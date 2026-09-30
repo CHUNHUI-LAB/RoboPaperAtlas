@@ -31,7 +31,7 @@ def data_version():
 
 def shell(title,body,prefix='',page='catalog',description='一个持续生长的中文机器人论文地图，连接书目、官方来源与分阶段阅读档案。'):
     theme_assets='' if page=='preview' else f'<link rel="stylesheet" href="{asset_url(prefix,"experience.css")}"><script src="{asset_url(prefix,"experience.js")}" defer></script>'
-    if page=='catalog':theme_assets+=f'<link rel="stylesheet" href="{asset_url(prefix,"hero-robot.css")}"><script src="{asset_url(prefix,"hero-robot.js")}" defer></script>'
+    if page=='catalog':theme_assets+=f'<link rel="stylesheet" href="{asset_url(prefix,"hero-atlas.css")}"><script src="{asset_url(prefix,"hero-atlas.js")}" defer></script>'
     nav=''.join(f'<a href="{prefix}{href}"'+(' aria-current="page"' if page==name else '')+f'>{label}</a>' for name,href,label in [('catalog','index.html#catalog','论文目录'),('frontier','frontier/index.html','前沿动态'),('about','about/index.html','关于与贡献')])
     return f'''<!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light"><meta name="description" content="{esc(description)}"><meta name="theme-color" content="#f8f7f2"><title>RoboPaperAtlas</title><link rel="icon" type="image/svg+xml" href="{asset_url(prefix,'favicon.svg')}"><link rel="stylesheet" href="{asset_url(prefix,'preview-base.css' if page=='preview' else 'styles.css')}"><script src="{asset_url(prefix,'app.js')}" defer></script><script src="{asset_url(prefix,'frontier.js')}" defer></script><script src="{asset_url(prefix,'interface.js')}" defer></script><script src="{asset_url(prefix,'motion.js')}" defer></script><script src="{asset_url(prefix,'brief-reader.js')}" defer></script>{theme_assets}</head>
