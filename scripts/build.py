@@ -80,6 +80,8 @@ def main():
     data=json.loads((ROOT/'data/catalog.json').read_text()); validate_catalog(data); target.mkdir(parents=True,exist_ok=True)
     # Remove only generated output; input and versioned report directories stay intact.
     shutil.rmtree(target); target.mkdir(); shutil.copytree(ROOT/'assets',target/'assets')
+    from design_preview import render as render_design_preview
+    (target/'design-preview').mkdir(); (target/'design-preview/index.html').write_text(render_design_preview(data,shell,card,asset_url))
     (target/'index.html').write_text(home(data)); (target/'about').mkdir(); (target/'about/index.html').write_text(about())
     for p in data['papers']:
         d=target/'papers'/p['id']; d.mkdir(parents=True); (d/'index.html').write_text(details(p))
