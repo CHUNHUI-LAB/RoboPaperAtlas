@@ -30,3 +30,12 @@ test('rapid multi-axis changes, empty results and reset preserve all95 searchabl
 test('unknown values reset safely; individual chips clear only their own axis',()=>{
  const f=make('https://example.org/RoboPaperAtlas/index.html?topic=bad&direction=bad&method=bad&resource=bad');assert.equal(visible(f).length,24);select(f,'#method-filter','VLA');const chip=f.$('#active-filters').children.find(c=>c.textContent.includes('方法：'));chip.emit('click');assert.equal(f.$('#method-filter').value,'all');assert.match(f.$('#result-count').textContent,/95/);
 });
+
+test('curated UMI abbreviation finds original UMI and keeps existing UMI family results',()=>{
+ const f=make('https://example.org/RoboPaperAtlas/index.html?q=UMI#catalog');
+ const ids=visible(f).map(c=>c.querySelector('h3').querySelector('a').getAttribute('href'));
+ for(const id of ['rpa-0064','rpa-0062','rpa-0017'])assert(ids.some(h=>h.includes('/'+id+'/')),id+' should match UMI');
+ const index=require('../dist/data/search-index.json'),matches=index.filter(p=>p.text.toLowerCase().includes('umi'));
+ for(const id of ['rpa-0064','rpa-0062','rpa-0017'])assert(matches.some(p=>p.id===id),id+' should match global search');
+ assert.equal(index.length,95);assert.equal(matches.length,3);assert.equal(ids.length,3);
+});

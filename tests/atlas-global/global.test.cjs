@@ -23,3 +23,19 @@ test('optional methods and resources form independent axes and clear together',(
 
 test('null-primary resources remain resources in detail, not research directions',()=>{const f=fixture();for(const id of ['rpa-0022','rpa-0032','rpa-0039','rpa-0045','savva2019habitat','ramakrishnan2021hm3d','yadav2023hm3dsem']){const p=D.papers.find(p=>p.id===id);assert.equal(p.classification.direction,null);f.window.AtlasDebug.select(id);assert.match(f.$('#detail').textContent,/跨领域资源/)}f.window.AtlasDebug.select('holoagent-0');assert.match(f.$('#detail').textContent,/跨领域研究/)});
 test('global text search uses order-independent AND terms like Library',()=>{const p=D.papers.find(p=>p.id==='rpa-0062');assert(M.search(p,'legs umi','',''));assert(M.search(p,'  umi   legs  ','',''));assert(!M.search(p,'umi nonexistentword','',''))});
+
+test('UMI abbreviation includes original UMI without losing existing family matches',()=>{
+ const matches=D.papers.filter(p=>M.search(p,'UMI','','')).map(p=>p.id);assert.equal(matches.length,3);
+ for(const id of ['rpa-0064','rpa-0062','rpa-0017'])assert(matches.includes(id),id+' should match UMI');
+ const f=fixture();f.input('UMI');for(const id of ['rpa-0064','rpa-0062','rpa-0017'])assert(f.window.AtlasDebug.getState().matching.includes(id));
+});
+test('narrow selection shows only selected and hovered or focused labels, retaining all relation evidence',()=>{
+ const f=fixture({mobile:true,width:390,height:844,reduced:true});f.window.AtlasDebug.select('rpa-0062');
+ const labels=()=>f.$$('.node-label').filter(n=>n.textContent);
+ assert.equal(labels().length,1);assert.equal(labels()[0].parentElement.dataset.id,'rpa-0062');
+ assert.equal(f.$$('.node').length,95);assert.equal(f.$$('.edge').length,8);assert.equal(f.$$('.relation').length,8);assert.equal(f.$$('.evidence').length,12);
+ const other=f.$('.node[data-id="rpa-0064"]');other.emit('pointerenter',{clientX:150,clientY:200});assert.equal(labels().length,2);other.emit('pointerleave');assert.equal(labels().length,1);
+ other.focus();assert.equal(labels().length,2);other.emit('blur',{bubbles:false});assert.equal(labels().length,1);
+ f.context.innerWidth=1440;f.context.innerHeight=900;f.window.emit('resize');assert.equal(labels().length,9);
+ f.context.innerWidth=390;f.context.innerHeight=844;f.window.emit('resize');assert.equal(labels().length,1);assert.equal(f.$$('.edge').length,8);
+});
