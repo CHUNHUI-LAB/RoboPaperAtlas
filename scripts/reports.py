@@ -86,7 +86,7 @@ def _public_url(value):
 def _identity(record):
     require(isinstance(record, dict), 'Report record must be an object')
     require(record.get('paper_id') == 'rpa-0062', 'Only the reviewed rpa-0062 pilot is allowed')
-    require(record.get('version') in {'v1','v2'}, 'Only reviewed report versions v1/v2 are allowed')
+    require(record.get('version') in {'v1','v2','v3'}, 'Only reviewed report versions v1/v2/v3 are allowed')
     stage = record.get('stage')
     require(isinstance(stage, str) and stage in STAGE_FILES, 'Unknown report stage')
     require(record.get('filename') == STAGE_FILES[stage], 'Filename must match its stage')
@@ -375,7 +375,7 @@ def _parse_html(record, payload, root=ROOT):
     except UnicodeDecodeError as exc:
         raise ValueError('Report must contain exact UTF-8 bytes') from exc
     require(not re.search(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', text), 'HTML contains control characters')
-    if record['version']=='v2':
+    if record['version']in {'v2','v3'}:
         from report_v2 import prepare
         text,parser=prepare(root,record,payload)
     else:parser = ReportHTML(record['filename'])
@@ -411,7 +411,7 @@ def _load(root):
     require(type(registry['schema_version']) is int and registry['schema_version'] == 1,
             'Unsupported report schema')
     records = registry['reports']
-    require(isinstance(records, list) and len(records) <= 2 * len(STAGE_FILES), 'Invalid report registry list')
+    require(isinstance(records, list) and len(records) <= 3 * len(STAGE_FILES), 'Invalid report registry list')
     payloads = {}
     parsers = {}
     for record in records:

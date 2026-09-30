@@ -94,7 +94,7 @@ class ReportTests(unittest.TestCase):
 
     def test_manifest_metadata_strictness(self):
         cases = [('paper_id', '../rpa-0062'), ('paper_id', 'rpa-0063'), ('stage', 1),
-                 ('version', 'v3'), ('filename', '../first-pass.html'),
+                 ('version', 'v4'), ('filename', '../first-pass.html'),
                  ('review_status', 'pending'), ('created_at', '2026-02-30'),
                  ('created_at', '2026-09-30T00:00:00Z'), ('source_edition', ''),
                  ('rights_note', ' '), ('source_sha256', 'A' * 64), ('bytes', True),

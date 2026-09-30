@@ -38,9 +38,10 @@ def align_tables(article,units):
  if seen!=set(byid):raise ValueError('All37 source rows must be aligned exactly')
  return article
 
-def render(root,stage,source,units,site_shell,asset_url):
+def render(root,stage,source,units,site_shell,asset_url,version='v2'):
  root=Path(root)
- if stage not in FILES:raise ValueError('Unknown stage')
+ if stage not in FILES or version not in {'v2','v3'}:raise ValueError('Unknown reader identity')
+ previous='v2'if version=='v3'else'v1'
  if stage==3:source=apply_math(source,root)
  article=re.search(r'<main class="article">(.*?)</main>',source,re.S).group(1)
  toc=re.search(r'<nav class="toc"[^>]*>(.*?)</nav>',source,re.S).group(1).replace('ON THIS PAGE','本页章节')
@@ -57,12 +58,12 @@ def render(root,stage,source,units,site_shell,asset_url):
  toggler='<button type="button" class="reader-control" data-source-toggle aria-pressed="true">原文定位</button>'if stage==2 else''
  panel=source_panel(units)if stage==2 else''
  styles=(f'<link rel="stylesheet" href="{asset_url(SITE,"vendor/katex/katex.min.css")}">'if stage==3 else'')+f'<link rel="stylesheet" href="{asset_url(SITE,"reader-v2.css")}"><link rel="stylesheet" href="{asset_url(SITE,"reader-document.css")}">'
- body=f'''{styles}<script src="{asset_url(SITE,'reader-v2.js')}" defer></script><main id="main" class="reader-page reader-stage{stage}"><div class="reader-stagebar"><a class="reader-paper-link" href="{SITE}papers/rpa-0062/index.html">UMI-on-Legs <span> / Reading</span></a><nav class="reader-stages" aria-label="阅读阶段">{stages}</nav><div class="reader-controls">{toggler}<nav class="reader-section-stepper" aria-label="章节导航"><button type="button" data-reader-previous aria-label="上一节" title="上一节" disabled>←</button><span class="reader-position" aria-label="当前章节位置">01 / {count:02d}</span><span class="sr-only" data-reader-section-label></span><button type="button" data-reader-next aria-label="下一节" title="下一节">→</button></nav><button type="button" class="reader-control reader-toc-toggle" aria-expanded="false" aria-controls="reader-toc">本页目录</button></div></div><div class="reader-grid"><nav class="reader-toc" id="reader-toc" aria-label="本页目录">{toc}</nav><div class="reader-body"><header class="reader-title"><div class="reader-breadcrumb"><a href="{SITE}index.html#catalog">Library</a><span> / </span><span>Stage {stage} · {LABELS[stage]} · v2</span></div><h1>UMI-on-Legs</h1><p class="subtitle">{subtitle}</p><div class="reader-meta"><p class="reader-byline">Huy Ha · Yihuai Gao · Zipeng Fu · Jie Tan · Shuran Song</p><details><summary>CoRL 2024 / PMLR 2025 · 原文、来源与阅读范围</summary><div class="reader-context"><p>{metadata[0]}</p><p>{metadata[1]}</p><a href="{SITE}artifacts/rpa-0062/v1/{FILES[stage]}">历史报告 v1 ↗</a></div></details><p class="reader-document-note">报告版本 v2 · 正文、图表和公式可离线阅读；原文、源码与站内搜索需联网。</p></div></header><article class="reader-article">{article}</article></div>{panel}</div></main><p class="reader-footer">RoboPaperAtlas · 独立中文阅读分析，不代表作者背书 · 保留正式论文来源与固定源码版本</p><div class="reader-toast" role="status" aria-live="polite" hidden></div>'''
+ body=f'''{styles}<script src="{asset_url(SITE,'reader-v2.js')}" defer></script><main id="main" class="reader-page reader-stage{stage}"><div class="reader-stagebar"><a class="reader-paper-link" href="{SITE}papers/rpa-0062/index.html">UMI-on-Legs <span> / Reading</span></a><nav class="reader-stages" aria-label="阅读阶段">{stages}</nav><div class="reader-controls">{toggler}<nav class="reader-section-stepper" aria-label="章节导航"><button type="button" data-reader-previous aria-label="上一节" title="上一节" disabled>←</button><span class="reader-position" aria-label="当前章节位置">01 / {count:02d}</span><span class="sr-only" data-reader-section-label></span><button type="button" data-reader-next aria-label="下一节" title="下一节">→</button></nav><button type="button" class="reader-control reader-toc-toggle" aria-expanded="false" aria-controls="reader-toc">本页目录</button></div></div><div class="reader-grid"><nav class="reader-toc" id="reader-toc" aria-label="本页目录">{toc}</nav><div class="reader-body"><header class="reader-title"><div class="reader-breadcrumb"><a href="{SITE}index.html#catalog">Library</a><span> / </span><span>Stage {stage} · {LABELS[stage]} · {version}</span></div><h1>UMI-on-Legs</h1><p class="subtitle">{subtitle}</p><div class="reader-meta"><p class="reader-byline">Huy Ha · Yihuai Gao · Zipeng Fu · Jie Tan · Shuran Song</p><details><summary>CoRL 2024 / PMLR 2025 · 原文、来源与阅读范围</summary><div class="reader-context"><p>{metadata[0]}</p><p>{metadata[1]}</p><a href="{SITE}artifacts/rpa-0062/{previous}/{FILES[stage]}">历史报告 {previous} ↗</a></div></details><p class="reader-document-note">报告版本 {version} · 正文、图表和公式可离线阅读；原文、源码与站内搜索需联网。</p></div></header><article class="reader-article">{article}</article></div>{panel}</div></main><p class="reader-footer">RoboPaperAtlas · 独立中文阅读分析，不代表作者背书 · 保留正式论文来源与固定源码版本</p><div class="reader-toast" role="status" aria-live="polite" hidden></div>'''
  return site_shell('RoboPaperAtlas',body,prefix=SITE,page='reader')
 
-def self_contained(document,root,stage):
+def self_contained(document,root,stage,version='v2'):
  root=Path(root);policies={'styles':{},'scripts':{}};scripts=[]
- document=re.sub(r'data-data-version="[^"]+"','data-data-version="reader-v2"',document)
+ document=re.sub(r'data-data-version="[^"]+"','data-data-version="reader-'+version+'"',document)
  def asset_path(url):
   if not url.startswith(SITE+'assets/'):raise ValueError('Unexpected reader asset')
   path=(root/url.split('?',1)[0][len(SITE):]).resolve()

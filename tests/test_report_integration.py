@@ -10,7 +10,7 @@ class ReportIntegrationTests(unittest.TestCase):
  def setUpClass(cls):
   cls.records=load_reports(ROOT);cls.catalog=json.loads((ROOT/'data/catalog.json').read_text());cls.paper=next(p for p in cls.catalog['papers'] if p['id']=='rpa-0062')
  def test_exact_approved_pilot(self):
-  self.assertEqual(len(self.records),6);self.assertEqual({p['paper_id'] for p in self.records},{'rpa-0062'});self.assertEqual({p['stage'] for p in self.records},{'stage1','stage2','stage3'})
+  self.assertEqual(len(self.records),9);self.assertEqual({p['paper_id'] for p in self.records},{'rpa-0062'});self.assertEqual({p['stage'] for p in self.records},{'stage1','stage2','stage3'})
   self.assertEqual(validate_catalog(self.catalog,self.records),95)
  def test_unregistered_stage_cannot_publish(self):
   with self.assertRaises(ValueError):validate_catalog(self.catalog,[])
@@ -38,7 +38,7 @@ class ReportIntegrationTests(unittest.TestCase):
    output=Path(d);paper=output/'papers/rpa-0062/index.html';paper.parent.mkdir(parents=True);paper.write_text('<html><body>Paper</body></html>')
    for r in self.records:
     path=report_path(r);dest=output/path;dest.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(ROOT/path,dest)
-   self.assertEqual(validate_output(output,self.records),7)
+   self.assertEqual(validate_output(output,self.records),10)
    changed=output/report_path(self.records[0]);changed.write_bytes(changed.read_bytes()+b' ')
    with self.assertRaises(ValueError):validate_output(output,self.records)
  def test_stage3_narrow_wrap_is_presentation_only(self):
@@ -47,5 +47,5 @@ class ReportIntegrationTests(unittest.TestCase):
   html=(ROOT/report_path(records['stage3'])).read_text();self.assertIn('@media(max-width:860px){.article p,.article li{overflow-wrap:anywhere}}',html);self.assertIn('overflow:auto',html)
  def test_map_stage_projection(self):
   projection=map_data(self.catalog,report_records=self.records);p=next(x for x in projection['papers'] if x['id']=='rpa-0062')
-  for k in ['stage1','stage2','stage3']:self.assertEqual(p['stages'][k]['status'],'imported');self.assertEqual(len(p['stages'][k]['artifacts']),2)
+  for k in ['stage1','stage2','stage3']:self.assertEqual(p['stages'][k]['status'],'imported');self.assertEqual(len(p['stages'][k]['artifacts']),3)
 if __name__=='__main__':unittest.main()

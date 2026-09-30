@@ -40,13 +40,14 @@ class ReaderHTML(ReportHTML):
 
 
 def prepare(root,record,payload):
-    policy=json.loads(_read(root,'data/report-v2-policy.json',20000).decode(),object_pairs_hook=_json_object)
+    require(record.get('version') in {'v2','v3'},'Unknown immutable reader version')
+    policy=json.loads(_read(root,'data/report-'+record['version']+'-policy.json',20000).decode(),object_pairs_hook=_json_object)
     _keys(policy,{'version','styles','scripts','documents'},'Reader v2 policy')
-    require(policy['version']=='v2','Unknown reader policy version')
+    require(policy['version']==record['version'],'Unknown reader policy version')
     for key,names in [('styles',STYLE_NAMES),('scripts',SCRIPT_NAMES),('documents',set(STAGE_FILES.values()))]:
         _keys(policy[key],names,'Reader '+key)
         for digest in policy[key].values():_digest(digest,'Reader fingerprint')
-    require(sha(payload)==policy['documents'][record['filename']],'V2 document fingerprint differs from reviewed policy')
+    require(sha(payload)==policy['documents'][record['filename']],'Reader document fingerprint differs from reviewed policy')
     text=payload.decode('utf-8');seen_styles=set();seen_scripts=set()
     def style(m):
         name=m[1];require(name in STYLE_NAMES and name not in seen_styles,'Unknown or repeated reader CSS')

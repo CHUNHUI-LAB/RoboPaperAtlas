@@ -15,7 +15,7 @@ class ReaderDocumentTests(unittest.TestCase):
   from validate import expected_stage
   records=reports.load_reports(ROOT)
   for stage in self.records:
-   self.assertEqual([a['version']for a in expected_stage('rpa-0062',stage,records)['artifacts']],['v2','v1'])
+   self.assertEqual([a['version']for a in expected_stage('rpa-0062',stage,records)['artifacts']],['v3','v2','v1'])
   self.assertEqual(expected_stage('rpa-0064','stage1',records),{'status':'not_imported','artifacts':[]})
  def test_self_contained_figures_fonts_and_navigation(self):
   for stage,page in self.pages.items():
@@ -60,7 +60,7 @@ class ReaderDocumentTests(unittest.TestCase):
     changed=raw.replace(b'</body>',payload+b'</body>');policy=copy.deepcopy(self.policy);policy['documents'][r['filename']]=reports.sha(changed);(root/'data/report-v2-policy.json').write_text(json.dumps(policy))
     with self.assertRaises(ValueError):reports._parse_html(r,changed,root)
  def test_version_keying_preserves_all_sibling_links(self):
-  self.assertEqual(len(reports.load_reports(ROOT)),6)
+  self.assertEqual(len(reports.load_reports(ROOT)),9)
   for r in self.records.values():
    page=self.pages[r['stage']]
    for other in reports.STAGE_FILES.values():

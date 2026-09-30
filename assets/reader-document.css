@@ -11,3 +11,6 @@
 @media(max-width:1050px){.reader-stage2 .reader-grid{grid-template-columns:145px minmax(0,1fr)}.reader-stage2 .reader-title,.reader-stage2 .reader-stages{margin-left:0}}
 @media(max-width:767px){.reader-stage2 .reader-grid{display:block}.reader-source-mobile{min-height:44px;padding:9px 0}.source-row-button{min-height:44px}.reader-stage2 .reader-stages{gap:14px}}
 @media print{.site-header,.site-footer,#search-dialog,#paper-drawer,.toast,.reader-toast,.reader-licenses{display:none!important}.reader-stage2 .reader-grid{display:block}.reader-stage2 .reader-title{margin:0}.reader-source-panel{display:none!important}}
+
+/* Keep the source action legible against its dark background at every state. */
+.reader-page a.source-open,.reader-page a.source-open:hover,.reader-page a.source-open:focus-visible{color:#f2fff7;font-size:12px}.reader-page a.source-open:hover{background:#23513c}
