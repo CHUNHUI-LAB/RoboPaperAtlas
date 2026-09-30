@@ -120,6 +120,8 @@ def main():
     from reader_preview import render as render_reader_preview
     (target/'reader-preview/umi-on-legs').mkdir(parents=True)
     (target/'reader-preview/umi-on-legs/index.html').write_text(render_reader_preview(ROOT,shell,asset_url))
+    from preview_artifacts import write_preview
+    write_preview(ROOT,target)
     for p in data['papers']:
         d=target/'papers'/p['id']; d.mkdir(parents=True); (d/'index.html').write_text(details(p))
     from frontier_page import render as frontier_render
