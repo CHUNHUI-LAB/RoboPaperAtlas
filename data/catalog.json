@@ -3549,61 +3549,90 @@
         ],
         "publication_year": 2025,
         "preprint_year": 2024,
-        "venue": "Conference on Robot Learning (CoRL 2024); PMLR 270",
+        "venue": "CoRL 2024 · PMLR 270 (2025), 5254–5270",
         "doi": null,
-        "verification_scope": "已核验出版方书目与官方来源，尚未开展全文精读或复现。"
+        "verification_scope": "正式PMLR书目、17页正式PDF与固定版本源码已按三阶段报告注明的范围核对；未执行训练、仿真或硬件复现。"
       },
       "bibliographic_year": 2024,
       "publication_year": 2025,
       "preprint_year": 2024,
       "year_basis": "user_provided",
-      "venue": "Conference on Robot Learning (CoRL 2024); PMLR 270",
+      "venue": "CoRL 2024 · PMLR 270 (2025), 5254–5270",
       "category": "wbc",
       "tags": [
         "whole-body",
         "legged"
       ],
-      "summary": null,
+      "summary": "将现实手持示范与仿真全身控制分开学习，以世界坐标末端轨迹连接，面向四足带臂移动操作。三阶段报告基于正式出版版，源码核对范围在Stage3明确列出。",
       "citation_verified": false,
       "metadata_status": "user_provided_unverified",
       "verified_at": "2026-09-30",
-      "verification_scope": "原始书目字段保留为用户提供、未核验记录；已单独核验并补充正式出版题名、作者、出版年及官方来源。此核验不代表已完成论文阅读或复现。",
-      "publication_status": "verified_primary_metadata",
+      "verification_scope": "原始题名、作者与年份按提供记录保留；正式题名、作者、PMLR出版年与官方资源在独立核验补充中展示。三份中文阅读报告已导入，不能据此声称独立复现。",
+      "publication_status": "published",
       "paper_url": "https://proceedings.mlr.press/v270/ha25a.html",
       "preprint_url": "https://arxiv.org/abs/2407.10353",
       "pdf_url": "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf",
       "pdf_kind": "publisher",
-      "pdf_edition": "version_of_record",
-      "pdf_note": "已核验正式出版方指定的 PDF 链接；本次为书目与链接核验，未完成全文检查。",
+      "pdf_edition": "CoRL 2024 · PMLR 270 (2025), 5254–5270 · 17页正式出版版",
+      "pdf_note": "优先使用PMLR正式出版PDF。CoRL会议为2024年，PMLR正式出版年为2025年；首次预印本为2024年。",
       "project_url": "https://umi-on-legs.github.io/",
       "code_urls": [
         "https://github.com/real-stanford/umi-on-legs"
       ],
-      "code_note": "已发现官方实现仓库，但未运行代码或独立复现。 Repository includes whole-body controller simulation training and real-world deployment components, iPhone VIO and ARX5 submodules; implementation files and README inspected, nothing executed.",
+      "code_note": "已按Stage3所列范围核对WBC与部署端源码，固定commit d75c9c182d8044dadf53043612da2ffbf1936a97；上层视觉发布端未定位，未运行训练、仿真或硬件复现。",
       "doi": null,
       "sources": [
         "https://proceedings.mlr.press/v270/ha25a.html",
-        "https://proceedings.mlr.press/v270/",
-        "https://arxiv.org/abs/2407.10353",
+        "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf",
         "https://umi-on-legs.github.io/",
-        "https://github.com/real-stanford/umi-on-legs"
+        "https://github.com/real-stanford/umi-on-legs/commit/d75c9c182d8044dadf53043612da2ffbf1936a97"
       ],
       "notes": [
-        "CoRL event and preprint are 2024; official PMLR citation year is 2025. Published title uses UMI-on-Legs. No publication DOI is listed by PMLR.",
-        "Official PDF link verified from publisher; full PDF content not checked in this metadata pass."
+        "会议年2024、PMLR出版年2025与原始记录年份分开保留。",
+        "报告v1基于17页PMLR正式版；Stage3为明确范围内的部分源码核对，不是训练或硬件复现。"
       ],
       "stages": {
         "stage1": {
-          "status": "not_imported",
-          "artifacts": []
+          "status": "imported",
+          "artifacts": [
+            {
+              "kind": "html",
+              "version": "v1",
+              "path": "artifacts/rpa-0062/v1/first-pass.html",
+              "sha256": "2f1e5842f3aabc71f1fb7ab41bc82636f86a2a1dd9ac35e337853b9768c00702",
+              "source_edition": "CoRL 2024 · PMLR 270 (2025), 5254–5270 · 正式出版版",
+              "created_at": "2026-09-30",
+              "review_status": "approved"
+            }
+          ]
         },
         "stage2": {
-          "status": "not_imported",
-          "artifacts": []
+          "status": "imported",
+          "artifacts": [
+            {
+              "kind": "html",
+              "version": "v1",
+              "path": "artifacts/rpa-0062/v1/writing-close-reading.html",
+              "sha256": "7eee3ea784be422b06ca6e357a48b947181fe50109b2530218f4304fe54ba3be",
+              "source_edition": "CoRL 2024 · PMLR 270 (2025), 5254–5270 · 正式出版版",
+              "created_at": "2026-09-30",
+              "review_status": "approved"
+            }
+          ]
         },
         "stage3": {
-          "status": "not_imported",
-          "artifacts": []
+          "status": "imported",
+          "artifacts": [
+            {
+              "kind": "html",
+              "version": "v1",
+              "path": "artifacts/rpa-0062/v1/method-code-reading.html",
+              "sha256": "ca9fa162704e399cee13687c4bf047996b520a9e8604bb621bf6c122d414aaa6",
+              "source_edition": "CoRL 2024 · PMLR 270 (2025), 5254–5270 · 正式出版版",
+              "created_at": "2026-09-30",
+              "review_status": "approved"
+            }
+          ]
         }
       }
     },

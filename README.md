@@ -6,7 +6,7 @@
 
 - 95 条论文目录：73 条原始书目与 22 条主来源核验增补
 - 原始记录按提供信息保留，核验结果独立保存在 verified_overlay；原始 citation_verified 始终为 false，不把部分字段核验称作整条书目已核验
-- 元数据核验、阅读完成和独立复现是不同状态。三个阅读阶段当前均为 not_imported，没有虚构报告
+- 元数据核验、阅读完成和独立复现是不同状态。仅 UMI-on-Legs（rpa-0062）导入3份实际阅读报告；其余94条均为 not_imported
 - 正式出版方 PDF 优先；预印本替代版本、原因与代码可用性分别说明。只链接第三方 PDF，不重新分发
 - 前沿动态是独立的 arXiv 启发式发现队列，不代表人工推荐、同行评审或精读完成。已安排每日更新（约 08:00 UTC），首次计划为 2026-10-01；页面展示最后发布快照，实际抓取状态以页面记录为准
 
@@ -16,6 +16,7 @@ Python 3.10+，无第三方构建依赖：
 
 ```sh
 python3 scripts/assemble_frontier.py
+python3 scripts/reports.py
 python3 -m unittest discover -s tests -v
 node tests/test_hero_atlas.cjs
 node tests/test_brief_reader.cjs
@@ -31,6 +32,8 @@ python3 -m http.server 8000 --directory dist
 - data/catalog.json：经过公开字段投影的目录源数据
 - data/frontier-parts/：公开候选快照的无损 UTF-8 小片段，每片不超过 60 KB；manifest 保留原始字节数与 SHA-256
 - data/frontier.json：构建时精确重组的真实 arXiv 候选快照，不直接提交
+- data/reports.json 与 data/report-parts/：审核通过报告的元数据和无损UTF-8片段；生成 artifacts/ 时逐一核对大小、SHA与HTML安全
+- scripts/reports.py：重建三个版本固定的阅读HTML；只按清单发布，不复制邻近研究资料
 - scripts/assemble_frontier.py：验证片段顺序、字节数与 SHA-256，再原子重组；--split 将采集器的新快照重新导出为片段
 - scripts/build.py、frontier_page.py：确定性静态生成器
 - scripts/validate.py：公开字段、URL、ID、年份、阶段状态和本地链接检查

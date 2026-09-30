@@ -58,3 +58,9 @@ test('empty search after selection cannot reuse stale suggestions; first Up sele
  const f=fixture();pick(f,'whole-body');f.click('#map-panel-close');const input=f.$('#map-search');input.focus();input.emit('keydown',{key:'ArrowDown'});input.emit('keydown',{key:'ArrowUp'});input.emit('keydown',{key:'Enter'});assert.equal(selected(f),'');assert.equal(f.$('#map-suggestions').hidden,true);assert.equal(input.getAttribute('aria-activedescendant'),null);
  f.input('whole-body');const n=f.$('#map-suggestions').children.length;input.emit('keydown',{key:'ArrowUp'});assert.equal(input.getAttribute('aria-activedescendant'),`map-option-${n-1}`);input.emit('keydown',{key:'Escape'});input.emit('keydown',{key:'ArrowDown'});assert.equal(input.getAttribute('aria-activedescendant'),'map-option-0');
 });
+
+test('only the approved UMI-on-Legs pilot exposes three report links',()=>{
+ const f=fixture();pick(f,'UMI-on-Legs');assert.match(selected(f),/UMI-on-Legs/);const rows=f.$('.map-stage-list').children;
+ assert.equal(rows.length,3);assert(rows.every(a=>a.tagName==='A'));assert.deepEqual(rows.map(a=>a.href),['../artifacts/rpa-0062/v1/first-pass.html','../artifacts/rpa-0062/v1/writing-close-reading.html','../artifacts/rpa-0062/v1/method-code-reading.html']);
+ pick(f,'Universal Manipulation Interface: In-The-Wild');assert(f.$('.map-stage-list').children.every(b=>b.disabled===true));
+});

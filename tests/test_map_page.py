@@ -11,13 +11,14 @@ SOURCE=Path(os.environ.get('ATLAS_SOURCE',str(ROOT)))
 sys.path.insert(0,str(SOURCE/'scripts'))
 sys.path.insert(0,str(ROOT/'scripts'))
 from map_page import map_data, map_html
+from reports import load_reports
 
 class MapPageTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.catalog=json.loads((SOURCE/'data/catalog.json').read_text())
-        cls.data=map_data(cls.catalog)
-        cls.html=map_html(cls.catalog)
+        cls.catalog=json.loads((SOURCE/'data/catalog.json').read_text());cls.reports=load_reports(SOURCE)
+        cls.data=map_data(cls.catalog,report_records=cls.reports)
+        cls.html=map_html(cls.catalog,report_records=cls.reports)
     def test_all_records_preserved(self):
         self.assertEqual(len(self.data['papers']),95)
         self.assertEqual({p['id'] for p in self.catalog['papers']},{p['id'] for p in self.data['papers']})
@@ -40,14 +41,17 @@ class MapPageTests(unittest.TestCase):
         self.assertEqual(self.data['relationMode'],'topic-only')
         self.assertEqual(self.data['verifiedRelations'],[])
         for p in self.data['papers']:
-            self.assertEqual(p['stages'],{key:{'status':'not_imported','artifacts':[]} for key in ('stage1','stage2','stage3')})
+            source=next(x for x in self.catalog['papers'] if x['id']==p['id'])
+            for key,state in p['stages'].items():
+                self.assertEqual(state['status'],source['stages'][key]['status'])
+                self.assertEqual(state['artifacts'],[{'url':'../'+a['path'],'version':a['version']} for a in source['stages'][key]['artifacts']])
     def test_strict_upstream_validation_reused(self):
         data=copy.deepcopy(self.catalog);data['private_skill']='must never publish'
-        with self.assertRaises(ValueError):map_data(data)
+        with self.assertRaises(ValueError):map_data(data,report_records=self.reports)
         data=copy.deepcopy(self.catalog);data['papers'][0]['pdf_url']='javascript:alert(1)'
-        with self.assertRaises(ValueError):map_data(data)
+        with self.assertRaises(ValueError):map_data(data,report_records=self.reports)
         data=copy.deepcopy(self.catalog);data['papers'][0]['stages']['stage1']={'status':'complete','artifacts':[]}
-        with self.assertRaises(ValueError):map_data(data)
+        with self.assertRaises(ValueError):map_data(data,report_records=self.reports)
     def test_public_projection_allowlist(self):
         keys={'id','title','shortName','authors','category','tags','year','yearBasis','originalRecord','sourceChecked','hasVerifiedOverlay','verificationScope','summary','paperUrl','pdfUrl','pdfKind','pdfNote','projectUrl','codeUrls','codeNote','detailUrl','catalogUrl','stages'}
         for paper in self.data['papers']:self.assertEqual(set(paper),keys)
@@ -61,13 +65,13 @@ class MapPageTests(unittest.TestCase):
         self.assertNotIn('<html',self.html)
     def test_script_injection_cannot_escape_json(self):
         data=copy.deepcopy(self.catalog);data['papers'][0]['title']='Hostile </script><script>alert(1)</script>'
-        rendered=map_html(data)
+        rendered=map_html(data,report_records=self.reports)
         payload=re.search(r'<script type="application/json" id="paper-map-data">(.*?)</script>',rendered,re.S).group(1)
         self.assertNotIn('</script>',payload)
         self.assertIn('Hostile </script>',json.loads(payload)['papers'][0]['title'])
         self.assertNotIn('<script>alert(1)</script>',rendered)
     def test_generated_links_stay_under_site_subpath(self):
-        data=map_data(self.catalog,base='../')
+        data=map_data(self.catalog,base='../',report_records=self.reports)
         self.assertTrue(all(p['detailUrl']==f'../papers/{p["id"]}/index.html' for p in data['papers']))
         self.assertNotIn('href="/papers/',self.html)
         self.assertTrue(all(p['catalogUrl']==f'../index.html?topic={p["category"]}#catalog' for p in data['papers']))

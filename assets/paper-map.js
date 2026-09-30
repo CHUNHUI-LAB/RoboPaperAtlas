@@ -285,8 +285,10 @@
     if (p.codeNote) resources.append(create('p', p.codeNote, 'map-panel-note'));
     const stages = section('分阶段阅读'), stageList = create('div', null, 'map-stage-list');
     for (const [index, name] of ['初读', '写作精读', '方法精读'].entries()) {
-      const button = create('button', `S${index + 1} ${name}`); button.type = 'button'; button.disabled = true;
-      button.append(create('span', '尚未导入')); stageList.append(button);
+      const state=p.stages['stage'+(index+1)],artifact=state?.status==='imported'?state.artifacts[0]:null;
+      const report=artifact&&/^\.\.\/artifacts\/rpa-0062\/v1\/(first-pass|writing-close-reading|method-code-reading)\.html$/.test(artifact.url)?safeLink(artifact.url,`S${index+1} ${name}`):null;
+      if(report){report.classList.add('map-stage-report');report.append(create('small',artifact.version+' · 已导入'));stageList.append(report);}
+      else{const button = create('button', `S${index + 1} ${name}`); button.type = 'button'; button.disabled = true;button.append(create('span', '尚未导入')); stageList.append(button);}
     }
     stages.append(stageList, create('p', '只有实际报告完成导入与检查，阅读入口才会开放。', 'map-panel-note'));
     const relations = related(nodes, p.id), relationSection = section(relations.mode === 'shared-tags' ? '沿共享标签继续探索' : '同一目录分组');

@@ -20,7 +20,14 @@ def check_url(value):
     except ValueError as ex:
         if 'Nonpublic IP' in str(ex) or re.fullmatch(r'[0-9.]+',u.hostname) or re.match(r'^0x[0-9a-f]+',u.hostname,re.I): raise ValueError('Nonpublic or ambiguous IP hostname')
     ensure(not re.search(r'(?:token|password|secret|api_key)=',u.query,re.I),'Credential-shaped query parameter not permitted')
-def validate_catalog(data):
+def expected_stage(paper_id,stage,report_records=()):
+    from reports import report_path
+    matches=[x for x in report_records if x['paper_id']==paper_id and x['stage']==stage]
+    if not matches:return {'status':'not_imported','artifacts':[]}
+    ensure(len(matches)==1,'Duplicate report stage')
+    x=matches[0]
+    return {'status':'imported','artifacts':[{'kind':'html','version':x['version'],'path':report_path(x),'sha256':x['sha256'],'source_edition':x['source_edition'],'created_at':x['created_at'],'review_status':'approved'}]}
+def validate_catalog(data,report_records=()):
     ensure(set(data)=={'schema_version','updated_at','papers'},'Catalog envelope fields not allowlisted')
     ensure(data['schema_version']==1,'Unsupported schema'); ensure(bool(re.fullmatch(r'\d{4}-\d{2}-\d{2}',data['updated_at'])), 'Invalid catalog date'); ids=set(); titles=set()
     for p in data['papers']:
@@ -44,7 +51,8 @@ def validate_catalog(data):
         if p['verified_overlay']:
             ensure(set(p['verified_overlay'])<= {'title','authors','publication_year','preprint_year','venue','doi','verification_scope'},'Unexpected verified overlay fields')
         ensure(set(p['stages'])=={'stage1','stage2','stage3'},'Three stages required')
-        for stage in p['stages'].values():ensure(stage=={'status':'not_imported','artifacts':[]},'This catalog release has no imported reports; artifact import requires reviewed implementation')
+        for key,stage in p['stages'].items():ensure(stage==expected_stage(p['id'],key,report_records),'Stage must match an actual reviewed report or remain not_imported')
+    ensure(all(x['paper_id'] in ids for x in report_records),'Report paper is absent from catalog')
     return len(ids)
 def validate_frontier(data):
     ensure(data.get('schema_version') in {1,'1.0'},'Unsupported frontier schema')
@@ -62,16 +70,29 @@ def validate_frontier(data):
         ensure(p.get('change_type') in {'new','revision'},'Unknown change type')
     return len(ids)
 class Links(HTMLParser):
-    def __init__(self):super().__init__();self.links=[]
+    def __init__(self):super().__init__();self.links=[];self.references=[]
     def handle_starttag(self,tag,attrs):
         for k,v in attrs:
-            if k in {'href','src'} and v:self.links.append(v)
-def validate_output(root):
+            if k in {'href','src'} and v:self.links.append(v);self.references.append((tag,k,v))
+def validate_output(root,report_records=()):
+    from reports import report_path
+    report_paths={report_path(x) for x in report_records}
+    import hashlib
+    for report in report_records:
+        artifact=root/report_path(report)
+        ensure(artifact.is_file() and not artifact.is_symlink(),'Missing report artifact')
+        ensure(hashlib.sha256(artifact.read_bytes()).hexdigest()==report['sha256'],'Built report hash mismatch')
+    if (root/'artifacts').exists():
+        ensure({str(x.relative_to(root)) for x in (root/'artifacts').rglob('*') if x.is_file()}==report_paths,'Unlisted built report artifact')
+        ensure(not any(x.is_symlink() for x in (root/'artifacts').rglob('*')),'Symlink in report output')
     pages=list(root.rglob('*.html'))
     ensure(pages,'No built HTML')
     for p in pages:
         parser=Links();parser.feed(p.read_text())
-        for link in parser.links:
+        for tag,attribute,link in parser.references:
+            if link.startswith('data:'):
+                ensure(str(p.relative_to(root)) in report_paths and tag=='img' and attribute=='src' and link.startswith(('data:image/png;base64,','data:image/jpeg;base64,')),'Unexpected embedded resource')
+                continue
             u=urlsplit(link)
             if u.scheme:check_url(link);continue
             if not u.path:continue
@@ -86,6 +107,8 @@ def main():
     ap=argparse.ArgumentParser();ap.add_argument('--output',default='dist');args=ap.parse_args()
     from briefs import load_archive
     load_archive(ROOT)
-    n=validate_catalog(json.loads((ROOT/'data/catalog.json').read_text()));f=validate_frontier(json.loads((ROOT/'data/frontier.json').read_text()));pages=validate_output(ROOT/args.output)
+    from reports import load_reports
+    reports=load_reports(ROOT)
+    n=validate_catalog(json.loads((ROOT/'data/catalog.json').read_text()),reports);f=validate_frontier(json.loads((ROOT/'data/frontier.json').read_text()));pages=validate_output(ROOT/args.output,reports)
     print(f'PASS: {n} catalog records, {f} frontier candidates, {pages} HTML pages; schemas, public URLs, IDs, stage boundaries, local links')
 if __name__=='__main__': main()

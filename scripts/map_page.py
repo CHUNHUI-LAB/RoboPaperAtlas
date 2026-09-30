@@ -19,9 +19,9 @@ def esc(value):
     return html.escape(str(value) if value is not None else '', quote=True)
 
 
-def map_data(catalog, base='../'):
+def map_data(catalog, base='../',report_records=()):
     """Explicit public projection: no private provenance or speculative relations."""
-    validate_catalog(catalog)
+    validate_catalog(catalog,report_records)
     papers = []
     for p in catalog['papers']:
         overlay = p.get('verified_overlay') or {}
@@ -43,7 +43,7 @@ def map_data(catalog, base='../'):
             'codeNote': p.get('code_note') or '',
             'detailUrl': f'{base}papers/{p["id"]}/index.html',
             'catalogUrl': f'{base}index.html?topic={p["category"]}#catalog',
-            'stages': {key: {'status': value['status'], 'artifacts': []}
+            'stages': {key: {'status': value['status'], 'artifacts': [{'url':base+a['path'],'version':a['version']} for a in value['artifacts']]}
                        for key, value in p['stages'].items()},
         })
     return {'schemaVersion': 1, 'updatedAt': catalog['updated_at'],
@@ -53,8 +53,8 @@ def map_data(catalog, base='../'):
             'papers': papers}
 
 
-def map_html(catalog, base='../', css='../assets/paper-map.css', js='../assets/paper-map.js'):
-    data = map_data(catalog, base)
+def map_html(catalog, base='../', css='../assets/paper-map.css', js='../assets/paper-map.js',report_records=()):
+    data = map_data(catalog, base,report_records)
     counts = {key: sum(p['category'] == key for p in data['papers']) for key in CATEGORIES}
     topics = ''.join(f'<button type="button" data-map-topic="{key}" aria-pressed="false" style="--topic:{color}"><i aria-hidden="true"></i>{esc(label)}<span>{counts[key]}</span></button>' for key, (label, _, color) in CATEGORIES.items())
     rows = ''.join(f'<li data-map-row="{esc(p["id"])}"><a href="{esc(p["detailUrl"])}" data-map-paper="{esc(p["id"])}"><span class="map-list-dot" style="--topic:{CATEGORIES[p["category"]][2]}" aria-hidden="true"></span><span class="map-list-copy"><strong>{esc(p["title"])}</strong><small>{esc(CATEGORIES[p["category"]][0])} · {esc(p["year"] or "年份待核验")} · {"原始书目 · 初步分类" if p["originalRecord"] else "增补书目 · 元数据编目"}</small></span><span aria-hidden="true">↗</span></a></li>' for p in data['papers'])

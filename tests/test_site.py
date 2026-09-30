@@ -3,18 +3,23 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT/'scripts'))
 from validate import validate_catalog,check_url,validate_frontier
 from build import esc,details
+from reports import load_reports
+from validate import expected_stage
 class SiteTests(unittest.TestCase):
- def setUp(self):self.data=json.loads((ROOT/'data/catalog.json').read_text())
- def test_catalog(self):self.assertEqual(validate_catalog(self.data),95)
+ def setUp(self):self.data=json.loads((ROOT/'data/catalog.json').read_text());self.reports=load_reports(ROOT)
+ def test_catalog(self):self.assertEqual(validate_catalog(self.data,self.reports),95)
  def test_exact_original_count(self):self.assertEqual(sum(p['original_metadata'] is not None for p in self.data['papers']),73)
- def test_no_fake_stages(self):self.assertTrue(all(s=={'status':'not_imported','artifacts':[]} for p in self.data['papers'] for s in p['stages'].values()))
+ def test_no_fake_stages(self):
+  for p in self.data['papers']:
+   for key,s in p['stages'].items():self.assertEqual(s,expected_stage(p['id'],key,self.reports))
+  self.assertEqual([p['id'] for p in self.data['papers'] if any(s['status']=='imported' for s in p['stages'].values())],['rpa-0062'] if self.reports else [])
  def test_overlay_keeps_original_unverified(self):self.assertTrue(all(not p['citation_verified'] for p in self.data['papers'] if p['original_metadata']))
  def test_ids_reject_traversal(self):
   self.data['papers'][0]['id']='../../bad'
-  with self.assertRaises(ValueError):validate_catalog(self.data)
+  with self.assertRaises(ValueError):validate_catalog(self.data,self.reports)
  def test_extra_fields_rejected(self):
   self.data['papers'][0]['unapproved_field']='x'
-  with self.assertRaises(ValueError):validate_catalog(self.data)
+  with self.assertRaises(ValueError):validate_catalog(self.data,self.reports)
  def test_url_schemes(self):
   for u in ['javascript:alert(1)','data:text/html,hi','http://example.org/','https://u:p@example.org/','https://127.0.0.1/x','https://localhost./','https://2130706433/','https://0x7f000001/','https://example.org/a\nb']:
    with self.subTest(u=u):
