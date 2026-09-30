@@ -30,11 +30,12 @@
  input.addEventListener('input',showResults);
  document.querySelector('#global-search-form').addEventListener('submit',e=>{e.preventDefault();results.querySelector('a')?.click()});
  dialog.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){e.preventDefault();e.stopPropagation();dialog.close();return}
   if(!['ArrowDown','ArrowUp'].includes(e.key))return;
   const links=Array.from(results.querySelectorAll('a'));if(!links.length)return;
   e.preventDefault();let at=links.indexOf(document.activeElement);at=e.key==='ArrowDown'?Math.min(links.length-1,at+1):at-1;
   if(at<0)input.focus();else links[at].focus();
- });
+ },true);
  document.addEventListener('keydown',e=>{
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();dialog.open?dialog.close():openSearch()}
   if(e.key==='Escape'&&menu.getAttribute('aria-expanded')==='true'){closeMenu();menu.focus()}

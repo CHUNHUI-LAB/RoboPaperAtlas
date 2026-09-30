@@ -49,3 +49,13 @@ class InterfaceTests(unittest.TestCase):
   self.assertIn('textContent=p.title',js)
   self.assertIn('dialog.showModal()',js)
   self.assertIn("dialog.addEventListener('close'",js)
+
+class DialogEscapeRegression(unittest.TestCase):
+ def test_escape_is_explicit_and_before_arrow_navigation(self):
+  js=(ROOT/'assets/interface.js').read_text()
+  start=js.index("dialog.addEventListener('keydown'")
+  end=js.index("document.addEventListener('keydown'",start)
+  handler=js[start:end]
+  self.assertIn("if(e.key==='Escape'){e.preventDefault();e.stopPropagation();dialog.close();return}",handler)
+  self.assertIn("},true);",handler)
+  self.assertLess(handler.index("e.key==='Escape'"),handler.index("['ArrowDown'"))
