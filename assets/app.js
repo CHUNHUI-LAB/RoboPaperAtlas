@@ -12,14 +12,14 @@
   const empty = document.querySelector('#empty-state');
   const more = document.querySelector('#load-more');
   let topic = 'all', limit = 24, timer;
-  let view='cards';
+  let view='list';
   const chips=document.querySelector('#active-filters'),viewButtons=Array.from(document.querySelectorAll('[data-view]'));
   function syncView(){grid.classList.toggle('list-view',view==='list');viewButtons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===view)))}
   const validSelect = (select, value) => Array.from(select.options).some(o => o.value === value) ? value : 'all';
   function readQuery() {
     const q = new URLSearchParams(window.location.search);
     search.value = q.get('q') || '';
-    view=q.get('view')==='list'?'list':'cards';syncView();
+    view=q.get('view')==='cards'?'cards':'list';syncView();
     topic = topicButtons.some(b => b.dataset.topic === q.get('topic')) ? q.get('topic') : 'all';
     year.value = validSelect(year, q.get('year'));
     status.value = validSelect(status, q.get('status'));
@@ -32,7 +32,7 @@
     if (year.value !== 'all') q.set('year', year.value);
     if (status.value !== 'all') q.set('status', status.value);
     if (sort.value !== 'curated') q.set('sort', sort.value);
-    if(view==='list')q.set('view','list');
+    if(view==='cards')q.set('view','cards');
     const next = window.location.pathname + (q.size ? '?' + q.toString() : '') + window.location.hash;
     window.history.replaceState(null, '', next);
   }
@@ -54,7 +54,9 @@
     empty.hidden = match.length !== 0;
     more.hidden = match.length <= limit;
     more.textContent = `显示更多论文（还剩 ${Math.max(0, match.length-limit)} 篇） ↓`;
+    const label=document.querySelector('#catalog-search-label');if(label)label.textContent=search.value.trim()||'搜索标题、作者或关键词';
     topicButtons.forEach(b => { const active = b.dataset.topic === topic; b.classList.toggle('active', active); b.setAttribute('aria-pressed', String(active)); });
+    document.dispatchEvent(new CustomEvent('catalog:updated'));
     if(chips){chips.replaceChildren();const active=[];if(search.value.trim())active.push(['关键词：'+search.value.trim(),()=>search.value='']);if(topic!=='all')active.push([topicButtons.find(b=>b.dataset.topic===topic).querySelector('span').textContent,()=>topic='all']);if(year.value!=='all')active.push(['出版年：'+year.selectedOptions[0].textContent,()=>year.value='all']);if(status.value!=='all')active.push([status.selectedOptions[0].textContent,()=>status.value='all']);for(const [label,clear] of active){const b=document.createElement('button');b.type='button';b.textContent=label+' ×';b.setAttribute('aria-label','移除筛选 '+label);b.addEventListener('click',()=>{clear();apply()});chips.append(b)}if(active.length){const b=document.createElement('button');b.type='button';b.className='clear-all';b.textContent='清除全部';b.addEventListener('click',()=>{search.value='';topic='all';year.value='all';status.value='all';apply()});chips.append(b)}chips.hidden=!active.length}
     if (save) updateQuery();
   }
@@ -63,9 +65,9 @@
   [year,status,sort].forEach(s => s.addEventListener('change', () => apply()));
   topicButtons.forEach(b => b.addEventListener('click', () => { topic = b.dataset.topic; apply(); }));
   more.addEventListener('click', () => { limit += 24; apply(false); });
-  document.querySelector('#reset-filters').addEventListener('click', () => { search.value=''; topic='all'; year.value='all'; status.value='all'; sort.value='curated'; apply(); search.focus(); });
+  document.querySelector('#reset-filters').addEventListener('click', () => { search.value=''; topic='all'; year.value='all'; status.value='all'; sort.value='curated'; apply(); document.querySelector('.catalog-search-trigger')?.focus(); });
   document.addEventListener('keydown', e => {
-    if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey && !['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) { e.preventDefault(); search.focus(); }
+    
     if (e.key === 'Escape' && document.activeElement === search && search.value) { search.value=''; apply(); }
   });
   window.addEventListener('popstate', () => { readQuery(); apply(true,false); });

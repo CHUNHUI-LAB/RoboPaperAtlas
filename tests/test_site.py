@@ -59,3 +59,33 @@ class DialogEscapeRegression(unittest.TestCase):
   self.assertIn("if(e.key==='Escape'){e.preventDefault();e.stopPropagation();dialog.close();return}",handler)
   self.assertIn("},true);",handler)
   self.assertLess(handler.index("e.key==='Escape'"),handler.index("['ArrowDown'"))
+
+class EditorialInterfaceTests(unittest.TestCase):
+ def test_single_search_entry_and_editorial_home(self):
+  from build import home
+  page=home(json.loads((ROOT/'data/catalog.json').read_text()))
+  self.assertIn('class="atlas-hero"',page)
+  self.assertIn('id="coordinate-field"',page)
+  self.assertIn('id="motion-toggle"',page)
+  self.assertIn('class="paper-grid list-view"',page)
+  self.assertNotIn('class="catalog-sidebar"',page)
+  self.assertNotIn('class="research-routes"',page)
+  self.assertIn('<input id="search" type="hidden"',page)
+ def test_assets_have_real_content_hash(self):
+  from build import asset_url
+  import hashlib
+  for name in ['styles.css','app.js','interface.js','frontier.js','motion.js']:
+   expected=hashlib.sha256((ROOT/'assets'/name).read_bytes()).hexdigest()[:12]
+   self.assertEqual(asset_url('../../',name),'../../assets/'+name+'?v='+expected)
+ def test_drawer_has_safe_dom_and_escape(self):
+  js=(ROOT/'assets/interface.js').read_text()
+  self.assertNotIn('innerHTML',js)
+  self.assertIn("drawer.addEventListener('cancel'",js)
+  self.assertIn('current!==requestId',js)
+  self.assertIn("if(closing||!drawer.open)return",js)
+  self.assertIn('if(epoch!==closeEpoch)return',js)
+  self.assertIn('drawer.getAnimations().forEach(a=>a.cancel())',js)
+ def test_motion_has_pause_and_accessibility_boundaries(self):
+  js=(ROOT/'assets/motion.js').read_text()
+  for marker in ['prefers-reduced-motion: reduce','min-width:768px','document.hidden','IntersectionObserver','cancelAnimationFrame','paused=!paused']:
+   self.assertIn(marker,js)
