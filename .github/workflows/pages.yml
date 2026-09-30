@@ -25,7 +25,7 @@ jobs:
           node tests/test_hero_atlas.cjs
           node tests/test_brief_reader.cjs
           python3 scripts/build.py
-          node --test tests/test_map_core.cjs tests/test_map_dom.cjs
+          node --test tests/test_map_core.cjs tests/test_map_dom.cjs tests/test_catalog_facets.cjs
           python3 scripts/validate.py
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4

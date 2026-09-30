@@ -3,21 +3,25 @@
  */
 (function (scope) {
   'use strict';
-  const TOPICS = ['navigation', 'wbc', 'vla', 'foundations'];
-  const CENTERS = {
-    navigation: { x: 370, y: 310, rx: 290, ry: 207 },
-    wbc: { x: 1070, y: 345, rx: 320, ry: 224 },
-    vla: { x: 395, y: 860, rx: 295, ry: 215 },
-    foundations: { x: 1100, y: 890, rx: 320, ry: 226 }
-  };
+  const TOPICS = ['navigation', 'wbc', 'vla', 'methods', 'sim-tools', 'data-benchmarks'];
+  const CENTERS = Object.fromEntries(TOPICS.map((id, index) => [id, { x: 370 + (index % 3) * 680, y: 310 + Math.floor(index / 3) * 555, rx: 295, ry: 215 }]));
   const normalize = value => String(value || '').normalize('NFKC').toLocaleLowerCase();
   const stableCompare = (a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
   const clamp = (value, low, high) => Math.min(high, Math.max(low, value));
-  function layout(papers) {
+  function regionsFor(topicIds = TOPICS) {
+    if (topicIds.length === TOPICS.length && topicIds.every(id => CENTERS[id])) return Object.fromEntries(topicIds.map(id => [id, { ...CENTERS[id] }]));
+    // Geometry configuration only; adding a region never reclassifies a paper.
+    return Object.fromEntries(topicIds.map((id, index) => [id, { x: 370 + (index % 3) * 680, y: 310 + Math.floor(index / 3) * 555, rx: 295, ry: 215 }]));
+  }
+  function layout(papers, regions) {
+    regions = regions || regionsFor([...new Set(papers.map(p => p.mapTopic || p.category))].sort((a, b) => {
+      const ai = TOPICS.indexOf(a), bi = TOPICS.indexOf(b);
+      return (ai < 0 ? 99 : ai) - (bi < 0 ? 99 : bi) || (a < b ? -1 : a > b ? 1 : 0);
+    }));
     const nodes = [];
-    for (const category of TOPICS) {
-      const cluster = papers.filter(p => p.category === category).slice().sort(stableCompare);
-      const c = CENTERS[category];
+    for (const category of Object.keys(regions)) {
+      const cluster = papers.filter(p => (p.mapTopic || p.category) === category).slice().sort(stableCompare);
+      const c = regions[category];
       cluster.forEach((paper, index) => {
         // Golden-angle packing, fixed order and fixed category centers. No physics.
         const angle = index * Math.PI * (3 - Math.sqrt(5)) + .35;
@@ -37,7 +41,7 @@
       return terms.every(term => haystack.includes(term));
     });
   }
-  function related(papers, id, limit = 8) {
+  function related(papers, id, limit = 6) {
     const selected = papers.find(p => p.id === id);
     if (!selected) return { mode: 'none', items: [], total: 0 };
     const tags = new Map((selected.tags || []).map(tag => [normalize(tag), tag]));
@@ -47,14 +51,14 @@
     }).filter(match => match.sharedTags.length)
       .sort((a, b) => b.sharedTags.length - a.sharedTags.length || stableCompare(a.paper, b.paper));
     if (matches.length) return { mode: 'shared-tags', items: matches.slice(0, limit), total: matches.length };
-    const fallback = papers.filter(p => p.id !== id && p.category === selected.category).sort(stableCompare);
+    const fallback = papers.filter(p => p.id !== id && (p.mapTopic || p.category) === (selected.mapTopic || selected.category)).sort(stableCompare);
     return { mode: 'category-only', items: fallback.slice(0, limit).map(paper => ({ paper, sharedTags: [] })), total: fallback.length };
   }
   function fitCamera(nodes, width, height) {
     if (!nodes.length || !width || !height) return { x: width / 2, y: height / 2, k: .5 };
     const minX = Math.min(...nodes.map(p => p.x)) - 74, maxX = Math.max(...nodes.map(p => p.x)) + 74;
     const minY = Math.min(...nodes.map(p => p.y)) - 105, maxY = Math.max(...nodes.map(p => p.y)) + 76;
-    const k = clamp(Math.min((width - 62) / Math.max(140, maxX - minX), (height - 130) / Math.max(140, maxY - minY)), .18, 1.55);
+    const k = clamp(Math.min((width - 62) / Math.max(140, maxX - minX), (height - 130) / Math.max(140, maxY - minY)), .08, 1.55);
     return { x: width / 2 - (maxX + minX) / 2 * k, y: (height - 12) / 2 - (maxY + minY) / 2 * k, k };
   }
   function nearest(nodes, current, direction) {
@@ -70,7 +74,7 @@
     });
     return best;
   }
-  const Core = { layout, search, related, fitCamera, nearest, normalize, TOPICS, CENTERS };
+  const Core = { layout, regionsFor, search, related, fitCamera, nearest, normalize, TOPICS, CENTERS };
   if (typeof module !== 'undefined' && module.exports) { module.exports = Core; return; }
   if (!scope.document) return;
   const root = document.getElementById('paper-map');
@@ -96,7 +100,8 @@
     return element;
   };
   const categories = new Map(data.categories.map(c => [c.id, c]));
-  const nodes = layout(data.papers), nodeById = new Map(nodes.map(p => [p.id, p]));
+  const regions = regionsFor(data.categories.map(c => c.id));
+  const nodes = layout(data.papers, regions), nodeById = new Map(nodes.map(p => [p.id, p]));
   const svg = $('#map-canvas'), world = $('.map-world'), nodeLayer = $('.map-nodes'), edgeLayer = $('.map-edges');
   const canvas = $('.map-canvas-wrap'), listWrap = $('.map-list-wrap'), panel = $('.map-sidebar');
   const input = $('#map-search'), suggestions = $('#map-suggestions'), hover = $('.map-hover-card');
@@ -114,24 +119,24 @@
     const preferred = colon > 1 && colon < 24 ? title.slice(0, colon) : title;
     return preferred.length > 31 ? preferred.slice(0, 29).trim() + '…' : preferred;
   };
-  const currentNodes = () => search(nodes.filter(p => state.topic === 'all' || p.category === state.topic), state.query);
+  const currentNodes = () => search(nodes.filter(p => state.topic === 'all' || (p.topics || [p.category]).includes(state.topic)), state.query);
 
   data.categories.forEach(category => {
-    const c = CENTERS[category.id], group = createSvg('g', { 'data-region': category.id, style: `--topic:${category.color}` });
-    group.append(createSvg('ellipse', { cx: c.x, cy: c.y, rx: c.rx, ry: c.ry, class: 'map-region-shape' }));
+    const c = regions[category.id], group = createSvg('g', { 'data-region': category.id, style: `--topic:${category.color}` });
+    group.append(createSvg('ellipse', { cx: c.x, cy: c.y, rx: c.rx, ry: c.ry, class: 'map-region-shape', transform: `rotate(-18 ${c.x} ${c.y})` }));
     const title = createSvg('text', { x: c.x - c.rx + 14, y: c.y - c.ry - 26, class: 'map-region-title' });
     title.textContent = category.label;
     const subtitle = createSvg('text', { x: c.x - c.rx + 14, y: c.y - c.ry - 7, class: 'map-region-subtitle' });
-    subtitle.textContent = `${category.english.toUpperCase()} / ${nodes.filter(p => p.category === category.id).length}`;
+    subtitle.textContent = `${nodes.filter(p => (p.mapTopic || p.category) === category.id).length} PAPERS`; 
     group.append(title, subtitle); $('.map-regions').append(group);
   });
   nodes.forEach(p => {
     const group = createSvg('g', { transform: `translate(${p.x} ${p.y})`, class: 'map-node', role: 'button',
-      tabindex: '-1', 'aria-pressed': 'false', 'aria-label': `${p.title}；${categories.get(p.category).label}；${yearText(p)}。查看论文资源。`,
-      'data-paper-id': p.id, style: `--topic:${categories.get(p.category).color}` });
+      tabindex: '-1', 'aria-pressed': 'false', 'aria-label': `${p.title}；${categories.get(p.mapTopic || p.category).english} · ${categories.get(p.mapTopic || p.category).chinese}；${yearText(p)}。查看论文资源。`,
+      'data-paper-id': p.id, style: `--topic:${categories.get(p.mapTopic || p.category).color}` });
     const title = createSvg('title'); title.textContent = p.title;
     const label = createSvg('text', { x: 14, y: 4, class: 'map-node-label' }); label.textContent = shortLabel(p);
-    group.append(title, createSvg('circle', { r: 28, class: 'map-node-hit' }), createSvg('circle', { r: 17, class: 'map-node-ring' }), createSvg('circle', { r: 7, class: 'map-node-dot' }), label);
+    group.append(title, createSvg('circle', { r: 28, class: 'map-node-hit' }), createSvg('circle', { r: 15, class: 'map-node-aura', 'aria-hidden': 'true' }), createSvg('circle', { r: 17, class: 'map-node-ring' }), createSvg('circle', { r: 7, class: 'map-node-dot' }), label);
     nodeLayer.append(group); nodeEls.set(p.id, group);
   });
 
@@ -141,15 +146,16 @@
     $('#map-zoom').textContent = `${Math.round(camera.k * 100)}%`;
     const scale = 1 / camera.k;
     $$('.map-regions>g').forEach(group => {
-      const c = CENTERS[group.dataset.region];
+      const c = regions[group.dataset.region];
       const title = group.querySelector('.map-region-title'), subtitle = group.querySelector('.map-region-subtitle');
-      title.style.fontSize = `${12 * scale}px`; title.setAttribute('y', String(c.y - c.ry - 22 * scale));
+      title.style.fontSize = `${(smallScreen.matches ? 9 : 12) * scale}px`; title.setAttribute('y', String(c.y - c.ry - 22 * scale));
       subtitle.style.fontSize = `${7 * scale}px`; subtitle.setAttribute('y', String(c.y - c.ry - 8 * scale));
     });
     nodeEls.forEach((group, id) => {
-      group.querySelector('.map-node-hit').setAttribute('r', Math.min(34, 15 * scale));
-      group.querySelector('.map-node-dot').setAttribute('r', Math.min(10, 4.2 * scale));
-      group.querySelector('.map-node-ring').setAttribute('r', Math.min(24, 9 * scale));
+      group.querySelector('.map-node-hit').setAttribute('r', 22 * scale);
+      group.querySelector('.map-node-dot').setAttribute('r', (id === state.selected ? 2.8 : 1.9) * scale);
+      group.querySelector('.map-node-aura').setAttribute('r', (id === state.selected ? 13 : 8) * scale);
+      group.querySelector('.map-node-ring').setAttribute('r', 8.5 * scale);
       const label = group.querySelector('.map-node-label');
       label.setAttribute('font-size', String(11 * scale));
       label.style.fontSize = `${11 * scale}px`; label.setAttribute('x', String(12 * scale)); label.setAttribute('y', String(3.5 * scale));
@@ -160,7 +166,7 @@
     const occupied = [];
     const candidates = currentNodes().slice().sort((a, b) => Number(b.id === state.selected) - Number(a.id === state.selected) || Number(b.anchor) - Number(a.anchor) || stableCompare(a, b));
     candidates.forEach(p => {
-      if (p.id !== state.selected && camera.k < .93 && !(p.anchor && camera.k >= .36)) return;
+      if (p.id !== state.selected && camera.k < .9) return;
       const rect = { x: p.x * camera.k + camera.x + 11, y: p.y * camera.k + camera.y - 9, w: shortLabel(p).length * 6.3 + 7, h: 18 };
       if (rect.x < 6 || rect.x + rect.w > width - 6 || rect.y < 42 || rect.y + rect.h > height - 72) return;
       if (p.id !== state.selected && occupied.some(r => rect.x < r.x + r.w && rect.x + rect.w > r.x && rect.y < r.y + r.h && rect.y + rect.h > r.y)) return;
@@ -169,7 +175,7 @@
   }
   function moveCamera(target, animate = true) {
     cancelCamera(); hover.hidden = true;
-    target = { ...target, k: clamp(target.k, .18, 3.5) };
+    target = { ...target, k: clamp(target.k, .08, 3.5) };
     if (!animate || reducedMotion.matches || !visible || document.hidden || state.view !== 'map') { camera = target; drawCamera(); return; }
     const start = { ...camera }, started = performance.now(), epoch = cameraEpoch;
     const tick = now => {
@@ -193,7 +199,7 @@
     if (state.selected) focusPaper(state.selected, false); else fit(false);
   }
   function zoom(factor, x = width / 2, y = height / 2, animate = true) {
-    const k = clamp(camera.k * factor, .18, 3.5);
+    const k = clamp(camera.k * factor, .08, 3.5);
     moveCamera({ x: x - (x - camera.x) * k / camera.k, y: y - (y - camera.y) * k / camera.k, k }, animate);
   }
   function syncURL(push = false) {
@@ -238,7 +244,11 @@
     });
     if (!ids.has(focusedId)) focusedId = filtered[0]?.id || '';
     setRoving(focusedId);
-    $$('.map-regions>g').forEach(group => { group.style.display = state.topic === 'all' || group.dataset.region === state.topic ? '' : 'none'; });
+    $$('.map-regions>g').forEach(group => {
+      const count = filtered.filter(p => (p.mapTopic || p.category) === group.dataset.region).length;
+      group.style.display = count ? '' : 'none';
+      group.querySelector('.map-region-subtitle').textContent = `${count} PAPER STARS`;
+    });
     edgeLayer.replaceChildren();
     if (state.selected && ids.has(state.selected) && relations.mode === 'shared-tags') {
       const from = nodeById.get(state.selected);
@@ -252,6 +262,7 @@
     $('.map-empty').hidden = !!filtered.length; $('.map-list-empty').hidden = !!filtered.length;
     $('#map-search-clear').hidden = !state.query;
     $$('[data-map-topic]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.mapTopic === state.topic)));
+    drawCamera(); // Restore equal default star sizes immediately when a selection closes.
   }
   function safeLink(url, label, full = false) {
     if (!url) return null;
@@ -266,8 +277,10 @@
     selected.getAnimations?.().forEach(animation => animation.cancel()); selected.classList.remove('is-entering');
     const p = nodeById.get(state.selected); selected.hidden = !p; welcome.hidden = !!p;
     const content = $('#map-panel-content'); content.replaceChildren(); if (!p) return;
-    const c = categories.get(p.category); selected.style.setProperty('--topic', c.color);
+    const c = categories.get(p.mapTopic || p.category); selected.style.setProperty('--topic', c.color);
     content.append(create('p', `${c.label} / ${yearText(p)}`, 'map-panel-kicker'));
+    content.append(create('p', `${c.english} · ${c.chinese}`, 'map-panel-topic-full'));
+    content.append(create('p', `展示标签（可交叉）：${(p.topics || [p.category]).map(t => categories.get(t)?.label || t).join(' · ')}`, 'map-panel-note')); 
     const heading = create('h2', p.title); heading.id = 'map-selected-title'; heading.tabIndex = -1;
     content.append(heading, create('p', p.authors || '作者待核验', 'map-panel-authors'));
     if (p.tags.length) { const tags = create('div', null, 'map-panel-tags'); p.tags.forEach(tag => tags.append(create('span', tag))); content.append(tags); }
@@ -291,13 +304,13 @@
       else{const button = create('button', `S${index + 1} ${name}`); button.type = 'button'; button.disabled = true;button.append(create('span', '尚未导入')); stageList.append(button);}
     }
     stages.append(stageList, create('p', '只有实际报告完成导入与检查，阅读入口才会开放。', 'map-panel-note'));
-    const relations = related(nodes, p.id), relationSection = section(relations.mode === 'shared-tags' ? '沿共享标签继续探索' : '同一目录分组');
-    relationSection.append(create('p', relations.mode === 'shared-tags' ? `主题相近（推断），非引用关系。共 ${relations.total} 条匹配，仅显示 ${relations.items.length} 条，按共享标签数及固定 ID 排序。` : `此条目没有共享标签匹配，仅显示 ${relations.items.length} 条同组论文作为导航，不绘制关系线。`, 'map-panel-note'));
+    const relations = related(nodes, p.id), relationSection = section(relations.mode === 'shared-tags' ? '沿共享标签继续探索' : '同一主展示分组');
+    relationSection.append(create('p', relations.mode === 'shared-tags' ? `主题相近（推断），非引用关系。共 ${relations.total} 条匹配，仅显示 ${relations.items.length} 条，按共享标签数及固定 ID 排序。` : `此条目没有共享标签匹配，仅显示 ${relations.items.length} 条同主展示分组的论文作为导航，不绘制关系线。`, 'map-panel-note'));
     const list = create('ul', null, 'map-related-list');
     relations.items.forEach(item => {
       const li = create('li'), button = create('button'); button.type = 'button'; button.dataset.relatedPaper = item.paper.id;
-      button.append(create('strong', shortLabel(item.paper)), create('small', item.sharedTags.length ? `共享：${item.sharedTags.join(' · ')}` : '仅同目录分组 · 非方法关系'));
-      button.setAttribute('aria-label', `查看 ${item.paper.title}；${item.sharedTags.length ? '共享标签：' + item.sharedTags.join('、') : '同目录分组'}`);
+      button.append(create('strong', shortLabel(item.paper)), create('small', item.sharedTags.length ? `共享：${item.sharedTags.join(' · ')}` : '仅同主展示分组 · 非方法关系'));
+      button.setAttribute('aria-label', `查看 ${item.paper.title}；${item.sharedTags.length ? '共享标签：' + item.sharedTags.join('、') : '同主展示分组'}`);
       li.append(button); list.append(li);
     });
     relationSection.append(list);
@@ -321,7 +334,7 @@
     activeSuggestions = search(nodes, query).slice(0, 8);
     activeSuggestions.forEach((p, index) => {
       const li = create('li'); li.id = `map-option-${index}`; li.setAttribute('role', 'option'); li.setAttribute('aria-selected', 'false'); li.dataset.suggestPaper = p.id;
-      li.append(create('span', p.title), create('small', `${categories.get(p.category).label} · ${yearText(p)}`)); suggestions.append(li);
+      li.append(create('span', p.title), create('small', `${categories.get(p.mapTopic || p.category).label} · ${yearText(p)}`)); suggestions.append(li);
     });
     if (!activeSuggestions.length) { const li = create('li', '没有匹配论文，试试更短的关键词', 'map-suggest-empty'); li.setAttribute('role', 'presentation'); suggestions.append(li); }
     suggestions.hidden = false; input.setAttribute('aria-expanded', 'true');
@@ -330,7 +343,7 @@
     const p = nodeById.get(id); if (!p) return;
     cancelCamera(); closeSuggestions(); hover.hidden = true;
     opener = source?.isConnected ? source : nodeEls.get(id);
-    if (state.topic !== 'all' && state.topic !== p.category) state.topic = 'all';
+    if (state.topic !== 'all' && !(p.topics || [p.category]).includes(state.topic)) state.topic = 'all';
     state.query = ''; input.value = ''; state.selected = id;
     renderMap(); renderPanel(animate); setRoving(id);
     if (state.view === 'map') focusPaper(id, animate);
@@ -397,10 +410,20 @@
     if (event.key === 'Escape' && state.selected && event.target !== input) { event.preventDefault(); event.stopPropagation(); closePanel(); }
   });
 
+  function paperAtPointer(event) {
+    if (!Number.isFinite(event.clientX) || !Number.isFinite(event.clientY)) return event.target.closest('[data-paper-id]')?.dataset.paperId;
+    const rect = svg.getBoundingClientRect(), x = event.clientX - rect.left, y = event.clientY - rect.top;
+    let nearestId, distance = 22;
+    currentNodes().forEach(p => {
+      const d = Math.hypot(p.x * camera.k + camera.x - x, p.y * camera.k + camera.y - y);
+      if (d <= distance) { nearestId = p.id; distance = d; }
+    });
+    return nearestId;
+  }
   svg.addEventListener('pointerdown', event => {
     if (event.button !== 0 || event.pointerType === 'touch') return;
     cancelCamera(); hover.hidden = true;
-    pointer = { id: event.pointerId, startX: event.clientX, startY: event.clientY, x: event.clientX, y: event.clientY, moved: false, nodeId: event.target.closest('[data-paper-id]')?.dataset.paperId };
+    pointer = { id: event.pointerId, startX: event.clientX, startY: event.clientY, x: event.clientX, y: event.clientY, moved: false, nodeId: paperAtPointer(event) };
     svg.setPointerCapture(event.pointerId);
   });
   svg.addEventListener('pointermove', event => {
@@ -421,7 +444,7 @@
   svg.addEventListener('lostpointercapture', () => { pointer = null; svg.classList.remove('is-dragging'); });
   nodeLayer.addEventListener('click', event => {
     if (performance.now() < ignoreClickUntil) return;
-    const node = event.target.closest('[data-paper-id]'); if (node) selectPaper(node.dataset.paperId, node, { focusPanel: true });
+    const id = paperAtPointer(event); if (id) selectPaper(id, nodeEls.get(id), { focusPanel: true });
   });
   svg.addEventListener('wheel', event => {
     if (!event.ctrlKey && !event.metaKey) return; // Normal wheel keeps page scrolling.
@@ -442,14 +465,16 @@
   nodeLayer.addEventListener('focusin', event => {
     const node = event.target.closest('[data-paper-id]'); if (node) setRoving(node.dataset.paperId);
   });
-  nodeLayer.addEventListener('pointerover', event => {
+  function updateHover(event) {
     if (pointer || event.pointerType === 'touch' || smallScreen.matches) return;
-    const element = event.target.closest('[data-paper-id]'); if (!element) return;
-    const p = nodeById.get(element.dataset.paperId); hover.replaceChildren(create('span', p.title), create('small', `${categories.get(p.category).label} · 点击查看原文与资源`));
+    const id = paperAtPointer(event); if (!id) { hover.hidden = true; return; }
+    const p = nodeById.get(id); hover.replaceChildren(create('span', p.title), create('small', `${categories.get(p.mapTopic || p.category).label} · 点击查看原文与资源`));
     hover.hidden = false; const x = p.x * camera.k + camera.x, y = p.y * camera.k + camera.y;
     hover.style.left = `${clamp(x + 14, 12, Math.max(12, width - hover.offsetWidth - 14))}px`;
     hover.style.top = `${clamp(y + 15, 45, Math.max(45, height - hover.offsetHeight - 75))}px`;
-  });
+  }
+  nodeLayer.addEventListener('pointerover', updateHover);
+  svg.addEventListener('pointermove', updateHover);
   nodeLayer.addEventListener('pointerout', event => { if (!event.relatedTarget?.closest?.('[data-paper-id]')) hover.hidden = true; });
   svg.addEventListener('pointerleave', () => { hover.hidden = true; });
   window.addEventListener('popstate', () => {

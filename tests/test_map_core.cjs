@@ -45,7 +45,7 @@ test('missing tags use only category fallback, not invented theme edges', () => 
 test('fit includes all nodes at desktop and narrow dimensions',()=>{
   const nodes=core.layout(papers);
   for(const [w,h] of [[980,690],[530,660],[335,470]]){
-    const camera=core.fitCamera(nodes,w,h);assert.ok(camera.k>=.18&&camera.k<=1.55);
+    const camera=core.fitCamera(nodes,w,h);assert.ok(camera.k>=.08&&camera.k<=1.55);
     assert.ok(Number.isFinite(camera.x)&&Number.isFinite(camera.y));
     nodes.forEach(p=>{const x=p.x*camera.k+camera.x,y=p.y*camera.k+camera.y;assert.ok(x>=0&&x<=w);assert.ok(y>=0&&y<=h)});
   }
@@ -66,4 +66,17 @@ test('implementation does not fetch or run model/API calls',()=>{
   assert.ok(js.includes('cancelAnimationFrame'));
   assert.ok(js.includes("prefers-reduced-motion: reduce"));
   assert.ok(js.includes('visibilitychange'));
+});
+
+test('region geometry is configurable without changing or guessing paper categories',()=>{
+ const regions=core.regionsFor(['a','b','c','d','e','f']);assert.equal(Object.keys(regions).length,6);
+ assert.deepEqual(core.regionsFor(),core.CENTERS);
+ const records=[{id:'test-only',category:'f',title:'Geometry fixture',tags:[]}],before=JSON.stringify(records);
+ const plotted=core.layout(records,regions);assert.equal(plotted.length,1);assert.equal(plotted[0].category,'f');assert.equal(JSON.stringify(records),before);
+});
+
+test('six-region full fit includes every paper at narrow optional-map width',()=>{
+ const six=['navigation','wbc','vla','methods','sim-tools','data-benchmarks'];const regions=core.regionsFor(six);
+ const records=Array.from({length:95},(_,i)=>({id:'fixture-'+String(i).padStart(3,'0'),category:six[i%6],tags:[]}));const nodes=core.layout(records,regions);
+ for(const [w,h]of[[335,490],[970,720]]){const c=core.fitCamera(nodes,w,h);nodes.forEach(p=>{assert(p.x*c.k+c.x>=0&&p.x*c.k+c.x<=w);assert(p.y*c.k+c.y>=0&&p.y*c.k+c.y<=h)});}
 });

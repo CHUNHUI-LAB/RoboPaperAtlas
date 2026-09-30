@@ -39,7 +39,7 @@
   function apply(reset = true, save = true) {
     if (reset) limit = 24;
     const terms = search.value.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
-    const match = cards.filter(c => (topic === 'all' || c.dataset.category === topic)
+    const match = cards.filter(c => (topic === 'all' || (c.dataset.topics || c.dataset.category).split(' ').includes(topic))
       && (year.value === 'all' || c.dataset.year === year.value)
       && (status.value === 'all' || c.dataset.status === status.value)
       && terms.every(t => c.dataset.search.includes(t)));

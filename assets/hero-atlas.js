@@ -34,7 +34,7 @@
    y:204 + (x * Math.sin(roll) + py * Math.cos(roll))*perspective,
    radius:star.size*(.9+depth/650), opacity:star.light*(.77+depth/950)*(.90+.10*Math.sin(seconds*.52+star.phase)), color:star.color};
  }
- const regions=[{key:'navigation',x:185,y:178,rx:88,ry:74},{key:'wbc',x:298,y:105,rx:92,ry:70},{key:'vla',x:377,y:229,rx:90,ry:74},{key:'foundations',x:245,y:301,rx:94,ry:72}];
+ const regions=[{key:'navigation',x:188,y:130,rx:73,ry:63},{key:'wbc',x:327,y:117,rx:73,ry:63},{key:'vla',x:397,y:218,rx:73,ry:63},{key:'methods',x:339,y:295,rx:73,ry:63},{key:'sim-tools',x:213,y:307,rx:73,ry:63},{key:'data-benchmarks',x:150,y:220,rx:73,ry:63}];
  function focusProjection(p,weights){
   let x=p.x,y=p.y,local=0,total=0;
   weights.forEach((weight,i)=>{const r=regions[i],dx=p.x-r.x,dy=p.y-r.y,g=Math.exp(-.5*((dx/r.rx)**2+(dy/r.ry)**2));
@@ -54,7 +54,7 @@
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)'), compact = window.matchMedia('(max-width: 767px)');
   const topicLinks=[...root.querySelectorAll('[data-atlas-topic]')],panels=[...root.querySelectorAll('[data-atlas-panel]')],overview=root.querySelector('.atlas-galaxy__overview'),status=root.querySelector('[data-atlas-status]');
   topicLinks.forEach(link=>{link.setAttribute('aria-expanded','false');link.setAttribute('aria-controls','atlas-panel-'+link.dataset.atlasTopic);});root.dataset.activeTopic='overview';
-  let suppressFocus=false,active=null,hovered=null,focused=null,weights=[0,0,0,0],targets=[0,0,0,0];
+  let suppressFocus=false,active=null,hovered=null,focused=null,weights=regions.map(()=>0),targets=regions.map(()=>0);
   let userPaused=false, inView=!('IntersectionObserver' in window), elapsed=0, previous=null, lastPaint=0, frame=0, disposed=false;
   const sprites = ctx ? colors.map(color => {
    const sprite=document.createElement('canvas');sprite.width=sprite.height=48;
@@ -87,7 +87,7 @@
   }
   function reconcile(){if(disposed)return;if(frame)cancelAnimationFrame(frame);frame=0;previous=null;controls();if(!canRun())weights=[...targets];draw(staticMode()?0:elapsed);if(canRun())frame=requestAnimationFrame(tick);}
   function select(key){
-   if(disposed||active===key)return;active=key;targets=regions.map(r=>Number(r.key===key));root.dataset.activeTopic=key||'overview';
+   if(disposed||active===key||key!==null&&!regions.some(r=>r.key===key))return;active=key;targets=regions.map(r=>Number(r.key===key));root.dataset.activeTopic=key||'overview';
    topicLinks.forEach(link=>{const selected=link.dataset.atlasTopic===key;link.classList.toggle('is-active',selected);link.setAttribute('aria-expanded',String(selected));});
    panels.forEach(panel=>{const selected=panel.dataset.atlasPanel===key;panel.classList.toggle('is-active',selected);panel.inert=!selected;panel.setAttribute('aria-hidden',String(!selected));});
    overview.classList.toggle('is-hidden',!!key);overview.setAttribute('aria-hidden',String(!!key));

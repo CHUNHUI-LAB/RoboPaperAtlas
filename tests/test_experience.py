@@ -12,16 +12,16 @@ class ExperienceTests(unittest.TestCase):
  def test_atlas_topics_and_truthful_label(self):
   from html.parser import HTMLParser
   data=json.loads((ROOT/'data/catalog.json').read_text());page=home(data)
-  for key in ['navigation','wbc','vla','foundations']:
+  for key in ['navigation','wbc','vla','methods','sim-tools','data-benchmarks']:
    self.assertIn('index.html?topic='+key+'#catalog',page)
   self.assertIn('非引用关系',page);self.assertIn('hero-atlas.svg?v=',page)
   self.assertNotIn('hero-robot',page);self.assertNotIn('robot-vignette',page)
  def test_topic_paper_examples_are_real_and_labeled(self):
   page=home(json.loads((ROOT/'data/catalog.json').read_text()))
-  self.assertEqual(page.count('data-atlas-panel="'),4);self.assertEqual(page.count('data-atlas-topic="'),4)
-  for key in ['navigation','wbc','vla','foundations']:self.assertIn('id="atlas-panel-'+key+'"',page)
-  for pid in ['harnessvln','agenticnav-tool-harness','rpa-0040','rpa-0002','rpa-0073','rpa-0072','huang2023vlmaps','gu2024conceptgraphs']:self.assertIn('papers/'+pid+'/index.html',page)
-  self.assertIn('2 个入口示例',page);self.assertIn('书目待核验',page)
+  self.assertEqual(page.count('data-atlas-panel="'),6);self.assertEqual(page.count('data-atlas-topic="'),6)
+  for key in ['navigation','wbc','vla','methods','sim-tools','data-benchmarks']:self.assertIn('id="atlas-panel-'+key+'"',page)
+  for pid in ['harnessvln','agenticnav-tool-harness','rpa-0040','rpa-0062','rpa-0073','rpa-0072','huang2023vlmaps','gu2024conceptgraphs']:self.assertIn('papers/'+pid+'/index.html',page)
+  self.assertIn('可交叉归组',page);self.assertIn('书目待核验',page)
  def test_existing_preview_uses_preserved_base(self):
   page=shell('RoboPaperAtlas','<main id="main"></main>',prefix='../',page='preview')
   self.assertIn('preview-base.css?v=',page);self.assertNotIn('experience.css?v=',page);self.assertNotIn('hero-atlas.js?v=',page)

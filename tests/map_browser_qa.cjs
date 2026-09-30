@@ -44,7 +44,7 @@ const pause = page => page.waitForTimeout(430);
     assert.ok(!page.url().includes('paper='));
 
     // Every category is reachable in one click, and unknown query has a usable reset.
-    for (const [topic, count] of [['navigation',16], ['wbc',31], ['vla',17], ['foundations',31], ['all',95]]) {
+    for (const [topic, count] of [['navigation',26], ['wbc',31], ['vla',17], ['methods',17], ['sim-tools',8], ['data-benchmarks',13], ['all',95]]) {
       await page.locator(`[data-map-topic="${topic}"]`).click(); await pause(page);
       assert.equal(await page.locator('.map-node:visible').count(), count);
     }
