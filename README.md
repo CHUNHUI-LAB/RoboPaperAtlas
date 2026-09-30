@@ -52,3 +52,7 @@ python3 -m http.server 8000 --directory dist
 ## 内容与许可
 
 本库不授予第三方论文、数据、图表或代码的任何新许可。公开访问不等于转载许可。贡献原创报告时必须说明有权公开；引用应适量并链接来源。详见 [贡献指南](CONTRIBUTING.md)。
+
+## 单页阅读器预览
+
+`reader-preview/umi-on-legs/` 提供一页完整的Stage3阅读器设计预览，复用站点导航与基础样式，并用已审核原文生成代码语法颜色、原文件行号和可操作目录。此预览不替换三份已发布v1报告。详见 `docs/reader-preview.md`。

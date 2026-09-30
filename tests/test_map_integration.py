@@ -45,4 +45,4 @@ class MapIntegrationTests(unittest.TestCase):
  def test_current_build_script_writes_standalone_map(self):
   script=(ROOT/'scripts/build.py').read_text()
   self.assertIn("(target/'map/index.html').write_text",script)
-  self.assertIn("('map','map/index.html','论文地图')",script)
+  self.assertIn("('map','map/index.html','Atlas')",script)

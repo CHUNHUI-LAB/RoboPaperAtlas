@@ -77,11 +77,14 @@ class Links(HTMLParser):
 def validate_output(root,report_records=()):
     from reports import report_path
     report_paths={report_path(x) for x in report_records}
+    preview_path='reader-preview/umi-on-legs/index.html'
+    report_images=set()
     import hashlib
     for report in report_records:
         artifact=root/report_path(report)
         ensure(artifact.is_file() and not artifact.is_symlink(),'Missing report artifact')
         ensure(hashlib.sha256(artifact.read_bytes()).hexdigest()==report['sha256'],'Built report hash mismatch')
+        image_parser=Links();image_parser.feed(artifact.read_text());report_images.update(v for t,k,v in image_parser.references if t=='img' and k=='src' and v.startswith('data:image/'))
     if (root/'artifacts').exists():
         ensure({str(x.relative_to(root)) for x in (root/'artifacts').rglob('*') if x.is_file()}==report_paths,'Unlisted built report artifact')
         ensure(not any(x.is_symlink() for x in (root/'artifacts').rglob('*')),'Symlink in report output')
@@ -91,7 +94,7 @@ def validate_output(root,report_records=()):
         parser=Links();parser.feed(p.read_text())
         for tag,attribute,link in parser.references:
             if link.startswith('data:'):
-                ensure(str(p.relative_to(root)) in report_paths and tag=='img' and attribute=='src' and link.startswith(('data:image/png;base64,','data:image/jpeg;base64,')),'Unexpected embedded resource')
+                ensure((str(p.relative_to(root)) in report_paths or str(p.relative_to(root))==preview_path and link in report_images) and tag=='img' and attribute=='src' and link.startswith(('data:image/png;base64,','data:image/jpeg;base64,')),'Unexpected embedded resource')
                 continue
             u=urlsplit(link)
             if u.scheme:check_url(link);continue
