@@ -39,6 +39,10 @@ class ReportIntegrationTests(unittest.TestCase):
    self.assertEqual(validate_output(output,self.records),4)
    changed=output/report_path(self.records[0]);changed.write_bytes(changed.read_bytes()+b' ')
    with self.assertRaises(ValueError):validate_output(output,self.records)
+ def test_stage3_narrow_wrap_is_presentation_only(self):
+  records={r['stage']:r for r in self.records}
+  self.assertEqual(records['stage1']['sha256'],'2f1e5842f3aabc71f1fb7ab41bc82636f86a2a1dd9ac35e337853b9768c00702');self.assertEqual(records['stage2']['sha256'],'7eee3ea784be422b06ca6e357a48b947181fe50109b2530218f4304fe54ba3be')
+  html=(ROOT/report_path(records['stage3'])).read_text();self.assertIn('@media(max-width:860px){.article p,.article li{overflow-wrap:anywhere}}',html);self.assertIn('overflow:auto',html)
  def test_map_stage_projection(self):
   projection=map_data(self.catalog,report_records=self.records);p=next(x for x in projection['papers'] if x['id']=='rpa-0062')
   for k in ['stage1','stage2','stage3']:self.assertEqual(p['stages'][k]['status'],'imported');self.assertEqual(len(p['stages'][k]['artifacts']),1)

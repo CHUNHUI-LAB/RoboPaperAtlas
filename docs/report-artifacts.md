@@ -160,3 +160,7 @@ metadata is updated, so build only from a coherent reviewed revision.
 Tests use tiny synthetic reports and generated temporary directories. They do
 not include original research reports, private notes, credentials, or source
 Library files.
+
+## Narrow-screen presentation correction
+
+The Stage3 v1 delivery includes a CSS-only correction for long inline identifiers in prose/list items at widths up to860px: `overflow-wrap:anywhere`. Preformatted code blocks retain their existing local horizontal scrolling. No report text, citations, image bytes or stage interlinks changed. The corrected offline source and the public copy each retain their own SHA; the public copy still differs from that offline source only by its return-to-paper brand link.
