@@ -138,6 +138,8 @@ def main():
     for entry in brief_index['briefs']:
         shutil.copyfile(ROOT/'data/briefs'/entry['path'],target/'data/briefs'/entry['path'])
     (target/'data/frontier.json').write_text(json.dumps(frontier,ensure_ascii=False,indent=2)+'\n'); (target/'data/search-index.json').write_text(json.dumps([{'id':p['id'],'title':display_title(p),'authors':author_text(p),'category':CATEGORIES[primary_topic(p)][0],'text':' '.join([p['title'],display_title(p),p.get('short_name') or '',author_text(p),p.get('summary') or '',taxonomy_search(p),*p.get('tags',[])])} for p in data['papers']],ensure_ascii=False,separators=(',',':'))+'\n'); (target/'data/catalog.json').write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n')
+    from radar_preview import build_preview as build_radar_preview
+    build_radar_preview(ROOT,target,shell)
     for report in reports:
         path=report_path(report);dest=target/path;dest.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(ROOT/path,dest)
     shutil.copyfile(ROOT/'data/reports.json',target/'data/reports.json')

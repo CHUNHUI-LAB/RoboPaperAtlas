@@ -23,7 +23,7 @@ def stamp(value,nullable=False):
  return datetime.fromisoformat(value.replace('Z','+00:00'))
 def digest(value):require(isinstance(value,str) and bool(re.fullmatch(r'[0-9a-f]{64}',value)),'Invalid SHA-256')
 def validate_brief(data):
- keys(data,TOP);require(data['schema_version']=='1.0','Unsupported brief schema');date_ok(data['date']);require(data['id']=='arxiv-daily-'+data['date'],'Mismatched brief ID');require(data['status'] in {'ready','no_material_update','stale','error'},'Invalid brief status');require(data['language']=='zh-CN','Unexpected language');stamp(data['generated_at'])
+ require(data.get('schema_version')in {'1.0','1.1'},'Unsupported brief schema');keys(data,TOP|({'research_overview'}if data['schema_version']=='1.1'else set()));date_ok(data['date']);require(data['id']=='arxiv-daily-'+data['date'],'Mismatched brief ID');require(data['status'] in {'ready','no_material_update','stale','error'},'Invalid brief status');require(data['language']=='zh-CN','Unexpected language');stamp(data['generated_at'])
  for field in ['title','coverage_note','overview','evidence_note']:string(data[field])
  strings(data['limitations'])
  win=data['window'];keys(win,{'start','end','timezone','date_field','inclusive','duration_hours'});a,b=stamp(win['start']),stamp(win['end']);require(a<b,'Invalid observation window');require(win['timezone']=='UTC' and win['date_field']=='updated_at' and win['inclusive'] is True,'Brief window must use inclusive UTC updated_at');number(win['duration_hours']);require((b-a).total_seconds()==win['duration_hours']*3600 and 0<win['duration_hours']<=744,'Window duration mismatch')
@@ -69,6 +69,9 @@ def validate_brief(data):
  for entry in data['reading_priority']:
   keys(entry,{'audience','arxiv_ids','text'});string(entry['audience']);string(entry['text']);strings(entry['arxiv_ids']);require(set(entry['arxiv_ids'])<=ids,'Priority references unselected papers')
  strings(data['candidate_ids']);require(all(re.fullmatch(r'\d{4}\.\d{4,5}v[1-9]\d*',vid) for vid in data['candidate_ids']),'Invalid candidate version ID');require(len(set(data['candidate_ids']))==len(data['candidate_ids'])==counts['window_candidates'],'Candidate list/count mismatch');require(selected_versions<=set(data['candidate_ids']),'Selection absent from candidate snapshot')
+ if data['schema_version']=='1.1':
+  from radar_overview import validate_overview
+  validate_overview(data)
  return data
 
 def load_archive(root):
@@ -78,9 +81,19 @@ def load_archive(root):
   path=directory/entry['path'];require(not path.is_symlink() and path.resolve().parent==directory.resolve(),'Unsafe archive path');payload=path.read_bytes();require(hashlib.sha256(payload).hexdigest()==entry['sha256'],'Brief SHA-256 mismatch');record=validate_brief(json.loads(payload));require(record['date']==entry['date'] and record['title']==entry['title'] and record['status']==entry['status'],'Brief/index metadata mismatch');records[entry['date']]=record
  require(index['latest'] in records,'Latest brief missing');expected={'index.json'}|{entry['path'] for entry in index['briefs']}
  require(all(p.name in expected and p.is_file() and not p.is_symlink() for p in directory.iterdir()),'Unindexed or unsafe archive file')
+ snapshot=Path(root)/'data/frontier.json'
+ if snapshot.exists():
+  raw=snapshot.read_bytes();current_hash=hashlib.sha256(raw).hexdigest()
+  for record in records.values():
+   if record['schema_version']=='1.1' and record['source_snapshot']['sha256']==current_hash:
+    from radar_overview import validate_snapshot
+    validate_snapshot(record,json.loads(raw),current_hash)
  return index,records
 
 def section(data,index,prefix='',archive=False):
+ if data['schema_version']=='1.1':
+  from radar_overview import render
+  return render(data,index,prefix,archive)
  e=lambda v:html.escape(str(v),quote=True);items=data['new_papers']+data['revised_papers'];count=data['counts'];cards=[];tabs=[]
  for n,item in enumerate(items,1):
   token=data['date']+'-'+item['arxiv_id'].replace('.','-')
