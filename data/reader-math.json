@@ -1,0 +1,1398 @@
+{
+  "schema_version": 1,
+  "paper_id": "rpa-0062",
+  "report": "stage3",
+  "source_pdf_sha256": "0228e01b083d2fca2cf260115271d0f2c7718844b31799a61ccc34c78762d971",
+  "section_sha256": {
+    "actor-control": "229249e7c82848701c2f9728bcf4b07ada3c0ccd480282a994192dba968ba08f",
+    "conditions": "f2ecd057f7cf2f6feac1227ded623ae6a3d688794c5729008928a07e4b15a8c3",
+    "deployment": "9eb9a1fcffaa65c1f65bce37a2a9630e35b2c2123b6424ace94b09411ffad457",
+    "frames": "61ae3ddfbbebd31d8d37c52a44686b948d3b76f140e49e0b13a1f401fd8d8653",
+    "preview": "b3b4009e79190fb43489ded24194548c62a74f70f131e030a0f8db801a5dc1dc",
+    "reward": "e8c9a376d5eda4c443b9188f8206766b18d85093f6712e94f61d9ce846037741",
+    "trajectory-data": "d59d611606c08620e4774211e537a2eb51f2b3088908f02453623f9c8a1033b7"
+  },
+  "entries": [
+    {
+      "id": "in-axis-z",
+      "section_id": "trajectory-data",
+      "original_html": "z",
+      "original_html_sha256": "594e519ae499312b29433b7dd8a97ff068defcba9755b6d5d00e84c524d67b06",
+      "latex": "z",
+      "display_mode": false,
+      "role": "code_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [],
+        "paper_location": null,
+        "equation_number": null,
+        "paper_links": [],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/scripts/preprocess_umi_trajs.py#L95-L170"
+        ]
+      },
+      "caveat": "",
+      "occurrences": [
+        {
+          "start": 544,
+          "end": 545
+        }
+      ]
+    },
+    {
+      "id": "in-preprocess-angle",
+      "section_id": "trajectory-data",
+      "original_html": "−π/2",
+      "original_html_sha256": "713f840858ee8134fbf545fd0ba588aa96a407b43865168cc4baebaa24d02d33",
+      "latex": "-\\pi/2",
+      "display_mode": false,
+      "role": "code_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [],
+        "paper_location": null,
+        "equation_number": null,
+        "paper_links": [],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/scripts/preprocess_umi_trajs.py#L95-L170"
+        ]
+      },
+      "caveat": "Fixed rotation is visible in code; its calibration origin remains unverified.",
+      "occurrences": [
+        {
+          "start": 546,
+          "end": 550
+        },
+        {
+          "start": 1107,
+          "end": 1111
+        }
+      ]
+    },
+    {
+      "id": "in-loader-position-shape",
+      "section_id": "trajectory-data",
+      "original_html": "E×T×3",
+      "original_html_sha256": "3d19cf879dcd730a95cec53727cc98ad306490db24b103169b3e3e1addeb5e26",
+      "latex": "E\\times T\\times3",
+      "display_mode": false,
+      "role": "code_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [],
+        "paper_location": null,
+        "equation_number": null,
+        "paper_links": [],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/pose_sequence.py#L57-L107"
+        ]
+      },
+      "caveat": "",
+      "occurrences": [
+        {
+          "start": 2162,
+          "end": 2167
+        }
+      ]
+    },
+    {
+      "id": "in-loader-rotation-shape",
+      "section_id": "trajectory-data",
+      "original_html": "E×T×3×3",
+      "original_html_sha256": "f714cef2fafd5526e7667888fa49f850b94093bc7d2a6328d04dbf03419cdeb5",
+      "latex": "E\\times T\\times3\\times3",
+      "display_mode": false,
+      "role": "code_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [],
+        "paper_location": null,
+        "equation_number": null,
+        "paper_links": [],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/pose_sequence.py#L57-L107"
+        ]
+      },
+      "caveat": "",
+      "occurrences": [
+        {
+          "start": 2183,
+          "end": 2190
+        }
+      ]
+    },
+    {
+      "id": "in-episode-count",
+      "section_id": "trajectory-data",
+      "original_html": "E",
+      "original_html_sha256": "a9f51566bd6705f7ea6ad54bb9deb449f795582d6529a0e22207b8981233ec58",
+      "latex": "E",
+      "display_mode": false,
+      "role": "code_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [],
+        "paper_location": null,
+        "equation_number": null,
+        "paper_links": [],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/pose_sequence.py#L57-L107"
+        ]
+      },
+      "caveat": "",
+      "occurrences": [
+        {
+          "start": 2197,
+          "end": 2198
+        }
+      ]
+    },
+    {
+      "id": "in-sequence-length",
+      "section_id": "trajectory-data",
+      "original_html": "T",
+      "original_html_sha256": "e632b7095b0bf32c260fa4c539e9fd7b852d0de454e9be26f24d0d6f91d069d3",
+      "latex": "T",
+      "display_mode": false,
+      "role": "code_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [],
+        "paper_location": null,
+        "equation_number": null,
+        "paper_links": [],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/pose_sequence.py#L57-L107"
+        ]
+      },
+      "caveat": "",
+      "occurrences": [
+        {
+          "start": 2203,
+          "end": 2204
+        }
+      ]
+    },
+    {
+      "id": "in-batch-draw",
+      "section_id": "trajectory-data",
+      "original_html": "B",
+      "original_html_sha256": "df7e70e5021544f4834bbee64a9e3789febc4be81470df629cad6ddb03320a5c",
+      "latex": "B",
+      "display_mode": false,
+      "role": "code_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [],
+        "paper_location": null,
+        "equation_number": null,
+        "paper_links": [],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/pose_sequence.py#L57-L107"
+        ]
+      },
+      "caveat": "",
+      "occurrences": [
+        {
+          "start": 2516,
+          "end": 2517
+        }
+      ]
+    },
+    {
+      "id": "in-batch-count",
+      "section_id": "trajectory-data",
+      "original_html": "B",
+      "original_html_sha256": "df7e70e5021544f4834bbee64a9e3789febc4be81470df629cad6ddb03320a5c",
+      "latex": "B",
+      "display_mode": false,
+      "role": "code_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [],
+        "paper_location": null,
+        "equation_number": null,
+        "paper_links": [],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/pose_sequence.py#L57-L107"
+        ]
+      },
+      "caveat": "",
+      "occurrences": [
+        {
+          "start": 2548,
+          "end": 2549
+        }
+      ]
+    },
+    {
+      "id": "in-planar-xy",
+      "section_id": "trajectory-data",
+      "original_html": "xy",
+      "original_html_sha256": "769a4e6d0003189c7e96c5d9b7e810a0d11c3a12832527ec94b0f86d277f51ca",
+      "latex": "xy",
+      "display_mode": false,
+      "role": "code_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [],
+        "paper_location": null,
+        "equation_number": null,
+        "paper_links": [],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/pose_sequence.py#L108-L126"
+        ]
+      },
+      "caveat": "",
+      "occurrences": [
+        {
+          "start": 2878,
+          "end": 2880
+        }
+      ]
+    },
+    {
+      "id": "in-time-index",
+      "section_id": "trajectory-data",
+      "original_html": "t/dt",
+      "original_html_sha256": "c08ef775fe27a7e9c97fcc3f0e8ca4192a11d8ae1ad75089945289299a3cf260",
+      "latex": "t/\\mathtt{dt}",
+      "display_mode": false,
+      "role": "code_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [],
+        "paper_location": null,
+        "equation_number": null,
+        "paper_links": [],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/task.py#L652-L679"
+        ]
+      },
+      "caveat": "dt is the implementation sampling interval; do not convert the code identifier into a differential operator.",
+      "occurrences": [
+        {
+          "start": 3536,
+          "end": 3540
+        }
+      ]
+    },
+    {
+      "id": "in-observed-transform",
+      "section_id": "frames",
+      "original_html": "T<sup>W</sup><sub>E</sub>(t)",
+      "original_html_sha256": "5ace0b1689eeae0d44773b9e6d40926f2b60140a613cfdd5f8b399116d49b2e7",
+      "latex": "T^{W}_{E}(t)",
+      "display_mode": false,
+      "role": "reader_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [
+          4,
+          5
+        ],
+        "paper_location": "§3.2 and §3.3 conceptual correspondence",
+        "equation_number": null,
+        "paper_links": [
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=4",
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=5"
+        ],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/task.py#L794-L879"
+        ]
+      },
+      "caveat": "",
+      "occurrences": [
+        {
+          "start": 469029,
+          "end": 469057
+        }
+      ]
+    },
+    {
+      "id": "in-target-transform",
+      "section_id": "frames",
+      "original_html": "T<sup>W</sup><sub>D</sub>(t+δ)",
+      "original_html_sha256": "703492975fa36fc222534703ebd7f0d23fbe6c1b4465cee26b686769b294294b",
+      "latex": "T^{W}_{D}(t+\\delta)",
+      "display_mode": false,
+      "role": "reader_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [
+          4,
+          5
+        ],
+        "paper_location": "§3.2 and §3.3 conceptual correspondence",
+        "equation_number": null,
+        "paper_links": [
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=4",
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=5"
+        ],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/task.py#L794-L879"
+        ]
+      },
+      "caveat": "",
+      "occurrences": [
+        {
+          "start": 469068,
+          "end": 469098
+        }
+      ]
+    },
+    {
+      "id": "eq-relative",
+      "section_id": "frames",
+      "original_html": "T<sup>E</sup><sub>D</sub>(t,δ) = [T<sup>W</sup><sub>E</sub>(t)]<sup>−1</sup> T<sup>W</sup><sub>D</sub>(t+δ)",
+      "original_html_sha256": "fba54152f496248c05be8727cd0fe25d5908640bc92f564151410f16976fd5fa",
+      "latex": "T^{E}_{D}(t,\\delta)=\\left[T^{W}_{E}(t)\\right]^{-1}T^{W}_{D}(t+\\delta)",
+      "display_mode": true,
+      "role": "reader_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [
+          4,
+          5
+        ],
+        "paper_location": "§3.2 world-frame tracking; §3.3 book-keeping",
+        "equation_number": null,
+        "paper_links": [
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=4",
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=5"
+        ],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/task.py#L845-L851"
+        ]
+      },
+      "caveat": "Reader-introduced transform notation for the audited code. There is no corresponding numbered or printed matrix equation in the paper.",
+      "occurrences": [
+        {
+          "start": 469160,
+          "end": 469267
+        }
+      ]
+    },
+    {
+      "id": "in-frame-W",
+      "section_id": "frames",
+      "original_html": "W",
+      "original_html_sha256": "fcb5f40df9be6bae66c1d77a6c15968866a9e6cbd7314ca432b019d17392f6f4",
+      "latex": "W",
+      "display_mode": false,
+      "role": "reader_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [
+          4,
+          5
+        ],
+        "paper_location": "§3.2 and §3.3 conceptual correspondence",
+        "equation_number": null,
+        "paper_links": [
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=4",
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=5"
+        ],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/task.py#L794-L879"
+        ]
+      },
+      "caveat": "",
+      "occurrences": [
+        {
+          "start": 469278,
+          "end": 469279
+        }
+      ]
+    },
+    {
+      "id": "in-frame-E",
+      "section_id": "frames",
+      "original_html": "E",
+      "original_html_sha256": "a9f51566bd6705f7ea6ad54bb9deb449f795582d6529a0e22207b8981233ec58",
+      "latex": "E",
+      "display_mode": false,
+      "role": "reader_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [
+          4,
+          5
+        ],
+        "paper_location": "§3.2 and §3.3 conceptual correspondence",
+        "equation_number": null,
+        "paper_links": [
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=4",
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=5"
+        ],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/task.py#L794-L879"
+        ]
+      },
+      "caveat": "",
+      "occurrences": [
+        {
+          "start": 469287,
+          "end": 469288
+        }
+      ]
+    },
+    {
+      "id": "in-frame-D",
+      "section_id": "frames",
+      "original_html": "D",
+      "original_html_sha256": "3f39d5c348e5b79d06e842c114e6cc571583bbf44e4b0ebfda1a01ec05745d43",
+      "latex": "D",
+      "display_mode": false,
+      "role": "reader_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [
+          4,
+          5
+        ],
+        "paper_location": "§3.2 and §3.3 conceptual correspondence",
+        "equation_number": null,
+        "paper_links": [
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=4",
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=5"
+        ],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/task.py#L794-L879"
+        ]
+      },
+      "caveat": "",
+      "occurrences": [
+        {
+          "start": 469294,
+          "end": 469295
+        }
+      ]
+    },
+    {
+      "id": "in-target-count",
+      "section_id": "frames",
+      "original_html": "K",
+      "original_html_sha256": "86be9a55762d316a3026c2836d044f5fc76e34da10e1b45feee5f18be7edb177",
+      "latex": "K",
+      "display_mode": false,
+      "role": "code_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [
+          4,
+          5
+        ],
+        "paper_location": "§3.2 and §3.3 conceptual correspondence",
+        "equation_number": null,
+        "paper_links": [
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=4",
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=5"
+        ],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/task.py#L794-L879"
+        ]
+      },
+      "caveat": "",
+      "occurrences": [
+        {
+          "start": 470639,
+          "end": 470640
+        }
+      ]
+    },
+    {
+      "id": "in-target-transform-shape",
+      "section_id": "frames",
+      "original_html": "B×K×4×4",
+      "original_html_sha256": "8a624af045ce913c5ee9ab42d199e3f2787799cc549fecebf3115d0f8be7972f",
+      "latex": "B\\times K\\times4\\times4",
+      "display_mode": false,
+      "role": "code_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [
+          4,
+          5
+        ],
+        "paper_location": "§3.2 and §3.3 conceptual correspondence",
+        "equation_number": null,
+        "paper_links": [
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=4",
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=5"
+        ],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/task.py#L794-L879"
+        ]
+      },
+      "caveat": "",
+      "occurrences": [
+        {
+          "start": 470659,
+          "end": 470666
+        },
+        {
+          "start": 470994,
+          "end": 471001
+        }
+      ]
+    },
+    {
+      "id": "in-position-count",
+      "section_id": "frames",
+      "original_html": "3K",
+      "original_html_sha256": "7594ee1cc8fb538281b40e95d497dd72d991ba9323d2dafa6e424b591ff084b2",
+      "latex": "3K",
+      "display_mode": false,
+      "role": "code_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [
+          4,
+          5
+        ],
+        "paper_location": "§3.2 and §3.3 conceptual correspondence",
+        "equation_number": null,
+        "paper_links": [
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=4",
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=5"
+        ],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/task.py#L794-L879"
+        ]
+      },
+      "caveat": "",
+      "occurrences": [
+        {
+          "start": 471019,
+          "end": 471021
+        }
+      ]
+    },
+    {
+      "id": "in-orientation-count",
+      "section_id": "frames",
+      "original_html": "6K",
+      "original_html_sha256": "a830565eab8d41b6dc54b073c0f8c254a0b0473379a5b9de65d7a1b9eeedb3c8",
+      "latex": "6K",
+      "display_mode": false,
+      "role": "code_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [
+          4,
+          5
+        ],
+        "paper_location": "§3.2 and §3.3 conceptual correspondence",
+        "equation_number": null,
+        "paper_links": [
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=4",
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=5"
+        ],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/task.py#L794-L879"
+        ]
+      },
+      "caveat": "",
+      "occurrences": [
+        {
+          "start": 471071,
+          "end": 471073
+        }
+      ]
+    },
+    {
+      "id": "in-target-observation-shape",
+      "section_id": "frames",
+      "original_html": "B×9K",
+      "original_html_sha256": "d0f2a173d5d4ff736e15f635e861ff41b10215893cf475c367131d6a3c4b7839",
+      "latex": "B\\times9K",
+      "display_mode": false,
+      "role": "code_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [
+          4,
+          5
+        ],
+        "paper_location": "§3.2 and §3.3 conceptual correspondence",
+        "equation_number": null,
+        "paper_links": [
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=4",
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=5"
+        ],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/task.py#L794-L879"
+        ]
+      },
+      "caveat": "",
+      "occurrences": [
+        {
+          "start": 471605,
+          "end": 471609
+        }
+      ]
+    },
+    {
+      "id": "in-history-placeholder",
+      "section_id": "frames",
+      "original_html": "−1",
+      "original_html_sha256": "721e085b0cc00b384202bc81177c1f26d8e3d25ee8f3175763518f14a7aca747",
+      "latex": "-1",
+      "display_mode": false,
+      "role": "code_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [
+          4,
+          5
+        ],
+        "paper_location": "§3.2 and §3.3 conceptual correspondence",
+        "equation_number": null,
+        "paper_links": [
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=4",
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=5"
+        ],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/task.py#L794-L879"
+        ]
+      },
+      "caveat": "",
+      "occurrences": [
+        {
+          "start": 471896,
+          "end": 471898
+        }
+      ]
+    },
+    {
+      "id": "in-paper-preview-count",
+      "section_id": "preview",
+      "original_html": "K=8",
+      "original_html_sha256": "01fa7d646d7be3d7f7ea9e51c712773cb6a54c66db9c1abfbe1ee31491234acb",
+      "latex": "K=8",
+      "display_mode": false,
+      "role": "paper_description_in_reader_notation",
+      "source": {
+        "pdf_pages": [
+          4
+        ],
+        "paper_location": "§3.2 Observation space",
+        "equation_number": null,
+        "paper_links": [
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=4"
+        ],
+        "code_links": []
+      },
+      "caveat": "K is reader notation; the paper states the target sampling schedule in prose.",
+      "occurrences": [
+        {
+          "start": 14107,
+          "end": 14110
+        }
+      ]
+    },
+    {
+      "id": "in-code-preview-count",
+      "section_id": "preview",
+      "original_html": "K=4",
+      "original_html_sha256": "c70b02dc2ea07c933ad2879e789c215931164d271065665078261cce217294c1",
+      "latex": "K=4",
+      "display_mode": false,
+      "role": "code_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [],
+        "paper_location": null,
+        "equation_number": null,
+        "paper_links": [],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/config/env/tasks/world_pos_reaching.yaml#L11-L15"
+        ]
+      },
+      "caveat": "Default YAML count differs from paper/evaluation override.",
+      "occurrences": [
+        {
+          "start": 14398,
+          "end": 14401
+        }
+      ]
+    },
+    {
+      "id": "in-interpolation-alpha",
+      "section_id": "preview",
+      "original_html": "α",
+      "original_html_sha256": "3e32da9648c78feedcc821d56e483c126dcd270e9fe49973c528e3a88912d557",
+      "latex": "\\alpha",
+      "display_mode": false,
+      "role": "code_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [],
+        "paper_location": null,
+        "equation_number": null,
+        "paper_links": [],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/real-wbc/modules/realtime_traj.py#L186-L241"
+        ]
+      },
+      "caveat": "",
+      "occurrences": [
+        {
+          "start": 15274,
+          "end": 15275
+        }
+      ]
+    },
+    {
+      "id": "in-preview-delta",
+      "section_id": "preview",
+      "original_html": "δ",
+      "original_html_sha256": "3027120f128ffcad1c779b86d0e5e2e8779817f62ecd23090905f62b818925ee",
+      "latex": "\\delta",
+      "display_mode": false,
+      "role": "code_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [],
+        "paper_location": null,
+        "equation_number": null,
+        "paper_links": [],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/real-wbc/modules/wbc_node.py#L967-L976"
+        ]
+      },
+      "caveat": "Preserve the nearby zero-multiplication caveat.",
+      "occurrences": [
+        {
+          "start": 17807,
+          "end": 17808
+        }
+      ]
+    },
+    {
+      "id": "in-preview-slots",
+      "section_id": "preview",
+      "original_html": "K",
+      "original_html_sha256": "86be9a55762d316a3026c2836d044f5fc76e34da10e1b45feee5f18be7edb177",
+      "latex": "K",
+      "display_mode": false,
+      "role": "code_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [],
+        "paper_location": null,
+        "equation_number": null,
+        "paper_links": [],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/real-wbc/modules/wbc_node.py#L967-L976"
+        ]
+      },
+      "caveat": "",
+      "occurrences": [
+        {
+          "start": 17902,
+          "end": 17903
+        }
+      ]
+    },
+    {
+      "id": "in-scale-sigma",
+      "section_id": "reward",
+      "original_html": "σ",
+      "original_html_sha256": "ff59ed1e562b056aea9bfdf757bada8c1eb638b10b75bfc7835beca4c2db0360",
+      "latex": "\\sigma",
+      "display_mode": false,
+      "role": "paper_notation_or_code_parameter",
+      "source": {
+        "pdf_pages": [
+          4,
+          16
+        ],
+        "paper_location": "§3.2 Rewards; §9.6 Pose Reaching",
+        "equation_number": null,
+        "paper_links": [
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=4",
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=16"
+        ],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/task.py#L716-L778"
+        ]
+      },
+      "caveat": "Retain surrounding role tags and original-vs-code qualifications.",
+      "occurrences": [
+        {
+          "start": 147,
+          "end": 148
+        },
+        {
+          "start": 789,
+          "end": 790
+        },
+        {
+          "start": 4265,
+          "end": 4266
+        },
+        {
+          "start": 4292,
+          "end": 4293
+        }
+      ]
+    },
+    {
+      "id": "eq-paper",
+      "section_id": "reward",
+      "original_html": "[论文] r<sub>pose</sub> = exp(−(ε<sub>pos</sub>/σ<sub>pos</sub> + ε<sub>orn</sub>/σ<sub>orn</sub>))",
+      "original_html_sha256": "bf2133dec9711653e46b751b61027e29678dee3203cb71a626918d244688936f",
+      "latex": "r_{\\mathrm{pose}}=\\exp\\!\\left(-\\left(\\frac{\\varepsilon_{\\mathrm{pos}}}{\\sigma_{\\mathrm{pos}}}+\\frac{\\varepsilon_{\\mathrm{orn}}}{\\sigma_{\\mathrm{orn}}}\\right)\\right)",
+      "display_mode": true,
+      "role": "paper_expression_with_reader_lhs",
+      "source": {
+        "pdf_pages": [
+          4,
+          16
+        ],
+        "paper_location": "§3.2 Rewards; §9.6 Pose Reaching",
+        "equation_number": null,
+        "paper_links": [
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=4",
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=16"
+        ],
+        "code_links": []
+      },
+      "caveat": "The PDF prints the exponential expression, without an r_pose = left-hand side and without a multiplier 4. r_pose is the existing reader label. Preserve the paper’s unspecified error definition; do not insert a squared norm. Varepsilon preserves the approved HTML glyph; the PDF uses epsilon.",
+      "occurrences": [
+        {
+          "start": 645,
+          "end": 742
+        }
+      ]
+    },
+    {
+      "id": "in-error-epsilon",
+      "section_id": "reward",
+      "original_html": "ε",
+      "original_html_sha256": "0f072b4daf81e8b8db6784d78f54e655058b19522c47b945b59d02f41d4cbaab",
+      "latex": "\\varepsilon",
+      "display_mode": false,
+      "role": "paper_notation",
+      "source": {
+        "pdf_pages": [
+          4,
+          16
+        ],
+        "paper_location": "§3.2 Rewards; §9.6 Pose Reaching",
+        "equation_number": null,
+        "paper_links": [
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=4",
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=16"
+        ],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/task.py#L716-L778"
+        ]
+      },
+      "caveat": "",
+      "occurrences": [
+        {
+          "start": 778,
+          "end": 779
+        }
+      ]
+    },
+    {
+      "id": "in-orientation-angle",
+      "section_id": "reward",
+      "original_html": "arccos((trace−1)/2)",
+      "original_html_sha256": "41a49551a376bab0596e043abc52fd76fc102e790bb0a3eae8b039ee352737c3",
+      "latex": "\\arccos\\!\\left(\\frac{\\mathrm{trace}-1}{2}\\right)",
+      "display_mode": false,
+      "role": "code_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [
+          4,
+          16
+        ],
+        "paper_location": "§3.2 Rewards; §9.6 Pose Reaching",
+        "equation_number": null,
+        "paper_links": [
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=4",
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=16"
+        ],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/task.py#L716-L778"
+        ]
+      },
+      "caveat": "The preceding prose says the trace is clipped. Preserve it; do not promote this shorthand into a full original paper equation or claim all numerical guards are displayed.",
+      "occurrences": [
+        {
+          "start": 2706,
+          "end": 2725
+        }
+      ]
+    },
+    {
+      "id": "eq-code",
+      "section_id": "reward",
+      "original_html": "[代码等价式] r<sub>pose</sub> = 4 exp(−(‖p<sub>d</sub>−p‖<sup>2</sup>/σ<sub>pos</sub> + θ/σ<sub>orn</sub>))",
+      "original_html_sha256": "717d729173bd1ae53c0c38b52abe7c53c7abb57130690659dc63b6dd5a3a7450",
+      "latex": "r_{\\mathrm{pose}}=4\\exp\\!\\left(-\\left(\\frac{\\left\\lVert p_{d}-p\\right\\rVert^{2}}{\\sigma_{\\mathrm{pos}}}+\\frac{\\theta}{\\sigma_{\\mathrm{orn}}}\\right)\\right)",
+      "display_mode": true,
+      "role": "code_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [
+          4,
+          16
+        ],
+        "paper_location": "Related reward discussion only; equation is the reader’s code equivalence",
+        "equation_number": null,
+        "paper_links": [
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=4",
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=16"
+        ],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/task.py#L716-L737",
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/task.py#L768-L778",
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/config/env/tasks/world_pos_reaching.yaml#L6-L10"
+        ]
+      },
+      "caveat": "Squared norm and weight 4 belong to the audited default code configuration. This is not the unweighted paper transcription and not the full environment reward. Norm is Euclidean, as explained in the approved prose; preserve existing notation rather than silently adding a subscript 2.",
+      "occurrences": [
+        {
+          "start": 3021,
+          "end": 3123
+        }
+      ]
+    },
+    {
+      "id": "in-position-error-label",
+      "section_id": "reward",
+      "original_html": "εpos",
+      "original_html_sha256": "af1ee2c82dc1a888c46cb8549ce0c9d6fbfea170a0bacc20976bd8f404be53de",
+      "latex": "\\varepsilon_{\\mathrm{pos}}",
+      "display_mode": false,
+      "role": "paper_notation_in_reader_comparison",
+      "source": {
+        "pdf_pages": [
+          4,
+          16
+        ],
+        "paper_location": "§3.2 Rewards; §9.6 Pose Reaching",
+        "equation_number": null,
+        "paper_links": [
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=4",
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=16"
+        ],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/task.py#L716-L778"
+        ]
+      },
+      "caveat": "Do not square this symbol or define it as distance without preserving the conditional prose.",
+      "occurrences": [
+        {
+          "start": 3756,
+          "end": 3760
+        },
+        {
+          "start": 3807,
+          "end": 3811
+        }
+      ]
+    },
+    {
+      "id": "in-error-smoothing-product",
+      "section_id": "reward",
+      "original_html": "sim_dt×smoothing_dt_multiplier",
+      "original_html_sha256": "b06c9abdd969028aba9f4d3544b3040717ff619e08b6ab696641a4339aad702c",
+      "latex": "\\mathtt{sim\\_dt}\\times\\mathtt{smoothing\\_dt\\_multiplier}",
+      "display_mode": false,
+      "role": "code_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [],
+        "paper_location": null,
+        "equation_number": null,
+        "paper_links": [],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/task.py#L680-L685"
+        ]
+      },
+      "caveat": "Implementation identifiers remain literal monospaced names, not mathematical subscripts.",
+      "occurrences": [
+        {
+          "start": 3939,
+          "end": 3969
+        }
+      ]
+    },
+    {
+      "id": "in-curriculum-sigma-position",
+      "section_id": "reward",
+      "original_html": "σpos",
+      "original_html_sha256": "62cde6ed777348c3b4858f109198cd5298be3b39c9fd8b07d5d19295195f7458",
+      "latex": "\\sigma_{\\mathrm{pos}}",
+      "display_mode": false,
+      "role": "paper_notation",
+      "source": {
+        "pdf_pages": [
+          4,
+          16
+        ],
+        "paper_location": "§3.2 Rewards; §9.6 Pose Reaching",
+        "equation_number": null,
+        "paper_links": [
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=4",
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=16"
+        ],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/task.py#L716-L778"
+        ]
+      },
+      "caveat": "The printed second curriculum value remains 0.1; do not replace with YAML 1.0.",
+      "occurrences": [
+        {
+          "start": 4555,
+          "end": 4559
+        }
+      ]
+    },
+    {
+      "id": "in-curriculum-code-sigma",
+      "section_id": "reward",
+      "original_html": "σ=1.0",
+      "original_html_sha256": "a7f611c2a9f00607db4c9db903f84a2b5e54e8ae62028e3d17586544e3e58dc4",
+      "latex": "\\sigma=1.0",
+      "display_mode": false,
+      "role": "code_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [],
+        "paper_location": null,
+        "equation_number": null,
+        "paper_links": [],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/config/env/tasks/world_pos_reaching.yaml#L33-L42"
+        ]
+      },
+      "caveat": "Code value at error threshold 1.0, distinct from printed paper value 0.1.",
+      "occurrences": [
+        {
+          "start": 4585,
+          "end": 4590
+        }
+      ]
+    },
+    {
+      "id": "in-trajectory-dimension",
+      "section_id": "actor-control",
+      "original_html": "9K",
+      "original_html_sha256": "143424d04ea8d7c18f826a8efaa34ffa693e92dd95aa914227f5583aae88390a",
+      "latex": "9K",
+      "display_mode": false,
+      "role": "code_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [],
+        "paper_location": null,
+        "equation_number": null,
+        "paper_links": [],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/env.py#L613-L663"
+        ]
+      },
+      "caveat": "",
+      "occurrences": [
+        {
+          "start": 24094,
+          "end": 24096
+        }
+      ]
+    },
+    {
+      "id": "in-observation-dimension",
+      "section_id": "actor-control",
+      "original_html": "60+9K",
+      "original_html_sha256": "59e4d5c5c018634351475e1ff593fd3107d94dff6c740aa92dd7e57e764ff6a9",
+      "latex": "60+9K",
+      "display_mode": false,
+      "role": "code_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [],
+        "paper_location": null,
+        "equation_number": null,
+        "paper_links": [],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/env.py#L613-L663"
+        ]
+      },
+      "caveat": "Calculated dimension from audited configuration, not a run measurement.",
+      "occurrences": [
+        {
+          "start": 24102,
+          "end": 24107
+        }
+      ]
+    },
+    {
+      "id": "in-action-rescale",
+      "section_id": "actor-control",
+      "original_html": "q* = s⊙a+b",
+      "original_html_sha256": "768d04e8063d94d8e75f7f856b2c461c38a7f5f2b71318cbff8b6289118a20fa",
+      "latex": "q^{*}=s\\odot a+b",
+      "display_mode": false,
+      "role": "reader_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [
+          4
+        ],
+        "paper_location": "§3.2 Policy network architecture mentions PD tracking; no printed PD equation",
+        "equation_number": null,
+        "paper_links": [
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=4"
+        ],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/control.py#L85-L106",
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/control.py#L130-L144"
+        ]
+      },
+      "caveat": "Reader’s explanatory code equivalence; elementwise scaling.",
+      "occurrences": [
+        {
+          "start": 26749,
+          "end": 26759
+        }
+      ]
+    },
+    {
+      "id": "in-pd-torque",
+      "section_id": "actor-control",
+      "original_html": "τ = clip(Kp⊙(q*−q)−Kd⊙q̇, ±τmax)",
+      "original_html_sha256": "61d8823e31b64ed2fb6fd0692392ef126a28ee8a1f919e0157c3203067167915",
+      "latex": "\\tau=\\operatorname{clip}\\!\\left(K_{p}\\odot(q^{*}-q)-K_{d}\\odot\\dot q,\\;\\pm\\tau_{\\max}\\right)",
+      "display_mode": false,
+      "role": "reader_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [
+          4
+        ],
+        "paper_location": "§3.2 Policy network architecture mentions PD tracking; no printed PD equation",
+        "equation_number": null,
+        "paper_links": [
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=4"
+        ],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/control.py#L85-L106",
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/control.py#L130-L144"
+        ]
+      },
+      "caveat": "Preserve the existing compact ± limit notation. Code clips componentwise to min=-torque_limit and max=torque_limit; this is not a paper-printed equation.",
+      "occurrences": [
+        {
+          "start": 26760,
+          "end": 26792
+        }
+      ]
+    },
+    {
+      "id": "in-action-symbol",
+      "section_id": "actor-control",
+      "original_html": "a",
+      "original_html_sha256": "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb",
+      "latex": "a",
+      "display_mode": false,
+      "role": "reader_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [
+          4
+        ],
+        "paper_location": "§3.2 Policy network architecture mentions PD tracking; no printed PD equation",
+        "equation_number": null,
+        "paper_links": [
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=4"
+        ],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/control.py#L85-L106",
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/control.py#L130-L144"
+        ]
+      },
+      "caveat": "",
+      "occurrences": [
+        {
+          "start": 26793,
+          "end": 26794
+        }
+      ]
+    },
+    {
+      "id": "in-scale-offset-symbols",
+      "section_id": "actor-control",
+      "original_html": "s/b",
+      "original_html_sha256": "c823d9cdf224348f045716b4882b2710b646d38581b9b14e88ff503a11bd405c",
+      "latex": "s/b",
+      "display_mode": false,
+      "role": "reader_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [
+          4
+        ],
+        "paper_location": "§3.2 Policy network architecture mentions PD tracking; no printed PD equation",
+        "equation_number": null,
+        "paper_links": [
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=4"
+        ],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/control.py#L85-L106",
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/control.py#L130-L144"
+        ]
+      },
+      "caveat": "Slash separates two symbols in the prose (scale/offset); it is not a claim that s is divided by b.",
+      "occurrences": [
+        {
+          "start": 26803,
+          "end": 26806
+        }
+      ]
+    },
+    {
+      "id": "in-joint-state-symbols",
+      "section_id": "actor-control",
+      "original_html": "q/q̇",
+      "original_html_sha256": "c03cd7b5a6e6d56084ea90a4145ba06ccbc8030d221f57eb6672bf8d4cc2feda",
+      "latex": "q/\\dot q",
+      "display_mode": false,
+      "role": "reader_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [
+          4
+        ],
+        "paper_location": "§3.2 Policy network architecture mentions PD tracking; no printed PD equation",
+        "equation_number": null,
+        "paper_links": [
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=4"
+        ],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/control.py#L85-L106",
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/control.py#L130-L144"
+        ]
+      },
+      "caveat": "Slash separates position and velocity symbols in the prose.",
+      "occurrences": [
+        {
+          "start": 26820,
+          "end": 26824
+        }
+      ]
+    },
+    {
+      "id": "in-transform-matrix-shape",
+      "section_id": "deployment",
+      "original_html": "4×4",
+      "original_html_sha256": "18f2b0a7496d481d36853b569b767db6331d51cc3197eac507790138535a4f89",
+      "latex": "4\\times4",
+      "display_mode": false,
+      "role": "code_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [],
+        "paper_location": null,
+        "equation_number": null,
+        "paper_links": [],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/real-wbc/modules/pose_estimator.py#L40-L57"
+        ]
+      },
+      "caveat": "",
+      "occurrences": [
+        {
+          "start": 221774,
+          "end": 221777
+        }
+      ]
+    },
+    {
+      "id": "in-stop-threshold",
+      "section_id": "deployment",
+      "original_html": ">0.5 m",
+      "original_html_sha256": "849544bcb292341e97bca96b77fe8f5db01a8571d6de57694391e54fee5eed2f",
+      "latex": ">0.5\\,\\mathrm{m}",
+      "display_mode": false,
+      "role": "code_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [],
+        "paper_location": null,
+        "equation_number": null,
+        "paper_links": [],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/real-wbc/modules/wbc_node.py#L654-L665"
+        ]
+      },
+      "caveat": "A code protection branch, not a sufficient general safety guarantee.",
+      "occurrences": [
+        {
+          "start": 222697,
+          "end": 222703
+        }
+      ]
+    },
+    {
+      "id": "in-clip-threshold",
+      "section_id": "deployment",
+      "original_html": ">0.1 m",
+      "original_html_sha256": "3a8676b48fc892a799d31c5e0dea350d7d0b1af63e02ad3b4273e77de9568c68",
+      "latex": ">0.1\\,\\mathrm{m}",
+      "display_mode": false,
+      "role": "code_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [],
+        "paper_location": null,
+        "equation_number": null,
+        "paper_links": [],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/real-wbc/modules/wbc_node.py#L654-L665"
+        ]
+      },
+      "caveat": "",
+      "occurrences": [
+        {
+          "start": 222708,
+          "end": 222714
+        }
+      ]
+    },
+    {
+      "id": "in-comparison-paper-ratio",
+      "section_id": "conditions",
+      "original_html": "εpos/σpos",
+      "original_html_sha256": "a88038d02c04fd303b23a5e09f6039457e01c343078371dd685fb789cfb26b0c",
+      "latex": "\\varepsilon_{\\mathrm{pos}}/\\sigma_{\\mathrm{pos}}",
+      "display_mode": false,
+      "role": "paper_notation_in_reader_comparison",
+      "source": {
+        "pdf_pages": [
+          4,
+          16
+        ],
+        "paper_location": "§3.2 Rewards; §9.6 Pose Reaching",
+        "equation_number": null,
+        "paper_links": [
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=4",
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=16"
+        ],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/task.py#L716-L778"
+        ]
+      },
+      "caveat": "Preserve unsquared paper symbol in this comparison.",
+      "occurrences": [
+        {
+          "start": 1444,
+          "end": 1453
+        }
+      ]
+    },
+    {
+      "id": "in-comparison-code-scale",
+      "section_id": "conditions",
+      "original_html": "σpos",
+      "original_html_sha256": "62cde6ed777348c3b4858f109198cd5298be3b39c9fd8b07d5d19295195f7458",
+      "latex": "\\sigma_{\\mathrm{pos}}",
+      "display_mode": false,
+      "role": "code_explanation_not_paper_equation",
+      "source": {
+        "pdf_pages": [
+          4,
+          16
+        ],
+        "paper_location": "§3.2 Rewards; §9.6 Pose Reaching",
+        "equation_number": null,
+        "paper_links": [
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=4",
+          "https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=16"
+        ],
+        "code_links": [
+          "https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/env/isaacgym/task.py#L716-L778"
+        ]
+      },
+      "caveat": "Appears after the Chinese phrase for squared Euclidean distance; do not change surrounding contrast.",
+      "occurrences": [
+        {
+          "start": 1463,
+          "end": 1467
+        }
+      ]
+    }
+  ],
+  "renderer_description": {
+    "original_html": "本模块没有独立模块原图；核心是正文内未编号公式。本页按PDF视觉核对转写，使用本地HTML上下标，可离线读取。",
+    "replacement_html": "本模块没有独立模块原图；核心是正文内未编号公式。本页按PDF视觉核对转写，使用KaTeX预渲染为HTML与MathML，并加载本地公式字体。"
+  }
+}

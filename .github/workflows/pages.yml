@@ -17,8 +17,14 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          package-manager-cache: false
       - name: Test and build trusted main
         run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run prepare:math
           python3 scripts/assemble_frontier.py
           python3 scripts/reports.py
           python3 -m unittest discover -s tests -v

@@ -12,9 +12,11 @@
 
 ## 本地构建
 
-Python 3.10+，无第三方构建依赖：
+Python 3.10+ 与 Node24；仅公式预渲染使用锁定版本的 KaTeX：
 
 ```sh
+npm ci --ignore-scripts --no-audit --no-fund
+npm run prepare:math
 python3 scripts/assemble_frontier.py
 python3 scripts/reports.py
 python3 -m unittest discover -s tests -v
@@ -60,3 +62,5 @@ python3 -m http.server 8000 --directory dist
 ## 分类与浏览
 
 Library、首页与 Atlas 共用已核查来源的研究问题分类。方法标签和资源类型单独筛选；四条分类边界记录保持待复核。详见 [classification](docs/classification.md)。原始书目与阅读状态不因分类检查而改变。
+
+The reader preview typesets reviewed equations with pinned build-time KaTeX and serves local fonts. See [math rendering](docs/math-rendering.md). Node24 is required for the pinned build toolchain.
