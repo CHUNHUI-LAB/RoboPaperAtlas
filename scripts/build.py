@@ -132,6 +132,8 @@ def main():
     write_preview(ROOT,target)
     from global_preview import write_preview as write_global_preview
     write_global_preview(ROOT,target)
+    from reader_theme_preview import write_preview as write_reader_theme_preview
+    write_reader_theme_preview(ROOT,target)
     for p in data['papers']:
         d=target/'papers'/p['id']; d.mkdir(parents=True); (d/'index.html').write_text(details(p))
     from frontier_page import render as frontier_render

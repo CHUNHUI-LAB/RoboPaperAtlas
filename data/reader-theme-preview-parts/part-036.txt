@@ -1,0 +1,14 @@
+urce-location]').textContent=unit.location;panel.querySelector('[data-source-paraphrase]').textContent=unit.paraphrase;
+   const quote=panel.querySelector('[data-source-quote]');quote.hidden=!unit.quote;quote.textContent=unit.quote||'';
+   const a=panel.querySelector('[data-source-open]');a.href=unit.url;a.textContent=(unit.link_label||'打开原文位置')+' ↗';
+   panel.querySelector('[data-source-previous]').disabled=index===0;panel.querySelector('[data-source-next]').disabled=index===units.length-1;
+   rows.forEach(row=>row.classList.toggle('is-current',row.dataset.sourceRow===id));buttons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.sourceUnit===id)));
+   if(scroll)page.querySelector('[data-source-row="'+CSS.escape(id)+'"]')?.scrollIntoView({block:'start',behavior:reduced.matches?'auto':'smooth'});
+  };
+  buttons.forEach(b=>b.addEventListener('click',()=>{show(b.dataset.sourceUnit);if(innerWidth<=1050){const unit=units.find(x=>x.id===b.dataset.sourceUnit);announce(unit?.location||'已选择原文位置');}}));
+  panel.querySelector('[data-source-previous]').addEventListener('click',()=>show(units[Math.max(0,selected-1)].id,true));panel.querySelector('[data-source-next]').addEventListener('click',()=>show(units[Math.min(units.length-1,selected+1)].id,true));
+  const toggle=page.querySelector('[data-source-toggle]');toggle?.addEventListener('click',()=>{const off=page.classList.toggle('reader-source-collapsed');toggle.setAttribute('aria-pressed',String(!off));});if(units.length)show(units[0].id);
+ }
+ updatePosition();
+})();
+</script></body></html>

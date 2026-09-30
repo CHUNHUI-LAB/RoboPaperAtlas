@@ -14,4 +14,4 @@ class SearchAliasTests(unittest.TestCase):
   page=read_preview(ROOT).decode();data=json.loads(re.search(r'<script id="atlas-data" type="application/json">(.*?)</script>',page,re.S)[1]);papers={p['id']:p for p in data['papers']}
   self.assertIn('UMI',papers['rpa-0064']['searchAliases']);self.assertTrue(papers['rpa-0064']['title'].startswith('Universal Manipulation Interface:'))
  def test_mobile_labels_do_not_display_every_relation_neighbor(self):
-  page=read_preview(ROOT).decode();self.assertIn("active||hovered===p.id||(w>=800&&isNeighbor)",page)
+  page=read_preview(ROOT).decode();self.assertIn("const priority=[hovered,selected,...(w>=800?",page);self.assertIn("function placeLabels(near)",page)
