@@ -38,6 +38,7 @@ function fixture(options={}){
   addEventListener(type,fn){(this.listeners[type]??=[]).push(fn)}removeEventListener(type,fn){this.listeners[type]=(this.listeners[type]||[]).filter(x=>x!==fn)}
   emit(type,input={}){const e={type,target:this,currentTarget:this,preventDefault(){this.defaultPrevented=true},stopPropagation(){this.stopped=true},...input};let at=this;while(at){e.currentTarget=at;for(const fn of(at.listeners[type]||[]))fn(e);if(at['on'+type])at['on'+type](e);if(e.stopped||input.bubbles===false)break;at=at.parentElement}return e}
   focus(){const old=document.activeElement;document.activeElement=this;if(old&&old!==this)old.emit('focusout');this.emit('focusin');this.emit('focus',{bubbles:false})}
+  select(){this.selectionStart=0;this.selectionEnd=this.value.length;this.selectionSelected=true}
   scrollIntoView(){this.scrolled=true}getAnimations(){return []}
   getBoundingClientRect(){return {x:0,y:0,left:0,top:0,width:this.closest('[hidden]')?0:options.mobile?350:970,height:this.closest('[hidden]')?0:options.mobile?470:690}}
   setPointerCapture(id){this.pointerCapture=id}hasPointerCapture(id){return this.pointerCapture===id}releasePointerCapture(id){delete this.pointerCapture;this.emit('lostpointercapture',{pointerId:id,bubbles:false})}
@@ -52,7 +53,7 @@ function fixture(options={}){
   stack.at(-1).append(el);if(!voids.has(name)&&!tag.endsWith('/'))stack.push(el);
  }
  const window=new Element('#window');window.document=document;window.matchMedia=key=>media[key]??=(Object.assign(new Element('media'),{matches:key.includes('max-width')?!!options.mobile:!!options.reduced}));
- const historyStack=[url.href],historyStates=[{atlasIndex:0}];let historyIndex=0;
+ const historyStack=[url.href],historyStates=[options.historyState||{atlasIndex:0}];let historyIndex=0;
  const location={get href(){return url.href},get search(){return url.search},get origin(){return url.origin},get pathname(){return url.pathname},get hash(){return url.hash}};
  const history={get state(){return historyStates[historyIndex]},pushState(state,__,value){historyWrites.push({kind:'push',at:now});url=new URL(value,url);historyStack.splice(++historyIndex);historyStack.push(url.href);historyStates.splice(historyIndex);historyStates.push(state)},replaceState(state,__,value){historyWrites.push({kind:'replace',at:now});url=new URL(value,url);historyStack[historyIndex]=url.href;historyStates[historyIndex]=state},back(){if(historyIndex){url=new URL(historyStack[--historyIndex]);window.emit('popstate',{bubbles:false,state:historyStates[historyIndex]})}}};
  class IO{constructor(cb){this.cb=cb;observers.push(this)}observe(el){this.element=el}disconnect(){this.disconnected=true}}

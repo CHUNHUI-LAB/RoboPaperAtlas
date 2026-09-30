@@ -80,7 +80,10 @@ function animate(target){target=normalizeCamera(target);camera=normalizeCamera(c
 function syncOverlayMode(){const active=!$('results').hidden||!$('controls').classList.contains('collapsed');const compact=w<800&&h<560&&Boolean(selected||active);$('controls').classList.toggle('compact-controls',compact);$('brand').classList.toggle('compact-hidden',compact);$('controls').classList.toggle('overlay-active',active);if(active)$('detail').setAttribute('inert','');else $('detail').removeAttribute('inert')}
 function setFilterPanel(open){$('controls').classList.toggle('collapsed',!open);$('collapse').textContent=open?'筛选 −':'筛选 +';$('collapse').setAttribute('aria-expanded',String(open));$('collapse').setAttribute('aria-label',open?'收起筛选':'展开筛选');syncOverlayMode()}
 function setResults(open){$('results').hidden=!open;$('listToggle').setAttribute('aria-expanded',String(open));$('listToggle').textContent=open?'收起列表':'论文列表';syncOverlayMode()}
-function select(id,record=true){if(!byId.has(id))return;const previous=selected,fromControls=Boolean(document.activeElement?.closest('#controls'));if(record)saveHistory(false);setFilterPanel(false);setResults(false);selected=id;const p=byId.get(id);$('tooltip').hidden=true;$('footer').classList.add('has-selection');$('mapNotes').classList.add('has-selection');detail(p);const target={x:w<800?p.x*.65:p.x*.42+.12,y:w<800?p.y*.65+.26:p.y*.42,k:1.15};animate(target);if(record&&previous!==id)saveHistory(true,target);if(fromControls)$('detail').querySelector('button')?.focus({preventScroll:true});$('caption').textContent=p.label;$('status').textContent='95 篇仍在同一星图 · 实线为引用，金色虚线为明确采用'}
+function selectionCamera(id){const p=byId.get(id);return p?normalizeCamera({x:w<800?p.x*.65:p.x*.42+.12,y:w<800?p.y*.65+.26:p.y*.42,k:1.15}):{x:0,y:0,k:1}}
+function readPaperLocation(search=location.search){const ids=new URLSearchParams(search).getAll('paper'),id=ids.length===1&&byId.has(ids[0])?ids[0]:null;return {id,invalid:ids.length>0&&!id}}
+function paperURL(id){const here=new URL(location.href);if(!['https:','http:'].includes(here.protocol))return null;const clean=new URL(here.origin+here.pathname);if(byId.has(id))clean.searchParams.set('paper',id);return clean.href}
+function select(id,record=true){if(!byId.has(id))return;const previous=selected,fromControls=Boolean(document.activeElement?.closest('#controls'));if(record)saveHistory(false);setFilterPanel(false);setResults(false);selected=id;const p=byId.get(id);$('tooltip').hidden=true;$('footer').classList.add('has-selection');$('mapNotes').classList.add('has-selection');detail(p);const target=selectionCamera(id);animate(target);if(record&&previous!==id)saveHistory(true,target);else if(record)saveHistory(false,target);if(fromControls)$('detail').querySelector('button')?.focus({preventScroll:true});$('caption').textContent=p.label;$('status').textContent='95 篇仍在同一星图 · 实线为引用，金色虚线为明确采用'}
 function link(text,url){const a=el('a',text);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a}
 function detail(p){
  const panel=$('detail');panel.replaceChildren();panel.hidden=false;
@@ -93,8 +96,8 @@ function detail(p){
   jump.onclick=()=>{const target=related.querySelector('button')||related;target.scrollIntoView({block:'start'});target.focus({preventScroll:true})};panel.append(jump);
  }
  const links=el('div',undefined,'links');links.append(link('论文详情 ↗',p.detail));const source=p.source||p.classification.sources?.[0];if(source)links.append(link('原始来源 ↗',source));panel.append(links);
- const meta=el('details',undefined,'paper-meta');meta.append(el('summary','完整题名与方法标签'),el('p',p.title,'full-paper-title'));
- const chips=el('div',undefined,'chips');for(const m of p.methods)chips.append(el('span',label(m),'chip'));meta.append(chips);panel.append(meta);
+ const meta=el('details',undefined,'paper-meta');meta.append(el('summary','完整题名、方法与星图链接'),el('p',p.title,'full-paper-title'));
+ const chips=el('div',undefined,'chips');for(const m of p.methods)chips.append(el('span',label(m),'chip'));meta.append(chips);const share=paperURL(p.id);if(share){const label=el('label','当前论文星图链接（可选中复制）'),input=el('input');input.id='paperLink';input.type='text';input.value=share;input.setAttribute('readonly','');input.addEventListener('focus',()=>input.select?.());label.append(input);meta.append(label)}else meta.append(el('p','当前环境无法生成网页分享链接。','muted'));panel.append(meta);
  if(p.classification.needsReview)panel.append(el('p','研究方向边界待复核','muted'));
  if(!matching.has(p.id))panel.append(el('p','当前选中论文不符合筛选条件；保留选择以便对照','muted'));
  const classified=el('details',undefined,'evidence');classified.append(el('summary','细分研究问题与分类依据'),el('p',(D.directionLabels[p.classification.direction]||(p.classification.placementState==='cross-domain-resource'?'跨领域资源':'跨领域研究'))+' · '+p.classification.problemLabel),el('p',p.classification.rationale,'muted'));panel.append(classified);
@@ -115,10 +118,10 @@ function overview(restoreFocus=false,record=true){const previous=selected;if(rec
 function zoom(f){cancelAnimationFrame(animation);moveCamera({...camera,k:camera.k*(Number.isFinite(f)?f:1)})}
 for(const id of ['query','task','method','resource'])$(id).addEventListener(id==='query'?'input':'change',()=>{filter(false);if(id==='query'){setResults(Boolean($('query').value.trim()));setFilterPanel(false)}saveHistory(false)});
 $('clear').onclick=()=>{clear(false);setResults(false);saveHistory(false)};$('pilot').onclick=()=>select('rpa-0062');$('overview').onclick=overview;$('plus').onclick=()=>zoom(1.2);$('minus').onclick=()=>zoom(1/1.2);$('listToggle').onclick=()=>{const open=$('results').hidden;setResults(open);if(open)setFilterPanel(false);saveHistory(false)};$('collapse').onclick=()=>{const open=$('controls').classList.contains('collapsed');setFilterPanel(open);if(open)setResults(false);saveHistory(false)};
-let historySequence=Number.isInteger(history.state?.atlasEntry)?history.state.atlasEntry:0,currentHistoryId=historySequence,lastHistoryWrite=-Infinity,historyTimer=0;
+let historySequence=Number.isSafeInteger(history.state?.atlasEntry)&&history.state.atlasEntry>=0?history.state.atlasEntry:0,currentHistoryId=historySequence,lastHistoryWrite=-Infinity,historyTimer=0;
 const historySnapshots=new Map,historyWriteInterval=500;
 function cancelHistoryTimer(){if(historyTimer)clearTimeout(historyTimer);historyTimer=0}
-function writeHistory(state,push){history[push?'pushState':'replaceState'](state,'',location.href);lastHistoryWrite=performance.now()}
+function writeHistory(state,push){history[push?'pushState':'replaceState'](state,'',paperURL(state.selected)||location.href);lastHistoryWrite=performance.now()}
 function flushHistory(){cancelHistoryTimer();const state=historySnapshots.get(currentHistoryId);if(state)writeHistory(state,false)}
 function saveHistory(push=false,view=camera){
  const state={...(history.state&&typeof history.state==='object'?history.state:{}),atlasPreview:true,atlasEntry:currentHistoryId,selected,resultsOpen:!$('results').hidden,filtersOpen:!$('controls').classList.contains('collapsed'),camera:normalizeCamera(view),filters:Object.fromEntries(['query','task','method','resource'].map(id=>[id,$(id).value]))};
@@ -127,24 +130,27 @@ function saveHistory(push=false,view=camera){
  const elapsed=performance.now()-lastHistoryWrite;
  if(elapsed>=historyWriteInterval)flushHistory();else if(!historyTimer)historyTimer=setTimeout(flushHistory,historyWriteInterval-elapsed);
 }
-window.addEventListener('popstate',e=>{
- if(!e.state?.atlasPreview)return;
- cancelHistoryTimer();const entry=Number.isInteger(e.state.atlasEntry)&&e.state.atlasEntry>=0?e.state.atlasEntry:++historySequence;
- const state=historySnapshots.get(entry)||e.state;currentHistoryId=entry;historySequence=Math.max(historySequence,entry);
- const filters=state.filters&&typeof state.filters==='object'?state.filters:{};
+function restoreLocation(incoming,moveFocus=false){
+ cancelHistoryTimer();cancelAnimationFrame(animation);
+ const route=readPaperLocation(),entry=Number.isSafeInteger(incoming?.atlasEntry)&&incoming.atlasEntry>=0?incoming.atlasEntry:null;
+ const candidate=entry!==null?(historySnapshots.get(entry)||incoming):incoming;
+ const state=!route.invalid&&incoming?.atlasPreview&&candidate?.selected===route.id?candidate:null;
+ currentHistoryId=state&&entry!==null?entry:++historySequence;historySequence=Math.max(historySequence,currentHistoryId);
+ const filters=state?.filters&&typeof state.filters==='object'?state.filters:{};
  const restoreFilters=()=>{for(const id of ['query','task','method','resource'])$(id).value=typeof filters[id]==='string'?filters[id]:''};
- restoreFilters();filter(false);if(typeof state.selected==='string'&&byId.has(state.selected))select(state.selected,false);else overview(false,false);
- restoreFilters();filter(false);setFilterPanel(state.filtersOpen===true&&state.resultsOpen!==true);setResults(state.resultsOpen===true);
- cancelAnimationFrame(animation);camera=normalizeCamera(state.camera);render();saveHistory(false);
- ($('controls').classList.contains('overlay-active')?$('query'):compactReading()?$('detail').querySelector('button'):selected?els.get(selected)?.g:$('query'))?.focus({preventScroll:true});
-});
+ restoreFilters();filter(false);if(route.id)select(route.id,false);else overview(false,false);
+ restoreFilters();filter(false);setFilterPanel(state?.filtersOpen===true&&state?.resultsOpen!==true);setResults(state?.resultsOpen===true);
+ cancelAnimationFrame(animation);camera=state?normalizeCamera(state.camera):selectionCamera(route.id);render();saveHistory(false);const canonical=paperURL(selected);if(canonical&&location.href!==canonical)flushHistory();
+ if(moveFocus)($('controls').classList.contains('overlay-active')?$('query'):compactReading()?$('detail').querySelector('button'):selected?els.get(selected)?.g:$('query'))?.focus({preventScroll:true});
+}
+window.addEventListener('popstate',e=>restoreLocation(e.state,true));
 window.addEventListener('pagehide',flushHistory);
 function focusSearch(){setFilterPanel(false);setResults(Boolean($('query').value.trim()));$('query').focus({preventScroll:true});saveHistory(false)}
 $('skipSearch').addEventListener('click',e=>{e.preventDefault();focusSearch()});
 $('query').addEventListener('keydown',e=>{if(e.key==='ArrowDown'&&!$('results').hidden){const first=$('results').querySelector('button');if(first){e.preventDefault();first.focus({preventScroll:true})}}});
 let suppressClick=false;
-$('field').addEventListener('wheel',e=>{e.preventDefault();zoom(Math.exp(-e.deltaY*.001))},{passive:false});$('field').addEventListener('pointerdown',e=>{if(e.button!==0)return;cancelAnimationFrame(animation);drag={x:e.clientX,y:e.clientY,cx:camera.x,cy:camera.y,moved:false};suppressClick=false});window.addEventListener('pointermove',e=>{if(!drag)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.hypot(dx,dy)>5){drag.moved=true;suppressClick=true;$('tooltip').hidden=true;const b=base();moveCamera({...camera,x:drag.cx-dx/(b.s*camera.k),y:drag.cy-dy/(b.s*camera.k)})}});window.addEventListener('pointerup',()=>{drag=null;setTimeout(()=>{suppressClick=false},0)});window.addEventListener('pointercancel',()=>{drag=null;suppressClick=false});$('field').addEventListener('keydown',e=>{const moves={ArrowLeft:[-.1,0],ArrowRight:[.1,0],ArrowUp:[0,-.1],ArrowDown:[0,.1]};if(moves[e.key]){e.preventDefault();cancelAnimationFrame(animation);moveCamera({...camera,x:camera.x+moves[e.key][0]/camera.k,y:camera.y+moves[e.key][1]/camera.k})}if(e.key==='+'||e.key==='=')zoom(1.2);if(e.key==='-')zoom(1/1.2)});window.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();if($('controls').classList.contains('overlay-active')){setResults(false);setFilterPanel(false);$('query').focus({preventScroll:true});saveHistory(false)}else overview(true)}});document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelAnimationFrame(animation);flushHistory()}});window.addEventListener('resize',()=>{w=innerWidth;h=innerHeight;render()});buildAmbient();results();render();saveHistory(false);
-window.AtlasDebug={nodes,select,overview,filter,project,base,normalizeCamera,cameraBounds,getLabels:()=>labelRects.map(r=>({...r})),getState:()=>({selected,matching:[...matching],camera:{...camera},nodeCount:nodes.length})};
+$('field').addEventListener('wheel',e=>{e.preventDefault();zoom(Math.exp(-e.deltaY*.001))},{passive:false});$('field').addEventListener('pointerdown',e=>{if(e.button!==0)return;cancelAnimationFrame(animation);drag={x:e.clientX,y:e.clientY,cx:camera.x,cy:camera.y,moved:false};suppressClick=false});window.addEventListener('pointermove',e=>{if(!drag)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.hypot(dx,dy)>5){drag.moved=true;suppressClick=true;$('tooltip').hidden=true;const b=base();moveCamera({...camera,x:drag.cx-dx/(b.s*camera.k),y:drag.cy-dy/(b.s*camera.k)})}});window.addEventListener('pointerup',()=>{drag=null;setTimeout(()=>{suppressClick=false},0)});window.addEventListener('pointercancel',()=>{drag=null;suppressClick=false});$('field').addEventListener('keydown',e=>{const moves={ArrowLeft:[-.1,0],ArrowRight:[.1,0],ArrowUp:[0,-.1],ArrowDown:[0,.1]};if(moves[e.key]){e.preventDefault();cancelAnimationFrame(animation);moveCamera({...camera,x:camera.x+moves[e.key][0]/camera.k,y:camera.y+moves[e.key][1]/camera.k})}if(e.key==='+'||e.key==='=')zoom(1.2);if(e.key==='-')zoom(1/1.2)});window.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();if($('controls').classList.contains('overlay-active')){setResults(false);setFilterPanel(false);$('query').focus({preventScroll:true});saveHistory(false)}else overview(true)}});document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelAnimationFrame(animation);flushHistory()}});window.addEventListener('resize',()=>{w=innerWidth;h=innerHeight;render()});buildAmbient();results();render();restoreLocation(history.state);
+window.AtlasDebug={nodes,select,overview,filter,project,base,normalizeCamera,cameraBounds,readPaperLocation,paperURL,getLabels:()=>labelRects.map(r=>({...r})),getState:()=>({selected,matching:[...matching],camera:{...camera},nodeCount:nodes.length})};
 })();
 </script>
 </body></html>

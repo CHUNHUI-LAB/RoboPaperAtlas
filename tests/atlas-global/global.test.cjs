@@ -121,12 +121,12 @@ test('short narrow windows prioritize the readable detail and list rather than s
  f.click('#overview');assert(!f.$('#field').classList.contains('reading-mode'));assert.equal(f.$('#field').getAttribute('aria-hidden'),'false');assert.equal(f.$('#field').getAttribute('tabindex'),'0');assert(f.$$('.node').every(n=>n.getAttribute('tabindex')==='-1'));
 });
 
-test('Back and Forward restore paper selection and camera without leaving or rewriting the preview URL',()=>{
+test('Back and Forward restore paper selection and camera on the same preview path with a matching paper URL',()=>{
  const f=fixture({reduced:true}),d=f.window.AtlasDebug,original=f.location.href;
  d.select('rpa-0062');const first=JSON.stringify(d.getState().camera);d.select('rpa-0013');const second=JSON.stringify(d.getState().camera);
- f.goBack();assert.equal(d.getState().selected,'rpa-0062');assert.equal(JSON.stringify(d.getState().camera),first);assert.equal(f.$$('.edge').length,8);assert.equal(f.location.href,original);
+ f.goBack();assert.equal(d.getState().selected,'rpa-0062');assert.equal(JSON.stringify(d.getState().camera),first);assert.equal(f.$$('.edge').length,8);assert.equal(new URL(f.location.href).pathname,new URL(original).pathname);assert.equal(new URL(f.location.href).searchParams.get('paper'),'rpa-0062');
  f.goBack();assert.equal(d.getState().selected,null);assert(f.$('#detail').hidden);assert.equal(d.getState().camera.k,1);
- f.goForward();assert.equal(d.getState().selected,'rpa-0062');f.goForward();assert.equal(d.getState().selected,'rpa-0013');assert.equal(JSON.stringify(d.getState().camera),second);assert.equal(f.location.href,original);
+ f.goForward();assert.equal(d.getState().selected,'rpa-0062');f.goForward();assert.equal(d.getState().selected,'rpa-0013');assert.equal(JSON.stringify(d.getState().camera),second);assert.equal(new URL(f.location.href).pathname,new URL(original).pathname);assert.equal(new URL(f.location.href).searchParams.get('paper'),'rpa-0013');
 });
 
 test('keyboard paper selection, detail Close, and Back restore a real paper focus target',()=>{
@@ -241,7 +241,7 @@ test('mouse node selection, keyboard reopening and Close focus restoration remai
 
 test('detail leads with the existing short label while exact title and every method remain in a closed native disclosure',()=>{
  const f=fixture({reduced:true}),paper=program.data.papers.find(p=>p.id==='rpa-0062');f.window.AtlasDebug.select(paper.id);assert.equal(f.$('#detail').querySelector('h2').textContent,paper.label);
- const meta=f.$('#detail').querySelector('.paper-meta');assert.equal(meta.tagName,'DETAILS');assert.equal(meta.getAttribute('open'),null);assert.equal(meta.querySelector('.full-paper-title').textContent,paper.title);assert.equal(meta.querySelectorAll('.chip').length,paper.methods.length);assert.match(meta.querySelector('summary').textContent,/完整题名与方法/);
+ const meta=f.$('#detail').querySelector('.paper-meta');assert.equal(meta.tagName,'DETAILS');assert.equal(meta.getAttribute('open'),null);assert.equal(meta.querySelector('.full-paper-title').textContent,paper.title);assert.equal(meta.querySelectorAll('.chip').length,paper.methods.length);assert.match(meta.querySelector('summary').textContent,/完整题名.*方法.*星图链接/);
  const star=f.$('[data-id="rpa-0062"]');assert(star.getAttribute('aria-label').includes(paper.title));
 });
 
@@ -256,9 +256,68 @@ test('unindexed papers retain honest relationship status and do not receive a fa
  const f=fixture({reduced:true});f.window.AtlasDebug.select('rpa-0042');assert.equal(f.$('#detail').querySelector('.relation-jump'),null);assert.match(f.$('#detail').textContent,/关系尚未索引/);assert.equal(f.$$('.edge').length,0);assert(f.$('#detail').querySelector('.full-paper-title'));
 });
 
-test('navigation patch preserves every accepted font declaration and the exact scientific data',()=>{
- const css=program.html.match(/<style>([\s\S]*?)<\/style>/)[1],cut=css.indexOf('\n/* Navigation patch:');assert(cut>0);const sha=value=>require('node:crypto').createHash('sha256').update(value).digest('hex');
- assert.equal(sha(css.slice(0,cut)),'3e24ec9eefef0bf4b011cca9fae71b0326c29eace2874ffa12bcc5e37bcd8999');
- assert.equal(sha(JSON.stringify(css.match(/(?:font-size|font):[^;}]+/g))),'14d92c52a2c6fb7a4b75a5be82f551265e064450a4fc3f34bf65595a0af4c270');
+test('deep-link patch preserves the accepted CSS and exact scientific data',()=>{
+ const sha=value=>require('node:crypto').createHash('sha256').update(value).digest('hex'),css=program.html.match(/<style>([\s\S]*?)<\/style>/)[1];
+ assert.equal(sha(css),'ef3a77811e454d09746be23aebf441cf6ceb655dfdda7a5433673a410867cb66');
  assert.equal(sha(program.html.match(/<script id="atlas-data" type="application\/json">([\s\S]*?)<\/script>/)[1]),'1ae66d5bd377cbc623dff58f71221a9fcdd6e902e37eadf850f53e45e8ff114c');
+});
+
+test('cold ?paper=rpa-0062 starts focused with all 95 papers and exactly the verified 8 pairs / 11 records',()=>{
+ const url='https://example.org/RoboPaperAtlas/atlas-global-preview/?paper=rpa-0062',f=fixture({url,reduced:true}),d=f.window.AtlasDebug;
+ assert.equal(d.getState().selected,'rpa-0062');assert.equal(d.getState().nodeCount,95);assert.equal(d.getState().matching.length,95);assert.equal(f.$$('.edge').length,8);assert.equal(f.$$('.relation').length,8);assert.equal(f.$$('.evidence').length,12);assert.equal(f.historyStack.length,1);assert.equal(f.location.href,url);assert.equal(d.getState().camera.k,1.15);assert.equal(f.raf.size,0);
+});
+
+test('the URL parser allowlists every current paper ID and rejects duplicates, case variants, empty and injected IDs',()=>{
+ const f=fixture({reduced:true}),d=f.window.AtlasDebug;
+ for(const p of program.data.papers)assert.equal(d.readPaperLocation('?paper='+encodeURIComponent(p.id)).id,p.id);
+ for(const search of ['?paper=','?paper=RPA-0062','?paper=not-a-paper','?paper=rpa-0062&paper=rpa-0062','?paper=rpa-0062&paper=rpa-0013','?paper=%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E','?paper=javascript%3Aalert(1)']){assert.equal(d.readPaperLocation(search).id,null);assert.equal(d.readPaperLocation(search).invalid,true)}
+ assert.equal(d.readPaperLocation('?paper=rpa%2D0062').id,'rpa-0062');assert.equal(d.readPaperLocation('').invalid,false);
+});
+
+test('invalid or duplicate cold-link IDs fall back to a clean 95-paper overview and ignore stale history selection',()=>{
+ for(const search of ['?paper=not-a-paper','?paper=rpa-0062&paper=rpa-0013','?paper=%3Cscript%3E']){
+  const f=fixture({url:'https://example.org/RoboPaperAtlas/atlas-global-preview/'+search+'&token=private#ignored',historyState:{atlasPreview:true,atlasEntry:7,selected:'rpa-0062',filters:{query:'ODYSSEY'},camera:{x:.2,y:.1,k:2}},reduced:true});
+  assert.equal(f.window.AtlasDebug.getState().selected,null);assert.equal(f.window.AtlasDebug.getState().matching.length,95);assert.equal(f.$('#query').value,'');assert(f.$('#detail').hidden);assert.equal(f.$$('.edge').length,0);assert.equal(f.location.search,'');assert.equal(f.location.hash,'');assert.equal(f.historyStack.length,1);
+ }
+});
+
+test('share URL is only the current origin/path and validated paper, without credentials, unknown parameters, hash, filters or camera',()=>{
+ const f=fixture({url:'https://user:secret@example.org/RoboPaperAtlas/atlas-global-preview/?paper=rpa-0062&token=private&q=ODYSSEY&mode=debug#session-secret',reduced:true}),d=f.window.AtlasDebug;
+ const expected='https://example.org/RoboPaperAtlas/atlas-global-preview/?paper=rpa-0062';assert.equal(d.paperURL('rpa-0062'),expected);assert.equal(f.$('#paperLink').value,expected);assert.equal(f.$('#paperLink').getAttribute('readonly'),'');f.$('#paperLink').focus();assert(f.$('#paperLink').selectionSelected);
+ assert.equal(f.location.href,expected);assert.equal(d.paperURL('not-a-paper'),'https://example.org/RoboPaperAtlas/atlas-global-preview/');assert(!/clipboard|writeText|已复制/.test(program.source));
+ const nested=fixture({url:'https://example.org//other.example/atlas/?paper=rpa-0062',reduced:true});assert.equal(new URL(nested.window.AtlasDebug.paperURL('rpa-0013')).origin,'https://example.org');
+});
+
+test('relationship navigation, Close and Overview update only paper selection on the canonical URL',()=>{
+ const f=fixture({url:'https://example.org/atlas-global-preview/?paper=rpa-0062&unrelated=1#ignored',reduced:true}),d=f.window.AtlasDebug;
+ f.$('#detail').querySelector('.relation').querySelector('button').emit('click');const other=d.getState().selected;assert.notEqual(other,'rpa-0062');assert.equal(new URL(f.location.href).searchParams.get('paper'),other);assert.equal(new URL(f.location.href).searchParams.size,1);
+ f.$('#detail').querySelector('button').emit('click');assert.equal(d.getState().selected,null);assert.equal(f.location.search,'');assert.equal(f.location.hash,'');
+ f.goBack();assert.equal(d.getState().selected,other);assert.equal(new URL(f.location.href).searchParams.get('paper'),other);f.goBack();assert.equal(d.getState().selected,'rpa-0062');
+ f.click('#overview');assert.equal(f.location.search,'');assert.equal(d.getState().selected,null);
+});
+
+test('reload restores a matching selected-paper query, overlay and camera snapshot while URL wins over a mismatched snapshot',()=>{
+ const url='https://example.org/atlas-global-preview/?paper=rpa-0062',f=fixture({url,reduced:true});f.input('ODYSSEY');f.click('#plus');f.window.emit('pagehide');const saved=JSON.parse(JSON.stringify(f.context.history.state));
+ const reload=fixture({url:f.location.href,historyState:saved,reduced:true});assert.equal(reload.window.AtlasDebug.getState().selected,'rpa-0062');assert.equal(reload.$('#query').value,'ODYSSEY');assert(!reload.$('#results').hidden);assert.equal(reload.window.AtlasDebug.getState().camera.k,1.38);assert.equal(reload.$('#detail').getAttribute('inert'),'');
+ const changed=fixture({url:'https://example.org/atlas-global-preview/?paper=rpa-0013',historyState:saved,reduced:true});assert.equal(changed.window.AtlasDebug.getState().selected,'rpa-0013');assert.equal(changed.$('#query').value,'');assert.equal(changed.window.AtlasDebug.getState().camera.k,1.15);
+});
+
+test('URL, selected paper and pending query/camera remain consistent through immediate Back/Forward',()=>{
+ const f=fixture({url:'https://example.org/atlas-global-preview/?paper=rpa-0062',reduced:true}),d=f.window.AtlasDebug;d.select('rpa-0013');f.input('ODYSSEY');f.click('#plus');const view=JSON.stringify(d.getState().camera),entries=f.historyStack.length;
+ f.goBack();assert.equal(d.getState().selected,'rpa-0062');assert.equal(new URL(f.location.href).searchParams.get('paper'),'rpa-0062');
+ f.goForward();assert.equal(d.getState().selected,'rpa-0013');assert.equal(new URL(f.location.href).searchParams.get('paper'),'rpa-0013');assert.equal(f.$('#query').value,'ODYSSEY');assert.equal(JSON.stringify(d.getState().camera),view);assert(!f.$('#results').hidden);assert.equal(f.historyStack.length,entries);
+});
+
+test('unowned or malformed popstate reads validated paper from URL and never selects a conflicting history ID',()=>{
+ const f=fixture({url:'https://example.org/atlas-global-preview/?paper=rpa-0062',reduced:true});f.setURL('https://example.org/atlas-global-preview/?paper=rpa-0013&junk=1#secret');assert.equal(f.window.AtlasDebug.getState().selected,'rpa-0013');assert.equal(f.location.hash,'');assert.equal(new URL(f.location.href).searchParams.size,1);
+ f.setURL('https://example.org/atlas-global-preview/?paper=not-allowed');assert.equal(f.window.AtlasDebug.getState().selected,null);assert.equal(f.window.AtlasDebug.getState().matching.length,95);assert.equal(f.location.search,'');
+});
+
+test('reselecting the same paper keeps one URL entry and stores the resulting closed-overlay focus camera',()=>{
+ const f=fixture({reduced:true}),d=f.window.AtlasDebug;d.select('rpa-0062');f.click('#plus');f.input('ODYSSEY');const entries=f.historyStack.length;d.select('rpa-0062');assert.equal(f.historyStack.length,entries);assert(f.$('#results').hidden);assert.equal(d.getState().camera.k,1.15);
+ f.goBack();f.goForward();assert.equal(d.getState().selected,'rpa-0062');assert.equal(d.getState().camera.k,1.15);assert.equal(f.$('#query').value,'ODYSSEY');assert(f.$('#results').hidden);assert.equal(new URL(f.location.href).searchParams.get('paper'),'rpa-0062');
+});
+
+test('non-web environments do not expose a local/private share URL or claim a successful clipboard operation',()=>{
+ const f=fixture({url:'file:///tmp/example-atlas.html?paper=rpa-0062',reduced:true});assert.equal(f.window.AtlasDebug.paperURL('rpa-0062'),null);assert.equal(f.$('#paperLink'),null);assert.match(f.$('#detail').textContent,/无法生成网页分享链接/);assert(!f.$('#detail').textContent.includes('file:///'));assert(!f.$('#detail').textContent.includes('已复制'));
 });
