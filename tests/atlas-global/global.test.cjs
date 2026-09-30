@@ -118,7 +118,7 @@ test('short narrow windows prioritize the readable detail and list rather than s
  assert(f.$('#detail').classList.contains('compact-read'));assert(f.$('#field').classList.contains('reading-mode'));assert.equal(f.$('#field').getAttribute('aria-hidden'),'true');assert.equal(f.$('#field').getAttribute('tabindex'),'-1');
  assert.equal(f.window.AtlasDebug.getLabels().length,0);assert(f.$$('.node').every(n=>n.getAttribute('tabindex')==='-1'));assert.equal(f.$$('.node').length,95);assert.match(f.$('#detail').textContent,/11 条记录/);
  f.input('ODYSSEY');assert.equal(f.$('#results').children.length,1);assert(!f.$('#results').hidden);
- f.click('#overview');assert(!f.$('#field').classList.contains('reading-mode'));assert.equal(f.$('#field').getAttribute('aria-hidden'),'false');assert.equal(f.$('#field').getAttribute('tabindex'),'0');assert(f.$$('.node').every(n=>n.getAttribute('tabindex')==='0'));
+ f.click('#overview');assert(!f.$('#field').classList.contains('reading-mode'));assert.equal(f.$('#field').getAttribute('aria-hidden'),'false');assert.equal(f.$('#field').getAttribute('tabindex'),'0');assert(f.$$('.node').every(n=>n.getAttribute('tabindex')==='-1'));
 });
 
 test('Back and Forward restore paper selection and camera without leaving or rewriting the preview URL',()=>{
@@ -217,4 +217,48 @@ test('the shipped type scale keeps primary controls readable and no supporting C
  assert.match(css,/\.detail p,\.detail \.muted,\.relation \.evidence p\{font-size:18px/);assert.match(css,/\.links,\.evidence,\.relation button,\.relation details\{font-size:16px/);
  assert.match(css,/\.brand small\{font-size:14px/);assert.match(css,/\.detail h2\{font-size:22px/);assert.match(css,/\.detail h2\{font-size:20px/);
  const f=fixture({mobile:true,width:500,height:420,reduced:true});f.window.AtlasDebug.select('rpa-0062');assert(f.$('#brand').classList.contains('compact-hidden'));assert(f.$('#controls').classList.contains('compact-controls'));assert.equal(f.$('#mapNotes').parentElement.id,'filterPanel');
+});
+
+test('brand returns to the real catalog and a first-in-document skip link targets search',()=>{
+ const f=fixture(),html=program.html;assert.equal(f.$('#catalogLink').getAttribute('href'),'../index.html#catalog');assert.match(f.$('#catalogLink').getAttribute('aria-label'),/返回论文目录/);assert.equal(f.$('#skipSearch').getAttribute('href'),'#query');
+ assert(html.indexOf('id="skipSearch"')<html.indexOf('id="catalogLink"'));assert(html.indexOf('id="catalogLink"')<html.indexOf('id="field"'));assert(html.indexOf('id="field"')<html.indexOf('id="query"'));
+ const url=f.location.href,event=f.$('#skipSearch').emit('click');assert(event.defaultPrevented);assert.equal(f.document.activeElement,f.$('#query'));assert.equal(f.location.href,url);
+});
+
+test('the graph has one sequential Tab stop; its 95 nodes and 8 evidence edges do not form a Tab gauntlet',()=>{
+ const f=fixture({reduced:true}),field=f.$('#field');assert.equal(field.getAttribute('tabindex'),'0');assert.equal(f.$$('.node').length,95);assert(f.$$('.node').every(n=>n.getAttribute('tabindex')==='-1'));
+ const isTab=e=>Number(e.getAttribute('tabindex'))>=0&&e.getAttribute('tabindex')!==null||e.tagName==='A'&&e.getAttribute('href')||['INPUT','BUTTON','SELECT'].includes(e.tagName);
+ const ordered=f.$$(' *'.trim()).filter(e=>!e.closest('[hidden]')&&!e.closest('[inert]')&&!e.closest('.filter-panel')&&isTab(e));
+ assert.deepEqual(ordered.slice(0,4).map(e=>e.id),['skipSearch','catalogLink','field','query']);
+ f.window.AtlasDebug.select('rpa-0062');assert.equal(f.$$('.edge').length,8);assert(f.$$('.edge').every(e=>e.getAttribute('tabindex')==='-1'));assert.equal(field.querySelectorAll('[tabindex]').filter(e=>e.getAttribute('tabindex')==='0').length,0);
+});
+
+test('mouse node selection, keyboard reopening and Close focus restoration remain available without Tab-stopping every star',()=>{
+ const f=fixture({reduced:true}),star=f.$('[data-id="rpa-0062"]');star.emit('click');assert.equal(f.window.AtlasDebug.getState().selected,'rpa-0062');f.$('#detail').querySelector('button').emit('click');assert.equal(f.document.activeElement,star);assert.equal(star.getAttribute('tabindex'),'-1');
+ const tab=star.emit('keydown',{key:'Tab'});assert(!tab.defaultPrevented);const enter=star.emit('keydown',{key:'Enter'});assert(enter.defaultPrevented);assert.equal(f.window.AtlasDebug.getState().selected,'rpa-0062');
+ f.$('#skipSearch').emit('click');f.input('ODYSSEY');f.$('#query').emit('keydown',{key:'ArrowDown'});const result=f.$('#results').querySelector('button');assert.equal(f.document.activeElement,result);result.emit('keydown',{key:'Enter'});assert.match(f.$('#detail').textContent,/ODYSSEY/);
+});
+
+test('detail leads with the existing short label while exact title and every method remain in a closed native disclosure',()=>{
+ const f=fixture({reduced:true}),paper=program.data.papers.find(p=>p.id==='rpa-0062');f.window.AtlasDebug.select(paper.id);assert.equal(f.$('#detail').querySelector('h2').textContent,paper.label);
+ const meta=f.$('#detail').querySelector('.paper-meta');assert.equal(meta.tagName,'DETAILS');assert.equal(meta.getAttribute('open'),null);assert.equal(meta.querySelector('.full-paper-title').textContent,paper.title);assert.equal(meta.querySelectorAll('.chip').length,paper.methods.length);assert.match(meta.querySelector('summary').textContent,/完整题名与方法/);
+ const star=f.$('[data-id="rpa-0062"]');assert(star.getAttribute('aria-label').includes(paper.title));
+});
+
+test('the verified-relation entry precedes metadata and jumps directly to a real related paper without changing selection',()=>{
+ for(const options of [{reduced:true,width:1180,height:757},{reduced:true,mobile:true,width:500,height:420}]){
+  const f=fixture(options);f.window.AtlasDebug.select('rpa-0062');const panel=f.$('#detail'),jump=panel.querySelector('.relation-jump'),meta=panel.querySelector('.paper-meta'),first=panel.querySelector('.relation').querySelector('button');
+  assert(jump);assert.match(jump.textContent,/8 篇已核验关联 · 11 条记录/);assert(panel.children.indexOf(jump)<panel.children.indexOf(meta));assert.equal(panel.children.indexOf(jump),3);assert.equal(jump.getAttribute('aria-controls'),'related-rpa-0062');jump.emit('click');assert.equal(f.document.activeElement,first);assert(first.scrolled);assert.equal(f.window.AtlasDebug.getState().selected,'rpa-0062');assert.equal(f.$$('.edge').length,8);assert.equal(f.$$('.evidence').length,12);
+ }
+});
+
+test('unindexed papers retain honest relationship status and do not receive a fabricated relation entry',()=>{
+ const f=fixture({reduced:true});f.window.AtlasDebug.select('rpa-0042');assert.equal(f.$('#detail').querySelector('.relation-jump'),null);assert.match(f.$('#detail').textContent,/关系尚未索引/);assert.equal(f.$$('.edge').length,0);assert(f.$('#detail').querySelector('.full-paper-title'));
+});
+
+test('navigation patch preserves every accepted font declaration and the exact scientific data',()=>{
+ const css=program.html.match(/<style>([\s\S]*?)<\/style>/)[1],cut=css.indexOf('\n/* Navigation patch:');assert(cut>0);const sha=value=>require('node:crypto').createHash('sha256').update(value).digest('hex');
+ assert.equal(sha(css.slice(0,cut)),'3e24ec9eefef0bf4b011cca9fae71b0326c29eace2874ffa12bcc5e37bcd8999');
+ assert.equal(sha(JSON.stringify(css.match(/(?:font-size|font):[^;}]+/g))),'14d92c52a2c6fb7a4b75a5be82f551265e064450a4fc3f34bf65595a0af4c270');
+ assert.equal(sha(program.html.match(/<script id="atlas-data" type="application\/json">([\s\S]*?)<\/script>/)[1]),'1ae66d5bd377cbc623dff58f71221a9fcdd6e902e37eadf850f53e45e8ff114c');
 });

@@ -1,0 +1,10 @@
+const assert=require('node:assert/strict'),fs=require('node:fs');
+const {filterRecords,escapeHTML}=require('../previews/library-topic-preview/preview.js');
+const data=JSON.parse(fs.readFileSync(__dirname+'/../previews/library-topic-preview/topics.json'));
+const defaults={topic:'',q:'',related:true,method:'',morph:'',role:''},find=o=>filterRecords(data.records,{...defaults,...o});
+assert.equal(find({}).length,95);assert.equal(new Set(data.records.map(r=>r.id)).size,95);
+for(const [query,id] of [['UMI','rpa-0064'],['original UMI','rpa-0064'],['UMI legs','rpa-0062'],['legs UMI','rpa-0062'],['  legs   UMI  ','rpa-0062'],['RoboDuet','rpa-0052'],['RMA','rpa-0050'],['Harness','harnessvln'],['Qwen','qwen-robotnav'],['OpenVLA','rpa-0043'],['pi0','rpa-0073'],['π0','rpa-0073'],['DiffPolicy','rpa-0013'],['IsaacGym','rpa-0022'],['PPO','rpa-0046']])assert(find({q:query}).some(r=>r.id===id),query);
+assert.deepEqual(find({q:'UMI legs'}).map(r=>r.id),find({q:'legs UMI'}).map(r=>r.id));assert.equal(find({q:'UMI nonexistentwordzz'}).length,0);assert.equal(find({q:' \t  '}).length,95);
+assert(find({topic:'legged'}).some(r=>r.id==='rpa-0022'));assert(!find({topic:'legged',related:false}).some(r=>r.id==='rpa-0022'));assert(!find({topic:'navigation'}).some(r=>r.id==='rpa-0043'));assert.equal(find({q:'PPO',role:'resource'})[0].id,'rpa-0046');assert(find({q:'UMI',role:'policy'}).some(r=>r.id==='rpa-0064'));assert(find({q:'UMI',role:'resource'}).some(r=>r.id==='rpa-0064'));
+assert.equal(escapeHTML('<img src=x onerror="x"> & \'x\''),'&lt;img src=x onerror=&quot;x&quot;&gt; &amp; &#39;x&#39;');
+console.log('PASS: 95 default records; 15 aliases/multiword queries; query order/whitespace/empty/no-result; topic/resource boundaries; HTML escaping');

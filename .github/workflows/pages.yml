@@ -32,7 +32,8 @@ jobs:
           node tests/test_brief_reader.cjs
           node tests/test_reader_controls.cjs
           node tests/test_reader_sources.cjs
-          python3 scripts/build.py
+          node tests/test_library_topic_preview.cjs
+          python3 scripts/build_previews.py
           node --test tests/test_map_core.cjs tests/test_map_dom.cjs tests/test_catalog_facets.cjs tests/test_atlas_hierarchy.cjs
           node --test tests/atlas-preview/relations.test.cjs tests/test_radar_controls.cjs tests/atlas-global/global.test.cjs
           python3 scripts/validate.py
