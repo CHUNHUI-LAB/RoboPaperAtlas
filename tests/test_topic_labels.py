@@ -1,75 +1,63 @@
-import json,sys,unittest
+import json,sys,unittest,html,re,copy
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT/'scripts'))
-from topic_labels import TOPIC_LABELS,TOPIC_HINTS,paper_topics,primary_topic,topic_counts,FOUNDATION_FACETS
+from topic_labels import TOPIC_LABELS,TOPIC_HINTS,paper_topics,primary_topic,topic_counts,classification,method_tags,resource_kinds,taxonomy_search,validate_projection,validate_overlay,OVERLAY,TAXONOMY
 from build import home,card,details,CATEGORIES
 from reports import load_reports
 from map_page import map_data,map_html
-
-class TopicLabelsTests(unittest.TestCase):
+COUNTS={'navigation':18,'mobile-manipulation':19,'wbc':20,'locomotion':2,'policy-learning':21,'spatial-representations':3,'general-ml':4,'resources':7,'cross-domain':1}
+class ReviewedClassificationTests(unittest.TestCase):
  @classmethod
  def setUpClass(cls):
-  cls.catalog=json.loads((ROOT/'data/catalog.json').read_text())
-  cls.reports=load_reports(ROOT)
- def test_short_labels_stable_ids(self):
-  self.assertEqual(TOPIC_LABELS,{'navigation':'Embodied Nav','wbc':'WBC','vla':'VLA','methods':'Methods','sim-tools':'Sim & Tools','data-benchmarks':'Data & Benchmarks'})
-  self.assertEqual(set(CATEGORIES),set(TOPIC_LABELS))
-  self.assertEqual([v[0] for v in CATEGORIES.values()],list(TOPIC_LABELS.values()))
- def test_home_and_catalog_share_labels_and_bilingual_hints(self):
-  page=home(self.catalog)
+  cls.catalog=json.loads((ROOT/'data/catalog.json').read_text());cls.papers=cls.catalog['papers'];cls.reports=load_reports(ROOT)
+ def test_labels_are_problem_axis_not_old_method_buckets(self):
+  self.assertEqual(TOPIC_LABELS['wbc'],'Motion & Control');self.assertEqual(TOPIC_LABELS['mobile-manipulation'],'Mobile Manip.')
+  self.assertNotIn('vla',TOPIC_LABELS);self.assertNotIn('methods',TOPIC_LABELS);self.assertEqual(set(CATEGORIES),set(COUNTS))
+ def test_all_95_have_one_explicit_primary_and_remain_unchanged(self):
+  before=json.dumps(self.papers,sort_keys=True)
+  self.assertEqual(topic_counts(self.papers),COUNTS);self.assertEqual(sum(COUNTS.values()),95)
+  for p in self.papers:self.assertEqual(len(paper_topics(p)),1);self.assertTrue(classification(p)['sources'])
+  self.assertEqual(json.dumps(self.papers,sort_keys=True),before)
+ def test_no_fallback_for_new_or_mismatched_paper(self):
+  for p in [{'id':'unreviewed-new','category':'wbc'},dict(self.papers[0],category='vla')]:
+   with self.assertRaises(ValueError):primary_topic(p)
+ def test_umi_odyssey_mobile_while_deepwbc_control(self):
+  by_id={p['id']:p for p in self.papers}
+  for pid in ['rpa-0062','rpa-0070']:self.assertEqual(primary_topic(by_id[pid]),'mobile-manipulation')
+  self.assertEqual(primary_topic(by_id['rpa-0012']),'wbc');self.assertIn('WBC',method_tags(by_id['rpa-0062']))
+ def test_crossdomain_resources_not_forced_into_nav(self):
+  by_id={p['id']:p for p in self.papers};self.assertEqual(primary_topic(by_id['holoagent-0']),'cross-domain');self.assertEqual(primary_topic(by_id['savva2019habitat']),'resources')
+ def test_home_cards_details_map_agree(self):
+  page=home(self.catalog);mapped=map_data(self.catalog,report_records=self.reports)
   for key,label in TOPIC_LABELS.items():
-   self.assertIn('data-atlas-topic="'+key+'"',page)
-   self.assertIn('title="'+TOPIC_HINTS[key].replace('&','&amp;')+'"',page)
-   self.assertIn('>'+label+'<small>',page)
-   self.assertIn('<span>'+label+'</span><b>',page)
- def test_map_projection_keeps_full_names_and_chinese(self):
-  data=map_data(self.catalog,report_records=self.reports)
-  for c in data['categories']:
-   self.assertEqual(c['label'],TOPIC_LABELS[c['id']]);self.assertTrue(c['english']);self.assertTrue(c['chinese'])
- def test_detail_preserves_full_topic_meaning(self):
-  for key in TOPIC_LABELS:
-   paper=next(p for p in self.catalog['papers'] if primary_topic(p)==key)
-   page=details(paper)
-   self.assertIn('class="detail-topic-description"',page)
-   self.assertIn(TOPIC_HINTS[key].replace('&','&amp;'),page)
- def test_galaxy_has_real_stars_no_grid_or_fake_relations(self):
-  page=map_html(self.catalog,report_records=self.reports)
-  self.assertIn('map-nebula',page);self.assertIn('map-star-glow',page);self.assertNotIn('map-dot-grid',page)
-  self.assertIn('星云辉光仅为背景',page);self.assertIn('不是引用或方法继承',page)
-  self.assertEqual(page.count('data-map-paper='),95)
-
-class PresentationFacetIntegrityTests(unittest.TestCase):
- def setUp(self):self.papers=json.loads((ROOT/'data/catalog.json').read_text())['papers']
- def test_all_foundation_records_have_explicit_mapping_and_no_extras(self):
-  self.assertEqual({p['id'] for p in self.papers if p['category']=='foundations'},set(FOUNDATION_FACETS))
-  self.assertEqual(len(FOUNDATION_FACETS),31)
- def test_original_categories_and_tags_are_unchanged_by_facets(self):
-  before=json.dumps(self.papers,ensure_ascii=False,sort_keys=True)
-  for p in self.papers:self.assertTrue(paper_topics(p));self.assertIn(primary_topic(p),TOPIC_LABELS)
-  self.assertEqual(json.dumps(self.papers,ensure_ascii=False,sort_keys=True),before)
- def test_overlap_counts_match_all_surfaces_without_extra_stars(self):
-  self.assertEqual(topic_counts(self.papers),{'navigation':26,'wbc':31,'vla':17,'methods':17,'sim-tools':8,'data-benchmarks':13})
-  self.assertEqual({t:sum(primary_topic(p)==t for p in self.papers)for t in TOPIC_LABELS},{'navigation':16,'wbc':31,'vla':17,'methods':13,'sim-tools':7,'data-benchmarks':11})
- def test_ambiguous_records_keep_multiple_facets(self):
-  expected={'rpa-0017':{'sim-tools','data-benchmarks'},'rpa-0044':{'data-benchmarks','methods'},'rpa-0053':{'data-benchmarks','sim-tools'},'savva2019habitat':{'sim-tools','navigation','data-benchmarks'},'krantz2020vlnce':{'data-benchmarks','navigation','methods'},'krantz2023ivln':{'data-benchmarks','navigation','methods'}}
-  for pid,facets in expected.items():self.assertEqual(set(FOUNDATION_FACETS[pid]),facets)
- def test_unknown_new_foundation_record_requires_explicit_review(self):
-  with self.assertRaises(ValueError):paper_topics({'id':'unreviewed-new','category':'foundations'})
-
- def test_frontier_keeps_query_tags_distinct_from_display_facets(self):
+   self.assertIn('data-atlas-topic="'+key+'"',page);self.assertIn('<span>'+html.escape(label)+'</span><b>'+str(COUNTS[key]),page)
+  for p,m in zip(self.papers,mapped['papers']):
+   self.assertEqual(m['mapTopic'],primary_topic(p));self.assertIn('data-topics="'+m['mapTopic']+'"',card(p))
+   d=details(p);self.assertIn('研究问题与分类证据',d);self.assertIn(html.escape(classification(p)['problemLabel']),d)
+ def test_evidence_does_not_promote_bibliography_or_reading(self):
+  self.assertEqual(sum(p['citation_verified'] for p in self.papers),22);self.assertEqual(sum(classification(p)['needsReview'] for p in self.papers),4)
+  self.assertEqual(sum(s['status']=='imported' for p in self.papers for s in p['stages'].values()),3)
+  for p in self.papers:
+   self.assertNotEqual(classification(p)['evidenceScope'],'catalog_title');self.assertIn('分类核查不代表全文精读',details(p))
+ def test_method_resource_axes_and_search_text(self):
+  page=home(self.catalog);self.assertIn('id="method-filter"',page);self.assertIn('id="resource-filter"',page)
+  for p in self.papers:
+   for t in method_tags(p):self.assertIn(t,taxonomy_search(p))
+ def test_projection_rejects_unsafe_urls_and_method_separators(self):
+  for field,value in [('sources',['javascript:alert(1)']),('resourceKinds',['unknown'])]:
+   x=copy.deepcopy(TAXONOMY);next(iter(x['placements'].values()))[field]=value
+   with self.assertRaises(ValueError):validate_projection(x)
+  x=copy.deepcopy(TAXONOMY);next(v for v in x['placements'].values() if v['methodTags'])['methodTags'][0]['label']='a|b'
+  with self.assertRaises(ValueError):validate_projection(x)
+ def test_overlay_unknown_fields_and_stale_catalog_fail_closed(self):
+  for mutate in [lambda x:x.update(private_note='no'),lambda x:x['records'][0].update(private_note='no'),lambda x:x.update(catalog_sha256='0'*64),lambda x:x['records'][0]['method_tags'][0].update(private_note='no')]:
+   x=copy.deepcopy(OVERLAY);mutate(x)
+   with self.assertRaises(ValueError):validate_overlay(x,self.papers)
+ def test_frontier_discovery_tags_are_separate(self):
   from frontier_page import render
   from build import shell,link
-  feed=json.loads((ROOT/'data/frontier.json').read_text());page=render(feed,{'papers':self.papers},shell,link)
-  self.assertIn('候选查询标签',page)
-  self.assertIn('与论文目录的六个展示主题分开',page)
-  self.assertIn('value="whole_body_control"',page)
-  self.assertIn('value="navigation_agents"',page)
-  self.assertNotIn('value="sim-tools"',page)
-
- def test_preserved_preview_does_not_deny_live_umi_reports(self):
-  from design_preview import render
-  from build import shell,card,asset_url
-  page=render({'papers':self.papers},shell,card,asset_url)
-  self.assertIn('HarnessVLN 示例的三个阶段均未导入',page)
-  self.assertIn('UMI-on-Legs 已有三阶段报告',page)
-  self.assertNotIn('阅读报告仍未导入',page)
+  page=render(json.loads((ROOT/'data/frontier.json').read_text()),self.catalog,shell,link)
+  self.assertIn('与 Library 中的研究问题分类分开',page);self.assertIn('value="whole_body_control"',page)
+ def test_real_map_hierarchy_preserves_95_papers(self):
+  data=map_data(self.catalog,report_records=self.reports);self.assertEqual(len(data['papers']),95)
+  page=map_html(self.catalog,report_records=self.reports);self.assertIn('Atlas',page);self.assertIn('atlas-systems',page);self.assertEqual(page.count('data-map-paper='),95)

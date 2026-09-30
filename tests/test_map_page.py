@@ -53,7 +53,7 @@ class MapPageTests(unittest.TestCase):
         data=copy.deepcopy(self.catalog);data['papers'][0]['stages']['stage1']={'status':'complete','artifacts':[]}
         with self.assertRaises(ValueError):map_data(data,report_records=self.reports)
     def test_public_projection_allowlist(self):
-        keys={'id','title','shortName','authors','category','mapTopic','topics','tags','year','yearBasis','originalRecord','sourceChecked','hasVerifiedOverlay','verificationScope','summary','paperUrl','pdfUrl','pdfKind','pdfNote','projectUrl','codeUrls','codeNote','detailUrl','catalogUrl','stages'}
+        keys={'id','title','shortName','authors','category','mapTopic','topics','classification','tags','year','yearBasis','originalRecord','sourceChecked','hasVerifiedOverlay','verificationScope','summary','paperUrl','pdfUrl','pdfKind','pdfNote','projectUrl','codeUrls','codeNote','detailUrl','catalogUrl','stages'}
         for paper in self.data['papers']:self.assertEqual(set(paper),keys)
     def test_html_fallback_and_accessibility(self):
         self.assertEqual(self.html.count('data-map-paper='),95)
@@ -74,7 +74,8 @@ class MapPageTests(unittest.TestCase):
         data=map_data(self.catalog,base='../',report_records=self.reports)
         self.assertTrue(all(p['detailUrl']==f'../papers/{p["id"]}/index.html' for p in data['papers']))
         self.assertNotIn('href="/papers/',self.html)
-        self.assertTrue(all(p['catalogUrl']==f'../index.html?topic={p["mapTopic"]}#catalog' for p in data['papers']))
+        from urllib.parse import quote
+        self.assertTrue(all(p['catalogUrl']==f'../index.html?q={quote(p["title"], safe="")}#catalog' for p in data['papers']))
     def test_renderer_has_explicit_truth_legend(self):
         for text in ['不是引用或方法继承','不代表学术影响力','73 条原始书目','22 条增补记录','0','阅读状态']:
             self.assertIn(text,self.html)

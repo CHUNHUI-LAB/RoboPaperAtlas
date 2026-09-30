@@ -18,8 +18,8 @@ test('related-node selection and Back restore correct panel and URL',()=>{
  const f=fixture();pick(f,'Deep Whole-Body Control');const before=selected(f);f.click('[data-related-paper]');f.step();assert.notEqual(selected(f),before);f.goBack();assert.equal(selected(f),before);assert(f.location.search.includes('rpa-0012'));
 });
 test('category single-click counts, global search resets category, empty results recover',()=>{
- const f=fixture();for(const [topic,n]of[['navigation',26],['wbc',31],['vla',17],['methods',17],['sim-tools',8],['data-benchmarks',13],['all',95]]){f.click(`[data-map-topic="${topic}"]`);f.step();assert.equal(f.$$('.map-node').filter(n=>!n.hidden).length,n)}
- f.click('[data-map-topic="wbc"]');pick(f,'HarnessVLN');assert.match(selected(f),/HarnessVLN/);assert.equal(f.$('[data-map-topic="all"]').getAttribute('aria-pressed'),'true');
+ const f=fixture();for(const [topic,n]of[['navigation',18],['wbc',20],['mobile-manipulation',19],['policy-learning',21],['spatial-representations',3],['locomotion',2],['general-ml',4],['resources',7],['cross-domain',1],['all',95]]){f.click(`[data-map-topic="${topic}"]`);f.step();assert.equal(f.$$('.map-node').filter(n=>!n.hidden).length,n)}
+ f.click('[data-map-topic="wbc"]');pick(f,'HarnessVLN');assert.match(selected(f),/HarnessVLN/);assert.equal(f.$('[data-map-topic="navigation"]').getAttribute('aria-pressed'),'true');
  f.input('q_not_present');f.step();assert.equal(f.$$('.map-node').filter(n=>!n.hidden).length,0);assert.equal(f.$('.map-empty').hidden,false);f.click('[data-map-reset]');f.step();assert.equal(f.$$('.map-node').filter(n=>!n.hidden).length,95);
 });
 test('rapid selection-close-search and map-list switches leave no animations or stale panel',()=>{
@@ -50,7 +50,7 @@ test('mobile defaults to full list and can opt into map without changing records
  const camera=f.$('.map-world').getAttribute('transform');f.$('#map-canvas').emit('pointerdown',{pointerType:'touch',button:0,pointerId:2,clientX:100,clientY:100});f.$('#map-canvas').emit('pointermove',{pointerId:2,clientX:130,clientY:130});assert.equal(f.$('.map-world').getAttribute('transform'),camera);
 });
 test('unknown query params and cross-category links cannot leave an invisible selected node',()=>{
- const f=fixture({url:'https://example.org/RoboPaperAtlas/map/index.html?paper=rpa-0012&topic=navigation&q=not_present'});assert.match(selected(f),/Deep Whole-Body/);assert.equal(f.$('[data-map-topic="all"]').getAttribute('aria-pressed'),'true');assert.equal(f.$('#map-search').value,'');
+ const f=fixture({url:'https://example.org/RoboPaperAtlas/map/index.html?paper=rpa-0012&topic=navigation&q=not_present'});assert.match(selected(f),/Deep Whole-Body/);assert.equal(f.$('[data-map-topic="wbc"]').getAttribute('aria-pressed'),'true');assert.equal(f.$('#map-search').value,'');
  f.setURL('?paper=not_real&topic=bad&view=bad');assert.equal(selected(f),'');assert.equal(f.$('#paper-map').dataset.view,'map');assert.equal(f.$$('.map-node').filter(n=>!n.hidden).length,95);
 });
 
@@ -65,11 +65,9 @@ test('only the approved UMI-on-Legs pilot exposes three report links',()=>{
  pick(f,'Universal Manipulation Interface: In-The-Wild');assert(f.$('.map-stage-list').children.every(b=>b.disabled===true));
 });
 
-test('galaxy theme keeps exactly95real stars and English topic labels with bilingual context',()=>{
- const f=fixture();assert.equal(f.$$('.map-node').length,95);assert.equal(f.$$('.map-node-aura').length,95);assert.equal(f.$$('.map-node-dot').length,95);assert.equal(f.$('.map-regions').children.length,6);
- for(const text of ['Embodied Nav','WBC','VLA','Methods','Sim & Tools','Data & Benchmarks'])assert(f.$$('.map-region-title').some(el=>el.textContent===text));
- assert.match(f.$('[data-map-topic="navigation"]').getAttribute('title'),/Embodied Navigation.*具身导航/);
- assert(f.$$('.map-region-shape').every(el=>el.getAttribute('transform').startsWith('rotate(')));
+test('galaxy has95real paper stars and9distinct labeled navigation systems',()=>{
+ const f=fixture();assert.equal(f.$$('.map-node').length,95);assert.equal(f.$$('.map-node-aura').length,95);assert.equal(f.$$('.map-node-dot').length,95);assert.equal(f.$$('.atlas-system').length,9);
+ for(const text of ['Embodied Nav','Motion & Control','Mobile Manip.','Policy Learning','Resources','Cross-domain'])assert(f.$$('.atlas-navigation-label').some(el=>el.textContent===text));
  assert.equal(f.$('#map-dot-grid'),null);assert.equal(f.$('.map-edges').children.length,0);
 });
 test('invisible star targets stay44px across zoom while paper marks stay equal-sized',()=>{
@@ -81,7 +79,7 @@ test('invisible star targets stay44px across zoom while paper marks stay equal-s
  }
 });
 test('overlapping44px targets select nearest actual star, independent of SVG paint order',()=>{
- const f=fixture(),svg=f.$('#map-canvas');const world=f.$('.map-world').getAttribute('transform').match(/translate\(([-\d.]+) ([-\d.]+)\) scale\(([-\d.]+)\)/);
+ const f=fixture(),svg=f.$('#map-canvas');f.click('[data-map-topic="wbc"]');f.step();const world=f.$('.map-world').getAttribute('transform').match(/translate\(([-\d.]+) ([-\d.]+)\) scale\(([-\d.]+)\)/);
  const node=f.$('[data-paper-id="rpa-0012"]'),point=node.getAttribute('transform').match(/translate\(([-\d.]+) ([-\d.]+)\)/);
  const clientX=Number(world[1])+Number(point[1])*Number(world[3]),clientY=Number(world[2])+Number(point[2])*Number(world[3]);
  // The simulated SVG hit target is intentionally the wrong star, as can occur with overlapping hit circles.
@@ -96,7 +94,7 @@ test('closing or replacing selection restores equal default star sizes immediate
 });
 
 test('overlapping hit targets refresh nearest-star tooltip on pointermove and clear in empty space',()=>{
- const f=fixture(),svg=f.$('#map-canvas');f.click('[data-camera="out"]');f.step();
+ const f=fixture(),svg=f.$('#map-canvas');f.click('[data-map-topic="navigation"]');f.step();f.click('[data-camera="out"]');f.step();
  const world=f.$('.map-world').getAttribute('transform').match(/translate\(([-\d.]+) ([-\d.]+)\) scale\(([-\d.]+)\)/);
  const point=id=>{const el=f.$(`[data-paper-id="${id}"]`),p=el.getAttribute('transform').match(/translate\(([-\d.]+) ([-\d.]+)\)/);return{clientX:Number(world[1])+Number(p[1])*Number(world[3]),clientY:Number(world[2])+Number(p[2])*Number(world[3])}};
  const oldTarget=f.$('[data-paper-id="agenticnav-tool-harness"]');oldTarget.emit('pointerover',{pointerType:'mouse',...point('agenticnav-tool-harness')});assert.match(f.$('.map-hover-card').textContent,/AgenticNav/);

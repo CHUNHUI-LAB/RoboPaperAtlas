@@ -34,7 +34,7 @@
    y:204 + (x * Math.sin(roll) + py * Math.cos(roll))*perspective,
    radius:star.size*(.9+depth/650), opacity:star.light*(.77+depth/950)*(.90+.10*Math.sin(seconds*.52+star.phase)), color:star.color};
  }
- const regions=[{key:'navigation',x:188,y:130,rx:73,ry:63},{key:'wbc',x:327,y:117,rx:73,ry:63},{key:'vla',x:397,y:218,rx:73,ry:63},{key:'methods',x:339,y:295,rx:73,ry:63},{key:'sim-tools',x:213,y:307,rx:73,ry:63},{key:'data-benchmarks',x:150,y:220,rx:73,ry:63}];
+ const regions=[{key:'navigation',x:164,y:176,rx:57,ry:51},{key:'mobile-manipulation',x:198,y:104,rx:57,ry:51},{key:'wbc',x:281,y:97,rx:57,ry:51},{key:'locomotion',x:365,y:139,rx:57,ry:51},{key:'policy-learning',x:396,y:217,rx:57,ry:51},{key:'spatial-representations',x:352,y:294,rx:57,ry:51},{key:'general-ml',x:264,y:315,rx:57,ry:51},{key:'resources',x:183,y:271,rx:57,ry:51},{key:'cross-domain',x:279,y:204,rx:47,ry:43}];
  function focusProjection(p,weights){
   let x=p.x,y=p.y,local=0,total=0;
   weights.forEach((weight,i)=>{const r=regions[i],dx=p.x-r.x,dy=p.y-r.y,g=Math.exp(-.5*((dx/r.rx)**2+(dy/r.ry)**2));

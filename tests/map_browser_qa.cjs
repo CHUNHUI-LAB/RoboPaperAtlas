@@ -30,7 +30,7 @@ const pause = page => page.waitForTimeout(430);
     assert.match(await page.locator('#map-selected-title').innerText(), /Deep Whole-Body Control/);
     assert.equal(await page.locator('.map-stage-list button:disabled').count(), 3);
     assert.equal(await page.locator('.map-resource-links a', { hasText: '出版方 PDF' }).getAttribute('href'), 'https://proceedings.mlr.press/v205/fu23a/fu23a.pdf');
-    assert.ok(await page.locator('.map-edges path').count() <= 8);
+    assert.ok(await page.locator('.map-edges path').count() <= 6);
     assert.match(page.url(), /paper=rpa-0012/);
     await page.screenshot({ path: path.join(output, 'desktop-selected.png'), fullPage: true });
     const beforeRelated = await page.locator('#map-selected-title').innerText();
@@ -44,7 +44,7 @@ const pause = page => page.waitForTimeout(430);
     assert.ok(!page.url().includes('paper='));
 
     // Every category is reachable in one click, and unknown query has a usable reset.
-    for (const [topic, count] of [['navigation',26], ['wbc',31], ['vla',17], ['methods',17], ['sim-tools',8], ['data-benchmarks',13], ['all',95]]) {
+    for (const [topic, count] of [['navigation',18], ['wbc',20], ['mobile-manipulation',19], ['policy-learning',21], ['spatial-representations',3], ['locomotion',2], ['general-ml',4], ['resources',7], ['cross-domain',1], ['all',95]]) {
       await page.locator(`[data-map-topic="${topic}"]`).click(); await pause(page);
       assert.equal(await page.locator('.map-node:visible').count(), count);
     }
@@ -76,6 +76,7 @@ const pause = page => page.waitForTimeout(430);
     assert.equal(await page.locator('.map-world').getAttribute('transform'),dragged);
     await page.locator('[data-camera="fit"]').click(); await pause(page);
     // Keyboard node selection, Escape restore, and map zoom controls.
+    await page.locator('[data-map-topic="wbc"]').click(); await pause(page);
     await page.locator('.map-node[tabindex="0"]').focus();
     await page.keyboard.press('ArrowRight'); await page.keyboard.press('Enter');
     assert.equal(await page.locator('.map-panel-selected').isVisible(),true);

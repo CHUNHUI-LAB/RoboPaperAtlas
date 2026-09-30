@@ -5,12 +5,10 @@ Integration: map_html(catalog, '../', hashed_css_url, hashed_js_url) returns a
 """
 import html
 import json
+from urllib.parse import quote
 from validate import validate_catalog
+from atlas_taxonomy import atlas_projection
 
-from topic_labels import TOPIC_LABELS, TOPIC_FULL_NAMES, TOPIC_CHINESE, TOPIC_HINTS, paper_topics, primary_topic, topic_counts
-
-TOPIC_COLORS = {'navigation': '#9fdcc5', 'wbc': '#c8bbf1', 'vla': '#a6c9ef', 'methods': '#a9bfdc', 'sim-tools': '#d8c6ed', 'data-benchmarks': '#e8d5b2'}
-CATEGORIES = {key: (TOPIC_LABELS[key], TOPIC_FULL_NAMES[key], TOPIC_COLORS[key]) for key in TOPIC_LABELS}
 
 
 def esc(value):
@@ -20,6 +18,7 @@ def esc(value):
 def map_data(catalog, base='../',report_records=()):
     """Explicit public projection: no private provenance or speculative relations."""
     validate_catalog(catalog,report_records)
+    taxonomy = atlas_projection(catalog['papers'])
     papers = []
     for p in catalog['papers']:
         overlay = p.get('verified_overlay') or {}
@@ -28,7 +27,8 @@ def map_data(catalog, base='../',report_records=()):
             'id': p['id'], 'title': overlay.get('title') or p['title'],
             'shortName': p.get('short_name') or '',
             'authors': ', '.join(authors) if isinstance(authors, list) else authors,
-            'category': p['category'], 'mapTopic': primary_topic(p), 'topics': list(paper_topics(p)), 'tags': p.get('tags') or [],
+            'category': p['category'], 'mapTopic': taxonomy['placements'][p['id']]['direction'],
+            'topics': [taxonomy['placements'][p['id']]['direction']], 'classification': taxonomy['placements'][p['id']], 'tags': p.get('tags') or [],
             'year': p.get('bibliographic_year'), 'yearBasis': p.get('year_basis'),
             'originalRecord': bool(p.get('original_metadata')),
             'sourceChecked': p['citation_verified'],
@@ -40,38 +40,40 @@ def map_data(catalog, base='../',report_records=()):
             'projectUrl': p.get('project_url'), 'codeUrls': p.get('code_urls') or [],
             'codeNote': p.get('code_note') or '',
             'detailUrl': f'{base}papers/{p["id"]}/index.html',
-            'catalogUrl': f'{base}index.html?topic={primary_topic(p)}#catalog',
+            'catalogUrl': f'{base}index.html?q={quote(overlay.get("title") or p["title"], safe="")}#catalog',
             'stages': {key: {'status': value['status'], 'artifacts': [{'url':base+a['path'],'version':a['version']} for a in value['artifacts']]}
                        for key, value in p['stages'].items()},
         })
     return {'schemaVersion': 1, 'updatedAt': catalog['updated_at'],
             'relationMode': 'topic-only', 'verifiedRelations': [],
-            'categories': [{'id': key, 'label': label, 'english': english, 'chinese': TOPIC_CHINESE[key], 'color': color}
-                           for key, (label, english, color) in CATEGORIES.items()],
+            'categories': taxonomy['directions'], 'problems': taxonomy['problems'],
+            'classificationScope': taxonomy['scope'], 'classificationStatus': taxonomy['status'],
             'papers': papers}
 
 
 def map_html(catalog, base='../', css='../assets/paper-map.css', js='../assets/paper-map.js',report_records=()):
     data = map_data(catalog, base,report_records)
-    counts = topic_counts(catalog['papers'])
-    topics = ''.join(f'<button type="button" data-map-topic="{key}" aria-pressed="false" title="{esc(TOPIC_HINTS[key])}" aria-label="{esc(TOPIC_HINTS[key])}" style="--topic:{color}"><i aria-hidden="true"></i>{esc(label)}<span>{counts[key]}</span></button>' for key, (label, _, color) in CATEGORIES.items())
-    rows = ''.join(f'<li data-map-row="{esc(p["id"])}"><a href="{esc(p["detailUrl"])}" data-map-paper="{esc(p["id"])}"><span class="map-list-dot" style="--topic:{CATEGORIES[p["mapTopic"]][2]}" aria-hidden="true"></span><span class="map-list-copy" title="{esc(TOPIC_HINTS[p["mapTopic"]])}"><strong>{esc(p["title"])}</strong><small>{esc(' / '.join(CATEGORIES[t][0] for t in p['topics']))} · {esc(p["year"] or "年份待核验")} · {"原始书目 · 初步分类" if p["originalRecord"] else "增补书目 · 元数据编目"}</small></span><span aria-hidden="true">↗</span></a></li>' for p in data['papers'])
+    categories = {c['id']: c for c in data['categories']}
+    counts = {key: sum(p['mapTopic'] == key for p in data['papers']) for key in categories}
+    topics = ''.join(f'<button type="button" data-map-topic="{key}" aria-pressed="false" title="{esc(c["english"])}" style="--topic:{c["color"]}"><i aria-hidden="true"></i>{esc(c["label"])}<span>{counts[key]}</span></button>' for key,c in categories.items())
+    rows = ''.join(f'<li data-map-row="{esc(p["id"])}"><a href="{esc(p["detailUrl"])}" data-map-paper="{esc(p["id"])}"><span class="map-list-dot" style="--topic:{categories[p["mapTopic"]]["color"]}" aria-hidden="true"></span><span class="map-list-copy"><strong>{esc(p["title"])}</strong><small>{esc(categories[p["mapTopic"]]["label"])} / {esc(p["classification"]["problemLabel"])} · {esc(p["year"] or "年份待核验")} · {"分类暂定" if p["classification"]["needsReview"] else "主来源支持的编目判断"}</small></span><span aria-hidden="true">↗</span></a></li>' for p in data['papers'])
     payload = json.dumps(data, ensure_ascii=False, separators=(',', ':')).replace('<', '\\u003c').replace('>', '\\u003e').replace('&', '\\u0026')
     return f'''<link rel="stylesheet" href="{esc(css)}"><script src="{esc(js)}" defer></script>
 <main id="main" class="paper-map-page">
-  <section class="map-heading"><div><p class="eyebrow">THE PAPER ATLAS / EXPLORE THE CONSTELLATION</p><h1>论文地图</h1></div><p>{len(data['papers'])} 个星点，{len(data['papers'])} 篇真实论文。<br>沿研究主题探索，回到原文与证据。</p></section>
+  <section class="map-heading"><div><p class="eyebrow">ROBO PAPER ATLAS / EXPLORE THE GALAXY</p><h1>Atlas</h1></div><p>{len(data['papers'])} 个星点，{len(data['papers'])} 篇真实论文。<br>从研究方向进入问题，再抵达论文与证据。</p></section>
   <section class="paper-map" id="paper-map" aria-label="论文主题地图" data-view="list">
     <div class="map-toolbar" hidden>
       <div class="map-search-wrap"><label for="map-search" class="sr-only">搜索地图中的论文</label><span aria-hidden="true">⌕</span><input id="map-search" type="search" role="combobox" autocomplete="off" aria-autocomplete="list" aria-controls="map-suggestions" aria-expanded="false" placeholder="搜索标题、作者、标签…"><button type="button" id="map-search-clear" aria-label="清空地图搜索" hidden>×</button><ul id="map-suggestions" role="listbox" aria-label="匹配的论文" hidden></ul></div>
       <p id="map-result-count" role="status" aria-live="polite">{len(data['papers'])} 篇论文</p>
       <div class="map-view-toggle" role="group" aria-label="浏览方式"><button type="button" data-map-view="map" aria-pressed="false"><span aria-hidden="true">⊙</span> 地图</button><button type="button" data-map-view="list" aria-pressed="true"><span aria-hidden="true">☷</span> 列表</button></div>
     </div>
-    <div class="map-topics" aria-label="主题筛选" hidden><button type="button" data-map-topic="all" aria-pressed="true">全部主题<span>{len(data['papers'])}</span></button>{topics}</div>
+    <div class="map-topics" aria-label="研究方向与独立资源区域" hidden><button type="button" data-map-topic="all" aria-pressed="true">Galaxy<span>{len(data['papers'])}</span></button>{topics}</div>
+    <div class="atlas-navigation" hidden><nav id="atlas-breadcrumbs" aria-label="Atlas location"></nav><button type="button" id="atlas-back" disabled>← Back</button><p id="atlas-level-description" role="status" aria-live="polite"></p></div>
     <div class="map-workspace">
       <div class="map-explore">
         <div class="map-canvas-wrap" hidden>
-          <svg id="map-canvas" role="group" aria-label="论文主题地图。方向键切换论文，Enter 查看，加减键缩放，Home 显示全部。" aria-describedby="map-help map-legend" tabindex="0"><defs><radialGradient id="map-nebula"><stop offset="0" stop-color="#b5cae0" stop-opacity=".16"/><stop offset=".4" stop-color="#7995b3" stop-opacity=".07"/><stop offset="1" stop-color="#597086" stop-opacity="0"/></radialGradient><radialGradient id="map-star-glow"><stop offset="0" stop-color="#f1f8ff" stop-opacity=".8"/><stop offset=".24" stop-color="#d8e8ff" stop-opacity=".22"/><stop offset="1" stop-color="#acc8f0" stop-opacity="0"/></radialGradient></defs><g class="map-world"><g class="map-regions" aria-hidden="true"></g><g class="map-edges" aria-hidden="true"></g><g class="map-nodes"></g></g></svg>
-          <div class="map-canvas-top"><span><i aria-hidden="true"></i> PAPER CONSTELLATION</span><span>{len(data['papers'])} PAPERS / {len(data['categories'])} TOPICS</span></div>
+          <svg id="map-canvas" role="group" aria-label="论文主题地图。方向键切换论文，Enter 查看，加减键缩放，Home 显示全部。" aria-describedby="map-help map-legend" tabindex="0"><defs><radialGradient id="map-nebula"><stop offset="0" stop-color="#b5cae0" stop-opacity=".16"/><stop offset=".4" stop-color="#7995b3" stop-opacity=".07"/><stop offset="1" stop-color="#597086" stop-opacity="0"/></radialGradient><radialGradient id="map-star-glow"><stop offset="0" stop-color="#f1f8ff" stop-opacity=".8"/><stop offset=".24" stop-color="#d8e8ff" stop-opacity=".22"/><stop offset="1" stop-color="#acc8f0" stop-opacity="0"/></radialGradient></defs><g class="map-world"><g class="map-regions" aria-hidden="true"></g><g class="map-edges" aria-hidden="true"></g><g class="map-nodes"></g><g class="atlas-systems"></g><g class="atlas-problems"></g></g></svg>
+          <div class="map-canvas-top"><span><i aria-hidden="true"></i> RESEARCH GALAXY</span><span>{len(data['papers'])} PAPERS / EXPLORE</span></div>
           <div class="map-controls" role="group" aria-label="地图缩放"><button type="button" data-camera="in" aria-label="放大地图">+</button><button type="button" data-camera="out" aria-label="缩小地图">−</button><span id="map-zoom" aria-live="off">100%</span><button type="button" data-camera="fit" aria-label="显示当前筛选的全部论文">全览 <span aria-hidden="true">↗</span></button></div>
           <p id="map-help" class="map-help">拖动平移 · Ctrl / ⌘ + 滚轮缩放 · 方向键选择</p>
           <p class="map-empty" hidden>没有匹配论文。<br><button type="button" data-map-reset>清空筛选</button></p>
@@ -80,11 +82,11 @@ def map_html(catalog, base='../', css='../assets/paper-map.css', js='../assets/p
         <div class="map-list-wrap"><p class="map-list-intro">按主题浏览全部书目。选择论文查看资源，也可直接进入完整详情。</p><ul class="map-paper-list">{rows}</ul><p class="map-list-empty" hidden>没有匹配论文。<button type="button" data-map-reset>清空筛选</button></p></div>
       </div>
       <aside class="map-sidebar" aria-label="论文详情与资源">
-        <div class="map-panel-welcome"><span class="map-welcome-symbol" aria-hidden="true">✦</span><p class="eyebrow">A PLACE TO START</p><h2>每一颗星，<br>都是一篇论文。</h2><p>选择星点，查看论文、PDF、代码与阅读状态。以共享标签为线索，发现下一篇。</p><div class="map-welcome-facts"><div><strong>{len(data['papers'])}</strong><span>已收录论文</span></div><div><strong>{len(data['categories']):02d}</strong><span>目录主题</span></div><div><strong>00</strong><span>已核验引用关系</span></div></div><p class="map-truth-note">展示分组依据已有题名、标签与编目说明，属于可交叉的导航标签；原始分类与来源保留。73 条原始书目仍待核验，22 条增补记录不等于精读或复现。</p><a class="map-catalog-link" href="{esc(base)}index.html#catalog">回到完整目录 <span aria-hidden="true">↗</span></a></div>
+        <div class="map-panel-welcome"><span class="map-welcome-symbol" aria-hidden="true">✦</span><p class="eyebrow">A PLACE TO START</p><h2>A galaxy of<br>research problems.</h2><p>选择彩色星系进入研究方向，再展开问题子系统。每颗论文星都通向原文、代码与阅读状态。</p><div class="map-welcome-facts"><div><strong>{len(data['papers'])}</strong><span>已收录论文</span></div><div><strong>{len(data['categories']):02d}</strong><span>导航区域</span></div><div><strong>00</strong><span>已核验引用关系</span></div></div><p class="map-truth-note">研究方向、方法标签和资源类型分开展示。分类属于编辑判断；题名暂定与主来源核验范围会逐篇说明，不等于全文精读或复现。73 条原始书目与 22 条增补记录的来源状态保留。</p><a class="map-catalog-link" href="{esc(base)}index.html#catalog">回到完整目录 <span aria-hidden="true">↗</span></a></div>
         <div class="map-panel-selected" hidden><div class="map-panel-top"><span>论文与资源</span><button type="button" id="map-panel-close" aria-label="关闭论文详情">关闭 ×</button></div><div id="map-panel-content"></div></div>
       </aside>
     </div>
-    <div id="map-legend" class="map-legend"><p><span class="map-legend-node" aria-hidden="true"></span> 同尺寸星点代表论文，颜色代表主展示主题</p><p><span class="map-legend-edge" aria-hidden="true"></span> 虚线 = 共享标签的主题相近（推断），不是引用或方法继承</p><p>交叉标签可重复计数；每篇论文只绘一颗星。星云辉光仅为背景；位置与距离用于导航，不代表学术影响力或测得的相似度</p></div>
+    <div id="map-legend" class="map-legend"><p><span class="map-legend-node" aria-hidden="true"></span> 小星点代表论文，大光点为层级入口；颜色区分研究方向。Resources 与 Cross-domain 单列</p><p><span class="map-legend-edge" aria-hidden="true"></span> 虚线 = 共享标签的主题相近（推断），不是引用或方法继承</p><p>每篇论文只有一个主位置；方法与资源标签可交叉。星云辉光仅为背景；轨道与距离仅用于层级导航，不代表引用、时间，不代表学术影响力或测得的相似度</p></div>
     <p class="map-access-note">不便操作地图？列表提供同一组论文与全部资源入口。普通滚轮保持页面滚动；移动端默认列表，地图可选。</p>
     <noscript><p class="map-noscript">交互地图需要 JavaScript；全部 {len(data['papers'])} 篇论文的详情链接仍可直接使用。</p></noscript>
     <script type="application/json" id="paper-map-data">{payload}</script>

@@ -76,6 +76,7 @@
    const overlay=p.verified_overlay||{},title=overlay.title||p.title,a=overlay.authors||p.authors,authors=Array.isArray(a)?a.join(', '):a;
    body.replaceChildren();body.append(text('p',(p.bibliographic_year||'年份待核验')+' · '+(p.citation_verified?'来源已核验':'原始书目待核验'),'drawer-kicker'));
    const h=text('h2',title);h.id='drawer-title';body.append(h,text('p',authors,'drawer-authors'),text('p',p.summary||'已收录原始书目，题名、作者与年份尚待来源核验。','drawer-summary'));
+   if(button.dataset.directionLabel)body.append(text('p',button.dataset.directionLabel+' / '+button.dataset.problemLabel,'drawer-taxonomy'));
    const resources=document.createElement('div');resources.className='drawer-resources';
    for(const [url,label] of [[p.pdf_url,p.pdf_kind==='publisher'?'出版方 PDF ↗':'预印本替代 PDF ↗'],[p.paper_url,'出版 / 论文页面 ↗'],[p.project_url,'官方项目 ↗']]){if(url){const a=safeLink(url,label);if(a){a.target='_blank';a.rel='noopener noreferrer';resources.append(a)}}}
    if(resources.children.length)body.append(resources);

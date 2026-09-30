@@ -7,6 +7,7 @@
   const year = document.querySelector('#year-filter');
   const status = document.querySelector('#status-filter');
   const sort = document.querySelector('#sort');
+  const method=document.querySelector('#method-filter'),resource=document.querySelector('#resource-filter');
   const topicButtons = Array.from(document.querySelectorAll('[data-topic]'));
   const count = document.querySelector('#result-count');
   const empty = document.querySelector('#empty-state');
@@ -21,6 +22,7 @@
     search.value = q.get('q') || '';
     view=q.get('view')==='list'?'list':'cards';syncView();
     topic = topicButtons.some(b => b.dataset.topic === q.get('topic')) ? q.get('topic') : 'all';
+    method.value=validSelect(method,q.get('method'));resource.value=validSelect(resource,q.get('resource'));
     year.value = validSelect(year, q.get('year'));
     status.value = validSelect(status, q.get('status'));
     sort.value = ['curated','newest','title'].includes(q.get('sort')) ? q.get('sort') : 'curated';
@@ -29,6 +31,7 @@
     const q = new URLSearchParams();
     if (search.value.trim()) q.set('q', search.value.trim());
     if (topic !== 'all') q.set('topic', topic);
+    if(method.value!=='all')q.set('method',method.value);if(resource.value!=='all')q.set('resource',resource.value);
     if (year.value !== 'all') q.set('year', year.value);
     if (status.value !== 'all') q.set('status', status.value);
     if (sort.value !== 'curated') q.set('sort', sort.value);
@@ -39,7 +42,9 @@
   function apply(reset = true, save = true) {
     if (reset) limit = 24;
     const terms = search.value.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
-    const match = cards.filter(c => (topic === 'all' || (c.dataset.topics || c.dataset.category).split(' ').includes(topic))
+    const match = cards.filter(c => (topic === 'all' || c.dataset.topics.split(' ').includes(topic))
+      && (method.value==='all'||c.dataset.methods.split('|').includes(method.value))
+      && (resource.value==='all'||c.dataset.resources.split('|').includes(resource.value))
       && (year.value === 'all' || c.dataset.year === year.value)
       && (status.value === 'all' || c.dataset.status === status.value)
       && terms.every(t => c.dataset.search.includes(t)));
@@ -57,15 +62,15 @@
     const label=document.querySelector('#catalog-search-label');if(label)label.textContent=search.value.trim()||'搜索标题、作者或关键词';
     topicButtons.forEach(b => { const active = b.dataset.topic === topic; b.classList.toggle('active', active); b.setAttribute('aria-pressed', String(active)); });
     document.dispatchEvent(new CustomEvent('catalog:updated'));
-    if(chips){chips.replaceChildren();const active=[];if(search.value.trim())active.push(['关键词：'+search.value.trim(),()=>search.value='']);if(topic!=='all')active.push([topicButtons.find(b=>b.dataset.topic===topic).querySelector('span').textContent,()=>topic='all']);if(year.value!=='all')active.push(['出版年：'+year.selectedOptions[0].textContent,()=>year.value='all']);if(status.value!=='all')active.push([status.selectedOptions[0].textContent,()=>status.value='all']);for(const [label,clear] of active){const b=document.createElement('button');b.type='button';b.textContent=label+' ×';b.setAttribute('aria-label','移除筛选 '+label);b.addEventListener('click',()=>{clear();apply()});chips.append(b)}if(active.length){const b=document.createElement('button');b.type='button';b.className='clear-all';b.textContent='清除全部';b.addEventListener('click',()=>{search.value='';topic='all';year.value='all';status.value='all';apply()});chips.append(b)}chips.hidden=!active.length}
+    if(chips){chips.replaceChildren();const active=[];if(search.value.trim())active.push(['关键词：'+search.value.trim(),()=>search.value='']);if(topic!=='all')active.push([topicButtons.find(b=>b.dataset.topic===topic).querySelector('span').textContent,()=>topic='all']);if(method.value!=='all')active.push(['方法：'+method.value,()=>method.value='all']);if(resource.value!=='all')active.push(['资源：'+resource.selectedOptions[0].textContent,()=>resource.value='all']);if(year.value!=='all')active.push(['出版年：'+year.selectedOptions[0].textContent,()=>year.value='all']);if(status.value!=='all')active.push([status.selectedOptions[0].textContent,()=>status.value='all']);for(const [label,clear] of active){const b=document.createElement('button');b.type='button';b.textContent=label+' ×';b.setAttribute('aria-label','移除筛选 '+label);b.addEventListener('click',()=>{clear();apply()});chips.append(b)}if(active.length){const b=document.createElement('button');b.type='button';b.className='clear-all';b.textContent='清除全部';b.addEventListener('click',()=>{search.value='';topic='all';year.value='all';status.value='all';method.value='all';resource.value='all';apply()});chips.append(b)}chips.hidden=!active.length}
     if (save) updateQuery();
   }
   viewButtons.forEach(b=>b.addEventListener('click',()=>{view=b.dataset.view;syncView();updateQuery()}));
   search.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => apply(), 120); });
-  [year,status,sort].forEach(s => s.addEventListener('change', () => apply()));
+  [year,status,sort,method,resource].forEach(s => s.addEventListener('change', () => apply()));
   topicButtons.forEach(b => b.addEventListener('click', () => { topic = b.dataset.topic; apply(); }));
   more.addEventListener('click', () => { limit += 24; apply(false); });
-  document.querySelector('#reset-filters').addEventListener('click', () => { search.value=''; topic='all'; year.value='all'; status.value='all'; sort.value='curated'; apply(); document.querySelector('.catalog-search-trigger')?.focus(); });
+  document.querySelector('#reset-filters').addEventListener('click', () => { search.value=''; topic='all'; year.value='all'; status.value='all'; method.value='all'; resource.value='all'; sort.value='curated'; apply(); document.querySelector('.catalog-search-trigger')?.focus(); });
   document.addEventListener('keydown', e => {
     
     if (e.key === 'Escape' && document.activeElement === search && search.value) { search.value=''; apply(); }

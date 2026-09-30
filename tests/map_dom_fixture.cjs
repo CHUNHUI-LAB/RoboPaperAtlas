@@ -68,6 +68,7 @@ function fixture(options={}){
   step(ms=400){now+=ms;const queue=[...raf.values()];raf.clear();queue.forEach(fn=>fn(now))},
   changeMedia(key,matches){media[key].matches=matches;media[key].emit('change',{bubbles:false})},
   goBack(){if(historyIndex){url=new URL(historyStack[--historyIndex]);window.emit('popstate',{bubbles:false})}},
+  goForward(){if(historyIndex+1<historyStack.length){url=new URL(historyStack[++historyIndex]);window.emit('popstate',{bubbles:false})}},
   setURL(value){url=new URL(value,url);window.emit('popstate',{bubbles:false})},
   input(value){const el=document.getElementById('map-search');el.value=value;el.focus();el.emit('input')},
   click(selector){const el=document.querySelector(selector);if(!el)throw Error('Missing '+selector);el.emit('click',{button:0});return el},

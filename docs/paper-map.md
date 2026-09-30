@@ -1,58 +1,42 @@
-# 论文地图
+# Atlas
 
-`/map/index.html` 是 95 条公开书目的交互式主题视图，与前沿候选和每日摘要分开。站点名始终为 RoboPaperAtlas。
+`/map/index.html` explores the 95 canonical papers as a stable hierarchy: galaxy → research direction → problem subsystem → paper. The route remains stable. The product name is RoboPaperAtlas and this feature is Atlas.
 
-## 数据与证据边界
+## Classification and evidence
 
-- 直接复用公开 `data/catalog.json` 与既有校验器，不重新分类、不补造题名、年份、链接或结论
-- 73 条原始记录仍是按题名初步编目；22 条增补记录仍是来源元数据核验。编目核验不等于全文精读或复现
-- 位置按固定主展示分组与 ID 顺序确定，仅用于导航排布；距离、先后位置和节点大小都不是科学相似度、年代、重要性或引用量
-- 默认没有任何边。选中论文时，最多画 6 条共享标签虚线；明确标注为“主题相近（推断）”，并列出实际共享标签。没有共享标签时，只显示同目录分组的列表，不画关系线
-- `verifiedRelations` 当前为空；客户端拒绝非空值，避免误把未经实现检查的数据当作引用图。预留证据格式在 `verified-relations.schema.json`，未来启用必须另外审查
-- 出版方 PDF、预印本替代版本、论文、项目和代码入口均原样来自公开元数据；未核验的入口不会猜测。仅 UMI-on-Legs（rpa-0062）的 Stage 1/2/3 已启用并链接到实际HTML；其他94条仍禁用并写明“尚未导入”
+`data/catalog.json` is unchanged. The additive `data/classification.json` overlay explicitly places all 95 IDs and preserves their original category, title, links, citation-verification status and reading stages. `scripts/atlas_taxonomy.py` rejects missing, extra or duplicate IDs and unknown placements; it never classifies by keyword fallback.
 
-## 导航与交互
+The source review covers official abstracts and project/contribution text for all 95 entries. It does not claim 95 full-paper readings or bibliographic verification. Four overlap cases remain visibly provisional, with reasons and source links. Method components and resource types appear separately from the primary research problem; an evidenced component does not necessarily represent the paper's novelty.
 
-- 主导航的“论文地图”进入独立页面；每篇详情有“在地图中查看”链接，可以直达选中节点
-- 地图提供当前主题筛选、跨全部书目的搜索、详情链接，以及直达相应主题目录的链接
-- 桌面默认地图，手机默认完整列表；列表使用服务端生成的实际详情链接，不依赖 JavaScript
-- SVG 节点可用方向键移动焦点，Enter/空格打开详情，Escape 关闭，Home/0 全览，+/- 缩放；列表可替代地图完成全部资源访问
-- 拖动即时平移，不带惯性。普通滚轮继续滚页面，Ctrl/Command+滚轮在地图上缩放；还有放大、缩小、全览按钮
-- 侧栏是非模态的，不锁住焦点。选择、搜索、关闭、切换、后退和 resize 都会取消旧相机动画；没有自动布局漂移或持续动画循环
-- 离屏、页面隐藏时取消动画；减少动态效果模式立即更新相机并取消面板动画。手机使用简单控制，未宣称经过实体触屏测试
+The current primary counts are Embodied Nav 18, Mobile Manip. 19, Motion & Control 20, Locomotion 2, Policy Learning 21, Spatial Repr. 3 and General ML 4. Resources has 7 cross-domain resource entries; Cross-domain contains one research entry with no unique primary direction. These nine placements sum to 95. Secondary directions, method tags and resource kinds may overlap and are not additional stars. Policy Learning includes simulated-character policy research as well as robot policies.
 
-## 构建与检查
+Taxonomy revision 3 applies two reviewed consistency corrections to revision 2: the badminton paper exposes Motion & Control as its supported secondary direction, and RoboDuet joins the existing Coordinated Motion subsystem rather than creating a duplicate same-name subsystem. Source scope, pending flags and canonical data remain unchanged.
 
-无新增运行时或构建依赖。Python 构建器调用 `map_page.map_html`，使用内容哈希 CSS/JS URL 和现有页面 shell。地图模块没有网络/API/模型调用、分析追踪或本地存储。
+## Interaction
 
-完整检查顺序：
+- The galaxy has distinct direction colors and labeled systems. Select a system to see problem subsystems; select a problem to see named paper stars. Search can jump directly to any of the 95 papers from any level
+- Positions are deterministic. Drill navigation changes the camera without running a physics simulation or random spin. Decorative navigation orbits, background glow, distance, order and star size do not encode citation, chronology, scientific similarity or importance
+- Every paper has one star. A system's central navigation symbol is a labeled control, not another paper. Default paper marks have equal sizes within the current view
+- Breadcrumbs, Back, Escape and browser Back/Forward restore hierarchy and visible focus. New navigation cancels old camera animations and captured pointer clicks
+- Desktop dragging is immediate. Ordinary wheel scrolls the page; Ctrl/Command plus wheel zooms. Zoom buttons, fit, arrows, Enter/Space, Home/0 and +/- are provided. Paper targets remain 44px; system controls are at least 54px
+- Mobile defaults to the complete server-rendered paper list. The optional map uses simple controls and labeled direction buttons; physical-device touch testing is not claimed
+- The non-modal side panel shows classification support, unresolved boundaries, methods, resource types, original metadata, PDF/code links and actual Stage availability. Only rpa-0062 has three imported reports; the other 94 entries remain disabled
+- The panel's Library link searches for the exact displayed title, so it does not silently equate an older Library facet with a new primary direction
+- There are no verified citation edges. At most six dashed shared-tag inference links are drawn for the current selection and visible scope; each actual shared tag is listed. Missing shared tags produce a same-primary-group navigation list with no edges
+- Reduced motion, hidden documents, offscreen views, resize, close, search and view changes cancel ongoing animation. No ambient animation, network requests, API/model calls or tracking are used
+
+## Integration and checks
+
+The map renderer returns a `<main>` fragment for the existing shell and accepts hashed CSS/JS URLs plus `report_records`. Integrate only the changed map files, additive taxonomy and tests. Preserve concurrent reader work and canonical data. A separate shared-nav patch can rename the map's shell title to Atlas without replacing build.py.
 
 ```sh
 python3 scripts/assemble_frontier.py
-python3 -m unittest discover -s tests -v
+python3 -m unittest discover -s tests -q
 node tests/test_hero_atlas.cjs
 node tests/test_brief_reader.cjs
 python3 scripts/build.py
-node --test tests/test_map_core.cjs tests/test_map_dom.cjs tests/test_catalog_facets.cjs
+node --test tests/test_map_core.cjs tests/test_map_dom.cjs tests/test_atlas_hierarchy.cjs tests/test_catalog_facets.cjs
 python3 scripts/validate.py
 ```
 
-`test_map_core.cjs` 检查确定性排布、全部节点、标签关系、搜索和相机数学。`test_map_dom.cjs` 用轻量 DOM 模型载入实际生成 HTML、执行未改写的生产 JS，检查搜索/选择/返回、连续关闭、键盘、拖动、滚轮、离屏/隐藏/减少动态效果和手机默认列表。DOM 模型不是浏览器渲染测试。
-
-`map_browser_qa.cjs` 是另外准备的真实浏览器套件。在有允许的浏览器进程与预览地址时执行，截图只有成功渲染后才会生成。该套件仍需单独运行；源代码测试不等于浏览器或实体触屏验收。
-
-## 星图外观与可操作性
-
-地图采用与首页一致的深色底、细小辉光星点和柔和主题背景。星点严格对应目录中的 95 篇真实论文；不添加会被误认成论文的随机背景星点。柔和星云只是背景，不表达任何论文关系。默认星点大小一致，只有选择态会暂时加亮；关闭或搜索替换选择后立即恢复。
-
-主题边界不画硬圆圈。全览时只显示简短主题名和实际条目数，放大后按屏幕空间碰撞检查显示论文短标签；完整题名始终可从键盘节点、搜索、列表和详情读取。只为当前选择显示最多 6 条共享标签推断线，未选择时没有关系线。
-
-星点外观较细，但透明命中区在所有缩放级别保持直径 44px。命中区重叠时按离指针最近的实际星点解析选择，避免由 SVG 图层顺序决定。节点位置仍为确定性的导航布局；区域几何可配置，但改变呈现配置本身不会重分类任何论文。
-
-四个规范书目 category 值仍然保留；六个展示主题为 Embodied Nav、WBC、VLA、Methods、Sim & Tools、Data & Benchmarks。展示标签允许交叉，不是新的已核验科学分类。每篇论文只分配一个固定主星位，筛选按全部展示标签匹配，所以主题计数不可相加。短英文主题名和完整双语含义统一从 `scripts/topic_labels.py` 提供，首页方向、目录筛选、详情与地图共同使用。报告入口保留真实导入状态和版本；星图外观不改变报告、目录、发现队列或自动化数据。
-
-### 六个展示主题的计数
-
-首页方向、目录和地图筛选共同使用同一份展示标签映射。当前匹配数分别为 Embodied Nav 26、WBC 31、VLA 17、Methods 17、Sim & Tools 8、Data & Benchmarks 13；交叉标签会重复计数，不能相加为论文总量。地图只画 95 个星点，主展示分组星点数分别为 16、31、17、13、7、11。原 `foundations` 规范分类的 31 条记录保持原值，仅增加独立的呈现映射；其依据仍是已有题名、标签和编目说明，不能视为方法或结论已经核验。新的未映射记录要求显式检查，避免静默猜测或丢失条目。
-
-前沿候选页面的采集查询标签保持独立；它们描述 arXiv 标题/摘要的关键词匹配，不强制对应上述六个目录展示主题。
+The DOM fixture executes the real production script on generated markup. It is not a rendering engine. The hierarchy suite checks all 95 search targets, unique deterministic placement, narrow fit, correct drill/back/history focus, pending evidence, and interrupted pointer cancellation. The optional `tests/map_browser_qa.cjs` requires an allowed browser and preview; browser appearance and physical touch remain separate acceptance gates.

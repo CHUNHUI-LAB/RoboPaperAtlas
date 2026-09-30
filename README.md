@@ -1,6 +1,6 @@
 # RoboPaperAtlas
 
-中文机器人论文目录与阅读档案，面向具身导航、全身控制与移动操作、视觉语言动作，以及基础方法、数据和评测。
+机器人研究的 Library、Atlas 与 Radar：按研究问题探索论文，分别查看方法、资源和阅读档案。
 
 ## 当前边界
 
@@ -56,3 +56,7 @@ python3 -m http.server 8000 --directory dist
 ## 单页阅读器预览
 
 `reader-preview/umi-on-legs/` 提供一页完整的Stage3阅读器设计预览，复用站点导航与基础样式，并用已审核原文生成代码语法颜色、原文件行号和可操作目录。此预览不替换三份已发布v1报告。详见 `docs/reader-preview.md`。
+
+## 分类与浏览
+
+Library、首页与 Atlas 共用已核查来源的研究问题分类。方法标签和资源类型单独筛选；四条分类边界记录保持待复核。详见 [classification](docs/classification.md)。原始书目与阅读状态不因分类检查而改变。
