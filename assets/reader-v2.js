@@ -6,7 +6,7 @@
  const sections=[...page.querySelectorAll('.reader-article>section[id]')],tocLinks=[...toc.querySelectorAll('a[href^="#"]')];
  let frame=0,toastTimer=0,toast=document.querySelector('.reader-toast');
  function announce(message){clearTimeout(toastTimer);toast.textContent=message;toast.hidden=false;toastTimer=setTimeout(()=>{toast.hidden=true;},2400);}
- function updatePosition(){frame=0;let current=sections[0];for(const section of sections){if(section.getBoundingClientRect().top<=175)current=section;else break;}tocLinks.forEach(link=>{const active=link.hash==='#'+current?.id;link.classList.toggle('is-current',active);if(active)link.setAttribute('aria-current','location');else link.removeAttribute('aria-current');});}
+ function updatePosition(){frame=0;const anchorOffset=Number.parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop)||144;let current=sections[0];for(const section of sections){if(section.getBoundingClientRect().top<=anchorOffset+6)current=section;else break;}tocLinks.forEach(link=>{const active=link.hash==='#'+current?.id;link.classList.toggle('is-current',active);if(active)link.setAttribute('aria-current','location');else link.removeAttribute('aria-current');});}
  const schedule=()=>{if(!frame&&!document.hidden)frame=requestAnimationFrame(updatePosition);};
  window.addEventListener('scroll',schedule,{passive:true});window.addEventListener('resize',schedule);window.addEventListener('hashchange',schedule);window.addEventListener('pageshow',schedule);
  document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelAnimationFrame(frame);frame=0;}else schedule();});

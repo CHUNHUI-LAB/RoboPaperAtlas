@@ -48,6 +48,11 @@ class ReaderPreviewTests(unittest.TestCase):
    p=ROOT/'artifacts'/record['paper_id']/record['version']/record['filename'];self.assertEqual(hashlib.sha256(p.read_bytes()).hexdigest(),record['sha256'])
  def test_code_escaping_and_plain_text_roundtrip(self):
   raw='x = "<script>&hello" # comment';p=CodeText();p.feed('<span class="code-text">'+colored_lines(raw)[0]+'</span>');self.assertEqual(p.lines,[raw]);self.assertNotIn('<script>',colored_lines(raw)[0])
+ def test_anchor_offset_is_single_and_toc_uses_computed_padding(self):
+  css=(ROOT/'assets/reader-v2.css').read_text();js=(ROOT/'assets/reader-v2.js').read_text()
+  self.assertIn('--reader-anchor-offset:144px',css);self.assertIn('.reader-article>section{scroll-margin-top:0;',css)
+  self.assertNotIn('scroll-margin-top:144px',css);self.assertNotIn('scroll-padding-top:134px',css)
+  self.assertIn('getComputedStyle(document.documentElement).scrollPaddingTop',js)
  def test_mobile_catalog_search_basis_fixed(self):
   css=(ROOT/'assets/experience.css').read_text();self.assertIn('.catalog-search-trigger{flex-basis:auto;',css)
 if __name__=='__main__':unittest.main()
