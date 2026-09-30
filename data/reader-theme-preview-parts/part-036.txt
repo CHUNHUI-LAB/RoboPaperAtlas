@@ -1,4 +1,26 @@
-'0');
+不同机器人平台共享操作策略的路径。 <span class="source">§5 · PDF页 <a href="https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=8">8</a></span></p></div></section><section id="section-11" tabindex="-1"><h2>11 / 第一遍结束后，应记住的五件事</h2><div class="eyebrow">STAGE 01</div><ol><li><span class="tag">概括</span>问题是如何让足式平台获得精细和动态操作，同时避免每个任务都采集机器人专属示范或构建完整任务仿真。<span class="source">§1 · PDF页 <a href="https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=1">1</a>、<a href="https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=2">2</a></span></li><li><span class="tag">概括</span>接口gap是单步、机体系、带基座命令的控制表达不够适合跨形态动态操作。<span class="source">§1接口段 · PDF页 <a href="https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=1">1</a>、<a href="https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=2">2</a></span></li><li><span class="tag">概括</span>关键认识是把现实任务示范和仿真机器人控制分工，用轨迹跟踪绕开任务物体模拟。<span class="source">§1、§3.2 · PDF页 <a href="https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=1">1</a>、<a href="https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=2">2</a>、<a href="https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=4">4</a></span></li><li><span class="tag">概括</span>核心变化是世界系末端轨迹＋未来预览，WBC自主协调臂与腿。<span class="source">§3、Fig.3–4 · PDF页 <a href="https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=3">3</a>、<a href="https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=4">4</a>、<a href="https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=5">5</a></span></li><li><span class="tag">作者表述</span>预训练杯子操作策略无需微调即可在四足系统上达到硬地80%（iPhone），野外27/45；“零样本”仅指上层策略，WBC是为机器人训练的。<span class="source">§4.3及脚注 · PDF页 <a href="https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=7">7</a>、<a href="https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=8">8</a></span></li></ol></section><section id="section-12" tabindex="-1"><h2>12 / 暂时不要深入的内容</h2><div class="eyebrow">STAGE 01</div><ul><li>世界系任务目标为何最终变成夹爪坐标系观测，以及异步时间戳变换的具体顺序：<span class="source">§3.3 Book-keeping · PDF页 <a href="https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=4">4</a>、<a href="https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=5">5</a></span></li><li>位置/姿态耦合指数奖励、精度课程与各项正则权重：<span class="source">§3.2；§9.6、Table5 · PDF页 <a href="https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=4">4</a>、<a href="https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=15">15</a>、<a href="https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=16">16</a></span></li><li>近期目标−60至60 ms与1 s远期目标的采样、6D旋转表示及MLP观测组成：<span class="source">§3.2 Observation space · PDF页 <a href="https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=4">4</a></span></li><li>不同任务的预测、执行步数、执行频率与轨迹平滑时间：<span class="source">§9.1–9.4、Tables2–4 · PDF页 <a href="https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=14">14</a>、<a href="https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=15">15</a></span></li><li>重测URDF惯量、控制/里程计延迟、抖动和过热的部署调节：<span class="source">§7–8 · PDF页 <a href="https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=12">12</a>、<a href="https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=13">13</a>、<a href="https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=14">14</a></span></li><li>下一遍写作阅读会回到摘要、引言及结论句段；方法阅读再核对上面这些细节，不用实现反推替换本页的作者论证。</li></ul></section></article></div></div></main><p class="reader-footer">RoboPaperAtlas · 独立中文阅读分析，不代表论文作者背书 · 保留正式论文来源</p><div class="reader-toast" role="status" aria-live="polite" hidden></div><script>/* Reader controls only: no models, analytics, remote scripts or automatic PDF fetch. */
+(() => {
+ 'use strict';
+ const page=document.querySelector('.reader-page');if(!page)return;
+ const reduced=matchMedia('(prefers-reduced-motion: reduce)'),toc=page.querySelector('.reader-toc'),tocButton=page.querySelector('.reader-toc-toggle');
+ const compact=matchMedia('(max-width:767px)'),position=page.querySelector('.reader-position'),previousSection=page.querySelector('[data-reader-previous]'),nextSection=page.querySelector('[data-reader-next]'),sectionLabel=page.querySelector('[data-reader-section-label]');let currentSection=0,programmaticTarget=null;
+ const sections=[...page.querySelectorAll('.reader-article>section[id]')],tocLinks=[...toc.querySelectorAll('a[href^="#"]')];
+ let frame=0,toastTimer=0,toast=document.querySelector('.reader-toast');
+ const siteHeader=document.querySelector('.atlas-site-header'),stagebar=page.querySelector('.reader-stagebar');
+ function syncChrome(){
+  if(!siteHeader||!stagebar)return;
+  const headerHeight=siteHeader.getBoundingClientRect().height,barHeight=stagebar.getBoundingClientRect().height;
+  if(!(headerHeight>0&&barHeight>0))return;
+  document.documentElement.style.setProperty('--atlas-header-height',headerHeight+'px');
+  document.documentElement.style.setProperty('--reader-chrome-bottom',(headerHeight+barHeight)+'px');
+  document.documentElement.style.setProperty('--reader-anchor-offset',(headerHeight+barHeight+16)+'px');
+ }
+ syncChrome();
+ function announce(message){clearTimeout(toastTimer);toast.textContent=message;toast.hidden=false;toastTimer=setTimeout(()=>{toast.hidden=true;},2400);}
+ function selectSection(index){
+  currentSection=Math.max(0,Math.min(sections.length-1,index));
+  tocLinks.forEach(link=>{const active=link.hash==='#'+sections[currentSection]?.id;link.classList.toggle('is-current',active);if(active)link.setAttribute('aria-current','location');else link.removeAttribute('aria-current');});
+  if(position)position.textContent=String(currentSection+1).padStart(2,'0')+' / '+String(sections.length).padStart(2,'0');
   if(previousSection)previousSection.disabled=currentSection===0;if(nextSection)nextSection.disabled=currentSection===sections.length-1;
   if(sectionLabel)sectionLabel.textContent=tocLinks[currentSection]?.textContent||'';
  }
@@ -16,7 +38,8 @@
  }
 
  const schedule=()=>{if(!frame&&!document.hidden)frame=requestAnimationFrame(updatePosition);};
- window.addEventListener('scroll',schedule,{passive:true});window.addEventListener('resize',schedule);window.addEventListener('hashchange',()=>{programmaticTarget=null;schedule();});window.addEventListener('pageshow',schedule);
+ window.addEventListener('scroll',schedule,{passive:true});window.addEventListener('resize',()=>{syncChrome();schedule();});window.addEventListener('hashchange',()=>{programmaticTarget=null;schedule();});window.addEventListener('pageshow',()=>{syncChrome();schedule();});
+ if(typeof ResizeObserver==='function'&&siteHeader&&stagebar){const chromeObserver=new ResizeObserver(()=>{syncChrome();schedule();});chromeObserver.observe(siteHeader);chromeObserver.observe(stagebar);}
  const interruptScroll=()=>{programmaticTarget=null;schedule();};
  const isSectionControl=target=>[previousSection,nextSection,tocButton,...tocLinks].some(control=>control&&(control===target||control.contains(target)));
  const pointerIntent=e=>{if(!isSectionControl(e.target))interruptScroll();};
