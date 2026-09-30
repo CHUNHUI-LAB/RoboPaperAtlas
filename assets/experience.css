@@ -60,3 +60,10 @@ a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible,s
 .atlas-galaxy .atlas-galaxy__paper-panel a{min-height:96px}
 .site-footer p,.site-footer .footer-right,.site-footer .footer-brand>span{font-size:15px;line-height:1.7}
 @media(max-width:767px){.atlas-galaxy .atlas-galaxy__preview{min-height:300px}.site-footer{gap:20px;flex-wrap:wrap}.site-footer p,.site-footer .footer-right,.site-footer .footer-brand>span{font-size:14px}}
+/* Browser QA: readable hero prose and row-local selection after wrapping. */
+.atlas-experience .experience-hero-copy>p{font-size:18px;line-height:1.8;max-width:42ch}
+.atlas-experience .experience-primary{font-size:17px;min-height:46px}
+.atlas-experience .topic-indicator{display:none}
+.atlas-experience .topic-filter{border-bottom:2px solid transparent}
+.atlas-experience .topic-filter[aria-pressed=true]{border-bottom-color:currentColor}
+@media(max-width:767px){.atlas-experience .experience-hero-copy>p{font-size:17px}.atlas-experience .experience-primary{font-size:16px}}
