@@ -15,18 +15,21 @@
 Python 3.10+，无第三方构建依赖：
 
 ```sh
+python3 scripts/assemble_frontier.py
 python3 -m unittest discover -s tests -v
 python3 scripts/build.py
 python3 scripts/validate.py
 python3 -m http.server 8000 --directory dist
 ```
 
-输出为 dist/。所有目录与详情页以相对 URL 连接，适用于 GitHub Pages 的 /RoboPaperAtlas/ 子路径。404 页回到该固定站点根。浏览器搜索在本地运行；不需要账户、模型 API、数据库或外部字体。
+输出为 dist/。所有目录与详情页以相对 URL 连接，适用于 GitHub Pages 的 /RoboPaperAtlas/ 子路径。404 页回到该固定站点根。全局搜索使用浏览器加载静态书目索引，支持 Ctrl/⌘K、方向键与 Escape；卡片/列表视图与筛选保存在当前 URL。移动端菜单、详情页目录和复制链接均为实际交互。浏览器搜索在本地运行；不需要账户、模型 API、数据库或外部字体。
 
 ## 目录
 
 - data/catalog.json：经过公开字段投影的目录源数据
-- data/frontier.json：真实抓取的 arXiv 候选快照与抓取状态
+- data/frontier-parts/：公开候选快照的无损 UTF-8 小片段，每片不超过 60 KB；manifest 保留原始字节数与 SHA-256
+- data/frontier.json：构建时精确重组的真实 arXiv 候选快照，不直接提交
+- scripts/assemble_frontier.py：验证片段顺序、字节数与 SHA-256，再原子重组；--split 将采集器的新快照重新导出为片段
 - scripts/build.py、frontier_page.py：确定性静态生成器
 - scripts/validate.py：公开字段、URL、ID、年份、阶段状态和本地链接检查
 - assets/：无第三方运行时依赖的页面样式和交互

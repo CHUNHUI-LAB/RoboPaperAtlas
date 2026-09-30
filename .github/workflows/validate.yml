@@ -1,0 +1,21 @@
+name: Validate public catalog
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Test, build and validate
+        run: |
+          python3 scripts/assemble_frontier.py
+          python3 -m unittest discover -s tests -v
+          python3 scripts/build.py
+          python3 scripts/validate.py
