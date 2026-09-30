@@ -65,8 +65,9 @@ class EditorialInterfaceTests(unittest.TestCase):
   from build import home
   page=home(json.loads((ROOT/'data/catalog.json').read_text()))
   self.assertIn('class="atlas-hero"',page)
-  self.assertIn('id="coordinate-field"',page)
-  self.assertIn('id="motion-toggle"',page)
+  self.assertNotIn('id="coordinate-field"',page)
+  self.assertNotIn('id="motion-toggle"',page)
+  self.assertIn('<title>RoboPaperAtlas</title>',page)
   self.assertIn('class="paper-grid list-view"',page)
   self.assertNotIn('class="catalog-sidebar"',page)
   self.assertNotIn('class="research-routes"',page)
@@ -83,9 +84,10 @@ class EditorialInterfaceTests(unittest.TestCase):
   self.assertIn("drawer.addEventListener('cancel'",js)
   self.assertIn('current!==requestId',js)
   self.assertIn("if(closing||!drawer.open)return",js)
-  self.assertIn('if(epoch!==closeEpoch)return',js)
   self.assertIn('drawer.getAnimations().forEach(a=>a.cancel())',js)
- def test_motion_has_pause_and_accessibility_boundaries(self):
+ def test_no_decorative_canvas_or_row_motion(self):
   js=(ROOT/'assets/motion.js').read_text()
-  for marker in ['prefers-reduced-motion: reduce','min-width:768px','document.hidden','IntersectionObserver','cancelAnimationFrame','paused=!paused']:
-   self.assertIn(marker,js)
+  self.assertNotIn('requestAnimationFrame',js)
+  self.assertNotIn('getContext',js)
+  interface=(ROOT/'assets/interface.js').read_text()
+  self.assertNotIn('drawer.animate',interface)

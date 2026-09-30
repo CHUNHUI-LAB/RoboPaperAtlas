@@ -61,7 +61,7 @@
  const reduced=window.matchMedia('(prefers-reduced-motion: reduce)');let catalog=null,pending=null,opener=null,requestId=0,closing=false,closeEpoch=0;
  const text=(tag,content,className)=>{const el=document.createElement(tag);el.textContent=content;if(className)el.className=className;return el};
  function safeLink(url,label,className){const a=document.createElement('a');try{const u=new URL(url,window.location.href);if(!['http:','https:'].includes(u.protocol))return null;a.href=u.href}catch(e){return null}a.textContent=label;a.className=className||'';return a}
- async function dismiss(){if(closing||!drawer.open)return;closing=true;requestId++;const epoch=++closeEpoch;if(!reduced.matches){try{await drawer.animate([{transform:'translateX(0)',opacity:1},{transform:'translateX(25px)',opacity:0}],{duration:180,easing:'ease-in'}).finished}catch(e){}}if(epoch!==closeEpoch)return;drawer.close();closing=false}
+ function dismiss(){if(closing||!drawer.open)return;closing=true;requestId++;closeEpoch++;drawer.close();closing=false}
  drawer.addEventListener('close',()=>{if(drawer.open)return;if(opener?.isConnected)opener.focus()});
  drawer.addEventListener('cancel',e=>{e.preventDefault();dismiss()});
  drawer.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();dismiss()}},true);
