@@ -34,6 +34,8 @@ python3 -m http.server 8000 --directory dist
 - scripts/validate.py：公开字段、URL、ID、年份、阶段状态和本地链接检查
 - assets/：无第三方运行时依赖的页面样式和交互
 - docs/schema.md：公开数据契约与将来的报告导入约定
+- data/briefs/：按日期保存的摘要速览与索引，证据与作者陈述/编辑推断分开
+- docs/daily-briefs.md：每日简报更新契约；摘要自动化状态由实际配置验证后记录
 - CONTRIBUTING.md：来源与版权检查
 
 ## GitHub Pages

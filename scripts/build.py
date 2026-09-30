@@ -87,8 +87,18 @@ def main():
         d=target/'papers'/p['id']; d.mkdir(parents=True); (d/'index.html').write_text(details(p))
     from frontier_page import render as frontier_render
     frontier=json.loads((ROOT/'data/frontier.json').read_text()); validate_frontier(frontier)
-    (target/'frontier').mkdir(); (target/'frontier/index.html').write_text(frontier_render(frontier,data,shell,link))
-    (target/'data').mkdir(); (target/'data/frontier.json').write_text(json.dumps(frontier,ensure_ascii=False,indent=2)+'\n'); (target/'data/search-index.json').write_text(json.dumps([{'id':p['id'],'title':display_title(p),'authors':author_text(p),'category':CATEGORIES[p['category']][0],'text':' '.join([p['title'],display_title(p),p.get('short_name') or '',author_text(p),p.get('summary') or '',*p.get('tags',[])])} for p in data['papers']],ensure_ascii=False,separators=(',',':'))+'\n'); (target/'data/catalog.json').write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n')
+    from briefs import load_archive, section as brief_section
+    brief_index, brief_records=load_archive(ROOT)
+    latest_brief=brief_records[brief_index['latest']]
+    (target/'frontier').mkdir(); (target/'frontier/index.html').write_text(frontier_render(frontier,data,shell,link,brief_section(latest_brief,brief_index,prefix='../')))
+    for date,record in brief_records.items():
+        folder=target/'frontier/briefs'/date;folder.mkdir(parents=True)
+        content='<main id="main" class="brief-archive-page"><a class="back-link" href="../../index.html#daily-brief">← 返回前沿动态</a>'+brief_section(record,brief_index,prefix='../../../',archive=True)+'</main>'
+        (folder/'index.html').write_text(shell(record['title'],content,prefix='../../../',page='frontier'))
+    (target/'data').mkdir(); (target/'data/briefs').mkdir(); shutil.copyfile(ROOT/'data/briefs/index.json',target/'data/briefs/index.json')
+    for entry in brief_index['briefs']:
+        shutil.copyfile(ROOT/'data/briefs'/entry['path'],target/'data/briefs'/entry['path'])
+    (target/'data/frontier.json').write_text(json.dumps(frontier,ensure_ascii=False,indent=2)+'\n'); (target/'data/search-index.json').write_text(json.dumps([{'id':p['id'],'title':display_title(p),'authors':author_text(p),'category':CATEGORIES[p['category']][0],'text':' '.join([p['title'],display_title(p),p.get('short_name') or '',author_text(p),p.get('summary') or '',*p.get('tags',[])])} for p in data['papers']],ensure_ascii=False,separators=(',',':'))+'\n'); (target/'data/catalog.json').write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n')
     (target/'.nojekyll').write_text(''); (target/'404.html').write_text(shell('未找到页面','<main id="main" class="about-main"><p class="eyebrow">404 / OFF THE MAP</p><h1>这条路径暂未收录。</h1><p>页面可能移动了，试试从目录重新寻找。</p><a class="primary-link" href="/RoboPaperAtlas/index.html">返回论文目录 →</a></main>',prefix='/RoboPaperAtlas/'))
     print(f'Built {len(data["papers"])} papers → {target.relative_to(ROOT)}')
 if __name__=='__main__': main()

@@ -84,6 +84,8 @@ def validate_output(root):
     return len(pages)
 def main():
     ap=argparse.ArgumentParser();ap.add_argument('--output',default='dist');args=ap.parse_args()
+    from briefs import load_archive
+    load_archive(ROOT)
     n=validate_catalog(json.loads((ROOT/'data/catalog.json').read_text()));f=validate_frontier(json.loads((ROOT/'data/frontier.json').read_text()));pages=validate_output(ROOT/args.output)
     print(f'PASS: {n} catalog records, {f} frontier candidates, {pages} HTML pages; schemas, public URLs, IDs, stage boundaries, local links')
 if __name__=='__main__': main()
