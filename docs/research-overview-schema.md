@@ -1,14 +1,16 @@
 # Daily research overview, schema 1.1
 
-This is an additive contract for a separately previewed daily overview. Existing version1.0 brief files, archive entries and rendering remain valid and unchanged. The current scheduled update has not been migrated by this preview.
+The accepted overview is the production Radar view for schema1.1. Existing version1.0 brief files and rendering remain valid. Deployment of this renderer does not itself change the existing scheduled task; its migration is verified separately after the production page check.
 
 ## Paths and publication boundaries
 
 - Existing future publication scope: data/briefs/YYYY-MM-DD.json plus data/briefs/index.json, with the index's exact dated-file SHA-256 updated
-- Current isolated pilot: data/radar-preview/2026-09-30.json, rendered only at /radar-preview/
+- Accepted design sample: data/radar-preview/2026-09-30.json remains available at /radar-preview/
+- Production: the current data/briefs/YYYY-MM-DD.json renders at /frontier/ and its dated /frontier/briefs/YYYY-MM-DD/ route
+- Initial1.0 snapshot is preserved exactly at data/brief-history/2026-09-30-v1.0.json and /frontier/briefs/2026-09-30/v1/; it is immutable and outside scheduled write paths
 - Source snapshot: data/frontier.json, regenerated from its existing public parts. The overview does not change raw heuristic labels
 - Full captured abstracts are not published. Public evidence stores canonical/pinned source links, capture time, normalized character count and SHA-256
-- Preserve the single existing scheduled update. Migrating it to1.1 is a separate activation step after source and actual UI review; this code adds no automation or cron
+- Preserve the single existing scheduled update. Migrating it to1.1 is a separate activation step after source and actual production UI review; this code adds no automation or cron
 
 Version1.1 keeps all1.0 required fields and adds exactly one required top-level object, research_overview. Original selection counts remain historical provenance: complete_abstracts_checked_for_selection=6 is distinct from the overview's14 complete abstracts. Selection still has at most five papers; themes synthesize a broader source set.
 
@@ -32,4 +34,4 @@ keyword_caveats has at most ten rows: versioned_id, topic, issue, explanation, e
 
 The loader rejects extra fields, boolean counts, duplicate/unresolved/out-of-window IDs, malformed URLs, missing source hashes, contradictory flags, distribution mismatches and unsupported comparison claims. Whenever the brief's source hash matches the current snapshot, retained metadata is also compared to actual frontier bytes. Archived1.1 briefs retain their bounded metadata for validation after that snapshot changes.
 
-The preview leads with an editorial finding, then a small window count. Research themes expose their synthesis before optional method/source details. Original selected summaries follow as a secondary section. All42 window records remain searchable; the253 seven-day feed is linked separately. Coverage and known tag false positives/false negatives stay visible. A stale/error banner precedes the editorial lead. Native details and separate source links preserve keyboard access; narrow views simplify rather than adding a sticky multi-row toolbar.
+The production view leads with an editorial finding, then a small window count. Research themes expose their synthesis before optional method/source details. Original selected summaries follow as a secondary section. All window records remain searchable; the seven-day feed follows as a separate candidate queue. The initial approved window has42 records, while its source feed has253. Coverage and known tag false positives/false negatives stay visible. A stale/error banner precedes the editorial lead. Native details and separate source links preserve keyboard access; narrow views simplify rather than adding a sticky multi-row toolbar.

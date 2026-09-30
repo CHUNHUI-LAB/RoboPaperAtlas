@@ -30,7 +30,7 @@ class ExperienceTests(unittest.TestCase):
   for marker in ['prefers-reduced-motion','max-width: 767px','document.hidden','IntersectionObserver','userPaused','cancelAnimationFrame','atlasDestroy']:
    self.assertIn(marker,js)
  def test_daily_reader_preserves_evidence_and_states(self):
-  index,records=load_archive(ROOT);out=section(records[index['latest']],index,prefix='../')
+  index,records=load_archive(ROOT);out=section(json.loads((ROOT/'data/brief-history/2026-09-30-v1.0.json').read_text()),index,prefix='../')
   self.assertEqual(out.count('role="tab"'),5);self.assertEqual(out.count('role="tabpanel"'),5)
   self.assertIn('基于完整摘要',out);self.assertIn('相关性判断 · 推断',out);self.assertIn('未逐版比较',out)
   js=(ROOT/'assets/brief-reader.js').read_text();self.assertIn('p.inert=!active',js);self.assertNotIn('setTimeout',js)

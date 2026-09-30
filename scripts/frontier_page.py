@@ -2,7 +2,7 @@
 import html,re
 from urllib.parse import urlsplit
 
-def render(data,catalog,shell,link,brief_html=''):
+def render(data,catalog,shell,link,brief_html='',overview=False):
     e=lambda v:html.escape(str(v) if v is not None else '',quote=True)
     status=data.get('status','not_fetched'); papers=data.get('papers',[]); coverage=data.get('coverage',{})
     status_labels={'success':'抓取成功','ok':'抓取成功','limited':'部分抓取','stale':'上次成功快照（本次失败）','partial':'部分抓取','failed':'抓取失败','error':'抓取失败','not_fetched':'尚未发布抓取结果'}
@@ -37,4 +37,7 @@ def render(data,catalog,shell,link,brief_html=''):
     period=' → '.join(str(coverage[k]) for k in ('window_start','window_end') if coverage.get(k)) or '尚无已核验抓取窗口'
     results=''.join(cards) or '<div class="empty-state"><h3>暂时没有已发布的发现结果</h3><p>抓取结果就绪后会显示真实候选；这里不会用示例论文填充。</p></div>'
     body=f'''<main id="main" class="frontier-main"><p class="eyebrow">AT THE RESEARCH FRONTIER</p><div class="frontier-heading"><div><h1>Radar<span class="frontier-accent"> / 前沿动态</span></h1><p>先读本期重点，再探索新论文与版本更新。<br>所有判断都保留来源，也保留证据边界。</p></div><span class="frontier-status">{e(status_labels.get(status,status))} · {len(papers)} 条候选</span></div>{brief_html}<div class="frontier-boundary"><strong>发现队列与精读目录分开维护</strong><p>这些条目是未经人工审核的预印本候选，可能存在关键词误匹配；不代表同行评审通过，也不代表已完成 Stage 1 / 2 / 3。正式纳入阅读时，仍优先核验会议或期刊出版版本。</p></div><section class="feed-metadata" aria-label="抓取透明度"><div><h2>抓取记录</h2><dl>{date_html}</dl></div><div><h2>覆盖范围</h2><p>{e(period)}</p><p>结果覆盖：{'完整（相对于所记录查询和窗口）' if coverage.get('complete') else '未证明完整 / 可能仅部分结果'}</p><p>达到候选上限而截断：{'是' if coverage.get('truncated') else '否'}</p><p><a class="text-link" href="../data/frontier.json">查看公开快照与完整查询 ↗</a></p><p>已安排每日更新（约 08:00 UTC）；本页显示最后发布快照，实际抓取状态见记录。</p><ul>{coverage_html}</ul></div></section><div class="frontier-results-label"><h2>继续探索</h2><p>自动匹配候选 · 下方为采集查询标签，与 Library 中的研究问题分类分开 · 不代表推荐或精读完成</p></div><div class="frontier-controls"><label>候选查询标签 <select id="frontier-topic"><option value="focused">核心方向优先</option><option value="all">全部候选（含延伸相关）</option>{filter_options}</select></label><span id="frontier-count" role="status" aria-live="polite"></span></div><div class="frontier-grid" id="frontier-grid">{results}</div><button type="button" class="load-more" id="frontier-more" hidden>显示更多候选 ↓</button><div id="frontier-empty" class="empty-state" hidden>当前方向没有匹配候选</div><p class="fine-print">摘要与元数据来自 arXiv 原始记录。各论文权益归原作者与相应权利人；本页不重新分发 PDF。显示的英文时间为 UTC 原始时间戳。</p></main>'''
+    if overview:
+        start=body.index(brief_html)
+        body='<main id="main" class="frontier-main radar-production">'+body[start:]
     return shell('前沿动态',body,prefix='../',page='frontier')

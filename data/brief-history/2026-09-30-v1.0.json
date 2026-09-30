@@ -1,0 +1,396 @@
+{
+  "schema_version": "1.0",
+  "id": "arxiv-daily-2026-09-30",
+  "date": "2026-09-30",
+  "title": "arXiv 每日摘要 · 2026-09-30",
+  "status": "ready",
+  "generated_at": "2026-09-30T07:56:24Z",
+  "language": "zh-CN",
+  "window": {
+    "start": "2026-09-29T06:18:30Z",
+    "end": "2026-09-30T06:18:30Z",
+    "timezone": "UTC",
+    "date_field": "updated_at",
+    "inclusive": true,
+    "duration_hours": 24
+  },
+  "source_snapshot": {
+    "name": "frontier.json",
+    "sha256": "f588f4cec914b8e4aca23c1dbb2059dec74f05cee944b7e8e819d1fb9019eb47",
+    "generated_at": "2026-09-30T06:28:31Z",
+    "fetched_at": "2026-09-30T06:24:23Z",
+    "last_successful_fetch_at": "2026-09-30T06:24:23Z",
+    "status": "ok",
+    "coverage": {
+      "window_start": "2026-09-23T06:18:30Z",
+      "window_end": "2026-09-30T06:18:30Z",
+      "window_inclusive": true,
+      "date_field": "updated_at",
+      "complete": true,
+      "truncated": false,
+      "api_total_results": 14162,
+      "fetched_entries": 500,
+      "pages_fetched": 5,
+      "window_entries": 444,
+      "matched_entries": 253,
+      "displayed_entries": 253,
+      "stopped_at": "reached_window_start",
+      "source": "arxiv_api",
+      "limitations": [
+        "Candidates are heuristic title-and-abstract matches, not reviewed or deep-read recommendations.",
+        "Coverage is limited to the declared arXiv query and categories; indexing delay and terminology can omit relevant work.",
+        "This feed discovers preprints. Curated reading should prefer an available formally published version.",
+        "New/revision describes the retrieved arXiv version, not novelty, publication acceptance, or first appearance on this site."
+      ]
+    },
+    "query": "(cat:cs.RO OR cat:cs.CV OR cat:cs.AI OR cat:cs.LG OR cat:cs.CL) AND (all:\"vision-language navigation\" OR all:\"vision language navigation\" OR all:VLN OR all:ObjectNav OR all:\"object-goal\" OR all:\"object goal\" OR ((ti:navigation OR abs:navigation) AND (all:agent OR all:memory OR all:feedback OR all:harness OR all:reflection)) OR all:\"spatial memory\" OR all:\"episodic memory\" OR all:\"mobile manipulation\" OR all:\"mobile manipulator\" OR all:quadruped OR all:\"whole-body\" OR all:\"whole body\" OR all:\"end-effector\" OR all:\"end effector\" OR all:\"vision-language-action\" OR all:\"vision language action\" OR all:\"world-action model\" OR all:\"world action model\" OR ((all:VLA OR all:MoE OR all:\"mixture of experts\" OR all:\"mixture-of-experts\" OR all:\"world model\" OR all:\"world models\") AND (all:robot OR all:robotic OR all:robotics OR all:manipulation OR all:navigation OR all:embodied)))",
+    "rule_version": "2026-09-30.3"
+  },
+  "counts": {
+    "source_seven_day_candidates": 253,
+    "window_candidates": 42,
+    "new": 24,
+    "revisions": 18,
+    "selected_new": 4,
+    "selected_revisions": 1,
+    "complete_abstracts_checked_for_selection": 6
+  },
+  "coverage_note": "按源快照声明的检索终点划定24小时，06:24 UTC为抓取完成时间。候选来自限定类别与关键词，不代表arXiv全部相关论文。首版/修订指抓取版本，不指网站首次收录。",
+  "overview": "本期可并读“何时补充观察、如何核验在线改动、怎样维持空间记忆”三种闭环设计；全身方向看人体动作与机器人执行的对齐。这只是本窗口的选题观察，不足以概括领域趋势。",
+  "new_papers": [
+    {
+      "arxiv_id": "2609.37591",
+      "arxiv_version": 1,
+      "versioned_id": "2609.37591v1",
+      "title": "Credit-Guided Policy Improvement for Test-time Adaptive Vision-Language Navigation",
+      "authors": [
+        "Yang Li",
+        "Sijia Zhang",
+        "Yihan Li",
+        "Aming WU",
+        "Zihao Zhang",
+        "Ziju Han",
+        "Yahong Han"
+      ],
+      "first_submitted_at": "2026-09-29T13:46:11Z",
+      "updated_at": "2026-09-29T13:46:11Z",
+      "change_type": "new",
+      "source_url": "https://arxiv.org/abs/2609.37591",
+      "version_url": "https://arxiv.org/abs/2609.37591v1",
+      "short_title": "CGPI",
+      "problem": "在线纠偏有信号，不等于更新值得保留。",
+      "author_proposal": "作者从动作前后观察恢复决策信用，用历史交互核验轻量更新；缺少支持就回滚，主干保持冻结。",
+      "relevance": "适合看反馈如何转成可撤销的在线改动。",
+      "evidence_limit": "摘要称多基准有收益；真机仅定性展示，尚未核对实验。",
+      "focus_tags": [
+        "VLN",
+        "test-time adaptation",
+        "feedback"
+      ],
+      "evidence_level": "abstract_only",
+      "author_proposal_attribution": "author_claim",
+      "relevance_attribution": "curator_inference",
+      "evidence": {
+        "level": "primary_complete_abstract",
+        "label": "完整作者摘要，未阅读全文",
+        "source_type": "arxiv_api_atom",
+        "source_url": "https://arxiv.org/abs/2609.37591v1",
+        "retrieved_at": "2026-09-30T07:52:42Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "abstract_chars": 1582,
+        "abstract_sha256": "8adebfa75a9b2e7d8f6124270db08ad5873a961497e4b461bf277b02e35f5880"
+      },
+      "curated_catalog_overlap": {
+        "already_present": false,
+        "catalog_id": null
+      }
+    },
+    {
+      "arxiv_id": "2609.37353",
+      "arxiv_version": 1,
+      "versioned_id": "2609.37353v1",
+      "title": "Seek Before You Move: Evidence Seeking for Progress Grounding in Vision-Language Navigation",
+      "authors": [
+        "Zhimin Wang",
+        "Meiyuan Zhu",
+        "Duo Wu",
+        "Linjia Kang",
+        "Yajun Wang",
+        "Yuan Ni",
+        "Xiaohang Wang",
+        "Tianlu Pan",
+        "Jingyan Jiang",
+        "Yaowei Wang",
+        "Zhi Wang"
+      ],
+      "first_submitted_at": "2026-09-29T12:18:16Z",
+      "updated_at": "2026-09-29T12:18:16Z",
+      "change_type": "new",
+      "source_url": "https://arxiv.org/abs/2609.37353",
+      "version_url": "https://arxiv.org/abs/2609.37353v1",
+      "short_title": "SeekVLN",
+      "problem": "缺少关键地标证据时，导航仍可能自信前进。",
+      "author_proposal": "作者先用离线专家未来动作构造补充视角监督，再比较“寻证”与“直接走”的反事实分支训练策略。",
+      "relevance": "适合看“何时多看一眼”的收益如何定义。",
+      "evidence_limit": "需要监督与强化微调；摘要所报提升尚未核验，不能当作免训练插件。",
+      "focus_tags": [
+        "VLN",
+        "active observation",
+        "progress grounding"
+      ],
+      "evidence_level": "abstract_only",
+      "author_proposal_attribution": "author_claim",
+      "relevance_attribution": "curator_inference",
+      "evidence": {
+        "level": "primary_complete_abstract",
+        "label": "完整作者摘要，未阅读全文",
+        "source_type": "arxiv_api_atom",
+        "source_url": "https://arxiv.org/abs/2609.37353v1",
+        "retrieved_at": "2026-09-30T07:52:42Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "abstract_chars": 1854,
+        "abstract_sha256": "94f1d1ecb084da8801980b08e8326a636c01514c527da4b70d8abc7c8b646dc0"
+      },
+      "curated_catalog_overlap": {
+        "already_present": false,
+        "catalog_id": null
+      }
+    },
+    {
+      "arxiv_id": "2609.37187",
+      "arxiv_version": 1,
+      "versioned_id": "2609.37187v1",
+      "title": "InsightMap: Structured Spatial Modeling for Embodied Multimodal Reasoning",
+      "authors": [
+        "Hongpei Zheng",
+        "Hujun Yin"
+      ],
+      "first_submitted_at": "2026-09-29T10:10:18Z",
+      "updated_at": "2026-09-29T10:10:18Z",
+      "change_type": "new",
+      "source_url": "https://arxiv.org/abs/2609.37187",
+      "version_url": "https://arxiv.org/abs/2609.37187v1",
+      "short_title": "InsightMap",
+      "problem": "零散历史视角缺少持续空间参照。",
+      "author_proposal": "作者将俯视图兼作显式记忆与动作后的预测目标，联合训练导航动作和地图生成。",
+      "relevance": "适合比较“记住观测”与“预测空间变化”的作用。",
+      "evidence_limit": "摘要称地图监督带来增益；它依赖RGB-D数据管线，训练成本与消融尚未核验。",
+      "focus_tags": [
+        "VLN",
+        "spatial memory",
+        "map prediction"
+      ],
+      "evidence_level": "abstract_only",
+      "author_proposal_attribution": "author_claim",
+      "relevance_attribution": "curator_inference",
+      "evidence": {
+        "level": "primary_complete_abstract",
+        "label": "完整作者摘要，未阅读全文",
+        "source_type": "arxiv_api_atom",
+        "source_url": "https://arxiv.org/abs/2609.37187v1",
+        "retrieved_at": "2026-09-30T07:52:42Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "abstract_chars": 1262,
+        "abstract_sha256": "90b00578404a87b0270e264f42fc7ae98998e636ad2799682a944cb9184480c0"
+      },
+      "curated_catalog_overlap": {
+        "already_present": false,
+        "catalog_id": null
+      }
+    },
+    {
+      "arxiv_id": "2609.37181",
+      "arxiv_version": 1,
+      "versioned_id": "2609.37181v1",
+      "title": "EgoHumanoid-V2: Human-to-Humanoid Transfer of Coordinated Whole-Body Skills for Loco-Manipulation",
+      "authors": [
+        "Jin Chen",
+        "Yiming Jiang",
+        "Chongyang Xu",
+        "Modi Shi",
+        "Shijia Peng",
+        "Li Chen",
+        "Tianyu Li",
+        "Mu Xu",
+        "Yilun Chen",
+        "Steven Hoi",
+        "Hongyang Li"
+      ],
+      "first_submitted_at": "2026-09-29T10:05:10Z",
+      "updated_at": "2026-09-29T10:05:10Z",
+      "change_type": "new",
+      "source_url": "https://arxiv.org/abs/2609.37181",
+      "version_url": "https://arxiv.org/abs/2609.37181v1",
+      "short_title": "EgoHumanoid-V2",
+      "problem": "人类动作对齐末端后，还要保留全身协调。",
+      "author_proposal": "作者结合运动学参考修正与动力学细化，将人体示范变成全身loco-manipulation监督。",
+      "relevance": "适合看末端精度与全身协调如何一起处理。",
+      "evidence_limit": "作者报告四项人形真机任务；这是相邻方向参考，不能据此推断四足臂迁移效果。",
+      "focus_tags": [
+        "whole-body control",
+        "loco-manipulation",
+        "human demonstrations"
+      ],
+      "evidence_level": "abstract_only",
+      "author_proposal_attribution": "author_claim",
+      "relevance_attribution": "curator_inference",
+      "evidence": {
+        "level": "primary_complete_abstract",
+        "label": "完整作者摘要，未阅读全文",
+        "source_type": "arxiv_api_atom",
+        "source_url": "https://arxiv.org/abs/2609.37181v1",
+        "retrieved_at": "2026-09-30T07:52:42Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "abstract_chars": 1105,
+        "abstract_sha256": "394b275f7a02f6e3b0e25b0b74bf04eee164aa7e0a12f6cc203d77bee1e11f3f"
+      },
+      "curated_catalog_overlap": {
+        "already_present": false,
+        "catalog_id": null
+      }
+    }
+  ],
+  "revised_papers": [
+    {
+      "arxiv_id": "2609.15195",
+      "arxiv_version": 3,
+      "versioned_id": "2609.15195v3",
+      "title": "HarnessVLN: Unifying Training-Free Embodied Navigation through an Agent Harness",
+      "authors": [
+        "Yang Chen",
+        "Lirong Che",
+        "Zhenyu Huang",
+        "Wenbo Fu",
+        "Chuang Wang",
+        "Xu Cao",
+        "Daqi Liu",
+        "Yuzhe Yang",
+        "Jian Su",
+        "Lan-Zhe Guo"
+      ],
+      "first_submitted_at": "2026-09-14T08:15:56Z",
+      "updated_at": "2026-09-29T06:50:02Z",
+      "change_type": "revision",
+      "source_url": "https://arxiv.org/abs/2609.15195",
+      "version_url": "https://arxiv.org/abs/2609.15195v3",
+      "short_title": "HarnessVLN",
+      "problem": "规划建议需与空间证据、子目标和执行结果一致。",
+      "author_proposal": "作者以统一工具接口协调记忆与执行，在派发前验证提案，并以结构化反馈维护共享状态。",
+      "relevance": "已有目录条目，可作为VLN/ObjectNav的运行时框架对照。",
+      "evidence_limit": "本期仅确认v3摘要与更新时间；未逐版比较，不能把摘要中的方法当作本次新增。",
+      "focus_tags": [
+        "VLN",
+        "ObjectNav",
+        "agent harness",
+        "memory",
+        "feedback"
+      ],
+      "evidence_level": "abstract_only",
+      "author_proposal_attribution": "author_claim",
+      "relevance_attribution": "curator_inference",
+      "evidence": {
+        "level": "primary_complete_abstract",
+        "label": "完整作者摘要，未阅读全文",
+        "source_type": "arxiv_api_atom",
+        "source_url": "https://arxiv.org/abs/2609.15195v3",
+        "retrieved_at": "2026-09-30T07:52:42Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "abstract_chars": 1455,
+        "abstract_sha256": "6d176e00c6bcc5b98f9a702577a4190a9a7e4bc716c4b50cff67b896cca1e463"
+      },
+      "curated_catalog_overlap": {
+        "already_present": true,
+        "catalog_id": "harnessvln"
+      },
+      "revision_comparison": {
+        "performed": false,
+        "changes_verified": []
+      }
+    }
+  ],
+  "reading_priority": [
+    {
+      "audience": "导航与反馈",
+      "arxiv_ids": [
+        "2609.37353",
+        "2609.37591"
+      ],
+      "text": "优先并读SeekVLN与CGPI：一个补证据，一个核验改动。"
+    },
+    {
+      "audience": "空间记忆",
+      "arxiv_ids": [
+        "2609.37187"
+      ],
+      "text": "再看InsightMap的地图监督。"
+    },
+    {
+      "audience": "全身移动操作",
+      "arxiv_ids": [
+        "2609.37181"
+      ],
+      "text": "关注全身协同时可再看 EgoHumanoid-V2 的动作对齐；这是人形相邻方向，非四足臂实证。"
+    }
+  ],
+  "evidence_note": "所选5篇均核对版本化arXiv完整摘要，未下载PDF、未阅读全文或代码。方法与结果均为作者陈述；相关性与阅读顺序为编辑判断，不构成效果验证。",
+  "limitations": [
+    "限定检索存在术语遗漏、索引延迟与误匹配。",
+    "新稿不等于高质量；修订不等于新方法，未做版本差分。",
+    "没有跨论文直接比较成功率，各基准、模型与训练条件可能不同。",
+    "预印本未作同行评审或正式发表状态核验。"
+  ],
+  "candidate_ids": [
+    "2609.38164v1",
+    "2609.38163v1",
+    "2609.38087v1",
+    "2609.38078v1",
+    "2609.38057v1",
+    "2609.38046v1",
+    "2609.37922v1",
+    "2506.11261v2",
+    "2607.06559v2",
+    "2607.06558v3",
+    "2609.37810v1",
+    "2609.37793v1",
+    "2609.37772v1",
+    "2609.37771v1",
+    "2609.37721v1",
+    "2609.37591v1",
+    "2609.37530v1",
+    "2606.18363v3",
+    "2609.37519v1",
+    "2609.37398v1",
+    "2609.37353v1",
+    "2609.37334v1",
+    "2609.19878v3",
+    "2609.37307v1",
+    "2608.25798v2",
+    "2609.29382v2",
+    "2609.06302v2",
+    "2608.12743v3",
+    "2609.37187v1",
+    "2609.37181v1",
+    "2609.37150v1",
+    "2606.08495v2",
+    "2603.10971v4",
+    "2609.23580v3",
+    "2605.21862v3",
+    "2603.12717v2",
+    "2609.04802v3",
+    "2609.36967v1",
+    "2609.36915v1",
+    "2609.23439v2",
+    "2606.20092v3",
+    "2609.15195v3"
+  ]
+}

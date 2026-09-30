@@ -129,12 +129,14 @@ def main():
     from briefs import load_archive, section as brief_section
     brief_index, brief_records=load_archive(ROOT)
     latest_brief=brief_records[brief_index['latest']]
-    (target/'frontier').mkdir(); (target/'frontier/index.html').write_text(frontier_render(frontier,data,shell,link,brief_section(latest_brief,brief_index,prefix='../')))
+    (target/'frontier').mkdir(); (target/'frontier/index.html').write_text(frontier_render(frontier,data,shell,link,brief_section(latest_brief,brief_index,prefix='../'),overview=latest_brief['schema_version']=='1.1'))
     for date,record in brief_records.items():
         folder=target/'frontier/briefs'/date;folder.mkdir(parents=True)
         content='<main id="main" class="brief-archive-page"><a class="back-link" href="../../index.html#daily-brief">← 返回前沿动态</a>'+brief_section(record,brief_index,prefix='../../../',archive=True)+'</main>'
         (folder/'index.html').write_text(shell(record['title'],content,prefix='../../../',page='frontier'))
-    (target/'data').mkdir(); (target/'data/briefs').mkdir(); shutil.copyfile(ROOT/'data/briefs/index.json',target/'data/briefs/index.json')
+    from brief_history import build as build_brief_history
+    build_brief_history(ROOT,target,shell,brief_index)
+    (target/'data').mkdir(exist_ok=True); (target/'data/briefs').mkdir(); shutil.copyfile(ROOT/'data/briefs/index.json',target/'data/briefs/index.json')
     for entry in brief_index['briefs']:
         shutil.copyfile(ROOT/'data/briefs'/entry['path'],target/'data/briefs'/entry['path'])
     (target/'data/frontier.json').write_text(json.dumps(frontier,ensure_ascii=False,indent=2)+'\n'); (target/'data/search-index.json').write_text(json.dumps([{'id':p['id'],'title':display_title(p),'authors':author_text(p),'category':CATEGORIES[primary_topic(p)][0],'text':' '.join([p['title'],display_title(p),p.get('short_name') or '',author_text(p),p.get('summary') or '',taxonomy_search(p),*p.get('tags',[])])} for p in data['papers']],ensure_ascii=False,separators=(',',':'))+'\n'); (target/'data/catalog.json').write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n')

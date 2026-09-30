@@ -66,3 +66,5 @@ Library、首页与 Atlas 共用已核查来源的研究问题分类。方法标
 The reader preview typesets reviewed equations with pinned build-time KaTeX and serves local fonts. See [math rendering](docs/math-rendering.md). Node24 is required for the pinned build toolchain.
 
 Current UMI-on-Legs reports use the accepted shared reader in v2: Stage 1 expanded figure/table analysis, Stage 2 official-source locations, and Stage 3 colored code plus offline LaTeX math. Immutable v1 links remain available. Only this one paper has three imported reading stages. See [report artifacts](docs/report-artifacts.md) for exact version/security rules.
+
+Radar now leads with a source-backed research overview and all records in its observation window; individual selected summaries are secondary. Schema1.1 keeps1.0 compatibility, and the original2026-09-30 five-summary snapshot remains in the history route. The separate daily task must be updated and verified after deployment; this repository adds no scheduled workflow.

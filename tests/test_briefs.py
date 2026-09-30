@@ -3,7 +3,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT/'scripts'))
 from briefs import validate_brief,load_archive,section
 class BriefTests(unittest.TestCase):
- def setUp(self):self.index,self.records=load_archive(ROOT);self.data=copy.deepcopy(self.records['2026-09-30'])
+ def setUp(self):self.index,self.records=load_archive(ROOT);self.data=copy.deepcopy(json.loads((ROOT/'data/brief-history/2026-09-30-v1.0.json').read_text()))
  def test_bounded_selection_and_consistent_counts(self):
   validate_brief(self.data);self.assertLessEqual(len(self.data['new_papers'])+len(self.data['revised_papers']),5);self.assertEqual(self.data['counts']['new']+self.data['counts']['revisions'],self.data['counts']['window_candidates'])
  def test_automation_label_follows_verified_flag(self):
@@ -32,7 +32,7 @@ class BriefTests(unittest.TestCase):
 
 class BriefBoundaryRegression(unittest.TestCase):
  def setUp(self):
-  self.index,self.records=load_archive(ROOT);self.data=copy.deepcopy(self.records['2026-09-30'])
+  self.index,self.records=load_archive(ROOT);self.data=copy.deepcopy(json.loads((ROOT/'data/brief-history/2026-09-30-v1.0.json').read_text()))
  def test_string_counts_cannot_inject_html(self):
   self.data['counts']['new']='24';self.data['counts']['revisions']='<script>alert(1)</script>';self.data['counts']['window_candidates']='24<script>alert(1)</script>'
   with self.assertRaises(ValueError):validate_brief(self.data)
@@ -77,7 +77,7 @@ class BriefBoundaryRegression(unittest.TestCase):
    with self.assertRaises(ValueError):load_archive(Path(tmp))
 
 class ComparisonScopeRegression(unittest.TestCase):
- def setUp(self):_,records=load_archive(ROOT);self.data=copy.deepcopy(records['2026-09-30'])
+ def setUp(self):_,records=load_archive(ROOT);self.data=copy.deepcopy(json.loads((ROOT/'data/brief-history/2026-09-30-v1.0.json').read_text()))
  def test_new_paper_cannot_smuggle_revision_object(self):
   self.data['new_papers'][0]['revision_comparison']={'unapproved_field':'synthetic'}
   with self.assertRaises(ValueError):validate_brief(self.data)

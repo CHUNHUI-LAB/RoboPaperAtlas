@@ -6,7 +6,7 @@ from radar_overview import validate_overview,validate_snapshot,render
 class RadarOverviewTests(unittest.TestCase):
  @classmethod
  def setUpClass(cls):
-  cls.data=json.loads((ROOT/'data/radar-preview/2026-09-30.json').read_text());cls.old=json.loads((ROOT/'data/briefs/2026-09-30.json').read_text());cls.index=json.loads((ROOT/'data/briefs/index.json').read_text());cls.raw=(ROOT/'data/frontier.json').read_bytes();cls.feed=json.loads(cls.raw)
+  cls.data=json.loads((ROOT/'data/radar-preview/2026-09-30.json').read_text());cls.old=json.loads((ROOT/'data/brief-history/2026-09-30-v1.0.json').read_text());cls.index=json.loads((ROOT/'data/briefs/index.json').read_text());cls.raw=(ROOT/'data/frontier.json').read_bytes();cls.feed=json.loads(cls.raw)
  def reject(self,fn):
   d=copy.deepcopy(self.data);fn(d)
   with self.assertRaises((ValueError,TypeError,KeyError)):validate_brief(d)
