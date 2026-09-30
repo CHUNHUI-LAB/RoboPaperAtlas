@@ -1,38 +1,38 @@
 'use strict';
 const assert=require('assert'),fs=require('fs'),vm=require('vm'),path=require('path');
 const rootDir=path.join(__dirname,'..'),source=fs.readFileSync(rootDir+'/assets/hero-atlas.js','utf8');
-const {makeStars,project}=require(rootDir+'/assets/hero-atlas.js');
+const {makeStars,project,regions,focusProjection}=require(rootDir+'/assets/hero-atlas.js');
 assert.deepStrictEqual(makeStars(10),makeStars(10));assert.equal(makeStars().length,3710);
-for(let t=0;t<600;t+=5)for(const s of makeStars(500)){const p=project(s,t);assert(Number.isFinite(p.x)&&Number.isFinite(p.y)&&p.radius>0);assert(p.x>15&&p.x<545&&p.y>5&&p.y<403,'projected bounds');assert(p.opacity>0&&p.opacity<=1);}
+for(let t=0;t<600;t+=10)for(const s of makeStars(150)){const p=project(s,t);assert(Number.isFinite(p.x)&&Number.isFinite(p.y)&&p.radius>0);for(let k=-1;k<4;k++){const q=focusProjection(p,regions.map((_,i)=>Number(i===k)));assert(q.x>0&&q.x<560&&q.y>0&&q.y<408,'focused bounds');assert(q.opacity>0&&q.opacity<=1);}}
+for(let k=0;k<4;k++){let r=regions[k],near={x:r.x+20,y:r.y,radius:1,opacity:.5},far={x:560-r.x,y:408-r.y,radius:1,opacity:.5},w=regions.map((_,i)=>Number(i===k)),p=focusProjection(near,w),q=focusProjection(far,w);assert(p.x-near.x>12,'local enlargement');assert(p.opacity>q.opacity,'surrounding stars recede');}
 assert.equal(fs.readFileSync(rootDir+'/assets/hero-atlas.svg','utf8'),require(rootDir+'/scripts/render_atlas.cjs').render());
 function fixture(noCanvas=false){
- const context2d={setTransform(){},clearRect(){this.paints=(this.paints||0)+1;},fillRect(){},createRadialGradient(){return{addColorStop(){}}},drawImage(){},beginPath(){},arc(){},fill(){}};
- const el=()=>({handlers:{},dataset:{},attributes:{},hidden:false,addEventListener(k,f){this.handlers[k]=f;},removeEventListener(k){delete this.handlers[k]},setAttribute(k,v){this.attributes[k]=v},classList:{add(){},remove(){}}});
- const toggle=el(),canvas={clientWidth:560,clientHeight:408,getContext:()=>noCanvas?null:context2d},root=el();root.isConnected=true;root.querySelector=s=>s==='canvas'?canvas:toggle;
- const document=el();document.readyState='complete';document.hidden=false;document.querySelectorAll=()=>[root];document.createElement=()=>({getContext:()=>context2d});
+ const context2d={setTransform(){},clearRect(){this.paints=(this.paints||0)+1;this.points=[];},fillRect(){},createRadialGradient(){return{addColorStop(){}}},drawImage(){},beginPath(){},arc(x,y,r){this.points.push([x,y,r]);},fill(){}};
+ let document;const el=(dataset={})=>({handlers:{},dataset,attributes:{},hidden:false,parent:null,addEventListener(k,f){this.handlers[k]=f;},removeEventListener(k){delete this.handlers[k]},setAttribute(k,v){this.attributes[k]=v},getAttribute(k){return this.attributes[k]},removeAttribute(k){delete this.attributes[k]},classList:{set:new Set(),add(k){this.set.add(k)},remove(k){this.set.delete(k)},toggle(k,on){on?this.set.add(k):this.set.delete(k)}},closest(selector){if(selector==='[data-atlas-topic]'&&this.dataset.atlasTopic)return this;if(selector==='[data-atlas-panel]'&&this.dataset.atlasPanel)return this;return this.parent?.closest(selector)||null},focus(){document.activeElement=this;root.handlers.focusin?.({target:this});}});
+ const toggle=el(),canvas={clientWidth:560,clientHeight:408,getContext:()=>noCanvas?null:context2d},root=el(),overview=el(),status=el();root.isConnected=true;
+ const topics=regions.map(r=>el({atlasTopic:r.key})),panels=regions.map(r=>el({atlasPanel:r.key}));
+ topics.forEach(t=>{t.parent=root;t.attributes['aria-label']=t.dataset.atlasTopic});panels.forEach(p=>{p.parent=root;const a=el();a.parent=p;p.querySelector=()=>a;p.link=a});
+ root.contains=e=>!!e&&(e===root||topics.includes(e)||panels.includes(e)||panels.some(p=>p.link===e)||e===toggle);
+ root.querySelector=s=>({'canvas':canvas,'[data-atlas-toggle]':toggle,'.atlas-galaxy__overview':overview,'[data-atlas-status]':status})[s];root.querySelectorAll=s=>s==='[data-atlas-topic]'?topics:panels;
+ document=el();document.readyState='complete';document.hidden=false;document.querySelectorAll=()=>[root];document.createElement=()=>({getContext:()=>context2d});
  const media={},raf=new Map();let next=0,observer;
  const window=el();window.devicePixelRatio=1;window.matchMedia=s=>media[s]||(media[s]={...el(),matches:false});
  class IO{constructor(cb){this.cb=cb;observer=this;}observe(){}disconnect(){this.disconnected=true;}}window.IntersectionObserver=IO;
  const c={document,window,IntersectionObserver:IO,requestAnimationFrame:f=>{raf.set(++next,f);return next;},cancelAnimationFrame:id=>raf.delete(id)};
  vm.runInNewContext(source,c);
- return {root,toggle,canvas,document,window,media,raf,observer,context2d,c,tick(n){const a=[...raf.values()];raf.clear();a.forEach(f=>f(n));}};
+ return {root,toggle,canvas,document,window,media,raf,observer,context2d,c,topics,panels,overview,status,tick(n){const a=[...raf.values()];raf.clear();a.forEach(f=>f(n));}};
 }
 const a=fixture();assert.equal(a.raf.size,0);a.observer.cb([{isIntersecting:true}]);assert.equal(a.raf.size,1);
 for(let n=0;n<1000;n+=16)a.tick(n);assert(a.context2d.paints>20&&a.context2d.paints<40,'paint capped about30fps');
+const before=a.context2d.points.map(p=>p.slice());a.root.handlers.pointerover({target:a.topics[0]});assert.equal(a.root.dataset.activeTopic,'navigation');assert.equal(a.panels.filter(p=>!p.inert).length,1);a.tick(1008);assert(Math.abs(a.context2d.points[0][0]-before[0][0])<5,'no selection teleport');
+for(let n=1024;n<2000;n+=16)a.tick(n);assert.notDeepStrictEqual(a.context2d.points,before);
+for(let i=0;i<120;i++){a.root.handlers.pointerover({target:a.topics[i%4]});a.tick(2016+i*16);assert.equal(a.raf.size,1);assert.equal(a.panels.filter(p=>!p.inert).length,1);}
+a.root.handlers.pointerover({target:a.panels[3].link});assert.equal(a.root.dataset.activeTopic,'foundations','paper path retains selection');a.root.handlers.pointerleave();assert.equal(a.root.dataset.activeTopic,'overview');
+a.topics[1].focus();assert.equal(a.root.dataset.activeTopic,'wbc');a.root.handlers.pointerover({target:a.topics[2]});assert.equal(a.root.dataset.activeTopic,'vla');let prevented=0;const key=(key,target)=>a.root.handlers.keydown({key,target,preventDefault(){prevented++}});key('ArrowDown',a.topics[1]);assert.equal(a.document.activeElement,a.panels[1].link,'Down uses the focused topic rather than mouse-hover target');a.root.handlers.pointerover({target:a.topics[3]});assert.equal(a.root.dataset.activeTopic,'wbc','pointer cannot evict a focused paper panel');assert(!a.panels[1].inert);a.root.handlers.pointerleave();assert.equal(a.root.dataset.activeTopic,'wbc','keyboard focus survives pointer leave');key('ArrowUp',a.panels[1].link);assert.equal(a.document.activeElement,a.topics[1]);key('ArrowDown',a.topics[1]);key('Escape',a.panels[1].link);assert.equal(a.document.activeElement,a.topics[1]);assert.equal(a.root.dataset.activeTopic,'overview');assert(a.panels.every(p=>p.inert));key('ArrowDown',a.topics[1]);assert.equal(a.document.activeElement,a.panels[1].link,'Down reopens after Escape');key('Escape',a.panels[1].link);
+a.topics[0].focus();a.root.handlers.pointerover({target:a.topics[2]});key('Escape',a.topics[0]);assert.equal(a.document.activeElement,a.topics[0],'Escape preserves keyboard origin over hover selection');
 a.toggle.handlers.click();assert.equal(a.raf.size,0);assert.equal(a.toggle.attributes['aria-pressed'],'true');
-for(let i=0;i<50;i++){
- a.document.hidden=true;a.document.handlers.visibilitychange();a.document.hidden=false;a.document.handlers.visibilitychange();
- a.observer.cb([{isIntersecting:false}]);a.observer.cb([{isIntersecting:true}]);
- a.media['(max-width: 767px)'].matches=true;a.media['(max-width: 767px)'].handlers.change();
- a.media['(max-width: 767px)'].matches=false;a.media['(max-width: 767px)'].handlers.change();
- assert.equal(a.raf.size,0,'manual pause survives all transitions');
-}
-a.toggle.handlers.click();assert.equal(a.raf.size,1);
-a.media['(prefers-reduced-motion: reduce)'].matches=true;a.media['(prefers-reduced-motion: reduce)'].handlers.change();assert.equal(a.raf.size,0);assert(a.toggle.hidden);
-a.media['(prefers-reduced-motion: reduce)'].matches=false;a.media['(prefers-reduced-motion: reduce)'].handlers.change();assert.equal(a.raf.size,1);
-for(let i=0;i<100;i++){a.toggle.handlers.click();assert.equal(a.raf.size,i%2?1:0);}
-vm.runInNewContext(source,a.c);assert.equal(a.raf.size,1,'no duplicate initialization');
-const callback=a.observer.cb,oldDestroy=a.root.atlasDestroy;a.root.atlasDestroy();assert.equal(a.raf.size,0);assert(a.toggle.hidden);const paints=a.context2d.paints;callback([{isIntersecting:true}]);assert.equal(a.raf.size,0);assert.equal(a.context2d.paints,paints,'queued callback does not redraw after teardown');
-vm.runInNewContext(source,a.c);assert(a.root.dataset.atlasInitialized);assert.equal(a.raf.size,0);const newDestroy=a.root.atlasDestroy;oldDestroy();assert.equal(a.root.atlasDestroy,newDestroy);assert(a.root.dataset.atlasInitialized,'stale destroy cannot clear new instance');
-const b=fixture(true);assert(!b.root.dataset.atlasInitialized);assert.equal(b.raf.size,0);
-console.log('PASS Atlas: deterministic star math/fallback, bounds, ~30fps cap, repeated pause, hidden/offscreen/static lifecycle, reduced motion, duplicate init, teardown/reinit and no-Canvas fallback. DOM model; live rendering checked separately.');
+for(let i=0;i<50;i++){a.document.hidden=true;a.document.handlers.visibilitychange();a.document.hidden=false;a.document.handlers.visibilitychange();a.observer.cb([{isIntersecting:false}]);a.observer.cb([{isIntersecting:true}]);a.media['(max-width: 767px)'].matches=true;a.media['(max-width: 767px)'].handlers.change();a.media['(max-width: 767px)'].matches=false;a.media['(max-width: 767px)'].handlers.change();assert.equal(a.raf.size,0);}
+a.toggle.handlers.click();assert.equal(a.raf.size,1);a.media['(prefers-reduced-motion: reduce)'].matches=true;a.media['(prefers-reduced-motion: reduce)'].handlers.change();assert.equal(a.raf.size,0);assert(a.toggle.hidden);a.topics[2].focus();assert.equal(a.root.dataset.activeTopic,'vla');a.media['(prefers-reduced-motion: reduce)'].matches=false;a.media['(prefers-reduced-motion: reduce)'].handlers.change();assert.equal(a.raf.size,1);
+vm.runInNewContext(source,a.c);assert.equal(a.raf.size,1);const callback=a.observer.cb,oldDestroy=a.root.atlasDestroy;a.root.atlasDestroy();assert.equal(a.raf.size,0);assert(a.toggle.hidden);const paints=a.context2d.paints;callback([{isIntersecting:true}]);assert.equal(a.context2d.paints,paints);vm.runInNewContext(source,a.c);const newDestroy=a.root.atlasDestroy;oldDestroy();assert.equal(a.root.atlasDestroy,newDestroy);assert(a.root.dataset.atlasInitialized);
+const b=fixture(true);assert(b.root.dataset.atlasInitialized);assert.equal(b.raf.size,0);assert(b.toggle.hidden);b.topics[0].focus();assert.equal(b.root.dataset.activeTopic,'navigation');assert(!b.panels[0].inert);
+console.log('PASS Atlas: distinct local magnification, smooth interrupted120-topic sequence, real preview states, pointer path, keyboard Down/Up/Escape, bounds, deterministic fallback, ~30fps, pause/visibility/static lifecycle and no-Canvas controls. DOM model only.');

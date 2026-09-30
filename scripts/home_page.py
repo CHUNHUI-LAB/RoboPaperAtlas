@@ -6,9 +6,21 @@ def render(data,card,categories,shell,esc):
  title_svg=(root/'assets/preview-title.svg').read_text()
  papers=data['papers'];total=len(papers);counts={k:sum(p['category']==k for p in papers) for k in categories}
  topic_labels={'navigation':'具身导航','wbc':'全身控制','vla':'视觉语言动作','foundations':'基础与评测'}
- topic_links=''.join(f'<li><a href="index.html?topic={key}#catalog" aria-label="{topic_labels[key]}，{counts[key]} 条书目">{topic_labels[key]}<small>{counts[key]} ↗</small></a></li>' for key in categories)
+ topic_links=''.join(f'<li><a data-atlas-topic="{key}" href="index.html?topic={key}#catalog" aria-label="{topic_labels[key]}，{counts[key]} 条书目">{topic_labels[key]}<small>{counts[key]} ↗</small></a></li>' for key in categories)
  fallback_version=hashlib.sha256((root/'assets/hero-atlas.svg').read_bytes()).hexdigest()[:12]
- atlas_svg=f'<figure class="atlas-galaxy"><div class="atlas-galaxy__field"><img class="atlas-galaxy__fallback" src="assets/hero-atlas.svg?v={fallback_version}" alt="" width="560" height="408"><canvas width="560" height="408" aria-hidden="true"></canvas><ul class="atlas-galaxy__topics" aria-label="按研究方向探索">{topic_links}</ul></div><figcaption><span>知识星图 · 抽象视觉，非引用关系</span><button type="button" data-atlas-toggle hidden aria-pressed="false">暂停星图</button></figcaption></figure>'
+ example_ids={'navigation':['harnessvln','agenticnav-tool-harness'],'wbc':['rpa-0040','rpa-0002'],'vla':['rpa-0073','rpa-0072'],'foundations':['huang2023vlmaps','gu2024conceptgraphs']}
+ by_id={p['id']:p for p in papers}
+ previews='<div class="atlas-galaxy__preview"><div class="atlas-galaxy__overview"><span>探索知识星图</span><p>悬停或聚焦方向，展开局部星域。按 ↓ 查看论文入口。</p></div>'
+ for key in categories:
+  examples=[]
+  for pid in example_ids[key]:
+   paper=by_id[pid];title=(paper.get('verified_overlay') or {}).get('title') or paper['title']
+   status='来源已核验' if paper['citation_verified'] else '书目待核验'
+   examples.append(f'<a href="papers/{pid}/index.html" title="{esc(title)}"><span>{esc(title)}</span><small>{status} ↗</small></a>')
+  previews+=f'<section class="atlas-galaxy__paper-panel" id="atlas-panel-{key}" data-atlas-panel="{key}" aria-label="{topic_labels[key]}的目录示例" aria-hidden="true" inert><header><strong>{topic_labels[key]}</strong><span>{counts[key]} 条书目 · 2 个入口示例</span></header><div>{"".join(examples)}</div></section>'
+ previews+='</div><p class="sr-only" data-atlas-status role="status" aria-live="polite"></p>'
+ atlas_svg=f'<figure class="atlas-galaxy"><div class="atlas-galaxy__field"><img class="atlas-galaxy__fallback" src="assets/hero-atlas.svg?v={fallback_version}" alt="" width="560" height="408"><canvas width="560" height="408" aria-hidden="true"></canvas><ul class="atlas-galaxy__topics" aria-label="按研究方向探索">{topic_links}</ul></div>{previews}<figcaption><span>知识星图 · 抽象视觉，非引用关系</span><button type="button" data-atlas-toggle hidden aria-pressed="false">暂停星图</button></figcaption></figure>'
+
  tabs=f'<button class="topic-filter active" type="button" data-topic="all" aria-pressed="true"><span>全部</span><b>{total}</b></button>'
  labels={'navigation':'具身导航','wbc':'全身控制','vla':'视觉语言动作','foundations':'基础与评测'}
  tabs+=''.join(f'<button class="topic-filter" type="button" data-topic="{key}" aria-pressed="false"><span>{labels[key]}</span><b>{counts[key]}</b></button>' for key in categories)
