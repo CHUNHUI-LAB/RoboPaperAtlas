@@ -23,3 +23,40 @@
 .classification-note{margin-top:32px;padding-top:24px;border-top:1px solid #e2e4e8}.classification-note h3{font-size:19px;margin:0 0 18px}.classification-note dl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.classification-note dt{font-size:12px;color:#5d6471}.classification-note dd{margin:6px 0;font-size:15px}.classification-note details{margin-top:18px}.classification-note details small{display:block;color:#586070;font-size:12px}.classification-note .classification-review{padding:14px 16px;background:#f2eff8;border-radius:9px;color:#574872}.topic-filters{scrollbar-width:thin}.drawer-taxonomy{color:#514071;font-size:13px;line-height:1.7;margin:16px 0}.filter-panel{max-height:min(75vh,660px);overflow-y:auto}@media(max-width:767px){.classification-note dl{grid-template-columns:1fr}.filter-panel{max-height:65vh}}
 
 .stage-version-links{display:flex;flex-direction:column;align-items:flex-start;gap:8px}.stage-version-links>a:not(.stage-report-link){font-size:11px;color:#586478}
+
+.common-methods{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-bottom:18px}.method-chip{font-size:11px;line-height:1.5;padding:8px;border:1px solid #d8dfe3;border-radius:6px;background:#fff;color:#40514c;min-height:40px}.method-chip[aria-pressed=true]{background:#e8f4ed;border-color:#83b09b;color:#244f3d}.paper-card .card-category{white-space:normal;line-height:1.65}.filter-panel{max-height:calc(100vh - 180px);overflow-y:auto}
+
+/* Readable discovery controls: shared desktop and narrow typography. */
+body{font-size:18px;line-height:1.7}
+.atlas-experience .topic-filters{flex-wrap:wrap;gap:8px}
+.atlas-experience .topic-filter{font-size:17px;line-height:1.5;min-height:46px;padding:10px 14px;white-space:normal}
+.atlas-experience .topic-filter b{font-size:14px;margin-left:8px}
+.atlas-experience .topic-crosslabels span,.atlas-experience .method-chip{font-size:16px;line-height:1.5}
+.filter-panel label,.filter-panel select,.filter-panel p,.results-bar,.active-filters button,.sort-label select,.filter-disclosure summary{font-size:16px;line-height:1.6}
+.filter-panel select,.method-chip,.active-filters button{min-height:44px}
+.filter-panel{max-width:calc(100vw - 40px)}
+.paper-card .category,.paper-card .authors,.paper-meta,.paper-card small{font-size:15px;line-height:1.6}
+.paper-card .summary,.paper-summary,.paper-card p,.section-heading p,.experience-route p,.reading-roadmap p{font-size:18px;line-height:1.75}
+.classification-note dt,.drawer-taxonomy{font-size:16px;line-height:1.65}.classification-note dd{font-size:18px;line-height:1.7}
+.atlas-galaxy .atlas-galaxy__topics a{font-size:17px;line-height:1.6;min-height:48px;padding:8px 10px}
+.atlas-galaxy .atlas-galaxy__topics a small{font-size:14px}
+.atlas-galaxy .atlas-galaxy__topics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.atlas-galaxy .atlas-galaxy__overview p,.atlas-galaxy .atlas-galaxy__paper-panel p{font-size:16px;line-height:1.7}
+.atlas-galaxy .atlas-galaxy__overview>span,.atlas-galaxy .atlas-galaxy__paper-panel strong{font-size:18px}
+.atlas-galaxy .atlas-galaxy__paper-panel a,.atlas-galaxy .atlas-galaxy__paper-panel header span,.atlas-galaxy figcaption,.atlas-galaxy figcaption button{font-size:15px;line-height:1.6}
+.atlas-galaxy .atlas-galaxy__paper-panel small{font-size:14px}
+.catalog-search-trigger,.text-link,.load-more,.experience-secondary{font-size:17px;line-height:1.6}
+a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible,select:focus-visible{outline:3px solid #78629f;outline-offset:3px}
+@media(max-width:700px){body{font-size:17px}.atlas-experience .topic-filter{font-size:16px;padding:10px 12px}.atlas-galaxy .atlas-galaxy__topics a{font-size:16px}.paper-card .summary,.paper-summary,.paper-card p{font-size:17px}.results-bar{gap:12px;flex-wrap:wrap}.results-actions{flex-wrap:wrap;gap:10px}.filter-panel{width:min(360px,calc(100vw - 40px))}.atlas-galaxy figcaption{flex-wrap:wrap;gap:10px}}
+.paper-grid:not(.list-view) .card-summary,.paper-grid.list-view .card-summary{font-size:18px;line-height:1.75}
+.paper-grid:not(.list-view) .authors,.paper-grid:not(.list-view) .card-category,.paper-grid.list-view .authors,.paper-grid.list-view .card-category,.paper-card .badge{font-size:15px;line-height:1.6}
+/* Wrap long Chinese entry names and preserve static-mode instructions. */
+.atlas-galaxy .atlas-galaxy__topics a{white-space:normal;overflow-wrap:anywhere;align-items:flex-start}
+.atlas-galaxy .atlas-galaxy__paper-panel a>span{font-size:16px;line-height:1.6}
+.experience-hero-scene>.atlas-galaxy:not(.atlas-interactive) .atlas-galaxy__overview p{font-size:0}
+.experience-hero-scene>.atlas-galaxy:not(.atlas-interactive) .atlas-galaxy__overview p:after{font-size:16px;line-height:1.7}
+@media(max-width:767px){.atlas-galaxy .atlas-galaxy__overview p{font-size:0}.atlas-galaxy .atlas-galaxy__overview p:after{font-size:16px;line-height:1.7}.atlas-galaxy .atlas-galaxy__paper-panel a>span{font-size:16px}}
+.atlas-galaxy .atlas-galaxy__preview{height:auto;min-height:240px}
+.atlas-galaxy .atlas-galaxy__paper-panel a{min-height:96px}
+.site-footer p,.site-footer .footer-right,.site-footer .footer-brand>span{font-size:15px;line-height:1.7}
+@media(max-width:767px){.atlas-galaxy .atlas-galaxy__preview{min-height:300px}.site-footer{gap:20px;flex-wrap:wrap}.site-footer p,.site-footer .footer-right,.site-footer .footer-brand>span{font-size:14px}}

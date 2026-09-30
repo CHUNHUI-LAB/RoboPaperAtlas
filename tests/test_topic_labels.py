@@ -2,7 +2,8 @@ import json,sys,unittest,html,re,copy
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT/'scripts'))
 from topic_labels import TOPIC_LABELS,TOPIC_HINTS,paper_topics,primary_topic,topic_counts,classification,method_tags,resource_kinds,taxonomy_search,validate_projection,validate_overlay,OVERLAY,TAXONOMY
-from build import home,card,details,CATEGORIES
+from build import home,card,details,CATEGORIES,browse_groups
+from discovery_facets import GROUPS,for_catalog,counts
 from reports import load_reports
 from map_page import map_data,map_html
 COUNTS={'navigation':18,'mobile-manipulation':19,'wbc':20,'locomotion':2,'policy-learning':21,'spatial-representations':3,'general-ml':4,'resources':7,'cross-domain':1}
@@ -29,10 +30,11 @@ class ReviewedClassificationTests(unittest.TestCase):
   by_id={p['id']:p for p in self.papers};self.assertEqual(primary_topic(by_id['holoagent-0']),'cross-domain');self.assertEqual(primary_topic(by_id['savva2019habitat']),'resources')
  def test_home_cards_details_map_agree(self):
   page=home(self.catalog);mapped=map_data(self.catalog,report_records=self.reports)
-  for key,label in TOPIC_LABELS.items():
-   self.assertIn('data-atlas-topic="'+key+'"',page);self.assertIn('<span>'+html.escape(label)+'</span><b>'+str(COUNTS[key]),page)
+  groups=counts(for_catalog(self.papers,OVERLAY['records']))
+  for key,label,_ in GROUPS:
+   self.assertIn('data-atlas-topic="'+key+'"',page);self.assertIn('<span>'+html.escape(label)+'</span><b>'+str(groups[key]),page)
   for p,m in zip(self.papers,mapped['papers']):
-   self.assertEqual(m['mapTopic'],primary_topic(p));self.assertIn('data-topics="'+m['mapTopic']+'"',card(p))
+   self.assertEqual(m['mapTopic'],primary_topic(p));self.assertIn('data-topics="'+' '.join(browse_groups(p))+'"',card(p))
    d=details(p);self.assertIn('研究问题与分类证据',d);self.assertIn(html.escape(classification(p)['problemLabel']),d)
  def test_evidence_does_not_promote_bibliography_or_reading(self):
   self.assertEqual(sum(p['citation_verified'] for p in self.papers),22);self.assertEqual(sum(classification(p)['needsReview'] for p in self.papers),4)

@@ -7,6 +7,11 @@ from urllib.parse import urlsplit
 ROOT=Path(__file__).resolve().parents[1]
 from topic_labels import TOPIC_LABELS, TOPIC_FULL_NAMES, TOPIC_HINTS, paper_topics, primary_topic, classification, method_tags, resource_kinds, taxonomy_search, RESOURCE_LABELS, TAXONOMY
 CATEGORIES={key:(TOPIC_LABELS[key],TOPIC_FULL_NAMES[key]) for key in TOPIC_LABELS}
+from discovery_facets import GROUPS,for_catalog,method_label
+BROWSE=for_catalog(json.loads((ROOT/'data/catalog.json').read_text())['papers'],json.loads((ROOT/'data/classification.json').read_text())['records'])
+BROWSE_LABELS={key:label for key,label,_ in GROUPS}
+def browse_groups(p):return BROWSE[p['id']]['groups']
+def browse_search(p):return ' '.join([*(BROWSE_LABELS[k] for k in browse_groups(p)),*(method_label(t) for t in method_tags(p))])
 REPO='https://github.com/CHUNHUI-LAB/RoboPaperAtlas'
 STAGES=[('stage1','01','Stage 1','初读','建立研究问题、核心贡献与证据入口。'),('stage2','02','Stage 2','写作精读','梳理论文论证、研究缺口与表达结构。'),('stage3','03','Stage 3','方法精读','结合公式、框架与公开代码理解方法。')]
 def esc(s): return html.escape(str(s) if s is not None else '',quote=True)
@@ -41,16 +46,16 @@ def shell(title,body,prefix='',page='catalog',description='RoboPaperAtlas：从�
 def badge(p): return '<span class="badge verified"><span aria-hidden="true">●</span> 来源已核验</span>' if p['citation_verified'] else '<span class="badge pending"><span aria-hidden="true">○</span> 书目待核验</span>'
 def imported_count(p):return sum(s['status']=='imported' for s in p['stages'].values())
 def card(p):
-    title=display_title(p); authors=author_text(p); cat=CATEGORIES[primary_topic(p)][0]
+    title=display_title(p); authors=author_text(p); cat=' / '.join(BROWSE_LABELS[k] for k in browse_groups(p))
     desc=p.get('summary') or '已收录原始书目。题名、作者、年份与出版版本尚待逐项核验，阅读档案尚未导入。'
     c=classification(p)
-    tags=''.join(f'<span>{esc(t)}</span>' for t in method_tags(p)[:3])
+    tags=''.join(f'<span>{esc(method_label(t))}</span>' for t in method_tags(p)[:3])
     resource_tags=''.join(f'<span>{esc(RESOURCE_LABELS[t])}</span>' for t in resource_kinds(p))
     report_count=imported_count(p)
     stage_badge=(f'<a class="card-report-link" href="papers/{p["id"]}/index.html#reading">{report_count} 份阅读报告 ↗</a>' if report_count else '<span class="card-stage" title="三个阶段的阅读报告均尚未导入">S1 <i></i> S2 <i></i> S3 <i></i><span class="sr-only">均未导入</span></span>')
     yearkind={'publication':'出版','preprint':'预印本','user_provided':'原始记录'}.get(p.get('year_basis'),'待核验')
-    q=' '.join([p['title'],title,p.get('short_name',''),authors,desc,taxonomy_search(p),*p.get('tags',[])])
-    return f'''<article class="paper-card" data-search="{esc(q.casefold())}" data-category="{primary_topic(p)}" data-canonical-category="{p['category']}" data-topics="{' '.join(paper_topics(p))}" data-methods="{esc('|'.join(method_tags(p)))}" data-resources="{'|'.join(resource_kinds(p))}" data-year="{p.get('publication_year') or 'unknown'}" data-status="{'verified' if p['citation_verified'] else 'pending'}" data-title="{esc(title.casefold())}" data-sort-year="{p.get('bibliographic_year') or 0}"><span class="paper-art" aria-hidden="true" style="position:absolute"></span><div class="card-top"><span class="card-category" title="{esc(TOPIC_HINTS[primary_topic(p)])}">{esc(cat)}</span>{badge(p)}</div><h3><a href="papers/{p['id']}/index.html">{esc(title)}</a></h3><p class="authors" title="{esc(authors)}">{esc(authors)}</p><p class="card-summary">{esc(desc)}</p><div class="tags">{tags}</div><div class="topic-crosslabels" aria-label="研究问题与资源类型"><span>{esc(c["problemLabel"])}</span>{resource_tags}{'<span>分类边界待复核</span>' if c["needsReview"] else ''}</div><div class="card-bottom"><span class="paper-year">{esc(yearlabel(p))}<small>{yearkind}</small></span>{stage_badge}<button class="card-arrow" type="button" data-direction-label="{esc(cat)}" data-problem-label="{esc(c['problemLabel'])}" data-preview="{p['id']}" aria-label="快速查看 {esc(title)}">↗</button></div></article>'''
+    q=' '.join([p['title'],title,p.get('short_name',''),authors,desc,taxonomy_search(p),browse_search(p),*p.get('tags',[])])
+    return f'''<article class="paper-card" data-search="{esc(q.casefold())}" data-category="{primary_topic(p)}" data-canonical-category="{p['category']}" data-topics="{' '.join(browse_groups(p))}" data-methods="{esc('|'.join(method_tags(p)))}" data-resources="{'|'.join(resource_kinds(p))}" data-year="{p.get('publication_year') or 'unknown'}" data-status="{'verified' if p['citation_verified'] else 'pending'}" data-title="{esc(title.casefold())}" data-sort-year="{p.get('bibliographic_year') or 0}"><span class="paper-art" aria-hidden="true" style="position:absolute"></span><div class="card-top"><span class="card-category" title="{esc(TOPIC_HINTS[primary_topic(p)])}">{esc(cat)}</span>{badge(p)}</div><h3><a href="papers/{p['id']}/index.html">{esc(title)}</a></h3><p class="authors" title="{esc(authors)}">{esc(authors)}</p><p class="card-summary">{esc(desc)}</p><div class="tags">{tags}</div><div class="topic-crosslabels" aria-label="研究问题与资源类型"><span>{esc(c["problemLabel"])}</span>{resource_tags}{'<span>分类边界待复核</span>' if c["needsReview"] else ''}</div><div class="card-bottom"><span class="paper-year">{esc(yearlabel(p))}<small>{yearkind}</small></span>{stage_badge}<button class="card-arrow" type="button" data-direction-label="{esc(cat)}" data-problem-label="{esc(c['problemLabel'])}" data-preview="{p['id']}" aria-label="快速查看 {esc(title)}">↗</button></div></article>'''
 
 def classification_html(p):
     c=classification(p)
@@ -122,6 +127,8 @@ def main():
     (target/'reader-preview/umi-on-legs/index.html').write_text(render_reader_preview(ROOT,shell,asset_url))
     from preview_artifacts import write_preview
     write_preview(ROOT,target)
+    from global_preview import write_preview as write_global_preview
+    write_global_preview(ROOT,target)
     for p in data['papers']:
         d=target/'papers'/p['id']; d.mkdir(parents=True); (d/'index.html').write_text(details(p))
     from frontier_page import render as frontier_render
@@ -139,7 +146,7 @@ def main():
     (target/'data').mkdir(exist_ok=True); (target/'data/briefs').mkdir(); shutil.copyfile(ROOT/'data/briefs/index.json',target/'data/briefs/index.json')
     for entry in brief_index['briefs']:
         shutil.copyfile(ROOT/'data/briefs'/entry['path'],target/'data/briefs'/entry['path'])
-    (target/'data/frontier.json').write_text(json.dumps(frontier,ensure_ascii=False,indent=2)+'\n'); (target/'data/search-index.json').write_text(json.dumps([{'id':p['id'],'title':display_title(p),'authors':author_text(p),'category':CATEGORIES[primary_topic(p)][0],'text':' '.join([p['title'],display_title(p),p.get('short_name') or '',author_text(p),p.get('summary') or '',taxonomy_search(p),*p.get('tags',[])])} for p in data['papers']],ensure_ascii=False,separators=(',',':'))+'\n'); (target/'data/catalog.json').write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n')
+    (target/'data/frontier.json').write_text(json.dumps(frontier,ensure_ascii=False,indent=2)+'\n'); (target/'data/search-index.json').write_text(json.dumps([{'id':p['id'],'title':display_title(p),'authors':author_text(p),'category':CATEGORIES[primary_topic(p)][0],'text':' '.join([p['title'],display_title(p),p.get('short_name') or '',author_text(p),p.get('summary') or '',taxonomy_search(p),browse_search(p),*p.get('tags',[])])} for p in data['papers']],ensure_ascii=False,separators=(',',':'))+'\n'); (target/'data/catalog.json').write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n')
     from radar_preview import build_preview as build_radar_preview
     build_radar_preview(ROOT,target,shell)
     for report in reports:
