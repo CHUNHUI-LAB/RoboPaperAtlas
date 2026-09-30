@@ -1,0 +1,433 @@
+an><span class="tok-operator">,</span> <span class="tok-name">Z</span><span class="tok-operator">=</span><span class="tok-name">np</span><span class="tok-operator">.</span><span class="tok-call">ones</span><span class="tok-operator">(</span><span class="tok-number">3</span><span class="tok-operator">)</span></span></span><span class="code-line" id="code-wbc_node-1089-L1096"><span class="code-number" aria-hidden="true">1096</span><span class="code-text">        <span class="tok-operator">)</span></span></span><span class="code-line" id="code-wbc_node-1089-L1097"><span class="code-number" aria-hidden="true">1097</span><span class="code-text">        <span class="tok-keyword">return</span> <span class="tok-name">self</span><span class="tok-operator">.</span><span class="tok-name">robot_pose</span> <span class="tok-operator">@</span> <span class="tok-name">self</span><span class="tok-operator">.</span><span class="tok-name">arm2base</span> <span class="tok-operator">@</span> <span class="tok-name">ee2arm</span> <span class="tok-operator">@</span> <span class="tok-name">self</span><span class="tok-operator">.</span><span class="tok-name">tcp2ee</span></span></span></code></pre><p class="code-foot">原文件行号 · 静态摘录，未执行 · commit d75c9c182d8044dadf53043612da2ffbf1936a97</p></div><p><span class="tag">代码</span>矩阵链robot_pose @ arm2base @ ee2arm @ tcp2ee将基座世界姿态、臂安装外参、机械臂FK和TCP偏移串起来。本文读取了调用链；ARX5 SDK的forward_kinematics内部及真实标定数值准确性未逐行/实测核验，不能仅凭函数调用声称姿态已校准。<a class="code-cite" href="https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/real-wbc/modules/wbc_node.py#L1089-L1097" title="real-wbc/modules/wbc_node.py:1089–1097 · commit d75c9c182d8044dadf53043612da2ffbf1936a97">wbc_node.py · L1089–L1097 ↗</a></p><p><span class="tag">代码</span>iPhone Python侧解码<span class="math-inline" id="in-transform-matrix-shape"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>4</mn><mo>×</mo><mn>4</mn></mrow><annotation encoding="application/x-tex">4\times4</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">4</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">4</span></span></span></span></span>矩阵与时间戳（Swift列优先矩阵转置），维护接收时间与位姿，结合base2iphone得到基座位姿；可选速度积分路径存在。<a class="code-cite" href="https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/real-wbc/modules/pose_estimator.py#L40-L57" title="real-wbc/modules/pose_estimator.py:40–57 · commit d75c9c182d8044dadf53043612da2ffbf1936a97">pose_estimator.py · L40–L57 ↗</a>；<a class="code-cite" href="https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/real-wbc/modules/pose_estimator.py#L324-L367" title="real-wbc/modules/pose_estimator.py:324–367 · commit d75c9c182d8044dadf53043612da2ffbf1936a97">pose_estimator.py · L324–L367 ↗</a></p><p><span class="tag">论文</span>iPhone VIO约140 ms延迟，动捕约8 ms；作者尝试速度前推但没有显著改善，不能因为代码有积分器就声称延迟问题已解决。论文还说明真实控制链约20 ms仿真延迟匹配重要，URDF质量/惯量重测与安全微调不可忽略。<span class="source">§7.4、§8.2–8.4 · PDF页 <a href="https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=13">13</a>、<a href="https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=14">14</a></span></p><p><span class="tag">代码</span>实时lowlevel_state_cb构造世界目标，转到TCP系；策略开始后，位置误差有<span class="math-inline" id="in-stop-threshold"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>&gt;</mo><mn>0.5</mn><mtext> </mtext><mi mathvariant="normal">m</mi></mrow><annotation encoding="application/x-tex">&gt;0.5\,\mathrm{m}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.5782em;vertical-align:-0.0391em;"></span><span class="mrel">&gt;</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">0.5</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathrm">m</span></span></span></span></span>触发停止及<span class="math-inline" id="in-clip-threshold"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>&gt;</mo><mn>0.1</mn><mtext> </mtext><mi mathvariant="normal">m</mi></mrow><annotation encoding="application/x-tex">&gt;0.1\,\mathrm{m}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.5782em;vertical-align:-0.0391em;"></span><span class="mrel">&gt;</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="katex-base"><span class="katex-strut" style="height:0.6444em;"></span><span class="mord">0.1</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathrm">m</span></span></span></span></span>裁剪分支。这是该版本的保护处理，不是对任何真机部署都充分的安全保证。<a class="code-cite" href="https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/real-wbc/modules/wbc_node.py#L654-L665" title="real-wbc/modules/wbc_node.py:654–665 · commit d75c9c182d8044dadf53043612da2ffbf1936a97">wbc_node.py · L654–L665 ↗</a></p><p><span class="tag">未核验</span>主仓库固定了ARX5 SDK子模块9cf19e04c5ebf6cd094249b81190da6a55901828和iPhoneVIO子模块adabceaf02f0485a64c0f739f04c1d945b3802a4。此处确认gitlink与URL，不声称已审阅全部子模块、下载设备固件或验证ROS2实时性。</p></section><section id="chains" tabindex="-1"><h2>训练与推理：把两条全链路分开</h2><div class="eyebrow">STAGE 03</div><h3>训练：已读到的WBC调用链</h3><ol><li><span class="tag">代码</span>scripts/train.py用Hydra加载train.yaml，解析配置并构建IsaacGymEnv及OnPolicyRunner；有ckpt_path时加载检查点继续训练。<a class="code-cite" href="https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/scripts/train.py#L12-L26" title="mani-centric-wbc/scripts/train.py:12–26 · commit d75c9c182d8044dadf53043612da2ffbf1936a97">train.py · L12–L26 ↗</a></li><li><span class="tag">代码</span>defaults链为train→combo_go2ARX5_pickle_reaching_extreme→pickle_reaching→reaching→env_go2ARX5→env_base；sequence_sampler替换为PicklePoseSequenceLoader。当前配置的实际任务是reaching，不是看到目录里locomotion文件就认为先训练移动策略再拼接。<a class="code-cite" href="https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/config/train.yaml#L1-L6" title="mani-centric-wbc/config/train.yaml:1–6 · commit d75c9c182d8044dadf53043612da2ffbf1936a97">train.yaml · L1–L6 ↗</a>；<a class="code-cite" href="https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/config/env/combo_go2ARX5_pickle_reaching.yaml#L1-L4" title="mani-centric-wbc/config/env/combo_go2ARX5_pickle_reaching.yaml:1–4 · commit d75c9c182d8044dadf53043612da2ffbf1936a97">combo_go2ARX5_pickle_reaching.yaml · L1–L4 ↗</a></li><li><span class="tag">代码</span>环境reset抽轨迹，observe构造机器人/目标观测；actor高斯采样动作，环境模拟、返回reward/done；runner累积on-policy rollout，再计算returns并调用PPO update。<a class="code-cite" href="https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/rsl_rl/runners/on_policy_runner.py#L175-L266" title="mani-centric-wbc/legged_gym/rsl_rl/runners/on_policy_runner.py:175–266 · commit d75c9c182d8044dadf53043612da2ffbf1936a97">on_policy_runner.py · L175–L266 ↗</a>；<a class="code-cite" href="https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/rsl_rl/modules/actor_critic.py#L79-L96" title="mani-centric-wbc/legged_gym/rsl_rl/modules/actor_critic.py:79–96 · commit d75c9c182d8044dadf53043612da2ffbf1936a97">actor_critic.py · L79–L96 ↗</a></li><li><span class="tag">代码</span>PPO损失包括裁剪概率比的surrogate、值函数误差和熵项；训练配置最终覆盖gamma为0.99、entropy_coef为0.01，而子配置原始值分别0.9与0.001。只读ppo.yaml会读错最终训练参数。<a class="code-cite" href="https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/rsl_rl/algorithms/ppo.py#L209-L240" title="mani-centric-wbc/legged_gym/rsl_rl/algorithms/ppo.py:209–240 · commit d75c9c182d8044dadf53043612da2ffbf1936a97">ppo.py · L209–L240 ↗</a>；<a class="code-cite" href="https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/config/train.yaml#L8-L18" title="mani-centric-wbc/config/train.yaml:8–18 · commit d75c9c182d8044dadf53043612da2ffbf1936a97">train.yaml · L8–L18 ↗</a></li></ol><p><span class="tag">论文</span>论文实验报告所有比较训练4000轮、Unified另微调1000；仓库train.yaml默认reaching可训练20000轮。默认最大轮数不是论文实际选用检查点轮数。<span class="source">§10.2 · PDF页 <a href="https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=16">16</a>、<a href="https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf#page=17">17</a></span>；<a class="code-cite" href="https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/config/train.yaml#L8-L10" title="mani-centric-wbc/config/train.yaml:8–10 · commit d75c9c182d8044dadf53043612da2ffbf1936a97">train.yaml · L8–L10 ↗</a></p><h3>仿真评估</h3><p><span class="tag">代码</span>evaluate.py加载eval.yaml并要求ckpt_path。eval.yaml使用250个环境×每环境2个episode的目标计数；文档命令覆盖episode_length_s=17与8点preview。runner.eval暂时关闭push/transport扰动，再执行确定性推理、收集统计并恢复标志。文件载入路径存在不等于本页验证了相应checkpoint或重新得到500条结果。<a class="code-cite" href="https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/scripts/evaluate.py#L11-L35" title="mani-centric-wbc/scripts/evaluate.py:11–35 · commit d75c9c182d8044dadf53043612da2ffbf1936a97">evaluate.py · L11–L35 ↗</a>；<a class="code-cite" href="https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/config/eval.yaml#L1-L7" title="mani-centric-wbc/config/eval.yaml:1–7 · commit d75c9c182d8044dadf53043612da2ffbf1936a97">eval.yaml · L1–L7 ↗</a>；<a class="code-cite" href="https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/legged_gym/rsl_rl/runners/on_policy_runner.py#L92-L173" title="mani-centric-wbc/legged_gym/rsl_rl/runners/on_policy_runner.py:92–173 · commit d75c9c182d8044dadf53043612da2ffbf1936a97">on_policy_runner.py · L92–L173 ↗</a></p><h3>真机推理：接收端闭环与缺失连接</h3><ol><li><span class="tag">论文 / 未核验实现</span>上层图像→扩散轨迹→使用图像时刻相机位姿转到世界；完整UMI-on-Legs发布端未定位。</li><li><span class="tag">代码</span>ROS2 EEFTraj回调→RealtimeTraj.update；机器人LowState回调+机械臂状态→TCP世界位姿→按相对时间采样轨迹→局部位置/6D旋转→与上一动作拼接。</li><li><span class="tag">代码</span>policy_timer_callback读取观测history并调用actor→动作缩放偏置→腿关节重排→腿和臂命令。基座/iPhone/臂状态按不同回调异步更新，本文未测时序。</li><li><span class="tag">差异</span>当前部署文件把preview偏移归零，自适应延迟匹配没有应用时间轴平移，故上面是源码实际链路，不能不加限定地称为论文全部设计原样实现。</li></ol></section><section id="conditions" tabindex="-1"><h2>实现条件、差异与未核验项</h2><div class="eyebrow">STAGE 03</div><div class="reader-table"><table><thead><tr><th>项目</th><th>已核对的证据</th><th>本次状态 / 影响</th></tr></thead><tbody><tr><td>来源与版本</td><td>PMLR官方链接；主仓库固定SHA；gitlink子模块记录</td><td>只读源码；没有clone、安装、训练、评估或设备操作</td></tr><tr><td>仿真依赖</td><td><a class="code-cite" href="https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/docs/starter.md#L1-L29" title="mani-centric-wbc/docs/starter.md:1–29 · commit d75c9c182d8044dadf53043612da2ffbf1936a97">starter.md · L1–L29 ↗</a>；isaac.yml锁定大量依赖</td><td>需要Isaac Gym、CUDA环境、Python依赖；未进行环境兼容性验证</td></tr><tr><td>数据输入</td><td><a class="code-cite" href="https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/docs/wbc.md#L75-L83" title="mani-centric-wbc/docs/wbc.md:75–83 · commit d75c9c182d8044dadf53043612da2ffbf1936a97">wbc.md · L75–L83 ↗</a>；PicklePoseSequenceLoader</td><td>需要处理后的轨迹pickle；文档标称200 Hz。下载链接存在，未下载/解包</td></tr><tr><td>检查点</td><td><a class="code-cite" href="https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/mani-centric-wbc/docs/starter.md#L31-L40" title="mani-centric-wbc/docs/starter.md:31–40 · commit d75c9c182d8044dadf53043612da2ffbf1936a97">starter.md · L31–L40 ↗</a>；<a class="code-cite" href="https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/real-wbc/modules/wbc_node.py#L831-L885" title="real-wbc/modules/wbc_node.py:831–885 · commit d75c9c182d8044dadf53043612da2ffbf1936a97">wbc_node.py · L831–L885 ↗</a></td><td>文档有checkpoint链接；未确认下载可用、文件完整、权重形状与本版配置匹配</td></tr><tr><td>视觉策略端</td><td>主仓库README及递归文件树</td><td>未定位本文完整推理发布端；不能称端到端闭环已代码验证</td></tr><tr><td>preview</td><td>论文8点；默认YAML4点；文档评估覆盖8点；部署乘0</td><td>四种不同层级必须分别记录</td></tr><tr><td>奖励</td><td>论文<span class="math-inline" id="in-comparison-paper-ratio"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>ε</mi><mrow><mi mathvariant="normal">p</mi><mi mathvariant="normal">o</mi><mi mathvariant="normal">s</mi></mrow></msub><mi mathvariant="normal">/</mi><msub><mi>σ</mi><mrow><mi mathvariant="normal">p</mi><mi mathvariant="normal">o</mi><mi mathvariant="normal">s</mi></mrow></msub></mrow><annotation encoding="application/x-tex">\varepsilon_{\mathrm{pos}}/\sigma_{\mathrm{pos}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:1.0361em;vertical-align:-0.2861em;"></span><span class="mord"><span class="mord mathnormal">ε</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">pos</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mord">/</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0359em;">σ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">pos</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span></span></span></span></span>；代码欧氏距离平方/<span class="math-inline" id="in-comparison-code-scale"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>σ</mi><mrow><mi mathvariant="normal">p</mi><mi mathvariant="normal">o</mi><mi mathvariant="normal">s</mi></mrow></msub></mrow><annotation encoding="application/x-tex">\sigma_{\mathrm{pos}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="katex-base"><span class="katex-strut" style="height:0.7167em;vertical-align:-0.2861em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0359em;">σ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">pos</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span></span></span></span></span></td><td>定义可能未完全对齐；没有替作者更正或验证实验影响</td></tr><tr><td>部署平滑</td><td>论文推动0.3秒；当前WBC回调固定0.1秒</td><td>文件硬编码与任务表不同；不猜测实验当时用了哪一版</td></tr><tr><td>位姿延迟</td><td>论文模拟10ms；默认world_pos_reaching.yaml为0.0</td><td>需要配置/检查点实际值核验，不能仅凭默认声称实验设置一致</td></tr><tr><td>重定位扰动间隔</td><td>论文§3.3每20秒；extreme默认transport_interval_s=4.0</td><td>保留版本/配置差异，不视为论文实验日志</td></tr><tr><td>复现与安全</td><td>论文§7–8列出抖动、延迟、过热、URDF校准问题</td><td>未复现；不据代码可读性给“直接可跑”或“安全部署”结论</td></tr></tbody></table></div><p><span class="tag">实现条件的证据边界</span>有代码、有下载入口、有作者报告结果，是三个不同事实。只有实际取到对应数据与检查点、恢复论文配置、运行并比对指标，才能升级为复现结果；本页没有进行这一步。</p><details><summary>代码摘录的版权与许可</summary><p>本页仅节选解释所需的短代码；这些摘录来自上述固定提交的作者文件。主仓库LICENSE为MIT；原有第三方文件可能保留不同许可，本页对ActorCritic/PPO仅做分析与永久链接，不复制其完整实现。</p><pre>Copyright (c) 2024, Huy Ha, Yihuai Gao
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the &quot;Software&quot;), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+</pre><p><a class="code-cite" href="https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/LICENSE" title="固定版本LICENSE · commit d75c9c182d8044dadf53043612da2ffbf1936a97">LICENSE ↗</a></p></details></section><section id="summary" tabindex="-1"><h2>理解小结：已打通与仍缺的一段</h2><div class="eyebrow">STAGE 03</div><ul><li><span class="tag">论文＋代码</span>WBC核心不是另一个高层任务识别器，而是世界系轨迹跟踪器：离线示范序列成为仿真目标，当前末端姿态把世界目标变为局部误差，MLP输出关节目标并经PD执行。</li><li><span class="tag">代码</span>关键的行为选择藏在配置和边界处理中：目标采样时间、观测拼接顺序、误差平方、课程阈值、动作延迟、检查点附带配置与轨迹插值都会改变实际问题。</li><li><span class="tag">论文—代码差异</span>公开部署版的preview归零、延迟匹配未应用，以及默认/任务参数差异，阻止我们把这份源码直接等同于论文实验运行快照。</li><li><span class="tag">未核验</span>上层视觉发布端、具体实验数据/权重与配置、iOS/SDK内部和真实运行时序仍未打通；当前成果是有定位的静态方法理解，不是“已跑通”。</li></ul><p>从方法角度可以带走的是任务语义与形态控制之间的接口职责；从代码角度可以带走的是世界→末端坐标变换、预览索引与奖励实现的具体位置。以上结论不自动扩展成新任务迁移成功或新的机器人部署建议。</p></section></article></div></div></main><p class="reader-footer">RoboPaperAtlas · 独立中文阅读分析，不代表论文作者背书 · 保留正式论文来源</p><details class="reader-licenses"><summary>公式软件与字体许可</summary><pre>The MIT License (MIT)
+
+Copyright (c) 2013-2020 Khan Academy and other contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the &quot;Software&quot;), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+KaTeX_AMS-Regular
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_AMS.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+KaTeX_Caligraphic-Bold
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_Caligraphic.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+KaTeX_Caligraphic-Regular
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_Caligraphic.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+KaTeX_Fraktur-Bold
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_Fraktur.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+KaTeX_Fraktur-Regular
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_Fraktur.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+KaTeX_Main-Bold
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_Main.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+KaTeX_Main-BoldItalic
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_Main.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+KaTeX_Main-Italic
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_Main.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+KaTeX_Main-Regular
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_Main.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+KaTeX_Math-BoldItalic
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_Math.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+KaTeX_Math-Italic
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_Math.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+KaTeX_SansSerif-Bold
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_SansSerif.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+KaTeX_SansSerif-Italic
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_SansSerif.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+KaTeX_SansSerif-Regular
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_SansSerif.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+KaTeX_Script-Regular
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_Script.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+KaTeX_Size1-Regular
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_Size1.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+KaTeX_Size2-Regular
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_Size2.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+KaTeX_Size3-Regular
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_Size3.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+KaTeX_Size4-Regular
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_Size4.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+KaTeX_Typewriter-Regular
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_Typewriter.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+
+Font copyright and Reserved Font Names are listed in katex-font-notices.txt.
+Source: https://openfontlicense.org/documents/OFL.txt
+
+-----------------------------------------------------------
+SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007
+-----------------------------------------------------------
+
+PREAMBLE
+The goals of the Open Font License (OFL) are to stimulate worldwide
+development of collaborative font projects, to support the font creation
+efforts of academic and linguistic communities, and to provide a free and
+open framework in which fonts may be shared and improved in partnership
+with others.
+The OFL allows the licensed fonts to be used, studied, modified and
+redistributed freely as long as they are not sold by themselves. The
+fonts, including any derivative works, can be bundled, embedded,
+redistributed and/or sold with any software provided that any reserved
+names are not used by derivative works. The fonts and derivatives,
+however, cannot be released under any other type of license. The
+requirement for fonts to remain under this license does not apply
+to any document created using the fonts or their derivatives.
+DEFINITIONS
+&quot;Font Software&quot; refers to the set of files released by the Copyright
+Holder(s) under this license and clearly marked as such. This may
+include source files, build scripts and documentation.
+
+&quot;Reserved Font Name&quot; refers to any names specified as such after the
+copyright statement(s).
+
+&quot;Original Version&quot; refers to the collection of Font Software components as
+distributed by the Copyright Holder(s).
+&quot;Modified Version&quot; refers to any derivative made by adding to, deleting,
+or substituting -- in part or in whole -- any of the components of the
+Original Version, by changing formats or by porting the Font Software to a
+new environment.
+
+&quot;Author&quot; refers to any designer, engineer, programmer, technical
+writer or other person who contributed to the Font Software.
+PERMISSION &amp; CONDITIONS
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of the Font Software, to use, study, copy, merge, embed, modify,
+redistribute, and sell modified and unmodified copies of the Font
+Software, subject to the following conditions:
+
+1) Neither the Font Software nor any of its individual components,
+in Original or Modified Versions, may be sold by itself.
+2) Original or Modified Versions of the Font Software may be bundled,
+redistributed and/or sold with any software, provided that each copy
+contains the above copyright notice and this license. These can be
+included either as stand-alone text files, human-readable headers or
+in the appropriate machine-readable metadata fields within text or
+binary files as long as those fields can be easily viewed by the user.
+3) No Modified Version of the Font Software may use the Reserved Font
+Name(s) unless explicit written permission is granted by the corresponding
+Copyright Holder. This restriction only applies to the primary font name as
+presented to the users.
+4) The name(s) of the Copyright Holder(s) or the Author(s) of the Font
+Software shall not be used to promote, endorse or advertise any
+Modified Version, except to acknowledge the contribution(s) of the
+Copyright Holder(s) and the Author(s) or with their explicit written
+permission.
+5) The Font Software, modified or unmodified, in part or in whole,
+must be distributed entirely under this license, and must not be
+distributed under any other license. The requirement for fonts to
+remain under this license does not apply to any document created
+using the Font Software.
+
+TERMINATION
+This license becomes null and void if any of the above conditions are
+not met.
+DISCLAIMER
+THE FONT SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT
+OF COPYRIGHT, PATENT, TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL
+DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
+OTHER DEALINGS IN THE FONT SOFTWARE.
+</pre></details><div class="reader-toast" role="status" aria-live="polite" hidden></div><script>/* Reader controls only: no models, analytics, remote scripts or automatic PDF fetch. */
+(() => {
+ 'use strict';
+ const page=document.querySelector('.reader-page');if(!page)return;
+ const reduced=matchMedia('(prefers-reduced-motion: reduce)'),toc=page.querySelector('.reader-toc'),tocButton=page.querySelector('.reader-toc-toggle');
+ const compact=matchMedia('(max-width:767px)'),position=page.querySelector('.reader-position'),previousSection=page.querySelector('[data-reader-previous]'),nextSection=page.querySelector('[data-reader-next]'),sectionLabel=page.querySelector('[data-reader-section-label]');let currentSection=0,programmaticTarget=null;
+ const sections=[...page.querySelectorAll('.reader-article>section[id]')],tocLinks=[...toc.querySelectorAll('a[href^="#"]')];
+ let frame=0,toastTimer=0,toast=document.querySelector('.reader-toast');
+ function announce(message){clearTimeout(toastTimer);toast.textContent=message;toast.hidden=false;toastTimer=setTimeout(()=>{toast.hidden=true;},2400);}
+ function selectSection(index){
+  currentSection=Math.max(0,Math.min(sections.length-1,index));
+  tocLinks.forEach(link=>{const active=link.hash==='#'+sections[currentSection]?.id;link.classList.toggle('is-current',active);if(active)link.setAttribute('aria-current','location');else link.removeAttribute('aria-current');});
+  if(position)position.textContent=String(currentSection+1).padStart(2,'0')+' / '+String(sections.length).padStart(2,'0');
+  if(previousSection)previousSection.disabled=currentSection===0;if(nextSection)nextSection.disabled=currentSection===sections.length-1;
+  if(sectionLabel)sectionLabel.textContent=tocLinks[currentSection]?.textContent||'';
+ }
+ function updatePosition(){
+  frame=0;const offset=Number.parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop)||144;
+  const effectiveTop=section=>section.getBoundingClientRect().top-(Number.parseFloat(getComputedStyle(section).scrollMarginTop)||0);
+  const atBottom=Number.isFinite(window.scrollY)&&window.scrollY>0&&window.innerHeight+window.scrollY>=document.documentElement.scrollHeight-2;
+  if(programmaticTarget!==null){
+   const targetTop=effectiveTop(sections[programmaticTarget]);
+   if(Math.abs(targetTop-offset)<=6||(atBottom&&targetTop>=offset-6))programmaticTarget=null;
+   else{selectSection(programmaticTarget);return;}
+  }
+  let current=sections[0];for(const section of sections){if(effectiveTop(section)<=offset+6)current=section;else break;}
+  if(atBottom)current=sections[sections.length-1];selectSection(Math.max(0,sections.indexOf(current)));
+ }
+
+ const schedule=()=>{if(!frame&&!document.hidden)frame=requestAnimationFrame(updatePosition);};
+ window.addEventListener('scroll',schedule,{passive:true});window.addEventListener('resize',schedule);window.addEventListener('hashchange',()=>{programmaticTarget=null;schedule();});window.addEventListener('pageshow',schedule);
+ const interruptScroll=()=>{programmaticTarget=null;schedule();};
+ const isSectionControl=target=>[previousSection,nextSection,tocButton,...tocLinks].some(control=>control&&(control===target||control.contains(target)));
+ const pointerIntent=e=>{if(!isSectionControl(e.target))interruptScroll();};
+ window.addEventListener('wheel',interruptScroll,{passive:true});window.addEventListener('touchstart',pointerIntent,{passive:true});window.addEventListener('touchmove',interruptScroll,{passive:true});window.addEventListener('pointerdown',pointerIntent,{passive:true});
+ window.addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','PageUp','PageDown','Home','End'].includes(e.key)||(e.key===' '&&!isSectionControl(e.target)))interruptScroll();});
+ // A prior animation can emit scrollend after a newer navigation has started.
+ // Only geometry (above) or genuine manual intent may settle that new target.
+ window.addEventListener('scrollend',schedule);
+ document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelAnimationFrame(frame);frame=0;programmaticTarget=null;}else schedule();});
+ function closeToc(restore=false){toc.classList.remove('is-open');toc.inert=compact.matches;tocButton.setAttribute('aria-expanded','false');if(restore)tocButton.focus({preventScroll:true});}
+ tocButton.addEventListener('click',()=>{const open=!toc.classList.contains('is-open');toc.classList.toggle('is-open',open);toc.inert=compact.matches&&!open;tocButton.setAttribute('aria-expanded',String(open));if(open){const target=toc.querySelector('.is-current')||tocLinks[0];target?.focus({preventScroll:true});if(target)toc.scrollTop=Math.max(0,target.offsetTop-toc.clientHeight/2);}});
+ tocLinks.forEach(link=>link.addEventListener('click',e=>{if(e.defaultPrevented||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey||e.button>0)return;const index=sections.findIndex(section=>'#'+section.id===link.hash);if(index<0)return;e.preventDefault();closeToc();history.pushState(null,'',link.hash);goSection(index);}));
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&toc.classList.contains('is-open')&&!document.querySelector('dialog[open]')){e.preventDefault();closeToc(true);}});
+ document.addEventListener('focusin',e=>{if(toc.classList.contains('is-open')&&e.target!==tocButton&&!toc.contains(e.target))closeToc();});
+ compact.addEventListener?.('change',()=>{closeToc(compact.matches&&toc.contains(document.activeElement));schedule();});toc.inert=compact.matches;
+ function goSection(index){const target=sections[index];if(!target)return;
+  // Focus can interrupt an in-flight browser scroll even with preventScroll.
+  // Finish focus changes first, then make this navigation the last scroll request.
+  target.focus({preventScroll:true});programmaticTarget=index;selectSection(index);target.scrollIntoView({block:'start',behavior:reduced.matches?'auto':'smooth'});
+ }
+ previousSection?.addEventListener('click',()=>goSection(currentSection-1));nextSection?.addEventListener('click',()=>goSection(currentSection+1));
+ const copies=new WeakMap();
+ page.querySelectorAll('[data-copy-code]').forEach(button=>button.addEventListener('click',async()=>{
+  const holder=button.closest('.code-reader'),lines=[...holder.querySelectorAll('.code-text')].map(line=>line.textContent),token=(copies.get(button)||0)+1;copies.set(button,token);
+  try{await navigator.clipboard.writeText(lines.join('\n'));if(copies.get(button)===token&&button.isConnected)announce('代码片段已复制，未包含行号');}
+  catch{if(copies.get(button)===token&&button.isConnected)announce('未能访问剪贴板，可在代码框中手动选择复制');}
+ }));
+ page.querySelectorAll('[data-code-focus]').forEach(button=>button.addEventListener('click',()=>{
+  const holder=button.closest('.code-reader'),active=!holder.classList.contains('is-focused');holder.classList.toggle('is-focused',active);button.setAttribute('aria-pressed',String(active));
+  const pre=holder.querySelector('pre'),first=holder.querySelector('.code-line.is-key');
+  if(active&&first)pre.scrollTo({top:Math.max(0,first.offsetTop-pre.clientHeight/3),behavior:reduced.matches?'auto':'smooth'});
+ }));
+ const sourceData=page.querySelector('[data-source-units]');
+ if(sourceData){
+  let units=[];try{units=JSON.parse(sourceData.textContent);}catch{};
+  const panel=page.querySelector('.reader-source-panel'),rows=page.querySelectorAll('[data-source-row]'),buttons=page.querySelectorAll('[data-source-unit]');let selected=0;
+  const show=(id,scroll=false)=>{const index=units.findIndex(x=>x.id===id);if(index<0)return;selected=index;const unit=units[index];
+   panel.querySelector('[data-source-id]').textContent=unit.id;panel.querySelector('[data-source-location]').textContent=unit.location;panel.querySelector('[data-source-paraphrase]').textContent=unit.paraphrase;
+   const quote=panel.querySelector('[data-source-quote]');quote.hidden=!unit.quote;quote.textContent=unit.quote||'';
+   const a=panel.querySelector('[data-source-open]');a.href=unit.url;a.textContent=(unit.link_label||'打开原文位置')+' ↗';
+   panel.querySelector('[data-source-previous]').disabled=index===0;panel.querySelector('[data-source-next]').disabled=index===units.length-1;
+   rows.forEach(row=>(row.closest('.source-row')||row).classList.toggle('is-current',row.dataset.sourceRow===id));buttons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.sourceUnit===id)));
+   if(scroll){interruptScroll();page.querySelector('[data-source-row="'+CSS.escape(id)+'"]')?.scrollIntoView({block:'start',behavior:reduced.matches?'auto':'smooth'});}
+  };
+  buttons.forEach(b=>b.addEventListener('click',()=>{show(b.dataset.sourceUnit);if(innerWidth<=1050){const unit=units.find(x=>x.id===b.dataset.sourceUnit);announce(unit?.location||'已选择原文位置');}}));
+  panel.querySelector('[data-source-previous]').addEventListener('click',()=>show(units[Math.max(0,selected-1)].id,true));panel.querySelector('[data-source-next]').addEventListener('click',()=>show(units[Math.min(units.length-1,selected+1)].id,true));
+  const toggle=page.querySelector('[data-source-toggle]');toggle?.addEventListener('click',()=>{const off=page.classList.toggle('reader-source-collapsed');toggle.setAttribute('aria-pressed',String(!off));});if(units.length)show(units[0].id);
+ }
+ updatePosition();
+})();
+</script></body></html>

@@ -78,11 +78,16 @@ def validate_output(root,report_records=()):
     from reports import report_path
     report_paths={report_path(x) for x in report_records}
     preview_path='reader-preview/umi-on-legs/index.html'
-    from reader_theme_preview import ROUTE as theme_preview_path, read_preview as read_theme_preview
-    theme_preview=root/theme_preview_path
-    if theme_preview.exists():
-        ensure(not theme_preview.is_symlink() and theme_preview.is_file(),'Unsafe reader theme preview output')
-        ensure(theme_preview.read_bytes()==read_theme_preview(ROOT),'Reader theme preview hash mismatch')
+    from reader_theme_preview import PREVIEWS, read_preview as read_theme_preview
+    theme_preview_paths=set(PREVIEWS)
+    theme_root=root/'reader-theme-preview'
+    if theme_root.exists() or theme_root.is_symlink():
+        ensure(not theme_root.is_symlink(),'Unsafe reader theme preview directory')
+        ensure({str(p.relative_to(root)) for p in theme_root.rglob('*') if p.is_file()}==theme_preview_paths,'Unexpected or missing reader theme preview')
+        for route in theme_preview_paths:
+            theme_preview=root/route
+            ensure(not theme_preview.parent.is_symlink() and not theme_preview.is_symlink() and theme_preview.is_file(),'Unsafe reader theme preview output')
+            ensure(theme_preview.read_bytes()==read_theme_preview(ROOT,route),'Reader theme preview hash mismatch')
     report_images=set()
     import hashlib
     for report in report_records:
@@ -99,7 +104,7 @@ def validate_output(root,report_records=()):
         parser=Links();parser.feed(p.read_text())
         for tag,attribute,link in parser.references:
             if link.startswith('data:'):
-                ensure((str(p.relative_to(root)) in report_paths or str(p.relative_to(root)) in {preview_path,theme_preview_path} and link in report_images) and tag=='img' and attribute=='src' and link.startswith(('data:image/png;base64,','data:image/jpeg;base64,')),'Unexpected embedded resource')
+                ensure((str(p.relative_to(root)) in report_paths or str(p.relative_to(root)) in ({preview_path}|theme_preview_paths) and link in report_images) and tag=='img' and attribute=='src' and link.startswith(('data:image/png;base64,','data:image/jpeg;base64,')),'Unexpected embedded resource')
                 continue
             u=urlsplit(link)
             if u.scheme:check_url(link);continue
