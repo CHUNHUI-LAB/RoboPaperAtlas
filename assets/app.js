@@ -12,14 +12,14 @@
   const empty = document.querySelector('#empty-state');
   const more = document.querySelector('#load-more');
   let topic = 'all', limit = 24, timer;
-  let view='list';
+  let view='cards';
   const chips=document.querySelector('#active-filters'),viewButtons=Array.from(document.querySelectorAll('[data-view]'));
   function syncView(){grid.classList.toggle('list-view',view==='list');viewButtons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===view)))}
   const validSelect = (select, value) => Array.from(select.options).some(o => o.value === value) ? value : 'all';
   function readQuery() {
     const q = new URLSearchParams(window.location.search);
     search.value = q.get('q') || '';
-    view=q.get('view')==='cards'?'cards':'list';syncView();
+    view=q.get('view')==='list'?'list':'cards';syncView();
     topic = topicButtons.some(b => b.dataset.topic === q.get('topic')) ? q.get('topic') : 'all';
     year.value = validSelect(year, q.get('year'));
     status.value = validSelect(status, q.get('status'));
@@ -32,7 +32,7 @@
     if (year.value !== 'all') q.set('year', year.value);
     if (status.value !== 'all') q.set('status', status.value);
     if (sort.value !== 'curated') q.set('sort', sort.value);
-    if(view==='cards')q.set('view','cards');
+    if(view==='list')q.set('view','list');
     const next = window.location.pathname + (q.size ? '?' + q.toString() : '') + window.location.hash;
     window.history.replaceState(null, '', next);
   }

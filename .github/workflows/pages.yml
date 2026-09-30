@@ -21,6 +21,8 @@ jobs:
         run: |
           python3 scripts/assemble_frontier.py
           python3 -m unittest discover -s tests -v
+          node tests/test_hero_robot.cjs
+          node tests/test_brief_reader.cjs
           python3 scripts/build.py
           python3 scripts/validate.py
       - uses: actions/configure-pages@v5
