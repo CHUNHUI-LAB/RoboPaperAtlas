@@ -1,7 +1,7 @@
 # Reviewed HTML report artifacts
 
 This pilot imports three separately reviewed reading stages for `rpa-0062`
-(UMI-on-Legs), version `v1`. A report means that the named reading artifact was
+(UMI-on-Legs). Current readers are version `v2`; all three `v1` files remain available. A report means that the named reading artifact was
 imported; it does not mean that its claims or experiments were independently
 reproduced. Metadata verification, reading, code inspection, and reproduction
 remain distinct.
@@ -20,7 +20,7 @@ An empty registry is valid. Every included report must have exactly these fields
 | --- | --- |
 | `paper_id` | `rpa-0062` in this pilot |
 | `stage` | `stage1`, `stage2`, or `stage3` |
-| `version` | `v1` |
+| `version` | `v1` or `v2` |
 | `filename` | The exact stage-specific filename below |
 | `sha256` | Lowercase 64-character SHA-256 of the delivered HTML bytes |
 | `bytes` | Positive integer, exactly the delivered HTML byte count |
@@ -56,7 +56,7 @@ inputs and must not be copied into this repository.
 Generated paths are always:
 
 ```text
-artifacts/rpa-0062/v1/<stage-specific-filename>
+artifacts/rpa-0062/<v1-or-v2>/<stage-specific-filename>
 ```
 
 Input chunks are always:
@@ -72,8 +72,8 @@ later than `part-999.txt`. Each part contains at most **48,000 bytes**, is
 independently valid UTF-8, and carries its exact byte count and SHA-256. Assembly
 concatenates those original bytes without newline, Unicode, whitespace, or HTML
 normalization. The final byte count and SHA-256 must also match. This bounds a
-single report at 47,952,000 bytes. The whole registry is limited to 2 MB and three
-unique pilot stages.
+single report at 47,952,000 bytes. The whole registry is limited to 2 MB and six
+unique paper/stage/version records, covering three stages across two versions.
 
 No registry value is accepted as a directory or arbitrary input/output path.
 Symlinks in the root, its ancestors, the registry, chunk ancestry, chunks, or
@@ -87,7 +87,7 @@ or remove unrelated files. The static builder must copy only the validated
 manifest-listed paths returned by `report_path(record)`; stale generated files
 must not become publication inputs.
 
-## Static HTML security boundary
+## Legacy v1 static HTML security boundary
 
 The validator checks exact UTF-8 bytes and a strict readable-HTML tag/attribute
 allowlist. It allows semantic text, headings, navigation, tables, figures,
@@ -164,3 +164,15 @@ Library files.
 ## Narrow-screen presentation correction
 
 The Stage3 v1 delivery includes a CSS-only correction for long inline identifiers in prose/list items at widths up to860px: `overflow-wrap:anywhere`. Preformatted code blocks retain their existing local horizontal scrolling. No report text, citations, image bytes or stage interlinks changed. The corrected offline source and the public copy each retain their own SHA; the public copy still differs from that offline source only by its return-to-paper brand link.
+
+## Immutable v2 readers
+
+Each v2 HTML is the exact same self-contained file for website and offline use. It embeds the shared reader CSS, reviewed interaction scripts, original figure bytes, and, in Stage 3, all 20 unmodified KaTeX WOFF2 fonts. Math is static HTML plus accessible MathML and TeX annotations; no remote formula renderer runs. Software and font license notices are included in the document. Original PDF/code links and site search need a network connection.
+
+Version 2 uses a separate strict boundary in `scripts/report_v2.py`. `data/report-v2-policy.json` pins all three complete document hashes and the exact named inline CSS/script hashes. The parser then checks permitted semantic HTML and MathML, IDs, safe inline styles, figures, HTTPS links and version-local sibling links. Unknown scripts, styles, events, frames, remote fonts/images and resource tags are rejected. An arbitrary script cannot be enabled by changing only the report registry or its document hash. Policy changes require reviewing the embedded code and delivered documents. Version 1 retains its original script-free policy.
+
+Only `rpa-0062` receives v2 entries. Current artifact arrays are newest-first (`v2`, then `v1`); stage counts count three imported stages, not six independent readings. The detail page links both current and historical versions. Original bibliographic fields and classification records are unchanged.
+
+Stage 1 expands the approved figure/table discussion while preserving the twelve-section structure. The Figure 4 description uses upper/lower rows rather than ambiguous panel letters. Stage 2 keeps all 37 Chinese analysis units and adds exact PDF page/paragraph locations, with six short openings totaling 16 quoted words. The official PDF may download rather than embed, and no sentence-level highlighting is claimed. Stage 3 retains the approved 54 rendered math occurrences, nine exact source-code snippets, fixed-commit citations and six figure images.
+
+Public CI assembles already reviewed, hash-pinned HTML parts. It does not regenerate reading content from any private input. `scripts/reader_document.py` is a generic presentation/packaging utility; its source inputs are not required by the public build.

@@ -31,6 +31,7 @@ jobs:
           node tests/test_hero_atlas.cjs
           node tests/test_brief_reader.cjs
           node tests/test_reader_controls.cjs
+          node tests/test_reader_sources.cjs
           python3 scripts/build.py
           node --test tests/test_map_core.cjs tests/test_map_dom.cjs tests/test_catalog_facets.cjs tests/test_atlas_hierarchy.cjs
           node --test tests/atlas-preview/relations.test.cjs tests/test_radar_controls.cjs

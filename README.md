@@ -64,3 +64,5 @@ python3 -m http.server 8000 --directory dist
 Library、首页与 Atlas 共用已核查来源的研究问题分类。方法标签和资源类型单独筛选；四条分类边界记录保持待复核。详见 [classification](docs/classification.md)。原始书目与阅读状态不因分类检查而改变。
 
 The reader preview typesets reviewed equations with pinned build-time KaTeX and serves local fonts. See [math rendering](docs/math-rendering.md). Node24 is required for the pinned build toolchain.
+
+Current UMI-on-Legs reports use the accepted shared reader in v2: Stage 1 expanded figure/table analysis, Stage 2 official-source locations, and Stage 3 colored code plus offline LaTeX math. Immutable v1 links remain available. Only this one paper has three imported reading stages. See [report artifacts](docs/report-artifacts.md) for exact version/security rules.

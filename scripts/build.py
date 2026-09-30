@@ -81,7 +81,7 @@ def details(p):
     for key,num,name,label,description in STAGES:
         state=p['stages'][key]
         if state['status']=='imported':
-            artifact=state['artifacts'][0];entry=f'<a class="stage-report-link" href="{prefix}{esc(artifact["path"])}">阅读 HTML ↗<small>{esc(artifact["version"])} · 已导入</small></a>'
+            artifact=state['artifacts'][0];history=''.join(f'<a href="{prefix}{esc(a["path"])}">历史 {esc(a["version"])} ↗</a>' for a in state['artifacts'][1:]);entry=f'<div class="stage-version-links"><a class="stage-report-link" href="{prefix}{esc(artifact["path"])}">阅读 HTML ↗<small>{esc(artifact["version"])} · 已导入</small></a>{history}</div>'
         else:entry='<span class="unavailable">尚未导入</span>'
         stage_rows.append(f'<div class="stage-slot"><span class="stage-index">{num}</span><div><h3>{name} · {label}</h3><p>{description}</p></div>{entry}</div>')
     stages=''.join(stage_rows)
@@ -112,7 +112,7 @@ def main():
     shutil.rmtree(target); target.mkdir(); shutil.copytree(ROOT/'assets',target/'assets')
     from design_preview import render as render_design_preview
     (target/'design-preview').mkdir(); (target/'design-preview/index.html').write_text(render_design_preview(data,shell,card,asset_url))
-    (target/'index.html').write_text(home(data)); (target/'about').mkdir(); (target/'about/index.html').write_text(about(len(reports)))
+    (target/'index.html').write_text(home(data)); (target/'about').mkdir(); (target/'about/index.html').write_text(about(len({(r['paper_id'],r['stage']) for r in reports})))
     from map_page import map_html
     (target/'map').mkdir()
     map_body=map_html(data,base='../',css=asset_url('../','paper-map.css'),js=asset_url('../','paper-map.js'),report_records=reports)

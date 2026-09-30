@@ -24,9 +24,9 @@ def expected_stage(paper_id,stage,report_records=()):
     from reports import report_path
     matches=[x for x in report_records if x['paper_id']==paper_id and x['stage']==stage]
     if not matches:return {'status':'not_imported','artifacts':[]}
-    ensure(len(matches)==1,'Duplicate report stage')
-    x=matches[0]
-    return {'status':'imported','artifacts':[{'kind':'html','version':x['version'],'path':report_path(x),'sha256':x['sha256'],'source_edition':x['source_edition'],'created_at':x['created_at'],'review_status':'approved'}]}
+    ensure(len({x['version'] for x in matches})==len(matches),'Duplicate report stage version')
+    matches=sorted(matches,key=lambda x:int(x['version'][1:]),reverse=True)
+    return {'status':'imported','artifacts':[{'kind':'html','version':x['version'],'path':report_path(x),'sha256':x['sha256'],'source_edition':x['source_edition'],'created_at':x['created_at'],'review_status':'approved'} for x in matches]}
 def validate_catalog(data,report_records=()):
     ensure(set(data)=={'schema_version','updated_at','papers'},'Catalog envelope fields not allowlisted')
     ensure(data['schema_version']==1,'Unsupported schema'); ensure(bool(re.fullmatch(r'\d{4}-\d{2}-\d{2}',data['updated_at'])), 'Invalid catalog date'); ids=set(); titles=set()

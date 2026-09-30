@@ -1,0 +1,606 @@
+-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="katex-sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">pos</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span></span></span></span></span></td><td>定义可能未完全对齐；没有替作者更正或验证实验影响</td></tr><tr><td>部署平滑</td><td>论文推动0.3秒；当前WBC回调固定0.1秒</td><td>文件硬编码与任务表不同；不猜测实验当时用了哪一版</td></tr><tr><td>位姿延迟</td><td>论文模拟10ms；默认world_pos_reaching.yaml为0.0</td><td>需要配置/检查点实际值核验，不能仅凭默认声称实验设置一致</td></tr><tr><td>重定位扰动间隔</td><td>论文§3.3每20秒；extreme默认transport_interval_s=4.0</td><td>保留版本/配置差异，不视为论文实验日志</td></tr><tr><td>复现与安全</td><td>论文§7–8列出抖动、延迟、过热、URDF校准问题</td><td>未复现；不据代码可读性给“直接可跑”或“安全部署”结论</td></tr></tbody></table></div></div><p><span class="tag">实现条件的证据边界</span>有代码、有下载入口、有作者报告结果，是三个不同事实。只有实际取到对应数据与检查点、恢复论文配置、运行并比对指标，才能升级为复现结果；本页没有进行这一步。</p><details><summary>代码摘录的版权与许可</summary><p>本页仅节选解释所需的短代码；这些摘录来自上述固定提交的作者文件。主仓库LICENSE为MIT；原有第三方文件可能保留不同许可，本页对ActorCritic/PPO仅做分析与永久链接，不复制其完整实现。</p><pre>Copyright (c) 2024, Huy Ha, Yihuai Gao
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the &quot;Software&quot;), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+</pre><p><a class="code-cite" href="https://github.com/real-stanford/umi-on-legs/blob/d75c9c182d8044dadf53043612da2ffbf1936a97/LICENSE" title="固定版本LICENSE · commit d75c9c182d8044dadf53043612da2ffbf1936a97">LICENSE ↗</a></p></details></section><section id="summary" tabindex="-1"><div class="eyebrow">STAGE 03</div><h2>理解小结：已打通与仍缺的一段</h2><ul><li><span class="tag">论文＋代码</span>WBC核心不是另一个高层任务识别器，而是世界系轨迹跟踪器：离线示范序列成为仿真目标，当前末端姿态把世界目标变为局部误差，MLP输出关节目标并经PD执行。</li><li><span class="tag">代码</span>关键的行为选择藏在配置和边界处理中：目标采样时间、观测拼接顺序、误差平方、课程阈值、动作延迟、检查点附带配置与轨迹插值都会改变实际问题。</li><li><span class="tag">论文—代码差异</span>公开部署版的preview归零、延迟匹配未应用，以及默认/任务参数差异，阻止我们把这份源码直接等同于论文实验运行快照。</li><li><span class="tag">未核验</span>上层视觉发布端、具体实验数据/权重与配置、iOS/SDK内部和真实运行时序仍未打通；当前成果是有定位的静态方法理解，不是“已跑通”。</li></ul><p>从方法角度可以带走的是任务语义与形态控制之间的接口职责；从代码角度可以带走的是世界→末端坐标变换、预览索引与奖励实现的具体位置。以上结论不自动扩展成新任务迁移成功或新的机器人部署建议。</p></section></article></div></div></main><p class="reader-footer">RoboPaperAtlas · 独立中文阅读分析，不代表作者背书 · 保留正式论文来源与固定源码版本</p><details class="reader-licenses"><summary>公式软件与字体许可</summary><pre>The MIT License (MIT)
+
+Copyright (c) 2013-2020 Khan Academy and other contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the &quot;Software&quot;), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+KaTeX_AMS-Regular
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_AMS.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+KaTeX_Caligraphic-Bold
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_Caligraphic.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+KaTeX_Caligraphic-Regular
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_Caligraphic.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+KaTeX_Fraktur-Bold
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_Fraktur.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+KaTeX_Fraktur-Regular
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_Fraktur.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+KaTeX_Main-Bold
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_Main.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+KaTeX_Main-BoldItalic
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_Main.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+KaTeX_Main-Italic
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_Main.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+KaTeX_Main-Regular
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_Main.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+KaTeX_Math-BoldItalic
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_Math.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+KaTeX_Math-Italic
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_Math.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+KaTeX_SansSerif-Bold
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_SansSerif.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+KaTeX_SansSerif-Italic
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_SansSerif.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+KaTeX_SansSerif-Regular
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_SansSerif.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+KaTeX_Script-Regular
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_Script.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+KaTeX_Size1-Regular
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_Size1.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+KaTeX_Size2-Regular
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_Size2.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+KaTeX_Size3-Regular
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_Size3.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+KaTeX_Size4-Regular
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_Size4.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+KaTeX_Typewriter-Regular
+Copyright (c) 2009-2010 Design Science, Inc.
+Copyright (c) 2014-2018 Khan Academy
+Copyright (c) 2009-2010, Design Science, Inc. (&lt;www.mathjax.org&gt;)
+Copyright (c) 2014-2018 Khan Academy (&lt;www.khanacademy.org&gt;),
+with Reserved Font Name KaTeX_Typewriter.
+
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+This license available with a FAQ at:
+http://scripts.sil.org/OFL
+http://scripts.sil.org/OFL
+
+
+Font copyright and Reserved Font Names are listed in katex-font-notices.txt.
+Source: https://openfontlicense.org/documents/OFL.txt
+
+-----------------------------------------------------------
+SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007
+-----------------------------------------------------------
+
+PREAMBLE
+The goals of the Open Font License (OFL) are to stimulate worldwide
+development of collaborative font projects, to support the font creation
+efforts of academic and linguistic communities, and to provide a free and
+open framework in which fonts may be shared and improved in partnership
+with others.
+The OFL allows the licensed fonts to be used, studied, modified and
+redistributed freely as long as they are not sold by themselves. The
+fonts, including any derivative works, can be bundled, embedded,
+redistributed and/or sold with any software provided that any reserved
+names are not used by derivative works. The fonts and derivatives,
+however, cannot be released under any other type of license. The
+requirement for fonts to remain under this license does not apply
+to any document created using the fonts or their derivatives.
+DEFINITIONS
+&quot;Font Software&quot; refers to the set of files released by the Copyright
+Holder(s) under this license and clearly marked as such. This may
+include source files, build scripts and documentation.
+
+&quot;Reserved Font Name&quot; refers to any names specified as such after the
+copyright statement(s).
+
+&quot;Original Version&quot; refers to the collection of Font Software components as
+distributed by the Copyright Holder(s).
+&quot;Modified Version&quot; refers to any derivative made by adding to, deleting,
+or substituting -- in part or in whole -- any of the components of the
+Original Version, by changing formats or by porting the Font Software to a
+new environment.
+
+&quot;Author&quot; refers to any designer, engineer, programmer, technical
+writer or other person who contributed to the Font Software.
+PERMISSION &amp; CONDITIONS
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of the Font Software, to use, study, copy, merge, embed, modify,
+redistribute, and sell modified and unmodified copies of the Font
+Software, subject to the following conditions:
+
+1) Neither the Font Software nor any of its individual components,
+in Original or Modified Versions, may be sold by itself.
+2) Original or Modified Versions of the Font Software may be bundled,
+redistributed and/or sold with any software, provided that each copy
+contains the above copyright notice and this license. These can be
+included either as stand-alone text files, human-readable headers or
+in the appropriate machine-readable metadata fields within text or
+binary files as long as those fields can be easily viewed by the user.
+3) No Modified Version of the Font Software may use the Reserved Font
+Name(s) unless explicit written permission is granted by the corresponding
+Copyright Holder. This restriction only applies to the primary font name as
+presented to the users.
+4) The name(s) of the Copyright Holder(s) or the Author(s) of the Font
+Software shall not be used to promote, endorse or advertise any
+Modified Version, except to acknowledge the contribution(s) of the
+Copyright Holder(s) and the Author(s) or with their explicit written
+permission.
+5) The Font Software, modified or unmodified, in part or in whole,
+must be distributed entirely under this license, and must not be
+distributed under any other license. The requirement for fonts to
+remain under this license does not apply to any document created
+using the Font Software.
+
+TERMINATION
+This license becomes null and void if any of the above conditions are
+not met.
+DISCLAIMER
+THE FONT SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT
+OF COPYRIGHT, PATENT, TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL
+DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
+OTHER DEALINGS IN THE FONT SOFTWARE.
+</pre></details><div class="reader-toast" role="status" aria-live="polite" hidden></div><footer class="site-footer"><div><a class="footer-brand" href="https://chunhui-lab.github.io/RoboPaperAtlas/index.html">RoboPaperAtlas<span>机器人研究的开放地图</span></a><p>从原始论文出发，让每一次理解都有据可查。</p></div><div class="footer-right"><span>编目核验 ≠ 阅读完成 ≠ 独立复现</span><span>© 2026 · 第三方论文与代码遵循各自许可</span></div></footer><dialog id="search-dialog" aria-labelledby="search-title"><div class="dialog-heading"><h2 id="search-title">搜索论文目录</h2><button class="dialog-close" type="button" aria-label="关闭搜索">✕</button></div><form id="global-search-form" role="search"><label class="global-input-label"><span class="sr-only">论文标题、作者或关键词</span><input id="global-search-input" type="search" placeholder="标题、作者或关键词…" autocomplete="off"></label></form><p class="global-search-scope">检索公开书目与编目备注，不检索阅读报告正文</p><p id="global-search-status" role="status" aria-live="polite">输入关键词开始搜索</p><ul id="global-search-results"></ul><div class="dialog-footer"><span>↑ ↓ 选择 · Enter 打开 · Esc 关闭</span><a id="global-all-results" href="https://chunhui-lab.github.io/RoboPaperAtlas/index.html#catalog">进入完整目录 ↗</a></div></dialog><dialog class="paper-drawer" id="paper-drawer" aria-labelledby="drawer-title"><div class="drawer-top"><span>论文速览</span><button type="button" class="drawer-close" aria-label="关闭论文速览">✕</button></div><div id="drawer-body"><h2 id="drawer-title">正在载入</h2></div></dialog><div class="toast" role="status" aria-live="polite" hidden></div><script data-report-script="app.js">'use strict';
+(() => {
+  const grid = document.querySelector('#paper-grid');
+  if (!grid) return;
+  const cards = Array.from(grid.querySelectorAll('.paper-card'));
+  const search = document.querySelector('#search');
+  const year = document.querySelector('#year-filter');
+  const status = document.querySelector('#status-filter');
+  const sort = document.querySelector('#sort');
+  const method=document.querySelector('#method-filter'),resource=document.querySelector('#resource-filter');
+  const topicButtons = Array.from(document.querySelectorAll('[data-topic]'));
+  const count = document.querySelector('#result-count');
+  const empty = document.querySelector('#empty-state');
+  const more = document.querySelector('#load-more');
+  let topic = 'all', limit = 24, timer;
+  let view='cards';
+  const chips=document.querySelector('#active-filters'),viewButtons=Array.from(document.querySelectorAll('[data-view]'));
+  function syncView(){grid.classList.toggle('list-view',view==='list');viewButtons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===view)))}
+  const validSelect = (select, value) => Array.from(select.options).some(o => o.value === value) ? value : 'all';
+  function readQuery() {
+    const q = new URLSearchParams(window.location.search);
+    search.value = q.get('q') || '';
+    view=q.get('view')==='list'?'list':'cards';syncView();
+    topic = topicButtons.some(b => b.dataset.topic === q.get('topic')) ? q.get('topic') : 'all';
+    method.value=validSelect(method,q.get('method'));resource.value=validSelect(resource,q.get('resource'));
+    year.value = validSelect(year, q.get('year'));
+    status.value = validSelect(status, q.get('status'));
+    sort.value = ['curated','newest','title'].includes(q.get('sort')) ? q.get('sort') : 'curated';
+  }
+  function updateQuery() {
+    const q = new URLSearchParams();
+    if (search.value.trim()) q.set('q', search.value.trim());
+    if (topic !== 'all') q.set('topic', topic);
+    if(method.value!=='all')q.set('method',method.value);if(resource.value!=='all')q.set('resource',resource.value);
+    if (year.value !== 'all') q.set('year', year.value);
+    if (status.value !== 'all') q.set('status', status.value);
+    if (sort.value !== 'curated') q.set('sort', sort.value);
+    if(view==='list')q.set('view','list');
+    const next = window.location.pathname + (q.size ? '?' + q.toString() : '') + window.location.hash;
+    window.history.replaceState(null, '', next);
+  }
+  function apply(reset = true, save = true) {
+    if (reset) limit = 24;
+    const terms = search.value.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
+    const match = cards.filter(c => (topic === 'all' || c.dataset.topics.split(' ').includes(topic))
+      && (method.value==='all'||c.dataset.methods.split('|').includes(method.value))
+      && (resource.value==='all'||c.dataset.resources.split('|').includes(resource.value))
+      && (year.value === 'all' || c.dataset.year === year.value)
+      && (status.value === 'all' || c.dataset.status === status.value)
+      && terms.every(t => c.dataset.search.includes(t)));
+    match.sort((a,b) => {
+      if (sort.value === 'curated' && a.dataset.status !== b.dataset.status) return a.dataset.status === 'verified' ? -1 : 1;
+      if (sort.value !== 'title' && a.dataset.sortYear !== b.dataset.sortYear) return Number(b.dataset.sortYear) - Number(a.dataset.sortYear);
+      return a.dataset.title.localeCompare(b.dataset.title, 'en');
+    });
+    cards.forEach(c => { c.hidden = true; });
+    match.forEach((c,i) => { c.hidden = i >= limit; grid.appendChild(c); });
+    count.textContent = `找到 ${match.length} 篇论文${match.length > limit ? ` · 已显示 ${limit} 篇` : ''}`;
+    empty.hidden = match.length !== 0;
+    more.hidden = match.length <= limit;
+    more.textContent = `显示更多论文（还剩 ${Math.max(0, match.length-limit)} 篇） ↓`;
+    const label=document.querySelector('#catalog-search-label');if(label)label.textContent=search.value.trim()||'搜索标题、作者或关键词';
+    topicButtons.forEach(b => { const active = b.dataset.topic === topic; b.classList.toggle('active', active); b.setAttribute('aria-pressed', String(active)); });
+    document.dispatchEvent(new CustomEvent('catalog:updated'));
+    if(chips){chips.replaceChildren();const active=[];if(search.value.trim())active.push(['关键词：'+search.value.trim(),()=>search.value='']);if(topic!=='all')active.push([topicButtons.find(b=>b.dataset.topic===topic).querySelector('span').textContent,()=>topic='all']);if(method.value!=='all')active.push(['方法：'+method.value,()=>method.value='all']);if(resource.value!=='all')active.push(['资源：'+resource.selectedOptions[0].textContent,()=>resource.value='all']);if(year.value!=='all')active.push(['出版年：'+year.selectedOptions[0].textContent,()=>year.value='all']);if(status.value!=='all')active.push([status.selectedOptions[0].textContent,()=>status.value='all']);for(const [label,clear] of active){const b=document.createElement('button');b.type='button';b.textContent=label+' ×';b.setAttribute('aria-label','移除筛选 '+label);b.addEventListener('click',()=>{clear();apply()});chips.append(b)}if(active.length){const b=document.createElement('button');b.type='button';b.className='clear-all';b.textContent='清除全部';b.addEventListener('click',()=>{search.value='';topic='all';year.value='all';status.value='all';method.value='all';resource.value='all';apply()});chips.append(b)}chips.hidden=!active.length}
+    if (save) updateQuery();
+  }
+  viewButtons.forEach(b=>b.addEventListener('click',()=>{view=b.dataset.view;syncView();updateQuery()}));
+  search.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => apply(), 120); });
+  [year,status,sort,method,resource].forEach(s => s.addEventListener('change', () => apply()));
+  topicButtons.forEach(b => b.addEventListener('click', () => { topic = b.dataset.topic; apply(); }));
+  more.addEventListener('click', () => { limit += 24; apply(false); });
+  document.querySelector('#reset-filters').addEventListener('click', () => { search.value=''; topic='all'; year.value='all'; status.value='all'; method.value='all'; resource.value='all'; sort.value='curated'; apply(); document.querySelector('.catalog-search-trigger')?.focus(); });
+  document.addEventListener('keydown', e => {
+    
+    if (e.key === 'Escape' && document.activeElement === search && search.value) { search.value=''; apply(); }
+  });
+  window.addEventListener('popstate', () => { readQuery(); apply(true,false); });
+  window.addEventListener('pageshow', e => { if (e.persisted) { readQuery(); apply(true,false); } });
+  readQuery(); apply(true,false);
+})();
+</script><script data-report-script="frontier.js">'use strict';
+(() => {
+ const grid=document.querySelector('#frontier-grid'); if(!grid) return;
+ const cards=Array.from(grid.querySelectorAll('.frontier-card'));
+ const select=document.querySelector('#frontier-topic'),count=document.querySelector('#frontier-count'),more=document.querySelector('#frontier-more'),empty=document.querySelector('#frontier-empty');
+ let limit=20;
+ function apply(reset=true){
+  if(reset)limit=20;
+  const value=select.value;
+  const matched=cards.filter(c=>value==='all'||(value==='focused'?c.dataset.focus==='true':c.dataset.topics.split(' ').includes(value)));
+  cards.forEach(c=>c.hidden=true);matched.forEach((c,i)=>c.hidden=i>=limit);
+  count.textContent=`${matched.length} 条自动匹配候选 · 显示 ${Math.min(limit,matched.length)} 条`;
+  more.hidden=matched.length<=limit;more.textContent=`显示更多候选（还剩 ${Math.max(0,matched.length-limit)} 条） ↓`;empty.hidden=matched.length!==0;
+ }
+ select.addEventListener('change',()=>apply());more.addEventListener('click',()=>{limit+=20;apply(false)});apply();
+})();
+</script><script data-report-script="interface.js">'use strict';
+(() => {
+ document.body.classList.add('js-ready');
+ const root=document.body.dataset.root||'';
+ const menu=document.querySelector('.mobile-menu'),nav=document.querySelector('#main-nav');
+ function closeMenu(){menu.setAttribute('aria-expanded','false');nav.classList.remove('open')}
+ menu.addEventListener('click',()=>{const open=menu.getAttribute('aria-expanded')!=='true';menu.setAttribute('aria-expanded',String(open));nav.classList.toggle('open',open)});
+ nav.addEventListener('click',e=>{if(e.target.closest('a'))closeMenu()});
+ const dialog=document.querySelector('#search-dialog'),input=document.querySelector('#global-search-input'),results=document.querySelector('#global-search-results'),status=document.querySelector('#global-search-status');
+ let index=null,pending=null,opener=null;
+ function showResults(){
+  results.replaceChildren();const allLink=document.querySelector('#global-all-results');allLink.href=root+'index.html'+(input.value.trim()?'?q='+encodeURIComponent(input.value.trim()):'')+'#catalog';allLink.textContent=input.value.trim()?'查看全部匹配结果 ↗':'进入完整目录 ↗';const query=input.value.trim().toLocaleLowerCase(),terms=query.split(/\s+/).filter(Boolean);
+  if(!index){status.textContent='正在载入目录…';return}
+  if(!terms.length){status.textContent='试试 HarnessVLN、whole-body、diffusion 或作者名';return}
+  const matches=index.filter(p=>terms.every(t=>p.text.toLocaleLowerCase().includes(t)));
+  status.textContent=matches.length?`找到 ${matches.length} 篇论文，显示前 ${Math.min(8,matches.length)} 篇`:'没有匹配论文，试试更短的关键词';
+  for(const p of matches.slice(0,8)){
+   const li=document.createElement('li'),a=document.createElement('a'),title=document.createElement('strong'),meta=document.createElement('span');
+   a.href=root+'papers/'+encodeURIComponent(p.id)+'/index.html';title.textContent=p.title;meta.textContent=p.category+' · '+p.authors;a.append(title,meta);li.append(a);results.append(li);
+  }
+ }
+ async function openSearch(){
+  opener=document.activeElement;closeMenu();if(!dialog.open)dialog.showModal();input.focus();showResults();
+  try{if(!index){pending=pending||fetch(root+'data/search-index.json?v='+encodeURIComponent(document.body.dataset.dataVersion||'1')).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()});index=await pending}showResults()}
+  catch(e){pending=null;status.textContent='搜索索引暂时无法载入，请使用下方完整目录入口'}
+ }
+ document.querySelectorAll('.global-search-trigger,[data-search-trigger]').forEach(b=>b.addEventListener('click',openSearch));
+ document.querySelector('.dialog-close').addEventListener('click',()=>dialog.close());
+ dialog.addEventListener('close',()=>{if(dialog.open)return;if(opener&&opener.isConnected)opener.focus()});
+ dialog.addEventListener('click',e=>{if(e.target===dialog){const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)dialog.close()}});
+ input.addEventListener('input',showResults);
+ document.querySelector('#global-search-form').addEventListener('submit',e=>{e.preventDefault();results.querySelector('a')?.click()});
+ dialog.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){e.preventDefault();e.stopPropagation();dialog.close();return}
+  if(!['ArrowDown','ArrowUp'].includes(e.key))return;
+  const links=Array.from(results.querySelectorAll('a'));if(!links.length)return;
+  e.preventDefault();let at=links.indexOf(document.activeElement);at=e.key==='ArrowDown'?Math.min(links.length-1,at+1):at-1;
+  if(at<0)input.focus();else links[at].focus();
+ },true);
+ document.addEventListener('keydown',e=>{
+  if(e.key==='/'&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)&&!dialog.open&&!document.querySelector('#paper-drawer').open){e.preventDefault();openSearch()}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();if(document.querySelector('#paper-drawer').open)return;dialog.open?dialog.close():openSearch()}
+  if(e.key==='Escape'&&menu.getAttribute('aria-expanded')==='true'){closeMenu();menu.focus()}
+ });
+ let toastTimer;
+ document.querySelector('.copy-page')?.addEventListener('click',async()=>{
+  const toast=document.querySelector('.toast');
+  try{await navigator.clipboard.writeText(window.location.href);toast.textContent='本页链接已复制'}catch(e){toast.textContent='无法自动复制，请从浏览器地址栏复制链接'}
+  toast.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.hidden=true,3500);
+ });
+ const sections=Array.from(document.querySelectorAll('.detail-section[id]')),toc=Array.from(document.querySelectorAll('.detail-toc a'));
+ if(sections.length&&'IntersectionObserver' in window){
+  const observer=new IntersectionObserver(entries=>{for(const entry of entries){if(entry.isIntersecting){toc.forEach(a=>{const active=a.hash==='#'+entry.target.id;a.classList.toggle('active',active);if(active)a.setAttribute('aria-current','location');else a.removeAttribute('aria-current')})}}},{rootMargin:'-90px 0px -65% 0px'});sections.forEach(s=>observer.observe(s));
+ }
+})();
+
+// Contextual quick view keeps the reading flow on the catalogue.
+(() => {
+ const drawer=document.querySelector('#paper-drawer');if(!drawer)return;
+ const root=document.body.dataset.root||'',body=document.querySelector('#drawer-body'),close=document.querySelector('.drawer-close');
+ const reduced=window.matchMedia('(prefers-reduced-motion: reduce)');let catalog=null,pending=null,opener=null,requestId=0,closing=false,closeEpoch=0;
+ const text=(tag,content,className)=>{const el=document.createElement(tag);el.textContent=content;if(className)el.className=className;return el};
+ function safeLink(url,label,className){const a=document.createElement('a');try{const u=new URL(url,window.location.href);if(!['http:','https:'].includes(u.protocol))return null;a.href=u.href}catch(e){return null}a.textContent=label;a.className=className||'';return a}
+ function dismiss(){if(closing||!drawer.open)return;closing=true;requestId++;closeEpoch++;drawer.close();closing=false}
+ drawer.addEventListener('close',()=>{if(drawer.open)return;if(opener?.isConnected)opener.focus()});
+ drawer.addEventListener('cancel',e=>{e.preventDefault();dismiss()});
+ drawer.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();dismiss()}},true);
+ drawer.addEventListener('click',e=>{if(e.target===drawer){const r=drawer.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)dismiss()}});
+ close.addEventListener('click',dismiss);
+ async function show(button){
+  opener=button;closeEpoch++;drawer.getAnimations().forEach(a=>a.cancel());closing=false;const current=++requestId,id=button.dataset.preview;body.replaceChildren(text('h2','正在载入论文…'));body.firstChild.id='drawer-title';if(!drawer.open)drawer.showModal();close.focus();
+  try{
+   if(!catalog){pending=pending||fetch(root+'data/catalog.json?v='+encodeURIComponent(document.body.dataset.dataVersion||'1')).then(r=>{if(!r.ok)throw new Error('Fetch failed');return r.json()});catalog=await pending}
+   if(current!==requestId||!drawer.open)return;
+   const p=catalog.papers.find(p=>p.id===id);if(!p)throw new Error('Paper unavailable');
+   const overlay=p.verified_overlay||{},title=overlay.title||p.title,a=overlay.authors||p.authors,authors=Array.isArray(a)?a.join(', '):a;
+   body.replaceChildren();body.append(text('p',(p.bibliographic_year||'年份待核验')+' · '+(p.citation_verified?'来源已核验':'原始书目待核验'),'drawer-kicker'));
+   const h=text('h2',title);h.id='drawer-title';body.append(h,text('p',authors,'drawer-authors'),text('p',p.summary||'已收录原始书目，题名、作者与年份尚待来源核验。','drawer-summary'));
+   if(button.dataset.directionLabel)body.append(text('p',button.dataset.directionLabel+' / '+button.dataset.problemLabel,'drawer-taxonomy'));
+   const resources=document.createElement('div');resources.className='drawer-resources';
+   for(const [url,label] of [[p.pdf_url,p.pdf_kind==='publisher'?'出版方 PDF ↗':'预印本替代 PDF ↗'],[p.paper_url,'出版 / 论文页面 ↗'],[p.project_url,'官方项目 ↗']]){if(url){const a=safeLink(url,label);if(a){a.target='_blank';a.rel='noopener noreferrer';resources.append(a)}}}
+   if(resources.children.length)body.append(resources);
+   const reports=document.createElement('div');reports.className='drawer-resources';
+   for(const [i,name]of ['初读','写作精读','方法精读'].entries()){const stage=p.stages?.['stage'+(i+1)],artifact=stage?.status==='imported'?stage.artifacts[0]:null;if(artifact&&/^artifacts\/rpa-0062\/v[12]\/(first-pass|writing-close-reading|method-code-reading)\.html$/.test(artifact.path)){const a=safeLink(root+artifact.path,'S'+(i+1)+' '+name+' ↗');if(a)reports.append(a)}}
+   if(reports.children.length)body.append(reports);
+   body.append(text('p',reports.children.length?'已导入独立阅读报告。代码分析有明确范围，不代表已运行实验或独立复现。':'阅读档案尚未导入。来源核验不代表已完成论文阅读、代码审计或独立复现。','drawer-note'));
+   if(p.pdf_note)body.append(text('p',p.pdf_note,'drawer-note'));
+   const full=safeLink(root+'papers/'+encodeURIComponent(id)+'/index.html','打开完整详情 ↗','primary-link');if(full)body.append(full);
+  }catch(e){pending=null;if(current!==requestId)return;body.replaceChildren();const h=text('h2','暂时无法载入速览');h.id='drawer-title';body.append(h,text('p','可以直接打开完整论文详情。','drawer-summary'));const a=safeLink(root+'papers/'+encodeURIComponent(id)+'/index.html','打开完整详情 ↗','primary-link');if(a)body.append(a)}
+ }
+ document.querySelectorAll('[data-preview]').forEach(button=>button.addEventListener('click',()=>show(button)));
+})();
+</script><script data-report-script="motion.js">
+'use strict';
+// Keep the selected topic marker synchronized without decorative motion.
+(() => {
+ const tabs=document.querySelector('.topic-filters'),indicator=document.querySelector('.topic-indicator');
+ function update(){if(!tabs||!indicator)return;const active=tabs.querySelector('[aria-pressed="true"]');if(active){indicator.style.width=active.offsetWidth+'px';indicator.style.transform=`translateX(${active.offsetLeft}px)`}}
+ document.addEventListener('catalog:updated',update);window.addEventListener('resize',update);update();
+})();
+</script><script data-report-script="brief-reader.js">'use strict';
+(() => {
+ document.querySelectorAll('.brief-reader').forEach(reader=>{
+  const tabs=Array.from(reader.querySelectorAll('[data-brief-select]')),panels=Array.from(reader.querySelectorAll('[data-brief-panel]')),tablist=reader.querySelector('[role="tablist"]');
+  if(!tabs.length)return;
+  function select(tab){const id=tab.dataset.briefSelect;tabs.forEach(t=>{const active=t===tab;t.setAttribute('aria-selected',String(active));t.tabIndex=active?0:-1});panels.forEach(p=>{const active=p.dataset.briefPanel===id;p.classList.toggle('active',active);p.setAttribute('aria-hidden',String(!active));p.inert=!active})}
+  tabs.forEach((tab,i)=>{tab.addEventListener('click',()=>select(tab));tab.addEventListener('keydown',e=>{if(!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;e.preventDefault();let n=e.key==='Home'?0:e.key==='End'?tabs.length-1:(i+(['ArrowRight','ArrowDown'].includes(e.key)?1:-1)+tabs.length)%tabs.length;tabs[n].focus();select(tabs[n])})});
+  const narrow=window.matchMedia('(max-width:767px)');const orient=()=>tablist.setAttribute('aria-orientation',narrow.matches?'horizontal':'vertical');narrow.addEventListener('change',orient);orient();reader.classList.add('is-interactive');tablist.hidden=false;select(tabs[0]);
+ });
+})();
+</script><script data-report-script="experience.js">'use strict';
+(() => {
+ const svg=document.querySelector('.experience-title .preview-title-vector');if(!svg)return;
+ const letters=Array.from(svg.querySelectorAll('.vector-letter')),mode=window.matchMedia('(hover:hover) and (pointer:fine) and (min-width:768px)'),reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
+ const clear=()=>letters.forEach(g=>g.classList.remove('editing'));
+ svg.addEventListener('pointermove',e=>{if(!mode.matches||reduced.matches)return;const rect=svg.getBoundingClientRect(),x=(e.clientX-rect.left)*svg.viewBox.baseVal.width/rect.width;letters.forEach(g=>g.classList.toggle('editing',Math.abs(x-Number(g.dataset.center))<Number(g.dataset.span)*.5+20))});svg.addEventListener('pointerleave',clear);mode.addEventListener('change',clear);reduced.addEventListener('change',clear);
+})();
+</script><script data-report-script="reader-v2.js">/* Reader controls only: no models, analytics, remote scripts or automatic PDF fetch. */
+(() => {
+ 'use strict';
+ const page=document.querySelector('.reader-page');if(!page)return;
+ const reduced=matchMedia('(prefers-reduced-motion: reduce)'),toc=page.querySelector('.reader-toc'),tocButton=page.querySelector('.reader-toc-toggle');
+ const compact=matchMedia('(max-width:767px)'),position=page.querySelector('.reader-position'),previousSection=page.querySelector('[data-reader-previous]'),nextSection=page.querySelector('[data-reader-next]'),sectionLabel=page.querySelector('[data-reader-section-label]');let currentSection=0;
+ const sections=[...page.querySelectorAll('.reader-article>section[id]')],tocLinks=[...toc.querySelectorAll('a[href^="#"]')];
+ let frame=0,toastTimer=0,toast=document.querySelector('.reader-toast');
+ function announce(message){clearTimeout(toastTimer);toast.textContent=message;toast.hidden=false;toastTimer=setTimeout(()=>{toast.hidden=true;},2400);}
+ function updatePosition(){frame=0;const anchorOffset=Number.parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop)||144;let current=sections[0];for(const section of sections){if(section.getBoundingClientRect().top<=anchorOffset+6)current=section;else break;}tocLinks.forEach(link=>{const active=link.hash==='#'+current?.id;link.classList.toggle('is-current',active);if(active)link.setAttribute('aria-current','location');else link.removeAttribute('aria-current');});currentSection=Math.max(0,sections.indexOf(current));if(position)position.textContent=String(currentSection+1).padStart(2,'0')+' / '+String(sections.length).padStart(2,'0');if(previousSection)previousSection.disabled=currentSection===0;if(nextSection)nextSection.disabled=currentSection===sections.length-1;if(sectionLabel)sectionLabel.textContent=tocLinks[currentSection]?.textContent||'';}
+ const schedule=()=>{if(!frame&&!document.hidden)frame=requestAnimationFrame(updatePosition);};
+ window.addEventListener('scroll',schedule,{passive:true});window.addEventListener('resize',schedule);window.addEventListener('hashchange',schedule);window.addEventListener('pageshow',schedule);
+ document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelAnimationFrame(frame);frame=0;}else schedule();});
+ function closeToc(restore=false){toc.classList.remove('is-open');toc.inert=compact.matches;tocButton.setAttribute('aria-expanded','false');if(restore)tocButton.focus({preventScroll:true});}
+ tocButton.addEventListener('click',()=>{const open=!toc.classList.contains('is-open');toc.classList.toggle('is-open',open);toc.inert=compact.matches&&!open;tocButton.setAttribute('aria-expanded',String(open));if(open){const target=toc.querySelector('.is-current')||tocLinks[0];target?.focus({preventScroll:true});if(target)toc.scrollTop=Math.max(0,target.offsetTop-toc.clientHeight/2);}});
+ tocLinks.forEach(link=>link.addEventListener('click',()=>{closeToc();if(matchMedia('(max-width:767px)').matches)document.getElementById(link.hash.slice(1))?.focus({preventScroll:true});}));
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&toc.classList.contains('is-open')&&!document.querySelector('dialog[open]')){e.preventDefault();closeToc(true);}});
+ document.addEventListener('focusin',e=>{if(toc.classList.contains('is-open')&&e.target!==tocButton&&!toc.contains(e.target))closeToc();});
+ compact.addEventListener?.('change',()=>{closeToc(compact.matches&&toc.contains(document.activeElement));schedule();});toc.inert=compact.matches;
+ const goSection=index=>{const target=sections[index];if(!target)return;target.scrollIntoView({block:'start',behavior:reduced.matches?'auto':'smooth'});target.focus({preventScroll:true});};previousSection?.addEventListener('click',()=>goSection(currentSection-1));nextSection?.addEventListener('click',()=>goSection(currentSection+1));
+ const copies=new WeakMap();
+ page.querySelectorAll('[data-copy-code]').forEach(button=>button.addEventListener('click',async()=>{
+  const holder=button.closest('.code-reader'),lines=[...holder.querySelectorAll('.code-text')].map(line=>line.textContent),token=(copies.get(button)||0)+1;copies.set(button,token);
+  try{await navigator.clipboard.writeText(lines.join('\n'));if(copies.get(button)===token&&button.isConnected)announce('代码片段已复制，未包含行号');}
+  catch{if(copies.get(button)===token&&button.isConnected)announce('未能访问剪贴板，可在代码框中手动选择复制');}
+ }));
+ page.querySelectorAll('[data-code-focus]').forEach(button=>button.addEventListener('click',()=>{
+  const holder=button.closest('.code-reader'),active=!holder.classList.contains('is-focused');holder.classList.toggle('is-focused',active);button.setAttribute('aria-pressed',String(active));
+  const pre=holder.querySelector('pre'),first=holder.querySelector('.code-line.is-key');
+  if(active&&first)pre.scrollTo({top:Math.max(0,first.offsetTop-pre.clientHeight/3),behavior:reduced.matches?'auto':'smooth'});
+ }));
+ const sourceData=page.querySelector('[data-source-units]');
+ if(sourceData){
+  let units=[];try{units=JSON.parse(sourceData.textContent);}catch{};
+  const panel=page.querySelector('.reader-source-panel'),rows=page.querySelectorAll('[data-source-row]'),buttons=page.querySelectorAll('[data-source-unit]');let selected=0;
+  const show=(id,scroll=false)=>{const index=units.findIndex(x=>x.id===id);if(index<0)return;selected=index;const unit=units[index];
+   panel.querySelector('[data-source-id]').textContent=unit.id;panel.querySelector('[data-source-location]').textContent=unit.location;panel.querySelector('[data-source-paraphrase]').textContent=unit.paraphrase;
+   const quote=panel.querySelector('[data-source-quote]');quote.hidden=!unit.quote;quote.textContent=unit.quote||'';
+   const a=panel.querySelector('[data-source-open]');a.href=unit.url;a.textContent='打开 / 下载正式 PDF · 第'+unit.page+'页 ↗';
+   panel.querySelector('[data-source-previous]').disabled=index===0;panel.querySelector('[data-source-next]').disabled=index===units.length-1;
+   rows.forEach(row=>row.classList.toggle('is-current',row.dataset.sourceRow===id));buttons.forEach(b=>b.setAttr

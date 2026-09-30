@@ -61,7 +61,7 @@ test('empty search after selection cannot reuse stale suggestions; first Up sele
 
 test('only the approved UMI-on-Legs pilot exposes three report links',()=>{
  const f=fixture();pick(f,'UMI-on-Legs');assert.match(selected(f),/UMI-on-Legs/);const rows=f.$('.map-stage-list').children;
- assert.equal(rows.length,3);assert(rows.every(a=>a.tagName==='A'));assert.deepEqual(rows.map(a=>a.href),['../artifacts/rpa-0062/v1/first-pass.html','../artifacts/rpa-0062/v1/writing-close-reading.html','../artifacts/rpa-0062/v1/method-code-reading.html']);
+ assert.equal(rows.length,3);assert(rows.every(a=>a.tagName==='A'));assert.deepEqual(rows.map(a=>a.href),['../artifacts/rpa-0062/v2/first-pass.html','../artifacts/rpa-0062/v2/writing-close-reading.html','../artifacts/rpa-0062/v2/method-code-reading.html']);
  pick(f,'Universal Manipulation Interface: In-The-Wild');assert(f.$('.map-stage-list').children.every(b=>b.disabled===true));
 });
 

@@ -86,7 +86,7 @@ def _public_url(value):
 def _identity(record):
     require(isinstance(record, dict), 'Report record must be an object')
     require(record.get('paper_id') == 'rpa-0062', 'Only the reviewed rpa-0062 pilot is allowed')
-    require(record.get('version') == 'v1', 'Only reviewed report version v1 is allowed')
+    require(record.get('version') in {'v1','v2'}, 'Only reviewed report versions v1/v2 are allowed')
     stage = record.get('stage')
     require(isinstance(stage, str) and stage in STAGE_FILES, 'Unknown report stage')
     require(record.get('filename') == STAGE_FILES[stage], 'Filename must match its stage')
@@ -272,6 +272,12 @@ def _fragment(value):
 
 
 class ReportHTML(HTMLParser):
+    allowed_tags=ALLOWED_TAGS
+    global_attrs=GLOBAL_ATTRS
+    tag_attrs=TAG_ATTRS
+    aria_attrs=ARIA_ATTRS
+    meta_names={'viewport','description','author','robots','color-scheme'}
+    input_types={'checkbox'}
     def __init__(self, filename):
         super().__init__(convert_charrefs=True)
         self.filename = filename
@@ -291,12 +297,12 @@ class ReportHTML(HTMLParser):
         raise ValueError('HTML processing instructions are not permitted')
 
     def handle_starttag(self, tag, attrs):
-        require(tag in ALLOWED_TAGS, f'HTML tag is not permitted: {tag}')
+        require(tag in self.allowed_tags, f'HTML tag is not permitted: {tag}')
         self.tags.add(tag)
         values = {}
         for key, value in attrs:
             require(key not in values, f'Duplicate HTML attribute: {key}')
-            require(not key.startswith('on') and key in GLOBAL_ATTRS | TAG_ATTRS.get(tag, set()) | ARIA_ATTRS,
+            require(not key.startswith('on') and key in self.global_attrs | self.tag_attrs.get(tag, set()) | self.aria_attrs,
                     f'HTML attribute is not permitted: {tag}.{key}')
             require(value is None or not re.search(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', value),
                     'Control character in HTML attribute')
@@ -320,10 +326,10 @@ class ReportHTML(HTMLParser):
                         values['charset'].lower() == 'utf-8', 'Only UTF-8 charset metadata is permitted')
             else:
                 require(set(values) <= {'name', 'content'} and values.get('name') in
-                        {'viewport', 'description', 'author', 'robots', 'color-scheme'} and
+                        self.meta_names and
                         isinstance(values.get('content'), str), 'Unsupported report metadata')
         if tag == 'input':
-            require(isinstance(values.get('type'), str) and values['type'].lower() == 'checkbox',
+            require(isinstance(values.get('type'), str) and values['type'].lower() in self.input_types,
                     'Only checkbox inputs are permitted')
         if tag == 'img':
             _image_source(values.get('src'))
@@ -337,7 +343,7 @@ class ReportHTML(HTMLParser):
         self.handle_endtag(tag)
 
     def handle_endtag(self, tag):
-        require(tag in ALLOWED_TAGS, f'HTML end tag is not permitted: {tag}')
+        require(tag in self.allowed_tags, f'HTML end tag is not permitted: {tag}')
         if tag == 'style':
             _safe_css(''.join(self.style_text))
             self.style = False
@@ -363,13 +369,16 @@ class ReportHTML(HTMLParser):
         self.links.append((parsed.path or self.filename, fragment))
 
 
-def _parse_html(record, payload):
+def _parse_html(record, payload, root=ROOT):
     try:
         text = payload.decode('utf-8')
     except UnicodeDecodeError as exc:
         raise ValueError('Report must contain exact UTF-8 bytes') from exc
     require(not re.search(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', text), 'HTML contains control characters')
-    parser = ReportHTML(record['filename'])
+    if record['version']=='v2':
+        from report_v2 import prepare
+        text,parser=prepare(root,record,payload)
+    else:parser = ReportHTML(record['filename'])
     try:
         parser.feed(text)
         parser.close()
@@ -402,12 +411,12 @@ def _load(root):
     require(type(registry['schema_version']) is int and registry['schema_version'] == 1,
             'Unsupported report schema')
     records = registry['reports']
-    require(isinstance(records, list) and len(records) <= len(STAGE_FILES), 'Invalid report registry list')
+    require(isinstance(records, list) and len(records) <= 2 * len(STAGE_FILES), 'Invalid report registry list')
     payloads = {}
     parsers = {}
     for record in records:
         _validate_record(record)
-        filename = record['filename']
+        filename = (record['version'],record['filename'])
         require(filename not in payloads, 'Duplicate paper/stage/version report')
         directory = _parts_path(record)
         chunks = []
@@ -423,10 +432,11 @@ def _load(root):
         payload = b''.join(chunks)
         require(len(payload) == record['bytes'] and sha(payload) == record['sha256'],
                 'Assembled report byte count or SHA-256 mismatch')
-        parsers[filename] = _parse_html(record, payload)
+        parsers[filename] = _parse_html(record, payload, root)
         payloads[filename] = payload
-    for parser in parsers.values():
+    for (version, filename),parser in parsers.items():
         for target, fragment in parser.links:
+            target=(version,target)
             require(target in parsers, f'Report link is absent from the approved registry: {target}')
             require(not fragment or fragment in parsers[target].ids,
                     f'Unresolved sibling report fragment: {target}#{fragment}')
@@ -450,7 +460,7 @@ def assemble_reports(root=ROOT):
         target = _safe_path(root, report_path(record))
         require(not target.exists() or target.is_file(), 'Generated target must be a regular file')
     for record in records:
-        _atomic_write(root, report_path(record), payloads[record['filename']])
+        _atomic_write(root, report_path(record), payloads[(record['version'],record['filename'])])
     return records
 
 
@@ -485,7 +495,7 @@ def split_report(root, record, raw_bytes):
         updated['parts'].append({'file': name, 'bytes': len(chunk), 'sha256': sha(chunk)})
         start = end
     _validate_record(updated)
-    _parse_html(updated, raw_bytes)
+    _parse_html(updated, raw_bytes, root)
     directory = _parts_path(updated)
     for part in updated['parts']:
         target = _safe_path(root, directory + '/' + part['file'])
