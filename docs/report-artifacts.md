@@ -202,3 +202,10 @@ report HTML, report parts, manifests, security policies and approved hashes are
 unchanged. Output validation reconstructs each view and compares its entire
 bytes before allowing embedded report resources; the report security parsers
 are not relaxed. There is no iframe or additional runtime code.
+
+
+## RoboDuet reviewed first reading
+
+`rpa-0052/v1/first-pass.html` adds one content-reviewed Stage 1, with all twelve sections and explanations of seven figures and six tables. It reads the author-hosted eight-page manuscript; its extracted text matches arXiv v5 apart from the margin stamp. The formal RA-L identity is retained, while publisher-PDF equivalence remains unverified. No source PDF, extracted figure, page screenshot, copied original table or video is redistributed.
+
+`report_roboduet.py` permits only this exact paper/stage/version/file identity and pins both document and inline navigation-script hashes. The source-manuscript hash is independent of the report hash. Existing HTML/CSS/URL/attribute, path, sibling-link and resource guards remain unchanged. Later stages are not enabled. The content review does not assert browser visual QA or experiment reproduction. All existing UMI and Deep WBC report bytes are preserved.

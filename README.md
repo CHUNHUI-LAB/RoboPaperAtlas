@@ -6,7 +6,7 @@
 
 - 95 条论文目录：73 条原始书目与 22 条主来源核验增补
 - 原始记录按提供信息保留，核验结果独立保存在 verified_overlay；原始 citation_verified 始终为 false，不把部分字段核验称作整条书目已核验
-- 元数据核验、阅读完成和独立复现是不同状态。仅 UMI-on-Legs（rpa-0062）导入3份实际阅读报告；其余94条均为 not_imported
+- 元数据核验、阅读完成和独立复现是不同状态。UMI-on-Legs 与 Deep Whole-Body Control 各有3个阅读阶段，RoboDuet 有1个已审阅初读；其余92条尚未导入阅读报告
 - 正式出版方 PDF 优先；预印本替代版本、原因与代码可用性分别说明。只链接第三方 PDF，不重新分发
 - 前沿动态是独立的 arXiv 启发式发现队列，不代表人工推荐、同行评审或精读完成。已安排每日更新（约 08:00 UTC），首次计划为 2026-10-01；页面展示最后发布快照，实际抓取状态以页面记录为准
 
@@ -65,6 +65,6 @@ Library、首页与 Atlas 共用已核查来源的研究问题分类。方法标
 
 The reader preview typesets reviewed equations with pinned build-time KaTeX and serves local fonts. See [math rendering](docs/math-rendering.md). Node24 is required for the pinned build toolchain.
 
-Current UMI-on-Legs reports use the accepted shared reader in v3: Stage 1 expanded figure/table analysis, Stage 2 official-source locations, and Stage 3 colored code plus offline LaTeX math. Immutable v1/v2 links remain available. Only this one paper has three imported reading stages. See [report artifacts](docs/report-artifacts.md) for exact version/security rules.
+Current UMI-on-Legs reports use the accepted shared reader in v3: Stage 1 expanded figure/table analysis, Stage 2 official-source locations, and Stage 3 colored code plus offline LaTeX math. Immutable v1/v2 links remain available. UMI-on-Legs and Deep Whole-Body Control each have three imported reading stages; RoboDuet has one content-reviewed first reading. See [report artifacts](docs/report-artifacts.md) for exact version/security rules.
 
 Radar now leads with a source-backed research overview and all records in its observation window; individual selected summaries are secondary. Schema1.1 keeps1.0 compatibility, and the original2026-09-30 five-summary snapshot remains in the history route. The separate daily task must be updated and verified after deployment; this repository adds no scheduled workflow.

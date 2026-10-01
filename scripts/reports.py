@@ -35,6 +35,14 @@ RECORD_FIELDS = {
 COMPUTED_FIELDS = {'sha256', 'bytes', 'parts'}
 PART_FIELDS = {'file', 'bytes', 'sha256'}
 REPORT_PAPERS = {
+    'rpa-0052': {
+        'title': 'RoboDuet',
+        'versions': {'v1': {'stage1'}},
+        'review_status': 'content_approved',
+        'source_urls': {'https://ieeexplore.ieee.org/document/10925884','https://locomanip-duet.github.io/'},
+        'pdf_urls': {'https://locomanip-duet.github.io/RoboDuet.pdf'},
+        'arxiv_id': '2403.17367',
+    },
     'rpa-0062': {
         'title': 'UMI on Legs',
         'versions': {'v1': set(STAGE_FILES), 'v2': set(STAGE_FILES), 'v3': set(STAGE_FILES)},
@@ -398,7 +406,10 @@ def _parse_html(record, payload, root=ROOT):
     except UnicodeDecodeError as exc:
         raise ValueError('Report must contain exact UTF-8 bytes') from exc
     require(not re.search(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', text), 'HTML contains control characters')
-    if record['paper_id'] == 'rpa-0012':
+    if record['paper_id'] == 'rpa-0052':
+        from report_roboduet import prepare
+        text,parser=prepare(root,record,payload)
+    elif record['paper_id'] == 'rpa-0012':
         from report_deep_wbc import prepare
         text,parser=prepare(root,record,payload)
     elif record['version']in {'v2','v3'}:

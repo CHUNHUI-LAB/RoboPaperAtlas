@@ -38,7 +38,7 @@ class ReviewedClassificationTests(unittest.TestCase):
    d=details(p);self.assertIn('研究问题与分类证据',d);self.assertIn(html.escape(classification(p)['problemLabel']),d)
  def test_evidence_does_not_promote_bibliography_or_reading(self):
   self.assertEqual(sum(p['citation_verified'] for p in self.papers),22);self.assertEqual(sum(classification(p)['needsReview'] for p in self.papers),4)
-  self.assertEqual(sum(s['status']=='imported' for p in self.papers for s in p['stages'].values()),6)
+  self.assertEqual(sum(s['status']=='imported' for p in self.papers for s in p['stages'].values()),7)
   for p in self.papers:
    self.assertNotEqual(classification(p)['evidenceScope'],'catalog_title');self.assertIn('分类核查不代表全文精读',details(p))
  def test_method_resource_axes_and_search_text(self):

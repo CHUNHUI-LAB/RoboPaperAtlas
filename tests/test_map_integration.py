@@ -28,12 +28,16 @@ class MapIntegrationTests(unittest.TestCase):
    page=details(paper)
    self.assertIn(f'../../map/index.html?paper={paper["id"]}',page)
  def test_nonpilot_catalog_records_unchanged(self):
-  # Only Deep WBC Stage 1/2/3 imports are authorized; every other field stays pinned.
+  # Normalize reviewed Deep WBC and RoboDuet imports, then pin all unrelated fields.
   deep=next(p for p in self.catalog['papers'] if p['id']=='rpa-0012')
   self.assertEqual(deep['stages']['stage1']['status'],'imported')
   deep['stages']['stage1']={'status':'not_imported','artifacts':[]}
   deep['stages']['stage2']={'status':'not_imported','artifacts':[]}
   deep['stages']['stage3']={'status':'not_imported','artifacts':[]}
+  robo=next(p for p in self.catalog['papers'] if p['id']=='rpa-0052')
+  self.assertEqual(robo['stages']['stage1']['status'],'imported')
+  robo['stages']['stage1']={'status':'not_imported','artifacts':[]}
+  robo['verified_overlay']['verification_scope']='已核验出版方书目与官方来源，尚未开展全文精读或复现。'
   payload=json.dumps([p for p in self.catalog['papers'] if p['id']!='rpa-0062'],ensure_ascii=False,sort_keys=True,separators=(',',':')).encode()
   self.assertEqual(hashlib.sha256(payload).hexdigest(),'efa2b769f740904ccac886cf8a5b0f821bc7184b1539451946d37490ad9dfb66')
  def test_verified_force_control_author_preserves_original(self):
