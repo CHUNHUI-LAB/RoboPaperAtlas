@@ -3,7 +3,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT/'scripts'))
 from build import CATEGORIES,details,card,home
 from topic_labels import TOPIC_CHINESE,classification
-from presentation import overlay_status,metadata_label,doi_label,translate,edition_label
+from presentation import overlay_status,metadata_label,doi_label,translate,edition_label,map_year_label
 class UIClarityTests(unittest.TestCase):
  @classmethod
  def setUpClass(cls):
@@ -46,3 +46,13 @@ class UIClarityTests(unittest.TestCase):
  def test_catalog_classification_and_reports_match_reviewed_stage3_integration(self):
   expected={'data/catalog.json':'4daaf6dc6ce078b3e8a80e77c81f2d064da0b0c8298f3ce4c45790acd7d4874e','data/classification.json':'5613c2271aff928748d50f4132ec7fb542b4e97b69d687a66b1cd6f98522c004','data/reports.json':'dcc018df7a4cb676c3c0d73668f985208616f3c79be70f05af3438b358058a24'}
   for name,sha in expected.items():self.assertEqual(hashlib.sha256((ROOT/name).read_bytes()).hexdigest(),sha)
+
+ def test_map_year_label_requires_complete_formal_overlay(self):
+  p=copy.deepcopy(self.byid['rpa-0012'])
+  self.assertEqual(map_year_label(p),'2023 · 正式出版年（独立核验）；2022 · 原始记录年')
+  p['verified_overlay']={};self.assertEqual(map_year_label(p),'2022 · 原始记录年')
+  p['bibliographic_year']=None;self.assertEqual(map_year_label(p),'年份待核验')
+  p=copy.deepcopy(self.byid['rpa-0012']);p['verified_overlay']['authors']=[]
+  self.assertNotIn('独立核验',map_year_label(p))
+  p=copy.deepcopy(self.byid['rpa-0012']);p['publication_status']='preprint_metadata_verified_publication_unresolved'
+  self.assertNotIn('正式出版年',map_year_label(p))

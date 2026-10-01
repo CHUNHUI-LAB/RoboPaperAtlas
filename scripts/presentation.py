@@ -48,3 +48,16 @@ def doi_label(paper):
 def pdf_note_heading(paper):
     date=paper.get('verified_at') or '未注明日期'
     return f'以下是 {date} 的书目／链接核验记录；后续阅读范围见各阶段报告。'
+
+
+def map_year_label(paper):
+    """Show verified formal overlay year without erasing original chronology."""
+    year=paper.get('bibliographic_year')
+    basis=paper.get('year_basis')
+    raw=(f'{year} · '+{'user_provided':'原始记录年','preprint':'预印本年','publication':'出版年'}.get(basis,'记录年')) if year else '年份待核验'
+    overlay=paper.get('verified_overlay') or {}
+    if overlay_status(paper)=='正式书目已核验（独立补充）':
+        formal=f'{overlay["publication_year"]} · 正式出版年（独立核验）'
+        # Preserve the original label even when the numeric year happens to match.
+        return formal+'；'+raw if basis=='user_provided' or year!=overlay['publication_year'] else formal
+    return raw

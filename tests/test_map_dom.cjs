@@ -101,3 +101,17 @@ test('overlapping hit targets refresh nearest-star tooltip on pointermove and cl
  svg.emit('pointermove',{target:oldTarget,pointerType:'mouse',...point('harnessvln')});assert.match(f.$('.map-hover-card').textContent,/HarnessVLN/);
  svg.emit('pointermove',{target:oldTarget,pointerType:'mouse',clientX:-2000,clientY:-2000});assert.equal(f.$('.map-hover-card').hidden,true);
 });
+
+
+test('Deep WBC panel distinguishes verified formal year and scopes old bibliography notes',()=>{
+ const f=fixture();pick(f,'Deep Whole-Body Control');
+ const panel=f.$('#map-panel-content').textContent;
+ assert(panel.includes('2023 · 正式出版年（独立核验）；2022 · 原始记录年'));
+ assert(panel.includes('正式书目已核验（独立补充）'));
+ assert(panel.includes('以下是 2026-09-30 的书目／链接核验记录；后续阅读范围见各阶段报告。'));
+ assert(panel.includes('本次为书目与链接核验，未完成全文检查'));
+ assert(panel.includes('未运行代码或独立复现'));
+ for(const old of ['Author-linked','Source-supported classification','Classification sources','Primary source'])assert(!panel.includes(old));
+ assert.equal(f.$('.map-stage-list').children.length,3);
+ assert(f.$('.map-stage-list').children.every(a=>a.tagName==='A'));
+});

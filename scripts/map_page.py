@@ -8,6 +8,7 @@ import json
 from urllib.parse import quote
 from validate import validate_catalog
 from atlas_taxonomy import atlas_projection
+from presentation import map_year_label, metadata_label, pdf_note_heading, translate, evidence_label
 
 
 
@@ -30,6 +31,12 @@ def map_data(catalog, base='../',report_records=()):
             'category': p['category'], 'mapTopic': taxonomy['placements'][p['id']]['direction'],
             'topics': [taxonomy['placements'][p['id']]['direction']], 'classification': taxonomy['placements'][p['id']], 'tags': p.get('tags') or [],
             'year': p.get('bibliographic_year'), 'yearBasis': p.get('year_basis'),
+            'display': {
+                'yearLabel': map_year_label(p), 'metadataLabel': metadata_label(p),
+                'pdfNoteHeading': pdf_note_heading(p), 'codeNote': translate(p.get('code_note') or ''),
+                'classificationRationale': translate(taxonomy['placements'][p['id']]['rationale']),
+                'classificationEvidenceScope': evidence_label(taxonomy['placements'][p['id']]['evidenceScope']),
+            },
             'originalRecord': bool(p.get('original_metadata')),
             'sourceChecked': p['citation_verified'],
             'hasVerifiedOverlay': bool(p.get('verified_overlay')),
@@ -56,7 +63,7 @@ def map_html(catalog, base='../', css='../assets/paper-map.css', js='../assets/p
     categories = {c['id']: c for c in data['categories']}
     counts = {key: sum(p['mapTopic'] == key for p in data['papers']) for key in categories}
     topics = ''.join(f'<button type="button" data-map-topic="{key}" aria-pressed="false" title="{esc(c["english"])}" style="--topic:{c["color"]}"><i aria-hidden="true"></i>{esc(c["label"])}<span>{counts[key]}</span></button>' for key,c in categories.items())
-    rows = ''.join(f'<li data-map-row="{esc(p["id"])}"><a href="{esc(p["detailUrl"])}" data-map-paper="{esc(p["id"])}"><span class="map-list-dot" style="--topic:{categories[p["mapTopic"]]["color"]}" aria-hidden="true"></span><span class="map-list-copy"><strong>{esc(p["title"])}</strong><small>{esc(categories[p["mapTopic"]]["label"])} / {esc(p["classification"]["problemLabel"])} · {esc(p["year"] or "年份待核验")} · {"分类暂定" if p["classification"]["needsReview"] else "主来源支持的编目判断"}</small></span><span aria-hidden="true">↗</span></a></li>' for p in data['papers'])
+    rows = ''.join(f'<li data-map-row="{esc(p["id"])}"><a href="{esc(p["detailUrl"])}" data-map-paper="{esc(p["id"])}"><span class="map-list-dot" style="--topic:{categories[p["mapTopic"]]["color"]}" aria-hidden="true"></span><span class="map-list-copy"><strong>{esc(p["title"])}</strong><small>{esc(categories[p["mapTopic"]]["label"])} / {esc(p["classification"]["problemLabel"])} · {esc(p["display"]["yearLabel"])} · {"分类暂定" if p["classification"]["needsReview"] else "主来源支持的编目判断"}</small></span><span aria-hidden="true">↗</span></a></li>' for p in data['papers'])
     payload = json.dumps(data, ensure_ascii=False, separators=(',', ':')).replace('<', '\\u003c').replace('>', '\\u003e').replace('&', '\\u0026')
     return f'''<link rel="stylesheet" href="{esc(css)}"><script src="{esc(js)}" defer></script>
 <main id="main" class="paper-map-page">

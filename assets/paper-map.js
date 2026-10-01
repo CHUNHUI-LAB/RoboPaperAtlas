@@ -138,7 +138,7 @@
   let visible = true, activeSuggestions = [], suggestionIndex = -1, pointer = null, ignoreClickUntil = 0;
   let opener = null, focusedId = nodes[0]?.id || '', lastViewExplicit = false;
   let state = { topic: 'all', problem: '', query: '', selected: '', view: smallScreen.matches ? 'list' : 'map' };
-  const yearText = p => p.year ? `${p.year}${p.yearBasis === 'user_provided' ? ' · 原始记录年' : p.yearBasis === 'preprint' ? ' · 预印本年' : ' · 出版年'}` : '年份待核验';
+  const yearText = p => p.display?.yearLabel || (p.year ? `${p.year}${p.yearBasis === 'user_provided' ? ' · 原始记录年' : p.yearBasis === 'preprint' ? ' · 预印本年' : ' · 出版年'}` : '年份待核验');
   const shortLabel = p => {
     const title = p.shortName || p.title;
     const colon = title.indexOf(':');
@@ -358,20 +358,20 @@
     const classification = p.classification;
     content.append(create('p', `${c.label} / ${classification.problemLabel}`, 'map-panel-path'));
     const evidence = create('div', null, 'map-classification-evidence');
-    evidence.append(create('strong', classification.needsReview ? 'Provisional classification · 分类待复核' : 'Source-supported classification · 编辑判断'), create('p', classification.rationale), create('small', `Evidence: ${classification.evidenceScope}. ${classification.evidenceNote}`));
+    evidence.append(create('strong', classification.needsReview ? '分类待复核 · 暂定判断' : '有主来源支持的分类 · 编辑判断'), create('p', p.display?.classificationRationale || classification.rationale), create('small', `证据范围：${p.display?.classificationEvidenceScope || classification.evidenceScope}。${classification.evidenceNote}`));
     if (classification.reviewNote) evidence.append(create('p', classification.reviewNote, 'map-classification-pending'));
     content.append(evidence);
     const crossTags = create('div', null, 'map-panel-tags');
-    classification.methodTags.forEach(tag => { const span = create('span', `${tag.label} · method`); span.title = tag.evidence_scope; crossTags.append(span); });
-    classification.resourceKinds.forEach(kind => crossTags.append(create('span', `${kind} · resource`)));
-    classification.secondaryDirections.forEach(id => crossTags.append(create('span', `${categories.get(id)?.label || id} · secondary`)));
+    classification.methodTags.forEach(tag => { const span = create('span', `${tag.label} · 方法`); span.title = tag.evidence_scope; crossTags.append(span); });
+    classification.resourceKinds.forEach(kind => crossTags.append(create('span', `${kind} · 资源`)));
+    classification.secondaryDirections.forEach(id => crossTags.append(create('span', `${categories.get(id)?.label || id} · 次要方向`)));
     if (crossTags.children.length) content.append(crossTags);
  
     const heading = create('h2', p.title); heading.id = 'map-selected-title'; heading.tabIndex = -1;
     content.append(heading, create('p', p.authors || '作者待核验', 'map-panel-authors'));
-    if (p.tags.length) { content.append(create('p', 'Original catalog tags · 原始编目标签', 'map-original-tags-label')); const tags = create('div', null, 'map-panel-tags'); p.tags.forEach(tag => tags.append(create('span', tag))); content.append(tags); }
+    if (p.tags.length) { content.append(create('p', '原始编目标签', 'map-original-tags-label')); const tags = create('div', null, 'map-panel-tags'); p.tags.forEach(tag => tags.append(create('span', tag))); content.append(tags); }
     const badge = create('div', null, 'map-panel-badge');
-    badge.append(create('strong', p.originalRecord ? (p.hasVerifiedOverlay ? '原始书目 · 部分字段另有核验' : '原始书目 · 来源字段保留') : '增补书目 · 主来源元数据核验'));
+    badge.append(create('strong', p.display?.metadataLabel || (p.originalRecord ? '原始书目 · 来源字段保留' : '增补书目 · 主来源元数据核验')));
     badge.append(create('span', p.originalRecord ? '原始书目字段的核验状态与 Atlas 分类证据分别记录；摘要支持的分类不等于全文、方法或结论已核验。' : '元数据编目不代表完成全文精读、代码审计或独立复现。'));
     content.append(badge);
     if (p.summary) content.append(create('p', p.summary, 'map-panel-summary'));
@@ -380,8 +380,8 @@
     const links = [safeLink(p.pdfUrl, p.pdfKind === 'publisher' ? '出版方 PDF' : '预印本替代 PDF'), safeLink(p.paperUrl, '出版 / 论文页面'), safeLink(p.projectUrl, '官方项目'), ...p.codeUrls.map((url, i) => safeLink(url, p.codeUrls.length > 1 ? `代码 / 数据 ${i + 1}` : '代码 / 数据')), safeLink(p.detailUrl, '完整书目详情', true), safeLink(p.catalogUrl, '在 Library 中查看')].filter(Boolean);
     links.forEach(link => resourceLinks.append(link)); resources.append(resourceLinks);
     if (!p.paperUrl && !p.pdfUrl) resources.append(create('p', '原文与 PDF 链接尚待核验，暂不提供猜测入口。', 'map-panel-note'));
-    if (p.pdfNote) resources.append(create('p', p.pdfNote, 'map-panel-note'));
-    if (p.codeNote) resources.append(create('p', p.codeNote, 'map-panel-note'));
+    if (p.pdfNote) { resources.append(create('p', p.display?.pdfNoteHeading || '书目／链接核验记录；后续阅读范围见各阶段报告。', 'map-panel-note')); resources.append(create('p', p.pdfNote, 'map-panel-note')); }
+    if (p.codeNote) resources.append(create('p', p.display?.codeNote || p.codeNote, 'map-panel-note'));
     const stages = section('分阶段阅读'), stageList = create('div', null, 'map-stage-list');
     for (const [index, name] of ['初读', '写作精读', '方法精读'].entries()) {
       const state=p.stages['stage'+(index+1)],artifact=state?.status==='imported'?state.artifacts[0]:null;
@@ -392,9 +392,9 @@
       else{const button = create('button', `S${index + 1} ${name}`); button.type = 'button'; button.disabled = true;button.append(create('span', '尚未导入')); stageList.append(button);}
     }
     stages.append(stageList, create('p', '只有实际报告完成导入与检查，阅读入口才会开放。', 'map-panel-note'));
-    const evidenceLinks = section('Classification sources');
-    classification.sources.map((url, i) => safeLink(url, `Primary source ${i + 1}`)).filter(Boolean).forEach(link => evidenceLinks.append(link));
-    if (!classification.sources.length) evidenceLinks.append(create('p', 'Title-level proposal; primary-source classification review pending.', 'map-panel-note'));
+    const evidenceLinks = section('分类来源');
+    classification.sources.map((url, i) => safeLink(url, `主来源 ${i + 1}`)).filter(Boolean).forEach(link => evidenceLinks.append(link));
+    if (!classification.sources.length) evidenceLinks.append(create('p', '仅按题名暂定；尚待主来源分类核查。', 'map-panel-note'));
     const relations = related(nodes, p.id), relationSection = section(relations.mode === 'shared-tags' ? '沿原始编目标签继续探索' : '同一主展示分组');
     relationSection.append(create('p', relations.mode === 'shared-tags' ? `原始编目标签相近（推断），不是已核验方法标签或引用关系。共 ${relations.total} 条匹配，仅显示 ${relations.items.length} 条，按共享标签数及固定 ID 排序。` : `此条目没有共享标签匹配，仅显示 ${relations.items.length} 条同主展示分组的论文作为导航，不绘制关系线。`, 'map-panel-note'));
     const list = create('ul', null, 'map-related-list');

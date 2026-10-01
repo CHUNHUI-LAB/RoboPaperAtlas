@@ -29,7 +29,7 @@ test('root canvas keyboard enters systems, never an arbitrary hidden paper',()=>
 });
 test('all pending placements expose evidence and resources stay distinct from cross-domain research',()=>{
  const f=fixture();for(const p of data.papers.filter(p=>p.classification.needsReview)){
-  f.setURL('?paper='+p.id);assert.match(f.$('.map-classification-evidence').textContent,/分类待复核/);assert.match(f.$('.map-classification-evidence').textContent,/Evidence:/);
+  f.setURL('?paper='+p.id);assert.match(f.$('.map-classification-evidence').textContent,/分类待复核/);assert.match(f.$('.map-classification-evidence').textContent,/证据范围：/);
  }
  f.setURL('?paper=holoagent-0');assert.match(f.$('#atlas-breadcrumbs').textContent,/Cross-domain/);assert(!f.$('#atlas-breadcrumbs').textContent.includes('Resources'));
  f.setURL('?paper=savva2019habitat');assert.match(f.$('#atlas-breadcrumbs').textContent,/Resources/);
@@ -67,7 +67,7 @@ test('pending classification notes meet readable contrast on both list and dark 
 
 test('original inferred tags are explicitly separated from source-supported method components',()=>{
  const f=fixture({url:'https://example.org/map/?paper=rpa-0062'});
- assert.match(f.$('.map-original-tags-label').textContent,/Original catalog tags/);
+ assert.match(f.$('.map-original-tags-label').textContent,/原始编目标签/);
  assert.match(f.$('#map-panel-content').textContent,/不是已核验方法标签或引用关系/);
  const data=JSON.parse(f.$('#paper-map-data').textContent),p=data.papers.find(p=>p.id==='rpa-0062');
  assert(p.classification.methodTags.some(t=>t.evidence_scope==='formal paper sections 3.1–3.2'));

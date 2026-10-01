@@ -53,8 +53,11 @@ class MapPageTests(unittest.TestCase):
         data=copy.deepcopy(self.catalog);data['papers'][0]['stages']['stage1']={'status':'complete','artifacts':[]}
         with self.assertRaises(ValueError):map_data(data,report_records=self.reports)
     def test_public_projection_allowlist(self):
-        keys={'id','title','shortName','authors','category','mapTopic','topics','classification','tags','year','yearBasis','originalRecord','sourceChecked','hasVerifiedOverlay','verificationScope','summary','paperUrl','pdfUrl','pdfKind','pdfNote','projectUrl','codeUrls','codeNote','detailUrl','catalogUrl','stages'}
-        for paper in self.data['papers']:self.assertEqual(set(paper),keys)
+        keys={'id','title','shortName','authors','category','mapTopic','topics','classification','tags','year','yearBasis','display','originalRecord','sourceChecked','hasVerifiedOverlay','verificationScope','summary','paperUrl','pdfUrl','pdfKind','pdfNote','projectUrl','codeUrls','codeNote','detailUrl','catalogUrl','stages'}
+        for paper in self.data['papers']:
+            self.assertEqual(set(paper),keys)
+            self.assertEqual(set(paper['display']),{'yearLabel','metadataLabel','pdfNoteHeading','codeNote','classificationRationale','classificationEvidenceScope'})
+            self.assertTrue(all(isinstance(value,str) for value in paper['display'].values()))
     def test_html_fallback_and_accessibility(self):
         self.assertEqual(self.html.count('data-map-paper='),95)
         self.assertEqual(self.html.count('data-map-row='),95)
@@ -79,5 +82,27 @@ class MapPageTests(unittest.TestCase):
     def test_renderer_has_explicit_truth_legend(self):
         for text in ['不是引用或方法继承','不代表学术影响力','73 条原始书目','22 条增补记录','0','阅读状态']:
             self.assertIn(text,self.html)
+
+
+    def test_display_labels_keep_original_evidence_and_date_scope(self):
+        from atlas_taxonomy import atlas_projection
+        before=copy.deepcopy(self.catalog)
+        projected=map_data(self.catalog,report_records=self.reports)
+        self.assertEqual(self.catalog,before)
+        taxonomy=atlas_projection(self.catalog['papers'])
+        for raw,p in zip(self.catalog['papers'],projected['papers']):
+            self.assertEqual(p['year'],raw.get('bibliographic_year'))
+            self.assertEqual(p['yearBasis'],raw.get('year_basis'))
+            self.assertEqual(p['classification'],taxonomy['placements'][raw['id']])
+            self.assertEqual(p['codeNote'],raw.get('code_note') or '')
+            self.assertEqual(p['pdfNote'],raw.get('pdf_note') or '')
+        deep=next(p for p in projected['papers'] if p['id']=='rpa-0012')
+        self.assertEqual(deep['display']['yearLabel'],'2023 · 正式出版年（独立核验）；2022 · 原始记录年')
+        self.assertIn('2026-09-30',deep['display']['pdfNoteHeading'])
+        self.assertIn('后续阅读范围见各阶段报告',deep['display']['pdfNoteHeading'])
+        self.assertEqual(deep['display']['metadataLabel'],'正式书目已核验（独立补充）')
+        self.assertNotIn('Author-linked',deep['display']['codeNote'])
+        self.assertIn('未运行代码或独立复现',deep['display']['codeNote'])
+        self.assertIn('2023 · 正式出版年（独立核验）；2022 · 原始记录年',self.html)
 
 if __name__=='__main__':unittest.main()
