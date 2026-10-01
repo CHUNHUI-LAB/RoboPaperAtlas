@@ -28,7 +28,7 @@ class DeepWBCImageV2Tests(unittest.TestCase):
  @classmethod
  def setUpClass(cls):
   cls.records=load_reports(ROOT)
-  cls.deep={x['version']:x for x in cls.records if x['paper_id']=='rpa-0012'}
+  cls.deep={x['version']:x for x in cls.records if x['paper_id']=='rpa-0012' and x['stage']=='stage1'}
   cls.pages={v:(ROOT/report_path(x)).read_text() for v,x in cls.deep.items()}
  def test_all_nine_images_match_reviewed_nonrotated_outputs(self):
   images=re.findall(r'<figure id="([^"]+)"><img src="data:image/png;base64,([^"]+)"',self.pages['v2'])
@@ -48,7 +48,7 @@ class DeepWBCImageV2Tests(unittest.TestCase):
   cat=json.loads((ROOT/'data/catalog.json').read_text());p=next(x for x in cat['papers'] if x['id']=='rpa-0012')
   self.assertEqual(p['stages']['stage1'],expected_stage('rpa-0012','stage1',self.records))
   self.assertEqual([x['version'] for x in p['stages']['stage1']['artifacts']],['v2','v1'])
-  for stage in ['stage2','stage3']:self.assertEqual(p['stages'][stage],{'status':'not_imported','artifacts':[]})
+  for stage in ['stage3']:self.assertEqual(p['stages'][stage],{'status':'not_imported','artifacts':[]})
   self.assertEqual(len([x for x in self.records if x['paper_id']=='rpa-0062']),9)
  def test_policy_versions_are_separate_and_source_edition_is_unchanged(self):
   a=json.loads((ROOT/'data/report-rpa-0012-v1-policy.json').read_text());b=json.loads((ROOT/'data/report-rpa-0012-v2-policy.json').read_text())

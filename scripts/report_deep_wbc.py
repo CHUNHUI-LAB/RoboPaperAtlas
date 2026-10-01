@@ -1,4 +1,4 @@
-"""One explicitly reviewed Deep WBC Stage 1 document, not a general HTML uploader.
+"""Explicitly reviewed Deep WBC Stage 1/2 documents, not a general HTML uploader.
 
 The content approval does not claim browser QA. Whole-document and reader-script
 fingerprints are required before parsing the remaining HTML with all existing
@@ -22,12 +22,48 @@ class DeepWBCReader(ReportHTML):
         super().handle_starttag(tag, attrs)
 
 
+WRITING_UNIT_IDS = ({f'A{i}' for i in range(1, 10)}
+                    | {f'P{p}-S{i}' for p,n in enumerate((6,7,6,3,9),1) for i in range(1,n+1)}
+                    | {f'C1-S{i}' for i in range(1,6)})
+POLICY_PATHS = {
+    ('stage1','v1','first-pass.html'): 'data/report-rpa-0012-v1-policy.json',
+    ('stage1','v2','first-pass.html'): 'data/report-rpa-0012-v2-policy.json',
+    ('stage2','v1','writing-close-reading.html'): 'data/report-rpa-0012-stage2-v1-policy.json',
+}
+
+class DeepWBCWritingReader(DeepWBCReader):
+    tag_attrs = dict(DeepWBCReader.tag_attrs, div={'data-source-row'})
+
+    def __init__(self, filename, paper_id):
+        super().__init__(filename, paper_id)
+        self.source_rows = set()
+        self.quote_count = 0
+
+    def handle_starttag(self, tag, attrs):
+        values = dict(attrs)
+        if 'data-source-row' in values:
+            ident = values['data-source-row']
+            require(tag == 'div' and ident in WRITING_UNIT_IDS and ident not in self.source_rows,
+                    'Unknown or duplicated Deep WBC writing source unit')
+            self.source_rows.add(ident)
+        if tag == 'blockquote':
+            require(values.get('class') == 'source-excerpt' and values.get('lang') == 'en',
+                    'Writing excerpts must retain their explicit English source label')
+            self.quote_count += 1
+        super().handle_starttag(tag, attrs)
+
+    def close(self):
+        super().close()
+        require(self.source_rows == WRITING_UNIT_IDS and self.quote_count == 45,
+                'Deep WBC writing report requires exactly 45 reviewed source units and excerpts')
+
+
 def prepare(root, record, payload):
     identity = {k:record[k] for k in ('paper_id','stage','version','filename')}
-    require(identity['version'] in {'v1', 'v2'} and identity == dict(paper_id='rpa-0012',stage='stage1',version=identity['version'],filename='first-pass.html'),
+    key = (identity['stage'], identity['version'], identity['filename'])
+    require(identity['paper_id'] == 'rpa-0012' and key in POLICY_PATHS,
             'Unapproved Deep WBC reader identity')
-    policy_path = {'v1': 'data/report-rpa-0012-v1-policy.json', 'v2': 'data/report-rpa-0012-v2-policy.json'}[identity['version']]
-    policy = json.loads(_read(root, policy_path, 20000).decode(),
+    policy = json.loads(_read(root, POLICY_PATHS[key], 20000).decode(),
                         object_pairs_hook=_json_object)
     _keys(policy, POLICY_FIELDS, 'Deep WBC policy')
     require(all(policy[k] == v for k,v in identity.items()), 'Wrong paper/stage reader policy')
@@ -44,4 +80,5 @@ def prepare(root, record, payload):
     # Only the one exact reviewed script is removed from the strict parser input.
     # Other script tags/attributes remain and are rejected by ReportHTML.
     text=re.sub(r'<script>.*?</script>','',text,count=1,flags=re.S)
-    return text,DeepWBCReader(record['filename'],record['paper_id'])
+    parser = DeepWBCWritingReader if record['stage'] == 'stage2' else DeepWBCReader
+    return text,parser(record['filename'],record['paper_id'])

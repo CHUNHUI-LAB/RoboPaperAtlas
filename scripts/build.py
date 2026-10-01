@@ -89,7 +89,7 @@ def details(p):
     for key,num,name,label,description in STAGES:
         state=p['stages'][key]
         if state['status']=='imported':
-            artifact=state['artifacts'][0];review_label='初读内容已审阅' if artifact['review_status']=='content_approved' else '已导入';history=''.join(f'<a href="{prefix}{esc(a["path"])}">历史 {esc(a["version"])} ↗</a>' for a in state['artifacts'][1:]);entry=f'<div class="stage-version-links"><a class="stage-report-link" href="{prefix}{esc(artifact["path"])}">阅读 HTML ↗<small>{esc(artifact["version"])} · {review_label}</small></a>{history}</div>'
+            artifact=state['artifacts'][0];review_label=({'stage1':'初读内容已审阅','stage2':'写作内容已审阅'}.get(key,'内容已审阅')) if artifact['review_status']=='content_approved' else '已导入';history=''.join(f'<a href="{prefix}{esc(a["path"])}">历史 {esc(a["version"])} ↗</a>' for a in state['artifacts'][1:]);entry=f'<div class="stage-version-links"><a class="stage-report-link" href="{prefix}{esc(artifact["path"])}">阅读 HTML ↗<small>{esc(artifact["version"])} · {review_label}</small></a>{history}</div>'
         else:entry='<span class="unavailable">尚未导入</span>'
         stage_rows.append(f'<div class="stage-slot"><span class="stage-index">{num}</span><div><h3>{name} · {label}</h3><p>{description}</p></div>{entry}</div>')
     stages=''.join(stage_rows)
