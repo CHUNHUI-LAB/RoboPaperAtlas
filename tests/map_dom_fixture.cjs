@@ -61,6 +61,7 @@ function fixture(options={}){
   requestAnimationFrame:fn=>{raf.set(++sequence,fn);return sequence},cancelAnimationFrame:id=>raf.delete(id)};
  window.IntersectionObserver=IO;window.ResizeObserver=RO;window.location=location;window.history=history;
  const source=fs.readFileSync(path.join(rootDir,'assets/paper-map.js'),'utf8');
+ vm.runInNewContext(fs.readFileSync(path.join(rootDir,'assets/presentation.js'),'utf8'),context);
  vm.runInNewContext(source,context);
  return {document,window,media,raf,observers,resizers,location,historyStack,context,source,
   $(selector){return document.querySelector(selector)},$$(selector){return document.querySelectorAll(selector)},

@@ -77,6 +77,8 @@ class Links(HTMLParser):
 def validate_output(root,report_records=()):
     from reports import report_path
     report_paths={report_path(x) for x in report_records}
+    from current_reader import validate_current_readers
+    current_paths=validate_current_readers(ROOT,root,json.loads((ROOT/'data/catalog.json').read_text())['papers'],report_records)
     preview_path='reader-preview/umi-on-legs/index.html'
     from reader_theme_preview import PREVIEWS, read_preview as read_theme_preview
     theme_preview_paths=set(PREVIEWS)
@@ -104,7 +106,7 @@ def validate_output(root,report_records=()):
         parser=Links();parser.feed(p.read_text())
         for tag,attribute,link in parser.references:
             if link.startswith('data:'):
-                ensure((str(p.relative_to(root)) in report_paths or str(p.relative_to(root)) in ({preview_path}|theme_preview_paths) and link in report_images) and tag=='img' and attribute=='src' and link.startswith(('data:image/png;base64,','data:image/jpeg;base64,')),'Unexpected embedded resource')
+                ensure((str(p.relative_to(root)) in (report_paths|current_paths) or str(p.relative_to(root)) in ({preview_path}|theme_preview_paths) and link in report_images) and tag=='img' and attribute=='src' and link.startswith(('data:image/png;base64,','data:image/jpeg;base64,')),'Unexpected embedded resource')
                 continue
             u=urlsplit(link)
             if u.scheme:check_url(link);continue

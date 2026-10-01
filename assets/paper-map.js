@@ -385,7 +385,9 @@
     const stages = section('分阶段阅读'), stageList = create('div', null, 'map-stage-list');
     for (const [index, name] of ['初读', '写作精读', '方法精读'].entries()) {
       const state=p.stages['stage'+(index+1)],artifact=state?.status==='imported'?state.artifacts[0]:null;
-      const report=artifact&&/^\.\.\/artifacts\/rpa-0062\/v[123]\/(first-pass|writing-close-reading|method-code-reading)\.html$/.test(artifact.url)?safeLink(artifact.url,`S${index+1} ${name}`):null;
+      const entry=artifact&&typeof artifact.url==='string'&&artifact.url.startsWith('../')
+        ?globalThis.RoboPaperPresentation?.reportEntryPath(p.id,'stage'+(index+1),artifact.url.slice(3),artifact.version):null;
+      const report=entry?safeLink('../'+entry,`S${index+1} ${name}`):null;
       if(report){report.classList.add('map-stage-report');report.append(create('small',artifact.version+' · 已导入'));stageList.append(report);}
       else{const button = create('button', `S${index + 1} ${name}`); button.type = 'button'; button.disabled = true;button.append(create('span', '尚未导入')); stageList.append(button);}
     }

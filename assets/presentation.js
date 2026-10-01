@@ -8,17 +8,24 @@
   return p.publication_status==='preprint_metadata_verified_publication_unresolved'?'预印本书目已核验（正式出版未确认）':null;
  }
  function metadataLabel(p){return overlayStatus(p)||(p.citation_verified?'来源已核验':'原始书目待核验')}
+ function reportEntryPath(id,stage,path,version){
+  const definition=stages.find(item=>item[0]===stage);
+  if(!/^[a-z0-9][a-z0-9-]*$/.test(id||'')||!definition||!/^v[1-9][0-9]*$/.test(version||''))return null;
+  const expected='artifacts/'+id+'/'+version+'/'+definition[2];
+  if(path!==expected)return null;
+  return id==='rpa-0012'?'papers/'+id+'/reading/'+stage+'.html':expected;
+ }
  function currentReports(p){
   if(!/^[a-z0-9][a-z0-9-]*$/.test(p.id||''))return [];
   return stages.flatMap(([stage,label,file],index)=>{
    const state=p.stages?.[stage],a=state?.status==='imported'?state.artifacts?.[0]:null;
    if(!a||a.kind!=='html'||!/^v[1-9][0-9]*$/.test(a.version||'')||!['approved','content_approved'].includes(a.review_status))return [];
-   const expected='artifacts/'+p.id+'/'+a.version+'/'+file;
-   if(a.path!==expected)return [];
-   return [{stage,label,index:index+1,artifact:a,path:expected}];
+   const path=reportEntryPath(p.id,stage,a.path,a.version);
+   if(!path)return [];
+   return [{stage,label,index:index+1,artifact:a,path}];
   });
  }
  function pdfNoteHeading(p){return '以下是 '+(p.verified_at||'未注明日期')+' 的书目／链接核验记录；后续阅读范围见各阶段报告。'}
- const api=Object.freeze({overlayStatus,metadataLabel,currentReports,pdfNoteHeading});
+ const api=Object.freeze({overlayStatus,metadataLabel,currentReports,reportEntryPath,pdfNoteHeading});
  if(typeof module==='object'&&module.exports)module.exports=api;else root.RoboPaperPresentation=api;
 })(typeof globalThis==='object'?globalThis:this);

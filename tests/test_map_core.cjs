@@ -80,3 +80,22 @@ test('six-region full fit includes every paper at narrow optional-map width',()=
  const records=Array.from({length:95},(_,i)=>({id:'fixture-'+String(i).padStart(3,'0'),category:six[i%6],tags:[]}));const nodes=core.layout(records,regions);
  for(const [w,h]of[[335,490],[970,720]]){const c=core.fitCamera(nodes,w,h);nodes.forEach(p=>{assert(p.x*c.k+c.x>=0&&p.x*c.k+c.x<=w);assert(p.y*c.k+c.y>=0&&p.y*c.k+c.y<=h)});}
 });
+
+test('shared stage routing accepts exact paper/version/stage paths and rejects unsafe routes',()=>{
+ const {reportEntryPath,currentReports}=require('../assets/presentation.js');
+ for(const id of ['rpa-0012','rpa-0062']){
+  const p=catalog.papers.find(p=>p.id===id);
+  for(const [stage,state] of Object.entries(p.stages)){
+   const a=state.artifacts[0];
+   const expected=id==='rpa-0012'?`papers/${id}/reading/${stage}.html`:a.path;
+   assert.equal(reportEntryPath(id,stage,a.path,a.version),expected);
+   assert.equal(currentReports(p).find(r=>r.stage===stage).path,expected);
+   for(const bad of ['https://evil.example/'+a.path,'../'+a.path,a.path+'?x=1',a.path+'#x',a.path.replace(id,'rpa-9999'),a.path.replace('artifacts/','artifacts/../artifacts/'),a.path.replace('.html','.html/extra')]){
+    assert.equal(reportEntryPath(id,stage,bad,a.version),null);
+   }
+   assert.equal(reportEntryPath(id,'stage4',a.path,a.version),null);
+   assert.equal(reportEntryPath(id,stage,a.path,'v999'),null);
+  }
+ }
+ assert.equal(reportEntryPath('../rpa-0012','stage1','artifacts/../rpa-0012/v1/first-pass.html','v1'),null);
+});

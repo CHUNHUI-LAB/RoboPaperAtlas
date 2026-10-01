@@ -182,3 +182,23 @@ Public CI assembles already reviewed, hash-pinned HTML parts. It does not regene
 Version3 changes only reader presentation and current/history links. Main body text increases from16 to17px (15 to16px on narrow screens), code from12 to13px (11 to12px narrow), and captions from11 to12px (10 to12px narrow). Selected analysis/table/source-note text increases by1px. Title sizes, section order, paper content, images, equations and code snippets remain unchanged. The Stage2 official-PDF button explicitly uses light text in normal, hover and keyboard-focus states, fixing a more-specific inherited link color.
 
 `data/report-v3-policy.json` pins the new self-contained files and their embedded assets. Public v1/v2 bytes and policies remain immutable. The current arrays are newest-first v3/v2/v1; the three stages still belong to one paper.
+
+## Current stage navigation without changing frozen reports
+
+Deep WBC (`rpa-0012`) has live entry pages at
+`papers/rpa-0012/reading/stage1.html` through `stage3.html`. These standalone
+views derive from the exact registry-validated report bytes. The generator
+requires the reviewed document hash and one exact known navigation/note
+signature. It only replaces that stage navigation and adds explicit generated
+view provenance with a direct fixed-version link in the existing document note.
+Report content, embedded scripts and styles remain byte-identical. Unknown
+signatures fail closed instead of falling back to a broad HTML rewrite.
+
+Only imported stages get links and generated views. Detail pages, Library quick
+views and Atlas use these current entries; UMI-on-Legs retains its existing
+routes. The shared browser routing adapter checks the exact paper ID, version
+and stage filename before constructing a local entry URL. Historical links,
+report HTML, report parts, manifests, security policies and approved hashes are
+unchanged. Output validation reconstructs each view and compares its entire
+bytes before allowing embedded report resources; the report security parsers
+are not relaxed. There is no iframe or additional runtime code.

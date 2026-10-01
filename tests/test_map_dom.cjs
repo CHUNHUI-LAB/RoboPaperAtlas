@@ -11,7 +11,7 @@ test('real map markup initializes all95nodes, stable camera, no initial relation
 test('search-to-selection uses actual PDF and Stage states, closes with no stale callback',()=>{
  const f=fixture();pick(f,'Deep Whole-Body Control');assert.match(selected(f),/Deep Whole-Body/);
  const links=f.$('.map-resource-links').children;assert(links.some(a=>a.href==='https://proceedings.mlr.press/v205/fu23a/fu23a.pdf'));
- assert(f.$('.map-stage-list').children.every(b=>b.disabled===true));assert(f.$('.map-edges').children.length<=8);
+ assert.deepEqual(f.$('.map-stage-list').children.map(a=>a.href),[1,2,3].map(n=>`../papers/rpa-0012/reading/stage${n}.html`));assert(f.$('.map-edges').children.length<=8);
  f.click('#map-panel-close');f.step(1000);assert.equal(selected(f),'');assert.equal(f.raf.size,0);assert.equal(f.$('.map-edges').children.length,0);assert(!f.location.search.includes('paper='));
 });
 test('related-node selection and Back restore correct panel and URL',()=>{
@@ -59,7 +59,7 @@ test('empty search after selection cannot reuse stale suggestions; first Up sele
  f.input('whole-body');const n=f.$('#map-suggestions').children.length;input.emit('keydown',{key:'ArrowUp'});assert.equal(input.getAttribute('aria-activedescendant'),`map-option-${n-1}`);input.emit('keydown',{key:'Escape'});input.emit('keydown',{key:'ArrowDown'});assert.equal(input.getAttribute('aria-activedescendant'),'map-option-0');
 });
 
-test('only the approved UMI-on-Legs pilot exposes three report links',()=>{
+test('UMI report links remain unchanged and unimported papers stay disabled',()=>{
  const f=fixture();pick(f,'UMI-on-Legs');assert.match(selected(f),/UMI-on-Legs/);const rows=f.$('.map-stage-list').children;
  assert.equal(rows.length,3);assert(rows.every(a=>a.tagName==='A'));assert.deepEqual(rows.map(a=>a.href),['../artifacts/rpa-0062/v3/first-pass.html','../artifacts/rpa-0062/v3/writing-close-reading.html','../artifacts/rpa-0062/v3/method-code-reading.html']);
  pick(f,'Universal Manipulation Interface: In-The-Wild');assert(f.$('.map-stage-list').children.every(b=>b.disabled===true));
