@@ -32,7 +32,9 @@ class MapIntegrationTests(unittest.TestCase):
   self.assertEqual(hashlib.sha256(payload).hexdigest(),'80641f528508872deb788c59e6957121766c363e1ff5b1a60611f79941cf742b')
  def test_no_frontier_candidates_mixed_into_map(self):
   data=map_data(self.catalog,report_records=load_reports(ROOT));self.assertEqual(len(data['papers']),95)
-  frontier=json.loads((ROOT/'data/frontier.json').read_text());self.assertEqual(len(frontier['papers']),253)
+  frontier=json.loads((ROOT/'data/frontier.json').read_text());self.assertEqual(len(frontier['papers']),frontier['coverage']['displayed_entries'])
+  self.assertEqual({p['id'] for p in data['papers']},{p['id'] for p in self.catalog['papers']})
+  self.assertTrue({p['canonical_id'] for p in frontier['papers']}.isdisjoint({p['id'] for p in data['papers']}))
   brief=json.loads((ROOT/'data/briefs/2026-09-30.json').read_text());self.assertEqual(len(brief['new_papers'])+len(brief['revised_papers']),5)
   index=json.loads((ROOT/'data/briefs/index.json').read_text());self.assertTrue(index['summary_automation_enabled'])
  def test_all_source_links_are_static_and_no_report_fabrication(self):

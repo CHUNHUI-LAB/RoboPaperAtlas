@@ -16,10 +16,39 @@ class RadarOverviewTests(unittest.TestCase):
   x=copy.deepcopy(self.old);x['research_overview']=self.data['research_overview']
   with self.assertRaises(ValueError):validate_brief(x)
  def test_preview_integrity_and_coverage(self):
-  validate_brief(self.data);validate_snapshot(self.data,self.feed,hashlib.sha256(self.raw).hexdigest())
+  validate_brief(self.data)
+  index,records=load_archive(ROOT);current=records[index['latest']]
+  self.assert_current_snapshot_contract(current,self.feed,hashlib.sha256(self.raw).hexdigest(),records)
+  if self.data['source_snapshot']['sha256']==hashlib.sha256(self.raw).hexdigest():
+   validate_snapshot(self.data,self.feed,hashlib.sha256(self.raw).hexdigest())
+  else:
+   self.assertEqual(self.data['research_overview']['candidate_records'],records[self.data['date']]['research_overview']['candidate_records'])
   o=self.data['research_overview'];self.assertEqual(len(o['candidate_records']),42);self.assertEqual(len(o['evidence_sources']),14)
   self.assertEqual(len({v for t in o['themes']for v in t['evidence_ids']}),13)
   self.assertEqual(self.data['counts']['complete_abstracts_checked_for_selection'],6)
+ def assert_current_snapshot_contract(self,current,feed,raw_sha,records):
+  validate_brief(current)
+  if current['source_snapshot']['sha256']==raw_sha:
+   validate_snapshot(current,feed,raw_sha)
+   return
+  self.assertIn(current['status'],{'stale','error'})
+  preserved=[record for record in records.values() if record is not current and record['source_snapshot']==current['source_snapshot'] and record['window']==current['window']]
+  self.assertTrue(preserved,'Retained provenance must resolve to an earlier archived observation')
+  original=preserved[0]
+  self.assertEqual(current['candidate_ids'],original['candidate_ids'])
+  self.assertEqual(current['research_overview']['candidate_records'],original['research_overview']['candidate_records'])
+  if current['status']=='stale':
+   self.assertEqual(current['research_overview']['evidence_sources'],original['research_overview']['evidence_sources'])
+ def test_current_and_stale_snapshot_provenance(self):
+  index,records=load_archive(ROOT);current=records[index['latest']]
+  self.assert_current_snapshot_contract(current,self.feed,hashlib.sha256(self.raw).hexdigest(),records)
+  retained=copy.deepcopy(current);retained['status']='stale'
+  failed=copy.deepcopy(self.feed);failed['status']='stale';failed['last_failed_fetch_at']=current['generated_at']
+  failed_sha=hashlib.sha256(json.dumps(failed).encode()).hexdigest()
+  self.assert_current_snapshot_contract(retained,failed,failed_sha,{'previous':current})
+  with self.assertRaises(AssertionError):self.assert_current_snapshot_contract(retained,failed,failed_sha,{})
+  falsely_fresh=copy.deepcopy(retained);falsely_fresh['status']='ready'
+  with self.assertRaises(AssertionError):self.assert_current_snapshot_contract(falsely_fresh,failed,failed_sha,{'previous':current})
  def test_boolean_counts_rejected(self):
   self.reject(lambda d:d['research_overview']['coverage'].update(count_denominator=True))
   self.reject(lambda d:d['research_overview']['topic_distribution'][0].update(count=True))
@@ -74,8 +103,12 @@ class RadarOverviewTests(unittest.TestCase):
    validate_brief(d);html=render(d,self.index,preview=True,prefix='../');self.assertIn('class="radar-state"',html);self.assertLess(html.index('class="radar-state"'),html.index('class="radar-lead"'))
  def test_11_archive_is_self_contained_after_snapshot_changes(self):
   with tempfile.TemporaryDirectory()as directory:
-   root=Path(directory);(root/'data/briefs').mkdir(parents=True);raw=json.dumps(self.data,ensure_ascii=False).encode();(root/'data/briefs/2026-09-30.json').write_bytes(raw)
-   index=copy.deepcopy(self.index);index['briefs'][0]['sha256']=hashlib.sha256(raw).hexdigest();(root/'data/briefs/index.json').write_text(json.dumps(index))
+   root=Path(directory);(root/'data/briefs').mkdir(parents=True)
+   for entry in self.index['briefs']:shutil.copyfile(ROOT/'data/briefs'/entry['path'],root/'data/briefs'/entry['path'])
+   raw=json.dumps(self.data,ensure_ascii=False).encode();(root/'data/briefs/2026-09-30.json').write_bytes(raw)
+   index=copy.deepcopy(self.index)
+   next(entry for entry in index['briefs'] if entry['date']==self.data['date'])['sha256']=hashlib.sha256(raw).hexdigest()
+   (root/'data/briefs/index.json').write_text(json.dumps(index))
    (root/'data/frontier.json').write_text('{"papers":[]}')
    _,records=load_archive(root);self.assertEqual(records['2026-09-30']['schema_version'],'1.1')
  def test_historical_preview_does_not_block_a_later_daily_snapshot(self):

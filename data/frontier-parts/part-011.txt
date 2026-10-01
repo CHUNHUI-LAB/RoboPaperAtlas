@@ -1,50 +1,24 @@
-lop a modified DH kinematic model that represents",
-      "abstract_truncated": true,
-      "abstract_original_chars": 1750,
-      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
-    },
-    {
-      "id": "2512.17992",
-      "canonical_id": "2512.17992",
-      "arxiv_version": 2,
-      "versioned_id": "2512.17992v2",
-      "title": "Unifying Deep Predicate Invention with Pre-trained Foundation Models",
-      "authors": [
-        "Qianwei Wang",
-        "Bowen Li",
-        "Zhanpeng Luo",
-        "Yifan Xu",
-        "Alexander Gray",
-        "Tom Silver",
-        "Sebastian Scherer",
-        "Katia Sycara",
-        "Yaqi Xie"
-      ],
-      "first_submitted_at": "2025-12-19T18:59:56Z",
-      "updated_at": "2026-09-25T18:16:00Z",
-      "change_type": "revision",
-      "source_url": "https://arxiv.org/abs/2512.17992",
-      "version_url": "https://arxiv.org/abs/2512.17992v2",
-      "categories": [
-        "cs.RO"
-      ],
-      "primary_category": "cs.RO",
-      "doi": null,
-      "journal_reference": null,
+nal_reference": null,
       "matched_topics": [
-        "robot_world_models"
+        "robot_vla"
       ],
       "relevance_reasons": [
         {
-          "topic": "robot_world_models",
-          "label": "Robot world models",
+          "topic": "robot_vla",
+          "label": "Robot VLA",
           "method": "title_abstract_keyword_heuristic",
           "evidence": [
             {
+              "field": "title",
+              "matched_phrases": [
+                "vision language action"
+              ]
+            },
+            {
               "field": "abstract",
               "matched_phrases": [
-                "world models",
-                "world modeling"
+                "vision language action",
+                "vla"
               ]
             }
           ],
@@ -53,39 +27,32 @@ lop a modified DH kinematic model that represents",
       ],
       "review_status": "candidate_not_reviewed",
       "deep_read": false,
-      "fetched_at": "2026-09-30T06:24:23Z",
+      "fetched_at": "2026-10-01T08:08:07Z",
       "first_seen_at": "2026-09-30T06:24:23Z",
-      "observation": "first_seen",
-      "abstract_excerpt": "Long-horizon robotic tasks are hard due to continuous state-action spaces and sparse feedback. Symbolic world models help by decomposing tasks into discrete predicates that capture object properties and relations. Existing methods learn predicates either top-down, by prompting foundation models without data grounding, or bottom-up, from demonstrations without high-level priors. We introduce UniPred, a bilevel learning framework that unifies both. UniPred uses large language models (LLMs) to propose predicate effect distributions that supervise neural predicate learning from low-level data, whi",
+      "observation": "unchanged",
+      "abstract_excerpt": "Flow-based vision-language-action (VLA) models are highly effective for generalist robot manipulation, yet their reliance on computationally expensive VLM encoding and multi-step iterative action generation imposes a significant latency bottleneck. The resulting inference latency makes it difficult for robots to respond quickly, especially in dynamic environments. We address this limitation with RAVEL (Rolling Asynchronous VLA Enabling Low-Latency Control), an asynchronous inference framework that addresses the computational bottlenecks of both the VLM backbone and the action expert. To reduce",
       "abstract_truncated": true,
-      "abstract_original_chars": 1222,
+      "abstract_original_chars": 1339,
       "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
     },
     {
-      "id": "2609.31840",
-      "canonical_id": "2609.31840",
+      "id": "2609.34163",
+      "canonical_id": "2609.34163",
       "arxiv_version": 1,
-      "versioned_id": "2609.31840v1",
-      "title": "Humanoid Badminton: Learning Dynamic Racket Skills from Limited Human Motion Data",
+      "versioned_id": "2609.34163v1",
+      "title": "Reliability-Aware Sparse Route Memory for Round-Trip Vision-Language Navigation",
       "authors": [
-        "Jingzhi Cui",
-        "Zhexiong Wang",
-        "Bangjie Xu",
-        "Pengyu Zhao",
-        "Youyuan Li",
-        "Zhi Su",
-        "Peng Ren",
-        "Mengdi Xu",
-        "Chao Yu",
-        "Yi Wu",
-        "Luyang Wang",
-        "Zhongyu Li"
+        "Bojun Long",
+        "Lingfan Bao",
+        "Tianhu Peng",
+        "Jingcheng Sun",
+        "Chengxu Zhou"
       ],
-      "first_submitted_at": "2026-09-25T18:00:06Z",
-      "updated_at": "2026-09-25T18:00:06Z",
+      "first_submitted_at": "2026-09-28T02:40:09Z",
+      "updated_at": "2026-09-28T02:40:09Z",
       "change_type": "new",
-      "source_url": "https://arxiv.org/abs/2609.31840",
-      "version_url": "https://arxiv.org/abs/2609.31840v1",
+      "source_url": "https://arxiv.org/abs/2609.34163",
+      "version_url": "https://arxiv.org/abs/2609.34163v1",
       "categories": [
         "cs.RO"
       ],
@@ -93,65 +60,7 @@ lop a modified DH kinematic model that represents",
       "doi": null,
       "journal_reference": null,
       "matched_topics": [
-        "whole_body_control"
-      ],
-      "relevance_reasons": [
-        {
-          "topic": "whole_body_control",
-          "label": "Whole-body control",
-          "method": "title_abstract_keyword_heuristic",
-          "evidence": [
-            {
-              "field": "abstract",
-              "matched_phrases": [
-                "whole body coordination"
-              ]
-            }
-          ],
-          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
-        }
-      ],
-      "review_status": "candidate_not_reviewed",
-      "deep_read": false,
-      "fetched_at": "2026-09-30T06:24:23Z",
-      "first_seen_at": "2026-09-30T06:24:23Z",
-      "observation": "first_seen",
-      "abstract_excerpt": "High-speed racket sports provide a demanding testbed for humanoid robots, requiring time-critical decisions, precise striking, and dynamic whole-body coordination. In badminton, fast-changing shuttle trajectories require timely contact decisions, while successful returns demand precise racket pose and velocity within a brief contact window and across a broad three-dimensional striking workspace. Human motion data provide valuable priors for such athletic skills, but usable badminton references are limited and imperfect. Direct tracking provides insufficient executable variation for diverse shu",
-      "abstract_truncated": true,
-      "abstract_original_chars": 1591,
-      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
-    },
-    {
-      "id": "2609.31507",
-      "canonical_id": "2609.31507",
-      "arxiv_version": 1,
-      "versioned_id": "2609.31507v1",
-      "title": "SatNav: A Scalable Benchmark for Long-Horizon UAV Vision-Language Navigation from Satellite Imagery",
-      "authors": [
-        "Jiajun Jiang",
-        "Chunliang Hua",
-        "Zichun Chen",
-        "Yanxing Wu",
-        "Zeyuan Yang",
-        "Jie Song",
-        "Xiao Hu"
-      ],
-      "first_submitted_at": "2026-09-25T16:48:44Z",
-      "updated_at": "2026-09-25T16:48:44Z",
-      "change_type": "new",
-      "source_url": "https://arxiv.org/abs/2609.31507",
-      "version_url": "https://arxiv.org/abs/2609.31507v1",
-      "categories": [
-        "cs.CV",
-        "cs.RO"
-      ],
-      "primary_category": "cs.CV",
-      "doi": null,
-      "journal_reference": null,
-      "matched_topics": [
-        "vln_objectnav",
-        "navigation_agents",
-        "spatial_episodic_memory"
+        "vln_objectnav"
       ],
       "relevance_reasons": [
         {
@@ -174,185 +83,59 @@ lop a modified DH kinematic model that represents",
             }
           ],
           "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
-        },
+        }
+      ],
+      "review_status": "candidate_not_reviewed",
+      "deep_read": false,
+      "fetched_at": "2026-10-01T08:08:07Z",
+      "first_seen_at": "2026-09-30T06:24:23Z",
+      "observation": "unchanged",
+      "abstract_excerpt": "Vision-language navigation (VLN) is typically evaluated as a one-way task, although deployed robots may need to return after reaching a goal. We study continuous round-trip VLN and diagnose failures in directional observability, deviation recovery, and termination stability. We propose a reliability-aware sparse route memory that records the executed Outbound trajectory as ordered geometric anchors and queries them in reverse through a structured hint, action-level arbitration, and terminal verification. On 50 reverse-paired episodes using NaVILA and a simulated Unitree Go2, language-only Retu",
+      "abstract_truncated": true,
+      "abstract_original_chars": 1100,
+      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
+    },
+    {
+      "id": "2609.27145",
+      "canonical_id": "2609.27145",
+      "arxiv_version": 2,
+      "versioned_id": "2609.27145v2",
+      "title": "Planning Trajectories that Bounce: Reflection Classes for Collision-Tolerant Robots",
+      "authors": [
+        "Subhadeep Koley",
+        "Subhrajit Bhattacharya",
+        "David Saldaña"
+      ],
+      "first_submitted_at": "2026-09-22T23:11:51Z",
+      "updated_at": "2026-09-28T02:36:47Z",
+      "change_type": "revision",
+      "source_url": "https://arxiv.org/abs/2609.27145",
+      "version_url": "https://arxiv.org/abs/2609.27145v2",
+      "categories": [
+        "cs.RO"
+      ],
+      "primary_category": "cs.RO",
+      "doi": null,
+      "journal_reference": null,
+      "matched_topics": [
+        "navigation_agents"
+      ],
+      "relevance_reasons": [
         {
           "topic": "navigation_agents",
           "label": "Navigation agents / harnesses",
           "method": "title_abstract_keyword_heuristic",
           "evidence": [
             {
-              "field": "abstract",
-              "matched_phrases": [
-                "agents"
-              ]
-            }
-          ],
-          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
-        },
-        {
-          "topic": "spatial_episodic_memory",
-          "label": "Spatial / episodic memory and feedback",
-          "method": "title_abstract_keyword_heuristic",
-          "evidence": [
-            {
-              "field": "abstract",
-              "matched_phrases": [
-                "long term memory"
-              ]
-            }
-          ],
-          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
-        }
-      ],
-      "review_status": "candidate_not_reviewed",
-      "deep_read": false,
-      "fetched_at": "2026-09-30T06:24:23Z",
-      "first_seen_at": "2026-09-30T06:24:23Z",
-      "observation": "first_seen",
-      "abstract_excerpt": "Urban uncrewed aerial vehicle (UAV) vision-language navigation (VLN) requires agents to follow instructions across extended urban spaces, inherently demanding long-term memory and geospatial grounding. However, scaling existing benchmarks remains difficult because of their reliance on costly reconstructed 3D assets, limiting geographic diversity and episode scale. To address this, we introduce SatNav, a scalable, long-horizon UAV VLN benchmark built from high-resolution satellite imagery. SatNav targets city-level navigation missions and uses satellite crops as approximations of UAV nadir view",
-      "abstract_truncated": true,
-      "abstract_original_chars": 1545,
-      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
-    },
-    {
-      "id": "2605.21704",
-      "canonical_id": "2605.21704",
-      "arxiv_version": 2,
-      "versioned_id": "2605.21704v2",
-      "title": "Gait-Level Motion Design and Evaluation Framework for Grasp-Based Dynamic Locomotion in Microgravity",
-      "authors": [
-        "Chaerim Moon",
-        "Joohyung Kim",
-        "Justin K. Yim"
-      ],
-      "first_submitted_at": "2026-05-20T20:06:01Z",
-      "updated_at": "2026-09-25T16:45:24Z",
-      "change_type": "revision",
-      "source_url": "https://arxiv.org/abs/2605.21704",
-      "version_url": "https://arxiv.org/abs/2605.21704v2",
-      "categories": [
-        "cs.RO",
-        "eess.SY"
-      ],
-      "primary_category": "cs.RO",
-      "doi": null,
-      "journal_reference": null,
-      "matched_topics": [
-        "mobile_manipulation"
-      ],
-      "relevance_reasons": [
-        {
-          "topic": "mobile_manipulation",
-          "label": "Quadruped-arm / mobile manipulation",
-          "method": "title_abstract_keyword_heuristic",
-          "evidence": [
-            {
-              "field": "abstract",
-              "matched_phrases": [
-                "quadruped"
-              ]
-            }
-          ],
-          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
-        }
-      ],
-      "review_status": "candidate_not_reviewed",
-      "deep_read": false,
-      "fetched_at": "2026-09-30T06:24:23Z",
-      "first_seen_at": "2026-09-30T06:24:23Z",
-      "observation": "first_seen",
-      "abstract_excerpt": "Locomotion in microgravity often relies on sparsely and irregularly arranged anchors, motivating grasp-based mobility with multiple limbs. In this setting, dynamic traversal requires consecutive anchored interactions under coupled dynamic and kinematic constraints, yet the effects of gait-level motion design on locomotion feasibility and performance remain insufficiently understood. This paper formulates the feasibility and performance objectives for grasp-based dynamic locomotion and develops a gait-level parameter-metric framework that relates motion parameters to corresponding evaluation me",
-      "abstract_truncated": true,
-      "abstract_original_chars": 1125,
-      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
-    },
-    {
-      "id": "2609.31394",
-      "canonical_id": "2609.31394",
-      "arxiv_version": 1,
-      "versioned_id": "2609.31394v1",
-      "title": "InternW0-$Δ$: A World Action Model Bridging Predictive Dynamics and Actions with 20K+ Hours of Open Data",
-      "authors": [
-        "Xingyu Miao",
-        "Zizun Li",
-        "Baole Fang",
-        "Kaiwen Song",
-        "Tenghui Wang",
-        "Hanxue Zhang",
-        "Yating Wang",
-        "Xudong Li",
-        "Yuping He",
-        "Xueyuan Wei",
-        "Chao Gao",
-        "Xijie Yang",
-        "Yingxiang Xu",
-        "Kerui Ren",
-        "Wenqi Guo",
-        "Jianjun Zhou",
-        "Xinzhe Wang",
-        "Weiguang Zhao",
-        "Ni Yang",
-        "Zetao Cai",
-        "Yufei Xue",
-        "Hengjie Li",
-        "Zeyu He",
-        "Yuanzhen Zhou",
-        "Rong Fu",
-        "Jianyang Zhang",
-        "Siwei Cui",
-        "Fuxian Huang",
-        "Yunsong Zhou",
-        "Xing Gao",
-        "Yifei Yao",
-        "Qiaojun Yu",
-        "Kailin Li",
-        "Ming Zhou",
-        "Mu Huang",
-        "Xinyue Li",
-        "Wenze Cui",
-        "Bingqi Jiang",
-        "Xueyue Zhu",
-        "Junting Dong",
-        "Haoyu Guo",
-        "Tao Lu",
-        "Mulin Yu",
-        "Bowen Zhou",
-        "Bin Zhao",
-        "Tianfan Xue",
-        "Weinan Zhang",
-        "Chunhua Shen"
-      ],
-      "first_submitted_at": "2026-09-25T15:24:25Z",
-      "updated_at": "2026-09-25T15:24:25Z",
-      "change_type": "new",
-      "source_url": "https://arxiv.org/abs/2609.31394",
-      "version_url": "https://arxiv.org/abs/2609.31394v1",
-      "categories": [
-        "cs.RO",
-        "cs.CV"
-      ],
-      "primary_category": "cs.RO",
-      "doi": null,
-      "journal_reference": null,
-      "matched_topics": [
-        "robot_world_models"
-      ],
-      "relevance_reasons": [
-        {
-          "topic": "robot_world_models",
-          "label": "Robot world models",
-          "method": "title_abstract_keyword_heuristic",
-          "evidence": [
-            {
               "field": "title",
               "matched_phrases": [
-                "world action model"
+                "reflection"
               ]
             },
             {
               "field": "abstract",
               "matched_phrases": [
-                "world action models"
+                "reflection"
               ]
             }
           ],
@@ -361,37 +144,93 @@ lop a modified DH kinematic model that represents",
       ],
       "review_status": "candidate_not_reviewed",
       "deep_read": false,
-      "fetched_at": "2026-09-30T06:24:23Z",
+      "fetched_at": "2026-10-01T08:08:07Z",
       "first_seen_at": "2026-09-30T06:24:23Z",
-      "observation": "first_seen",
-      "abstract_excerpt": "World Action Models (WAMs) jointly model visual dynamics and action generation for generalist robot manipulation. A central challenge is to integrate priors from large-scale pretrained models---including visual dynamics, scene semantics, geometry, and motion---into a unified framework for robot action generation. We introduce InternW0-$Δ$, a unified WAM pretrained on a heterogeneous corpus that outperforms prior methods across simulation benchmarks and real-robot platforms. InternW0-$Δ$ combines pretrained visual dynamics, scene-level semantics, 4D geometric and motion priors, and action gener",
+      "observation": "unchanged",
+      "abstract_excerpt": "Robot navigation methods tend to avoid contact, and consequently search for collision-free trajectories. For robots with high inertia and limited maneuverability, however, avoiding contact can require substantial steering effort and time, even when interactions with surrounding surfaces could be safely exploited. In this paper, we develop a planning method that deliberately uses controlled wall reflections to generate trajectories that can be easier and more efficient to execute than purely collision-free motion. We consider planar navigation in environments where a mobile robot is permitted t",
       "abstract_truncated": true,
-      "abstract_original_chars": 1781,
+      "abstract_original_chars": 1621,
       "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
     },
     {
-      "id": "2605.30834",
-      "canonical_id": "2605.30834",
-      "arxiv_version": 2,
-      "versioned_id": "2605.30834v2",
-      "title": "Hide-and-Seek in Trajectories: Discovering Failure Signals for VLA Runtime Monitoring",
+      "id": "2609.05178",
+      "canonical_id": "2609.05178",
+      "arxiv_version": 3,
+      "versioned_id": "2609.05178v3",
+      "title": "LIBERO-RECOVER: Beyond Task Success Towards Failure Recovery in Robotic Manipulation Models",
       "authors": [
-        "Seongheon Park",
-        "Wendi Li",
-        "Changdae Oh",
-        "Samuel Yeh",
-        "Zsolt Kira",
-        "Michael Hagenow",
-        "Sharon Li"
+        "Lin Liu",
+        "Zhicheng Bao",
+        "Lu Zhang",
+        "Ziying Song",
+        "Wu Yang",
+        "Yuzheng Zhuang",
+        "Shuai Tao",
+        "Wulong Liu",
+        "Caiyan Jia",
+        "Huchuan Lu"
       ],
-      "first_submitted_at": "2026-05-29T04:40:12Z",
-      "updated_at": "2026-09-25T15:12:43Z",
+      "first_submitted_at": "2026-09-04T14:15:27Z",
+      "updated_at": "2026-09-28T02:34:14Z",
       "change_type": "revision",
-      "source_url": "https://arxiv.org/abs/2605.30834",
-      "version_url": "https://arxiv.org/abs/2605.30834v2",
+      "source_url": "https://arxiv.org/abs/2609.05178",
+      "version_url": "https://arxiv.org/abs/2609.05178v3",
+      "categories": [
+        "cs.RO"
+      ],
+      "primary_category": "cs.RO",
+      "doi": null,
+      "journal_reference": null,
+      "matched_topics": [
+        "robot_vla"
+      ],
+      "relevance_reasons": [
+        {
+          "topic": "robot_vla",
+          "label": "Robot VLA",
+          "method": "title_abstract_keyword_heuristic",
+          "evidence": [
+            {
+              "field": "abstract",
+              "matched_phrases": [
+                "vision language action",
+                "vla"
+              ]
+            }
+          ],
+          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
+        }
+      ],
+      "review_status": "candidate_not_reviewed",
+      "deep_read": false,
+      "fetched_at": "2026-10-01T08:08:07Z",
+      "first_seen_at": "2026-09-30T06:24:23Z",
+      "observation": "unchanged",
+      "abstract_excerpt": "Vision-Language-Action (VLA) or World Action (WAM) models have recently demonstrated remarkable performance in robotic manipulation. On LIBERO, SOTA method have achieved nearly 100\\% success rates, seemingly suggesting that the models are ready for deployment in real world. However, near perfect performance on existing benchmarks can be misleading: success under ideal conditions does not imply real world robustness. Existing benchmarks primarily evaluate task completion from predefined initial states, while real world interactions inevitably involve failures such as failed grasps, collisions,",
+      "abstract_truncated": true,
+      "abstract_original_chars": 1734,
+      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
+    },
+    {
+      "id": "2609.34061",
+      "canonical_id": "2609.34061",
+      "arxiv_version": 1,
+      "versioned_id": "2609.34061v1",
+      "title": "Quantile Head for Vision-Language-Action Models",
+      "authors": [
+        "Xuan Wang",
+        "Yinan Wu",
+        "Haoran Duan",
+        "Jungong Han"
+      ],
+      "first_submitted_at": "2026-09-28T00:40:10Z",
+      "updated_at": "2026-09-28T00:40:10Z",
+      "change_type": "new",
+      "source_url": "https://arxiv.org/abs/2609.34061",
+      "version_url": "https://arxiv.org/abs/2609.34061v1",
       "categories": [
         "cs.RO",
-        "cs.AI"
+        "cs.CV"
       ],
       "primary_category": "cs.RO",
       "doi": null,
@@ -408,7 +247,7 @@ lop a modified DH kinematic model that represents",
             {
               "field": "title",
               "matched_phrases": [
-                "vla"
+                "vision language action"
               ]
             },
             {
@@ -424,123 +263,39 @@ lop a modified DH kinematic model that represents",
       ],
       "review_status": "candidate_not_reviewed",
       "deep_read": false,
-      "fetched_at": "2026-09-30T06:24:23Z",
+      "fetched_at": "2026-10-01T08:08:07Z",
       "first_seen_at": "2026-09-30T06:24:23Z",
-      "observation": "first_seen",
-      "abstract_excerpt": "Vision-Language-Action (VLA) models enable robots to follow natural language instructions and generalize across diverse tasks, but they remain vulnerable to execution failures that compromise reliability in real-world deployment. Detecting such failures during execution is therefore critical for the robust deployment of embodied systems. Existing failure detection methods either rely on expensive action resampling or external models, while alternatives propagate trajectory-level labels uniformly across every timestep, obscuring localized failure signals. In this paper, we propose \\textbf{Hide-",
-      "abstract_truncated": true,
-      "abstract_original_chars": 1314,
-      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
-    },
-    {
-      "id": "2609.31313",
-      "canonical_id": "2609.31313",
-      "arxiv_version": 1,
-      "versioned_id": "2609.31313v1",
-      "title": "Towards VLA-Dreamer: Refining VLA Behavior Using World Models",
-      "authors": [
-        "Parsa Mastouri Kashani",
-        "Jan-Gerrit Habekost",
-        "Stefan Wermter"
-      ],
-      "first_submitted_at": "2026-09-25T14:21:20Z",
-      "updated_at": "2026-09-25T14:21:20Z",
-      "change_type": "new",
-      "source_url": "https://arxiv.org/abs/2609.31313",
-      "version_url": "https://arxiv.org/abs/2609.31313v1",
-      "categories": [
-        "cs.RO",
-        "cs.AI"
-      ],
-      "primary_category": "cs.RO",
-      "doi": null,
-      "journal_reference": null,
-      "matched_topics": [
-        "robot_vla",
-        "robot_world_models"
-      ],
-      "relevance_reasons": [
-        {
-          "topic": "robot_vla",
-          "label": "Robot VLA",
-          "method": "title_abstract_keyword_heuristic",
-          "evidence": [
-            {
-              "field": "title",
-              "matched_phrases": [
-                "vla"
-              ]
-            },
-            {
-              "field": "abstract",
-              "matched_phrases": [
-                "vision language action",
-                "vlas",
-                "vla"
-              ]
-            }
-          ],
-          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
-        },
-        {
-          "topic": "robot_world_models",
-          "label": "Robot world models",
-          "method": "title_abstract_keyword_heuristic",
-          "evidence": [
-            {
-              "field": "title",
-              "matched_phrases": [
-                "world models"
-              ]
-            },
-            {
-              "field": "abstract",
-              "matched_phrases": [
-                "world model"
-              ]
-            }
-          ],
-          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
-        }
-      ],
-      "review_status": "candidate_not_reviewed",
-      "deep_read": false,
-      "fetched_at": "2026-09-30T06:24:23Z",
-      "first_seen_at": "2026-09-30T06:24:23Z",
-      "observation": "first_seen",
-      "abstract_excerpt": "Vision-Language-Action models (VLAs), while showing strong potential for robot control, require massive amounts of high-quality imitation learning data. Moreover, the absence of an explicit world model casts further doubt on their control capabilities. In this concept paper, we propose a novel architecture that addresses sample efficiency in VLAs by training a predictive world model on the embedding space of the VLA's vision encoder. We hypothesize that these embeddings are action-relevant and usable for future prediction. To this end, we propose using the suggested architecture to investigate",
+      "observation": "unchanged",
+      "abstract_excerpt": "Vision-Language-Action (VLA) models integrate pretrained Vision-Language Models (VLMs) with action heads for robot control. Common action heads have distinct limitations: point regression provides only a point estimate of the action distribution, while standard flow-matching samplers require costly iterative sampling. To address these limitations, we unify regression and flow matching under a shared objective and extend it to derive a quantile objective. This quantile objective guides the design of our Quantile Head, which predicts a median and positive gaps to form ordered marginal action qua",
       "abstract_truncated": true,
       "abstract_original_chars": 1313,
       "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
     },
     {
-      "id": "2608.11521",
-      "canonical_id": "2608.11521",
-      "arxiv_version": 3,
-      "versioned_id": "2608.11521v3",
-      "title": "Keep the Future, Drop the Rollout: RIFT for World Action Models",
+      "id": "2609.33951",
+      "canonical_id": "2609.33951",
+      "arxiv_version": 1,
+      "versioned_id": "2609.33951v1",
+      "title": "Integrity Detection and Characterization of Malicious Injections in RAVEN II",
       "authors": [
-        "Chushan Zhang",
-        "Jinguang Tong",
-        "Xuesong Li",
-        "Yikai Wang",
-        "Hongdong Li"
+        "Xingli Zhang",
+        "Diba Afroze",
+        "Fei Hu",
+        "Xiali Hei"
       ],
-      "first_submitted_at": "2026-08-12T00:17:30Z",
-      "updated_at": "2026-09-25T14:16:05Z",
-      "change_type": "revision",
-      "source_url": "https://arxiv.org/abs/2608.11521",
-      "version_url": "https://arxiv.org/abs/2608.11521v3",
+      "first_submitted_at": "2026-09-27T21:47:00Z",
+      "updated_at": "2026-09-27T21:47:00Z",
+      "change_type": "new",
+      "source_url": "https://arxiv.org/abs/2609.33951",
+      "version_url": "https://arxiv.org/abs/2609.33951v1",
       "categories": [
-        "cs.RO",
-        "cs.AI"
+        "cs.RO"
       ],
       "primary_category": "cs.RO",
       "doi": null,
       "journal_reference": null,
       "matched_topics": [
-        "end_effector_trajectories",
-        "robot_world_models"
+        "end_effector_trajectories"
       ],
       "relevance_reasons": [
         {
@@ -556,22 +311,61 @@ lop a modified DH kinematic model that represents",
             }
           ],
           "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
-        },
+        }
+      ],
+      "review_status": "candidate_not_reviewed",
+      "deep_read": false,
+      "fetched_at": "2026-10-01T08:08:07Z",
+      "first_seen_at": "2026-09-30T06:24:23Z",
+      "observation": "unchanged",
+      "abstract_excerpt": "The increasing adoption of robotic systems in surgery, together with the expanding range of procedures they can support and the growing level of autonomy they provide, has substantially increased the complexity of surgical robots. As these systems integrate more sensors, controllers, communication interfaces, and model-driven control components, their attack surface continues to expand. A compromise of the integrity of a surgical robot can therefore cause unintended robot behavior and potentially threaten patient safety. In this paper, we characterize the detection boundary of malicious inject",
+      "abstract_truncated": true,
+      "abstract_original_chars": 1665,
+      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
+    },
+    {
+      "id": "2503.19225",
+      "canonical_id": "2503.19225",
+      "arxiv_version": 4,
+      "versioned_id": "2503.19225v4",
+      "title": "CoinFT: A Coin-Sized, Capacitive 6-Axis Force Torque Sensor for Robotic Applications",
+      "authors": [
+        "Hojung Choi",
+        "Jun En Low",
+        "Tae Myung Huh",
+        "Seongheon Hong",
+        "Gabriela A. Uribe",
+        "Kenneth A. W. Hoffmann",
+        "Julia Di",
+        "Tony G. Chen",
+        "Andrew A. Stanley",
+        "Mark R. Cutkosky"
+      ],
+      "first_submitted_at": "2025-03-25T00:12:48Z",
+      "updated_at": "2026-09-27T21:22:10Z",
+      "change_type": "revision",
+      "source_url": "https://arxiv.org/abs/2503.19225",
+      "version_url": "https://arxiv.org/abs/2503.19225v4",
+      "categories": [
+        "cs.RO",
+        "cs.HC"
+      ],
+      "primary_category": "cs.RO",
+      "doi": null,
+      "journal_reference": null,
+      "matched_topics": [
+        "end_effector_trajectories"
+      ],
+      "relevance_reasons": [
         {
-          "topic": "robot_world_models",
-          "label": "Robot world models",
+          "topic": "end_effector_trajectories",
+          "label": "End-effector trajectories",
           "method": "title_abstract_keyword_heuristic",
           "evidence": [
             {
-              "field": "title",
-              "matched_phrases": [
-                "world action models"
-              ]
-            },
-            {
               "field": "abstract",
               "matched_phrases": [
-                "world action models"
+                "end effectors"
               ]
             }
           ],
@@ -580,32 +374,37 @@ lop a modified DH kinematic model that represents",
       ],
       "review_status": "candidate_not_reviewed",
       "deep_read": false,
-      "fetched_at": "2026-09-30T06:24:23Z",
+      "fetched_at": "2026-10-01T08:08:07Z",
       "first_seen_at": "2026-09-30T06:24:23Z",
-      "observation": "first_seen",
-      "abstract_excerpt": "World action models (WAMs) condition robot actions on predicted futures, but iterative video rollout increases deployment latency. We ask whether action generation requires the evolving rollout trajectory or only its future representation. Across four WAMs on 40 simulated robotic manipulation tasks, paired closed-loop interventions show that blocking access to the future cache or reassigning its values changes execution and reduces success. Yet in the evaluated co-denoising settings, reusing one fixed final-clean key/value (K/V) cache throughout action denoising nearly preserves unmodified exe",
+      "observation": "unchanged",
+      "abstract_excerpt": "We introduce CoinFT, a capacitive 6-axis force/torque (F/T) sensor that is compact, light, low-cost, and robust with an average root-mean-squared error of 0.16 N for force and 1.08 mN m for moment when the input ranges from 0-14 N and 0-5 N in normal and shear directions, respectively. CoinFT is a stack of two rigid PCBs with comb-shaped electrodes connected by an array of silicone rubber pillars. A microcontroller interrogates the electrodes in different subsets in order to enhance sensitivity for measuring 6-axis F/T. The combination of features of CoinFT enables various contact-rich robot i",
       "abstract_truncated": true,
-      "abstract_original_chars": 1633,
+      "abstract_original_chars": 1102,
       "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
     },
     {
-      "id": "2606.21372",
-      "canonical_id": "2606.21372",
+      "id": "2609.22973",
+      "canonical_id": "2609.22973",
       "arxiv_version": 2,
-      "versioned_id": "2606.21372v2",
-      "title": "NAC: Neural Action Codec for Vision-Language-Action Models",
+      "versioned_id": "2609.22973v2",
+      "title": "An Empirical Study and Open Testbed for Federated Fine-Tuning of Vision-Language-Action Models",
       "authors": [
-        "Ahad Jawaid",
-        "Yu Xiang"
+        "Zhekai Duan",
+        "Kevin Ziyang Xie",
+        "Xinyu Tan",
+        "Shikai Geng",
+        "Chengxu Zhou",
+        "Ramana Kompella",
+        "Gaowen Liu",
+        "Chris Xiaoxuan Lu"
       ],
-      "first_submitted_at": "2026-06-19T12:24:49Z",
-      "updated_at": "2026-09-25T13:44:37Z",
+      "first_submitted_at": "2026-09-19T11:51:00Z",
+      "updated_at": "2026-09-27T20:16:22Z",
       "change_type": "revision",
-      "source_url": "https://arxiv.org/abs/2606.21372",
-      "version_url": "https://arxiv.org/abs/2606.21372v2",
+      "source_url": "https://arxiv.org/abs/2609.22973",
+      "version_url": "https://arxiv.org/abs/2609.22973v2",
       "categories": [
-        "cs.RO",
-        "cs.LG"
+        "cs.RO"
       ],
       "primary_category": "cs.RO",
       "doi": null,
@@ -639,33 +438,594 @@ lop a modified DH kinematic model that represents",
       ],
       "review_status": "candidate_not_reviewed",
       "deep_read": false,
-      "fetched_at": "2026-09-30T06:24:23Z",
+      "fetched_at": "2026-10-01T08:08:07Z",
       "first_seen_at": "2026-09-30T06:24:23Z",
-      "observation": "first_seen",
-      "abstract_excerpt": "Vision-language-action (VLA) models rely on discrete action tokenizers to bridge continuous robot control and autoregressive sequence modeling, yet existing tokenizers often trade off between compression, latency, and downstream performance. We revisit this design through the lens of neural audio codecs - convolutional encoder-decoder architectures with residual vector quantization that serve as the standard front end for audio foundation models. Motivated by their success, we introduce the Neural Action Codec (NAC), which treats short robot action trajectories as multi-channel 1D signals and",
+      "observation": "unchanged",
+      "abstract_excerpt": "Adapting a pretrained Vision-Language-Action (VLA) model to a new robot, environment, or task requires demonstrations that are collected locally and often discarded. Federated learning is a promising approach to exploiting such distributed demonstrations by learning a shared policy. However, whether it can adapt large pretrained VLAs remains an open question, and a lack of reproducible benchmarks for pretrained VLAs and reusable training frameworks makes existing results difficult to compare. In this paper, we conduct a systematic study of federated fine-tuning of three modern pretrained VLA p",
       "abstract_truncated": true,
-      "abstract_original_chars": 1515,
+      "abstract_original_chars": 1818,
       "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
     },
     {
-      "id": "2609.31225",
-      "canonical_id": "2609.31225",
+      "id": "2609.33832",
+      "canonical_id": "2609.33832",
       "arxiv_version": 1,
-      "versioned_id": "2609.31225v1",
-      "title": "Imp-ACT: Adaptive Impedance Control and Action Chunking with Transformers to Learn Contact-Rich Manipulation from Demonstrations",
+      "versioned_id": "2609.33832v1",
+      "title": "Achieve What You Imagined: Learning to Align Actions with Visual Plans",
       "authors": [
-        "Luca Zanetti",
-        "Doganay Sirintuna",
-        "Idil Ozdamar",
-        "Pietro Balatti",
-        "Heng Zhang",
-        "Arash Ajoudani"
+        "Yuheng Qiao",
+        "Ziran Wei",
+        "Xiaohan Wang",
+        "Daqiang Guo",
+        "Yichen Luo",
+        "Zhibo Pang",
+        "Peng Zhou",
+        "Sichao Liu"
       ],
-      "first_submitted_at": "2026-09-25T13:04:37Z",
-      "updated_at": "2026-09-25T13:04:37Z",
+      "first_submitted_at": "2026-09-27T18:32:40Z",
+      "updated_at": "2026-09-27T18:32:40Z",
       "change_type": "new",
-      "source_url": "https://arxiv.org/abs/2609.31225",
-      "version_url": "https://arxiv.org/abs/2609.31225v1",
+      "source_url": "https://arxiv.org/abs/2609.33832",
+      "version_url": "https://arxiv.org/abs/2609.33832v1",
+      "categories": [
+        "cs.RO",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "primary_category": "cs.RO",
+      "doi": null,
+      "journal_reference": null,
+      "matched_topics": [
+        "robot_world_models"
+      ],
+      "relevance_reasons": [
+        {
+          "topic": "robot_world_models",
+          "label": "Robot world models",
+          "method": "title_abstract_keyword_heuristic",
+          "evidence": [
+            {
+              "field": "abstract",
+              "matched_phrases": [
+                "world action models",
+                "world model"
+              ]
+            }
+          ],
+          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
+        }
+      ],
+      "review_status": "candidate_not_reviewed",
+      "deep_read": false,
+      "fetched_at": "2026-10-01T08:08:07Z",
+      "first_seen_at": "2026-09-30T06:24:23Z",
+      "observation": "unchanged",
+      "abstract_excerpt": "World-action models can jointly predict future visual observations and robot actions. However, discrepancies may exist between their visual predictions and the consequences implied by generated actions. We observe that WAMs can often generate visually plausible task-completion outcomes before producing action sequences that reliably achieve them. Consequently, we treat the WAM-generated visual prediction as a goal-conditioned visual proposal rather than a directly executable plan. We use a frozen action-conditioned world model to predict action-conditioned consequences and construct feedback b",
+      "abstract_truncated": true,
+      "abstract_original_chars": 1251,
+      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
+    },
+    {
+      "id": "2609.33765",
+      "canonical_id": "2609.33765",
+      "arxiv_version": 1,
+      "versioned_id": "2609.33765v1",
+      "title": "Principal Steering Subspaces for Online Adaptation of Frozen Generative Robot Policies",
+      "authors": [
+        "Jialeng Ni",
+        "Nathan Zhao",
+        "Kunpeng Song"
+      ],
+      "first_submitted_at": "2026-09-27T17:04:16Z",
+      "updated_at": "2026-09-27T17:04:16Z",
+      "change_type": "new",
+      "source_url": "https://arxiv.org/abs/2609.33765",
+      "version_url": "https://arxiv.org/abs/2609.33765v1",
+      "categories": [
+        "cs.RO"
+      ],
+      "primary_category": "cs.RO",
+      "doi": null,
+      "journal_reference": null,
+      "matched_topics": [
+        "robot_vla"
+      ],
+      "relevance_reasons": [
+        {
+          "topic": "robot_vla",
+          "label": "Robot VLA",
+          "method": "title_abstract_keyword_heuristic",
+          "evidence": [
+            {
+              "field": "abstract",
+              "matched_phrases": [
+                "vision language action",
+                "vla"
+              ]
+            }
+          ],
+          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
+        }
+      ],
+      "review_status": "candidate_not_reviewed",
+      "deep_read": false,
+      "fetched_at": "2026-10-01T08:08:07Z",
+      "first_seen_at": "2026-09-30T06:24:23Z",
+      "observation": "unchanged",
+      "abstract_excerpt": "Generative robot policies provide expressive behavior priors, but updating a large diffusion or flow-matching model through online interaction is costly. Latent-space reinforcement learning avoids updating the pretrained generator by controlling its initial sampling noise, yet high-dimensional noise can have strongly anisotropic effects on decoded actions. We introduce Principal Steering Subspaces (PSS), a forward-query interface that constructs a fixed low-dimensional control basis from finite-difference decoder responses. Soft Actor-Critic controls the leading response directions, while the",
+      "abstract_truncated": true,
+      "abstract_original_chars": 1709,
+      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
+    },
+    {
+      "id": "2606.00537",
+      "canonical_id": "2606.00537",
+      "arxiv_version": 3,
+      "versioned_id": "2606.00537v3",
+      "title": "PACE: Phase-Aware Chunk Execution for Robot Policies with Action Chunking",
+      "authors": [
+        "Junnan Nie",
+        "Jiayi Li",
+        "Chenghao Liu",
+        "Junyi Lao",
+        "Jiachen Zhang",
+        "Tianle Zhang",
+        "Liang Lin",
+        "Songfang Huang"
+      ],
+      "first_submitted_at": "2026-05-30T05:11:06Z",
+      "updated_at": "2026-09-27T16:27:09Z",
+      "change_type": "revision",
+      "source_url": "https://arxiv.org/abs/2606.00537",
+      "version_url": "https://arxiv.org/abs/2606.00537v3",
+      "categories": [
+        "cs.RO"
+      ],
+      "primary_category": "cs.RO",
+      "doi": null,
+      "journal_reference": null,
+      "matched_topics": [
+        "robot_vla"
+      ],
+      "relevance_reasons": [
+        {
+          "topic": "robot_vla",
+          "label": "Robot VLA",
+          "method": "title_abstract_keyword_heuristic",
+          "evidence": [
+            {
+              "field": "abstract",
+              "matched_phrases": [
+                "vision language action"
+              ]
+            }
+          ],
+          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
+        }
+      ],
+      "review_status": "candidate_not_reviewed",
+      "deep_read": false,
+      "fetched_at": "2026-10-01T08:08:07Z",
+      "first_seen_at": "2026-09-30T06:24:23Z",
+      "observation": "unchanged",
+      "abstract_excerpt": "Recent vision-language-action and diffusion-based robot policies often use action chunking, where each policy query predicts a sequence of future actions and the robot executes an open-loop prefix before re-querying. While this interface improves local motion continuity, deployment still requires choosing the execution horizon: how much of each predicted chunk should be executed before acquiring a new observation. However, our experiments show that success is strongly task-dependent and non-monotonic with respect to the execution horizon, making a single constant horizon an unreliable deployme",
+      "abstract_truncated": true,
+      "abstract_original_chars": 1660,
+      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
+    },
+    {
+      "id": "2609.33707",
+      "canonical_id": "2609.33707",
+      "arxiv_version": 1,
+      "versioned_id": "2609.33707v1",
+      "title": "Does Adversarial Training Improve Generalization in Multi-View VLAs? Revealing and Mitigating View Collapse",
+      "authors": [
+        "Futa Waseda",
+        "Shuhei Kurita",
+        "Isao Echizen"
+      ],
+      "first_submitted_at": "2026-09-27T16:11:35Z",
+      "updated_at": "2026-09-27T16:11:35Z",
+      "change_type": "new",
+      "source_url": "https://arxiv.org/abs/2609.33707",
+      "version_url": "https://arxiv.org/abs/2609.33707v1",
+      "categories": [
+        "cs.AI",
+        "cs.RO"
+      ],
+      "primary_category": "cs.AI",
+      "doi": null,
+      "journal_reference": null,
+      "matched_topics": [
+        "robot_vla"
+      ],
+      "relevance_reasons": [
+        {
+          "topic": "robot_vla",
+          "label": "Robot VLA",
+          "method": "title_abstract_keyword_heuristic",
+          "evidence": [
+            {
+              "field": "title",
+              "matched_phrases": [
+                "vlas"
+              ]
+            },
+            {
+              "field": "abstract",
+              "matched_phrases": [
+                "vision language action",
+                "vla",
+                "vlas"
+              ]
+            }
+          ],
+          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
+        }
+      ],
+      "review_status": "candidate_not_reviewed",
+      "deep_read": false,
+      "fetched_at": "2026-10-01T08:08:07Z",
+      "first_seen_at": "2026-09-30T06:24:23Z",
+      "observation": "unchanged",
+      "abstract_excerpt": "Vision-language-action (VLA) models adapt pretrained vision-language models (VLMs) for closed-loop robot control, transferring their perceptual and semantic capabilities to action prediction. Despite strong in-distribution performance, however, VLAs often degrade under deployment shifts. Adversarial training (AT) offers a model-adaptive approach to robustness without explicitly anticipating individual shifts, but its effect on natural distribution-shift generalization in multi-view VLAs remains unclear. We study this question using a multi-view VLA directly adapted from a pretrained VLM and ev",
+      "abstract_truncated": true,
+      "abstract_original_chars": 1829,
+      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
+    },
+    {
+      "id": "2609.33647",
+      "canonical_id": "2609.33647",
+      "arxiv_version": 1,
+      "versioned_id": "2609.33647v1",
+      "title": "InfraVLA: Extending Vision-Language-Action Navigation with Infrastructure Cameras",
+      "authors": [
+        "Lukas Vierling",
+        "Benjamin Ramtoula",
+        "Luke Robinson",
+        "Ronald Clark",
+        "Daniele De Martini"
+      ],
+      "first_submitted_at": "2026-09-27T15:12:10Z",
+      "updated_at": "2026-09-27T15:12:10Z",
+      "change_type": "new",
+      "source_url": "https://arxiv.org/abs/2609.33647",
+      "version_url": "https://arxiv.org/abs/2609.33647v1",
+      "categories": [
+        "cs.RO"
+      ],
+      "primary_category": "cs.RO",
+      "doi": null,
+      "journal_reference": null,
+      "matched_topics": [
+        "robot_vla"
+      ],
+      "relevance_reasons": [
+        {
+          "topic": "robot_vla",
+          "label": "Robot VLA",
+          "method": "title_abstract_keyword_heuristic",
+          "evidence": [
+            {
+              "field": "title",
+              "matched_phrases": [
+                "vision language action"
+              ]
+            },
+            {
+              "field": "abstract",
+              "matched_phrases": [
+                "vision language action",
+                "vla"
+              ]
+            }
+          ],
+          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
+        }
+      ],
+      "review_status": "candidate_not_reviewed",
+      "deep_read": false,
+      "fetched_at": "2026-10-01T08:08:07Z",
+      "first_seen_at": "2026-09-30T06:24:23Z",
+      "observation": "unchanged",
+      "abstract_excerpt": "Many indoor environments in which robots operate, such as warehouses, offices, and hospitals, already have cameras installed. They observe parts of the building that the robot cannot see from where it stands, yet navigation policies, including recent vision-language-action (VLA) models, do not use them. We propose InfraVLA, an end-to-end method that adapts a pretrained navigation VLA to such static infrastructure views: a closed-circuit television (CCTV) encoder turns each external view into tokens of the input sequence. Because the views matter only at rare decision points, fine-tuning alone",
+      "abstract_truncated": true,
+      "abstract_original_chars": 1312,
+      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
+    },
+    {
+      "id": "2609.33581",
+      "canonical_id": "2609.33581",
+      "arxiv_version": 1,
+      "versioned_id": "2609.33581v1",
+      "title": "ForeFly: A Dual-Horizon World Action Model for Aerial Vision-Language Navigation",
+      "authors": [
+        "Kunhui Wang",
+        "Xintong Zhang",
+        "Junyu Gao",
+        "Changsheng Xu"
+      ],
+      "first_submitted_at": "2026-09-27T13:54:48Z",
+      "updated_at": "2026-09-27T13:54:48Z",
+      "change_type": "new",
+      "source_url": "https://arxiv.org/abs/2609.33581",
+      "version_url": "https://arxiv.org/abs/2609.33581v1",
+      "categories": [
+        "cs.CV"
+      ],
+      "primary_category": "cs.CV",
+      "doi": null,
+      "journal_reference": null,
+      "matched_topics": [
+        "vln_objectnav",
+        "robot_world_models"
+      ],
+      "relevance_reasons": [
+        {
+          "topic": "vln_objectnav",
+          "label": "VLN / ObjectNav",
+          "method": "title_abstract_keyword_heuristic",
+          "evidence": [
+            {
+              "field": "title",
+              "matched_phrases": [
+                "vision language navigation"
+              ]
+            },
+            {
+              "field": "abstract",
+              "matched_phrases": [
+                "vision language navigation"
+              ]
+            }
+          ],
+          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
+        },
+        {
+          "topic": "robot_world_models",
+          "label": "Robot world models",
+          "method": "title_abstract_keyword_heuristic",
+          "evidence": [
+            {
+              "field": "title",
+              "matched_phrases": [
+                "world action model"
+              ]
+            },
+            {
+              "field": "abstract",
+              "matched_phrases": [
+                "world action model"
+              ]
+            }
+          ],
+          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
+        }
+      ],
+      "review_status": "candidate_not_reviewed",
+      "deep_read": false,
+      "fetched_at": "2026-10-01T08:08:07Z",
+      "first_seen_at": "2026-09-30T06:24:23Z",
+      "observation": "unchanged",
+      "abstract_excerpt": "Aerial Vision-Language Navigation (AVLN) requires UAVs to maintain reliable instruction following over long trajectories in complex 3D environments. However, existing AVLN approaches are predominantly reactive or limited to single-horizon prediction, overlooking complementary future cues across different temporal horizons. To address this limitation, we propose ForeFly, a dual-horizon latent world action model that predicts both a proximal future for local continuity and an adaptive route-critical future for long-range guidance. Horizon-specific foresight queries are primed with recent and rou",
+      "abstract_truncated": true,
+      "abstract_original_chars": 1233,
+      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
+    },
+    {
+      "id": "2609.33575",
+      "canonical_id": "2609.33575",
+      "arxiv_version": 1,
+      "versioned_id": "2609.33575v1",
+      "title": "SLIP-VLA: Single-Step Latent Imagination for Policy Learning in Vision-Language-Action Models",
+      "authors": [
+        "Tianfu Li",
+        "Haoxuan Xu",
+        "Wenbo Chen",
+        "Haitian Li",
+        "Changchuan Yang",
+        "Xinhu Zheng",
+        "Jun Ma",
+        "Yuan Liu",
+        "Lujia Wang",
+        "Haoang Li"
+      ],
+      "first_submitted_at": "2026-09-27T13:53:29Z",
+      "updated_at": "2026-09-27T13:53:29Z",
+      "change_type": "new",
+      "source_url": "https://arxiv.org/abs/2609.33575",
+      "version_url": "https://arxiv.org/abs/2609.33575v1",
+      "categories": [
+        "cs.RO"
+      ],
+      "primary_category": "cs.RO",
+      "doi": null,
+      "journal_reference": null,
+      "matched_topics": [
+        "robot_vla"
+      ],
+      "relevance_reasons": [
+        {
+          "topic": "robot_vla",
+          "label": "Robot VLA",
+          "method": "title_abstract_keyword_heuristic",
+          "evidence": [
+            {
+              "field": "title",
+              "matched_phrases": [
+                "vla",
+                "vision language action"
+              ]
+            },
+            {
+              "field": "abstract",
+              "matched_phrases": [
+                "vision language action",
+                "vla"
+              ]
+            }
+          ],
+          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
+        }
+      ],
+      "review_status": "candidate_not_reviewed",
+      "deep_read": false,
+      "fetched_at": "2026-10-01T08:08:07Z",
+      "first_seen_at": "2026-09-30T06:24:23Z",
+      "observation": "unchanged",
+      "abstract_excerpt": "Vision-Language-Action models are increasingly effective for robotic manipulation, yet most predict actions directly from current observations without explicitly modeling future scene evolution. Recent methods introduce future prediction to improve action generation, but dense future modeling often requires expensive iterative denoising, while one-step alternatives can underperform their multi-step counterparts. To reconcile efficient future modeling with strong action performance, we present SLIP-VLA, a policy learning framework that equips VLA models with a Single-Step Latent Imagination for",
+      "abstract_truncated": true,
+      "abstract_original_chars": 1235,
+      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
+    },
+    {
+      "id": "2601.21667",
+      "canonical_id": "2601.21667",
+      "arxiv_version": 3,
+      "versioned_id": "2601.21667v3",
+      "title": "From Instruction to Event: Sound-Triggered Mobile Manipulation",
+      "authors": [
+        "Hao Ju",
+        "Shaofei Huang",
+        "Hongyu Li",
+        "Zihan Ding",
+        "Si Liu",
+        "Meng Wang",
+        "Zhedong Zheng"
+      ],
+      "first_submitted_at": "2026-01-29T13:02:10Z",
+      "updated_at": "2026-09-27T12:49:38Z",
+      "change_type": "revision",
+      "source_url": "https://arxiv.org/abs/2601.21667",
+      "version_url": "https://arxiv.org/abs/2601.21667v3",
+      "categories": [
+        "cs.RO",
+        "cs.CV"
+      ],
+      "primary_category": "cs.RO",
+      "doi": null,
+      "journal_reference": null,
+      "matched_topics": [
+        "mobile_manipulation"
+      ],
+      "relevance_reasons": [
+        {
+          "topic": "mobile_manipulation",
+          "label": "Quadruped-arm / mobile manipulation",
+          "method": "title_abstract_keyword_heuristic",
+          "evidence": [
+            {
+              "field": "title",
+              "matched_phrases": [
+                "mobile manipulation"
+              ]
+            },
+            {
+              "field": "abstract",
+              "matched_phrases": [
+                "mobile manipulation"
+              ]
+            }
+          ],
+          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
+        }
+      ],
+      "review_status": "candidate_not_reviewed",
+      "deep_read": false,
+      "fetched_at": "2026-10-01T08:08:07Z",
+      "first_seen_at": "2026-09-30T06:24:23Z",
+      "observation": "unchanged",
+      "abstract_excerpt": "Current mobile manipulation research predominantly follows an instruction-driven paradigm, where robots rely on predefined textual commands to execute tasks. However, this setting confines robots to a passive role, limiting robotic autonomy and the ability to react to dynamic environmental events. To address these limitations, we introduce Sound-Triggered Mobile Manipulation (STMM), where robots must actively perceive and interact with sound-emitting objects without explicit action instructions. To support STMM, we develop Habitat-Echo, a simulation platform that integrates sound rendering wit",
+      "abstract_truncated": true,
+      "abstract_original_chars": 1351,
+      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
+    },
+    {
+      "id": "2605.03821",
+      "canonical_id": "2605.03821",
+      "arxiv_version": 2,
+      "versioned_id": "2605.03821v2",
+      "title": "RoboAlign-R1: Distilled Multimodal Reward Alignment for Robot Video World Models",
+      "authors": [
+        "Hao Wu",
+        "Yuqi Li",
+        "Yuan Gao",
+        "Fan Xu",
+        "Fan Zhang",
+        "Kun Wang",
+        "Penghao Zhao",
+        "Qiufeng Wang",
+        "Yizhou Zhao",
+        "Weiyan Wang",
+        "Yingli Tian",
+        "Xian Wu",
+        "Xiaomeng Huang"
+      ],
+      "first_submitted_at": "2026-05-05T14:49:00Z",
+      "updated_at": "2026-09-27T12:35:31Z",
+      "change_type": "revision",
+      "source_url": "https://arxiv.org/abs/2605.03821",
+      "version_url": "https://arxiv.org/abs/2605.03821v2",
+      "categories": [
+        "cs.RO",
+        "cs.AI"
+      ],
+      "primary_category": "cs.RO",
+      "doi": null,
+      "journal_reference": null,
+      "matched_topics": [
+        "robot_world_models"
+      ],
+      "relevance_reasons": [
+        {
+          "topic": "robot_world_models",
+          "label": "Robot world models",
+          "method": "title_abstract_keyword_heuristic",
+          "evidence": [
+            {
+              "field": "title",
+              "matched_phrases": [
+                "world models"
+              ]
+            },
+            {
+              "field": "abstract",
+              "matched_phrases": [
+                "world models"
+              ]
+            }
+          ],
+          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
+        }
+      ],
+      "review_status": "candidate_not_reviewed",
+      "deep_read": false,
+      "fetched_at": "2026-10-01T08:08:07Z",
+      "first_seen_at": "2026-09-30T06:24:23Z",
+      "observation": "unchanged",
+      "abstract_excerpt": "Existing robot video world models are typically trained with low-level objectives such as reconstruction and perceptual similarity, which are poorly aligned with the capabilities that matter most for robot decision making, including instruction following, manipulation success, and physical plausibility. They also suffer from error accumulation in long-horizon autoregressive prediction. We present RoboAlign-R1, a framework that combines reward-aligned post-training with stabilized long-horizon inference for robot video world models. We construct RobotWorldBench, a benchmark of 10,000 annotated",
+      "abstract_truncated": true,
+      "abstract_original_chars": 1792,
+      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
+    },
+    {
+      "id": "2609.33484",
+      "canonical_id": "2609.33484",
+      "arxiv_version": 1,
+      "versioned_id": "2609.33484v1",
+      "title": "AMBIT: Anticipatory Multimodal Body Recruitment for Bimanual Tracking on a Humanoid",
+      "authors": [
+        "Hanlong Li",
+        "Sihan Tan",
+        "Takeshi Ashizawa",
+        "Benjamin Yen",
+        "Kazuhiro Nakadai"
+      ],
+      "first_submitted_at": "2026-09-27T11:52:15Z",
+      "updated_at": "2026-09-27T11:52:15Z",
+      "change_type": "new",
+      "source_url": "https://arxiv.org/abs/2609.33484",
+      "version_url": "https://arxiv.org/abs/2609.33484v1",
       "categories": [
         "cs.RO"
       ],
@@ -693,163 +1053,41 @@ lop a modified DH kinematic model that represents",
       ],
       "review_status": "candidate_not_reviewed",
       "deep_read": false,
-      "fetched_at": "2026-09-30T06:24:23Z",
+      "fetched_at": "2026-10-01T08:08:07Z",
       "first_seen_at": "2026-09-30T06:24:23Z",
-      "observation": "first_seen",
-      "abstract_excerpt": "Contact-rich manipulation requires robots to balance accurate motion tracking with compliant interaction, yet most visual-action policies leave compliance fixed at the controller level. We present Imp-ACT, a methodologically grounded and practical approach to incorporating direction-dependent Cartesian stiffness modulation directly into demonstration collection, without manual stiffness selection or offline target reconstruction. During teleoperation, a self-tuning impedance controller adapts stiffness along the instantaneous direction of motion while maintaining compliance in orthogonal direc",
+      "observation": "unchanged",
+      "abstract_excerpt": "A humanoid with 5-DoF arms cannot track generic bimanual end-effector trajectories with its arms alone; pelvis and waist motion must be recruited, but which motion, and when, is not uniquely determined. On a Unitree R1 in fixed double support, the set of dynamically valid recruitment strategies (pelvis pose and waist trajectories) for a task is a diverse continuous manifold, and a deterministic regressor trained on it mode-averages into strategies valid only 35% of the time, against 52% for a conditional variational autoencoder (CVAE) and 82% for the best of 16 CVAE samples. We introduce AMBIT",
       "abstract_truncated": true,
-      "abstract_original_chars": 1770,
+      "abstract_original_chars": 1907,
       "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
     },
     {
-      "id": "2609.29861",
-      "canonical_id": "2609.29861",
+      "id": "2604.12879",
+      "canonical_id": "2604.12879",
       "arxiv_version": 2,
-      "versioned_id": "2609.29861v2",
-      "title": "GPT-6-Astra Lights Up Embodied Navigation: Evaluation in Zero-Shot Vision-and-Language Navigation in Continuous Environments",
+      "versioned_id": "2604.12879v2",
+      "title": "FastGrasp: Learning-based Whole-Body Control Method for Fast Dexterous Grasping with Mobile Manipulators",
       "authors": [
-        "Guangzhao Dai",
-        "Qianru Sun",
-        "Qi Wu",
-        "Bin Zhu"
+        "Heng Tao",
+        "Yiming Zhong",
+        "Zemin Yang",
+        "Yuexin Ma"
       ],
-      "first_submitted_at": "2026-09-24T14:21:26Z",
-      "updated_at": "2026-09-25T12:44:47Z",
+      "first_submitted_at": "2026-04-14T15:30:57Z",
+      "updated_at": "2026-09-27T09:11:17Z",
       "change_type": "revision",
-      "source_url": "https://arxiv.org/abs/2609.29861",
-      "version_url": "https://arxiv.org/abs/2609.29861v2",
-      "categories": [
-        "cs.RO"
-      ],
-      "primary_category": "cs.RO",
-      "doi": null,
-      "journal_reference": null,
-      "matched_topics": [
-        "vln_objectnav",
-        "navigation_agents"
-      ],
-      "relevance_reasons": [
-        {
-          "topic": "vln_objectnav",
-          "label": "VLN / ObjectNav",
-          "method": "title_abstract_keyword_heuristic",
-          "evidence": [
-            {
-              "field": "title",
-              "matched_phrases": [
-                "vision and language navigation"
-              ]
-            },
-            {
-              "field": "abstract",
-              "matched_phrases": [
-                "vision and language navigation",
-                "vln"
-              ]
-            }
-          ],
-          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
-        },
-        {
-          "topic": "navigation_agents",
-          "label": "Navigation agents / harnesses",
-          "method": "title_abstract_keyword_heuristic",
-          "evidence": [
-            {
-              "field": "abstract",
-              "matched_phrases": [
-                "harness"
-              ]
-            }
-          ],
-          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
-        }
-      ],
-      "review_status": "candidate_not_reviewed",
-      "deep_read": false,
-      "fetched_at": "2026-09-30T06:24:23Z",
-      "first_seen_at": "2026-09-30T06:24:23Z",
-      "observation": "first_seen",
-      "abstract_excerpt": "We investigate whether GPT-6-Astra, a general-purpose foundation model, can navigate unfamiliar environments using its own perception, reasoning, and decision-making capabilities. Our evaluation focuses on zero-shot vision-and-language navigation in continuous environments (VLN-CE) through a minimal interface in the Codex harness, aiming to unleash GPT-6-Astra's full potential for navigation. Using monocular RGB, GPT-6-Astra decides when to observe, how to move, and when to stop, without navigation-specific fine-tuning, a trained waypoint predictor, or a pre-built scene map. Our evaluation yie",
-      "abstract_truncated": true,
-      "abstract_original_chars": 1794,
-      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
-    },
-    {
-      "id": "2609.31803",
-      "canonical_id": "2609.31803",
-      "arxiv_version": 1,
-      "versioned_id": "2609.31803v1",
-      "title": "Path Planning with Motion Primitives in Dynamic Environments: SIPP on Lattices",
-      "authors": [
-        "Marat Agranovskiy"
-      ],
-      "first_submitted_at": "2026-09-25T12:02:19Z",
-      "updated_at": "2026-09-25T12:02:19Z",
-      "change_type": "new",
-      "source_url": "https://arxiv.org/abs/2609.31803",
-      "version_url": "https://arxiv.org/abs/2609.31803v1",
-      "categories": [
-        "cs.RO"
-      ],
-      "primary_category": "cs.RO",
-      "doi": "10.1007/978-3-032-34387-1_29",
-      "journal_reference": "Agranovskiy, M. (2027). Path Planning with Motion Primitives in Dynamic Environments: SIPP on Lattices. In: Interactive Collaborative Robotics. ICR 2026. Lecture Notes in Computer Science(), vol 16790. Springer, Cham",
-      "matched_topics": [
-        "navigation_agents"
-      ],
-      "relevance_reasons": [
-        {
-          "topic": "navigation_agents",
-          "label": "Navigation agents / harnesses",
-          "method": "title_abstract_keyword_heuristic",
-          "evidence": [
-            {
-              "field": "abstract",
-              "matched_phrases": [
-                "agents"
-              ]
-            }
-          ],
-          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
-        }
-      ],
-      "review_status": "candidate_not_reviewed",
-      "deep_read": false,
-      "fetched_at": "2026-09-30T06:24:23Z",
-      "first_seen_at": "2026-09-30T06:24:23Z",
-      "observation": "first_seen",
-      "abstract_excerpt": "Autonomous navigation in dynamic environments is a critical challenge, particularly when spaces are shared with other mobile agents whose future trajectories are known. While traditional grid-based planners efficiently find collision-free paths, their reliance on stop-and-turn mechanics over $2^k$-connected grids produces piecewise-linear trajectories that are kinodynamically highly sub-optimal for differentially constrained robots. In this paper, we present an adaptation of Safe Interval Path Planning (SIPP) that operates on state lattices, utilizing precomputed, kinodynamically smooth motion",
-      "abstract_truncated": true,
-      "abstract_original_chars": 1575,
-      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
-    },
-    {
-      "id": "2609.31138",
-      "canonical_id": "2609.31138",
-      "arxiv_version": 1,
-      "versioned_id": "2609.31138v1",
-      "title": "Evaluating the Impact of Adaptive Extended Reality on Human-Robot Interaction Across the Reality-Virtuality Continuum",
-      "authors": [
-        "Carl Tornberg",
-        "Alicia Torck",
-        "Lotfi El Hafi",
-        "Tadahiro Taniguchi"
-      ],
-      "first_submitted_at": "2026-09-25T11:27:38Z",
-      "updated_at": "2026-09-25T11:27:38Z",
-      "change_type": "new",
-      "source_url": "https://arxiv.org/abs/2609.31138",
-      "version_url": "https://arxiv.org/abs/2609.31138v1",
+      "source_url": "https://arxiv.org/abs/2604.12879",
+      "version_url": "https://arxiv.org/abs/2604.12879v2",
       "categories": [
         "cs.RO",
-        "cs.HC"
+        "cs.AI"
       ],
       "primary_category": "cs.RO",
       "doi": null,
       "journal_reference": null,
       "matched_topics": [
-        "mobile_manipulation"
+        "mobile_manipulation",
+        "whole_body_control"
       ],
       "relevance_reasons": [
         {
@@ -858,256 +1096,29 @@ lop a modified DH kinematic model that represents",
           "method": "title_abstract_keyword_heuristic",
           "evidence": [
             {
-              "field": "abstract",
-              "matched_phrases": [
-                "mobile manipulator"
-              ]
-            }
-          ],
-          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
-        }
-      ],
-      "review_status": "candidate_not_reviewed",
-      "deep_read": false,
-      "fetched_at": "2026-09-30T06:24:23Z",
-      "first_seen_at": "2026-09-30T06:24:23Z",
-      "observation": "first_seen",
-      "abstract_excerpt": "As populations in developed countries age and labor shortages intensify, Cybernetic Avatars (CAs) are proposed to extend human capabilities through robotic embodiments, requiring effective Human-Robot Interaction (HRI) frameworks. Extended Reality (XR), an umbrella term for Augmented Reality (AR), Augmented Virtuality (AV), and Virtual Reality (VR), offers such interfaces, but prior research typically fixes the XR modality without evaluating its effect on task outcomes. This study examines whether the XR modality impacts HRI performance and whether an adaptive interface adjusting the level of",
-      "abstract_truncated": true,
-      "abstract_original_chars": 1454,
-      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
-    },
-    {
-      "id": "2609.31048",
-      "canonical_id": "2609.31048",
-      "arxiv_version": 1,
-      "versioned_id": "2609.31048v1",
-      "title": "Kintsugi-VLA: Turning Failed Robot Rollouts into Recovery Data through Interventional Recoverability",
-      "authors": [
-        "Ivan Snegirev",
-        "Elizaveta Semenyakina",
-        "Dmitrii Maliukov",
-        "Miguel Altamirano Cabrera",
-        "Dzmitry Tsetserukou"
-      ],
-      "first_submitted_at": "2026-09-25T09:42:20Z",
-      "updated_at": "2026-09-25T09:42:20Z",
-      "change_type": "new",
-      "source_url": "https://arxiv.org/abs/2609.31048",
-      "version_url": "https://arxiv.org/abs/2609.31048v1",
-      "categories": [
-        "cs.RO"
-      ],
-      "primary_category": "cs.RO",
-      "doi": null,
-      "journal_reference": null,
-      "matched_topics": [
-        "robot_vla"
-      ],
-      "relevance_reasons": [
-        {
-          "topic": "robot_vla",
-          "label": "Robot VLA",
-          "method": "title_abstract_keyword_heuristic",
-          "evidence": [
-            {
               "field": "title",
               "matched_phrases": [
-                "vla"
-              ]
-            },
-            {
-              "field": "abstract",
-              "matched_phrases": [
-                "vision language action",
-                "vla"
-              ]
-            }
-          ],
-          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
-        }
-      ],
-      "review_status": "candidate_not_reviewed",
-      "deep_read": false,
-      "fetched_at": "2026-09-30T06:24:23Z",
-      "first_seen_at": "2026-09-30T06:24:23Z",
-      "observation": "first_seen",
-      "abstract_excerpt": "Simulation enables scalable training of Vision-Language-Action policies by using privileged experts to generate visual demonstrations without requiring every trajectory to be collected through manual teleoperation. However, such pipelines typically retain successful demonstrations while failed rollouts are discarded, even though they expose precisely the off-nominal states from which recovery must be learned. We introduce Kintsugi-VLA, a framework for converting failed rollouts into targeted synthetic recovery data by exploiting exact state restoration and branching in simulation. For a fixed",
-      "abstract_truncated": true,
-      "abstract_original_chars": 1753,
-      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
-    },
-    {
-      "id": "2609.30996",
-      "canonical_id": "2609.30996",
-      "arxiv_version": 1,
-      "versioned_id": "2609.30996v1",
-      "title": "The Linear Representation Hypothesis for Vision-Language-Action Models",
-      "authors": [
-        "Minseok Jeong",
-        "Hyewon Choi",
-        "Hiroyasu Tsukamoto",
-        "SooJean Han"
-      ],
-      "first_submitted_at": "2026-09-25T08:41:36Z",
-      "updated_at": "2026-09-25T08:41:36Z",
-      "change_type": "new",
-      "source_url": "https://arxiv.org/abs/2609.30996",
-      "version_url": "https://arxiv.org/abs/2609.30996v1",
-      "categories": [
-        "cs.LG",
-        "cs.AI"
-      ],
-      "primary_category": "cs.LG",
-      "doi": null,
-      "journal_reference": null,
-      "matched_topics": [
-        "robot_vla"
-      ],
-      "relevance_reasons": [
-        {
-          "topic": "robot_vla",
-          "label": "Robot VLA",
-          "method": "title_abstract_keyword_heuristic",
-          "evidence": [
-            {
-              "field": "title",
-              "matched_phrases": [
-                "vision language action"
-              ]
-            },
-            {
-              "field": "abstract",
-              "matched_phrases": [
-                "vision language action",
-                "vla"
-              ]
-            }
-          ],
-          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
-        }
-      ],
-      "review_status": "candidate_not_reviewed",
-      "deep_read": false,
-      "fetched_at": "2026-09-30T06:24:23Z",
-      "first_seen_at": "2026-09-30T06:24:23Z",
-      "observation": "first_seen",
-      "abstract_excerpt": "The linear representation hypothesis (LRH) has become a standard lens for measuring and intervening on semantic information through the internal representations of large language models (LLMs). A growing body of work has begun extending this perspective to vision-language-action (VLA) models, but the dynamical nature of embodied interaction introduces an additional challenge. Unlike semantic attributes commonly studied in LLMs, such as gender or language, a physical quantity of interest (QoI) in a VLA evolves jointly with the system dynamics: the representation influences the actions selected",
-      "abstract_truncated": true,
-      "abstract_original_chars": 1405,
-      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
-    },
-    {
-      "id": "2609.30965",
-      "canonical_id": "2609.30965",
-      "arxiv_version": 1,
-      "versioned_id": "2609.30965v1",
-      "title": "FRAM: Trajectory-Guided Visual Feature Selection for Compact Language-Conditioned Robot Manipulation",
-      "authors": [
-        "Hiroshi Ito",
-        "Hyogo Hiruma",
-        "Yoshiki Kanai",
-        "Takahiro Yoshida",
-        "Akira Kanazawa",
-        "Hiroki Yamada"
-      ],
-      "first_submitted_at": "2026-09-25T08:16:16Z",
-      "updated_at": "2026-09-25T08:16:16Z",
-      "change_type": "new",
-      "source_url": "https://arxiv.org/abs/2609.30965",
-      "version_url": "https://arxiv.org/abs/2609.30965v1",
-      "categories": [
-        "cs.RO"
-      ],
-      "primary_category": "cs.RO",
-      "doi": null,
-      "journal_reference": null,
-      "matched_topics": [
-        "end_effector_trajectories",
-        "robot_vla"
-      ],
-      "relevance_reasons": [
-        {
-          "topic": "end_effector_trajectories",
-          "label": "End-effector trajectories",
-          "method": "title_abstract_keyword_heuristic",
-          "evidence": [
-            {
-              "field": "abstract",
-              "matched_phrases": [
-                "end effector"
+                "mobile manipulators"
               ]
             }
           ],
           "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
         },
         {
-          "topic": "robot_vla",
-          "label": "Robot VLA",
-          "method": "title_abstract_keyword_heuristic",
-          "evidence": [
-            {
-              "field": "abstract",
-              "matched_phrases": [
-                "vision language action"
-              ]
-            }
-          ],
-          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
-        }
-      ],
-      "review_status": "candidate_not_reviewed",
-      "deep_read": false,
-      "fetched_at": "2026-09-30T06:24:23Z",
-      "first_seen_at": "2026-09-30T06:24:23Z",
-      "observation": "first_seen",
-      "abstract_excerpt": "Vision-Language-Action models achieve strong performance in robot manipulation, but often require large numbers of parameters. In this work, we propose the Future Representation Action Model (FRAM), a small policy that explicitly links the future end-effector trajectory to the current visual input. FRAM uses the image coordinates of the predicted trajectory as spatial pointers and reads local visual features related to the motion from the current image. This organizes the information for action generation into the reference position (Where), the visual state (What), and the future motion (Futu",
-      "abstract_truncated": true,
-      "abstract_original_chars": 1415,
-      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
-    },
-    {
-      "id": "2606.22836",
-      "canonical_id": "2606.22836",
-      "arxiv_version": 2,
-      "versioned_id": "2606.22836v2",
-      "title": "Cloak: Zero-Shot Cross-Embodiment Manipulation by Masking the End-Effector from the VLA",
-      "authors": [
-        "Michael Piseno",
-        "Guy Tevet",
-        "C. Karen Liu"
-      ],
-      "first_submitted_at": "2026-06-22T04:16:05Z",
-      "updated_at": "2026-09-25T07:48:37Z",
-      "change_type": "revision",
-      "source_url": "https://arxiv.org/abs/2606.22836",
-      "version_url": "https://arxiv.org/abs/2606.22836v2",
-      "categories": [
-        "cs.RO"
-      ],
-      "primary_category": "cs.RO",
-      "doi": null,
-      "journal_reference": null,
-      "matched_topics": [
-        "robot_vla"
-      ],
-      "relevance_reasons": [
-        {
-          "topic": "robot_vla",
-          "label": "Robot VLA",
+          "topic": "whole_body_control",
+          "label": "Whole-body control",
           "method": "title_abstract_keyword_heuristic",
           "evidence": [
             {
               "field": "title",
               "matched_phrases": [
-                "vla"
+                "whole body control"
               ]
             },
             {
               "field": "abstract",
               "matched_phrases": [
-                "vision language action",
-                "vla"
+                "whole body control"
               ]
             }
           ],
@@ -1116,68 +1127,39 @@ lop a modified DH kinematic model that represents",
       ],
       "review_status": "candidate_not_reviewed",
       "deep_read": false,
-      "fetched_at": "2026-09-30T06:24:23Z",
+      "fetched_at": "2026-10-01T08:08:07Z",
       "first_seen_at": "2026-09-30T06:24:23Z",
-      "observation": "first_seen",
-      "abstract_excerpt": "We present Cloak, a training recipe that endows a Vision-Language-Action (VLA) model with zero-shot cross-embodiment transfer by cloaking the end-effector from its own wrist camera. The end-effector occupies a large and consistent region of the wrist view and masking it allows for embodiment-agnostic visual reasoning. Cloak renders a mask in simulation from the robot's known geometry, accurately and in real time, with no segmentation or generative models. During training, we augment the mask so the model generalizes to embodiments unseen at training time. We demonstrate the recipe with Cloak-V",
+      "observation": "unchanged",
+      "abstract_excerpt": "Fast dexterous grasping while a mobile base remains in motion requires coordinated whole-body control and rapid adaptation to physical contact. We propose FastGrasp, a two-stage learning framework that integrates grasp guidance, whole-body control, and tactile feedback. First, a pretrained conditional variational autoencoder generates diverse grasp candidates from object point clouds. Candidates are filtered by approach direction and supporting-surface constraints, then ranked using an envelopment-based criterion combining grasp width and depth coverage measures. Second, a reinforcement learni",
       "abstract_truncated": true,
-      "abstract_original_chars": 1014,
+      "abstract_original_chars": 1112,
       "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
     },
     {
-      "id": "2609.30913",
-      "canonical_id": "2609.30913",
+      "id": "2609.33378",
+      "canonical_id": "2609.33378",
       "arxiv_version": 1,
-      "versioned_id": "2609.30913v1",
-      "title": "Causeway: Restoring Task Accessibility for Instruction Switching in VLA Policies",
+      "versioned_id": "2609.33378v1",
+      "title": "Recursive Harness Distillation across Agents for Robot Manipulation",
       "authors": [
-        "Qingzi Wang",
-        "Kaixi Feng",
-        "Guangyao Shi",
-        "Xiyang Wu",
-        "Ang Li",
-        "Dinesh Manocha"
+        "Seungyeon Kim",
+        "Junhoo Lee",
+        "Minkyu Kim",
+        "Baekseung Kim",
+        "Nojun Kwak"
       ],
-      "first_submitted_at": "2026-09-25T07:25:19Z",
-      "updated_at": "2026-09-25T07:25:19Z",
+      "first_submitted_at": "2026-09-27T09:01:15Z",
+      "updated_at": "2026-09-27T09:01:15Z",
       "change_type": "new",
-      "source_url": "https://arxiv.org/abs/2609.30913",
-      "version_url": "https://arxiv.org/abs/2609.30913v1",
+      "source_url": "https://arxiv.org/abs/2609.33378",
+      "version_url": "https://arxiv.org/abs/2609.33378v1",
       "categories": [
-        "cs.RO"
+        "cs.RO",
+        "cs.AI",
+        "cs.CV",
+        "cs.LG"
       ],
       "primary_category": "cs.RO",
       "doi": null,
       "journal_reference": null,
-      "matched_topics": [
-        "robot_vla"
-      ],
-      "relevance_reasons": [
-        {
-          "topic": "robot_vla",
-          "label": "Robot VLA",
-          "method": "title_abstract_keyword_heuristic",
-          "evidence": [
-            {
-              "field": "title",
-              "matched_phrases": [
-                "vla"
-              ]
-            },
-            {
-              "field": "abstract",
-              "matched_phrases": [
-                "vision language action",
-                "vla"
-              ]
-            }
-          ],
-          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
-        }
-      ],
-      "review_status": "candidate_not_reviewed",
-      "deep_read": false,
-      "fetched_at": "2026-09-30T06:24:23Z",
-      "first_seen_at": "2026-09-30T06:24:23Z",
-      "observation": "first_seen",
-      "abstract_excerpt": "Vision-language-action (VLA) policies can execute many tasks from standard initial states, yet a new instruction may fail after another task has altered the robot's p
+      "match
