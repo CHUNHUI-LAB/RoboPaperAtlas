@@ -338,6 +338,33 @@
         "recent_work_evidence": []
       },
       "last_verified_at": "2026-10-01"
+    },
+    {
+      "id": "aaai",
+      "name": "AAAI",
+      "kind": "conference_series",
+      "aliases": [],
+      "scope_summary": "仅用于 AAAI 2026 Intelligent Robotics 已发表论文的历史身份；本次未核验现行征稿资格。",
+      "scope_source_ids": [
+        "odyssey-aaai"
+      ],
+      "topic_fit": [],
+      "publication_only": true,
+      "admission": {
+        "state": "historical_only",
+        "tier": "index_only",
+        "rationale": "Official AAAI 2026 Intelligent Robotics proceedings; not a current submission recommendation",
+        "recent_work_evidence": [
+          {
+            "title": "ODYSSEY",
+            "year": 2026,
+            "source_ids": [
+              "odyssey-aaai"
+            ]
+          }
+        ]
+      },
+      "last_verified_at": "2026-10-01"
     }
   ],
   "editions": [
@@ -1317,6 +1344,152 @@
       "deadlines": [],
       "templates": [],
       "notes": []
+    },
+    {
+      "id": "ral-volume-10-2025",
+      "venue_id": "ral",
+      "edition_year": null,
+      "kind": "journal_publication",
+      "status": "historical",
+      "publication_only": true,
+      "source_ids": [
+        "rpa-0052-crossref"
+      ],
+      "checked_at": "2026-10-01",
+      "channels": [
+        {
+          "id": "ral-volume-10-2025-research",
+          "forum_level": "journal",
+          "track_kind": "regular",
+          "archival_status": "archival",
+          "parent_edition_id": "ral-volume-10-2025"
+        }
+      ],
+      "deadlines": [],
+      "templates": [],
+      "notes": [
+        "仅作为历史发表身份，不用于现行投稿建议、截止日期或模板。"
+      ]
+    },
+    {
+      "id": "corl-2022",
+      "venue_id": "corl",
+      "edition_year": 2022,
+      "kind": "conference_event",
+      "status": "historical",
+      "publication_only": true,
+      "source_ids": [
+        "deep-pmlr",
+        "corl-volume"
+      ],
+      "checked_at": "2026-10-01",
+      "channels": [
+        {
+          "id": "corl-2022-research",
+          "forum_level": "main_conference",
+          "track_kind": "research",
+          "archival_status": "archival",
+          "parent_edition_id": "corl-2022"
+        }
+      ],
+      "deadlines": [],
+      "templates": [],
+      "notes": [
+        "仅作为历史发表身份，不用于现行投稿建议、截止日期或模板。"
+      ]
+    },
+    {
+      "id": "icra-2024",
+      "venue_id": "icra",
+      "edition_year": 2024,
+      "kind": "conference_event",
+      "status": "historical",
+      "publication_only": true,
+      "source_ids": [
+        "rpa-0026-crossref",
+        "rpa-0026-ieee"
+      ],
+      "checked_at": "2026-10-01",
+      "channels": [
+        {
+          "id": "icra-2024-research",
+          "forum_level": "main_conference",
+          "track_kind": "research",
+          "archival_status": "archival",
+          "parent_edition_id": "icra-2024"
+        },
+        {
+          "id": "icra-2024-loco-manipulation",
+          "forum_level": "workshop",
+          "track_kind": "workshop_contribution",
+          "archival_status": "unknown",
+          "parent_edition_id": "icra-2024",
+          "name": "Loco-Manipulation: Algorithms, Challenges & Applications",
+          "source_ids": [
+            "workshop-list",
+            "workshop-home"
+          ]
+        }
+      ],
+      "deadlines": [],
+      "templates": [],
+      "notes": [
+        "仅作为历史发表身份，不用于现行投稿建议、截止日期或模板。"
+      ]
+    },
+    {
+      "id": "icra-2025",
+      "venue_id": "icra",
+      "edition_year": 2025,
+      "kind": "conference_event",
+      "status": "historical",
+      "publication_only": true,
+      "source_ids": [
+        "rpa-0070-crossref",
+        "rpa-0070-ieee"
+      ],
+      "checked_at": "2026-10-01",
+      "channels": [
+        {
+          "id": "icra-2025-research",
+          "forum_level": "main_conference",
+          "track_kind": "research",
+          "archival_status": "archival",
+          "parent_edition_id": "icra-2025"
+        }
+      ],
+      "deadlines": [],
+      "templates": [],
+      "notes": [
+        "仅作为历史发表身份，不用于现行投稿建议、截止日期或模板。"
+      ]
+    },
+    {
+      "id": "aaai-2026",
+      "venue_id": "aaai",
+      "edition_year": 2026,
+      "kind": "conference_event",
+      "status": "historical",
+      "publication_only": true,
+      "source_ids": [
+        "odyssey-aaai"
+      ],
+      "checked_at": "2026-10-01",
+      "channels": [
+        {
+          "id": "aaai-2026-research",
+          "forum_level": "main_conference",
+          "track_kind": "research",
+          "archival_status": "archival",
+          "parent_edition_id": "aaai-2026",
+          "name": "AAAI-26 Technical Track: Intelligent Robotics"
+        }
+      ],
+      "deadlines": [],
+      "templates": [],
+      "notes": [
+        "仅作为历史发表身份，不用于现行投稿建议、截止日期或模板。"
+      ]
     }
   ],
   "publications": [
@@ -1403,9 +1576,345 @@
       "title": "OmniNav: A Unified Framework for Prospective Exploration and Visual-Language Navigation",
       "primary_direction": "navigation",
       "topic_label": "Embodied Nav"
+    },
+    {
+      "id": "rpa-0052-formal",
+      "paper_id": "rpa-0052",
+      "version_role": "formal_publication",
+      "record_kind": "journal_article",
+      "status": "published",
+      "title": "RoboDuet: Learning a Cooperative Policy for Whole-Body Legged Loco-Manipulation",
+      "authors": [
+        "Guoping Pan",
+        "Qingwei Ben",
+        "Zhecheng Yuan",
+        "Guangqi Jiang",
+        "Yandong Ji",
+        "Shoujie Li",
+        "Jiangmiao Pang",
+        "Houde Liu",
+        "Huazhe Xu"
+      ],
+      "venue_id": "ral",
+      "forum_level": "journal",
+      "edition_year": null,
+      "publication_year": 2025,
+      "issue_year": 2025,
+      "publication_date": "2025-05",
+      "publication_date_semantics": "publisher_deposited_print_date",
+      "online_first_date": null,
+      "doi": "10.1109/lra.2025.3551230",
+      "url": "https://ieeexplore.ieee.org/document/10925884",
+      "pages": "4564-4571",
+      "edition_id": "ral-volume-10-2025",
+      "channel_id": "ral-volume-10-2025-research",
+      "primary_direction": "wbc",
+      "topic_label": "全身控制",
+      "evidence": {
+        "state": "verified",
+        "source_ids": [
+          "rpa-0052-crossref"
+        ],
+        "checked_at": "2026-10-01"
+      },
+      "relation_to_other_records": [
+        {
+          "record_id": "rpa-0052-preprint",
+          "relation": "same_work_version_equivalence_not_established"
+        }
+      ],
+      "preprint": {
+        "id": "rpa-0052-preprint",
+        "paper_id": "rpa-0052",
+        "version_role": "preprint",
+        "record_kind": "preprint",
+        "forum_level": "preprint",
+        "venue_id": "arxiv",
+        "status": "preprint_available",
+        "publication_year": 2024,
+        "first_submission_date": "2024-03-26",
+        "latest_revision_date": "2025-02-08",
+        "version": "v5",
+        "url": "https://arxiv.org/abs/2403.17367v5",
+        "source_ids": [
+          "rpa-0052-arxiv"
+        ],
+        "relation_to_formal": "same_work_version_equivalence_not_established"
+      }
+    },
+    {
+      "id": "rpa-0012-formal",
+      "paper_id": "rpa-0012",
+      "version_role": "formal_publication",
+      "record_kind": "conference_paper",
+      "status": "published",
+      "title": "Deep Whole-Body Control: Learning a Unified Policy for Manipulation and Locomotion",
+      "authors": [
+        "Zipeng Fu",
+        "Xuxin Cheng",
+        "Deepak Pathak"
+      ],
+      "venue_id": "corl",
+      "forum_level": "main_conference",
+      "edition_year": 2022,
+      "publication_year": 2023,
+      "issue_year": null,
+      "publication_date": "2023-03-06",
+      "publication_date_semantics": "publisher_publication_date",
+      "online_first_date": null,
+      "doi": null,
+      "url": "https://proceedings.mlr.press/v205/fu23a.html",
+      "pages": "138-149",
+      "edition_id": "corl-2022",
+      "channel_id": "corl-2022-research",
+      "primary_direction": "wbc",
+      "topic_label": "全身控制",
+      "evidence": {
+        "state": "verified",
+        "source_ids": [
+          "deep-pmlr",
+          "corl-volume"
+        ],
+        "checked_at": "2026-10-01"
+      },
+      "relation_to_other_records": [
+        {
+          "record_id": "rpa-0012-preprint",
+          "relation": "same_work_version_equivalence_not_established"
+        }
+      ],
+      "preprint": {
+        "id": "rpa-0012-preprint",
+        "paper_id": "rpa-0012",
+        "version_role": "preprint",
+        "record_kind": "preprint",
+        "forum_level": "preprint",
+        "venue_id": "arxiv",
+        "status": "preprint_available",
+        "publication_year": 2022,
+        "first_submission_date": "2022-10-18",
+        "latest_revision_date": "2022-10-18",
+        "version": "v1",
+        "url": "https://arxiv.org/abs/2210.10044v1",
+        "source_ids": [
+          "rpa-0012-arxiv"
+        ],
+        "relation_to_formal": "same_work_version_equivalence_not_established"
+      }
+    },
+    {
+      "id": "rpa-0026-formal",
+      "paper_id": "rpa-0026",
+      "version_role": "formal_publication",
+      "record_kind": "conference_paper",
+      "status": "published",
+      "title": "Learning Force Control for Legged Manipulation",
+      "authors": [
+        "Tifanny Portela",
+        "Gabriel B. Margolis",
+        "Yandong Ji",
+        "Pulkit Agrawal"
+      ],
+      "venue_id": "icra",
+      "forum_level": "main_conference",
+      "edition_year": 2024,
+      "publication_year": 2024,
+      "issue_year": null,
+      "publication_date": "2024-05-13",
+      "publication_date_semantics": "publisher_deposited_print_date",
+      "online_first_date": null,
+      "doi": "10.1109/icra57147.2024.10611066",
+      "url": "https://ieeexplore.ieee.org/document/10611066/",
+      "pages": "15366-15372",
+      "edition_id": "icra-2024",
+      "channel_id": "icra-2024-research",
+      "primary_direction": "wbc",
+      "topic_label": "全身控制",
+      "evidence": {
+        "state": "verified",
+        "source_ids": [
+          "rpa-0026-crossref",
+          "rpa-0026-ieee",
+          "force-project"
+        ],
+        "checked_at": "2026-10-01"
+      },
+      "relation_to_other_records": [
+        {
+          "record_id": "rpa-0026-preprint",
+          "relation": "same_work_version_equivalence_not_established"
+        }
+      ],
+      "preprint": {
+        "id": "rpa-0026-preprint",
+        "paper_id": "rpa-0026",
+        "version_role": "preprint",
+        "record_kind": "preprint",
+        "forum_level": "preprint",
+        "venue_id": "arxiv",
+        "status": "preprint_available",
+        "publication_year": 2024,
+        "first_submission_date": "2024-05-02",
+        "latest_revision_date": "2024-05-20",
+        "version": "v2",
+        "url": "https://arxiv.org/abs/2405.01402v2",
+        "source_ids": [
+          "rpa-0026-arxiv"
+        ],
+        "relation_to_formal": "same_work_version_equivalence_not_established"
+      }
+    },
+    {
+      "id": "rpa-0070-formal",
+      "paper_id": "rpa-0070",
+      "version_role": "formal_publication",
+      "record_kind": "conference_paper",
+      "status": "published",
+      "title": "WildLMa: Long Horizon Loco-Manipulation in the Wild",
+      "authors": [
+        "Ri-Zhao Qiu",
+        "Yuchen Song",
+        "Xuanbin Peng",
+        "Sai Aneesh Suryadevara",
+        "Ge Yang",
+        "Minghuan Liu",
+        "Mazeyu Ji",
+        "Chengzhe Jia",
+        "Ruihan Yang",
+        "Xueyan Zou",
+        "Xiaolong Wang"
+      ],
+      "venue_id": "icra",
+      "forum_level": "main_conference",
+      "edition_year": 2025,
+      "publication_year": 2025,
+      "issue_year": null,
+      "publication_date": "2025-05-19",
+      "publication_date_semantics": "publisher_deposited_print_date",
+      "online_first_date": null,
+      "doi": "10.1109/icra55743.2025.11128535",
+      "url": "https://ieeexplore.ieee.org/document/11128535",
+      "pages": "10011-10019",
+      "edition_id": "icra-2025",
+      "channel_id": "icra-2025-research",
+      "primary_direction": "wbc",
+      "topic_label": "全身控制",
+      "evidence": {
+        "state": "verified",
+        "source_ids": [
+          "rpa-0070-crossref",
+          "rpa-0070-ieee"
+        ],
+        "checked_at": "2026-10-01"
+      },
+      "relation_to_other_records": [
+        {
+          "record_id": "rpa-0070-preprint",
+          "relation": "same_work_version_equivalence_not_established"
+        }
+      ],
+      "preprint": {
+        "id": "rpa-0070-preprint",
+        "paper_id": "rpa-0070",
+        "version_role": "preprint",
+        "record_kind": "preprint",
+        "forum_level": "preprint",
+        "venue_id": "arxiv",
+        "status": "preprint_available",
+        "publication_year": 2024,
+        "first_submission_date": "2024-11-22",
+        "latest_revision_date": "2025-03-08",
+        "version": "v2",
+        "url": "https://arxiv.org/abs/2411.15131v2",
+        "source_ids": [
+          "rpa-0070-arxiv"
+        ],
+        "relation_to_formal": "same_work_version_equivalence_not_established"
+      }
+    },
+    {
+      "id": "rpa-0042-formal",
+      "paper_id": "rpa-0042",
+      "version_role": "formal_publication",
+      "record_kind": "conference_paper",
+      "status": "published",
+      "title": "ODYSSEY: Open-World Quadrupeds Exploration and Manipulation for Long-Horizon Tasks",
+      "authors": [
+        "Kaijun Wang",
+        "Liqin Lu",
+        "Mingyu Liu",
+        "Jianuo Jiang",
+        "Zeju Li",
+        "Bolin Zhang",
+        "Wancai Zheng",
+        "Xinyi Yu",
+        "Hao Chen",
+        "Chunhua Shen"
+      ],
+      "venue_id": "aaai",
+      "forum_level": "main_conference",
+      "edition_year": 2026,
+      "publication_year": 2026,
+      "issue_year": null,
+      "publication_date": "2026-03-14",
+      "publication_date_semantics": "publisher_publication_date",
+      "online_first_date": null,
+      "doi": "10.1609/aaai.v40i22.38927",
+      "url": "https://ojs.aaai.org/index.php/AAAI/article/view/38927",
+      "pages": "18602-18610",
+      "edition_id": "aaai-2026",
+      "channel_id": "aaai-2026-research",
+      "primary_direction": "wbc",
+      "topic_label": "全身控制",
+      "evidence": {
+        "state": "verified",
+        "source_ids": [
+          "odyssey-aaai"
+        ],
+        "checked_at": "2026-10-01"
+      },
+      "relation_to_other_records": [
+        {
+          "record_id": "rpa-0042-preprint",
+          "relation": "same_work_version_equivalence_not_established"
+        }
+      ],
+      "preprint": {
+        "id": "rpa-0042-preprint",
+        "paper_id": "rpa-0042",
+        "version_role": "preprint",
+        "record_kind": "preprint",
+        "forum_level": "preprint",
+        "venue_id": "arxiv",
+        "status": "preprint_available",
+        "publication_year": 2025,
+        "first_submission_date": "2025-08-11",
+        "latest_revision_date": "2025-08-11",
+        "version": "v1",
+        "url": "https://arxiv.org/abs/2508.08240v1",
+        "source_ids": [
+          "rpa-0042-arxiv"
+        ],
+        "relation_to_formal": "same_work_version_equivalence_not_established"
+      }
     }
   ],
-  "presentations": [],
+  "presentations": [
+    {
+      "paper_id": "rpa-0012",
+      "event": "CoRL 2022",
+      "type": "oral_selection",
+      "source_ids": [
+        "corl-volume"
+      ],
+      "note": "Proceedings oral category is verified; not independent evidence the talk was delivered.",
+      "id": "rpa-0012-corl2022-oral-selection",
+      "venue_id": "corl",
+      "edition_id": "corl-2022",
+      "channel_id": "corl-2022-research",
+      "actual_presentation_status": "unknown"
+    }
+  ],
   "experiences": {
     "checked_at": "2026-10-01",
     "evidence_status": "full_body_read_self_report_not_independently_verified",
@@ -1717,6 +2226,168 @@
       "checked_at": "2026-10-01",
       "access_status": "source_text_observed",
       "content_hash": null
+    },
+    {
+      "id": "rpa-0052-arxiv",
+      "url": "https://arxiv.org/abs/2403.17367",
+      "kind": "author_preprint",
+      "locator": "Title; Authors; Abstract; Submission history",
+      "finding": "arXiv v5, latest observed 2025-02-08; preprint version is not automatically version of record.",
+      "access_status": "read",
+      "checked_at": "2026-10-01"
+    },
+    {
+      "id": "rpa-0012-arxiv",
+      "url": "https://arxiv.org/abs/2210.10044",
+      "kind": "author_preprint",
+      "locator": "Title; Authors; Abstract; Submission history",
+      "finding": "arXiv v1, latest observed 2022-10-18; preprint version is not automatically version of record.",
+      "access_status": "read",
+      "checked_at": "2026-10-01"
+    },
+    {
+      "id": "rpa-0026-arxiv",
+      "url": "https://arxiv.org/abs/2405.01402",
+      "kind": "author_preprint",
+      "locator": "Title; Authors; Abstract; Submission history",
+      "finding": "arXiv v2, latest observed 2024-05-20; preprint version is not automatically version of record.",
+      "access_status": "read",
+      "checked_at": "2026-10-01"
+    },
+    {
+      "id": "rpa-0070-arxiv",
+      "url": "https://arxiv.org/abs/2411.15131",
+      "kind": "author_preprint",
+      "locator": "Title; Authors; Abstract; Submission history",
+      "finding": "arXiv v2, latest observed 2025-03-08; preprint version is not automatically version of record.",
+      "access_status": "read",
+      "checked_at": "2026-10-01"
+    },
+    {
+      "id": "rpa-0042-arxiv",
+      "url": "https://arxiv.org/abs/2508.08240",
+      "kind": "author_preprint",
+      "locator": "Title; Authors; Abstract; Submission history",
+      "finding": "arXiv v1, latest observed 2025-08-11; preprint version is not automatically version of record.",
+      "access_status": "read",
+      "checked_at": "2026-10-01"
+    },
+    {
+      "id": "deep-pmlr",
+      "url": "https://proceedings.mlr.press/v205/fu23a.html",
+      "kind": "publisher",
+      "locator": "Citation; Abstract",
+      "finding": "Three authors; PMLR 205:138–149, publication 2023; no DOI listed.",
+      "access_status": "read",
+      "checked_at": "2026-10-01"
+    },
+    {
+      "id": "corl-volume",
+      "url": "https://proceedings.mlr.press/v205/",
+      "kind": "publisher",
+      "locator": "Volume heading; Oral section",
+      "finding": "CoRL held 14–18 December 2022; volume published 6 March 2023. Deep WBC appears in Oral section.",
+      "access_status": "read",
+      "checked_at": "2026-10-01"
+    },
+    {
+      "id": "odyssey-aaai",
+      "url": "https://ojs.aaai.org/index.php/AAAI/article/view/38927",
+      "kind": "publisher",
+      "locator": "Authors; DOI; Published; Issue; Section; Abstract",
+      "finding": "AAAI-26 technical track Intelligent Robotics; 40(22), 18602–18610; published 2026-03-14. Conference proceedings despite OJS journal-like UI.",
+      "access_status": "read",
+      "checked_at": "2026-10-01"
+    },
+    {
+      "id": "force-project",
+      "url": "https://tif-twirl-13.github.io/learning-compliance",
+      "kind": "author_project",
+      "locator": "Authors; ICRA heading; Abstract; BibTeX",
+      "finding": "Tifanny Portela (not catalog Tomás), Gabriel B. Margolis, Yandong Ji, Pulkit Agrawal; ICRA2024; final pages 15366–15372.",
+      "access_status": "read",
+      "checked_at": "2026-10-01"
+    },
+    {
+      "id": "workshop-list",
+      "url": "https://sites.google.com/view/loco-manipulation-icra24/accepted-contributions",
+      "kind": "workshop_organizer",
+      "locator": "Accepted Contributions",
+      "finding": "RoboDuet early title with eight authors and Learning Force Control listed as accepted contributions. This proves acceptance, not archival proceedings publication or actual presentation.",
+      "access_status": "read",
+      "checked_at": "2026-10-01"
+    },
+    {
+      "id": "workshop-home",
+      "url": "https://sites.google.com/view/loco-manipulation-icra24/home",
+      "kind": "workshop_organizer",
+      "locator": "Workshop heading/date",
+      "finding": "Loco-Manipulation: Algorithms, Challenges & Applications, full-day ICRA2024 workshop, 17 May 2024. Archival status not established.",
+      "access_status": "read",
+      "checked_at": "2026-10-01"
+    },
+    {
+      "id": "roboduet-v1",
+      "url": "https://arxiv.org/abs/2403.17367v1",
+      "kind": "author_preprint",
+      "locator": "Title; Authors",
+      "finding": "Early title A Framework Affording Mobile-Manipulation and Cross-Embodiment, eight authors; Shoujie Li absent. Matches workshop listing.",
+      "access_status": "read",
+      "checked_at": "2026-10-01"
+    },
+    {
+      "id": "rpa-0052-crossref",
+      "url": "https://api.crossref.org/works/10.1109/LRA.2025.3551230",
+      "kind": "publisher_deposited_crossref",
+      "locator": "message: title, author, type, container-title, published-print, page, DOI",
+      "finding": "Publisher-deposited bibliographic record; does not establish full-text availability or online-first date.",
+      "access_status": "read",
+      "checked_at": "2026-10-01"
+    },
+    {
+      "id": "rpa-0070-crossref",
+      "url": "https://api.crossref.org/works/10.1109/ICRA55743.2025.11128535",
+      "kind": "publisher_deposited_crossref",
+      "locator": "message: title, author, type, container-title, published-print, page, DOI",
+      "finding": "Publisher-deposited bibliographic record; does not establish full-text availability or online-first date.",
+      "access_status": "read",
+      "checked_at": "2026-10-01"
+    },
+    {
+      "id": "rpa-0026-crossref",
+      "url": "https://api.crossref.org/works/10.1109/ICRA57147.2024.10611066",
+      "kind": "publisher_deposited_crossref",
+      "locator": "message: title, author, type, container-title, published-print, page, DOI",
+      "finding": "Publisher-deposited bibliographic record; does not establish full-text availability or online-first date.",
+      "access_status": "read",
+      "checked_at": "2026-10-01"
+    },
+    {
+      "id": "rpa-0052-ieee",
+      "url": "https://ieeexplore.ieee.org/document/10925884",
+      "kind": "publisher",
+      "locator": "Landing page / search-index metadata",
+      "finding": "Direct open returns JavaScript/bot check. WildLMa and Force Control publisher-index results identify ICRA main proceedings, DOI and Xplore added dates; RoboDuet relies on successful publisher-deposited Crossref record.",
+      "access_status": "direct_open_blocked",
+      "checked_at": "2026-10-01"
+    },
+    {
+      "id": "rpa-0070-ieee",
+      "url": "https://ieeexplore.ieee.org/document/11128535",
+      "kind": "publisher",
+      "locator": "Landing page / search-index metadata",
+      "finding": "Direct open returns JavaScript/bot check. WildLMa and Force Control publisher-index results identify ICRA main proceedings, DOI and Xplore added dates; RoboDuet relies on successful publisher-deposited Crossref record.",
+      "access_status": "direct_open_blocked",
+      "checked_at": "2026-10-01"
+    },
+    {
+      "id": "rpa-0026-ieee",
+      "url": "https://ieeexplore.ieee.org/document/10611066",
+      "kind": "publisher",
+      "locator": "Landing page / search-index metadata",
+      "finding": "Direct open returns JavaScript/bot check. WildLMa and Force Control publisher-index results identify ICRA main proceedings, DOI and Xplore added dates; RoboDuet relies on successful publisher-deposited Crossref record.",
+      "access_status": "direct_open_blocked",
+      "checked_at": "2026-10-01"
     }
   ],
   "pending_adjacent_journals": [
@@ -1732,7 +2403,45 @@
   ],
   "migration": {
     "total": 95,
-    "normalized": 3,
-    "pending": 92
-  }
+    "normalized": 8,
+    "pending": 87
+  },
+  "workshop_contributions": [
+    {
+      "paper_id": "rpa-0052",
+      "forum_level": "workshop",
+      "venue": "Loco-Manipulation: Algorithms, Challenges & Applications",
+      "host_event": "ICRA 2024",
+      "date": "2024-05-17",
+      "state": "accepted_contribution",
+      "archival_publication_status": "unknown",
+      "actual_presentation_status": "unknown",
+      "source_ids": [
+        "workshop-list",
+        "workshop-home"
+      ],
+      "id": "rpa-0052-icra2024-workshop",
+      "venue_id": "icra",
+      "edition_id": "icra-2024",
+      "channel_id": "icra-2024-loco-manipulation"
+    },
+    {
+      "paper_id": "rpa-0026",
+      "forum_level": "workshop",
+      "venue": "Loco-Manipulation: Algorithms, Challenges & Applications",
+      "host_event": "ICRA 2024",
+      "date": "2024-05-17",
+      "state": "accepted_contribution",
+      "archival_publication_status": "unknown",
+      "actual_presentation_status": "unknown",
+      "source_ids": [
+        "workshop-list",
+        "workshop-home"
+      ],
+      "id": "rpa-0026-icra2024-workshop",
+      "venue_id": "icra",
+      "edition_id": "icra-2024",
+      "channel_id": "icra-2024-loco-manipulation"
+    }
+  ]
 }
