@@ -4,7 +4,7 @@ ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT/'scripts'))
 from reports import load_reports,report_path
 class ReaderTypeV3Tests(unittest.TestCase):
  @classmethod
- def setUpClass(cls):cls.records=load_reports(ROOT);cls.bykey={(r['version'],r['stage']):r for r in cls.records}
+ def setUpClass(cls):cls.records=load_reports(ROOT);cls.bykey={(r['version'],r['stage']):r for r in cls.records if r['paper_id']=='rpa-0062'}
  def page(self,v,s):return(ROOT/report_path(self.bykey[(v,s)])).read_text()
  def test_content_figures_math_code_and_titles_are_exact(self):
   for stage in ['stage1','stage2','stage3']:

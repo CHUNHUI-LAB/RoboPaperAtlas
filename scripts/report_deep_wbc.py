@@ -24,9 +24,10 @@ class DeepWBCReader(ReportHTML):
 
 def prepare(root, record, payload):
     identity = {k:record[k] for k in ('paper_id','stage','version','filename')}
-    require(identity == dict(paper_id='rpa-0012',stage='stage1',version='v1',filename='first-pass.html'),
+    require(identity['version'] in {'v1', 'v2'} and identity == dict(paper_id='rpa-0012',stage='stage1',version=identity['version'],filename='first-pass.html'),
             'Unapproved Deep WBC reader identity')
-    policy = json.loads(_read(root, 'data/report-rpa-0012-v1-policy.json', 20000).decode(),
+    policy_path = {'v1': 'data/report-rpa-0012-v1-policy.json', 'v2': 'data/report-rpa-0012-v2-policy.json'}[identity['version']]
+    policy = json.loads(_read(root, policy_path, 20000).decode(),
                         object_pairs_hook=_json_object)
     _keys(policy, POLICY_FIELDS, 'Deep WBC policy')
     require(all(policy[k] == v for k,v in identity.items()), 'Wrong paper/stage reader policy')

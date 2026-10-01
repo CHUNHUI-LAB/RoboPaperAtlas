@@ -8,7 +8,7 @@ from test_reader_preview import CodeText
 class ReaderDocumentTests(unittest.TestCase):
  @classmethod
  def setUpClass(cls):
-  cls.records={r['stage']:r for r in reports.load_reports(ROOT)if r['version']=='v2'}
+  cls.records={r['stage']:r for r in reports.load_reports(ROOT)if r['paper_id']=='rpa-0062' and r['version']=='v2'}
   cls.pages={s:(ROOT/reports.report_path(r)).read_text()for s,r in cls.records.items()}
   cls.policy=json.loads((ROOT/'data/report-v2-policy.json').read_text())
  def test_three_current_versions_with_history(self):

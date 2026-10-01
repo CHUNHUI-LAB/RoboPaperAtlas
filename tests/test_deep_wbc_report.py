@@ -40,7 +40,7 @@ class DeepWBCReportTests(unittest.TestCase):
   with self.assertRaisesRegex(ValueError,'Unresolved sibling'):r.assemble_reports(self.root)
   self.assertFalse((self.root/'artifacts').exists())
  def test_explicit_identity_sources_review_state_and_future_stages_are_closed(self):
-  for key,value in [('paper_id','rpa-0013'),('stage','stage2'),('version','v2'),('review_status','approved'),('review_status','browser_approved'),('source_url',metadata()['source_url']),('pdf_url',metadata()['pdf_url']),('source_sha256','a'*64),('filename','../first-pass.html')]:
+  for key,value in [('paper_id','rpa-0013'),('stage','stage2'),('version','v3'),('review_status','approved'),('review_status','browser_approved'),('source_url',metadata()['source_url']),('pdf_url',metadata()['pdf_url']),('source_sha256','a'*64),('filename','../first-pass.html')]:
    with self.subTest(key=key,value=value):
     rec=dict(self.record);rec[key]=value
     with self.assertRaises(ValueError):r.split_report(self.root,rec,self.payload)
@@ -59,7 +59,7 @@ class DeepWBCReportTests(unittest.TestCase):
   self.assertIn(b'href="../../../papers/rpa-0012/index.html"',self.payload)
   self.assertNotIn(b'private-atlas',self.payload);self.assertNotIn(b'references/atlas-theme.md',self.payload)
  def test_stage_metadata_public_page_and_unchanged_future_stages(self):
-  records=r.load_reports(ROOT);self.assertEqual(len(records),10);self.assertEqual(validate_catalog(self.catalog,records),95)
+  records=r.load_reports(ROOT);self.assertEqual(len(records),11);self.assertEqual(validate_catalog(self.catalog,records),95)
   paper=next(x for x in self.catalog['papers'] if x['id']=='rpa-0012')
   self.assertEqual(paper['stages']['stage1'],expected_stage('rpa-0012','stage1',records));self.assertEqual(paper['stages']['stage1']['artifacts'][0]['review_status'],'content_approved')
   for stage in ['stage2','stage3']:self.assertEqual(paper['stages'][stage],dict(status='not_imported',artifacts=[]))
