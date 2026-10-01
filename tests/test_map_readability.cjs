@@ -51,3 +51,13 @@ test('enlarged Chinese direction labels stay within modeled narrow desktop canva
   }
  }
 });
+
+test('map instructions occupy a separate row outside the SVG plotting area',()=>{
+ const f=fixture({reduced:true}),help=f.$('#map-help');
+ assert(help.parentElement.classList.contains('map-explore'));
+ assert.equal(help.closest('.map-canvas-wrap'),null);
+ assert(f.$('#map-canvas').getAttribute('aria-describedby').split(' ').includes('map-help'));
+ assert.match(help.textContent,/拖动平移/);
+ f.changeMedia('(max-width: 760px)',true);
+ assert.match(help.textContent,/点击节点查看/);
+});

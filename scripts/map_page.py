@@ -103,10 +103,10 @@ def map_html(catalog, base='../', css='../assets/paper-map.css', js='../assets/p
           <svg id="map-canvas" role="group" aria-label="论文主题地图。方向键切换论文，Enter 查看，加减键缩放，Home 显示全部。" aria-describedby="map-help map-legend" tabindex="0"><defs><radialGradient id="map-nebula"><stop offset="0" stop-color="#b5cae0" stop-opacity=".16"/><stop offset=".4" stop-color="#7995b3" stop-opacity=".07"/><stop offset="1" stop-color="#597086" stop-opacity="0"/></radialGradient><radialGradient id="map-star-glow"><stop offset="0" stop-color="#f1f8ff" stop-opacity=".8"/><stop offset=".24" stop-color="#d8e8ff" stop-opacity=".22"/><stop offset="1" stop-color="#acc8f0" stop-opacity="0"/></radialGradient></defs><g class="map-world"><g class="map-regions" aria-hidden="true"></g><g class="map-edges" aria-hidden="true"></g><g class="map-nodes"></g><g class="atlas-systems"></g><g class="atlas-problems"></g></g></svg>
           <div class="map-canvas-top"><span><i aria-hidden="true"></i> 研究地图</span><span>{len(data['papers'])} 篇论文 / 按问题探索</span></div>
           <div class="map-controls" role="group" aria-label="地图缩放"><button type="button" data-camera="in" aria-label="放大地图">+</button><button type="button" data-camera="out" aria-label="缩小地图">−</button><span id="map-zoom" aria-live="off">100%</span><button type="button" data-camera="fit" aria-label="显示当前筛选的全部论文">全览 <span aria-hidden="true">↗</span></button></div>
-          <p id="map-help" class="map-help">拖动平移 · Ctrl / ⌘ + 滚轮缩放 · 方向键选择</p>
           <p class="map-empty" hidden>没有匹配论文。<br><button type="button" data-map-reset>清空筛选</button></p>
           <div class="map-hover-card" hidden aria-hidden="true"></div>
         </div>
+        <p id="map-help" class="map-help">拖动平移 · Ctrl / ⌘ + 滚轮缩放 · 方向键选择</p>
         <div class="map-list-wrap"><p class="map-list-intro">按主题浏览全部书目。选择论文查看资源，也可直接进入完整详情。</p><ul class="map-paper-list">{rows}</ul><p class="map-list-empty" hidden>没有匹配论文。<button type="button" data-map-reset>清空筛选</button></p></div>
       </div>
       <aside class="map-sidebar" aria-label="论文详情与资源">

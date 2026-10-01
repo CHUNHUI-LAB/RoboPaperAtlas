@@ -22,3 +22,8 @@ class MapReadabilityTests(unittest.TestCase):
   css=(ROOT/'assets/paper-map.css').read_text()
   for rule in ['.paper-map .map-list-copy strong{font-size:17px', '.paper-map .map-panel-welcome>p:not(.eyebrow),.paper-map .map-panel-summary{font-size:16px', '.paper-map .map-classification-evidence small,.paper-map .map-panel-note,.paper-map .map-original-tags-label{font-size:14px', '.paper-map .map-stage-list,.paper-map .map-resource-links{grid-template-columns:1fr}']:
    self.assertIn(rule,css)
+
+ def test_help_row_does_not_overlay_canvas_and_is_absent_in_list_mode(self):
+  css=(ROOT/'assets/paper-map.css').read_text()
+  self.assertIn('.paper-map .map-help{position:static;inset:auto;',css)
+  self.assertIn('.paper-map[data-view=list] .map-help{display:none}',css)

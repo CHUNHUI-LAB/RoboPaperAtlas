@@ -87,3 +87,8 @@
 }
 .paper-map[data-view=list] .map-panel-authors,.paper-map[data-view=list] .map-panel-topic-full,.paper-map[data-view=list] .map-panel-note,.paper-map .map-list-copy small,.paper-map .map-list-intro,.paper-map .map-legend,.paper-map .map-legend p:last-child{color:#596575}
 .paper-map[data-view=map] .map-stage-list a{font-size:15px;line-height:1.7}
+
+/* Keep instructions outside the SVG plotting area so larger labels cannot overlap them. */
+.paper-map .map-help{position:static;inset:auto;margin:0;padding:16px 24px 18px;background:#0c111a;border-top:1px solid #8ea6c014;font-size:13px;line-height:1.8;color:#a5b4c8}
+.paper-map[data-view=list] .map-help{display:none}
+@media(max-width:760px){.paper-map .map-help{padding:14px 18px;font-size:13px}}
