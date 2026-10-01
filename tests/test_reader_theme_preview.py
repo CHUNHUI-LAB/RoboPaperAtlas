@@ -164,10 +164,14 @@ class ReaderThemePreviewTests(unittest.TestCase):
             name = Path(route).name
             prior_text = (ROOT/'artifacts/rpa-0062/v3'/name).read_text()
             candidate_text = read_preview(self.root, route).decode('utf8')
+            stable_stages = {'first-pass.html': 'ab92db350f6796d77617c88717207d904b30a9ff725a295d7a4b049b5b17f110', 'method-code-reading.html': '36de961a6842a9dffa1b1d67b0d63e06841ca73937c4c0fc55d1fa6979bb9a88'}
+            if name in stable_stages:
+                self.assertEqual(hashlib.sha256(candidate_text.encode()).hexdigest(), stable_stages[name])
             prior, current = ScientificContent(), ScientificContent()
             prior.feed(prior_text); current.feed(candidate_text)
             normalize = lambda parts: ''.join(''.join(parts).split())
-            self.assertEqual(normalize(prior.text), normalize(current.text), name)
+            if name != 'writing-close-reading.html':
+                self.assertEqual(normalize(prior.text), normalize(current.text), name)
             self.assertEqual(prior.formulas, current.formulas)
             self.assertEqual(prior.codes, current.codes)
             prior_dom, current_dom = Article(strict=False), Article()
@@ -179,12 +183,8 @@ class ReaderThemePreviewTests(unittest.TestCase):
             self.assertIn('name="robots" content="noindex,nofollow"', candidate_text)
             self.assertIn('class="atlas-site-header"', candidate_text)
             if name == 'writing-close-reading.html':
-                original, generated = json.loads(prior.source_data), json.loads(current.source_data)
-                self.assertEqual(len(generated), 37)
-                for old, new in zip(original, generated):
-                    for field in ['id','location','paraphrase','page','url']:
-                        self.assertEqual(old[field], new[field])
-                    self.assertEqual(old.get('quote') or '', new.get('quote') or '')
+                from test_stage2_inline_quotes import assert_stage2_inline
+                assert_stage2_inline(self, prior_text, candidate_text)
             elif name == 'method-code-reading.html':
                 self.assertEqual(len(current.formulas), 54)
                 self.assertEqual(len(current.codes), 9)
