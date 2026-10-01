@@ -1,0 +1,172 @@
+://openfontlicense.org/documents/OFL.txt
+
+-----------------------------------------------------------
+SIL OPEN FONT LICENSE Version 1.1 - 26 February 2007
+-----------------------------------------------------------
+
+PREAMBLE
+The goals of the Open Font License (OFL) are to stimulate worldwide
+development of collaborative font projects, to support the font creation
+efforts of academic and linguistic communities, and to provide a free and
+open framework in which fonts may be shared and improved in partnership
+with others.
+The OFL allows the licensed fonts to be used, studied, modified and
+redistributed freely as long as they are not sold by themselves. The
+fonts, including any derivative works, can be bundled, embedded,
+redistributed and/or sold with any software provided that any reserved
+names are not used by derivative works. The fonts and derivatives,
+however, cannot be released under any other type of license. The
+requirement for fonts to remain under this license does not apply
+to any document created using the fonts or their derivatives.
+DEFINITIONS
+&quot;Font Software&quot; refers to the set of files released by the Copyright
+Holder(s) under this license and clearly marked as such. This may
+include source files, build scripts and documentation.
+
+&quot;Reserved Font Name&quot; refers to any names specified as such after the
+copyright statement(s).
+
+&quot;Original Version&quot; refers to the collection of Font Software components as
+distributed by the Copyright Holder(s).
+&quot;Modified Version&quot; refers to any derivative made by adding to, deleting,
+or substituting -- in part or in whole -- any of the components of the
+Original Version, by changing formats or by porting the Font Software to a
+new environment.
+
+&quot;Author&quot; refers to any designer, engineer, programmer, technical
+writer or other person who contributed to the Font Software.
+PERMISSION &amp; CONDITIONS
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of the Font Software, to use, study, copy, merge, embed, modify,
+redistribute, and sell modified and unmodified copies of the Font
+Software, subject to the following conditions:
+
+1) Neither the Font Software nor any of its individual components,
+in Original or Modified Versions, may be sold by itself.
+2) Original or Modified Versions of the Font Software may be bundled,
+redistributed and/or sold with any software, provided that each copy
+contains the above copyright notice and this license. These can be
+included either as stand-alone text files, human-readable headers or
+in the appropriate machine-readable metadata fields within text or
+binary files as long as those fields can be easily viewed by the user.
+3) No Modified Version of the Font Software may use the Reserved Font
+Name(s) unless explicit written permission is granted by the corresponding
+Copyright Holder. This restriction only applies to the primary font name as
+presented to the users.
+4) The name(s) of the Copyright Holder(s) or the Author(s) of the Font
+Software shall not be used to promote, endorse or advertise any
+Modified Version, except to acknowledge the contribution(s) of the
+Copyright Holder(s) and the Author(s) or with their explicit written
+permission.
+5) The Font Software, modified or unmodified, in part or in whole,
+must be distributed entirely under this license, and must not be
+distributed under any other license. The requirement for fonts to
+remain under this license does not apply to any document created
+using the Font Software.
+
+TERMINATION
+This license becomes null and void if any of the above conditions are
+not met.
+DISCLAIMER
+THE FONT SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT
+OF COPYRIGHT, PATENT, TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL
+DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
+OTHER DEALINGS IN THE FONT SOFTWARE.
+</pre></details><div class="reader-toast" role="status" aria-live="polite" hidden></div><script>/* Reader controls only: no models, analytics, remote scripts or automatic PDF fetch. */
+(() => {
+ 'use strict';
+ const page=document.querySelector('.reader-page');if(!page)return;
+ const reduced=matchMedia('(prefers-reduced-motion: reduce)'),toc=page.querySelector('.reader-toc'),tocButton=page.querySelector('.reader-toc-toggle');
+ const compact=matchMedia('(max-width:767px)'),position=page.querySelector('.reader-position'),previousSection=page.querySelector('[data-reader-previous]'),nextSection=page.querySelector('[data-reader-next]'),sectionLabel=page.querySelector('[data-reader-section-label]');let currentSection=0,programmaticTarget=null;
+ const sections=[...page.querySelectorAll('.reader-article>section[id]')],tocLinks=[...toc.querySelectorAll('a[href^="#"]')];
+ let frame=0,toastTimer=0,toast=document.querySelector('.reader-toast');
+ const siteHeader=document.querySelector('.atlas-site-header'),stagebar=page.querySelector('.reader-stagebar');
+ function syncChrome(){
+  if(!siteHeader||!stagebar)return;
+  const headerHeight=siteHeader.getBoundingClientRect().height,barHeight=stagebar.getBoundingClientRect().height;
+  if(!(headerHeight>0&&barHeight>0))return;
+  document.documentElement.style.setProperty('--atlas-header-height',headerHeight+'px');
+  document.documentElement.style.setProperty('--reader-chrome-bottom',(headerHeight+barHeight)+'px');
+  document.documentElement.style.setProperty('--reader-anchor-offset',(headerHeight+barHeight+16)+'px');
+ }
+ syncChrome();
+ function announce(message){clearTimeout(toastTimer);toast.textContent=message;toast.hidden=false;toastTimer=setTimeout(()=>{toast.hidden=true;},2400);}
+ function selectSection(index){
+  currentSection=Math.max(0,Math.min(sections.length-1,index));
+  tocLinks.forEach(link=>{const active=link.hash==='#'+sections[currentSection]?.id;link.classList.toggle('is-current',active);if(active)link.setAttribute('aria-current','location');else link.removeAttribute('aria-current');});
+  if(position)position.textContent=String(currentSection+1).padStart(2,'0')+' / '+String(sections.length).padStart(2,'0');
+  if(previousSection)previousSection.disabled=currentSection===0;if(nextSection)nextSection.disabled=currentSection===sections.length-1;
+  if(sectionLabel)sectionLabel.textContent=tocLinks[currentSection]?.textContent||'';
+ }
+ function updatePosition(){
+  frame=0;const offset=Number.parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop)||144;
+  const effectiveTop=section=>section.getBoundingClientRect().top-(Number.parseFloat(getComputedStyle(section).scrollMarginTop)||0);
+  const atBottom=Number.isFinite(window.scrollY)&&window.scrollY>0&&window.innerHeight+window.scrollY>=document.documentElement.scrollHeight-2;
+  if(programmaticTarget!==null){
+   const targetTop=effectiveTop(sections[programmaticTarget]);
+   if(Math.abs(targetTop-offset)<=6||(atBottom&&targetTop>=offset-6))programmaticTarget=null;
+   else{selectSection(programmaticTarget);return;}
+  }
+  let current=sections[0];for(const section of sections){if(effectiveTop(section)<=offset+6)current=section;else break;}
+  if(atBottom)current=sections[sections.length-1];selectSection(Math.max(0,sections.indexOf(current)));
+ }
+
+ const schedule=()=>{if(!frame&&!document.hidden)frame=requestAnimationFrame(updatePosition);};
+ window.addEventListener('scroll',schedule,{passive:true});window.addEventListener('resize',()=>{syncChrome();schedule();});window.addEventListener('hashchange',()=>{programmaticTarget=null;schedule();});window.addEventListener('pageshow',()=>{syncChrome();schedule();});
+ if(typeof ResizeObserver==='function'&&siteHeader&&stagebar){const chromeObserver=new ResizeObserver(()=>{syncChrome();schedule();});chromeObserver.observe(siteHeader);chromeObserver.observe(stagebar);}
+ const interruptScroll=()=>{programmaticTarget=null;schedule();};
+ const isSectionControl=target=>[previousSection,nextSection,tocButton,...tocLinks].some(control=>control&&(control===target||control.contains(target)));
+ const pointerIntent=e=>{if(!isSectionControl(e.target))interruptScroll();};
+ window.addEventListener('wheel',interruptScroll,{passive:true});window.addEventListener('touchstart',pointerIntent,{passive:true});window.addEventListener('touchmove',interruptScroll,{passive:true});window.addEventListener('pointerdown',pointerIntent,{passive:true});
+ window.addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','PageUp','PageDown','Home','End'].includes(e.key)||(e.key===' '&&!isSectionControl(e.target)))interruptScroll();});
+ // A prior animation can emit scrollend after a newer navigation has started.
+ // Only geometry (above) or genuine manual intent may settle that new target.
+ window.addEventListener('scrollend',schedule);
+ document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelAnimationFrame(frame);frame=0;programmaticTarget=null;}else schedule();});
+ function closeToc(restore=false){toc.classList.remove('is-open');toc.inert=compact.matches;tocButton.setAttribute('aria-expanded','false');if(restore)tocButton.focus({preventScroll:true});}
+ tocButton.addEventListener('click',()=>{const open=!toc.classList.contains('is-open');toc.classList.toggle('is-open',open);toc.inert=compact.matches&&!open;tocButton.setAttribute('aria-expanded',String(open));if(open){const target=toc.querySelector('.is-current')||tocLinks[0];target?.focus({preventScroll:true});if(target)toc.scrollTop=Math.max(0,target.offsetTop-toc.clientHeight/2);}});
+ tocLinks.forEach(link=>link.addEventListener('click',e=>{if(e.defaultPrevented||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey||e.button>0)return;const index=sections.findIndex(section=>'#'+section.id===link.hash);if(index<0)return;e.preventDefault();closeToc();history.pushState(null,'',link.hash);goSection(index);}));
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&toc.classList.contains('is-open')&&!document.querySelector('dialog[open]')){e.preventDefault();closeToc(true);}});
+ document.addEventListener('focusin',e=>{if(toc.classList.contains('is-open')&&e.target!==tocButton&&!toc.contains(e.target))closeToc();});
+ compact.addEventListener?.('change',()=>{closeToc(compact.matches&&toc.contains(document.activeElement));schedule();});toc.inert=compact.matches;
+ function goSection(index){const target=sections[index];if(!target)return;
+  // Focus can interrupt an in-flight browser scroll even with preventScroll.
+  // Finish focus changes first, then make this navigation the last scroll request.
+  target.focus({preventScroll:true});programmaticTarget=index;selectSection(index);target.scrollIntoView({block:'start',behavior:reduced.matches?'auto':'smooth'});
+ }
+ previousSection?.addEventListener('click',()=>goSection(currentSection-1));nextSection?.addEventListener('click',()=>goSection(currentSection+1));
+ const copies=new WeakMap();
+ page.querySelectorAll('[data-copy-code]').forEach(button=>button.addEventListener('click',async()=>{
+  const holder=button.closest('.code-reader'),lines=[...holder.querySelectorAll('.code-text')].map(line=>line.textContent),token=(copies.get(button)||0)+1;copies.set(button,token);
+  try{await navigator.clipboard.writeText(lines.join('\n'));if(copies.get(button)===token&&button.isConnected)announce('代码片段已复制，未包含行号');}
+  catch{if(copies.get(button)===token&&button.isConnected)announce('未能访问剪贴板，可在代码框中手动选择复制');}
+ }));
+ page.querySelectorAll('[data-code-focus]').forEach(button=>button.addEventListener('click',()=>{
+  const holder=button.closest('.code-reader'),active=!holder.classList.contains('is-focused');holder.classList.toggle('is-focused',active);button.setAttribute('aria-pressed',String(active));
+  const pre=holder.querySelector('pre'),first=holder.querySelector('.code-line.is-key');
+  if(active&&first)pre.scrollTo({top:Math.max(0,first.offsetTop-pre.clientHeight/3),behavior:reduced.matches?'auto':'smooth'});
+ }));
+ const sourceData=page.querySelector('[data-source-units]');
+ if(sourceData){
+  let units=[];try{units=JSON.parse(sourceData.textContent);}catch{};
+  const panel=page.querySelector('.reader-source-panel'),rows=page.querySelectorAll('[data-source-row]'),buttons=page.querySelectorAll('[data-source-unit]');let selected=0;
+  const show=(id,scroll=false)=>{const index=units.findIndex(x=>x.id===id);if(index<0)return;selected=index;const unit=units[index];
+   panel.querySelector('[data-source-id]').textContent=unit.id;panel.querySelector('[data-source-location]').textContent=unit.location;panel.querySelector('[data-source-paraphrase]').textContent=unit.paraphrase;
+   const quote=panel.querySelector('[data-source-quote]');quote.hidden=!unit.quote;quote.textContent=unit.quote||'';
+   const a=panel.querySelector('[data-source-open]');a.href=unit.url;a.textContent=(unit.link_label||'打开原文位置')+' ↗';
+   panel.querySelector('[data-source-previous]').disabled=index===0;panel.querySelector('[data-source-next]').disabled=index===units.length-1;
+   rows.forEach(row=>(row.closest('.source-row')||row).classList.toggle('is-current',row.dataset.sourceRow===id));buttons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.sourceUnit===id)));
+   if(scroll){interruptScroll();page.querySelector('[data-source-row="'+CSS.escape(id)+'"]')?.scrollIntoView({block:'start',behavior:reduced.matches?'auto':'smooth'});}
+  };
+  buttons.forEach(b=>b.addEventListener('click',()=>{show(b.dataset.sourceUnit);if(innerWidth<=1050){const unit=units.find(x=>x.id===b.dataset.sourceUnit);announce(unit?.location||'已选择原文位置');}}));
+  panel.querySelector('[data-source-previous]').addEventListener('click',()=>show(units[Math.max(0,selected-1)].id,true));panel.querySelector('[data-source-next]').addEventListener('click',()=>show(units[Math.min(units.length-1,selected+1)].id,true));
+  const toggle=page.querySelector('[data-source-toggle]');toggle?.addEventListener('click',()=>{const off=page.classList.toggle('reader-source-collapsed');toggle.setAttribute('aria-pressed',String(!off));});if(units.length)show(units[0].id);
+ }
+ updatePosition();
+})();
+</script></body></html>

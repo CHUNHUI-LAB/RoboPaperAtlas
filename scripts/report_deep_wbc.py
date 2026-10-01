@@ -1,4 +1,4 @@
-"""Explicitly reviewed Deep WBC Stage 1/2 documents, not a general HTML uploader.
+"""Explicitly reviewed Deep WBC Stage 1/2/3 documents, not a general HTML uploader.
 
 The content approval does not claim browser QA. Whole-document and reader-script
 fingerprints are required before parsing the remaining HTML with all existing
@@ -29,6 +29,7 @@ POLICY_PATHS = {
     ('stage1','v1','first-pass.html'): 'data/report-rpa-0012-v1-policy.json',
     ('stage1','v2','first-pass.html'): 'data/report-rpa-0012-v2-policy.json',
     ('stage2','v1','writing-close-reading.html'): 'data/report-rpa-0012-stage2-v1-policy.json',
+    ('stage3','v1','method-code-reading.html'): 'data/report-rpa-0012-stage3-v1-policy.json',
 }
 
 class DeepWBCWritingReader(DeepWBCReader):
@@ -65,7 +66,7 @@ def prepare(root, record, payload):
             'Unapproved Deep WBC reader identity')
     policy = json.loads(_read(root, POLICY_PATHS[key], 20000).decode(),
                         object_pairs_hook=_json_object)
-    _keys(policy, POLICY_FIELDS, 'Deep WBC policy')
+    _keys(policy, POLICY_FIELDS | ({'style_sha256'} if record['stage'] == 'stage3' else set()), 'Deep WBC policy')
     require(all(policy[k] == v for k,v in identity.items()), 'Wrong paper/stage reader policy')
     for key in ('document_sha256','script_sha256','source_pdf_sha256'):
         _digest(policy[key], 'Reader fingerprint')
@@ -80,5 +81,8 @@ def prepare(root, record, payload):
     # Only the one exact reviewed script is removed from the strict parser input.
     # Other script tags/attributes remain and are rejected by ReportHTML.
     text=re.sub(r'<script>.*?</script>','',text,count=1,flags=re.S)
+    if record['stage'] == 'stage3':
+        from report_deep_wbc_method import prepare_style, DeepWBCMethodReader
+        return prepare_style(text, policy), DeepWBCMethodReader(record['filename'], record['paper_id'])
     parser = DeepWBCWritingReader if record['stage'] == 'stage2' else DeepWBCReader
     return text,parser(record['filename'],record['paper_id'])

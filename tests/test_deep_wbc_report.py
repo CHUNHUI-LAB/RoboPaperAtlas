@@ -58,13 +58,13 @@ class DeepWBCReportTests(unittest.TestCase):
   deep=self.add_deep();self.write_registry([deep]);self.assertEqual(r.load_reports(self.root),[deep])
   self.assertIn(b'href="../../../papers/rpa-0012/index.html"',self.payload)
   self.assertNotIn(b'private-atlas',self.payload);self.assertNotIn(b'references/atlas-theme.md',self.payload)
- def test_stage_metadata_public_page_and_unchanged_future_stages(self):
-  records=r.load_reports(ROOT);self.assertEqual(len(records),12);self.assertEqual(validate_catalog(self.catalog,records),95)
+ def test_stage_metadata_public_page_and_actual_stage_links(self):
+  records=r.load_reports(ROOT);self.assertEqual(len(records),13);self.assertEqual(validate_catalog(self.catalog,records),95)
   paper=next(x for x in self.catalog['papers'] if x['id']=='rpa-0012')
   self.assertEqual(paper['stages']['stage1'],expected_stage('rpa-0012','stage1',records));self.assertEqual(paper['stages']['stage1']['artifacts'][0]['review_status'],'content_approved')
-  for stage in ['stage3']:self.assertEqual(paper['stages'][stage],dict(status='not_imported',artifacts=[]))
-  page=details(paper);self.assertIn('2 个已导入报告',page);self.assertIn('初读内容已审阅',page);self.assertEqual(page.count('class="unavailable"'),1);self.assertIn('../../artifacts/rpa-0012/v1/first-pass.html',page)
-  self.assertIn('writing-close-reading.html',page);self.assertNotIn('method-code-reading.html',page)
+  self.assertEqual(paper['stages']['stage3'],expected_stage('rpa-0012','stage3',records))
+  page=details(paper);self.assertIn('3 个已导入报告',page);self.assertIn('初读内容已审阅',page);self.assertEqual(page.count('class="unavailable"'),0);self.assertIn('../../artifacts/rpa-0012/v1/first-pass.html',page)
+  self.assertIn('writing-close-reading.html',page);self.assertIn('method-code-reading.html',page)
   page=about(5,records);self.assertIn('../papers/rpa-0012/index.html#reading',page);self.assertIn('../papers/rpa-0062/index.html#reading',page)
  def test_source_pdf_and_content_fingerprints_are_explicit(self):
   self.assertEqual(self.record['source_sha256'],'96751c541e226404e10820771bd26dc97ced5770fe30520e3bba6db78743536b')

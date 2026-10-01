@@ -43,10 +43,10 @@ class DeepWBCWritingTests(unittest.TestCase):
   for payload in bad:
    policy=dict(self.policy);policy['document_sha256']=r.sha(payload);self.write_policy(policy)
    with self.assertRaises(ValueError):r.split_report(self.root,self.record,payload)
- def test_stage1_bytes_and_history_unchanged_stage3_unavailable(self):
+ def test_prior_bytes_and_disabled_link_in_immutable_stage2_preserved(self):
   stage1=[x for x in self.records if x['paper_id']=='rpa-0012' and x['stage']=='stage1'];self.assertEqual({x['version']:x['sha256'] for x in stage1},{'v1':'d2d80d400328afe4adac2e94d4761ce87d51dcdb000c5bd7e5bca22e3be357b1','v2':'70c9a4ceb870685d2e332305d9a2906756185ef4a2ae0f94e62a93bafc9e3950'})
   paper=next(x for x in json.loads((ROOT/'data/catalog.json').read_text())['papers'] if x['id']=='rpa-0012');page=details(paper)
-  self.assertEqual(paper['stages']['stage3'],{'status':'not_imported','artifacts':[]});self.assertEqual(page.count('class="unavailable"'),1)
+  self.assertEqual(paper['stages']['stage3']['status'],'imported');self.assertEqual(page.count('class="unavailable"'),0)
   self.assertIn('初读内容已审阅',page);self.assertIn('写作内容已审阅',page);self.assertIn('../../artifacts/rpa-0012/v1/writing-close-reading.html',page)
   self.assertIn('https://chunhui-lab.github.io/RoboPaperAtlas/artifacts/rpa-0012/v2/first-pass.html',self.text)
   self.assertIn('<span aria-disabled="true" title="此阶段报告尚未提供"><small>03</small>方法与代码</span>',self.text)

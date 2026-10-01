@@ -45,7 +45,7 @@ REPORT_PAPERS = {
     },
     'rpa-0012': {
         'title': 'Deep Whole-Body Control',
-        'versions': {'v1': {'stage1', 'stage2'}, 'v2': {'stage1'}},
+        'versions': {'v1': {'stage1', 'stage2', 'stage3'}, 'v2': {'stage1'}},
         'review_status': 'content_approved',
         'source_urls': {'https://proceedings.mlr.press/v205/fu23a.html'},
         'pdf_urls': {'https://proceedings.mlr.press/v205/fu23a/fu23a.pdf'},

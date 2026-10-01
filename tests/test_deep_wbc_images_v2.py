@@ -44,11 +44,11 @@ class DeepWBCImageV2Tests(unittest.TestCase):
   self.assertEqual(hashlib.sha256(self.pages['v1'].encode()).hexdigest(),'d2d80d400328afe4adac2e94d4761ce87d51dcdb000c5bd7e5bca22e3be357b1')
   for v in ['v1','v2']:
    self.assertEqual(hashlib.sha256(re.search(r'<script>(.*?)</script>',self.pages[v],re.S)[1].encode()).hexdigest(),'d6a59075a1b640bb5abca8f6a34d32041ac211b68f959e20adaf51e5019d2798')
- def test_v2_is_current_with_v1_history_and_no_future_stage_promotion(self):
+ def test_v2_is_current_with_v1_history_preserved(self):
   cat=json.loads((ROOT/'data/catalog.json').read_text());p=next(x for x in cat['papers'] if x['id']=='rpa-0012')
   self.assertEqual(p['stages']['stage1'],expected_stage('rpa-0012','stage1',self.records))
   self.assertEqual([x['version'] for x in p['stages']['stage1']['artifacts']],['v2','v1'])
-  for stage in ['stage3']:self.assertEqual(p['stages'][stage],{'status':'not_imported','artifacts':[]})
+  self.assertEqual(p['stages']['stage3']['status'],'imported')
   self.assertEqual(len([x for x in self.records if x['paper_id']=='rpa-0062']),9)
  def test_policy_versions_are_separate_and_source_edition_is_unchanged(self):
   a=json.loads((ROOT/'data/report-rpa-0012-v1-policy.json').read_text());b=json.loads((ROOT/'data/report-rpa-0012-v2-policy.json').read_text())

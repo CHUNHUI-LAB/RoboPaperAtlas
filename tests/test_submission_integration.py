@@ -34,7 +34,7 @@ class SubmissionIntegrationTests(unittest.TestCase):
             self.assertEqual((target/'submit-preview/data/venues.json').read_bytes(),
                              (ROOT/'submit-preview/data/venues.json').read_bytes())
             self.assertFalse((target/'submit/data').exists())
-            self.assertEqual(len(json.loads((target/'submit-preview/data/venues.json').read_text())['experiences']['records']), 2)
+            self.assertEqual(len(json.loads((target/'submit-preview/data/venues.json').read_text())['experiences']['records']), 3)
             page = (target/'submit/index.html').read_text()
             self.assertEqual(page.count('id="main-nav"'), 1)
             self.assertEqual(page.count('id="main"'), 1)

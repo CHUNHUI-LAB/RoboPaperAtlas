@@ -74,17 +74,21 @@
    if(current!==requestId||!drawer.open)return;
    const p=catalog.papers.find(p=>p.id===id);if(!p)throw new Error('Paper unavailable');
    const overlay=p.verified_overlay||{},title=overlay.title||p.title,a=overlay.authors||p.authors,authors=Array.isArray(a)?a.join(', '):a;
-   body.replaceChildren();body.append(text('p',(p.bibliographic_year||'年份待核验')+' · '+(p.citation_verified?'来源已核验':'原始书目待核验'),'drawer-kicker'));
-   const h=text('h2',title);h.id='drawer-title';body.append(h,text('p',authors,'drawer-authors'),text('p',p.summary||'已收录原始书目，题名、作者与年份尚待来源核验。','drawer-summary'));
+   const presentation=globalThis.RoboPaperPresentation;
+   body.replaceChildren();body.append(text('p',(p.bibliographic_year||'年份待核验')+' · '+presentation.metadataLabel(p),'drawer-kicker'));
+   if(presentation.overlayStatus(p))body.append(text('p','原始书目：'+(p.citation_verified?'已核验。':'保留原始记录，尚未核验。')+'补充书目的核验与原始记录状态分开保存。','drawer-note'));
+   const h=text('h2',title);h.id='drawer-title';body.append(h,text('p',authors,'drawer-authors'),text('p',p.summary||(presentation.overlayStatus(p)?'当前显示独立核验后的书目；原始记录仍单独保留。':'已收录原始书目，题名、作者与年份尚待来源核验。'),'drawer-summary'));
    if(button.dataset.directionLabel)body.append(text('p',button.dataset.directionLabel+' / '+button.dataset.problemLabel,'drawer-taxonomy'));
    const resources=document.createElement('div');resources.className='drawer-resources';
    for(const [url,label] of [[p.pdf_url,p.pdf_kind==='publisher'?'出版方 PDF ↗':'预印本替代 PDF ↗'],[p.paper_url,'出版 / 论文页面 ↗'],[p.project_url,'官方项目 ↗']]){if(url){const a=safeLink(url,label);if(a){a.target='_blank';a.rel='noopener noreferrer';resources.append(a)}}}
    if(resources.children.length)body.append(resources);
    const reports=document.createElement('div');reports.className='drawer-resources';
-   for(const [i,name]of ['初读','写作精读','方法精读'].entries()){const stage=p.stages?.['stage'+(i+1)],artifact=stage?.status==='imported'?stage.artifacts[0]:null;if(artifact&&/^artifacts\/rpa-0062\/v[123]\/(first-pass|writing-close-reading|method-code-reading)\.html$/.test(artifact.path)){const a=safeLink(root+artifact.path,'S'+(i+1)+' '+name+' ↗');if(a)reports.append(a)}}
+   const available=presentation.currentReports(p);
+   for(const item of available){const a=safeLink(root+item.path,'S'+item.index+' '+item.label+' ↗');if(a)reports.append(a)}
    if(reports.children.length)body.append(reports);
-   body.append(text('p',reports.children.length?'已导入独立阅读报告。代码分析有明确范围，不代表已运行实验或独立复现。':'阅读档案尚未导入。来源核验不代表已完成论文阅读、代码审计或独立复现。','drawer-note'));
-   if(p.pdf_note)body.append(text('p',p.pdf_note,'drawer-note'));
+   body.append(text('p',available.length?'已导入独立阅读报告；导入状态不等于全文已核验，具体阅读范围与未核验项见各阶段报告。':'当前没有可显示的已导入阅读报告；来源核验不代表已完成论文阅读、代码审计或独立复现。','drawer-note'));
+   for(const item of available)if(item.artifact.source_edition)body.append(text('p','已导入报告所用版本 · S'+item.index+' '+item.artifact.version+'：'+item.artifact.source_edition,'drawer-note'));
+   if(p.pdf_note){body.append(text('p',presentation.pdfNoteHeading(p),'drawer-note'));body.append(text('p',p.pdf_note,'drawer-note'))}
    const full=safeLink(root+'papers/'+encodeURIComponent(id)+'/index.html','打开完整详情 ↗','primary-link');if(full)body.append(full);
   }catch(e){pending=null;if(current!==requestId)return;body.replaceChildren();const h=text('h2','暂时无法载入速览');h.id='drawer-title';body.append(h,text('p','可以直接打开完整论文详情。','drawer-summary'));const a=safeLink(root+'papers/'+encodeURIComponent(id)+'/index.html','打开完整详情 ↗','primary-link');if(a)body.append(a)}
  }
