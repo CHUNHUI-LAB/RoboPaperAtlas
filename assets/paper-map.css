@@ -92,3 +92,7 @@
 .paper-map .map-help{position:static;inset:auto;margin:0;padding:16px 24px 18px;background:#0c111a;border-top:1px solid #8ea6c014;font-size:13px;line-height:1.8;color:#a5b4c8}
 .paper-map[data-view=list] .map-help{display:none}
 @media(max-width:760px){.paper-map .map-help{padding:14px 18px;font-size:13px}}
+
+/* Only rendered labels receive native pointer events (including optional touch map). */
+.map-node.is-label .map-node-label,.map-node:focus .map-node-label,.map-node.is-selected .map-node-label{pointer-events:all;cursor:pointer}
+.paper-map[data-level=galaxy] .map-node-label{pointer-events:none}

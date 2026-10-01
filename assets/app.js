@@ -41,6 +41,7 @@
     if(view==='list')q.set('view','list');
     const next = window.location.pathname + (q.size ? '?' + q.toString() : '') + window.location.hash;
     window.history.replaceState(null, '', next);
+    document.dispatchEvent(new CustomEvent('catalog:updated'));
   }
   function apply(reset = true, save = true) {
     if (reset) limit = 24;
@@ -66,9 +67,9 @@
     const label=document.querySelector('#catalog-search-label');if(label)label.textContent=search.value.trim()||'搜索标题、作者或关键词';
     topicButtons.forEach(b => { const active = b.dataset.topic === topic; b.classList.toggle('active', active); b.setAttribute('aria-pressed', String(active)); });
     methodButtons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.methodChip===method.value)));
-    document.dispatchEvent(new CustomEvent('catalog:updated'));
     if(chips){chips.replaceChildren();const active=[];if(search.value.trim())active.push(['关键词：'+search.value.trim(),()=>search.value='']);if(topic!=='all')active.push([topicButtons.find(b=>b.dataset.topic===topic).querySelector('span').textContent,()=>topic='all']);if(direction.value!=='all')active.push(['细分方向：'+direction.selectedOptions[0].textContent,()=>direction.value='all']);if(method.value!=='all')active.push(['方法：'+method.selectedOptions[0].textContent,()=>method.value='all']);if(resource.value!=='all')active.push(['资源：'+resource.selectedOptions[0].textContent,()=>resource.value='all']);if(year.value!=='all')active.push(['出版年：'+year.selectedOptions[0].textContent,()=>year.value='all']);if(status.value!=='all')active.push([status.selectedOptions[0].textContent,()=>status.value='all']);for(const [label,clear] of active){const b=document.createElement('button');b.type='button';b.textContent=label+' ×';b.setAttribute('aria-label','移除筛选 '+label);b.addEventListener('click',()=>{clear();apply()});chips.append(b)}if(active.length){const b=document.createElement('button');b.type='button';b.className='clear-all';b.textContent='清除全部';b.addEventListener('click',()=>{search.value='';topic='all';year.value='all';status.value='all';method.value='all';resource.value='all';direction.value='all';apply()});chips.append(b)}chips.hidden=!active.length}
     if (save) updateQuery();
+    else document.dispatchEvent(new CustomEvent('catalog:updated'));
   }
   methodButtons.forEach(b=>b.addEventListener('click',()=>{method.value=method.value===b.dataset.methodChip?'all':b.dataset.methodChip;apply()}));
   viewButtons.forEach(b=>b.addEventListener('click',()=>{view=b.dataset.view;syncView();updateQuery()}));

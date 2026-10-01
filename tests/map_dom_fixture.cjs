@@ -39,7 +39,15 @@ function fixture(options={}){
   emit(type,input={}){const e={type,target:this,currentTarget:this,preventDefault(){this.defaultPrevented=true},stopPropagation(){this.stopped=true},...input};let at=this;while(at){e.currentTarget=at;for(const fn of(at.listeners[type]||[]))fn(e);if(e.stopped||input.bubbles===false)break;at=at.parentElement}return e}
   focus(){const old=document.activeElement;document.activeElement=this;if(old&&old!==this)old.emit('focusout');this.emit('focusin');this.emit('focus',{bubbles:false})}
   scrollIntoView(){this.scrolled=true}getAnimations(){return []}
-  getBoundingClientRect(){return {x:0,y:0,left:0,top:0,width:this.closest('[hidden]')?0:options.mobile?350:970,height:this.closest('[hidden]')?0:options.mobile?470:690}}
+  getBoundingClientRect(){
+   if(this.classList.contains('map-node-label')){
+    const world=this.closest('.map-world').getAttribute('transform').match(/translate\(([-\d.]+) ([-\d.]+)\) scale\(([-\d.]+)\)/),point=this.parentElement.getAttribute('transform').match(/translate\(([-\d.]+) ([-\d.]+)\)/),k=Number(world[3]);
+    const left=Number(world[1])+(Number(point[1])+Number(this.getAttribute('x')))*k,top=Number(world[2])+(Number(point[2])+Number(this.getAttribute('y')))*k-12;
+    const width=this.closest('[hidden]')?0:this.textContent.length*8,height=this.closest('[hidden]')?0:16;
+    return {x:left,y:top,left,top,width,height,right:left+width,bottom:top+height};
+   }
+   return {x:0,y:0,left:0,top:0,width:this.closest('[hidden]')?0:options.mobile?350:970,height:this.closest('[hidden]')?0:options.mobile?470:690};
+  }
   setPointerCapture(id){this.pointerCapture=id}hasPointerCapture(id){return this.pointerCapture===id}releasePointerCapture(id){delete this.pointerCapture;this.emit('lostpointercapture',{pointerId:id,bubbles:false})}
  }
  document=new Element('#document');document.activeElement=null;document.hidden=false;document.createElement=tag=>new Element(tag);document.createElementNS=(_,tag)=>new Element(tag);document.getElementById=id=>document.querySelector('#'+id);
@@ -51,6 +59,7 @@ function fixture(options={}){
   for(const a of tag.slice(name.length).matchAll(/([^\s=\/]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s]+)))?/g))el.setAttribute(a[1],decode(a[2]??a[3]??a[4]??''));
   stack.at(-1).append(el);if(!voids.has(name)&&!tag.endsWith('/'))stack.push(el);
  }
+ document.body=document.querySelector('body');
  const window=new Element('#window');window.document=document;window.matchMedia=key=>media[key]??=(Object.assign(new Element('media'),{matches:key.includes('max-width')?!!options.mobile:!!options.reduced}));
  const historyStack=[url.href];let historyIndex=0;
  const location={get href(){return url.href},get search(){return url.search},get origin(){return url.origin},get pathname(){return url.pathname},get hash(){return url.hash}};

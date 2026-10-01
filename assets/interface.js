@@ -16,7 +16,7 @@
   status.textContent=matches.length?`找到 ${matches.length} 篇论文，显示前 ${Math.min(8,matches.length)} 篇`:'没有匹配论文，试试更短的关键词';
   for(const p of matches.slice(0,8)){
    const li=document.createElement('li'),a=document.createElement('a'),title=document.createElement('strong'),meta=document.createElement('span');
-   a.href=root+'papers/'+encodeURIComponent(p.id)+'/index.html';title.textContent=p.title;meta.textContent=p.category+' · '+p.authors;a.append(title,meta);li.append(a);results.append(li);
+   a.href=globalThis.RoboCatalogNavigation.paperHref(root+'papers/'+encodeURIComponent(p.id)+'/index.html',new URLSearchParams({q:input.value.trim()}).toString());title.textContent=p.title;meta.textContent=p.category+' · '+p.authors;a.append(title,meta);li.append(a);results.append(li);
   }
  }
  async function openSearch(){
@@ -89,8 +89,8 @@
    body.append(text('p',available.length?'已导入独立阅读报告；导入状态不等于全文已核验，具体阅读范围与未核验项见各阶段报告。':'当前没有可显示的已导入阅读报告；来源核验不代表已完成论文阅读、代码审计或独立复现。','drawer-note'));
    for(const item of available)if(item.artifact.source_edition)body.append(text('p','已导入报告所用版本 · S'+item.index+' '+item.artifact.version+'：'+item.artifact.source_edition,'drawer-note'));
    if(p.pdf_note){body.append(text('p',presentation.pdfNoteHeading(p),'drawer-note'));body.append(text('p',p.pdf_note,'drawer-note'))}
-   const full=safeLink(root+'papers/'+encodeURIComponent(id)+'/index.html','打开完整详情 ↗','primary-link');if(full)body.append(full);
-  }catch(e){pending=null;if(current!==requestId)return;body.replaceChildren();const h=text('h2','暂时无法载入速览');h.id='drawer-title';body.append(h,text('p','可以直接打开完整论文详情。','drawer-summary'));const a=safeLink(root+'papers/'+encodeURIComponent(id)+'/index.html','打开完整详情 ↗','primary-link');if(a)body.append(a)}
+   const full=safeLink(globalThis.RoboCatalogNavigation.paperHref(root+'papers/'+encodeURIComponent(id)+'/index.html',document.querySelector('#paper-grid')?window.location.search:''),'打开完整详情 ↗','primary-link');if(full)body.append(full);
+  }catch(e){pending=null;if(current!==requestId)return;body.replaceChildren();const h=text('h2','暂时无法载入速览');h.id='drawer-title';body.append(h,text('p','可以直接打开完整论文详情。','drawer-summary'));const a=safeLink(globalThis.RoboCatalogNavigation.paperHref(root+'papers/'+encodeURIComponent(id)+'/index.html',document.querySelector('#paper-grid')?window.location.search:''),'打开完整详情 ↗','primary-link');if(a)body.append(a)}
  }
  document.querySelectorAll('[data-preview]').forEach(button=>button.addEventListener('click',()=>show(button)));
 })();

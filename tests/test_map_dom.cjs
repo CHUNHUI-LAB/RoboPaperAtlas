@@ -115,3 +115,30 @@ test('Deep WBC panel distinguishes verified formal year and scopes old bibliogra
  assert.equal(f.$('.map-stage-list').children.length,3);
  assert(f.$('.map-stage-list').children.every(a=>a.tagName==='A'));
 });
+
+function screenStar(f,id){const world=f.$('.map-world').getAttribute('transform').match(/translate\(([-\d.]+) ([-\d.]+)\) scale\(([-\d.]+)\)/),point=f.$(`[data-paper-id="${id}"]`).getAttribute('transform').match(/translate\(([-\d.]+) ([-\d.]+)\)/);return{clientX:Number(world[1])+Number(point[1])*Number(world[3]),clientY:Number(world[2])+Number(point[2])*Number(world[3])}}
+function pointerPick(f,point,target){const svg=f.$('#map-canvas');svg.emit('pointermove',{target:target||svg,pointerType:'mouse',...point});const hover=f.$('.map-hover-card').textContent;svg.emit('pointerdown',{target:target||svg,button:0,pointerType:'mouse',pointerId:77,...point});svg.emit('pointerup',{pointerId:77,...point});return hover}
+const labelFixture=()=>fixture({url:'https://example.org/RoboPaperAtlas/map/index.html?topic=navigation&problem=navigation%2Fnav-language',reduced:true});
+test('visible paper label and star share actual screen-coordinate hover and selection',()=>{
+ for(const target of ['star','text']){const f=labelFixture(),id='agenticnav-tool-harness',node=f.$(`[data-paper-id="${id}"]`),label=node.querySelector('.map-node-label');assert(node.classList.contains('is-label'));
+ const b=label.getBoundingClientRect(),point=target==='star'?screenStar(f,id):{clientX:b.left+b.width*.65,clientY:b.top+b.height/2};
+ assert.match(pointerPick(f,point,label),/AgenticNav/);assert.match(selected(f),/AgenticNav/);assert(f.location.search.includes('paper=agenticnav-tool-harness'));
+ }
+});
+test('hidden labels have no ghost targets, and visible label hit tracks zoom and pan',()=>{
+ const f=labelFixture(),node=f.$('[data-paper-id="agenticnav-tool-harness"]'),label=node.querySelector('.map-node-label');
+ for(const action of ['[data-camera="in"]','[data-camera="out"]']){f.click(action);const b=label.getBoundingClientRect(),point={clientX:b.left+b.width*.65,clientY:b.top+b.height/2};assert.match(pointerPick(f,point,label),/AgenticNav/);f.click('#map-panel-close')}
+ const svg=f.$('#map-canvas');svg.emit('pointerdown',{button:0,pointerType:'mouse',pointerId:2,clientX:50,clientY:50});svg.emit('pointermove',{pointerId:2,clientX:65,clientY:60});svg.emit('pointerup',{pointerId:2});
+ const afterPan=label.getBoundingClientRect();assert.match(pointerPick(f,{clientX:afterPan.left+afterPan.width*.65,clientY:afterPan.top+afterPan.height/2},label),/AgenticNav/);f.click('#map-panel-close');
+ // Suppressed by collision policy: the former text rectangle is not a target.
+ const b=label.getBoundingClientRect();node.classList.remove('is-label');f.document.activeElement=f.$('#map-canvas');pointerPick(f,{clientX:b.left+b.width*.8,clientY:b.top+b.height/2},label);assert.equal(selected(f),'');assert(f.$('.map-hover-card').hidden);
+});
+test('overlapping visible text chooses nearest star with stable ID tie break, not DOM target order',()=>{
+ const f=labelFixture(),a=f.$('[data-paper-id="agenticnav-tool-harness"]'),b=f.$('[data-paper-id="krantz2020vlnce"]');
+ const box={left:780,top:170,right:900,bottom:195,width:120,height:25};for(const node of[a,b]){node.classList.add('is-label');node.querySelector('.map-node-label').getBoundingClientRect=()=>box}
+ const point={clientX:840,clientY:182},expected=[a,b].map(n=>({id:n.dataset.paperId,...screenStar(f,n.dataset.paperId)})).sort((a,b)=>Math.hypot(a.clientX-point.clientX,a.clientY-point.clientY)-Math.hypot(b.clientX-point.clientX,b.clientY-point.clientY)||a.id.localeCompare(b.id))[0].id;
+ pointerPick(f,point,a.querySelector('.map-node-label'));assert.equal(new URLSearchParams(f.location.search).get('paper'),expected);
+});
+test('canvas clipping rejects off-canvas label coordinates',()=>{
+ const f=labelFixture(),node=f.$('[data-paper-id="agenticnav-tool-harness"]');node.classList.add('is-label');node.querySelector('.map-node-label').getBoundingClientRect=()=>({left:-100,right:100,top:100,bottom:125,width:200,height:25});pointerPick(f,{clientX:-20,clientY:112},node);assert.equal(selected(f),'');assert(f.$('.map-hover-card').hidden);
+});

@@ -529,12 +529,20 @@
     if (state.topic === 'all' && !state.query) return undefined;
     if (!Number.isFinite(event.clientX) || !Number.isFinite(event.clientY)) return event.target.closest('[data-paper-id]')?.dataset.paperId;
     const rect = svg.getBoundingClientRect(), x = event.clientX - rect.left, y = event.clientY - rect.top;
-    let nearestId, distance = 22;
-    currentNodes().forEach(p => {
-      const d = Math.hypot(p.x * camera.k + camera.x - x, p.y * camera.k + camera.y - y);
-      if (d <= distance) { nearestId = p.id; distance = d; }
+    if (x < 0 || y < 0 || x > rect.width || y > rect.height) return undefined;
+    const candidates = currentNodes().filter(p => !nodeEls.get(p.id).hidden).map(p => ({
+      paper: p, distance: Math.hypot(p.x * camera.k + camera.x - x, p.y * camera.k + camera.y - y)
+    })).sort((a, b) => a.distance - b.distance || stableCompare(a.paper, b.paper));
+    // A direct star hit wins; otherwise visible text is the same target as its star.
+    // Use rendered screen bounds, not SVG paint order or guessed text widths.
+    if (candidates[0]?.distance <= 8) return candidates[0].paper.id;
+    const label = candidates.find(({ paper }) => {
+      const group = nodeEls.get(paper.id);
+      if (!group.classList.contains('is-label') && !group.classList.contains('is-selected') && document.activeElement !== group) return false;
+      const box = group.querySelector('.map-node-label').getBoundingClientRect();
+      return box.width > 0 && box.height > 0 && event.clientX >= box.left && event.clientX <= box.right && event.clientY >= box.top && event.clientY <= box.bottom;
     });
-    return nearestId;
+    return label?.paper.id || (candidates[0]?.distance <= 22 ? candidates[0].paper.id : undefined);
   }
   svg.addEventListener('pointerdown', event => {
     if (event.button !== 0 || event.pointerType === 'touch' || event.target.closest('[data-atlas-system]') || event.target.closest('[data-atlas-problem]')) return;
