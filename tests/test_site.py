@@ -12,7 +12,7 @@ class SiteTests(unittest.TestCase):
  def test_no_fake_stages(self):
   for p in self.data['papers']:
    for key,s in p['stages'].items():self.assertEqual(s,expected_stage(p['id'],key,self.reports))
-  self.assertEqual([p['id'] for p in self.data['papers'] if any(s['status']=='imported' for s in p['stages'].values())],['rpa-0062'] if self.reports else [])
+  self.assertEqual([p['id'] for p in self.data['papers'] if any(s['status']=='imported' for s in p['stages'].values())],sorted({r['paper_id'] for r in self.reports}))
  def test_overlay_keeps_original_unverified(self):self.assertTrue(all(not p['citation_verified'] for p in self.data['papers'] if p['original_metadata']))
  def test_ids_reject_traversal(self):
   self.data['papers'][0]['id']='../../bad'

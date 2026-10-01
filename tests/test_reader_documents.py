@@ -60,7 +60,7 @@ class ReaderDocumentTests(unittest.TestCase):
     changed=raw.replace(b'</body>',payload+b'</body>');policy=copy.deepcopy(self.policy);policy['documents'][r['filename']]=reports.sha(changed);(root/'data/report-v2-policy.json').write_text(json.dumps(policy))
     with self.assertRaises(ValueError):reports._parse_html(r,changed,root)
  def test_version_keying_preserves_all_sibling_links(self):
-  self.assertEqual(len(reports.load_reports(ROOT)),9)
+  self.assertEqual(len([x for x in reports.load_reports(ROOT) if x['paper_id']=='rpa-0062']),9)
   for r in self.records.values():
    page=self.pages[r['stage']]
    for other in reports.STAGE_FILES.values():

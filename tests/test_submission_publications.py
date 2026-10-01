@@ -45,6 +45,11 @@ class SubmissionPublicationTests(unittest.TestCase):
                 for x in obj:source_refs(x)
         source_refs(d)
 
+    def test_publication_topics_follow_reviewed_classification(self):
+        reviewed={r['id']:r for r in json.loads((ROOT/'data/classification.json').read_text())['records']}
+        for paper in self.data['publications']:
+            self.assertEqual(paper['primary_direction'],reviewed[paper['paper_id']]['primary_direction'],paper['paper_id'])
+
     def test_formal_workshop_and_oral_are_distinct(self):
         d=self.data;p={p['paper_id']:p for p in d['publications']}
         self.assertEqual(p['rpa-0052']['record_kind'],'journal_article')

@@ -34,15 +34,31 @@ RECORD_FIELDS = {
 }
 COMPUTED_FIELDS = {'sha256', 'bytes', 'parts'}
 PART_FIELDS = {'file', 'bytes', 'sha256'}
-SOURCE_URLS = {
-    'https://proceedings.mlr.press/v270/ha25a.html',
-    'https://umi-on-legs.github.io/',
+REPORT_PAPERS = {
+    'rpa-0062': {
+        'title': 'UMI on Legs',
+        'versions': {'v1': set(STAGE_FILES), 'v2': set(STAGE_FILES), 'v3': set(STAGE_FILES)},
+        'review_status': 'approved',
+        'source_urls': {'https://proceedings.mlr.press/v270/ha25a.html', 'https://umi-on-legs.github.io/'},
+        'pdf_urls': {'https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf', 'https://proceedings.mlr.press/v270/ha25a/ha25a.pdf'},
+        'arxiv_id': '2407.10353',
+    },
+    'rpa-0012': {
+        'title': 'Deep Whole-Body Control',
+        'versions': {'v1': {'stage1'}},
+        'review_status': 'content_approved',
+        'source_urls': {'https://proceedings.mlr.press/v205/fu23a.html'},
+        'pdf_urls': {'https://proceedings.mlr.press/v205/fu23a/fu23a.pdf'},
+        'arxiv_id': None,
+    },
 }
-PDF_URLS = {
-    'https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf',
-    'https://proceedings.mlr.press/v270/ha25a/ha25a.pdf',
-}
+# Backward-compatible test/public API constant; validation uses each paper's path.
 SITE_RETURN = '../../../papers/rpa-0062/index.html'
+
+
+def site_return(paper_id):
+    require(paper_id in REPORT_PAPERS, 'Unapproved report paper identity')
+    return f'../../../papers/{paper_id}/index.html'
 
 
 def require(condition, message):
@@ -85,8 +101,12 @@ def _public_url(value):
 
 def _identity(record):
     require(isinstance(record, dict), 'Report record must be an object')
-    require(record.get('paper_id') == 'rpa-0062', 'Only the reviewed rpa-0062 pilot is allowed')
-    require(record.get('version') in {'v1','v2','v3'}, 'Only reviewed report versions v1/v2/v3 are allowed')
+    require(isinstance(record.get('paper_id'), str), 'Report paper ID must be text')
+    policy = REPORT_PAPERS.get(record.get('paper_id'))
+    require(policy is not None, 'Only explicitly reviewed report papers are allowed')
+    version = record.get('version')
+    require(isinstance(version, str) and version in policy['versions'], 'Unapproved report version')
+    require(isinstance(record.get('stage'), str) and record.get('stage') in policy['versions'][version], 'Unapproved paper/version/stage identity')
     stage = record.get('stage')
     require(isinstance(stage, str) and stage in STAGE_FILES, 'Unknown report stage')
     require(record.get('filename') == STAGE_FILES[stage], 'Filename must match its stage')
@@ -95,7 +115,7 @@ def _identity(record):
 def _validate_record(record):
     _keys(record, RECORD_FIELDS, 'Report')
     _identity(record)
-    require(record['review_status'] == 'approved', 'Only approved reports may be assembled')
+    require(record['review_status'] == REPORT_PAPERS[record['paper_id']]['review_status'], 'Report must have its explicitly approved review state')
     for key in ('source_edition', 'rights_note'):
         _text(record[key], key)
     for key in ('sha256', 'source_sha256'):
@@ -109,12 +129,14 @@ def _validate_record(record):
         raise ValueError('Invalid created_at calendar date') from exc
     for key in ('source_url', 'pdf_url'):
         _public_url(record[key])
-    require(record['source_url'] in SOURCE_URLS or re.fullmatch(
-        r'https://arxiv\.org/abs/2407\.10353(?:v[1-9]\d*)?', record['source_url']),
-        'source_url must identify an official UMI-on-Legs source')
-    require(record['pdf_url'] in PDF_URLS or re.fullmatch(
-        r'https://arxiv\.org/pdf/2407\.10353(?:v[1-9]\d*)?(?:\.pdf)?', record['pdf_url']),
-        'pdf_url must identify an official UMI-on-Legs PDF')
+    policy = REPORT_PAPERS[record['paper_id']]
+    arxiv_id = policy['arxiv_id']
+    require(record['source_url'] in policy['source_urls'] or arxiv_id is not None and re.fullmatch(
+        r'https://arxiv\.org/abs/' + re.escape(arxiv_id) + r'(?:v[1-9]\d*)?', record['source_url']),
+        'source_url must identify this paper’s approved official source')
+    require(record['pdf_url'] in policy['pdf_urls'] or arxiv_id is not None and re.fullmatch(
+        r'https://arxiv\.org/pdf/' + re.escape(arxiv_id) + r'(?:v[1-9]\d*)?(?:\.pdf)?', record['pdf_url']),
+        'pdf_url must identify this paper’s approved official PDF')
     require(type(record['bytes']) is int and 0 < record['bytes'] <= MAX_REPORT_BYTES,
             'Invalid report byte count')
     parts = record['parts']
@@ -278,7 +300,8 @@ class ReportHTML(HTMLParser):
     aria_attrs=ARIA_ATTRS
     meta_names={'viewport','description','author','robots','color-scheme'}
     input_types={'checkbox'}
-    def __init__(self, filename):
+    def __init__(self, filename, paper_id='rpa-0062'):
+        self.site_return = site_return(paper_id)
         super().__init__(convert_charrefs=True)
         self.filename = filename
         self.ids = set()
@@ -361,7 +384,7 @@ class ReportHTML(HTMLParser):
             _public_url(value)
             return
         require(not parsed.netloc and not parsed.query, 'Network-relative links and local queries are forbidden')
-        if value == SITE_RETURN:
+        if value == self.site_return:
             return
         require(parsed.path in ('', *STAGE_FILES.values()), 'Unapproved relative report link')
         require(parsed.path or parsed.fragment, 'Empty report link')
@@ -375,10 +398,13 @@ def _parse_html(record, payload, root=ROOT):
     except UnicodeDecodeError as exc:
         raise ValueError('Report must contain exact UTF-8 bytes') from exc
     require(not re.search(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', text), 'HTML contains control characters')
-    if record['version']in {'v2','v3'}:
+    if record['paper_id'] == 'rpa-0012':
+        from report_deep_wbc import prepare
+        text,parser=prepare(root,record,payload)
+    elif record['version']in {'v2','v3'}:
         from report_v2 import prepare
         text,parser=prepare(root,record,payload)
-    else:parser = ReportHTML(record['filename'])
+    else:parser = ReportHTML(record['filename'], record['paper_id'])
     try:
         parser.feed(text)
         parser.close()
@@ -411,12 +437,12 @@ def _load(root):
     require(type(registry['schema_version']) is int and registry['schema_version'] == 1,
             'Unsupported report schema')
     records = registry['reports']
-    require(isinstance(records, list) and len(records) <= 3 * len(STAGE_FILES), 'Invalid report registry list')
+    require(isinstance(records, list) and len(records) <= sum(len(stages) for p in REPORT_PAPERS.values() for stages in p['versions'].values()), 'Invalid report registry list')
     payloads = {}
     parsers = {}
     for record in records:
         _validate_record(record)
-        filename = (record['version'],record['filename'])
+        filename = (record['paper_id'],record['version'],record['filename'])
         require(filename not in payloads, 'Duplicate paper/stage/version report')
         directory = _parts_path(record)
         chunks = []
@@ -434,9 +460,9 @@ def _load(root):
                 'Assembled report byte count or SHA-256 mismatch')
         parsers[filename] = _parse_html(record, payload, root)
         payloads[filename] = payload
-    for (version, filename),parser in parsers.items():
+    for (paper_id, version, filename),parser in parsers.items():
         for target, fragment in parser.links:
-            target=(version,target)
+            target=(paper_id,version,target)
             require(target in parsers, f'Report link is absent from the approved registry: {target}')
             require(not fragment or fragment in parsers[target].ids,
                     f'Unresolved sibling report fragment: {target}#{fragment}')
@@ -460,7 +486,7 @@ def assemble_reports(root=ROOT):
         target = _safe_path(root, report_path(record))
         require(not target.exists() or target.is_file(), 'Generated target must be a regular file')
     for record in records:
-        _atomic_write(root, report_path(record), payloads[(record['version'],record['filename'])])
+        _atomic_write(root, report_path(record), payloads[(record['paper_id'],record['version'],record['filename'])])
     return records
 
 
