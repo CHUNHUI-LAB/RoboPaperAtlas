@@ -6,12 +6,21 @@ from urllib.parse import urlsplit
 ROOT=Path(__file__).resolve().parents[1]
 ROUTE='library-topic-preview'
 FILES={'index.html','preview.css','preview.js','topics.json'}
-TOP={'schema_version','status','topics','contract','records'}
-RECORD={'id','title','short_name','aliases','authors','research_topics','related_topics','artifact_roles','morphology','curation','note','evidence','methods','tags'}
-CONTRACT={'default','membership','related','unknown','facets','limits'}
-TOPIC={'id','label','english','boundary'}
-EVIDENCE={'url','scope','locator'}
-SOURCE_HOSTS={'arxiv.org','proceedings.mlr.press','umi-gripper.github.io'}
+TOP={'schema_version','status','contract','records'}
+RECORD={'id','title','authors','bibliographic_year','short_name','aliases','study_question','study_question_evidence_ids','methods','platforms','resources','contributions','problem_claims','task_relations','execution_domains','evaluation_contexts','unresolved_tasks','facet_coverage','evidence'}
+CONTRACT={'same_facet_operator','between_facets_operator','weak_task_relations','main_task_relations','hierarchy'}
+EVIDENCE={'id','urls','locator','finding'}
+SOURCE_HOSTS={'arxiv.org','concept-graphs.github.io','crl.ethz.ch','horizonrobotics.github.io','ieeexplore.ieee.org','proceedings.mlr.press','raw.githubusercontent.com','sayplan.github.io','umi-gripper.github.io','weirdlabuw.github.io','www.markobjelonic.com','www.pi.website'}
+SCHEMAS={
+ 'methods':({'label','role','evidence_ids'},set()),
+ 'platforms':({'configuration','role','filter_keys','evidence_ids'},{'morphology','name'}),
+ 'resources':({'kind','name','evidence_ids'},set()),
+ 'contributions':({'kind','description','evidence_ids'},set()),
+ 'problem_claims':({'problem_id','label','role','rationale','evidence_ids'},set()),
+ 'task_relations':({'task','relation','rationale','evidence_ids'},{'execution_domains','evaluation_strength'}),
+ 'execution_domains':({'domain','evidence_ids'},{'scope_note'}),
+ 'evaluation_contexts':({'kind','label','evidence_ids'},set()),
+}
 
 def require(value,message):
     if not value:raise ValueError(message)
@@ -53,32 +62,53 @@ def validate_source(root=ROOT):
         require(path.is_file(),'Public source must be a regular file')
     data=json.loads((src/'topics.json').read_text())
     exact_fields(data,TOP,'root');exact_fields(data['contract'],CONTRACT,'contract')
-    require(data['schema_version']==1 and data['status']=='isolated_topic_name_proposal','Unexpected preview version or status')
-    for topic in data['topics']:exact_fields(topic,TOPIC,'topic');require(all(isinstance(v,str) for v in topic.values()),'Topic fields must be text')
-    topic_ids={t['id'] for t in data['topics']}
-    require(topic_ids=={'navigation','legged','manipulation'} and len(data['topics'])==3,'Unexpected topic IDs')
+    require(data['schema_version']==2 and data['status']=='isolated_search_preview','Unexpected preview version or status')
+    contract=data['contract']
+    require(contract['same_facet_operator']=='OR' and contract['between_facets_operator']=='AND','Facet operators changed')
+    require(contract['main_task_relations']==['research_object','downstream_execution_evaluation','qualitative_demonstration'],'Task strengths changed')
+    require(contract['weak_task_relations']==['data_or_component_testing','training_data_context','adopted_component','resource_support','downstream_application'],'Weak task strengths changed')
+    require(contract['hierarchy']=={'manipulation':['mobile-manipulation']},'Task hierarchy changed')
+    task_ids={'navigation','mobile-manipulation','motion-control','manipulation','stylized-motion'}
+    platform_ids={'legged','quadruped','humanoid','wheeled','mobile_manipulator','single_arm','dual_arm','fixed_base','dexterous_hand','simulated_character'}
+    resource_ids={'benchmark','dataset','data-collection','data-generator','simulator','software','deployment-software','tokenizer'}
     catalog={r['id']:r for r in json.loads((root/'data/catalog.json').read_text())['papers']}
     require(len(data['records'])==95 and {r['id'] for r in data['records']}==set(catalog),'Preview must preserve all 95 unique catalog records')
-    require(sum(r['curation']=='sample_reviewed' for r in data['records'])==13,'Exactly 13 reviewed examples required')
     for r in data['records']:
         exact_fields(r,RECORD,'record')
         require(re.fullmatch(r'[a-z0-9-]+',r['id']) is not None,'Invalid local paper ID')
-        for field in ['title','short_name','authors','note']:require(isinstance(r[field],str),'Invalid text field')
-        require(r['title']==catalog[r['id']]['title'],'Preview must preserve catalog title')
-        for field in ['aliases','research_topics','related_topics','artifact_roles','morphology','methods','tags']:strings(r[field],field)
-        require(set(r['research_topics']+r['related_topics'])<=topic_ids,'Unknown topic')
-        require(set(r['artifact_roles'])<={'policy','resource'} and set(r['morphology'])<={'legged','mobile'},'Unknown facet')
-        require(r['curation'] in {'sample_reviewed','not_curated'},'Unknown example status')
-        require(isinstance(r['evidence'],list),'Evidence must be a list')
-        if r['curation']=='not_curated':require(not (r['research_topics'] or r['related_topics'] or r['artifact_roles'] or r['morphology'] or r['evidence']),'Unreviewed record must not imply assignment')
-        else:require(bool(r['evidence']),'Examples require evidence')
+        for field in ['title','short_name','study_question']:require(isinstance(r[field],str),'Invalid text field')
+        if isinstance(r['authors'],list):strings(r['authors'],'authors')
+        else:require(isinstance(r['authors'],str),'Authors must be text or a string list')
+        for field in ['title','authors','short_name','bibliographic_year']:require(r[field]==catalog[r['id']][field],'Preview must preserve catalog '+field)
+        strings(r['aliases'],'aliases');strings(r['unresolved_tasks'],'unresolved_tasks');require(set(r['unresolved_tasks'])<=task_ids,'Invalid pending task')
+        require(isinstance(r['evidence'],list) and bool(r['evidence']),'Evidence required')
+        evidence_ids=set()
         for e in r['evidence']:
-            exact_fields(e,EVIDENCE,'evidence');public_url(e['url'])
-            require(isinstance(e['scope'],str) and (e['locator'] is None or isinstance(e['locator'],str)),'Invalid evidence scope')
+            exact_fields(e,EVIDENCE,'evidence')
+            require(isinstance(e['id'],str) and re.fullmatch(r'e[1-9][0-9]*',e['id']) and e['id'] not in evidence_ids,'Invalid or repeated source ID')
+            evidence_ids.add(e['id']);strings(e['urls'],'source URLs');require(bool(e['urls']),'Source URL required')
+            for url in e['urls']:public_url(url)
+            require(isinstance(e['locator'],str) and isinstance(e['finding'],str),'Invalid source description')
+        strings(r['study_question_evidence_ids'],'study question refs');require(set(r['study_question_evidence_ids'])<=evidence_ids,'Dangling study question reference')
+        for field,(required,optional) in SCHEMAS.items():
+            require(isinstance(r[field],list),'Claims must be a list')
+            for claim in r[field]:
+                require(isinstance(claim,dict) and required<=set(claim)<=required|optional,'Invalid claim fields: '+field)
+                strings(claim['evidence_ids'],'claim refs');require(bool(claim['evidence_ids']) and set(claim['evidence_ids'])<=evidence_ids,'Missing or dangling claim reference')
+                for key,value in claim.items():
+                    if key in {'evidence_ids','filter_keys','execution_domains'}:strings(value,key)
+                    else:require(isinstance(value,str),'Claim values must be text')
+                if field=='platforms':require(set(claim['filter_keys'])<=platform_ids,'Invalid platform filter')
+                if field=='resources':require(claim['kind'] in resource_ids,'Invalid resource kind')
+                if field=='task_relations':require(claim['task'] in task_ids and claim['relation'] in contract['main_task_relations']+contract['weak_task_relations'],'Invalid task relation')
+        exact_fields(r['facet_coverage'],{'problem_claims','contributions','methods','platforms','execution_domains','task_relations','resources'},'coverage')
+        for coverage in r['facet_coverage'].values():
+            exact_fields(coverage,{'completeness','unresolved_claim_count'},'coverage field')
+            require(coverage['completeness']=='partial' and type(coverage['unresolved_claim_count']) is int and coverage['unresolved_claim_count']>=0,'Coverage must retain partial/unknown states')
     for p in src.iterdir():
         text=p.read_text()
-        for forbidden in ['/workspace/','/agent_notes/','dream_notes','task-first-audit','catalog_metadata_preserved','scientific_classification_preserved','策展','本体','现有 Atlas','尚尚未','主题整理主题归属','prior section-level review']:
-            require(forbidden not in text,'Non-public or obsolete text in route source')
+        for forbidden in ['/workspace/','/agent_notes/','dream_notes','task-first-audit','catalog_metadata_preserved','scientific_classification_preserved','prior section-level review','raw_record','prior_assessments','ten_case_reference','provenance','local_controlled_vocabulary_candidate','审计','优先阅读','concurrent full-paper review']:
+            require(forbidden not in text,'Non-public input in route source')
     return data
 
 def write_preview(root,target):
@@ -109,5 +139,5 @@ def main():
     for r in json.loads((target/ROUTE/'topics.json').read_text())['records']:
         require((target/'papers'/r['id']/'index.html').is_file(),'Missing paper detail destination')
     require((target/'atlas-global-preview/index.html').is_file(),'Missing star-map destination')
-    print('Added isolated library-topic-preview route; 13 examples, 82 not topic-reviewed, all 95 searchable')
+    print('Added isolated library-topic-preview route; 95 searchable records with partial, source-backed facets')
 if __name__=='__main__':main()

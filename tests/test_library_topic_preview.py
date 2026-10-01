@@ -16,7 +16,7 @@ class TopicPreview(unittest.TestCase):
  def test_static_links(self):
   text=(ROOT/'previews/library-topic-preview/index.html').read_text()
   for link in ['../assets/preview-base.css','../atlas-global-preview/','preview.css','preview.js'] : self.assertIn(link,text)
-  self.assertIn('另外 82 篇',text);self.assertIn('13 个边界示例',text)
+  self.assertIn('95 篇',text);self.assertIn('独立方案预览',text);self.assertIn('更多筛选',text)
  def fixture(self,root):
   (root/'data').mkdir();shutil.copy(ROOT/'data/catalog.json',root/'data/catalog.json');shutil.copytree(ROOT/'previews',root/'previews')
  def test_source_symlink_rejected(self):
@@ -39,11 +39,30 @@ class TopicPreview(unittest.TestCase):
    root=Path(temp);self.fixture(root);src=root/'previews';src.rename(root/'moved');src.symlink_to(root/'moved',target_is_directory=True)
    with self.assertRaises(ValueError):mod.validate_source(root)
    with self.assertRaises(ValueError):mod.safe_path(root,root/'output/../../escape')
- def test_editorial_boundary_and_locators(self):
+ def test_partial_coverage_and_preserved_sources(self):
   data=mod.validate_source(ROOT);rows={r['id']:r for r in data['records']}
-  for id in ['rpa-0052','rpa-0062']:
-   self.assertIn('阅读线索',rows[id]['note']);self.assertIn('不否认',rows[id]['note'])
-  self.assertIn('示教训练',rows['rpa-0062']['note'])
-  e=next(e for e in rows['rpa-0064']['evidence'] if e['url']=='https://umi-gripper.github.io/')
-  self.assertEqual(e['scope'],'官方项目页');self.assertIn('Policy Robustness',e['locator']);self.assertNotIn('prior section',e['locator'])
+  self.assertEqual(data['contract']['hierarchy'],{'manipulation':['mobile-manipulation']})
+  for r in rows.values():
+   self.assertTrue(all(x['completeness']=='partial' for x in r['facet_coverage'].values()))
+   self.assertTrue(r['evidence'])
+  self.assertTrue(any(t['relation']=='data_or_component_testing' and t['task']=='mobile-manipulation' for t in rows['rpa-0016']['task_relations']))
+  relation=next(t for t in rows['rpa-0069']['task_relations'] if t['task']=='mobile-manipulation')
+  self.assertEqual(relation['execution_domains'],['simulation'])
+  self.assertEqual(rows['rpa-0041']['platforms'][0]['filter_keys'],['legged'])
+ def test_nested_operational_field_rejected(self):
+  with tempfile.TemporaryDirectory() as temp:
+   root=Path(temp);self.fixture(root);p=root/'previews/library-topic-preview/topics.json';d=json.loads(p.read_text());d['records'][0]['evidence'][0]['provenance']='private';p.write_text(json.dumps(d))
+   with self.assertRaises(ValueError):mod.validate_source(root)
+ def test_dangling_evidence_reference_rejected(self):
+  with tempfile.TemporaryDirectory() as temp:
+   root=Path(temp);self.fixture(root);p=root/'previews/library-topic-preview/topics.json';d=json.loads(p.read_text());d['records'][0]['methods'][0]['evidence_ids']=['e9999'];p.write_text(json.dumps(d))
+   with self.assertRaises(ValueError):mod.validate_source(root)
+ def test_metadata_change_rejected(self):
+  with tempfile.TemporaryDirectory() as temp:
+   root=Path(temp);self.fixture(root);p=root/'previews/library-topic-preview/topics.json';d=json.loads(p.read_text());d['records'][0]['authors']='altered';p.write_text(json.dumps(d))
+   with self.assertRaises(ValueError):mod.validate_source(root)
+ def test_complete_coverage_claim_rejected(self):
+  with tempfile.TemporaryDirectory() as temp:
+   root=Path(temp);self.fixture(root);p=root/'previews/library-topic-preview/topics.json';d=json.loads(p.read_text());d['records'][0]['facet_coverage']['platforms']['completeness']='complete';p.write_text(json.dumps(d))
+   with self.assertRaises(ValueError):mod.validate_source(root)
 if __name__=='__main__':unittest.main()
