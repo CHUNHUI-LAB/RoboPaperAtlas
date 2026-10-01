@@ -23,3 +23,67 @@
 .paper-map[data-view=list] .map-classification-pending{color:#805313!important}
 
 .map-original-tags-label{font-size:10px;color:#7f90a8;margin:18px 0 -8px}.paper-map[data-view=list] .map-original-tags-label{color:#626f80}
+
+/* Readable map typography. Screen-space SVG labels are sized in paper-map.js. */
+.paper-map-page .map-heading>p{font-size:16px;line-height:1.85;max-width:38em}
+.paper-map-page .map-heading .eyebrow{font-size:12px;letter-spacing:.08em}
+.paper-map .map-search-wrap input{font-size:16px}
+.paper-map .map-toolbar>p,.paper-map .map-view-toggle button{font-size:15px}
+.paper-map .map-topics{gap:8px;padding:18px 0 22px}
+.paper-map .map-topics button{font-size:16px;line-height:1.5;padding:9px 13px;min-height:44px}
+.paper-map .map-topics button>span{font-size:14px;opacity:.85}
+.paper-map .atlas-navigation nav button,.paper-map .atlas-navigation>button{font-size:16px;line-height:1.6}
+.paper-map .atlas-navigation>p{font-size:15px;line-height:1.75;color:#596575}
+.paper-map .map-workspace{grid-template-columns:minmax(0,1fr) 360px}
+.paper-map .map-sidebar{padding:28px;line-height:1.8}
+.paper-map .map-panel-welcome>p:not(.eyebrow),.paper-map .map-panel-summary{font-size:16px;line-height:1.9}
+.paper-map .map-panel-welcome .eyebrow{font-size:13px}
+.paper-map .map-welcome-facts{gap:14px;padding:22px 0}
+.paper-map .map-welcome-facts span{font-size:14px;line-height:1.6}
+.paper-map .map-catalog-link,.paper-map .map-panel-top,.paper-map .map-panel-top button{font-size:15px}
+.paper-map .map-panel-selected h2{font-size:26px;line-height:1.5;letter-spacing:-.3px;margin-bottom:14px}
+.paper-map .map-panel-kicker,.paper-map .map-panel-path{font-size:15px;line-height:1.8;margin:14px 0}
+.paper-map .map-panel-topic-full,.paper-map .map-panel-authors{font-size:14px;line-height:1.85}
+.paper-map .map-panel-tags{gap:8px;margin:20px 0}
+.paper-map .map-panel-tags span{font-size:14px;line-height:1.6;padding:5px 9px}
+.paper-map .map-panel-badge,.paper-map .map-classification-evidence{font-size:15px;line-height:1.85;padding:15px 12px;margin:22px 0}
+.paper-map .map-classification-evidence p{margin:12px 0}
+.paper-map .map-classification-evidence small,.paper-map .map-panel-note,.paper-map .map-original-tags-label{font-size:14px;line-height:1.85}
+.paper-map .map-panel-section{padding-top:24px;margin-top:28px}
+.paper-map .map-panel-section h3{font-size:16px;line-height:1.6;letter-spacing:0;margin-bottom:16px}
+.paper-map .map-resource-links{gap:10px}
+.paper-map .map-resource-links a,.paper-map .map-stage-list button,.paper-map .map-stage-list a{font-size:15px;line-height:1.7;min-height:44px;gap:10px;padding:10px 12px;overflow-wrap:anywhere}
+.paper-map .map-stage-list button span,.paper-map .map-stage-report small{font-size:14px}
+.paper-map .map-related-list strong{font-size:15px;line-height:1.8}
+.paper-map .map-related-list small{font-size:14px;line-height:1.75}
+.paper-map .map-list-intro{font-size:15px;line-height:1.8}
+.paper-map .map-list-copy strong{font-size:17px;line-height:1.75}
+.paper-map .map-list-copy small{font-size:14px;line-height:1.8}
+.paper-map .map-legend{font-size:14px;line-height:1.85;align-items:flex-start}
+.paper-map .map-legend p{align-items:baseline}
+.paper-map .map-legend-node,.paper-map .map-legend-edge{flex-shrink:0}
+.paper-map .map-access-note,.paper-map .map-noscript{font-size:14px;line-height:1.8;color:#596575}
+.paper-map .map-canvas-top,.paper-map .map-canvas-top>span:first-child{font-size:12px;letter-spacing:.03em}
+.paper-map .map-help{font-size:13px;line-height:1.7;left:24px;right:24px;bottom:80px;color:#a5b4c8}
+.paper-map .map-controls>span,.paper-map .map-controls button:last-child{font-size:14px}
+.paper-map .map-hover-card{font-size:15px;line-height:1.7}
+.paper-map .map-hover-card small{font-size:13px}
+.paper-map [role=option]{font-size:16px;line-height:1.7}
+.paper-map [role=option] small{font-size:14px;line-height:1.7}
+.paper-map[data-view=map] .map-panel-welcome>p:not(.eyebrow),.paper-map[data-view=map] .map-panel-summary,.paper-map[data-view=map] .map-panel-note,.paper-map[data-view=map] .map-panel-authors,.paper-map[data-view=map] .map-panel-topic-full{color:#aab8cb}
+.paper-map[data-view=map] .map-welcome-facts span,.paper-map[data-view=map] .map-panel-section h3,.paper-map[data-view=map] .map-related-list small{color:#a3b5cd}
+@media(max-width:1100px){.paper-map .map-workspace{grid-template-columns:minmax(0,1fr) 330px}.paper-map .map-sidebar{padding:24px}}
+@media(max-width:760px){
+ .paper-map .map-sidebar{padding:0}
+ .paper-map .map-panel-selected{padding:24px 20px}
+ .paper-map .map-stage-list,.paper-map .map-resource-links{grid-template-columns:1fr}
+ .paper-map .map-stage-list button,.paper-map .map-stage-list a{display:flex;text-align:left;align-items:center;justify-content:space-between}
+ .paper-map .map-stage-list button span,.paper-map .map-stage-list a span{display:inline;margin:0}
+ .paper-map .map-topics{gap:8px}
+ .paper-map .map-help{left:18px;right:18px;font-size:13px;bottom:78px}
+ .paper-map .atlas-navigation nav{gap:2px}
+ .paper-map .atlas-navigation nav button{padding:8px 5px}
+ .paper-map .atlas-navigation>p{margin-left:5px}
+}
+.paper-map[data-view=list] .map-panel-authors,.paper-map[data-view=list] .map-panel-topic-full,.paper-map[data-view=list] .map-panel-note,.paper-map .map-list-copy small,.paper-map .map-list-intro,.paper-map .map-legend,.paper-map .map-legend p:last-child{color:#596575}
+.paper-map[data-view=map] .map-stage-list a{font-size:15px;line-height:1.7}

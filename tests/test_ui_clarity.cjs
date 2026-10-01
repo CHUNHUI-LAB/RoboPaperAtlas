@@ -3,8 +3,9 @@ const test=require('node:test'),assert=require('node:assert/strict'),fs=require(
 const root=path.resolve(__dirname,'..'),ui=require('../assets/presentation.js');
 const papers=JSON.parse(fs.readFileSync(path.join(root,'data/catalog.json'),'utf8')).papers;
 const byid=Object.fromEntries(papers.map(p=>[p.id,p]));
-test('DeepWBC current S1v2, S2v1 and reviewed S3v1 are available',()=>{
- assert.deepEqual(ui.currentReports(byid['rpa-0012']).map(x=>x.path),['artifacts/rpa-0012/v2/first-pass.html','artifacts/rpa-0012/v1/writing-close-reading.html','artifacts/rpa-0012/v1/method-code-reading.html']);
+test('DeepWBC current readers route to reviewed stages while original artifacts stay intact',()=>{
+ assert.deepEqual(ui.currentReports(byid['rpa-0012']).map(x=>x.path),['papers/rpa-0012/reading/stage1.html','papers/rpa-0012/reading/stage2.html','papers/rpa-0012/reading/stage3.html']);
+ assert.deepEqual(['stage1','stage2','stage3'].map(stage=>byid['rpa-0012'].stages[stage].artifacts[0].path),['artifacts/rpa-0012/v2/first-pass.html','artifacts/rpa-0012/v1/writing-close-reading.html','artifacts/rpa-0012/v1/method-code-reading.html']);
 });
 test('UMI current three report links unchanged',()=>{
  assert.deepEqual(ui.currentReports(byid['rpa-0062']).map(x=>x.path),['artifacts/rpa-0062/v3/first-pass.html','artifacts/rpa-0062/v3/writing-close-reading.html','artifacts/rpa-0062/v3/method-code-reading.html']);

@@ -67,7 +67,7 @@ test('UMI report links remain unchanged and unimported papers stay disabled',()=
 
 test('galaxy has95real paper stars and9distinct labeled navigation systems',()=>{
  const f=fixture();assert.equal(f.$$('.map-node').length,95);assert.equal(f.$$('.map-node-aura').length,95);assert.equal(f.$$('.map-node-dot').length,95);assert.equal(f.$$('.atlas-system').length,9);
- for(const text of ['Embodied Nav','Motion & Control','Mobile Manip.','Policy Learning','Resources','Cross-domain'])assert(f.$$('.atlas-navigation-label').some(el=>el.textContent===text));
+ for(const text of ['具身导航','全身运动规划与控制','移动操作','策略学习','跨领域资源','跨领域研究'])assert(f.$$('.atlas-navigation-label').some(el=>el.textContent===text));
  assert.equal(f.$('#map-dot-grid'),null);assert.equal(f.$('.map-edges').children.length,0);
 });
 test('invisible star targets stay44px across zoom while paper marks stay equal-sized',()=>{

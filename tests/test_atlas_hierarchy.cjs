@@ -31,8 +31,8 @@ test('all pending placements expose evidence and resources stay distinct from cr
  const f=fixture();for(const p of data.papers.filter(p=>p.classification.needsReview)){
   f.setURL('?paper='+p.id);assert.match(f.$('.map-classification-evidence').textContent,/分类待复核/);assert.match(f.$('.map-classification-evidence').textContent,/证据范围：/);
  }
- f.setURL('?paper=holoagent-0');assert.match(f.$('#atlas-breadcrumbs').textContent,/Cross-domain/);assert(!f.$('#atlas-breadcrumbs').textContent.includes('Resources'));
- f.setURL('?paper=savva2019habitat');assert.match(f.$('#atlas-breadcrumbs').textContent,/Resources/);
+ f.setURL('?paper=holoagent-0');assert.match(f.$('#atlas-breadcrumbs').textContent,/跨领域研究/);assert(!f.$('#atlas-breadcrumbs').textContent.includes('跨领域资源'));
+ f.setURL('?paper=savva2019habitat');assert.match(f.$('#atlas-breadcrumbs').textContent,/跨领域资源/);
 });
 test('search reaches all95 regardless of the current system and restores exact problem',()=>{
  const f=fixture({reduced:true});for(const p of data.papers){f.setURL('?topic=resources');f.input(p.title);f.$('#map-search').emit('keydown',{key:'Enter'});assert.equal(f.$('#map-selected-title')?.textContent,p.title);assert.equal(level(f),'problem');}

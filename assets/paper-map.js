@@ -124,6 +124,9 @@
     if (className) element.className = className;
     return element;
   };
+  const displayLabel = item => item?.displayLabel || item?.label || '';
+  const problemLabel = p => displayLabel(data.problems.find(item => item.id === p.classification.problem)) || p.classification.problemLabel;
+  const resourceLabels = {benchmark: '基准测试', 'data-collection': '数据采集', 'data-generator': '数据生成器', dataset: '数据集', model: '模型', simulator: '仿真器', software: '软件'};
   const categories = new Map(data.categories.map(c => [c.id, c]));
   const hierarchy = hierarchyLayout(data.papers, data.categories, data.problems);
   const regions = hierarchy.centers;
@@ -150,20 +153,20 @@
 
   function navigationObject(item, kind, layer) {
     const g = createSvg('g', { transform: `translate(${item.x} ${item.y})`, class: `atlas-${kind}`, role: 'button', tabindex: '-1',
-      [`data-atlas-${kind}`]: item.id, 'aria-label': `${item.label}. Explore ${kind === 'system' ? 'research problems' : 'papers'}.`, style: `--topic:${categories.get(item.direction || item.id).color}` });
+      [`data-atlas-${kind}`]: item.id, 'aria-label': `${displayLabel(item)}。${kind === 'system' ? '探索研究问题' : '查看论文'}。`, style: `--topic:${categories.get(item.direction || item.id).color}` });
     const title = createSvg('title'); title.textContent = item.english || item.label;
     const halo = createSvg('ellipse', { rx: kind === 'system' ? 340 : 150, ry: kind === 'system' ? 255 : 110, class: 'atlas-navigation-halo', 'aria-hidden': 'true' });
     const ring = createSvg('ellipse', { rx: kind === 'system' ? 340 : 150, ry: kind === 'system' ? 255 : 110, class: 'atlas-navigation-orbit', 'aria-hidden': 'true', transform: 'rotate(-16)' });
     const hit = createSvg('rect', { class: 'atlas-navigation-hit', rx: 5 });
     const core = createSvg('circle', { r: 12, class: 'atlas-navigation-core', 'aria-hidden': 'true' });
-    const label = createSvg('text', { class: 'atlas-navigation-label' }); label.textContent = item.label;
+    const label = createSvg('text', { class: 'atlas-navigation-label' }); label.textContent = displayLabel(item);
     const meta = createSvg('text', { class: 'atlas-navigation-meta' });
     const number = nodes.filter(p => kind === 'system' ? p.mapTopic === item.id : p.classification.problem === item.id).length;
-    meta.textContent = `${number} ${number === 1 ? 'paper' : 'papers'}${kind === 'system' ? ` / ${item.children.length} ${item.id === 'resources' ? 'collection' : item.children.length === 1 ? 'problem' : 'problems'}` : ''}`;
+    meta.textContent = `${number} 篇论文${kind === 'system' ? ` / ${item.children.length} ${item.id === 'resources' || item.id === 'cross-domain' ? '个分组' : '个问题'}` : ''}`;
     g.append(title, halo, ring, hit, core, label, meta); layer.append(g); return g;
   }
   const centerTitle = createSvg('text', { x: 0, y: 0, class: 'atlas-galaxy-title', 'text-anchor': 'middle', 'aria-hidden': 'true' }); centerTitle.textContent = 'Atlas';
-  const centerNote = createSvg('text', { x: 0, y: 0, class: 'atlas-galaxy-note', 'text-anchor': 'middle', 'aria-hidden': 'true' }); centerNote.textContent = `${nodes.length} PAPERS / RESEARCH GALAXY`;
+  const centerNote = createSvg('text', { x: 0, y: 0, class: 'atlas-galaxy-note', 'text-anchor': 'middle', 'aria-hidden': 'true' }); centerNote.textContent = `${nodes.length} 篇论文 / 研究地图`;
   $('.map-regions').append(centerTitle, centerNote);
   Object.values(hierarchy.systems).forEach(item => systemEls.set(item.id, navigationObject(item, 'system', $('.atlas-systems'))));
   Object.values(hierarchy.subsystems).forEach(item => problemEls.set(item.id, navigationObject(item, 'problem', $('.atlas-problems'))));
@@ -183,18 +186,26 @@
     $('#map-zoom').textContent = `${Math.round(camera.k * 100)}%`;
     const scale = 1 / camera.k;
     centerTitle.style.fontSize = `${(smallScreen.matches ? 19 : 32) * scale}px`; centerTitle.setAttribute('y', -8 * scale);
-    centerNote.style.fontSize = `${(smallScreen.matches ? 6 : 8) * scale}px`; centerNote.setAttribute('y', 13 * scale);
+    centerNote.style.fontSize = `${(smallScreen.matches ? 11 : 13) * scale}px`; centerNote.setAttribute('y', 13 * scale);
     centerTitle.style.display = centerNote.style.display = state.topic === 'all' && !state.query ? '' : 'none';
     for (const [collection, kind] of [[systemEls, 'system'], [problemEls, 'problem']]) collection.forEach(group => {
       const hit = group.querySelector('.atlas-navigation-hit');
       const text = group.querySelector('.atlas-navigation-label').textContent;
       const compact = smallScreen.matches && kind === 'system';
-      const half = compact ? 27 : Math.max(32, text.length * (kind === 'system' ? 4.5 : 3.8));
-      hit.setAttribute('x', -half * scale); hit.setAttribute('y', -27 * scale); hit.setAttribute('width', half * 2 * scale); hit.setAttribute('height', (compact ? 54 : kind === 'system' ? 112 : 83) * scale);
+      const labelSize = smallScreen.matches ? 16 : kind === 'system' ? 19 : 17;
+      // Account for full-width Chinese glyphs in the screen-space hit target.
+      const labelWidth = Array.from(text).reduce((sum, char) => sum + (/[^\x00-\x7f]/.test(char) ? 1 : .6), 0) * labelSize;
+      const half = compact ? 27 : Math.max(32, labelWidth / 2 + 8);
+      const item = kind === 'system' ? hierarchy.systems[group.dataset.atlasSystem] : hierarchy.subsystems[group.dataset.atlasProblem];
+      const screenX = item.x * camera.k + camera.x;
+      // Keep a visible node's enlarged label inside a narrow desktop canvas.
+      const offset = !compact && screenX >= 0 && screenX <= width ? clamp(screenX, half + 8, width - half - 8) - screenX : 0;
+      hit.setAttribute('x', (offset - half) * scale); hit.setAttribute('y', -27 * scale); hit.setAttribute('width', half * 2 * scale); hit.setAttribute('height', (compact ? 54 : kind === 'system' ? 112 : 83) * scale);
       group.querySelector('.atlas-navigation-core').setAttribute('r', (kind === 'system' ? 7 : 4) * scale);
       const label = group.querySelector('.atlas-navigation-label'), meta = group.querySelector('.atlas-navigation-meta');
-      label.style.fontSize = `${(smallScreen.matches ? 12 : kind === 'system' ? 16 : 13) * scale}px`;
-      label.setAttribute('y', (kind === 'system' ? 62 : 30) * scale); meta.style.fontSize = `${10 * scale}px`; meta.setAttribute('y', (kind === 'system' ? 79 : 46) * scale);
+      label.setAttribute('x', offset * scale); meta.setAttribute('x', offset * scale);
+      label.style.fontSize = `${labelSize * scale}px`;
+      label.setAttribute('y', (kind === 'system' ? 62 : 30) * scale); meta.style.fontSize = `${13 * scale}px`; meta.setAttribute('y', (kind === 'system' ? 84 : 52) * scale);
     });
     nodeEls.forEach((group, id) => {
       group.querySelector('.map-node-hit').setAttribute('r', 22 * scale);
@@ -202,8 +213,8 @@
       group.querySelector('.map-node-aura').setAttribute('r', (id === state.selected ? 13 : 8) * scale);
       group.querySelector('.map-node-ring').setAttribute('r', 8.5 * scale);
       const label = group.querySelector('.map-node-label');
-      label.setAttribute('font-size', String(11 * scale));
-      label.style.fontSize = `${11 * scale}px`; label.setAttribute('x', String(12 * scale)); label.setAttribute('y', String(3.5 * scale));
+      label.setAttribute('font-size', String(14 * scale));
+      label.style.fontSize = `${14 * scale}px`; label.setAttribute('x', String(12 * scale)); label.setAttribute('y', String(3.5 * scale));
       const p = nodeById.get(id);
       group.classList.remove('is-label');
     });
@@ -212,7 +223,7 @@
     const candidates = currentNodes().slice().sort((a, b) => Number(b.id === state.selected) - Number(a.id === state.selected) || Number(b.anchor) - Number(a.anchor) || stableCompare(a, b));
     candidates.forEach(p => {
       if (p.id !== state.selected && !state.problem && !state.query) return;
-      const rect = { x: p.x * camera.k + camera.x + 11, y: p.y * camera.k + camera.y - 9, w: shortLabel(p).length * 6.3 + 7, h: 18 };
+      const rect = { x: p.x * camera.k + camera.x + 11, y: p.y * camera.k + camera.y - 12, w: Array.from(shortLabel(p)).reduce((sum, char) => sum + (/[^\x00-\x7f]/.test(char) ? 14 : 8.4), 0) + 7, h: 23 };
       if (rect.x < 6 || rect.x + rect.w > width - 6 || rect.y < 42 || rect.y + rect.h > height - 72) return;
       if (p.id !== state.selected && occupied.some(r => rect.x < r.x + r.w && rect.x + rect.w > r.x && rect.y < r.y + r.h && rect.y + rect.h > r.y)) return;
       nodeEls.get(p.id).classList.add('is-label'); occupied.push(rect);
@@ -256,11 +267,11 @@
     root.dataset.level = state.query ? 'search' : state.problem ? 'problem' : state.topic !== 'all' ? 'system' : 'galaxy';
     const crumbs = $('#atlas-breadcrumbs'); crumbs.replaceChildren();
     const add = (label, topic, problem, current) => { const button = create('button', label); button.type = 'button'; button.dataset.atlasCrumb = topic; button.dataset.atlasProblem = problem || ''; if (current) button.setAttribute('aria-current', 'location'); crumbs.append(button); };
-    add('Galaxy', 'all', '', state.topic === 'all');
-    if (state.topic !== 'all') add(categories.get(state.topic).label, state.topic, '', !state.problem);
-    if (state.problem) add(hierarchy.subsystems[state.problem].label, state.topic, state.problem, true);
+    add('全部方向', 'all', '', state.topic === 'all');
+    if (state.topic !== 'all') add(displayLabel(categories.get(state.topic)), state.topic, '', !state.problem);
+    if (state.problem) add(displayLabel(hierarchy.subsystems[state.problem]), state.topic, state.problem, true);
     $('#atlas-back').disabled = state.topic === 'all' && !state.selected;
-    $('#atlas-level-description').textContent = state.query ? 'Search across all 95 papers' : state.problem ? 'Paper stars · select a paper to read its evidence and resources' : state.topic !== 'all' ? (state.topic === 'resources' ? 'Cross-domain resources · a separate collection, not a research direction' : state.topic === 'cross-domain' ? 'Cross-domain research · no single primary direction assigned' : 'Problem subsystems · choose a problem or select a paper star') : 'Choose a colored system to explore its research problems';
+    $('#atlas-level-description').textContent = state.query ? `搜索全部 ${nodes.length} 篇论文` : state.problem ? '选择论文，查看分类证据与资源' : state.topic !== 'all' ? (state.topic === 'resources' ? '跨领域资源：独立资源集合，不作为研究方向' : state.topic === 'cross-domain' ? '跨领域研究：尚无唯一主方向归属' : '选择研究问题，或直接查看论文') : '选择研究方向，展开具体问题';
   }
   function focusPaper(id, animate = true) {
     const p = nodeById.get(id); if (!p) return;
@@ -353,22 +364,22 @@
     const p = nodeById.get(state.selected); selected.hidden = !p; welcome.hidden = !!p;
     const content = $('#map-panel-content'); content.replaceChildren(); if (!p) return;
     const c = categories.get(p.mapTopic || p.category); selected.style.setProperty('--topic', c.color);
-    content.append(create('p', `${c.label} / ${yearText(p)}`, 'map-panel-kicker'));
-    content.append(create('p', `${c.english} · ${c.chinese}`, 'map-panel-topic-full'));
+    const heading = create('h2', p.title); heading.id = 'map-selected-title'; heading.tabIndex = -1;
+    content.append(heading, create('p', p.authors || '作者待核验', 'map-panel-authors'));
+    content.append(create('p', `${displayLabel(c)} / ${yearText(p)}`, 'map-panel-kicker'));
+    content.append(create('p', c.english, 'map-panel-topic-full'));
     const classification = p.classification;
-    content.append(create('p', `${c.label} / ${classification.problemLabel}`, 'map-panel-path'));
+    content.append(create('p', `${displayLabel(c)} / ${problemLabel(p)}`, 'map-panel-path'));
     const evidence = create('div', null, 'map-classification-evidence');
     evidence.append(create('strong', classification.needsReview ? '分类待复核 · 暂定判断' : '有主来源支持的分类 · 编辑判断'), create('p', p.display?.classificationRationale || classification.rationale), create('small', `证据范围：${p.display?.classificationEvidenceScope || classification.evidenceScope}。${classification.evidenceNote}`));
     if (classification.reviewNote) evidence.append(create('p', classification.reviewNote, 'map-classification-pending'));
     content.append(evidence);
     const crossTags = create('div', null, 'map-panel-tags');
     classification.methodTags.forEach(tag => { const span = create('span', `${tag.label} · 方法`); span.title = tag.evidence_scope; crossTags.append(span); });
-    classification.resourceKinds.forEach(kind => crossTags.append(create('span', `${kind} · 资源`)));
-    classification.secondaryDirections.forEach(id => crossTags.append(create('span', `${categories.get(id)?.label || id} · 次要方向`)));
+    classification.resourceKinds.forEach(kind => crossTags.append(create('span', `${resourceLabels[kind] || kind} · 资源`)));
+    classification.secondaryDirections.forEach(id => crossTags.append(create('span', `${displayLabel(categories.get(id)) || id} · 次要方向`)));
     if (crossTags.children.length) content.append(crossTags);
  
-    const heading = create('h2', p.title); heading.id = 'map-selected-title'; heading.tabIndex = -1;
-    content.append(heading, create('p', p.authors || '作者待核验', 'map-panel-authors'));
     if (p.tags.length) { content.append(create('p', '原始编目标签', 'map-original-tags-label')); const tags = create('div', null, 'map-panel-tags'); p.tags.forEach(tag => tags.append(create('span', tag))); content.append(tags); }
     const badge = create('div', null, 'map-panel-badge');
     badge.append(create('strong', p.display?.metadataLabel || (p.originalRecord ? '原始书目 · 来源字段保留' : '增补书目 · 主来源元数据核验')));
@@ -425,7 +436,7 @@
     activeSuggestions = search(nodes, query).slice(0, 8);
     activeSuggestions.forEach((p, index) => {
       const li = create('li'); li.id = `map-option-${index}`; li.setAttribute('role', 'option'); li.setAttribute('aria-selected', 'false'); li.dataset.suggestPaper = p.id;
-      li.append(create('span', p.title), create('small', `${categories.get(p.mapTopic || p.category).label} · ${yearText(p)}`)); suggestions.append(li);
+      li.append(create('span', p.title), create('small', `${displayLabel(categories.get(p.mapTopic || p.category))} · ${yearText(p)}`)); suggestions.append(li);
     });
     if (!activeSuggestions.length) { const li = create('li', '没有匹配论文，试试更短的关键词', 'map-suggest-empty'); li.setAttribute('role', 'presentation'); suggestions.append(li); }
     suggestions.hidden = false; input.setAttribute('aria-expanded', 'true');
@@ -576,7 +587,7 @@
   function updateHover(event) {
     if (pointer || event.pointerType === 'touch' || smallScreen.matches) return;
     const id = paperAtPointer(event); if (!id) { hover.hidden = true; return; }
-    const p = nodeById.get(id); hover.replaceChildren(create('span', p.title), create('small', `${categories.get(p.mapTopic || p.category).label} · 点击查看原文与资源`));
+    const p = nodeById.get(id); hover.replaceChildren(create('span', p.title), create('small', `${displayLabel(categories.get(p.mapTopic || p.category))} · 点击查看原文与资源`));
     hover.hidden = false; const x = p.x * camera.k + camera.x, y = p.y * camera.k + camera.y;
     hover.style.left = `${clamp(x + 14, 12, Math.max(12, width - hover.offsetWidth - 14))}px`;
     hover.style.top = `${clamp(y + 15, 45, Math.max(45, height - hover.offsetHeight - 75))}px`;
