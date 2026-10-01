@@ -29,7 +29,12 @@ class MapIntegrationTests(unittest.TestCase):
    self.assertIn(f'../../map/index.html?paper={paper["id"]}',page)
  def test_nonpilot_catalog_records_unchanged(self):
   payload=json.dumps([p for p in self.catalog['papers'] if p['id']!='rpa-0062'],ensure_ascii=False,sort_keys=True,separators=(',',':')).encode()
-  self.assertEqual(hashlib.sha256(payload).hexdigest(),'80641f528508872deb788c59e6957121766c363e1ff5b1a60611f79941cf742b')
+  self.assertEqual(hashlib.sha256(payload).hexdigest(),'efa2b769f740904ccac886cf8a5b0f821bc7184b1539451946d37490ad9dfb66')
+ def test_verified_force_control_author_preserves_original(self):
+  paper=next(p for p in self.catalog['papers'] if p['id']=='rpa-0026')
+  self.assertEqual(paper['authors'],'Tomás Portela 等')
+  self.assertEqual(paper['verified_overlay']['authors'][0],'Tifanny Portela')
+  self.assertEqual(paper['doi'],'10.1109/ICRA57147.2024.10611066')
  def test_no_frontier_candidates_mixed_into_map(self):
   data=map_data(self.catalog,report_records=load_reports(ROOT));self.assertEqual(len(data['papers']),95)
   frontier=json.loads((ROOT/'data/frontier.json').read_text());self.assertEqual(len(frontier['papers']),frontier['coverage']['displayed_entries'])
