@@ -10,3 +10,56 @@ test('same-publication venue, year, forum, status and topic intersection',()=>{c
 test('derived counts and journal rendering do not fabricate conference editions',()=>{const {get,run}=setup();run('renderPapers()');assert.match(get('paper-count').textContent,/8 篇匹配.*8 篇/);assert.match(get('migration-notice').textContent,/8 篇.*95.*87/);assert.match(get('paper-list').innerHTML,/IEEE RA-L · 期刊/);assert.match(get('paper-list').innerHTML,/AAAI · 主会/);assert.doesNotMatch(get('paper-list').innerHTML,/届次 null/);get('p-forum').value='journal';run('renderPapers()');assert.match(get('paper-count').textContent,/1 篇匹配/);assert.doesNotMatch(get('paper-list').innerHTML,/会议届次与出版年份不同/);get('p-forum').value='workshop';run('renderPapers()');assert.match(get('paper-count').textContent,/0 篇匹配/)});
 test('year choices follow selected semantic mode and preserve valid selections',()=>{const {get,run}=setup();run('refreshYears()');assert.deepEqual(get('p-year').options.map(x=>x.value),['','2023','2024','2025','2026']);get('p-year').value='2023';get('p-yearmode').value='edition_year';run('refreshYears()');assert.equal(get('p-year').value,'');assert.deepEqual(get('p-year').options.map(x=>x.value),['','2022','2024','2025','2026']);get('p-year').value='2025';get('p-yearmode').value='publication_year';run('refreshYears()');assert.equal(get('p-year').value,'2025')});
 test('historical identity never becomes a sixteenth recommendation or policy snapshot',()=>{const {get,run}=setup();run('renderList()');assert.equal(get('venue-count').textContent,'15 个渠道');assert.doesNotMatch(get('venue-list').innerHTML,/AAAI/);assert.equal(run("latest(data.venues.find(v=>v.id==='ral')).kind"),'journal_policy_snapshot');run("openVenue('aaai')");assert.match(get('detail').innerHTML,/渠道不存在/) });
+
+test('experience types and links stay source-specific across venues',()=>{
+ const {run}=setup();
+ const icra=run("renderExperiences('icra')");
+ assert.match(icra,/3 条已读来源/);
+ assert.match(icra,/作者建议 · 非会议规范/);
+ assert.match(icra,/匿名网友自述 · 未独立认证/);
+ assert.match(icra,/Seita’s Place/);
+ assert.match(icra,/未观看视频/);
+ assert.match(icra,/页面仅显示约 3 个月前；绝对日期未核定/);
+ assert.doesNotMatch(icra,/查看知乎原文|RA-L 官方说明|3 条历史亲历|null 年/);
+ const cvpr=run("renderExperiences('cvpr')");
+ assert.match(cvpr,/1 条已读来源/);
+ assert.match(cvpr,/Devi Parikh、Dhruv Batra、Stefan Lee/);
+ assert.doesNotMatch(cvpr,/RA-L 官方说明|作者自报 · 非独立认证|2027 页数/);
+ const ral=run("renderExperiences('ral')");
+ assert.match(ral,/4 条已读来源/);
+ assert.match(ral,/RA-L 官方说明/);
+ for(const record of data.experiences.records.filter(r=>r.source_type==='first_person_self_report'))assert.match(ral,new RegExp(record.id));
+});
+test('official conflict and editorial synthesis are explicitly separate from anecdotes',()=>{
+ const {run}=setup(),html=run("renderExperiences('icra')");
+ assert.match(html,/aria-label="官方规则核对"/);
+ assert.match(html,/完整论文最多 8 页，包含参考文献/);
+ assert.match(html,/2025-03-06.*6\+n/);
+ assert.match(html,/终稿冲突尚未解决/);
+ assert.match(html,/aria-label="编辑归纳"/);
+ assert.match(html,/不是原作者共同结论或官方要求/);
+ assert.match(html,/不把这段旧内容认定为 2027 终稿要求/);
+ assert.doesNotMatch(run("renderExperiences('iros')"),/aria-label="官方规则核对"/);
+});
+test('empty and unrelated venues never borrow an RA-L label or source',()=>{
+ const {run}=setup(),html=run("renderExperiences('jfr')");
+ assert.match(html,/暂无已核读的公开来源/);
+ assert.doesNotMatch(html,/RA-L|知乎|历史亲历/);
+});
+test('cross-venue relevance does not duplicate the underlying source records',()=>{
+ const {run}=setup();
+ assert.equal(data.experiences.records.length,7);
+ assert.equal(new Set(data.experiences.records.map(r=>r.id)).size,7);
+ assert.equal(run("experienceMatches(data.experiences.records.find(r=>r.id==='milford-robotics-paper-structure-2023'),'iros')"),true);
+ assert.equal(run("experienceMatches(data.experiences.records.find(r=>r.id==='parikh-batra-lee-rebuttals-2020'),'ral')"),false);
+});
+test('new experience and rule fields escape markup and reject unsafe source URLs',()=>{
+ const {ctx,run}=setup();
+ ctx.fixture=JSON.parse(JSON.stringify(data));run('data=fixture');
+ const record=ctx.fixture.experiences.records.find(r=>r.id==='milford-robotics-paper-structure-2023');
+ record.source_label='<img src=x onerror=alert(1)>';record.source_url='javascript:alert(1)';record.source_author='<svg onload=alert(1)>';
+ ctx.fixture.experiences.official_checks[0].title='<img src=x>';
+ const html=run("renderExperiences('icra')");
+ assert.doesNotMatch(html,/<img|<svg|href="javascript:/);
+ assert.match(html,/&lt;img/);assert.match(html,/&lt;svg/);
+});

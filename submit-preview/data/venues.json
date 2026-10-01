@@ -1917,8 +1917,8 @@
   ],
   "experiences": {
     "checked_at": "2026-10-01",
-    "evidence_status": "full_body_read_self_report_not_independently_verified",
-    "rules_notice": "以下是历史个人经历，不是现行投稿规则。页数、费用、审稿政策与会议转报须以当期官方说明为准；经验不参与截止日期或录用概率计算。",
+    "evidence_status": "source_scoped_reading_advice_and_self_reports_not_independently_verified",
+    "rules_notice": "以下收录历史亲历、作者建议与论坛讨论，并单列编辑归纳；它们不是现行投稿规则，也不代表录用概率或审稿共识。页数、费用、回复与转投政策须按目标届次的官方说明核验。",
     "official_url": "https://www.ieee-ras.org/publications/ra-l/",
     "records": [
       {
@@ -2036,6 +2036,234 @@
           "现行作者要求核读于2026-10-01，修改与重投按决定信及官方页面；经验不会更新截止日期：https://www.ieee-ras.org/publications/ra-l/ra-l-information-for-authors/"
         ],
         "commercial_note": "原答和已读评论未见付费导流；页面周边广告不是作者背书"
+      },
+      {
+        "id": "milford-robotics-paper-structure-2023",
+        "venue_id": "icra",
+        "venue_ids": [
+          "icra",
+          "iros"
+        ],
+        "year": 2023,
+        "published_date": "2023-09-07",
+        "title": "机器人会议论文结构：把贡献与验证分清楚",
+        "source_url": "https://michaelmilford.com/structuring-robotics-conference-papers/",
+        "source_type": "author_advice",
+        "source_label": "Michael Milford 网站",
+        "source_author": "Michael Milford",
+        "period_label": "2023 年写作建议",
+        "evidence_label": "作者建议 · 非会议规范",
+        "checked_at": "2026-10-01",
+        "reading_scope": "已读页面正文、时间戳目录与 Full Video Notes；未观看视频、未收听播客，也未以文字阅读代替视听核验。",
+        "verification_limit": "作者网站上的写作建议，不是 ICRA 或 IROS 的官方政策，也不是录用效果研究。",
+        "body_summary": "作者围绕机器人会议短论文梳理结构：在引言说明研究意义与贡献；在方法中区分基础组件和新增内容；另用实验设置交代数据、平台与评价指标，再呈现结果和分析。",
+        "methods": [
+          "先让读者找到研究问题、贡献及其与已有工作的差别",
+          "分别检查“方法是什么”和“如何验证”，避免两者混写"
+        ],
+        "comments": [],
+        "comment_scope_note": "未核读独立评论区；视频与播客不在本次证据范围。",
+        "cautions": [
+          "文中旧版页数示例不作为现行规则；ICRA 渠道的官方核对区说明 2027 终稿年份冲突",
+          "这是可调整的写作框架，不能作为必须采用的章节模板"
+        ],
+        "commercial_note": "本次未单独核验商业关系；只使用该页公开文字建议。"
+      },
+      {
+        "id": "parikh-batra-lee-rebuttals-2020",
+        "venue_id": "cvpr",
+        "venue_ids": [
+          "cvpr",
+          "iccv",
+          "eccv",
+          "neurips",
+          "iclr"
+        ],
+        "year": 2020,
+        "published_date": "2020-05-27",
+        "title": "作者回复：让评审与领域主席看清问题是否被回答",
+        "source_url": "https://deviparikh.substack.com/p/how-we-write-rebuttals-dc84742fece1",
+        "source_type": "author_advice",
+        "source_label": "Devi Parikh · Substack",
+        "source_author": "Devi Parikh、Dhruv Batra、Stefan Lee",
+        "period_label": "2020 年回复建议",
+        "evidence_label": "作者团队建议 · 非统一评审规则",
+        "checked_at": "2026-10-01",
+        "reading_scope": "已读文章正文与其中可见的文字示例；未核读外链协作表格、演讲或评论。",
+        "verification_limit": "作者明确以 CVPR、ECCV、ICCV、NeurIPS、ICLR、EMNLP 等 AI 会议经验为背景；不能据此认定机器人会议有相同回复机制。",
+        "body_summary": "文章把评审人与领域主席都视为回复读者。建议先汇总全部关切、协作形成草稿，再优先处理主要问题；回答要直接、自足，并给出能够核对的证据位置。",
+        "methods": [
+          "用“问题—直接回答—证据—修改位置”整理回复；共同问题可合并，但保留对应评审编号",
+          "先核对目标会场是否允许新实验，再决定补充内容；没有完成的工作不要写成已完成"
+        ],
+        "comments": [],
+        "comment_scope_note": "本次仅使用文章正文，未把页面互动或外链材料作为证据。",
+        "cautions": [
+          "回复阶段、字数与新实验限制由目标届次规定；本文不提供这些现行规则",
+          "自足回复是沟通建议，不保证评审改分或论文录用"
+        ],
+        "commercial_note": "本次未单独核验商业关系；平台订阅入口不作为建议有效性的证据。"
+      },
+      {
+        "id": "seita-reviewing-load-2022",
+        "venue_id": "ral",
+        "venue_ids": [
+          "icra",
+          "iros",
+          "corl",
+          "rss",
+          "ral",
+          "tro"
+        ],
+        "year": 2022,
+        "published_date": "2022-04-23",
+        "title": "审稿工作量自述：修订稿应让变化容易核对",
+        "source_url": "https://danieltakeshi.github.io/2022/04/23/paper-reviewing-load/",
+        "source_type": "reviewer_self_report",
+        "source_label": "Seita’s Place",
+        "source_author": "Seita（博客署名）",
+        "period_label": "2022 年起的自述 · 2026-07 停更",
+        "evidence_label": "审稿者自述 · 非总体统计",
+        "checked_at": "2026-10-01",
+        "reading_scope": "已读工作量列表与 Reflections；页面声明 2026 年 7 月停止更新。未读取所链接的新 Google 文档或 Disqus 评论。",
+        "verification_limit": "作者个人记录和感受，未独立核验其评审记录；不能代表所有评审、AE 或 AC。",
+        "body_summary": "作者按会议、期刊、年份与职责分别记录工作量，并反思回复阅读的精力成本。他自报曾再次收到先前审过的重投稿，因此主张认真改进，而非只更换投稿目的地。",
+        "methods": [
+          "修订时留下清晰的问题与变更对应表，减少读者核对成本",
+          "把个人工作量或耗时数字视为背景，不拿它预测自己的评审周期"
+        ],
+        "comments": [],
+        "comment_scope_note": "未读取 Disqus 评论及停更后迁移到的新文档。",
+        "cautions": [
+          "个人的再遇审稿经历不意味着重投一定会分配给原评审",
+          "审稿负担与录用结果之间的因果关系未被本文检验；页面旧流程描述不作当前政策"
+        ],
+        "commercial_note": "本次未单独核验商业关系；只使用公开自述。"
+      },
+      {
+        "id": "reddit-icra-iros-transfer-1u91k6s",
+        "venue_id": "iros",
+        "venue_ids": [
+          "icra",
+          "iros"
+        ],
+        "year": null,
+        "published_date": null,
+        "published_date_note": "页面仅显示约 3 个月前；绝对日期未核定",
+        "title": "ICRA/IROS 转投讨论：作者回复可见，不等于结果沿用",
+        "source_url": "https://www.reddit.com/r/robotics/comments/1u91k6s/icrairos_transfer_review_process/",
+        "source_type": "forum_anecdote",
+        "source_label": "Reddit · r/robotics",
+        "source_author": "原帖与三位可见评论者",
+        "period_label": "论坛个案 · 绝对日期未核定",
+        "evidence_label": "匿名网友自述 · 未独立认证",
+        "checked_at": "2026-10-01",
+        "reading_scope": "已读原帖与页面可见的 3 条评论；未追踪所链接的另一讨论，也不涵盖隐藏、删除或后来新增内容。",
+        "verification_limit": "原帖作者自报转投 IROS 被拒；评论者自称有评审经历，身份、论文与决定均未独立核验。",
+        "body_summary": "提问者关心转投时评审能看到哪些材料，以及既往拒稿会否影响判断。三条回复描述各自阅读论文与作者回复的方式；这些片段不能确定统一材料权限或排除偏见。",
+        "methods": [
+          "转投前核对本届要求，清楚说明针对旧意见做了哪些实质改动",
+          "让新稿与回复各自可理解，不假定新评审看过旧稿"
+        ],
+        "comments": [
+          {
+            "role": "评论者 al_m 的自述",
+            "date": "绝对日期未核定",
+            "summary": "称自己先读论文再看回复，以形成独立判断；不代表其他评审。"
+          },
+          {
+            "role": "评论者 OverMike101 的自述",
+            "date": "绝对日期未核定",
+            "summary": "自报评过 IROS 2026 转投稿、看不到旧稿，因而难核对改动幅度；这不是官方权限说明。"
+          },
+          {
+            "role": "评论者 ReasonableMilk416 的自述与推测",
+            "date": "绝对日期未核定",
+            "summary": "称可见作者回复、仍独立判断；关于评审是否更换的推测不收为规则。"
+          }
+        ],
+        "cautions": [
+          "不从三条评论推断转投成功率、无偏见或评审分配保证",
+          "评论对旧评审质量及是否使用 AI 的指控未经核实，不予采信"
+        ],
+        "commercial_note": "本次未审计账号或商业关系；只使用上述公开讨论范围。"
+      }
+    ],
+    "editorial_synthesis": [
+      {
+        "id": "make-evidence-traceable",
+        "venue_ids": [
+          "icra",
+          "iros",
+          "corl",
+          "rss",
+          "ral",
+          "tro"
+        ],
+        "title": "投稿前：逐项核对贡献与验证",
+        "text": "编辑归纳：做一份“贡献—实验或分析—图表位置”清单，再区分通用方法和本作增量。它用于自查证据组织，不是统一录用标准。",
+        "source_record_ids": [
+          "milford-robotics-paper-structure-2023",
+          "seita-reviewing-load-2022"
+        ]
+      },
+      {
+        "id": "make-responses-auditable",
+        "venue_ids": [
+          "icra",
+          "iros",
+          "corl",
+          "rss",
+          "ral",
+          "tro",
+          "cvpr",
+          "iccv",
+          "eccv",
+          "neurips",
+          "iclr"
+        ],
+        "title": "修改或回复时：先回答，再给可核对的依据",
+        "text": "编辑归纳：把关切、回答、已完成的修改和证据位置一一对应。这是跨来源的沟通启发；是否有回复阶段、能否新增实验，仍须查目标渠道规则。",
+        "source_record_ids": [
+          "parikh-batra-lee-rebuttals-2020",
+          "seita-reviewing-load-2022"
+        ]
+      },
+      {
+        "id": "separate-transfer-from-outcome",
+        "venue_ids": [
+          "icra",
+          "iros"
+        ],
+        "title": "转投时：把改动讲清楚，保留结果的不确定性",
+        "text": "编辑归纳：保存可核对的修订说明，明确未解决的限制。个人再次遇到旧评审、或某位评审独立读稿，都不能变成分配规则或结果预测。",
+        "source_record_ids": [
+          "seita-reviewing-load-2022",
+          "reddit-icra-iros-transfer-1u91k6s"
+        ]
+      }
+    ],
+    "official_checks": [
+      {
+        "id": "icra-2027-length-check",
+        "venue_ids": [
+          "icra"
+        ],
+        "checked_at": "2026-10-01",
+        "status": "unresolved_final_instructions",
+        "title": "ICRA 2027 页数：投稿阶段可核对，终稿冲突待确认",
+        "summary": "ICRA 2027 征稿页的 Preparing your Submission 与 FAQ 明确：初次提交的完整论文最多 8 页，包含参考文献。该结论只用于这里的投稿阶段核对，不外推为已确认的终稿规则。",
+        "conflict": "同站 Final Paper Submission Instructions 页带有 2027 站点标识，正文却仍写 ICRA 2025、2025-03-06 截止与 6+n 页。年份不一致尚未解决；不把这段旧内容认定为 2027 终稿要求，也不据此设置提醒。",
+        "links": [
+          {
+            "label": "ICRA 2027 征稿页：投稿阶段 8 页",
+            "url": "https://2027.ieee-icra.org/contribute/call-for-icra-2027-papers-now-accepting-submissions/"
+          },
+          {
+            "label": "终稿说明页：正文年份冲突，待确认",
+            "url": "https://2027.ieee-icra.org/contribute/final-paper-submission-instructions/"
+          }
+        ]
       }
     ]
   },
