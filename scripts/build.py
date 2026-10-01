@@ -52,9 +52,19 @@ def badge(p):
     verified=bool(p['citation_verified'] or overlay_status(p));label=metadata_label(p)
     return f'<span class="badge {"verified" if verified else "pending"}"><span aria-hidden="true">{"●" if verified else "○"}</span> {esc(label)}</span>'
 def imported_count(p):return sum(s['status']=='imported' for s in p['stages'].values())
+def card_description(p):
+    if p.get('summary'):return p['summary']
+    status=overlay_status(p)
+    metadata=(status+'；原始书目单独保留。' if status else
+              '原始书目来源已核验。' if p.get('citation_verified') else
+              '已收录原始书目。题名、作者、年份与出版版本尚待逐项核验。')
+    count=imported_count(p)
+    reading=(f'已导入 {count} 份阶段阅读报告；具体阅读范围见各报告。' if count else '阅读档案尚未导入。')
+    return metadata+reading
+
 def card(p):
     title=display_title(p); authors=author_text(p); cat=' / '.join(BROWSE_LABELS[k] for k in browse_groups(p))
-    desc=p.get('summary') or '已收录原始书目。题名、作者、年份与出版版本尚待逐项核验，阅读档案尚未导入。'
+    desc=card_description(p)
     c=classification(p)
     tags=''.join(f'<span>{esc(method_label(t))}</span>' for t in method_tags(p)[:3])
     resource_tags=''.join(f'<span>{esc(RESOURCE_LABELS[t])}</span>' for t in resource_kinds(p))
@@ -62,7 +72,7 @@ def card(p):
     stage_badge=(f'<a class="card-report-link" href="papers/{p["id"]}/index.html#reading">{report_count} 份阅读报告 ↗</a>' if report_count else '<span class="card-stage" title="三个阶段的阅读报告均尚未导入">S1 <i></i> S2 <i></i> S3 <i></i><span class="sr-only">均未导入</span></span>')
     yearkind={'publication':'出版','preprint':'预印本','user_provided':'原始记录'}.get(p.get('year_basis'),'待核验')
     q=' '.join([p['title'],title,p.get('short_name',''),authors,desc,taxonomy_search(p),browse_search(p),*SEARCH_ALIASES.get(p['id'],[]),*p.get('tags',[])])
-    return f'''<article class="paper-card" data-search="{esc(q.casefold())}" data-category="{primary_topic(p)}" data-canonical-category="{p['category']}" data-topics="{' '.join(browse_groups(p))}" data-methods="{esc('|'.join(method_tags(p)))}" data-resources="{'|'.join(resource_kinds(p))}" data-year="{p.get('publication_year') or 'unknown'}" data-status="{'verified' if p['citation_verified'] else 'pending'}" data-title="{esc(title.casefold())}" data-sort-year="{p.get('bibliographic_year') or 0}"><span class="paper-art" aria-hidden="true" style="position:absolute"></span><div class="card-top"><span class="card-category" title="{esc(TOPIC_HINTS[primary_topic(p)])}">{esc(cat)}</span>{badge(p)}</div><h3><a href="papers/{p['id']}/index.html">{esc(title)}</a></h3><p class="authors" title="{esc(authors)}">{esc(authors)}</p><p class="card-summary">{esc(desc)}</p><div class="tags">{tags}</div><div class="topic-crosslabels" aria-label="研究问题与资源类型"><span>{esc(c["problemLabel"])}</span>{resource_tags}{'<span>分类边界待复核</span>' if c["needsReview"] else ''}</div><div class="card-bottom"><span class="paper-year">{esc(yearlabel(p))}<small>{yearkind}</small></span>{stage_badge}<button class="card-arrow" type="button" data-direction-label="{esc(cat)}" data-problem-label="{esc(c['problemLabel'])}" data-preview="{p['id']}" aria-label="快速查看 {esc(title)}">↗</button></div></article>'''
+    return f'''<article class="paper-card" data-search="{esc(q.casefold())}" data-category="{primary_topic(p)}" data-canonical-category="{p['category']}" data-topics="{' '.join(browse_groups(p))}" data-methods="{esc('|'.join(method_tags(p)))}" data-resources="{'|'.join(resource_kinds(p))}" data-year="{p.get('publication_year') or 'unknown'}" data-status="{'verified' if p['citation_verified'] else 'pending'}" data-title="{esc(title.casefold())}" data-sort-year="{p.get('bibliographic_year') or 0}"><span class="paper-art" aria-hidden="true" style="position:absolute"></span><div class="card-top"><span class="card-category" title="{esc(TOPIC_HINTS[primary_topic(p)])}">{esc(cat)}</span>{badge(p)}</div><h3><a href="papers/{p['id']}/index.html">{esc(title)}</a></h3><p class="authors" title="{esc(authors)}">{esc(authors)}</p><p class="card-summary">{esc(desc)}</p><div class="tags">{tags}</div><div class="topic-crosslabels" aria-label="研究问题与资源类型"><span>{esc(translate(c["problemLabel"]))}</span>{resource_tags}{'<span>分类边界待复核</span>' if c["needsReview"] else ''}</div><div class="card-bottom"><span class="paper-year">{esc(yearlabel(p))}<small>{yearkind}</small></span>{stage_badge}<button class="card-arrow" type="button" data-direction-label="{esc(cat)}" data-problem-label="{esc(translate(c['problemLabel']))}" data-preview="{p['id']}" aria-label="快速查看 {esc(title)}">↗</button></div></article>'''
 
 def classification_html(p):
     c=classification(p)
