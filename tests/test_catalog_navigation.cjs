@@ -56,6 +56,7 @@ test('all nine current views decorate their actual paper-return control, includi
  for(const paper of ['rpa-0012','rpa-0052','rpa-0062'])for(const stage of ['stage1','stage2','stage3']){
   const f=fixture({htmlFile:`dist/papers/${paper}/reading/${stage}.html`,url:`https://example.org/RoboPaperAtlas/papers/${paper}/reading/${stage}.html?catalog=q%3Drobot`});f.runAsset('catalog-navigation.js');
   const back=f.$('.atlas-return')||f.$('.reader-paper-link');assert.equal(back.getAttribute('href'),'../index.html?catalog=q%3Drobot#reading',paper+' '+stage);
+  if(paper==='rpa-0062'&&stage!=='stage2'){const crumb=f.$('.reader-breadcrumb').querySelector('a');assert.equal(crumb.getAttribute('href'),'../index.html?catalog=q%3Drobot#reading');assert.equal(crumb.getAttribute('class'),'atlas-return');}
   f.setURL('?');assert.equal(back.getAttribute('href'),'../index.html#reading');
  }
 });

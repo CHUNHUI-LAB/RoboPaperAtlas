@@ -151,6 +151,13 @@ def render(root, paper, stage, records):
         current_return = '<a class="atlas-return" href="../index.html#reading">回到论文详情</a>'
     if page.count(OPEN) != 1 or page.count(frozen) != 1 or page.count(note) != 1 or page.count(frozen_return) != 1:
         raise ValueError('Unexpected current reader navigation signature')
+    # The reviewed UMI layout hides its stagebar paper brand below 767px.
+    # Give current views a plain, visible return in the existing breadcrumb row.
+    if paper['id'] == 'rpa-0062' and stage in ('stage1', 'stage3'):
+        breadcrumb = '<div class="reader-breadcrumb"><a href="' + SITE + 'index.html#catalog">Library</a>'
+        if page.count(breadcrumb) != 1:
+            raise ValueError('Unexpected current reader breadcrumb signature')
+        page = page.replace(breadcrumb, '<div class="reader-breadcrumb"><a class="atlas-return" href="../index.html#reading">← 回到论文详情</a>', 1)
     nav = []
     for index, (key, label) in enumerate(STAGES, 1):
         target = paper['stages'][key]

@@ -79,6 +79,15 @@ class CurrentReaderTests(unittest.TestCase):
                     pattern = rf'<{tag}\b.*?</{tag}>'
                     self.assertEqual(re.findall(pattern, page.replace(script, ''), re.S), re.findall(pattern, source, re.S))
 
+    def test_umi_narrow_reader_has_a_visible_breadcrumb_return_outside_hidden_brand(self):
+        paper = next(p for p in self.papers if p['id'] == 'rpa-0062')
+        for stage in ('stage1', 'stage3'):
+            page = current.render(ROOT, paper, stage, self.records)
+            breadcrumb = re.search(r'<div class="reader-breadcrumb">.*?</div>', page, re.S)[0]
+            self.assertIn('<a class="atlas-return" href="../index.html#reading">← 回到论文详情</a>', breadcrumb)
+            self.assertNotIn('reader-paper-link', breadcrumb)
+            self.assertNotIn('>Library</a>', breadcrumb)
+
     def test_missing_stage_is_disabled_and_not_written(self):
         paper = copy.deepcopy(self.paper)
         paper['stages']['stage3'] = {'status': 'not_imported', 'artifacts': []}
