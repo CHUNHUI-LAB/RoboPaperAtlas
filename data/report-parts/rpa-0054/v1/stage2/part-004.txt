@@ -1,0 +1,39 @@
+toc.classList.contains('is-open')&&!document.querySelector('dialog[open]')){e.preventDefault();closeToc(true);}});
+ document.addEventListener('focusin',e=>{if(toc.classList.contains('is-open')&&e.target!==tocButton&&!toc.contains(e.target))closeToc();});
+ compact.addEventListener?.('change',()=>{closeToc(compact.matches&&toc.contains(document.activeElement));schedule();});toc.inert=compact.matches;
+ function goSection(index){const target=sections[index];if(!target)return;
+  // Focus can interrupt an in-flight browser scroll even with preventScroll.
+  // Finish focus changes first, then make this navigation the last scroll request.
+  target.focus({preventScroll:true});programmaticTarget=index;selectSection(index);target.scrollIntoView({block:'start',behavior:reduced.matches?'auto':'smooth'});
+ }
+ previousSection?.addEventListener('click',()=>goSection(currentSection-1));nextSection?.addEventListener('click',()=>goSection(currentSection+1));
+ const copies=new WeakMap();
+ page.querySelectorAll('[data-copy-code]').forEach(button=>button.addEventListener('click',async()=>{
+  const holder=button.closest('.code-reader'),lines=[...holder.querySelectorAll('.code-text')].map(line=>line.textContent),token=(copies.get(button)||0)+1;copies.set(button,token);
+  try{await navigator.clipboard.writeText(lines.join('\n'));if(copies.get(button)===token&&button.isConnected)announce('代码片段已复制，未包含行号');}
+  catch{if(copies.get(button)===token&&button.isConnected)announce('未能访问剪贴板，可在代码框中手动选择复制');}
+ }));
+ page.querySelectorAll('[data-code-focus]').forEach(button=>button.addEventListener('click',()=>{
+  const holder=button.closest('.code-reader'),active=!holder.classList.contains('is-focused');holder.classList.toggle('is-focused',active);button.setAttribute('aria-pressed',String(active));
+  const pre=holder.querySelector('pre'),first=holder.querySelector('.code-line.is-key');
+  if(active&&first)pre.scrollTo({top:Math.max(0,first.offsetTop-pre.clientHeight/3),behavior:reduced.matches?'auto':'smooth'});
+ }));
+ const sourceData=page.querySelector('[data-source-units]');
+ if(sourceData){
+  let units=[];try{units=JSON.parse(sourceData.textContent);}catch{};
+  const panel=page.querySelector('.reader-source-panel'),rows=page.querySelectorAll('[data-source-row]'),buttons=page.querySelectorAll('[data-source-unit]');let selected=0;
+  const show=(id,scroll=false)=>{const index=units.findIndex(x=>x.id===id);if(index<0)return;selected=index;const unit=units[index];
+   panel.querySelector('[data-source-id]').textContent=unit.id;panel.querySelector('[data-source-location]').textContent=unit.location;panel.querySelector('[data-source-paraphrase]').textContent=unit.paraphrase;
+   const quote=panel.querySelector('[data-source-quote]');quote.hidden=!unit.quote;quote.textContent=unit.quote||'';
+   const a=panel.querySelector('[data-source-open]');a.href=unit.url;a.textContent=(unit.link_label||'打开原文位置')+' ↗';
+   panel.querySelector('[data-source-previous]').disabled=index===0;panel.querySelector('[data-source-next]').disabled=index===units.length-1;
+   rows.forEach(row=>(row.closest('.source-row')||row).classList.toggle('is-current',row.dataset.sourceRow===id));buttons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.sourceUnit===id)));
+   if(scroll){interruptScroll();page.querySelector('[data-source-row="'+CSS.escape(id)+'"]')?.scrollIntoView({block:'start',behavior:reduced.matches?'auto':'smooth'});}
+  };
+  buttons.forEach(b=>b.addEventListener('click',()=>{show(b.dataset.sourceUnit);if(innerWidth<=1050){const unit=units.find(x=>x.id===b.dataset.sourceUnit);announce(unit?.location||'已选择原文位置');}}));
+  panel.querySelector('[data-source-previous]').addEventListener('click',()=>show(units[Math.max(0,selected-1)].id,true));panel.querySelector('[data-source-next]').addEventListener('click',()=>show(units[Math.min(units.length-1,selected+1)].id,true));
+  const toggle=page.querySelector('[data-source-toggle]');toggle?.addEventListener('click',()=>{const off=page.classList.toggle('reader-source-collapsed');toggle.setAttribute('aria-pressed',String(!off));});if(units.length)show(units[0].id);
+ }
+ updatePosition();
+})();
+</script></body></html>

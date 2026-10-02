@@ -26,10 +26,10 @@ class RoLoMaFirstTests(unittest.TestCase):
   (self.root/POLICY_PATH).write_text(json.dumps(dict(self.policy,document_sha256=r.sha(payload),**updates)))
  def admit(self,payload,**updates):self.set_policy(payload,**updates);return r.split_report(self.root,self.record,payload)
  def test_seventeen_reports_and_ninety_four_other_catalog_objects_unchanged(self):
-  self.assertEqual(len(FROZEN),17);self.assertEqual(len(self.records),18);self.assertEqual(len(CATALOG_FROZEN),94)
+  self.assertEqual(len(FROZEN),17);self.assertEqual(len(self.records),19);self.assertEqual(len(CATALOG_FROZEN),94)
   for rec in self.records:
    key='/'.join(rec[k] for k in ('paper_id','version','stage'))
-   if key=='rpa-0054/v1/stage1':continue
+   if key in {'rpa-0054/v1/stage1','rpa-0054/v1/stage2'}:continue
    self.assertEqual(rec['sha256'],FROZEN[key]);self.assertEqual(r.sha((ROOT/r.report_path(rec)).read_bytes()),FROZEN[key])
   for paper in self.catalog['papers']:
    if paper['id']!='rpa-0054':self.assertEqual(canonical(paper),CATALOG_FROZEN[paper['id']])
@@ -75,15 +75,15 @@ class RoLoMaFirstTests(unittest.TestCase):
   self.assertFalse(self.paper['citation_verified']);self.assertEqual(self.paper['metadata_status'],'user_provided_unverified')
   self.assertEqual(self.paper['verified_overlay']['publication_year'],2023);self.assertEqual(self.paper['pdf_kind'],'publisher')
   self.assertEqual(self.paper['stages']['stage1'],expected_stage('rpa-0054','stage1',self.records))
-  for stage in ('stage2','stage3'):self.assertEqual(self.paper['stages'][stage],{'status':'not_imported','artifacts':[]})
+  self.assertEqual(self.paper['stages']['stage2'],expected_stage('rpa-0054','stage2',self.records));self.assertEqual(self.paper['stages']['stage3'],{'status':'not_imported','artifacts':[]})
   self.assertEqual(sum(any(s['status']=='imported' for s in p['stages'].values()) for p in self.catalog['papers']),4)
-  self.assertEqual(sum(s['status']=='imported' for p in self.catalog['papers'] for s in p['stages'].values()),10)
+  self.assertEqual(sum(s['status']=='imported' for p in self.catalog['papers'] for s in p['stages'].values()),11)
   self.assertEqual(sum(all(s['status']=='imported' for s in p['stages'].values()) for p in self.catalog['papers']),3)
-  self.assertIn('1 个已导入报告',details(self.paper));self.assertIn('10 份报告已导入',home(self.catalog))
+  self.assertIn('2 个已导入报告',details(self.paper));self.assertIn('11 份报告已导入',home(self.catalog))
   self.assertEqual(json.loads((ROOT/'data/classification.json').read_text())['catalog_sha256'],r.sha((ROOT/'data/catalog.json').read_bytes()))
  def test_current_view_preserves_article_style_script_figures_and_return_context(self):
   page=current.render(ROOT,self.paper,'stage1',self.records)
-  self.assertIn('href="stage1.html"',page);self.assertNotIn('href="stage2.html"',page);self.assertNotIn('href="stage3.html"',page)
+  self.assertIn('href="stage1.html"',page);self.assertIn('href="stage2.html"',page);self.assertNotIn('href="stage3.html"',page)
   self.assertIn('href="../index.html#reading"',page);self.assertEqual(page.count(current.context_script(ROOT)),1)
   for tag in ('article','style','script'):self.assertEqual(re.findall(rf'<{tag}\b.*?</{tag}>',page.replace(current.context_script(ROOT),''),re.S),re.findall(rf'<{tag}\b.*?</{tag}>',self.text,re.S))
   with patch.dict(current.ROLOMA_FROZEN,{'stage1':dict(current.ROLOMA_FROZEN['stage1'],sha256='0'*64)}):
@@ -92,7 +92,7 @@ class RoLoMaFirstTests(unittest.TestCase):
   self.assertEqual(len(self.record['parts']),48)
   for part in self.record['parts']:
    self.assertLessEqual(part['bytes'],48000);raw=(ROOT/r._parts_path(self.record)/part['file']).read_bytes();raw.decode('utf-8');self.assertEqual(r.sha(raw),part['sha256'])
-  folder=ROOT/'artifacts/rpa-0054';self.assertEqual([p.name for p in folder.rglob('*') if p.is_file()],['first-pass.html'])
+  folder=ROOT/'artifacts/rpa-0054';self.assertEqual(sorted(p.name for p in folder.rglob('*') if p.is_file()),['first-pass.html','writing-close-reading.html'])
  def test_exact_packaged_reader_controls_in_python_discovery(self):
   result=subprocess.run(['node',str(ROOT/'tests/test_roloma_stage1_controls.cjs')],cwd=ROOT,capture_output=True,text=True,timeout=20)
   self.assertEqual(result.returncode,0,result.stdout+result.stderr)

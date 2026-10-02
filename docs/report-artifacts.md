@@ -297,7 +297,17 @@ passive MathML objective. Checkbox-only image-size controls add no extra script.
 The original reader controls remain offline; generated current views add only
 the separately disclosed hashed catalog-context navigation runtime. This does
 not relax any older importer or rewrite any of the seventeen prior report versions.
-The registry now has eighteen versioned records: four papers with ten current
-stages, of which three papers have all three stages. Only this paper receives a
+The Stage 1 addition brought the registry to eighteen versioned records: four
+papers with ten current stages, of which three papers have all three stages. Only this paper receives a
 formal metadata overlay; the other ninety-four catalog objects remain unchanged.
 Actual browser visual QA is separate from content review and static validation.
+
+
+## RoLoMa Stage 2 addition
+
+See [RoLoMa writing close reading](roloma-stage2.md). The new formal-version
+Stage 2 adds 36 licensed source-sentence/Chinese analysis pairs and scoped counts.
+The registry now contains 19 fixed records, 11 current stages across 4 papers,
+with 3 fully covered papers. All 18 predecessors, including RoLoMa Stage 1's
+48 fragments and fixed artifact, remain byte-identical. The current Stage 1
+view gains only its generated Stage 2 link; Stage 3 remains unavailable.

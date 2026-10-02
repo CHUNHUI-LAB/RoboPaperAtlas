@@ -43,8 +43,8 @@ class UIClarityTests(unittest.TestCase):
   self.assertEqual(sum(p['citation_verified'] for p in self.catalog['papers']),22)
   self.assertEqual(sum('data-status="verified"' in card(p) for p in self.catalog['papers']),22)
   self.assertIn('核验状态筛选只依据原始书目记录',home(self.catalog))
- def test_catalog_classification_and_reports_match_reviewed_roloma_stage1_integration(self):
-  expected={'data/catalog.json':'888a4e48df57d03ed229d96ef220da0285babf59ee6d63f669ff4b4bc625037d','data/classification.json':'e796b7fb169f489ef531593cc5d9652e4e6384a2383afcb4d42eb3138b14ce17','data/reports.json':'92268e69d13bd1f27880a9333f2cbfab65771fd8363a832cdeb252e8fb00a2c4'}
+ def test_catalog_classification_and_reports_match_reviewed_roloma_stage2_integration(self):
+  expected={'data/catalog.json':'f20a41065b6eb92649038e11ef996eed8d268123d5d10c467fcf87f155cd1167','data/classification.json':'6268a1a31011e10e1f48fcd7944338b742b7eecf656e7e9fc56c375bd987bc30','data/reports.json':'7004bfc2fc238380aa58eb6f3f4ed69dade441bb77fe49aabd8c16437b102a15'}
   for name,sha in expected.items():self.assertEqual(hashlib.sha256((ROOT/name).read_bytes()).hexdigest(),sha)
 
  def test_map_year_label_requires_complete_formal_overlay(self):

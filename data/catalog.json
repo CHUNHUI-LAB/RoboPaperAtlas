@@ -3196,7 +3196,7 @@
         "preprint_year": null,
         "venue": "Autonomous Robots 47(8):1463–1481 (2023)",
         "doi": "10.1007/s10514-023-10146-0",
-        "verification_scope": "Springer正式书目、19页Version of Record、11图、3表与附录已核对并完成初读；视频只核对索引，未读代码或独立复现。"
+        "verification_scope": "Springer正式书目、19页Version of Record、11图、3表与附录已核对并完成初读及36句范围的写作精读；视频只核对索引，未读代码或独立复现。"
       },
       "bibliographic_year": 2023,
       "publication_year": 2023,
@@ -3212,7 +3212,7 @@
       "citation_verified": false,
       "metadata_status": "user_provided_unverified",
       "verified_at": "2026-10-02",
-      "verification_scope": "原始题名、作者简称与年份保持用户提供记录；独立补充核验Springer正式题名、作者顺序、出版年、DOI及19页正式PDF。已完成明确范围的Stage 1初读，不代表写作/代码精读或独立复现；仅涉及本条目。",
+      "verification_scope": "原始题名、作者简称与年份保持用户提供记录；独立补充核验Springer正式题名、作者顺序、出版年、DOI及19页正式PDF。已完成明确范围的Stage 1初读与Stage 2写作精读，不代表代码精读或独立复现；仅涉及本条目。",
       "publication_status": "published",
       "paper_url": "https://link.springer.com/article/10.1007/s10514-023-10146-0",
       "preprint_url": null,
@@ -3222,7 +3222,7 @@
       "pdf_note": "正式出版方PDF已取得并核对；期刊印刷页码1463–1481。论文与所用图像的CC BY 4.0许可已核对；本站只链接PDF，不重新分发完整论文。",
       "project_url": null,
       "code_urls": [],
-      "code_note": "本次为正式论文第一遍初读；源码、模型与运行条件未核验。",
+      "code_note": "本次完成正式论文初读与写作精读；源码、模型与运行条件未核验。",
       "doi": "10.1007/s10514-023-10146-0",
       "sources": [
         "https://link.springer.com/article/10.1007/s10514-023-10146-0",
@@ -3230,7 +3230,7 @@
       ],
       "notes": [
         "原始书目信息保持不变；正式出版日期为2023-10-15，期刊卷期为47(8)。",
-        "报告v1基于19页Springer正式出版版；仅导入Stage 1，未读实现或运行实验。"
+        "报告v1基于19页Springer正式出版版；已导入Stage 1与Stage 2；写作统计限于摘要、完整引言和§6开头总结的36句，未读实现或运行实验。"
       ],
       "stages": {
         "stage1": {
@@ -3248,8 +3248,18 @@
           ]
         },
         "stage2": {
-          "status": "not_imported",
-          "artifacts": []
+          "status": "imported",
+          "artifacts": [
+            {
+              "kind": "html",
+              "version": "v1",
+              "path": "artifacts/rpa-0054/v1/writing-close-reading.html",
+              "sha256": "6b0959daab2482a75286e1a2951efb4fc550835f1715a5aaac5f4759847c6d38",
+              "source_edition": "Autonomous Robots 47(8):1463–1481 (2023)，Springer Version of Record，19页；摘要8句、引言18句（含§1.1）、§6开头总结10句；其余正文用于核对论证",
+              "created_at": "2026-10-02",
+              "review_status": "content_approved"
+            }
+          ]
         },
         "stage3": {
           "status": "not_imported",

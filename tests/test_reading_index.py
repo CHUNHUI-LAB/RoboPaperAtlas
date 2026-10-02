@@ -24,9 +24,9 @@ class ReadingIndexTests(unittest.TestCase):
 
     def test_current_stages_count_once_and_historical_versions_stay_in_detail(self):
         page = self.page()
-        self.assertIn('4 篇论文 · 10 份已导入阶段报告', page)
-        self.assertEqual(page.count('class="reading-stage-link"'), 10)
-        self.assertEqual(page.count('class="reading-stage unavailable"'), 2)
+        self.assertIn('4 篇论文 · 11 份已导入阶段报告', page)
+        self.assertEqual(page.count('class="reading-stage-link"'), 11)
+        self.assertEqual(page.count('class="reading-stage unavailable"'), 1)
         for paper in self.catalog['papers']:
             for stage, state in paper['stages'].items():
                 if state['status'] != 'imported':

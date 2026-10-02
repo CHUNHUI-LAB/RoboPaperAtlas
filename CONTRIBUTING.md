@@ -14,7 +14,7 @@
 
 ## 阅读档案
 
-当前 UMI-on-Legs（rpa-0062）、Deep Whole-Body Control（rpa-0012）和 RoboDuet（rpa-0052）各导入三阶段实际报告；RoLoMa（rpa-0054）仅导入正式版 Stage 1 初读，其他91条仍未导入。新增产物请先在 Issue 或 PR 中说明，附公开权利说明和来源版本，维护者审查后再扩展当前试点的身份白名单与版本规则：
+当前 UMI-on-Legs（rpa-0062）、Deep Whole-Body Control（rpa-0012）和 RoboDuet（rpa-0052）各导入三阶段实际报告；RoLoMa（rpa-0054）已导入正式版 Stage 1 初读与 Stage 2 写作精读，Stage 3 未完成，其他91条仍未导入。新增产物请先在 Issue 或 PR 中说明，附公开权利说明和来源版本，维护者审查后再扩展当前试点的身份白名单与版本规则：
 
 - 每篇论文可分别贡献 Stage 1 初读、Stage 2 写作精读、Stage 3 方法精读
 - 报告必须是实际完成的文件，不得用目录状态代替阅读完成

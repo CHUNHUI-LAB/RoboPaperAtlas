@@ -59,7 +59,7 @@ class DeepWBCReportTests(unittest.TestCase):
   self.assertIn(b'href="../../../papers/rpa-0012/index.html"',self.payload)
   self.assertNotIn(b'private-atlas',self.payload);self.assertNotIn(b'references/atlas-theme.md',self.payload)
  def test_stage_metadata_public_page_and_actual_stage_links(self):
-  records=r.load_reports(ROOT);self.assertEqual(len(records),18);self.assertEqual(validate_catalog(self.catalog,records),95)
+  records=r.load_reports(ROOT);self.assertEqual(len(records),19);self.assertEqual(validate_catalog(self.catalog,records),95)
   paper=next(x for x in self.catalog['papers'] if x['id']=='rpa-0012')
   self.assertEqual(paper['stages']['stage1'],expected_stage('rpa-0012','stage1',records));self.assertEqual(paper['stages']['stage1']['artifacts'][0]['review_status'],'content_approved')
   self.assertEqual(paper['stages']['stage3'],expected_stage('rpa-0012','stage3',records))
