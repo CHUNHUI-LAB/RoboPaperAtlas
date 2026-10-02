@@ -70,7 +70,9 @@ class CurrentReaderTests(unittest.TestCase):
         for paper in self.papers:
             if paper['id'] not in current.CURRENT_READER_PAPERS:
                 continue
-            for stage in paper['stages']:
+            for stage, state in paper['stages'].items():
+                if state['status'] != 'imported':
+                    continue
                 page = current.render(ROOT, paper, stage, self.records)
                 source = (ROOT / paper['stages'][stage]['artifacts'][0]['path']).read_text()
                 self.assertEqual(page.count(script), 1)
@@ -115,7 +117,7 @@ class CurrentReaderTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             out = Path(d)
             current.write_current_readers(ROOT, out, self.papers, self.records)
-            self.assertEqual(len(current.validate_current_readers(ROOT, out, self.papers, self.records)), 9)
+            self.assertEqual(len(current.validate_current_readers(ROOT, out, self.papers, self.records)), 10)
             dest = out / current.entry_path(self.paper['id'], 'stage1')
             original = dest.read_bytes()
             dest.write_bytes(original + b'<script>alert(1)</script>')
@@ -140,6 +142,6 @@ class CurrentReaderTests(unittest.TestCase):
                 self.assertIn('href="../../' + artifact['path'] + '"', page)
         with tempfile.TemporaryDirectory() as d:
             current.write_current_readers(ROOT, Path(d), self.papers, self.records)
-            self.assertEqual(len(list(Path(d).rglob('*.html'))), 9)
+            self.assertEqual(len(list(Path(d).rglob('*.html'))), 10)
         for r in self.records:
             self.assertEqual(hashlib.sha256((ROOT / report_path(r)).read_bytes()).hexdigest(), r['sha256'])

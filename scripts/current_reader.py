@@ -2,7 +2,7 @@
 import hashlib
 from html import escape
 
-CURRENT_READER_PAPERS = frozenset({'rpa-0012', 'rpa-0062', 'rpa-0052'})
+CURRENT_READER_PAPERS = frozenset({'rpa-0012', 'rpa-0062', 'rpa-0052', 'rpa-0054'})
 STAGES = (('stage1', '初读'), ('stage2', '写作精读'), ('stage3', '方法与代码'))
 OPEN = '<nav class="reader-stages" aria-label="阅读阶段">'
 NOTE = '<p class="reader-document-note">正文、嵌入图、代码和已排版公式可离线阅读；站点导航、外部原文与源码链接需联网。阅读覆盖范围以本页声明为准。</p>'
@@ -106,6 +106,10 @@ ROBO_FROZEN['stage3'] = {'version': 'v1',
  'current_return': '<a class="atlas-return" href="../index.html#reading">回到论文详情</a>'}
 
 
+# Exact formal-version RoLoMa Stage 1; all previous sources remain immutable.
+ROLOMA_FROZEN = {'stage1': {'version': 'v1', 'sha256': '7fd37b7123594f567766222adfbe3a6eeb6f4b4a5ce9a12965990bef8ca8ab7a', 'nav': '<nav class="reader-stages" aria-label="阅读阶段"><a href="#section-01" aria-current="page"><small>01</small>初读</a><span aria-disabled="true"><small>02</small>写作精读 · 未收录</span><span aria-disabled="true"><small>03</small>方法与代码 · 未收录</span></nav>', 'note': '<p class="reader-document-note">报告 v1 · 2026-10-02。内容已独立审阅，公开页面视觉验收尚未完成。原文页码同时标为 PDF 页序与期刊印刷页码；E01–E12 为本页新增证据单元编号。正文使用“作者表述 / 概括 / 直接观察”区分证据性质。</p>', 'return_link': '<a class="atlas-return" href="https://chunhui-lab.github.io/RoboPaperAtlas/papers/rpa-0054/index.html">回到论文详情</a>', 'current_return': '<a class="atlas-return" href="../index.html#reading">回到论文详情</a>'}}
+
+
 def entry_path(paper_id, stage):
     if paper_id in CURRENT_READER_PAPERS and stage in dict(STAGES):
         return f'papers/{paper_id}/reading/{stage}.html'
@@ -134,7 +138,13 @@ def render(root, paper, stage, records):
     if len(raw) != record['bytes'] or hashlib.sha256(raw).hexdigest() != record['sha256']:
         raise ValueError('Current reader source hash mismatch')
     page = raw.decode('utf-8')
-    if paper['id'] == 'rpa-0052':
+    if paper['id'] == 'rpa-0054':
+        spec = ROLOMA_FROZEN.get(stage)
+        if spec is None or (record['version'], record['sha256']) != (spec['version'], spec['sha256']):
+            raise ValueError('Unreviewed RoLoMa current reader source version/hash')
+        frozen, frozen_return, note = spec['nav'], spec['return_link'], spec['note']
+        current_return = spec['current_return']
+    elif paper['id'] == 'rpa-0052':
         spec = ROBO_FROZEN.get(stage)
         if spec is None or (record['version'], record['sha256']) != (spec['version'], spec['sha256']):
             raise ValueError('Unreviewed RoboDuet current reader source version/hash')

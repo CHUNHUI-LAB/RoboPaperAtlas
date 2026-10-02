@@ -73,7 +73,7 @@ independently valid UTF-8, and carries its exact byte count and SHA-256. Assembl
 concatenates those original bytes without newline, Unicode, whitespace, or HTML
 normalization. The final byte count and SHA-256 must also match. This bounds a
 single report at 47,952,000 bytes. The whole registry is limited to 2 MB and the exact
-reviewed paper/stage/version identities in `REPORT_PAPERS` (currently fifteen
+reviewed paper/stage/version identities in `REPORT_PAPERS` (currently eighteen
 records, including ten UMI versions across its three stages).
 
 No registry value is accepted as a directory or arbitrary input/output path.
@@ -278,3 +278,26 @@ combination; other valid historical artifact identities keep their frozen paths.
 Output validation reconstructs all six supported current views (UMI and Deep WBC)
 and compares their entire bytes. This is not an HTML-parser or resource-policy
 exception.
+
+
+## RoLoMa formal-version first reading
+
+`rpa-0054/v1/stage1` adds one content-reviewed first-pass report, based on the
+19-page Springer Version of Record (Autonomous Robots 47(8):1463–1481, 2023;
+DOI 10.1007/s10514-023-10146-0). The report uses twelve ordered sections and
+five closing conclusions. Eleven original figure crops carry author credit,
+CC BY 4.0 attribution and crop/rasterization/compression notices; the complete
+third-party PDF is not redistributed. Video coverage is explicitly limited to
+the appendix index. Model SUF, time-summed objectives and finite-direction force
+tests are kept distinct. Code reading and independent reproduction are not claimed.
+
+`scripts/report_roloma_stage1.py` is restricted to that exact identity. It pins
+complete document/style/script hashes, all eleven image byte hashes, and one
+passive MathML objective. Checkbox-only image-size controls add no extra script.
+The original reader controls remain offline; generated current views add only
+the separately disclosed hashed catalog-context navigation runtime. This does
+not relax any older importer or rewrite any of the seventeen prior report versions.
+The registry now has eighteen versioned records: four papers with ten current
+stages, of which three papers have all three stages. Only this paper receives a
+formal metadata overlay; the other ninety-four catalog objects remain unchanged.
+Actual browser visual QA is separate from content review and static validation.

@@ -44,10 +44,10 @@ class RoboDuetStage2Tests(unittest.TestCase):
         (self.root / POLICY_PATH).write_text(json.dumps(policy))
 
     def test_one_new_report_and_all_existing_bytes_are_immutable(self):
-        self.assertEqual(len(self.records), len(FROZEN) + 2)
+        self.assertEqual(len(self.records), len(FROZEN) + 3)
         for record in self.records:
             key = '/'.join(record[k] for k in ('paper_id', 'version', 'stage'))
-            if key in ('rpa-0052/v1/stage2', 'rpa-0052/v1/stage3'):
+            if key in ('rpa-0052/v1/stage2', 'rpa-0052/v1/stage3', 'rpa-0054/v1/stage1'):
                 continue
             self.assertEqual(record['sha256'], FROZEN[key])
             self.assertEqual(reports.sha((ROOT / reports.report_path(record)).read_bytes()), FROZEN[key])
@@ -121,7 +121,7 @@ class RoboDuetStage2Tests(unittest.TestCase):
 
     def test_catalog_status_counts_and_classification_metadata(self):
         self.assertEqual(validate_catalog(self.catalog, self.records), 95)
-        self.assertEqual(sum(s['status'] == 'imported' for p in self.catalog['papers'] for s in p['stages'].values()), 9)
+        self.assertEqual(sum(s['status'] == 'imported' for p in self.catalog['papers'] for s in p['stages'].values()), 10)
         self.assertEqual(sum(all(s['status'] == 'imported' for s in p['stages'].values()) for p in self.catalog['papers']), 3)
         self.assertFalse(self.paper['citation_verified'])
         self.assertEqual(self.paper['stages']['stage2'], expected_stage('rpa-0052', 'stage2', self.records))

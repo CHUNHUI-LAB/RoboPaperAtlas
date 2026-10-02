@@ -42,6 +42,11 @@ class MapIntegrationTests(unittest.TestCase):
   self.assertEqual(robo['stages']['stage3']['status'],'imported')
   robo['stages']['stage3']={'status':'not_imported','artifacts':[]}
   robo['verified_overlay']['verification_scope']='已核验出版方书目与官方来源，尚未开展全文精读或复现。'
+  # Normalize the separately tested single-paper formal RoLoMa overlay.
+  roloma=next(p for p in self.catalog['papers'] if p['id']=='rpa-0054')
+  self.assertEqual(roloma['stages']['stage1']['status'],'imported')
+  original=json.loads((ROOT/'tests/fixtures/roloma-before-registration.json').read_text())
+  roloma.clear();roloma.update(original)
   payload=json.dumps([p for p in self.catalog['papers'] if p['id']!='rpa-0062'],ensure_ascii=False,sort_keys=True,separators=(',',':')).encode()
   self.assertEqual(hashlib.sha256(payload).hexdigest(),'efa2b769f740904ccac886cf8a5b0f821bc7184b1539451946d37490ad9dfb66')
  def test_verified_force_control_author_preserves_original(self):

@@ -3183,41 +3183,69 @@
         "authors": "Henrique Ferrolho 等",
         "year": 2023
       },
-      "verified_overlay": null,
+      "verified_overlay": {
+        "title": "RoLoMa: robust loco-manipulation for quadruped robots with arms",
+        "authors": [
+          "Henrique Ferrolho",
+          "Vladimir Ivan",
+          "Wolfgang Merkt",
+          "Ioannis Havoutis",
+          "Sethu Vijayakumar"
+        ],
+        "publication_year": 2023,
+        "preprint_year": null,
+        "venue": "Autonomous Robots 47(8):1463–1481 (2023)",
+        "doi": "10.1007/s10514-023-10146-0",
+        "verification_scope": "Springer正式书目、19页Version of Record、11图、3表与附录已核对并完成初读；视频只核对索引，未读代码或独立复现。"
+      },
       "bibliographic_year": 2023,
-      "publication_year": null,
+      "publication_year": 2023,
       "preprint_year": null,
       "year_basis": "user_provided",
-      "venue": null,
+      "venue": "Autonomous Robots 47(8):1463–1481 (2023)",
       "category": "wbc",
       "tags": [
         "loco-manipulation",
         "quadruped"
       ],
-      "summary": null,
+      "summary": "在完整刚体动力学、摩擦与力矩限制下优化SUF，主动提高四足带臂全身轨迹的抗扰能力，并支持预设接触切换及初步足端位置优化。",
       "citation_verified": false,
       "metadata_status": "user_provided_unverified",
-      "verified_at": null,
-      "verification_scope": "原始题名、作者与年份保留为用户提供的未核验书目。分类仅按题名初步整理；尚未开展来源核验。",
-      "publication_status": "not_started",
-      "paper_url": null,
+      "verified_at": "2026-10-02",
+      "verification_scope": "原始题名、作者简称与年份保持用户提供记录；独立补充核验Springer正式题名、作者顺序、出版年、DOI及19页正式PDF。已完成明确范围的Stage 1初读，不代表写作/代码精读或独立复现；仅涉及本条目。",
+      "publication_status": "published",
+      "paper_url": "https://link.springer.com/article/10.1007/s10514-023-10146-0",
       "preprint_url": null,
-      "pdf_url": null,
-      "pdf_kind": null,
-      "pdf_edition": null,
-      "pdf_note": "正式出版方 PDF 尚未核验，暂不提供 PDF 下载入口。",
+      "pdf_url": "https://link.springer.com/content/pdf/10.1007/s10514-023-10146-0.pdf",
+      "pdf_kind": "publisher",
+      "pdf_edition": "Springer Version of Record · 2023-10-15 · 19页",
+      "pdf_note": "正式出版方PDF已取得并核对；期刊印刷页码1463–1481。论文与所用图像的CC BY 4.0许可已核对；本站只链接PDF，不重新分发完整论文。",
       "project_url": null,
       "code_urls": [],
-      "code_note": "官方代码链接与实际可用性尚未核验。",
-      "doi": null,
-      "sources": [],
+      "code_note": "本次为正式论文第一遍初读；源码、模型与运行条件未核验。",
+      "doi": "10.1007/s10514-023-10146-0",
+      "sources": [
+        "https://link.springer.com/article/10.1007/s10514-023-10146-0",
+        "https://link.springer.com/content/pdf/10.1007/s10514-023-10146-0.pdf"
+      ],
       "notes": [
-        "原始年份未指定是预印本年还是正式出版年；在独立核验前不将其用于出版年份筛选。"
+        "原始书目信息保持不变；正式出版日期为2023-10-15，期刊卷期为47(8)。",
+        "报告v1基于19页Springer正式出版版；仅导入Stage 1，未读实现或运行实验。"
       ],
       "stages": {
         "stage1": {
-          "status": "not_imported",
-          "artifacts": []
+          "status": "imported",
+          "artifacts": [
+            {
+              "kind": "html",
+              "version": "v1",
+              "path": "artifacts/rpa-0054/v1/first-pass.html",
+              "sha256": "7fd37b7123594f567766222adfbe3a6eeb6f4b4a5ce9a12965990bef8ca8ab7a",
+              "source_edition": "Autonomous Robots 47(8):1463–1481 (2023)，Springer Version of Record，19页；完整初读含11图、3表与附录，视频仅核对索引",
+              "created_at": "2026-10-02",
+              "review_status": "content_approved"
+            }
+          ]
         },
         "stage2": {
           "status": "not_imported",
