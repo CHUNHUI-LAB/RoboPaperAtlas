@@ -3,8 +3,8 @@ const test=require('node:test'),assert=require('node:assert/strict'),fs=require(
 const root=path.resolve(__dirname,'..'),data=JSON.parse(fs.readFileSync(path.join(root,'submit-preview/data/venues.json'),'utf8'));
 function setup(){
  const nodes={};function get(id){if(!nodes[id])nodes[id]={value:'',textContent:'',_html:'',options:[],classList:{remove(){}},add(o){this.options.push(o)},set innerHTML(v){this._html=v;if(v.startsWith('<option')){this.options=[{value:''}];this.value=''}},get innerHTML(){return this._html}};return nodes[id]}
- const ctx=vm.createContext({document:{getElementById:get,querySelectorAll:()=>[]},URL,Option:function(text,value){this.text=text;this.value=value},location:{hash:''},history:{replaceState(){}},console});
- const src=fs.readFileSync(path.join(root,'submit-preview/app.js'),'utf8').split("fetch(new URL(")[0];vm.runInContext(src,ctx);ctx.fixture=data;vm.runInContext('data=fixture',ctx);get('p-yearmode').value='publication_year';return {ctx,get,run:s=>vm.runInContext(s,ctx)};
+ const ctx=vm.createContext({document:{getElementById:get,querySelectorAll:()=>[]},URL,URLSearchParams,Option:function(text,value){this.text=text;this.value=value},location:{hash:''},history:{replaceState(){}},console});
+ const src=fs.readFileSync(path.join(root,'submit-preview/app.js'),'utf8').split("const sourceURL=")[0];vm.runInContext(src,ctx);ctx.fixture=data;vm.runInContext('data=fixture',ctx);get('p-yearmode').value='publication_year';return {ctx,get,run:s=>vm.runInContext(s,ctx)};
 }
 test('same-publication venue, year, forum, status and topic intersection',()=>{const {ctx,run}=setup();ctx.p=data.publications.find(p=>p.paper_id==='rpa-0052');assert.equal(run("matchesPublication(p,{venue:'ral',yearmode:'publication_year',year:'2025',forum:'journal',status:'published',topic:'wbc'})"),true);assert.equal(run("matchesPublication(p,{venue:'icra',forum:'workshop'})"),false);assert.equal(run("matchesPublication(p,{yearmode:'edition_year',year:'2025'})"),false);ctx.p=data.publications.find(p=>p.paper_id==='rpa-0012');assert.equal(run("matchesPublication(p,{yearmode:'edition_year',year:'2022',forum:'main_conference'})"),true);assert.equal(run("matchesPublication(p,{yearmode:'publication_year',year:'2023'})"),true);assert.equal(run("matchesPublication(p,{yearmode:'publication_year',year:'2022'})"),false)});
 test('derived counts and journal rendering do not fabricate conference editions',()=>{const {get,run}=setup();run('renderPapers()');assert.match(get('paper-count').textContent,/8 篇匹配.*8 篇/);assert.match(get('migration-notice').textContent,/8 篇.*95.*87/);assert.match(get('paper-list').innerHTML,/IEEE RA-L · 期刊/);assert.match(get('paper-list').innerHTML,/AAAI · 主会/);assert.doesNotMatch(get('paper-list').innerHTML,/届次 null/);get('p-forum').value='journal';run('renderPapers()');assert.match(get('paper-count').textContent,/1 篇匹配/);assert.doesNotMatch(get('paper-list').innerHTML,/会议届次与出版年份不同/);get('p-forum').value='workshop';run('renderPapers()');assert.match(get('paper-count').textContent,/0 篇匹配/)});
@@ -62,4 +62,42 @@ test('new experience and rule fields escape markup and reject unsafe source URLs
  const html=run("renderExperiences('icra')");
  assert.doesNotMatch(html,/<img|<svg|href="javascript:/);
  assert.match(html,/&lt;img/);assert.match(html,/&lt;svg/);
+});
+
+test('venue overview exposes source-backed summaries before any selection',()=>{
+ const {get,run}=setup();run('renderList()');
+ assert.equal((get('venue-list').innerHTML.match(/class="venue-card"/g)||[]).length,15);
+ assert.match(get('venue-list').innerHTML,/研究|机器人/);assert.match(get('venue-list').innerHTML,/投稿形式/);assert.match(get('venue-list').innerHTML,/时间概况/);
+ assert.match(get('venue-list').innerHTML,/两阶段评审 · 扩展摘要后按邀请提交全文/);
+ assert.match(get('venue-list').innerHTML,/暂无可核验日期/);
+ get('query').value='实地验证';run('renderList()');assert.equal(get('venue-count').textContent,'1 个渠道');assert.match(get('venue-list').innerHTML,/Journal of Field Robotics/);
+ get('query').value='不可能匹配的词';run('renderList()');assert.equal(get('venue-count').textContent,'0 个渠道');assert.match(get('venue-list').innerHTML,/重置筛选/);
+});
+test('global experiences show all unique summaries and provenance, with honest empty states',()=>{
+ const {get,run}=setup();run('renderExperienceOverview()');
+ assert.equal((get('experience-list').innerHTML.match(/data-experience-id=/g)||[]).length,7);
+ assert.equal((get('experience-synthesis').innerHTML.match(/class="synthesis-card"/g)||[]).length,3);
+ assert.match(get('experience-synthesis').innerHTML,/不是原作者共同结论或官方要求/);
+ for(const r of data.experiences.records)assert.ok(get('experience-list').innerHTML.includes(r.body_summary));
+ get('e-venue').value='icra';run('renderExperienceOverview()');assert.match(get('experience-count').textContent,/3 条已读来源/);assert.match(get('experience-checks').innerHTML,/终稿冲突尚未解决/);
+ get('e-type').value='author_advice';run('renderExperienceOverview()');assert.match(get('experience-count').textContent,/1 条已读来源/);
+ get('e-venue').value='jfr';run('renderExperienceOverview()');assert.match(get('experience-count').textContent,/0 条已读来源/);assert.match(get('experience-list').innerHTML,/没有收录不代表没有相关经验/);
+});
+test('deadline overview separates initial, conditional, historical and disputed information',()=>{
+ const {get,run}=setup();run('renderDeadlines()');const html=get('deadline-list').innerHTML,first=html.split('常规期刊、待确认与历史届次')[0];
+ assert.match(first,/3 个已核验节点/);assert.match(first,/2026-11-10/);assert.match(first,/2026-11-16/);assert.match(first,/2026-12-04/);
+ assert.doesNotMatch(first,/2027-04-16|2026-10-12|2026-09-16/);
+ assert.match(html,/仅适用于已完成前置阶段并获邀请的作者/);assert.match(html,/日期存在冲突/);assert.match(html,/本届官网来源待确认/);assert.match(html,/全年接收投稿/);
+ get('d-venue').value='icra';run('renderDeadlines()');assert.match(get('deadline-list').innerHTML,/0 个已核验节点/);assert.match(get('deadline-list').innerHTML,/暂不作可操作截止日/);
+ get('d-venue').value='rss';run('renderDeadlines()');assert.match(get('deadline-list').innerHTML,/1 个已核验节点/);
+});
+test('routes preserve encoded filters and detail return destination without arbitrary selection',()=>{
+ const {ctx,get,run}=setup();
+ assert.equal(run("parseRoute('#experiences?ev=ral&eq=%E4%BF%AE%E8%AE%A2').tab"),'experiences');assert.equal(run("parseRoute('#experiences?ev=ral&eq=%E4%BF%AE%E8%AE%A2').params.get('eq')"),'修订');
+ assert.equal(run("parseRoute('#bad').tab"),'venues');
+ get('query').value='感知';get('kind').value='journal';assert.match(run("venueHref('ral')"),/^#venues\/ral\?q=/);
+ ctx.location={hash:'#venues/rss?from=deadlines&dv=rss&edition=rss-2027'};assert.equal(run('returnHref()'),'#deadlines?dv=rss');
+ ctx.location={hash:'#venues/ral?q=test&kind=journal&edition=ral-policy-20261001'};assert.equal(run('returnHref()'),'#venues?q=test&kind=journal');
+ const src=fs.readFileSync(path.join(root,'submit-preview/app.js'),'utf8');assert.doesNotMatch(src,/if\(!selected\)openVenue\('rss'\)/);
+ assert.match(src,/navigator\.clipboard\.writeText\(url\)/);assert.match(src,/id="copy-status".*role="status"/);assert.match(src,/addEventListener\('hashchange',route\)/);
 });

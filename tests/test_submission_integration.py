@@ -40,9 +40,21 @@ class SubmissionIntegrationTests(unittest.TestCase):
             self.assertEqual(page.count('id="main"'), 1)
             self.assertIn('../submit-preview/app.js?v=', page)
             self.assertIn('class="submission-module"', page)
-            for element in ('nav-venues', 'nav-papers', 'query', 'workspace', 'detail', 'papers-view'):
+            for element in ('nav-venues', 'nav-experiences', 'nav-deadlines', 'nav-papers', 'query', 'workspace', 'detail', 'papers-view', 'experiences-view', 'deadlines-view', 'retry-load'):
                 self.assertEqual(page.count(f'id="{element}"'), 1)
             self.assertNotIn('独立预览', page)
+
+    def test_readable_task_entries_and_unselected_initial_state(self):
+        html = (ROOT/'submit-preview/index.html').read_text()
+        for text in ('找会议 / 期刊', '看投稿经验', '查截止日期', '先看总结，再读具体经历'):
+            self.assertIn(text, html)
+        self.assertIn('id="workspace" class="workspace" tabindex="-1" hidden', html)
+        css = (ROOT/'submit-preview/style.css').read_text()
+        self.assertNotIn('height:680px', css)
+        self.assertIn('.venue-grid{grid-template-columns:1fr', css)
+        self.assertIn('prefers-reduced-motion:reduce', css)
+        self.assertIn('transition:none!important', css)
+        self.assertIn('summary:focus-visible', css)
 
     def test_canonical_fetch_uses_script_location(self):
         self.assertIn("fetch(new URL('data/venues.json', document.currentScript.src))",

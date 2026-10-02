@@ -10,7 +10,7 @@ class SubmissionPublicationTests(unittest.TestCase):
         cls.data = json.loads((ROOT/'submit-preview/data/venues.json').read_text())
 
     def test_frontend_behavior(self):
-        subprocess.run(['node', '--test', 'tests/test_submission_publications.cjs'], cwd=ROOT, check=True, capture_output=True, text=True)
+        subprocess.run(['node', '--test', 'tests/test_submission_publications.cjs', 'tests/test_submission_routes.cjs'], cwd=ROOT, check=True, capture_output=True, text=True)
 
     def test_counts_and_recommendation_boundary(self):
         d=self.data
