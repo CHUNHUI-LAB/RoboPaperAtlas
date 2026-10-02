@@ -16,8 +16,8 @@ class SubmissionProfileTests(unittest.TestCase):
 
     def test_complete_source_backed_profiles_and_experiences(self):
         self.assertEqual(validate_submission_profiles(self.data), 15)
-        self.assertEqual(validate_experience_overview(self.data), 7)
-        self.assertEqual(len(self.data['experiences']['editorial_synthesis']), 3)
+        self.assertEqual(validate_experience_overview(self.data), 14)
+        self.assertEqual(len(self.data['experiences']['editorial_synthesis']), 6)
 
     def test_legacy_envelope_is_explicitly_compatible_but_not_publishable(self):
         self.data.pop('venue_profiles')
@@ -57,6 +57,22 @@ class SubmissionProfileTests(unittest.TestCase):
     def test_each_experience_summary_is_editorial_and_cannot_cross_source_identity(self):
         self.data['experiences']['overview']['records'][0]['record_id'] = 'unknown'
         with self.assertRaises(ValueError): validate_experience_overview(self.data)
+
+    def test_experience_evidence_checks_optional_urls_dates_and_markup(self):
+        mutations = [
+            lambda rs: rs[-1]['supporting_sources'][0].update(url='javascript:alert(1)'),
+            lambda rs: rs[-1]['supporting_sources'][0].update(role='<script>bad</script>'),
+            lambda rs: rs[7]['timeline'][0].update(date='2025-02-30'),
+            lambda rs: rs[-2]['cases'][0].update(sequence='<img src=x>'),
+            lambda rs: rs[8]['comments'][-1].update(source_url='https://localhost/private'),
+            lambda rs: rs[-1].update(id=rs[0]['id']),
+            lambda rs: rs[-1].update(source_url=rs[0]['source_url']),
+        ]
+        for mutate in mutations:
+            data = copy.deepcopy(self.data)
+            mutate(data['experiences']['records'])
+            with self.assertRaises(ValueError):
+                validate_experience_overview(data)
 
     def test_failed_fetch_is_never_policy_or_style_evidence(self):
         source = next(s for s in self.data['sources'] if s.get('access_status') == 'fetch_failed')

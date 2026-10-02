@@ -91,6 +91,29 @@ def validate_experience_overview(data):
     for field in ('summary', 'evidence_note'):
         text(overview[field], field)
     records = {r['id']: r for r in pack['records']}
+    ensure(len(records) == len(pack['records']), 'Duplicate experience ID')
+    ensure(len({r['source_url'] for r in pack['records']}) == len(records),
+           'Duplicate experience source URL')
+    venues = {v['id'] for v in data['venues']}
+    for record in records.values():
+        check_url(record['source_url'])
+        ids = record.get('venue_ids', [record['venue_id']])
+        ensure(record['venue_id'] in ids and set(ids) <= venues, 'Invalid experience venue')
+        for item in record.get('timeline', []):
+            ensure(set(item) == {'date', 'event'}, 'Unknown experience timeline field')
+            checked(item['date'])
+            text(item['event'], 'timeline event')
+        for item in record.get('cases', []):
+            ensure(set(item) == {'case', 'outcome', 'sequence'}, 'Unknown experience case field')
+            for field in ('case', 'outcome', 'sequence'):
+                text(item[field], 'case ' + field)
+        for source in record.get('supporting_sources', []):
+            ensure(set(source) == {'url', 'role'}, 'Unknown experience supporting source field')
+            check_url(source['url'])
+            text(source['role'], 'supporting source scope')
+        for comment in record['comments']:
+            if 'source_url' in comment:
+                check_url(comment['source_url'])
     summaries = overview['records']
     ensure(len(summaries) == len(records) and {s['record_id'] for s in summaries} == set(records),
            'Experience overview must cover each source exactly once')

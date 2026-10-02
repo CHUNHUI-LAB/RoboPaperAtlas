@@ -14,7 +14,7 @@ test('historical identity never becomes a sixteenth recommendation or policy sna
 test('experience types and links stay source-specific across venues',()=>{
  const {run}=setup();
  const icra=run("renderExperiences('icra')");
- assert.match(icra,/3 条已读来源/);
+ assert.match(icra,/5 条已读来源/);
  assert.match(icra,/作者建议 · 非会议规范/);
  assert.match(icra,/匿名网友自述 · 未独立认证/);
  assert.match(icra,/Seita’s Place/);
@@ -28,7 +28,7 @@ test('experience types and links stay source-specific across venues',()=>{
  const ral=run("renderExperiences('ral')");
  assert.match(ral,/4 条已读来源/);
  assert.match(ral,/RA-L 官方说明/);
- for(const record of data.experiences.records.filter(r=>r.source_type==='first_person_self_report'))assert.match(ral,new RegExp(record.id));
+ for(const record of data.experiences.records.filter(r=>r.source_type==='first_person_self_report'&&r.venue_id==='ral'))assert.match(ral,new RegExp(record.id));
 });
 test('official conflict and editorial synthesis are explicitly separate from anecdotes',()=>{
  const {run}=setup(),html=run("renderExperiences('icra')");
@@ -42,14 +42,14 @@ test('official conflict and editorial synthesis are explicitly separate from ane
  assert.doesNotMatch(run("renderExperiences('iros')"),/aria-label="官方规则核对"/);
 });
 test('empty and unrelated venues never borrow an RA-L label or source',()=>{
- const {run}=setup(),html=run("renderExperiences('jfr')");
+ const {run}=setup(),html=run("renderExperiences('icml')");
  assert.match(html,/暂无已核读的公开来源/);
  assert.doesNotMatch(html,/RA-L|知乎|历史亲历/);
 });
 test('cross-venue relevance does not duplicate the underlying source records',()=>{
  const {run}=setup();
- assert.equal(data.experiences.records.length,7);
- assert.equal(new Set(data.experiences.records.map(r=>r.id)).size,7);
+ assert.equal(data.experiences.records.length,14);
+ assert.equal(new Set(data.experiences.records.map(r=>r.id)).size,14);
  assert.equal(run("experienceMatches(data.experiences.records.find(r=>r.id==='milford-robotics-paper-structure-2023'),'iros')"),true);
  assert.equal(run("experienceMatches(data.experiences.records.find(r=>r.id==='parikh-batra-lee-rebuttals-2020'),'ral')"),false);
 });
@@ -75,11 +75,11 @@ test('venue overview exposes source-backed summaries before any selection',()=>{
 });
 test('global experiences show all unique summaries and provenance, with honest empty states',()=>{
  const {get,run}=setup();run('renderExperienceOverview()');
- assert.equal((get('experience-list').innerHTML.match(/data-experience-id=/g)||[]).length,7);
- assert.equal((get('experience-synthesis').innerHTML.match(/class="synthesis-card"/g)||[]).length,3);
+ assert.equal((get('experience-list').innerHTML.match(/data-experience-id=/g)||[]).length,14);
+ assert.equal((get('experience-synthesis').innerHTML.match(/class="synthesis-card"/g)||[]).length,6);
  assert.match(get('experience-overview').innerHTML,/不是原作者共同结论或官方要求/);assert.doesNotMatch(get('experience-synthesis').innerHTML,/<details|<summary/);
  for(const r of data.experiences.records)assert.ok(get('experience-list').innerHTML.includes(r.body_summary));
- get('e-venue').value='icra';run('renderExperienceOverview()');assert.match(get('experience-count').textContent,/3 条已读来源/);assert.match(get('experience-checks').innerHTML,/终稿冲突尚未解决/);
+ get('e-venue').value='icra';run('renderExperienceOverview()');assert.match(get('experience-count').textContent,/5 条已读来源/);assert.match(get('experience-checks').innerHTML,/终稿冲突尚未解决/);
  get('e-type').value='author_advice';run('renderExperienceOverview()');assert.match(get('experience-count').textContent,/1 条已读来源/);
  get('e-venue').value='jfr';run('renderExperienceOverview()');assert.match(get('experience-count').textContent,/0 条已读来源/);assert.match(get('experience-list').innerHTML,/没有收录不代表没有相关经验/);
 });
@@ -103,3 +103,28 @@ test('routes preserve encoded filters and detail return destination without arbi
 });
 
 test('profile and synopsis strings are escaped and unsafe profile URLs are inert',()=>{const {ctx,run}=setup();ctx.fixture=JSON.parse(JSON.stringify(data));run('data=fixture');const p=ctx.fixture.venue_profiles.profiles[0];p.teaser='<img src=x>';p.sections[0].text='<svg onload=evil>';const source=ctx.fixture.sources.find(s=>s.id===p.sections[0].source_ids[0]);source.url='javascript:alert(1)';source.title='<img>';ctx.venue=ctx.fixture.venues.find(v=>v.id===p.venue_id);let html=run('renderVenueProfile(venue)');assert.doesNotMatch(html,/<svg|<img|href="javascript:/);assert.match(html,/&lt;svg/);const summary=ctx.fixture.experiences.overview.records[0];summary.takeaway='<img onerror=x>';ctx.record=ctx.fixture.experiences.records.find(r=>r.id===summary.record_id);html=run('experienceCard(record)');assert.doesNotMatch(html,/<img/);assert.match(html,/&lt;img/)});
+
+test('expanded evidence keeps timeline, anonymous cases and workshop verification visible',()=>{
+ const {run}=setup();
+ const ijrr=run("renderExperiences('ijrr')");
+ assert.match(ijrr,/自报状态时间线/);assert.match(ijrr,/2025-01-10/);assert.match(ijrr,/未明确修回提交日/);
+ const jfr=run("renderExperiences('jfr')");
+ assert.match(jfr,/1 条已读来源/);assert.match(jfr,/投稿年份未公开/);assert.match(jfr,/分条记录/);
+ assert.match(jfr,/A · 自报接收/);assert.match(jfr,/B · 自报拒稿/);assert.match(jfr,/C · 自报接收/);
+ assert.doesNotMatch(jfr,/null 年/);
+ const rss=run("renderExperiences('rss')");
+ assert.match(rss,/不是 RSS 主会录用/);assert.match(rss,/href="https:\/\/sites.google.com\/view\/rss-taskspec"/);
+ const corl=run("renderExperiences('corl')");
+ assert.match(corl,/AddendumCold9417/);assert.match(corl,/没有明确最终渠道与日期/);
+ assert.match(corl,/href="https:\/\/www.reddit.com\/r\/robotics\/comments\/1vfbrsz\/comment\/p1wfy0b\/"/);
+});
+test('new evidence renders escaped content and never makes unsafe supporting links clickable',()=>{
+ const {ctx,run}=setup();ctx.fixture=JSON.parse(JSON.stringify(data));run('data=fixture');
+ const ijrr=ctx.fixture.experiences.records.find(r=>r.venue_id==='ijrr');ijrr.timeline[0].event='<img src=x onerror=alert(1)>';
+ const jfr=ctx.fixture.experiences.records.find(r=>r.venue_id==='jfr');jfr.cases[0].sequence='<svg onload=alert(1)>';
+ const workshop=ctx.fixture.experiences.records.find(r=>r.venue_scope);workshop.supporting_sources[0]={url:'javascript:alert(1)',role:'<iframe>'};
+ const corl=ctx.fixture.experiences.records.find(r=>r.id==='reddit-corl-2024-rebuttal-separated-cases');corl.comments[1].source_url='data:text/html,unsafe';
+ const html=run("renderExperiences('ijrr')+renderExperiences('jfr')+renderExperiences('rss')+renderExperiences('corl')");
+ assert.doesNotMatch(html,/<img|<svg|<iframe|href="(?:javascript|data):/);
+ assert.match(html,/&lt;img/);assert.match(html,/&lt;svg/);assert.match(html,/&lt;iframe/);
+});
