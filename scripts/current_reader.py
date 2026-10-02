@@ -92,6 +92,20 @@ ROBO_FROZEN = {'stage1': {'version': 'v1',
                               'href="../index.html#reading">回到论文详情</a>'}}
 
 
+# New reviewed stage; prior source signatures and historical bytes are unchanged.
+ROBO_FROZEN['stage3'] = {'version': 'v1',
+ 'sha256': '98110741325ba83b33fda779ed98eb895cd6eac96debc5c75d43264cde1e05db',
+ 'nav': '<nav class="reader-stages" aria-label="阅读阶段"><a '
+        'href="https://chunhui-lab.github.io/RoboPaperAtlas/artifacts/rpa-0052/v1/first-pass.html"><small>01</small>初读</a><a '
+        'href="https://chunhui-lab.github.io/RoboPaperAtlas/artifacts/rpa-0052/v1/writing-close-reading.html"><small>02</small>写作精读</a><a '
+        'href="#framework" aria-current="page"><small>03</small>方法与代码</a></nav>',
+ 'note': '<p class="reader-document-note">报告 v1 · 2026-10-02 · '
+         '八部分。内容已独立审阅，公开页面视觉验收尚未完成；静态阅读不作为复现完成或实机安全证明。</p>',
+ 'return_link': '<a class="atlas-return" '
+                'href="https://chunhui-lab.github.io/RoboPaperAtlas/papers/rpa-0052/index.html">回到论文详情</a>',
+ 'current_return': '<a class="atlas-return" href="../index.html#reading">回到论文详情</a>'}
+
+
 def entry_path(paper_id, stage):
     if paper_id in CURRENT_READER_PAPERS and stage in dict(STAGES):
         return f'papers/{paper_id}/reading/{stage}.html'

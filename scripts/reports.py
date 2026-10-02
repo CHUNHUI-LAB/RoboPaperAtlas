@@ -37,7 +37,7 @@ PART_FIELDS = {'file', 'bytes', 'sha256'}
 REPORT_PAPERS = {
     'rpa-0052': {
         'title': 'RoboDuet',
-        'versions': {'v1': {'stage1', 'stage2'}},
+        'versions': {'v1': {'stage1', 'stage2', 'stage3'}},
         'review_status': 'content_approved',
         'source_urls': {'https://ieeexplore.ieee.org/document/10925884','https://locomanip-duet.github.io/'},
         'pdf_urls': {'https://locomanip-duet.github.io/RoboDuet.pdf'},
@@ -406,7 +406,10 @@ def _parse_html(record, payload, root=ROOT):
     except UnicodeDecodeError as exc:
         raise ValueError('Report must contain exact UTF-8 bytes') from exc
     require(not re.search(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', text), 'HTML contains control characters')
-    if record['paper_id'] == 'rpa-0052' and record['stage'] == 'stage2':
+    if record['paper_id'] == 'rpa-0052' and record['stage'] == 'stage3':
+        from report_roboduet_stage3 import prepare
+        text,parser=prepare(root,record,payload)
+    elif record['paper_id'] == 'rpa-0052' and record['stage'] == 'stage2':
         from report_roboduet_stage2 import prepare
         text,parser=prepare(root,record,payload)
     elif record['paper_id'] == 'rpa-0052':

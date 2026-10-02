@@ -91,7 +91,7 @@ class CurrentReaderTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             out = Path(d)
             current.write_current_readers(ROOT, out, self.papers, self.records)
-            self.assertEqual(len(current.validate_current_readers(ROOT, out, self.papers, self.records)), 8)
+            self.assertEqual(len(current.validate_current_readers(ROOT, out, self.papers, self.records)), 9)
             dest = out / current.entry_path(self.paper['id'], 'stage1')
             original = dest.read_bytes()
             dest.write_bytes(original + b'<script>alert(1)</script>')
@@ -116,6 +116,6 @@ class CurrentReaderTests(unittest.TestCase):
                 self.assertIn('href="../../' + artifact['path'] + '"', page)
         with tempfile.TemporaryDirectory() as d:
             current.write_current_readers(ROOT, Path(d), self.papers, self.records)
-            self.assertEqual(len(list(Path(d).rglob('*.html'))), 8)
+            self.assertEqual(len(list(Path(d).rglob('*.html'))), 9)
         for r in self.records:
             self.assertEqual(hashlib.sha256((ROOT / report_path(r)).read_bytes()).hexdigest(), r['sha256'])
