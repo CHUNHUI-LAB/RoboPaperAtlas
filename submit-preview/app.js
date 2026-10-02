@@ -80,6 +80,7 @@ $('migration-notice').textContent=`发表字段迁移演示：${count} 篇已核
 $('paper-count').textContent=`${new Set(rows.map(p=>p.paper_id)).size} 篇匹配 · 范围仅限 ${count} 篇已核验示例`;
 $('paper-list').innerHTML=rows.length?rows.map(p=>`<article class="paper"><h2>${external(p.url,p.title)}</h2><div class="meta"><span>${esc(data.venues.find(v=>v.id===p.venue_id).name)} · ${esc(label(publicationChannel(p)?.forum_level||'unknown'))}</span><span>出版 ${p.publication_year}${p.edition_year!=null?' / 届次 '+p.edition_year:' / 期刊无会议届次'}</span><span>${esc(brief(p.topic_label))} · ${esc(label(p.status))}</span></div><p class="small">官方出版记录已核验 · ${p.evidence.checked_at}${p.edition_year!=null&&p.publication_year!==p.edition_year?' · 会议届次与出版年份不同，筛选依所选口径':''}</p></article>`).join(''):`<p class="empty">没有已核验示例符合筛选。这个结果不能代表全部 ${total} 条目录。</p>`;}
 function restoreFilters(p){const values={q:'query',kind:'kind',tier:'tier',eq:'e-query',ev:'e-venue',et:'e-type',dv:'d-venue',pv:'p-venue',ym:'p-yearmode',pf:'p-forum',ps:'p-status',pt:'p-topic'};Object.entries(values).forEach(([k,id])=>{$(id).value=p.get(k)||(k==='ym'?'publication_year':'')});if(!$('p-yearmode').value)$('p-yearmode').value='publication_year';refreshYears();$('p-year').value=p.get('py')||''}
+function focusTarget(el){if(!el)return;el.focus({preventScroll:true});el.scrollIntoView({block:'start',behavior:'auto'})}
 function setCurrent(el,current){if(current)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current')}
 function route(event){
  if(!data)return;
@@ -89,16 +90,16 @@ function route(event){
  const titles={venues:['投稿，从这三件事开始','先了解会议与期刊，再读经验、核对本届规则。选一个入口开始。'],experiences:['把别人的经验，变成你的准备清单','先读编辑归纳，再按渠道或来源类型找到具体经历。'],deadlines:['看清哪一天，也看清是哪一步','首轮投稿、评审回复和终稿分开看，未知日期明确留空。'],papers:['发表渠道 × 研究主题','这是 8 篇已核验示例的字段演示，完整论文目录请使用顶部 Library。']};
  $('page-title').textContent=titles[view][0];$('page-description').textContent=titles[view][1];
  if(view==='venues'){
-  if(state.id){openVenue(state.id);if(event)$('venue-title')?.focus({preventScroll:false})}
-  else{selected=null;$('venue-browse').hidden=false;$('workspace').hidden=true;renderList();if(event&&prior)document.querySelector(`[data-id="${prior}"]`)?.focus({preventScroll:false})}
+  if(state.id){openVenue(state.id);focusTarget($('venue-title'))}
+  else{selected=null;$('venue-browse').hidden=false;$('workspace').hidden=true;renderList();if(event&&prior)focusTarget(document.querySelector(`[data-id="${prior}"]`))}
  }else if(view==='experiences'){
-  selected=null;renderExperienceOverview();if(state.id){const card=$('experience-'+state.id);if(card){card.querySelector('details').open=true;card.focus({preventScroll:false})}else{$('experience-count').textContent='这条经验链接不存在，请从下方已读来源选择。'}}
+  selected=null;renderExperienceOverview();if(state.id){const card=$('experience-'+state.id);if(card){card.querySelector('details').open=true;focusTarget(card)}else{$('experience-count').textContent='这条经验链接不存在，请从下方已读来源选择。'}}
  }else if(view==='deadlines'){selected=null;renderDeadlines()}else{selected=null;renderPapers()}
- if(event&&!state.id&&!(view==='venues'&&prior))$('page-title').focus({preventScroll:false});
+ if(event&&!state.id&&!(view==='venues'&&prior))focusTarget($('page-title'));
 }
 let loading=false,initialized=false;
 function initialize(){
- document.querySelectorAll('a.skip,[href="#main"],[href="#page-title"]').forEach(a=>a.onclick=event=>{event.preventDefault();$('page-title').focus({preventScroll:false})});
+ document.querySelectorAll('a.skip,[href="#main"],[href="#page-title"]').forEach(a=>a.onclick=event=>{event.preventDefault();focusTarget($('page-title'))});
  document.addEventListener('click',event=>{const a=event.target.closest?.('a[href^="#"]');if(a&&!a.hasAttribute('data-jump')&&a.getAttribute('href')===location.hash&&/^(#venues|#experiences|#deadlines|#papers)([/?]|$)/.test(location.hash)){event.preventDefault();route(event)}});
  ['query','kind','tier'].forEach(id=>$(id).addEventListener(id==='query'?'input':'change',()=>{saveFilters();renderList()}));
  $('reset').onclick=()=>{['query','kind','tier'].forEach(id=>$(id).value='');saveFilters();renderList();$('query').focus()};
