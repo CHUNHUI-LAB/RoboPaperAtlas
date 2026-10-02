@@ -43,6 +43,33 @@
     window.history.replaceState(null, '', next);
     document.dispatchEvent(new CustomEvent('catalog:updated'));
   }
+  const filterDisclosure=document.querySelector('.filter-disclosure');
+  const filterSummary=filterDisclosure?.querySelector('summary');
+  function renderFilterFeedback(){
+    const advanced=[direction,method,resource,year,status].filter(select=>select.value!=='all').length;
+    if(filterSummary)filterSummary.textContent=`更多筛选${advanced?' · '+advanced+' 项':''} ＋`;
+    if(!chips)return;
+    const active=[];
+    if(search.value.trim())active.push(['关键词：'+search.value.trim(),()=>search.value='']);
+    if(topic!=='all')active.push([topicButtons.find(b=>b.dataset.topic===topic).querySelector('span').textContent,()=>topic='all']);
+    for(const [select,prefix] of [[direction,'细分方向：'],[method,'方法：'],[resource,'资源：'],[year,'出版年：'],[status,'']]){
+      if(select.value!=='all')active.push([prefix+select.selectedOptions[0].textContent,()=>select.value='all']);
+    }
+    const signature=JSON.stringify(active.map(([label])=>label));
+    if(chips.dataset.feedbackSignature===signature)return;
+    chips.dataset.feedbackSignature=signature;chips.replaceChildren();
+    active.forEach(([label,clear],index)=>{
+      const b=document.createElement('button');b.type='button';b.textContent=label+' ×';b.setAttribute('aria-label','移除筛选 '+label);
+      b.addEventListener('click',()=>{clear();apply();const remaining=Array.from(chips.querySelectorAll('button')).filter(button=>!button.classList.contains('clear-all'));(remaining[Math.min(index,remaining.length-1)]||document.querySelector('.catalog-search-trigger'))?.focus({preventScroll:true});});
+      chips.append(b);
+    });
+    if(active.length){
+      const b=document.createElement('button');b.type='button';b.className='clear-all';b.textContent='清除全部';
+      b.addEventListener('click',()=>{search.value='';topic='all';for(const select of [year,status,method,resource,direction])select.value='all';apply();document.querySelector('.catalog-search-trigger')?.focus({preventScroll:true});});chips.append(b);
+    }
+    chips.hidden=!active.length;
+  }
+  filterDisclosure?.addEventListener('keydown',event=>{if(event.key==='Escape'&&filterDisclosure.open){event.preventDefault();filterDisclosure.open=false;filterSummary?.focus({preventScroll:true});}});
   function apply(reset = true, save = true) {
     if (reset) limit = 24;
     const terms = search.value.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
@@ -67,7 +94,7 @@
     const label=document.querySelector('#catalog-search-label');if(label)label.textContent=search.value.trim()||'搜索标题、作者或关键词';
     topicButtons.forEach(b => { const active = b.dataset.topic === topic; b.classList.toggle('active', active); b.setAttribute('aria-pressed', String(active)); });
     methodButtons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.methodChip===method.value)));
-    if(chips){chips.replaceChildren();const active=[];if(search.value.trim())active.push(['关键词：'+search.value.trim(),()=>search.value='']);if(topic!=='all')active.push([topicButtons.find(b=>b.dataset.topic===topic).querySelector('span').textContent,()=>topic='all']);if(direction.value!=='all')active.push(['细分方向：'+direction.selectedOptions[0].textContent,()=>direction.value='all']);if(method.value!=='all')active.push(['方法：'+method.selectedOptions[0].textContent,()=>method.value='all']);if(resource.value!=='all')active.push(['资源：'+resource.selectedOptions[0].textContent,()=>resource.value='all']);if(year.value!=='all')active.push(['出版年：'+year.selectedOptions[0].textContent,()=>year.value='all']);if(status.value!=='all')active.push([status.selectedOptions[0].textContent,()=>status.value='all']);for(const [label,clear] of active){const b=document.createElement('button');b.type='button';b.textContent=label+' ×';b.setAttribute('aria-label','移除筛选 '+label);b.addEventListener('click',()=>{clear();apply()});chips.append(b)}if(active.length){const b=document.createElement('button');b.type='button';b.className='clear-all';b.textContent='清除全部';b.addEventListener('click',()=>{search.value='';topic='all';year.value='all';status.value='all';method.value='all';resource.value='all';direction.value='all';apply()});chips.append(b)}chips.hidden=!active.length}
+    renderFilterFeedback();
     if (save) updateQuery();
     else document.dispatchEvent(new CustomEvent('catalog:updated'));
   }
