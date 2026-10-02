@@ -6,7 +6,7 @@ from discovery_facets import GROUPS,for_catalog,counts as group_counts,method_la
 def render(data,card,categories,shell,esc):
  root=Path(__file__).resolve().parents[1]
  title_svg=(root/'assets/preview-title.svg').read_text()
- papers=data['papers'];reported=next((p['id'] for p in papers if any(s['status']=='imported' for s in p['stages'].values())),None);reading_href=f'papers/{reported}/index.html#reading' if reported else 'about/index.html';report_count=sum(s['status']=='imported' for p in papers for s in p['stages'].values());reading_intro=f'{report_count} 份报告已导入，按论文与阶段查阅。' if report_count else '了解分阶段阅读。实际报告尚未导入。';total=len(papers);memberships=for_catalog(papers,OVERLAY['records']);counts=group_counts(memberships);categories={key:(label,english)for key,label,english in GROUPS}
+ papers=data['papers'];reading_href='reading/index.html';report_count=sum(s['status']=='imported' for p in papers for s in p['stages'].values());reading_intro=f'{report_count} 份报告已导入，按论文与阶段查阅。' if report_count else '了解分阶段阅读。实际报告尚未导入。';total=len(papers);memberships=for_catalog(papers,OVERLAY['records']);counts=group_counts(memberships);categories={key:(label,english)for key,label,english in GROUPS}
  topic_labels={k:v[0]for k,v in categories.items()};hints={k:v[1]for k,v in categories.items()}
  topic_links=''.join(f'<li><a data-atlas-topic="{key}" href="index.html?topic={key}#catalog" title="{esc(hints[key])}" aria-label="{esc(topic_labels[key])}，{counts[key]} 条书目">{esc(topic_labels[key])}<small>{counts[key]} ↗</small></a></li>' for key in categories)
  fallback_version=hashlib.sha256((root/'assets/hero-atlas.svg').read_bytes()).hexdigest()[:12]

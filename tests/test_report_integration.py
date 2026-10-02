@@ -21,7 +21,7 @@ class ReportIntegrationTests(unittest.TestCase):
  def test_actual_stage_links_and_truthful_counts(self):
   page=details(self.paper);self.assertIn('3 个已导入报告',page);self.assertNotIn('阅读报告尚未导入；本页不是',page);self.assertIn('未运行训练、仿真或硬件复现',page)
   for record in self.records:self.assertIn('../../'+report_path(record),page)
-  self.assertIn('3 份阅读报告',card(self.paper));self.assertIn('7 份报告已导入',home(self.catalog));self.assertIn('当前已导入 3 份实际报告',about(3,self.records));self.assertIn('class="experience-route route-reading" href="papers/rpa-0012/index.html#reading"',home(self.catalog));self.assertIn('../papers/rpa-0062/index.html#reading',about(3,self.records))
+  self.assertIn('3 份阅读报告',card(self.paper));self.assertIn('7 份报告已导入',home(self.catalog));self.assertIn('当前已导入 3 份实际报告',about(3,self.records));self.assertIn('class="experience-route route-reading" href="reading/index.html"',home(self.catalog));self.assertIn('../papers/rpa-0062/index.html#reading',about(3,self.records))
  def test_all_other_papers_remain_unimported(self):
   for p in self.catalog['papers']:
    if p['id'] in {'rpa-0062','rpa-0012','rpa-0052'}:continue

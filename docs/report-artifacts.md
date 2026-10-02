@@ -188,8 +188,9 @@ Version3 changes only reader presentation and current/history links. Main body t
 Deep WBC (`rpa-0012`) has live entry pages at
 `papers/rpa-0012/reading/stage1.html` through `stage3.html`. These standalone
 views derive from the exact registry-validated report bytes. The generator
-requires the reviewed document hash and one exact known navigation/note
-signature. It only replaces that stage navigation and adds explicit generated
+requires the reviewed document hash and exact known navigation, return-link, and note
+signatures. It only replaces that stage navigation and the exact known header return link,
+then adds explicit generated
 view provenance with a direct fixed-version link in the existing document note.
 Report content, embedded scripts and styles remain byte-identical. Unknown
 signatures fail closed instead of falling back to a broad HTML rewrite.
@@ -209,3 +210,11 @@ are not relaxed. There is no iframe or additional runtime code.
 `rpa-0052/v1/first-pass.html` adds one content-reviewed Stage 1, with all twelve sections and explanations of seven figures and six tables. It reads the author-hosted eight-page manuscript; its extracted text matches arXiv v5 apart from the margin stamp. The formal RA-L identity is retained, while publisher-PDF equivalence remains unverified. No source PDF, extracted figure, page screenshot, copied original table or video is redistributed.
 
 `report_roboduet.py` permits only this exact paper/stage/version/file identity and pins both document and inline navigation-script hashes. The source-manuscript hash is independent of the report hash. Existing HTML/CSS/URL/attribute, path, sibling-link and resource guards remain unchanged. Later stages are not enabled. The content review does not assert browser visual QA or experiment reproduction. All existing UMI and Deep WBC report bytes are preserved.
+
+## Reading directory
+
+`reading/index.html` derives one entry per imported paper/stage from the public catalog.
+It links current readers when available and otherwise the newest frozen report.
+Historical versions remain in paper details and are not counted again. The homepage
+Reading route opens this directory; all three Deep WBC live reader headers return
+to the same paper archive. No immutable report bytes are changed.

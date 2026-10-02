@@ -12,6 +12,11 @@ FROZEN_NAV = {
     'stage2': OPEN + '<a href="' + SITE + 'artifacts/rpa-0012/v2/first-pass.html"><small>01</small>初读</a><span aria-current="page"><small>02</small>写作精读</span><span aria-disabled="true" title="此阶段报告尚未提供"><small>03</small>方法与代码</span></nav>',
     'stage3': OPEN + '<a href="' + SITE + 'artifacts/rpa-0012/v2/first-pass.html"><small>01</small>初读</a><a href="' + SITE + 'artifacts/rpa-0012/v1/writing-close-reading.html"><small>02</small>写作精读</a><span aria-current="page"><small>03</small>方法与代码</span></nav>',
 }
+FROZEN_RETURN = {
+    'stage1': '<a class="atlas-return" href="../../../papers/rpa-0012/index.html">回到论文详情</a>',
+    'stage2': '<a class="atlas-return" href="' + SITE + 'index.html#catalog">回到论文目录</a>',
+    'stage3': '<a class="atlas-return" href="' + SITE + 'index.html#catalog">回到论文目录</a>',
+}
 
 
 def entry_path(paper_id, stage):
@@ -38,7 +43,8 @@ def render(root, paper, stage, records):
         raise ValueError('Current reader source hash mismatch')
     page = raw.decode('utf-8')
     frozen = FROZEN_NAV[stage]
-    if page.count(OPEN) != 1 or page.count(frozen) != 1 or page.count(NOTE) != 1:
+    frozen_return = FROZEN_RETURN[stage]
+    if page.count(OPEN) != 1 or page.count(frozen) != 1 or page.count(NOTE) != 1 or page.count(frozen_return) != 1:
         raise ValueError('Unexpected current reader navigation signature')
     nav = []
     for index, (key, label) in enumerate(STAGES, 1):
@@ -48,10 +54,11 @@ def render(root, paper, stage, records):
             nav.append(f'<a href="{key}.html"{current}><small>{index:02}</small>{label}</a>')
         else:
             nav.append(f'<span aria-disabled="true"><small>{index:02}</small>{label} · 尚未导入</span>')
-    provenance = (f'当前导航视图 · 基于固定报告 {escape(record["version"])} 生成，仅更新阶段导航与本说明；'
+    provenance = (f'当前导航视图 · 基于固定报告 {escape(record["version"])} 生成，仅更新阶段导航、返回入口与本说明；'
                   f'正文、脚本与样式保持原样。<a href="../../../{escape(report_path(record), quote=True)}">打开固定版本报告 ↗</a> ')
-    return page.replace(frozen, OPEN + ''.join(nav) + '</nav>', 1).replace(
-        NOTE, NOTE.replace('>', '>' + provenance, 1), 1)
+    return (page.replace(frozen, OPEN + ''.join(nav) + '</nav>', 1)
+            .replace(frozen_return, '<a class="atlas-return" href="../index.html#reading">回到论文详情</a>', 1)
+            .replace(NOTE, NOTE.replace('>', '>' + provenance, 1), 1))
 
 
 def write_current_readers(root, target, papers, records):
