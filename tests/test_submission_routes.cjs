@@ -73,3 +73,17 @@ test('initial and retry loads use the data hash rather than the script hash or s
  assert.equal(newer.fetches[0],'https://example.org/RoboPaperAtlas/submit-preview/data/venues.json?v=data789');
  assert.notEqual(newer.fetches[0],f.fetches[0]);
 });
+
+
+test('venue experience entry foregrounds its subset while global synthesis remains reachable',async()=>{
+ const f=await fixture('#venues/ral');await f.click('[href="#experiences?ev=ral"]');
+ assert.equal(f.$('#experience-context').hidden,false);assert.equal(f.$('#experience-context-title').textContent,'IEEE RA-L · 4 条匹配经验');
+ assert.equal(f.document.activeElement.id,'experience-context-title');assert.equal(f.$$('.synthesis-card').length,6);const hash=f.location.hash;
+ await f.click('#experience-overview-link');assert.equal(f.location.hash,hash);assert.equal(f.document.activeElement.id,'experience-overview');
+ assert.ok(f.$('#experience-overview').textContent.includes('全站总览'));
+ await f.click('#experience-results-return');assert.equal(f.document.activeElement.id,'experience-context-title');assert.equal(f.location.hash,hash);
+ await f.input('#e-query','no-match');assert.equal(f.$('#experience-context-title').textContent,'IEEE RA-L · 0 条匹配经验');
+ await f.click('#e-reset');assert.equal(f.$('#experience-context').hidden,true);assert.equal(f.$$('.experience-preview').length,14);
+ const direct=await fixture('#experiences?ev=ral');assert.equal(direct.document.activeElement.id,'experience-context-title');
+ await direct.click('#experience-ral-2023-resubmission .primary-action');await direct.back();assert.equal(direct.$('#e-venue').value,'ral');assert.equal(direct.document.activeElement.id,'experience-ral-2023-resubmission');
+});

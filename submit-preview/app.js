@@ -65,11 +65,19 @@ function renderExperienceOverview(){
  $('experience-rules').textContent=pack.rules_notice;
  updateReset('e-reset',q||venue||type);
  const overview=pack.overview;
- $('experience-overview').innerHTML=overview?`<h2>这组经验，先记住什么</h2><p>${esc(overview.summary)}</p><p class="small">${esc(overview.evidence_note)} · 不是原作者共同结论或官方要求</p>`:'';
+ $('experience-overview').innerHTML=overview?`<h2>这组经验，先记住什么</h2><p class="small">全站总览 · 不随下方筛选变化</p><p>${esc(overview.summary)}</p><p class="small">${esc(overview.evidence_note)} · 不是原作者共同结论或官方要求</p>`:'';
  $('experience-synthesis').innerHTML=pack.editorial_synthesis.map((n,i)=>`<article class="synthesis-card"><p class="synthesis-step">0${i+1}</p><h3>${esc(n.title)}</h3><p>${esc(n.text.replace(/^编辑归纳：/,''))}</p><p class="small synthesis-sources">依据：${n.source_record_ids.map(id=>pack.records.find(r=>r.id===id)).filter(Boolean).map(r=>`<a href="${esc(experienceHref(r.id))}">${esc(r.source_label||r.title)}</a>`).join(' · ')}</p></article>`).join('');
  const recordId=parseRoute().id;
  const rows=recordId?pack.records.filter(r=>r.id===recordId):pack.records.filter(r=>(!venue||experienceMatches(r,venue))&&(!type||r.source_type===type)&&(!q||`${r.title} ${r.body_summary} ${r.methods.join(' ')} ${r.source_label||''} ${experienceSynopsis(r)?.takeaway||''}`.toLowerCase().includes(q)));
  $('experience-count').textContent=`${rows.length} 条已读来源 / 共 ${pack.records.length} 条 · 同一来源跨渠道只计一次`;
+ const venueName=data.venues.find(v=>v.id===venue)?.name;
+ $('experience-context').hidden=!venueName||!!recordId;
+ $('experience-context-title').textContent=venueName?`${venueName} · ${rows.length} 条匹配经验`:'';
+ $('experience-overview-link').setAttribute('href',routeHref('experiences','',filterParams()));
+ $('experience-overview-link').onclick=event=>{if(event.button>0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;event.preventDefault();focusTarget($('experience-overview'));};
+ if(venueName&&!recordId)$('experience-overview').innerHTML+=`<p><a id="experience-results-return" data-jump="experience-context" href="${esc(routeHref('experiences','',filterParams()))}">返回 ${esc(venueName)} 的 ${rows.length} 条匹配经验 ↓</a></p>`;
+ const resultReturn=$('experience-results-return');if(resultReturn)resultReturn.onclick=event=>{if(event.button>0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;event.preventDefault();focusTarget($('experience-context-title'),$('experience-context'));};
+
  $('experience-checks').innerHTML=venue&&!recordId?renderExperienceChecks(pack,venue):'';
  $('experience-list').innerHTML=rows.length?rows.map(r=>experienceCard(r,!!recordId)).join(''):'<div class="empty"><h3>暂无匹配的已读经验</h3><p>可重置筛选查看全部来源。没有收录不代表没有相关经验。</p></div>';
 }
@@ -132,7 +140,8 @@ function route(event){
  }else if(view==='experiences'){
   selected=null;renderExperienceOverview();if(state.id){const card=$('experience-'+state.id);if(card){card.querySelector('h3').setAttribute('role','heading');card.querySelector('h3').setAttribute('aria-level','1');focusTarget(card,$('experience-back'))}else{$('experience-list').innerHTML='<div class="empty"><h1>经验不存在</h1><p>这个链接可能有误，请返回经验列表选择。</p></div>';focusTarget($('experience-back'))}}
  }else if(view==='deadlines'){selected=null;renderDeadlines()}else{selected=null;renderPapers()}
- if(event&&!state.id&&!(view==='venues'&&prior)){if(view==='experiences'&&priorExperience){const card=$('experience-'+priorExperience);focusTarget(card||$('page-title'))}else focusTarget($('page-title'));}
+ if(event&&!state.id&&!(view==='venues'&&prior)){if(view==='experiences'&&priorExperience){const card=$('experience-'+priorExperience);focusTarget(card||$('page-title'))}else if(view==='experiences'&&!$('experience-context').hidden)focusTarget($('experience-context-title'),$('experience-context'));else focusTarget($('page-title'));}
+ if(!event&&view==='experiences'&&!state.id&&!$('experience-context').hidden)focusTarget($('experience-context-title'),$('experience-context'));
 }
 let loading=false,initialized=false;
 function initialize(){

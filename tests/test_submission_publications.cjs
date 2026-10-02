@@ -2,7 +2,7 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
 const root=path.resolve(__dirname,'..'),data=JSON.parse(fs.readFileSync(path.join(root,'submit-preview/data/venues.json'),'utf8'));
 function setup(){
- const nodes={};function get(id){if(!nodes[id])nodes[id]={value:'',textContent:'',_html:'',options:[],classList:{remove(){}},add(o){this.options.push(o)},set innerHTML(v){this._html=v;if(v.startsWith('<option')){this.options=[{value:''}];this.value=''}},get innerHTML(){return this._html}};return nodes[id]}
+ const nodes={};function get(id){if(!nodes[id])nodes[id]={value:'',textContent:'',_html:'',options:[],attributes:{},setAttribute(k,v){this.attributes[k]=String(v)},classList:{remove(){}},add(o){this.options.push(o)},set innerHTML(v){this._html=v;if(v.startsWith('<option')){this.options=[{value:''}];this.value=''}},get innerHTML(){return this._html}};return nodes[id]}
  const ctx=vm.createContext({document:{getElementById:get,querySelectorAll:()=>[]},URL,URLSearchParams,Option:function(text,value){this.text=text;this.value=value},location:{hash:''},history:{replaceState(){}},console});
  const src=fs.readFileSync(path.join(root,'submit-preview/app.js'),'utf8').split("const sourceURL=")[0];vm.runInContext(src,ctx);ctx.fixture=data;vm.runInContext('data=fixture',ctx);get('p-yearmode').value='publication_year';return {ctx,get,run:s=>vm.runInContext(s,ctx)};
 }
