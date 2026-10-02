@@ -87,13 +87,51 @@ class SubmissionProfileTests(unittest.TestCase):
         self.assertIn('publisher_deposited_crossref', kinds)
         self.assertEqual(validate_submission_profiles(self.data), 15)
 
-    def test_new_profile_dates_do_not_rewrite_deadline_snapshot(self):
-        self.assertEqual(self.data['checked_at'], '2026-10-01')
+    def test_official_maintenance_preserves_unresolved_deadline_boundaries(self):
+        self.assertEqual(self.data['checked_at'], self.data['maintenance_history'][-1]['checked_at'])
+        self.assertEqual(self.data['maintenance_history'][-1]['previous_snapshot'], '2026-10-01')
         editions = {e['id']: e for e in self.data['editions']}
         self.assertEqual(editions['icra-2027']['status'], 'needs_confirmation')
         self.assertEqual(editions['icra-2027']['deadlines'][0]['status'], 'conflicted')
         self.assertEqual(editions['iros-2027']['status'], 'source_unresolved')
         self.assertFalse(editions['iros-2027']['deadlines'])
+
+    def test_special_issue_notices_do_not_become_regular_journal_deadlines(self):
+        editions = {e['id']: e for e in self.data['editions']}
+        notices = []
+        for eid in ('ral-policy-20261001', 'auro-policy-20261001'):
+            e = editions[eid]
+            self.assertIsNone(e['edition_year'])
+            self.assertFalse(e['deadlines'])
+            notices.extend(e['special_issue_notices'])
+        self.assertEqual(len(notices), 5)
+        for notice in notices:
+            self.assertFalse(notice['normalized_as_regular_deadline'])
+            for item in notice['dates']:
+                self.assertIsNone(item['time'])
+                self.assertIsNone(item['timezone'])
+        self.assertEqual(notices[0]['status'], 'announced_not_yet_accepting_per_timeline')
+
+    def test_template_inspection_does_not_claim_rendering_or_future_editions(self):
+        editions = {e['id']: e for e in self.data['editions']}
+        corl = editions['corl-2026']
+        self.assertEqual(corl['status'], 'post_decision')
+        self.assertEqual({t['inspection']['role'] for t in corl['templates']}, {'initial_submission', 'camera_ready'})
+        for eid in ('corl-2026', 'rss-2027', 'iclr-2027'):
+            for template in editions[eid]['templates']:
+                self.assertEqual(len(template['inspection']['sha256']), 64)
+                self.assertIn('No compilation', template['inspection']['scope'])
+        self.assertNotIn('corl-2027', editions)
+        self.assertEqual(editions['cvpr-2027']['templates'][0]['status'], 'broken_404')
+
+    def test_iclr_discussion_stays_distinct_from_private_reviewer_work(self):
+        e = next(e for e in self.data['editions'] if e['id'] == 'iclr-2027')
+        decision = next(d for d in e['deadlines'] if d['kind'] == 'decision')
+        self.assertEqual((decision['timezone_label'], decision['utc_offset']), ('AoE', '-12:00'))
+        self.assertEqual(decision['precision'], 'date')
+        self.assertTrue(any(d['kind'] == 'reviews' and d['date'] == '2026-11-05' for d in e['deadlines']))
+        self.assertFalse(any(d['date'] == '2026-11-19' for d in e['deadlines']))
+        self.assertTrue(any('不是作者行动截止' in note for note in e['notes']))
 
 
 if __name__ == '__main__': unittest.main()
