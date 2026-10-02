@@ -35,7 +35,7 @@ class CurrentReaderTests(unittest.TestCase):
             self.assertIn('当前导航视图', page)
             for tag in ['script', 'style', 'article']:
                 pattern = rf'<{tag}\b.*?</{tag}>'
-                self.assertEqual(re.findall(pattern, page, re.S), re.findall(pattern, source, re.S))
+                self.assertEqual(re.findall(pattern, page.replace(current.context_script(ROOT), ""), re.S), re.findall(pattern, source, re.S))
 
     def test_umi_current_stage1_to_stage2_uses_v4_without_history_rewrites(self):
         paper = next(p for p in self.papers if p['id'] == 'rpa-0062')
@@ -50,7 +50,7 @@ class CurrentReaderTests(unittest.TestCase):
                 self.assertIn(f'href="{target}.html"', nav)
             for tag in ('article', 'script', 'style'):
                 pattern = rf'<{tag}\b.*?</{tag}>'
-                self.assertEqual(re.findall(pattern, page, re.S), re.findall(pattern, source, re.S))
+                self.assertEqual(re.findall(pattern, page.replace(current.context_script(ROOT), ""), re.S), re.findall(pattern, source, re.S))
             if stage != 'stage2':
                 self.assertIn('href="writing-close-reading.html"', source)
         self.assertEqual(current.entry_path('rpa-0062', 'stage2'), 'papers/rpa-0062/reading/stage2.html')
@@ -63,6 +63,21 @@ class CurrentReaderTests(unittest.TestCase):
         with patch.dict(current.UMI_FROZEN, {'stage2': dict(current.UMI_FROZEN['stage2'], version='v3')}):
             with self.assertRaisesRegex(ValueError, 'Unreviewed UMI'):
                 current.render(ROOT, paper, 'stage2', self.records)
+
+    def test_one_hashed_navigation_runtime_is_added_only_to_current_views(self):
+        script = current.context_script(ROOT)
+        self.assertRegex(script, r'^<script src="../../../assets/catalog-navigation.js\?v=[0-9a-f]{12}" defer></script>$')
+        for paper in self.papers:
+            if paper['id'] not in current.CURRENT_READER_PAPERS:
+                continue
+            for stage in paper['stages']:
+                page = current.render(ROOT, paper, stage, self.records)
+                source = (ROOT / paper['stages'][stage]['artifacts'][0]['path']).read_text()
+                self.assertEqual(page.count(script), 1)
+                self.assertNotIn('catalog-navigation.js', source)
+                for tag in ('article', 'script', 'style'):
+                    pattern = rf'<{tag}\b.*?</{tag}>'
+                    self.assertEqual(re.findall(pattern, page.replace(script, ''), re.S), re.findall(pattern, source, re.S))
 
     def test_missing_stage_is_disabled_and_not_written(self):
         paper = copy.deepcopy(self.paper)

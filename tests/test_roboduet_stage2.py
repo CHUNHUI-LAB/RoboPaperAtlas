@@ -146,7 +146,7 @@ class RoboDuetStage2Tests(unittest.TestCase):
             self.assertIn('href="../index.html#reading"', page)
             for tag in ('article', 'script', 'style'):
                 self.assertEqual(re.findall(rf'<{tag}\b.*?</{tag}>', source, re.S),
-                                 re.findall(rf'<{tag}\b.*?</{tag}>', page, re.S))
+                                 re.findall(rf'<{tag}\b.*?</{tag}>', page.replace(current.context_script(ROOT), ''), re.S))
         self.assertIn('方法与代码', current.render(ROOT, self.paper, 'stage3', self.records))
         with patch.dict(current.ROBO_FROZEN, {'stage2': dict(current.ROBO_FROZEN['stage2'], sha256='0' * 64)}):
             with self.assertRaisesRegex(ValueError, 'Unreviewed RoboDuet'):

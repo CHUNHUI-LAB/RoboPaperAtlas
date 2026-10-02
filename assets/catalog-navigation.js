@@ -26,16 +26,33 @@
     const clean = cleanQuery(new URLSearchParams(search).get('catalog') || '');
     return prefix + 'index.html' + (clean ? '?' + clean : '') + '#catalog';
   }
-  const api = { cleanQuery, paperHref, backHref };
+  function readerHref(href, search) {
+    // Only generated current-reader links and their fixed paper return are eligible.
+    // Historical artifacts and all external destinations remain byte-for-byte links.
+    const match = /^(?:(?:\.\.\/)*papers\/[a-z0-9-]+\/reading\/stage[123]\.html|stage[123]\.html|\.\.\/index\.html)(?:\?[^#]*)?(#[\w-]+)?$/.exec(href);
+    if (!match) return href;
+    const clean = cleanQuery(new URLSearchParams(search).get('catalog') || '');
+    return href.split(/[?#]/)[0] + (clean ? '?catalog=' + encodeURIComponent(clean) : '') + (match[1] || '');
+  }
+  const api = { cleanQuery, paperHref, backHref, readerHref };
   if (typeof module !== 'undefined' && module.exports) { module.exports = api; return; }
   scope.RoboCatalogNavigation = api;
-  const back = document.querySelector('[data-catalog-back]');
-  if (back) back.setAttribute('href', backHref(document.body.dataset.root || '', window.location.search));
+  function updateReaderLinks() {
+    const back = document.querySelector('[data-catalog-back]');
+    if (back) back.setAttribute('href', backHref(document.body.dataset.root || '', window.location.search));
+    const links = [...(document.querySelector('.stage-slots')?.querySelectorAll('a') || []),
+      ...(document.querySelector('.reader-stages')?.querySelectorAll('a') || []),
+      ...document.querySelectorAll('.atlas-return'), ...document.querySelectorAll('.reader-paper-link')];
+    links.forEach(a => a.setAttribute('href', readerHref(a.getAttribute('href') || '', window.location.search)));
+  }
   function updateLinks() {
     const grid = document.querySelector('#paper-grid');
     if (!grid) return;
     grid.querySelectorAll('a').forEach(a => a.setAttribute('href', paperHref(a.getAttribute('href') || '', window.location.search)));
   }
   document.addEventListener('catalog:updated', updateLinks);
+  window.addEventListener('popstate', updateReaderLinks);
+  window.addEventListener('pageshow', updateReaderLinks);
+  updateReaderLinks();
   updateLinks();
 })(globalThis);

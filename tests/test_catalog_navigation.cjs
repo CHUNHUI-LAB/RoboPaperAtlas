@@ -30,3 +30,32 @@ test('malicious destinations, unknown parameters, duplicate keys and control cha
  assert.equal(api.paperHref('papers/rpa-0012/index.html#reading','q=UMI'),'papers/rpa-0012/index.html?catalog=q%3DUMI#reading');
  for(const url of ['https://evil.example/x','//evil.example/papers/x/index.html','papers/../index.html','papers/rpa-0012/reading/stage1.html'])assert.equal(api.paperHref(url,'q=UMI'),url);
 });
+test('all current reader stages retain validated catalog context through repeated return journeys',()=>{
+ const query='?catalog='+encodeURIComponent('q=RoboDuet&direction=manipulation&sort=title&view=list');
+ const detail=fixture({htmlFile:'dist/papers/rpa-0052/index.html',url:'https://example.org/RoboPaperAtlas/papers/rpa-0052/index.html'+query});detail.runAsset('catalog-navigation.js');
+ const anchors=detail.$('.stage-slots').querySelectorAll('a');
+ for(const stage of ['stage1','stage2','stage3']){
+  const href=anchors.find(a=>a.getAttribute('href').includes('/reading/'+stage)).getAttribute('href');assert.equal(new URL(href,'https://example.org/RoboPaperAtlas/').search,query);
+  const f=fixture({htmlFile:'dist/papers/rpa-0052/reading/'+stage+'.html',url:'https://example.org/RoboPaperAtlas/papers/rpa-0052/reading/'+stage+'.html'+query});f.runAsset('catalog-navigation.js');
+  for(const a of f.$('.reader-stages').querySelectorAll('a'))assert.equal(new URL(a.getAttribute('href'),'https://example.org/RoboPaperAtlas/').search,query);
+  assert.equal(f.$('.atlas-return').getAttribute('href'),'../index.html'+query+'#reading');
+  f.setURL('?catalog='+encodeURIComponent('q=UMI'));assert.equal(f.$('.atlas-return').getAttribute('href'),'../index.html?catalog=q%3DUMI#reading');
+  f.setURL('?');assert.equal(f.$('.atlas-return').getAttribute('href'),'../index.html#reading');
+ }
+});
+test('reader state never decorates history or accepts caller-supplied destinations',()=>{
+ const search='?catalog='+encodeURIComponent('q=<script>alert(1)</script>&next=//evil.example&view=list');
+ for(const href of ['stage1.html','stage2.html?catalog=stale','stage3.html','../index.html#reading','../../papers/rpa-0052/reading/stage3.html']){
+  const out=api.readerHref(href,search),url=new URL(out,'https://example.org/RoboPaperAtlas/papers/rpa-0052/reading/');assert.equal(url.origin,'https://example.org');assert.equal(new URLSearchParams(url.searchParams.get('catalog')).get('q'),'<script>alert(1)</script>');assert(!out.includes('<script>'));assert(!out.includes('next='));assert.equal(api.readerHref(out,search),out);
+ }
+ for(const href of ['../../../artifacts/rpa-0052/v1/first-pass.html','https://evil.example/stage1.html','//evil.example/stage1.html','javascript:alert(1)','../stage3.html','stage4.html','stage1.html#bad/fragment'])assert.equal(api.readerHref(href,search),href);
+ for(const query of ['q=%00bad','q='+('x'.repeat(513)),'next=//evil.example'])assert.equal(api.readerHref('stage1.html','?catalog='+encodeURIComponent(query)),'stage1.html');
+});
+
+test('all nine current views decorate their actual paper-return control, including UMI branded links',()=>{
+ for(const paper of ['rpa-0012','rpa-0052','rpa-0062'])for(const stage of ['stage1','stage2','stage3']){
+  const f=fixture({htmlFile:`dist/papers/${paper}/reading/${stage}.html`,url:`https://example.org/RoboPaperAtlas/papers/${paper}/reading/${stage}.html?catalog=q%3Drobot`});f.runAsset('catalog-navigation.js');
+  const back=f.$('.atlas-return')||f.$('.reader-paper-link');assert.equal(back.getAttribute('href'),'../index.html?catalog=q%3Drobot#reading',paper+' '+stage);
+  f.setURL('?');assert.equal(back.getAttribute('href'),'../index.html#reading');
+ }
+});

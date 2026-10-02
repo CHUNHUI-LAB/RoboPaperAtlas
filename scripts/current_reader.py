@@ -112,8 +112,13 @@ def entry_path(paper_id, stage):
     return None
 
 
+def context_script(root):
+    digest = hashlib.sha256((root / 'assets/catalog-navigation.js').read_bytes()).hexdigest()[:12]
+    return f'<script src="../../../assets/catalog-navigation.js?v={digest}" defer></script>'
+
+
 def render(root, paper, stage, records):
-    """Require reviewed source bytes and exact signatures; no script/style edits."""
+    """Require reviewed bytes; add only the generated navigation-context runtime."""
     from reports import report_path
     state = paper['stages'][stage]
     if not entry_path(paper['id'], stage) or state['status'] != 'imported' or not state['artifacts']:
@@ -155,10 +160,14 @@ def render(root, paper, stage, records):
         else:
             nav.append(f'<span aria-disabled="true"><small>{index:02} · 未完成</small>{label}</span>')
     provenance = (f'当前导航视图 · 基于固定报告 {escape(record["version"])} 生成，仅更新阶段导航、返回入口与本说明；'
-                  f'正文、脚本与样式保持原样。<a href="../../../{escape(report_path(record), quote=True)}">打开固定版本报告 ↗</a> ')
+                  f'正文、原报告脚本与样式保持原样；另加载目录上下文导航。<a href="../../../{escape(report_path(record), quote=True)}">打开固定版本报告 ↗</a> ')
+    navigation_script = context_script(root)
+    if page.count('</body>') != 1:
+        raise ValueError('Unexpected current reader body signature')
     return (page.replace(frozen, OPEN + ''.join(nav) + '</nav>', 1)
             .replace(frozen_return, current_return, 1)
-            .replace(note, note.replace('>', '>' + provenance, 1), 1))
+            .replace(note, note.replace('>', '>' + provenance, 1), 1)
+            .replace('</body>', navigation_script + '</body>', 1))
 
 
 def write_current_readers(root, target, papers, records):
