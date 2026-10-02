@@ -9,7 +9,7 @@ function setup(){
 test('same-publication venue, year, forum, status and topic intersection',()=>{const {ctx,run}=setup();ctx.p=data.publications.find(p=>p.paper_id==='rpa-0052');assert.equal(run("matchesPublication(p,{venue:'ral',yearmode:'publication_year',year:'2025',forum:'journal',status:'published',topic:'wbc'})"),true);assert.equal(run("matchesPublication(p,{venue:'icra',forum:'workshop'})"),false);assert.equal(run("matchesPublication(p,{yearmode:'edition_year',year:'2025'})"),false);ctx.p=data.publications.find(p=>p.paper_id==='rpa-0012');assert.equal(run("matchesPublication(p,{yearmode:'edition_year',year:'2022',forum:'main_conference'})"),true);assert.equal(run("matchesPublication(p,{yearmode:'publication_year',year:'2023'})"),true);assert.equal(run("matchesPublication(p,{yearmode:'publication_year',year:'2022'})"),false)});
 test('derived counts and journal rendering do not fabricate conference editions',()=>{const {get,run}=setup();run('renderPapers()');assert.match(get('paper-count').textContent,/8 篇匹配.*8 篇/);assert.match(get('migration-notice').textContent,/8 篇.*95.*87/);assert.match(get('paper-list').innerHTML,/IEEE RA-L · 期刊/);assert.match(get('paper-list').innerHTML,/AAAI · 主会/);assert.doesNotMatch(get('paper-list').innerHTML,/届次 null/);get('p-forum').value='journal';run('renderPapers()');assert.match(get('paper-count').textContent,/1 篇匹配/);assert.doesNotMatch(get('paper-list').innerHTML,/会议届次与出版年份不同/);get('p-forum').value='workshop';run('renderPapers()');assert.match(get('paper-count').textContent,/0 篇匹配/)});
 test('year choices follow selected semantic mode and preserve valid selections',()=>{const {get,run}=setup();run('refreshYears()');assert.deepEqual(get('p-year').options.map(x=>x.value),['','2023','2024','2025','2026']);get('p-year').value='2023';get('p-yearmode').value='edition_year';run('refreshYears()');assert.equal(get('p-year').value,'');assert.deepEqual(get('p-year').options.map(x=>x.value),['','2022','2024','2025','2026']);get('p-year').value='2025';get('p-yearmode').value='publication_year';run('refreshYears()');assert.equal(get('p-year').value,'2025')});
-test('historical identity never becomes a sixteenth recommendation or policy snapshot',()=>{const {get,run}=setup();run('renderList()');assert.equal(get('venue-count').textContent,'15 个渠道 · 摘要来自官方资料');assert.doesNotMatch(get('venue-list').innerHTML,/AAAI/);assert.equal(run("latest(data.venues.find(v=>v.id==='ral')).kind"),'journal_policy_snapshot');run("openVenue('aaai')");assert.match(get('detail').innerHTML,/渠道不存在/) });
+test('historical identity never becomes a sixteenth recommendation or policy snapshot',()=>{const {get,run}=setup();run('renderList()');assert.equal(get('venue-count').textContent,'15 个渠道 · 总览含原始资料与编辑归纳');assert.doesNotMatch(get('venue-list').innerHTML,/AAAI/);assert.equal(run("latest(data.venues.find(v=>v.id==='ral')).kind"),'journal_policy_snapshot');run("openVenue('aaai')");assert.match(get('detail').innerHTML,/渠道不存在/) });
 
 test('experience types and links stay source-specific across venues',()=>{
  const {run}=setup();
@@ -70,14 +70,14 @@ test('venue overview exposes source-backed summaries before any selection',()=>{
  assert.match(get('venue-list').innerHTML,/研究|机器人/);assert.match(get('venue-list').innerHTML,/投稿形式/);assert.match(get('venue-list').innerHTML,/时间概况/);
  assert.match(get('venue-list').innerHTML,/两阶段评审 · 扩展摘要后按邀请提交全文/);
  assert.match(get('venue-list').innerHTML,/暂无可核验日期/);
- get('query').value='实地验证';run('renderList()');assert.equal(get('venue-count').textContent,'1 个渠道 / 共 15 个 · 摘要来自官方资料');assert.match(get('venue-list').innerHTML,/Journal of Field Robotics/);
- get('query').value='不可能匹配的词';run('renderList()');assert.equal(get('venue-count').textContent,'0 个渠道 / 共 15 个 · 摘要来自官方资料');assert.match(get('venue-list').innerHTML,/重置筛选/);
+ get('query').value='Journal of Field Robotics';run('renderList()');assert.equal(get('venue-count').textContent,'1 个渠道 / 共 15 个 · 总览含原始资料与编辑归纳');assert.match(get('venue-list').innerHTML,/Journal of Field Robotics/);
+ get('query').value='不可能匹配的词';run('renderList()');assert.equal(get('venue-count').textContent,'0 个渠道 / 共 15 个 · 总览含原始资料与编辑归纳');assert.match(get('venue-list').innerHTML,/重置筛选/);
 });
 test('global experiences show all unique summaries and provenance, with honest empty states',()=>{
  const {get,run}=setup();run('renderExperienceOverview()');
  assert.equal((get('experience-list').innerHTML.match(/data-experience-id=/g)||[]).length,7);
  assert.equal((get('experience-synthesis').innerHTML.match(/class="synthesis-card"/g)||[]).length,3);
- assert.match(get('experience-synthesis').innerHTML,/不是原作者共同结论或官方要求/);
+ assert.match(get('experience-overview').innerHTML,/不是原作者共同结论或官方要求/);assert.doesNotMatch(get('experience-synthesis').innerHTML,/<details|<summary/);
  for(const r of data.experiences.records)assert.ok(get('experience-list').innerHTML.includes(r.body_summary));
  get('e-venue').value='icra';run('renderExperienceOverview()');assert.match(get('experience-count').textContent,/3 条已读来源/);assert.match(get('experience-checks').innerHTML,/终稿冲突尚未解决/);
  get('e-type').value='author_advice';run('renderExperienceOverview()');assert.match(get('experience-count').textContent,/1 条已读来源/);
@@ -101,3 +101,5 @@ test('routes preserve encoded filters and detail return destination without arbi
  const src=fs.readFileSync(path.join(root,'submit-preview/app.js'),'utf8');assert.doesNotMatch(src,/if\(!selected\)openVenue\('rss'\)/);
  assert.match(src,/navigator\.clipboard\.writeText\(url\)/);assert.match(src,/id="copy-status".*role="status"/);assert.match(src,/addEventListener\('hashchange',route\)/);
 });
+
+test('profile and synopsis strings are escaped and unsafe profile URLs are inert',()=>{const {ctx,run}=setup();ctx.fixture=JSON.parse(JSON.stringify(data));run('data=fixture');const p=ctx.fixture.venue_profiles.profiles[0];p.teaser='<img src=x>';p.sections[0].text='<svg onload=evil>';const source=ctx.fixture.sources.find(s=>s.id===p.sections[0].source_ids[0]);source.url='javascript:alert(1)';source.title='<img>';ctx.venue=ctx.fixture.venues.find(v=>v.id===p.venue_id);let html=run('renderVenueProfile(venue)');assert.doesNotMatch(html,/<svg|<img|href="javascript:/);assert.match(html,/&lt;svg/);const summary=ctx.fixture.experiences.overview.records[0];summary.takeaway='<img onerror=x>';ctx.record=ctx.fixture.experiences.records.find(r=>r.id===summary.record_id);html=run('experienceCard(record)');assert.doesNotMatch(html,/<img/);assert.match(html,/&lt;img/)});

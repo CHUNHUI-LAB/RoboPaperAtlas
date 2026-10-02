@@ -38,6 +38,11 @@ def write_submission(root, target, shell):
     # This retains the strict four-file allowlist and symlink checks unchanged.
     write_submit_preview(root, target)
     source = root / 'submit-preview'
+    import json
+    from submission_profiles import validate_submission_profiles, validate_experience_overview
+    data = json.loads((source / 'data/venues.json').read_text(encoding='utf8'))
+    validate_submission_profiles(data)
+    validate_experience_overview(data)
     html = (source / 'index.html').read_text(encoding='utf8')
     main = re.search(r'<main>(.*?)</main>', html, re.S)
     nav = re.search(r'<nav class="submission-tabs" aria-label="模块">(.*?)</nav>', html, re.S)
