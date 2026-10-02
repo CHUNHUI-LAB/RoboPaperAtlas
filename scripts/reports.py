@@ -45,7 +45,7 @@ REPORT_PAPERS = {
     },
     'rpa-0062': {
         'title': 'UMI on Legs',
-        'versions': {'v1': set(STAGE_FILES), 'v2': set(STAGE_FILES), 'v3': set(STAGE_FILES)},
+        'versions': {'v1': set(STAGE_FILES), 'v2': set(STAGE_FILES), 'v3': set(STAGE_FILES), 'v4': {'stage2'}},
         'review_status': 'approved',
         'source_urls': {'https://proceedings.mlr.press/v270/ha25a.html', 'https://umi-on-legs.github.io/'},
         'pdf_urls': {'https://raw.githubusercontent.com/mlresearch/v270/main/assets/ha25a/ha25a.pdf', 'https://proceedings.mlr.press/v270/ha25a/ha25a.pdf'},
@@ -411,6 +411,9 @@ def _parse_html(record, payload, root=ROOT):
         text,parser=prepare(root,record,payload)
     elif record['paper_id'] == 'rpa-0012':
         from report_deep_wbc import prepare
+        text,parser=prepare(root,record,payload)
+    elif record['paper_id'] == 'rpa-0062' and record['version'] == 'v4':
+        from report_umi_stage2 import prepare
         text,parser=prepare(root,record,payload)
     elif record['version']in {'v2','v3'}:
         from report_v2 import prepare

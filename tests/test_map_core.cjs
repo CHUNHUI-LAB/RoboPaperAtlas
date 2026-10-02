@@ -87,7 +87,7 @@ test('shared stage routing accepts exact paper/version/stage paths and rejects u
   const p=catalog.papers.find(p=>p.id===id);
   for(const [stage,state] of Object.entries(p.stages)){
    const a=state.artifacts[0];
-   const expected=id==='rpa-0012'?`papers/${id}/reading/${stage}.html`:a.path;
+   const expected=['rpa-0012','rpa-0062'].includes(id)?`papers/${id}/reading/${stage}.html`:a.path;
    assert.equal(reportEntryPath(id,stage,a.path,a.version),expected);
    assert.equal(currentReports(p).find(r=>r.stage===stage).path,expected);
    for(const bad of ['https://evil.example/'+a.path,'../'+a.path,a.path+'?x=1',a.path+'#x',a.path.replace(id,'rpa-9999'),a.path.replace('artifacts/','artifacts/../artifacts/'),a.path.replace('.html','.html/extra')]){

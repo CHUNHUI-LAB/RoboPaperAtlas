@@ -1,7 +1,7 @@
 # Reviewed HTML report artifacts
 
 This pilot imports three separately reviewed reading stages for `rpa-0062`
-(UMI-on-Legs). Current readers are version `v3`; all `v1` and `v2` files remain available. A report means that the named reading artifact was
+(UMI-on-Legs). Current Stage 2 is `v4`; Stage 1 and Stage 3 remain `v3`. All historical files remain available. A report means that the named reading artifact was
 imported; it does not mean that its claims or experiments were independently
 reproduced. Metadata verification, reading, code inspection, and reproduction
 remain distinct.
@@ -20,7 +20,7 @@ An empty registry is valid. Every included report must have exactly these fields
 | --- | --- |
 | `paper_id` | `rpa-0062` in this pilot |
 | `stage` | `stage1`, `stage2`, or `stage3` |
-| `version` | `v1`, `v2`, or `v3` |
+| `version` | `v1`, `v2`, or `v3`; `v4` is restricted to UMI Stage 2 |
 | `filename` | The exact stage-specific filename below |
 | `sha256` | Lowercase 64-character SHA-256 of the delivered HTML bytes |
 | `bytes` | Positive integer, exactly the delivered HTML byte count |
@@ -56,7 +56,7 @@ inputs and must not be copied into this repository.
 Generated paths are always:
 
 ```text
-artifacts/rpa-0062/<v1-v2-or-v3>/<stage-specific-filename>
+artifacts/rpa-0062/<approved-version>/<stage-specific-filename>
 ```
 
 Input chunks are always:
@@ -72,8 +72,9 @@ later than `part-999.txt`. Each part contains at most **48,000 bytes**, is
 independently valid UTF-8, and carries its exact byte count and SHA-256. Assembly
 concatenates those original bytes without newline, Unicode, whitespace, or HTML
 normalization. The final byte count and SHA-256 must also match. This bounds a
-single report at 47,952,000 bytes. The whole registry is limited to 2 MB and nine
-unique paper/stage/version records, covering three stages across three versions.
+single report at 47,952,000 bytes. The whole registry is limited to 2 MB and the exact
+reviewed paper/stage/version identities in `REPORT_PAPERS` (currently fifteen
+records, including ten UMI versions across its three stages).
 
 No registry value is accepted as a directory or arbitrary input/output path.
 Symlinks in the root, its ancestors, the registry, chunk ancestry, chunks, or
@@ -196,8 +197,8 @@ Report content, embedded scripts and styles remain byte-identical. Unknown
 signatures fail closed instead of falling back to a broad HTML rewrite.
 
 Only imported stages get links and generated views. Detail pages, Library quick
-views and Atlas use these current entries; UMI-on-Legs retains its existing
-routes. The shared browser routing adapter checks the exact paper ID, version
+views and Atlas use these current entries; UMI-on-Legs now has a bounded
+v4 current-entry extension described below. The shared browser routing adapter checks the exact paper ID, version
 and stage filename before constructing a local entry URL. Historical links,
 report HTML, report parts, manifests, security policies and approved hashes are
 unchanged. Output validation reconstructs each view and compares its entire
@@ -218,3 +219,62 @@ It links current readers when available and otherwise the newest frozen report.
 Historical versions remain in paper details and are not counted again. The homepage
 Reading route opens this directory; all three Deep WBC live reader headers return
 to the same paper archive. No immutable report bytes are changed.
+
+## UMI Stage 2 original-sentence revision v4
+
+Only `rpa-0062/stage2/v4/writing-close-reading.html` is added. Stage 1 and Stage 3
+remain v3. The current Stage 2 artifact list is v4/v3/v2/v1; the three imported
+stages are still three reports, not ten independent readings. All prior registry
+records, v1-v3 parts/policies, and the separate reader-theme preview stay immutable.
+
+The new reader carries 37 visible English / Chinese / writing-analysis units from
+the previously reviewed preview, with PDF page/paragraph/unit locations. All 37
+English excerpts were checked against the publisher-linked formal PDF, including
+spelling, punctuation, citations and URLs, after layout-only line-break repairs.
+They are unchanged from that preview. The two noun-list fragments remain labelled
+as fragments; two bold list lead-in labels are explicitly excluded from the excerpt
+units. Source excerpts contain 857 whitespace-delimited items; the language table
+uses its separately stated lexical convention and only 35 complete analysis units
+(793 lexical words), rather than silently conflating these denominators.
+
+The editorial revision corrects P1-S5's finite-predicate voice classification and
+the introduction totals (17 active, 2 passive, 1 mixed, 3 copular/other, N=23).
+It distinguishes K2-S2's cross-embodiment deployment claim from P3-S1's nonexpert
+usability requirement, moderates overstrong Chinese summaries, and keeps author
+claims, translation, and editorial inference separate. English source grammar is
+not silently improved. The header bounds this review; it does not claim a new
+whole-paper rereading or independent experimental reproduction.
+
+`report_umi_stage2.py` permits this one identity only. The new policy independently
+pins the complete HTML, the formal source PDF, one stylesheet, and one interaction
+script. The existing resource-free CSS checks remain active; only the exact
+hash-pinned script is removed before the unchanged HTML/URL/attribute/path checks.
+The 37 source identifiers and English excerpt labels are checked in order.
+No legacy policy, general quotation budget, or script/resource allowlist is widened.
+Packaging uses the existing `split_report` and complete-registry `load_reports`
+checks. The new registry source hash is the formal PDF hash, distinct from the
+report hash: `0228e01b083d2fca2cf260115271d0f2c7718844b31799a61ccc34c78762d971`.
+
+Quotation rights are documented from the [formal PMLR record](https://proceedings.mlr.press/v270/ha25a.html),
+[CoRL 2024 author requirements](https://2024.corl.org/contributions/instruction-for-authors),
+and [PMLR publication agreement](https://proceedings.mlr.press/pmlr-license-agreement.html),
+which provides a [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) basis.
+The reader retains full author/title/publication attribution, original-paper and
+license links, extraction/translation changes, non-endorsement, and the caveats
+that the individual signed agreement was not inspected and the PDF has no printed
+CC mark. The source PDF, extracted text, page images and private authoring/review
+material are not public build inputs and are not redistributed.
+
+The user-facing UMI entries at `papers/rpa-0062/reading/stage1.html` through
+`stage3.html` extend the existing deterministic current-view generator. They use
+exact pinned v3 / v4 / v3 source hashes and exact navigation, return-link and note
+signatures. Only those three signatures change in a generated view; its article,
+embedded styles, scripts, images, formulas and code remain byte-identical to its
+registered source. Each view shows its current source version and an explicit
+fixed-version link. Current Stage 1 → Stage 2 therefore reaches the v4 comparison.
+Historical versioned artifacts retain their original sibling links. The browser
+route adapter selects a current view only for the exact supported paper/stage/version
+combination; other valid historical artifact identities keep their frozen paths.
+Output validation reconstructs all six supported current views (UMI and Deep WBC)
+and compares their entire bytes. This is not an HTML-parser or resource-policy
+exception.

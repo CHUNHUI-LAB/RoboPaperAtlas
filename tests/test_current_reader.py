@@ -37,6 +37,33 @@ class CurrentReaderTests(unittest.TestCase):
                 pattern = rf'<{tag}\b.*?</{tag}>'
                 self.assertEqual(re.findall(pattern, page, re.S), re.findall(pattern, source, re.S))
 
+    def test_umi_current_stage1_to_stage2_uses_v4_without_history_rewrites(self):
+        paper = next(p for p in self.papers if p['id'] == 'rpa-0062')
+        for stage, version in [('stage1', 'v3'), ('stage2', 'v4'), ('stage3', 'v3')]:
+            page = current.render(ROOT, paper, stage, self.records)
+            source = (ROOT / paper['stages'][stage]['artifacts'][0]['path']).read_text()
+            self.assertIn('基于固定报告 ' + version, page)
+            self.assertIn('href="../index.html#reading"', page)
+            self.assertIn('href="../../../' + paper['stages'][stage]['artifacts'][0]['path'] + '"', page)
+            nav = re.search(r'<nav class="reader-stages".*?</nav>', page, re.S)[0]
+            for target in ('stage1', 'stage2', 'stage3'):
+                self.assertIn(f'href="{target}.html"', nav)
+            for tag in ('article', 'script', 'style'):
+                pattern = rf'<{tag}\b.*?</{tag}>'
+                self.assertEqual(re.findall(pattern, page, re.S), re.findall(pattern, source, re.S))
+            if stage != 'stage2':
+                self.assertIn('href="writing-close-reading.html"', source)
+        self.assertEqual(current.entry_path('rpa-0062', 'stage2'), 'papers/rpa-0062/reading/stage2.html')
+        self.assertEqual(current.entry_path('rpa-0052', 'stage1'), None)
+        for stage in ('stage1', 'stage2', 'stage3'):
+            self.assertIn(f'href="../../papers/rpa-0062/reading/{stage}.html"', details(paper))
+        with patch.dict(current.UMI_FROZEN, {'stage1': dict(current.UMI_FROZEN['stage1'], nav='<nav>unknown</nav>')}):
+            with self.assertRaisesRegex(ValueError, 'signature'):
+                current.render(ROOT, paper, 'stage1', self.records)
+        with patch.dict(current.UMI_FROZEN, {'stage2': dict(current.UMI_FROZEN['stage2'], version='v3')}):
+            with self.assertRaisesRegex(ValueError, 'Unreviewed UMI'):
+                current.render(ROOT, paper, 'stage2', self.records)
+
     def test_missing_stage_is_disabled_and_not_written(self):
         paper = copy.deepcopy(self.paper)
         paper['stages']['stage3'] = {'status': 'not_imported', 'artifacts': []}
@@ -64,7 +91,7 @@ class CurrentReaderTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             out = Path(d)
             current.write_current_readers(ROOT, out, self.papers, self.records)
-            self.assertEqual(len(current.validate_current_readers(ROOT, out, self.papers, self.records)), 3)
+            self.assertEqual(len(current.validate_current_readers(ROOT, out, self.papers, self.records)), 6)
             dest = out / current.entry_path(self.paper['id'], 'stage1')
             original = dest.read_bytes()
             dest.write_bytes(original + b'<script>alert(1)</script>')
@@ -89,6 +116,6 @@ class CurrentReaderTests(unittest.TestCase):
                 self.assertIn('href="../../' + artifact['path'] + '"', page)
         with tempfile.TemporaryDirectory() as d:
             current.write_current_readers(ROOT, Path(d), self.papers, self.records)
-            self.assertEqual(len(list(Path(d).rglob('*.html'))), 3)
+            self.assertEqual(len(list(Path(d).rglob('*.html'))), 6)
         for r in self.records:
             self.assertEqual(hashlib.sha256((ROOT / report_path(r)).read_bytes()).hexdigest(), r['sha256'])

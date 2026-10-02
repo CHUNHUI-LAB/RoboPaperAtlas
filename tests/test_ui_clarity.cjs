@@ -7,8 +7,13 @@ test('DeepWBC current readers route to reviewed stages while original artifacts 
  assert.deepEqual(ui.currentReports(byid['rpa-0012']).map(x=>x.path),['papers/rpa-0012/reading/stage1.html','papers/rpa-0012/reading/stage2.html','papers/rpa-0012/reading/stage3.html']);
  assert.deepEqual(['stage1','stage2','stage3'].map(stage=>byid['rpa-0012'].stages[stage].artifacts[0].path),['artifacts/rpa-0012/v2/first-pass.html','artifacts/rpa-0012/v1/writing-close-reading.html','artifacts/rpa-0012/v1/method-code-reading.html']);
 });
-test('UMI current three report links unchanged',()=>{
- assert.deepEqual(ui.currentReports(byid['rpa-0062']).map(x=>x.path),['artifacts/rpa-0062/v3/first-pass.html','artifacts/rpa-0062/v3/writing-close-reading.html','artifacts/rpa-0062/v3/method-code-reading.html']);
+test('UMI current readers use mixed-stage versions without mutating frozen paths',()=>{
+ assert.deepEqual(ui.currentReports(byid['rpa-0062']).map(x=>x.path),['papers/rpa-0062/reading/stage1.html','papers/rpa-0062/reading/stage2.html','papers/rpa-0062/reading/stage3.html']);
+});
+test('historical UMI and DeepWBC artifact identities are not redirected to current views',()=>{
+ for(const [id,stage,version,file] of [['rpa-0062','stage2','v3','writing-close-reading.html'],['rpa-0062','stage1','v2','first-pass.html'],['rpa-0012','stage1','v1','first-pass.html']]){
+  const path=`artifacts/${id}/${version}/${file}`;assert.equal(ui.reportEntryPath(id,stage,path,version),path);
+ }
 });
 test('malformed, external, traversal, other-paper and stage/file mismatch paths fail closed',()=>{
  const bad=['https://evil.example/report.html','//evil.example/report.html','artifacts/rpa-0012/v2/../../secret.html','artifacts/rpa-0062/v2/first-pass.html','artifacts/rpa-0012/v2/method-code-reading.html','artifacts/rpa-0012/v2/any.html','artifacts/rpa-0012/v2/first-pass.html?x=1','artifacts/rpa-0012/v2/first-pass.html#x','artifacts/rpa-0012/v2/%66irst-pass.html'];

@@ -21,7 +21,7 @@ class ReaderTypeV3Tests(unittest.TestCase):
   def lum(h):
    x=[int(h[i:i+2],16)/255 for i in (0,2,4)];x=[v/12.92 if v<=.04045 else((v+.055)/1.055)**2.4 for v in x];return sum(a*b for a,b in zip(x,[.2126,.7152,.0722]))
   for background in ['173c2b','23513c']:self.assertGreater((lum('f2fff7')+.05)/(lum(background)+.05),7)
- def test_prior_artifacts_remain_hash_pinned_and_current_is_v3(self):
+ def test_prior_artifacts_remain_hash_pinned_with_stage2_v4(self):
   for r in self.records:self.assertEqual(hashlib.sha256((ROOT/report_path(r)).read_bytes()).hexdigest(),r['sha256'])
   paper=next(p for p in json.loads((ROOT/'data/catalog.json').read_text())['papers']if p['id']=='rpa-0062')
-  for s in paper['stages'].values():self.assertEqual([a['version']for a in s['artifacts']],['v3','v2','v1'])
+  for key,s in paper['stages'].items():self.assertEqual([a['version']for a in s['artifacts']],(['v4'] if key=='stage2' else [])+['v3','v2','v1'])

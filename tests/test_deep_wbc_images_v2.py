@@ -49,7 +49,7 @@ class DeepWBCImageV2Tests(unittest.TestCase):
   self.assertEqual(p['stages']['stage1'],expected_stage('rpa-0012','stage1',self.records))
   self.assertEqual([x['version'] for x in p['stages']['stage1']['artifacts']],['v2','v1'])
   self.assertEqual(p['stages']['stage3']['status'],'imported')
-  self.assertEqual(len([x for x in self.records if x['paper_id']=='rpa-0062']),9)
+  self.assertEqual(len([x for x in self.records if x['paper_id']=='rpa-0062']),10)
  def test_policy_versions_are_separate_and_source_edition_is_unchanged(self):
   a=json.loads((ROOT/'data/report-rpa-0012-v1-policy.json').read_text());b=json.loads((ROOT/'data/report-rpa-0012-v2-policy.json').read_text())
   self.assertEqual(a['version'],'v1');self.assertEqual(b['version'],'v2');self.assertNotEqual(a['document_sha256'],b['document_sha256'])

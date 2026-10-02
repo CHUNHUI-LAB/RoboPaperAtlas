@@ -5,12 +5,13 @@ from reports import load_reports,report_path,assemble_reports
 from build import home,details,card,about
 from validate import validate_catalog,validate_output
 from map_page import map_data
+from current_reader import write_current_readers
 class ReportIntegrationTests(unittest.TestCase):
  @classmethod
  def setUpClass(cls):
   cls.all_records=load_reports(ROOT);cls.records=[x for x in cls.all_records if x['paper_id']=='rpa-0062'];cls.catalog=json.loads((ROOT/'data/catalog.json').read_text());cls.paper=next(p for p in cls.catalog['papers'] if p['id']=='rpa-0062')
  def test_exact_approved_pilot(self):
-  self.assertEqual(len(self.records),9);self.assertEqual({p['paper_id'] for p in self.records},{'rpa-0062'});self.assertEqual({p['stage'] for p in self.records},{'stage1','stage2','stage3'})
+  self.assertEqual(len(self.records),10);self.assertEqual({p['paper_id'] for p in self.records},{'rpa-0062'});self.assertEqual({p['stage'] for p in self.records},{'stage1','stage2','stage3'})
   self.assertEqual(validate_catalog(self.catalog,self.all_records),95)
  def test_unregistered_stage_cannot_publish(self):
   with self.assertRaises(ValueError):validate_catalog(self.catalog,[])
@@ -31,14 +32,15 @@ class ReportIntegrationTests(unittest.TestCase):
   for r in self.records:
    raw=(ROOT/report_path(r)).read_bytes();self.assertEqual(len(raw),r['bytes']);self.assertEqual(hashlib.sha256(raw).hexdigest(),r['sha256'])
    if r['version']=='v1':self.assertNotEqual(r['sha256'],r['source_sha256']);self.assertIn('href="../../../papers/rpa-0062/index.html"',raw.decode())
-   else:self.assertEqual(r['sha256'],r['source_sha256']);self.assertIn('href="https://chunhui-lab.github.io/RoboPaperAtlas/papers/rpa-0062/index.html"',raw.decode())
+   elif r['version'] in {'v2','v3'}:self.assertEqual(r['sha256'],r['source_sha256']);self.assertIn('href="https://chunhui-lab.github.io/RoboPaperAtlas/papers/rpa-0062/index.html"',raw.decode())
  def test_output_hash_and_allowlist_are_enforced(self):
   assemble_reports(ROOT)
   with tempfile.TemporaryDirectory() as d:
    output=Path(d);paper=output/'papers/rpa-0062/index.html';paper.parent.mkdir(parents=True);paper.write_text('<html><body>Paper</body></html>')
    for r in self.records:
     path=report_path(r);dest=output/path;dest.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(ROOT/path,dest)
-   self.assertEqual(validate_output(output,self.records),10)
+   write_current_readers(ROOT,output,[self.paper],self.records)
+   self.assertEqual(validate_output(output,self.records),14)
    changed=output/report_path(self.records[0]);changed.write_bytes(changed.read_bytes()+b' ')
    with self.assertRaises(ValueError):validate_output(output,self.records)
  def test_stage3_narrow_wrap_is_presentation_only(self):
@@ -47,5 +49,5 @@ class ReportIntegrationTests(unittest.TestCase):
   html=(ROOT/report_path(records['stage3'])).read_text();self.assertIn('@media(max-width:860px){.article p,.article li{overflow-wrap:anywhere}}',html);self.assertIn('overflow:auto',html)
  def test_map_stage_projection(self):
   projection=map_data(self.catalog,report_records=self.all_records);p=next(x for x in projection['papers'] if x['id']=='rpa-0062')
-  for k in ['stage1','stage2','stage3']:self.assertEqual(p['stages'][k]['status'],'imported');self.assertEqual(len(p['stages'][k]['artifacts']),3)
+  for k in ['stage1','stage2','stage3']:self.assertEqual(p['stages'][k]['status'],'imported');self.assertEqual(len(p['stages'][k]['artifacts']),4 if k=='stage2' else 3)
 if __name__=='__main__':unittest.main()

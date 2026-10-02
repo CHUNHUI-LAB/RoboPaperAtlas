@@ -59,9 +59,9 @@ test('empty search after selection cannot reuse stale suggestions; first Up sele
  f.input('whole-body');const n=f.$('#map-suggestions').children.length;input.emit('keydown',{key:'ArrowUp'});assert.equal(input.getAttribute('aria-activedescendant'),`map-option-${n-1}`);input.emit('keydown',{key:'Escape'});input.emit('keydown',{key:'ArrowDown'});assert.equal(input.getAttribute('aria-activedescendant'),'map-option-0');
 });
 
-test('UMI report links remain unchanged and unimported papers stay disabled',()=>{
+test('UMI reports route to current mixed-version readers and unimported papers stay disabled',()=>{
  const f=fixture();pick(f,'UMI-on-Legs');assert.match(selected(f),/UMI-on-Legs/);const rows=f.$('.map-stage-list').children;
- assert.equal(rows.length,3);assert(rows.every(a=>a.tagName==='A'));assert.deepEqual(rows.map(a=>a.href),['../artifacts/rpa-0062/v3/first-pass.html','../artifacts/rpa-0062/v3/writing-close-reading.html','../artifacts/rpa-0062/v3/method-code-reading.html']);
+ assert.equal(rows.length,3);assert(rows.every(a=>a.tagName==='A'));assert.deepEqual(rows.map(a=>a.href),['../papers/rpa-0062/reading/stage1.html','../papers/rpa-0062/reading/stage2.html','../papers/rpa-0062/reading/stage3.html']);
  pick(f,'Universal Manipulation Interface: In-The-Wild');assert(f.$('.map-stage-list').children.every(b=>b.disabled===true));
 });
 

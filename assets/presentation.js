@@ -13,7 +13,8 @@
   if(!/^[a-z0-9][a-z0-9-]*$/.test(id||'')||!definition||!/^v[1-9][0-9]*$/.test(version||''))return null;
   const expected='artifacts/'+id+'/'+version+'/'+definition[2];
   if(path!==expected)return null;
-  return id==='rpa-0012'?'papers/'+id+'/reading/'+stage+'.html':expected;
+  const currentVersions={'rpa-0012':{stage1:'v2',stage2:'v1',stage3:'v1'},'rpa-0062':{stage1:'v3',stage2:'v4',stage3:'v3'}};
+  return currentVersions[id]?.[stage]===version?'papers/'+id+'/reading/'+stage+'.html':expected;
  }
  function currentReports(p){
   if(!/^[a-z0-9][a-z0-9-]*$/.test(p.id||''))return [];
