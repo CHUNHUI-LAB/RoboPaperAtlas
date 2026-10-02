@@ -10,7 +10,7 @@ class RoboDuetReportTests(unittest.TestCase):
   cls.records=r.load_reports(ROOT);cls.rec=next(x for x in cls.records if x['paper_id']=='rpa-0052');cls.payload=b''.join((ROOT/r._parts_path(cls.rec)/p['file']).read_bytes()for p in cls.rec['parts']);cls.catalog=json.loads((ROOT/'data/catalog.json').read_text())
  def setUp(self):
   self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup);self.root=Path(self.tmp.name);(self.root/'data').mkdir();shutil.copyfile(ROOT/'data/report-rpa-0052-v1-policy.json',self.root/'data/report-rpa-0052-v1-policy.json')
- def test_approved_identity_and_only_stage1(self):
+ def test_original_stage1_identity_remains_narrow(self):
   r.split_report(self.root,self.rec,self.payload)
   for k,v in [('paper_id','rpa-0053'),('stage','stage2'),('version','v2'),('review_status','approved'),('source_url','https://example.com/paper'),('pdf_url','https://example.com/paper.pdf'),('source_sha256','0'*64)]:
    with self.subTest(k=k),self.assertRaises(ValueError):r.split_report(self.root,dict(self.rec,**{k:v}),self.payload)
@@ -32,11 +32,11 @@ class RoboDuetReportTests(unittest.TestCase):
   for t in ['39/60','32/60','21.875%','11.67','23%','0.1075','98.20%','99.96%','IEEE 正式版等同性未核验','未读实现、未运行实验']:self.assertIn(t,s)
   for t in ['private-atlas','Skill','skill://','references/atlas-theme','/workspace/','<img','<iframe','v1-candidate']:self.assertNotIn(t,s)
   self.assertEqual(len(re.findall(r'<li>',s.split('id="section-11"')[1].split('</section>')[0])),5)
- def test_catalog_scope_and_no_future_stage(self):
+ def test_catalog_scope_and_stage3_still_pending(self):
   self.assertEqual(validate_catalog(self.catalog,self.records),95);p=next(x for x in self.catalog['papers']if x['id']=='rpa-0052')
   self.assertFalse(p['citation_verified']);self.assertEqual(p['original_metadata']['year'],2025);self.assertEqual(p['stages']['stage1'],expected_stage('rpa-0052','stage1',self.records))
-  for stage in ['stage2','stage3']:self.assertEqual(p['stages'][stage],{'status':'not_imported','artifacts':[]})
-  page=details(p);self.assertIn('1 个已导入报告',page);self.assertIn('初读内容已审阅',page);self.assertIn('../../artifacts/rpa-0052/v1/first-pass.html',page)
+  self.assertEqual(p['stages']['stage2'],expected_stage('rpa-0052','stage2',self.records));self.assertEqual(p['stages']['stage3'],{'status':'not_imported','artifacts':[]})
+  page=details(p);self.assertIn('2 个已导入报告',page);self.assertIn('初读内容已审阅',page);self.assertIn('../../artifacts/rpa-0052/v1/first-pass.html',page)
  def test_original_source_not_in_artifacts(self):
-  p=ROOT/'artifacts/rpa-0052';self.assertEqual([x.name for x in p.rglob('*')if x.is_file()],['first-pass.html']);self.assertNotEqual(self.rec['source_sha256'],self.rec['sha256'])
+  p=ROOT/'artifacts/rpa-0052';self.assertEqual(sorted(x.name for x in p.rglob('*')if x.is_file()),['first-pass.html','writing-close-reading.html']);self.assertNotEqual(self.rec['source_sha256'],self.rec['sha256'])
 if __name__=='__main__':unittest.main()

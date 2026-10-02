@@ -10,6 +10,12 @@ test('DeepWBC current readers route to reviewed stages while original artifacts 
 test('UMI current readers use mixed-stage versions without mutating frozen paths',()=>{
  assert.deepEqual(ui.currentReports(byid['rpa-0062']).map(x=>x.path),['papers/rpa-0062/reading/stage1.html','papers/rpa-0062/reading/stage2.html','papers/rpa-0062/reading/stage3.html']);
 });
+test('RoboDuet current readers include only the two reviewed author-manuscript stages',()=>{
+ assert.deepEqual(ui.currentReports(byid['rpa-0052']).map(x=>x.path),['papers/rpa-0052/reading/stage1.html','papers/rpa-0052/reading/stage2.html']);
+ assert.equal(byid['rpa-0052'].stages.stage3.status,'not_imported');
+ assert.equal(byid['rpa-0052'].stages.stage1.artifacts[0].path,'artifacts/rpa-0052/v1/first-pass.html');
+ assert.equal(byid['rpa-0052'].stages.stage2.artifacts[0].path,'artifacts/rpa-0052/v1/writing-close-reading.html');
+});
 test('historical UMI and DeepWBC artifact identities are not redirected to current views',()=>{
  for(const [id,stage,version,file] of [['rpa-0062','stage2','v3','writing-close-reading.html'],['rpa-0062','stage1','v2','first-pass.html'],['rpa-0012','stage1','v1','first-pass.html']]){
   const path=`artifacts/${id}/${version}/${file}`;assert.equal(ui.reportEntryPath(id,stage,path,version),path);

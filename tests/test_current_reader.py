@@ -54,7 +54,7 @@ class CurrentReaderTests(unittest.TestCase):
             if stage != 'stage2':
                 self.assertIn('href="writing-close-reading.html"', source)
         self.assertEqual(current.entry_path('rpa-0062', 'stage2'), 'papers/rpa-0062/reading/stage2.html')
-        self.assertEqual(current.entry_path('rpa-0052', 'stage1'), None)
+        self.assertEqual(current.entry_path('rpa-0052', 'stage1'), 'papers/rpa-0052/reading/stage1.html')
         for stage in ('stage1', 'stage2', 'stage3'):
             self.assertIn(f'href="../../papers/rpa-0062/reading/{stage}.html"', details(paper))
         with patch.dict(current.UMI_FROZEN, {'stage1': dict(current.UMI_FROZEN['stage1'], nav='<nav>unknown</nav>')}):
@@ -68,7 +68,7 @@ class CurrentReaderTests(unittest.TestCase):
         paper = copy.deepcopy(self.paper)
         paper['stages']['stage3'] = {'status': 'not_imported', 'artifacts': []}
         page = current.render(ROOT, paper, 'stage1', self.records)
-        self.assertIn('aria-disabled="true"><small>03</small>', page)
+        self.assertIn('aria-disabled="true"><small>03 · 未完成</small>', page)
         self.assertNotIn('href="stage3.html"', page)
         with self.assertRaises(ValueError):
             current.render(ROOT, paper, 'stage3', self.records)
@@ -91,7 +91,7 @@ class CurrentReaderTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             out = Path(d)
             current.write_current_readers(ROOT, out, self.papers, self.records)
-            self.assertEqual(len(current.validate_current_readers(ROOT, out, self.papers, self.records)), 6)
+            self.assertEqual(len(current.validate_current_readers(ROOT, out, self.papers, self.records)), 8)
             dest = out / current.entry_path(self.paper['id'], 'stage1')
             original = dest.read_bytes()
             dest.write_bytes(original + b'<script>alert(1)</script>')
@@ -116,6 +116,6 @@ class CurrentReaderTests(unittest.TestCase):
                 self.assertIn('href="../../' + artifact['path'] + '"', page)
         with tempfile.TemporaryDirectory() as d:
             current.write_current_readers(ROOT, Path(d), self.papers, self.records)
-            self.assertEqual(len(list(Path(d).rglob('*.html'))), 6)
+            self.assertEqual(len(list(Path(d).rglob('*.html'))), 8)
         for r in self.records:
             self.assertEqual(hashlib.sha256((ROOT / report_path(r)).read_bytes()).hexdigest(), r['sha256'])

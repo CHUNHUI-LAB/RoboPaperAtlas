@@ -2,7 +2,7 @@
 import hashlib
 from html import escape
 
-CURRENT_READER_PAPERS = frozenset({'rpa-0012', 'rpa-0062'})
+CURRENT_READER_PAPERS = frozenset({'rpa-0012', 'rpa-0062', 'rpa-0052'})
 STAGES = (('stage1', '初读'), ('stage2', '写作精读'), ('stage3', '方法与代码'))
 OPEN = '<nav class="reader-stages" aria-label="阅读阶段">'
 NOTE = '<p class="reader-document-note">正文、嵌入图、代码和已排版公式可离线阅读；站点导航、外部原文与源码链接需联网。阅读覆盖范围以本页声明为准。</p>'
@@ -65,6 +65,33 @@ UMI_FROZEN = {'stage1': {'version': 'v3',
                               'Reading</span></a>'}}
 
 
+# Exact fixed source signatures for the two reviewed RoboDuet stages.
+ROBO_FROZEN = {'stage1': {'version': 'v1',
+            'sha256': '72003683921cf646202e834b8738d580bd560eae6e64f86f4a3279fc586a010a',
+            'nav': '<nav class="reader-stages" aria-label="阅读阶段"><span '
+                   'aria-current="page"><small>01</small>初读</span><span aria-disabled="true" '
+                   'title="此阶段报告尚未提供"><small>02</small>写作精读</span><span aria-disabled="true" '
+                   'title="此阶段报告尚未提供"><small>03</small>方法与代码</span></nav>',
+            'note': '<p '
+                    'class="reader-document-note">正文、嵌入图、代码和已排版公式可离线阅读；站点导航、外部原文与源码链接需联网。阅读覆盖范围以本页声明为准。</p>',
+            'return_link': '<a class="atlas-return" '
+                           'href="../../../papers/rpa-0052/index.html">回到论文详情</a>',
+            'current_return': '<a class="atlas-return" '
+                              'href="../index.html#reading">回到论文详情</a>'},
+ 'stage2': {'version': 'v1',
+            'sha256': '12c0457a449666b905b839869f8461abab76d0415e96b8ffa0427dd3e885b29e',
+            'nav': '<nav class="reader-stages" aria-label="阅读阶段"><a '
+                   'href="https://chunhui-lab.github.io/RoboPaperAtlas/artifacts/rpa-0052/v1/first-pass.html"><small>01</small>初读</a><a '
+                   'href="#structure" aria-current="page"><small>02</small>写作精读</a><span '
+                   'class="reader-stage-pending"><small>03 · 未完成</small>方法与代码</span></nav>',
+            'note': '<p class="reader-document-note">报告 v1 · '
+                    '2026-10-02。覆盖摘要5句、引言散文20句、总结7句；直接短引与原创分析同页展示，未提供整套原句重刊。内容已独立审阅；浏览器视觉验收尚未完成。实际阅读版本与有限短引范围保持上述说明。</p>',
+            'return_link': '<a class="atlas-return" '
+                           'href="https://chunhui-lab.github.io/RoboPaperAtlas/papers/rpa-0052/index.html">回到论文详情</a>',
+            'current_return': '<a class="atlas-return" '
+                              'href="../index.html#reading">回到论文详情</a>'}}
+
+
 def entry_path(paper_id, stage):
     if paper_id in CURRENT_READER_PAPERS and stage in dict(STAGES):
         return f'papers/{paper_id}/reading/{stage}.html'
@@ -88,7 +115,13 @@ def render(root, paper, stage, records):
     if len(raw) != record['bytes'] or hashlib.sha256(raw).hexdigest() != record['sha256']:
         raise ValueError('Current reader source hash mismatch')
     page = raw.decode('utf-8')
-    if paper['id'] == 'rpa-0062':
+    if paper['id'] == 'rpa-0052':
+        spec = ROBO_FROZEN.get(stage)
+        if spec is None or (record['version'], record['sha256']) != (spec['version'], spec['sha256']):
+            raise ValueError('Unreviewed RoboDuet current reader source version/hash')
+        frozen, frozen_return, note = spec['nav'], spec['return_link'], spec['note']
+        current_return = spec['current_return']
+    elif paper['id'] == 'rpa-0062':
         spec = UMI_FROZEN[stage]
         if (record['version'], record['sha256']) != (spec['version'], spec['sha256']):
             raise ValueError('Unreviewed UMI current reader source version/hash')
@@ -106,7 +139,7 @@ def render(root, paper, stage, records):
             current = ' aria-current="page"' if key == stage else ''
             nav.append(f'<a href="{key}.html"{current}><small>{index:02}</small>{label}</a>')
         else:
-            nav.append(f'<span aria-disabled="true"><small>{index:02}</small>{label} · 尚未导入</span>')
+            nav.append(f'<span aria-disabled="true"><small>{index:02} · 未完成</small>{label}</span>')
     provenance = (f'当前导航视图 · 基于固定报告 {escape(record["version"])} 生成，仅更新阶段导航、返回入口与本说明；'
                   f'正文、脚本与样式保持原样。<a href="../../../{escape(report_path(record), quote=True)}">打开固定版本报告 ↗</a> ')
     return (page.replace(frozen, OPEN + ''.join(nav) + '</nav>', 1)
