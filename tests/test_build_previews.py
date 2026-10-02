@@ -1,4 +1,5 @@
 """Build the existing site once, then append two isolated allowlisted routes."""
+import hashlib
 import subprocess
 import sys
 import tempfile
@@ -29,12 +30,29 @@ class SubmissionAllowlistTests(unittest.TestCase):
  def setUp(self):
   self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup);self.root=Path(self.tmp.name).resolve();self.source=self.root/'submit-preview';(self.source/'data').mkdir(parents=True)
   for name in b.SUBMIT_FILES:(self.source/name).write_text('public '+name)
+  (self.source/'index.html').write_text('<!doctype html><script src="app.js"></script>')
   self.target=self.root/'dist';self.target.mkdir();(self.target/'index.html').write_text('unchanged main')
  def test_only_four_files_added_and_repeat_is_safe(self):
   for _ in range(2):b.write_submit_preview(self.root,self.target)
   self.assertEqual((self.target/'index.html').read_text(),'unchanged main')
   self.assertEqual({p.relative_to(self.target/'submit-preview').as_posix() for p in (self.target/'submit-preview').rglob('*') if p.is_file()},set(b.SUBMIT_FILES))
-  for name in b.SUBMIT_FILES:self.assertEqual((self.source/name).read_bytes(),(self.target/'submit-preview'/name).read_bytes())
+  for name in b.SUBMIT_FILES:
+   if name!='index.html':self.assertEqual((self.source/name).read_bytes(),(self.target/'submit-preview'/name).read_bytes())
+  script=hashlib.sha256((self.source/'app.js').read_bytes()).hexdigest()[:12]
+  data=hashlib.sha256((self.source/'data/venues.json').read_bytes()).hexdigest()[:12]
+  self.assertEqual((self.target/'submit-preview/index.html').read_text(),f'<!doctype html><script src="app.js?v={script}&amp;data={data}"></script>')
+ def test_data_only_change_gets_a_new_snapshot_url_without_changing_script_bytes(self):
+  before=b.write_submit_preview(self.root,self.target)
+  (self.source/'data/venues.json').write_text('new public snapshot')
+  after=b.write_submit_preview(self.root,self.target)
+  self.assertEqual(before['script'],after['script']);self.assertNotEqual(before['data'],after['data'])
+  self.assertIn('data='+after['data'],(self.target/'submit-preview/index.html').read_text())
+  self.assertNotIn('data='+before['data'],(self.target/'submit-preview/index.html').read_text())
+ def test_missing_or_duplicate_script_entry_fails_before_output_is_written(self):
+  for html in ('no script','<script src="app.js"></script>'*2):
+   (self.source/'index.html').write_text(html)
+   with self.assertRaisesRegex(ValueError,'exactly once'):b.write_submit_preview(self.root,self.target)
+   self.assertFalse((self.target/'submit-preview').exists())
  def test_missing_file(self):
   (self.source/'app.js').unlink()
   with self.assertRaises(ValueError):b.write_submit_preview(self.root,self.target)

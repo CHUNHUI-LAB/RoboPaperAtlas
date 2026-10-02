@@ -1,3 +1,4 @@
+import hashlib
 import json
 from pathlib import Path
 import re
@@ -39,6 +40,9 @@ class SubmissionIntegrationTests(unittest.TestCase):
             self.assertEqual(page.count('id="main-nav"'), 1)
             self.assertEqual(page.count('id="main"'), 1)
             self.assertIn('../submit-preview/app.js?v=', page)
+            snapshot = hashlib.sha256((ROOT/'submit-preview/data/venues.json').read_bytes()).hexdigest()[:12]
+            self.assertIn('&amp;data='+snapshot+'"', page)
+            self.assertIn('&amp;data='+snapshot+'"', (target/'submit-preview/index.html').read_text())
             self.assertIn('class="submission-module"', page)
             for element in ('nav-venues', 'nav-experiences', 'nav-deadlines', 'nav-papers', 'query', 'workspace', 'detail', 'papers-view', 'experiences-view', 'deadlines-view', 'retry-load'):
                 self.assertEqual(page.count(f'id="{element}"'), 1)
@@ -59,8 +63,10 @@ class SubmissionIntegrationTests(unittest.TestCase):
         self.assertIn('summary:focus-visible', css)
 
     def test_canonical_fetch_uses_script_location(self):
-        self.assertIn("fetch(new URL('data/venues.json', document.currentScript.src))",
-                      (ROOT/'submit-preview/app.js').read_text())
+        script = (ROOT/'submit-preview/app.js').read_text()
+        self.assertIn("new URL('data/venues.json',document.currentScript.src)", script)
+        self.assertIn("sourceURL.searchParams.set('v',snapshotVersion)", script)
+        self.assertEqual(script.count('fetch(sourceURL)'), 2)
 
 
 if __name__ == '__main__':

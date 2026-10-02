@@ -4,8 +4,8 @@
 The normal scripts/build.py output stays unchanged. CI opts into this wrapper.
 """
 import argparse
+import hashlib
 import os
-import shutil
 import stat
 from pathlib import Path
 import subprocess
@@ -48,20 +48,30 @@ def validate_submit_source(root, target):
 
 
 def write_submit_preview(root, target):
-    """Copy explicit public files only; never recursively publish a directory."""
+    """Copy allowlisted bytes and version the entry page's script/data pair."""
     root = Path(root).absolute()
     source = validate_submit_source(root, target)
+    payloads = {}
+    for name in SUBMIT_FILES:
+        src = safe_path(root, source / name)
+        with os.fdopen(os.open(src, os.O_RDONLY | os.O_NOFOLLOW), 'rb') as inp:
+            require(stat.S_ISREG(os.fstat(inp.fileno()).st_mode), 'Source must remain regular')
+            payloads[name] = inp.read()
+    versions = {key: hashlib.sha256(payloads[name]).hexdigest()[:12]
+                for key, name in (('script', 'app.js'), ('data', 'data/venues.json'))}
+    html = payloads['index.html'].decode('utf8')
+    require(html.count('src="app.js"') == 1, 'Submission entry script must occur exactly once')
+    payloads['index.html'] = html.replace('src="app.js"',
+        f'src="app.js?v={versions["script"]}&amp;data={versions["data"]}"').encode('utf8')
     destination = safe_path(root, Path(target) / SUBMIT_ROUTE)
     destination.mkdir(parents=True, exist_ok=True)
     safe_path(root, destination / 'data').mkdir(exist_ok=True)
     for name in SUBMIT_FILES:
-        src = safe_path(root, source / name)
         dst = safe_path(root, destination / name)
-        with os.fdopen(os.open(src, os.O_RDONLY | os.O_NOFOLLOW), 'rb') as inp:
-            require(stat.S_ISREG(os.fstat(inp.fileno()).st_mode), 'Source must remain regular')
-            with os.fdopen(os.open(dst, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o644), 'wb') as out:
-                require(stat.S_ISREG(os.fstat(out.fileno()).st_mode), 'Output must remain regular')
-                shutil.copyfileobj(inp, out)
+        with os.fdopen(os.open(dst, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o644), 'wb') as out:
+            require(stat.S_ISREG(os.fstat(out.fileno()).st_mode), 'Output must remain regular')
+            out.write(payloads[name])
+    return versions
 
 
 def main(argv=None):

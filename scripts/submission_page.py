@@ -36,7 +36,7 @@ def write_submission(root, target, shell):
     from build_previews import write_submit_preview
     root, target = Path(root), Path(target)
     # This retains the strict four-file allowlist and symlink checks unchanged.
-    write_submit_preview(root, target)
+    versions = write_submit_preview(root, target)
     source = root / 'submit-preview'
     import json
     from submission_profiles import validate_submission_profiles, validate_experience_overview
@@ -61,9 +61,8 @@ def write_submission(root, target, shell):
     css += '\n.submission-module{width:100%;font-family:inherit}'
     import hashlib
     version = hashlib.sha256(css.encode()).hexdigest()[:12]
-    script_version = hashlib.sha256((source / 'app.js').read_bytes()).hexdigest()[:12]
     page = page.replace('</head>', f'<link rel="stylesheet" href="style.css?v={version}"></head>')
-    page = page.replace('</body>', f'<script src="../submit-preview/app.js?v={script_version}"></script></body>')
+    page = page.replace('</body>', f'<script src="../submit-preview/app.js?v={versions["script"]}&amp;data={versions["data"]}"></script></body>')
     folder = target / 'submit'
     folder.mkdir(exist_ok=True)
     (folder / 'index.html').write_text(page, encoding='utf8')

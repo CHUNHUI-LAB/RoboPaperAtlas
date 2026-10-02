@@ -22,7 +22,7 @@ async function fixture(hash='',options={}){
   emit(type,input={}){const e={type,target:this,defaultPrevented:false,preventDefault(){this.defaultPrevented=true},...input};for(const h of document.listeners[type]||[])if(h.capture)h.fn(e);let n=this;while(n){n['on'+type]?.(e);for(const h of n.listeners[type]||[])if(!h.capture)h.fn(e);n=n.parentElement}return e}
  }
  function parse(html,parent){const nodes=[parent],voids=new Set(['meta','link','input','br','hr','img']);for(const m of html.matchAll(/<([^>]+)>|([^<]+)/g)){if(m[2]){nodes.at(-1)._text+=decode(m[2]);continue}const raw=m[1];if(raw.startsWith('!'))continue;if(raw.startsWith('/')){if(nodes.length>1)nodes.pop();continue}const tag=raw.split(/\s/)[0],el=new Element(tag);for(const a of raw.slice(tag.length).matchAll(/([^\s=\/]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s]+)))?/g))el.setAttribute(a[1],decode(a[2]??a[3]??a[4]??''));nodes.at(-1).append(el);if(!voids.has(tag))nodes.push(el)}for(const s of parent.querySelectorAll('select'))s._value=s.options.find(x=>x.hasAttribute('selected'))?.getAttribute('value')||s.options[0]?.getAttribute('value')||''}
- document=new Element('document');document.getElementById=id=>document.querySelector('#'+id);parse(fs.readFileSync(path.join(root,'submit-preview/index.html'),'utf8'),document);document.currentScript={src:'https://example.org/RoboPaperAtlas/submit-preview/app.js'};
+ document=new Element('document');document.getElementById=id=>document.querySelector('#'+id);parse(fs.readFileSync(path.join(root,'submit-preview/index.html'),'utf8'),document);document.currentScript={src:options.scriptURL||'https://example.org/RoboPaperAtlas/submit-preview/app.js'};
  const window=new Element('window');const change=hash=>{const next=new URL(hash,url);if(next.href===url.href)return;url=next;stack.splice(++index);stack.push(url.href);window.emit('hashchange')};
  const location={get hash(){return url.hash},set hash(v){change(v.startsWith('#')?v:'#'+v)},get href(){return url.href}};
  const history={replaceState(_a,_b,v){url=new URL(v,url);stack[index]=url.href}};
@@ -61,4 +61,15 @@ test('all added sources open with their own summary and preserve the filtered re
   await f.click('#experience-back');assert.equal(f.$('#e-venue').value,r.venue_id);
   assert.ok(f.$('#experience-'+r.id));
  }
+});
+
+
+test('initial and retry loads use the data hash rather than the script hash or stale fixed URL',async()=>{
+ const f=await fixture('#experiences',{failFirst:true,scriptURL:'https://example.org/RoboPaperAtlas/submit-preview/app.js?v=code123&data=data456'});
+ assert.equal(f.fetches[0],'https://example.org/RoboPaperAtlas/submit-preview/data/venues.json?v=data456');
+ await f.click('#retry-load');assert.equal(f.fetches.length,2);assert.equal(f.fetches[1],f.fetches[0]);
+ assert.equal(f.$$('.experience-preview').length,14);
+ const newer=await fixture('#experiences',{scriptURL:'https://example.org/RoboPaperAtlas/submit-preview/app.js?v=code123&data=data789'});
+ assert.equal(newer.fetches[0],'https://example.org/RoboPaperAtlas/submit-preview/data/venues.json?v=data789');
+ assert.notEqual(newer.fetches[0],f.fetches[0]);
 });
