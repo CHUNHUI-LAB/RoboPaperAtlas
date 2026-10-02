@@ -43,10 +43,12 @@ class SubmissionIntegrationTests(unittest.TestCase):
             for element in ('nav-venues', 'nav-experiences', 'nav-deadlines', 'nav-papers', 'query', 'workspace', 'detail', 'papers-view', 'experiences-view', 'deadlines-view', 'retry-load'):
                 self.assertEqual(page.count(f'id="{element}"'), 1)
             self.assertNotIn('独立预览', page)
+            self.assertEqual(page.count('class="submission-tabs"'), 1)
+            self.assertNotIn('start-routes', page)
 
     def test_readable_task_entries_and_unselected_initial_state(self):
         html = (ROOT/'submit-preview/index.html').read_text()
-        for text in ('找会议 / 期刊', '看投稿经验', '查截止日期', '先看总结，再读具体经历'):
+        for text in ('找会议 / 期刊', '看投稿经验', '查截止日期', '跨来源准备要点'):
             self.assertIn(text, html)
         self.assertIn('id="workspace" class="workspace" tabindex="-1" hidden', html)
         css = (ROOT/'submit-preview/style.css').read_text()

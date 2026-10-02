@@ -40,19 +40,19 @@ def write_submission(root, target, shell):
     source = root / 'submit-preview'
     html = (source / 'index.html').read_text(encoding='utf8')
     main = re.search(r'<main>(.*?)</main>', html, re.S)
-    nav = re.search(r'<nav aria-label="模块">(.*?)</nav>', html, re.S)
+    nav = re.search(r'<nav class="submission-tabs" aria-label="模块">(.*?)</nav>', html, re.S)
     footer = re.search(r'<footer>(.*?)</footer>', html, re.S)
     if not all((main, nav, footer)):
         raise ValueError('Submission source page structure changed; review integration')
     body = ('<main id="main" class="submission-module">'
-            '<nav class="submission-tabs" aria-label="投稿模块">' + nav.group(1) + '</nav>'
-            + main.group(1) + '<footer>' + footer.group(1) + '</footer></main>')
+            + main.group(1).replace('aria-label="模块"', 'aria-label="投稿模块"')
+            + '<footer>' + footer.group(1) + '</footer></main>')
     page = shell('投稿与期刊', body, prefix='../', page='submit',
                  description='机器人研究投稿渠道、期刊政策与公开来源。')
     page = page.replace('<title>RoboPaperAtlas</title>',
                         '<title>投稿与期刊 · RoboPaperAtlas</title>')
     css = scoped_styles((source / 'style.css').read_text(encoding='utf8'))
-    css += '\n.submission-module .submission-tabs{margin:0 0 24px;flex-wrap:wrap}'
+    css += '\n.submission-module{--shell-height:70px}'
     css += '\n.submission-module{width:100%;font-family:inherit}'
     import hashlib
     version = hashlib.sha256(css.encode()).hexdigest()[:12]
