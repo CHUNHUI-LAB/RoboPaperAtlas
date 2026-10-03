@@ -69,7 +69,7 @@ class EditorialInterfaceTests(unittest.TestCase):
  def test_single_search_entry_and_editorial_home(self):
   from build import home
   page=home(json.loads((ROOT/'data/catalog.json').read_text()))
-  self.assertIn('class="library-overview"',page)
+  self.assertIn('library-main"',page)
   self.assertNotIn('id="coordinate-field"',page)
   self.assertNotIn('id="motion-toggle"',page)
   self.assertIn('<title>RoboPaperAtlas</title>',page)

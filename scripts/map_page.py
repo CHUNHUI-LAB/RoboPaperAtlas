@@ -84,11 +84,11 @@ def map_html(catalog, base='../', css='../assets/paper-map.css', js='../assets/p
     categories = {c['id']: c for c in data['categories']}
     counts = {key: sum(p['mapTopic'] == key for p in data['papers']) for key in categories}
     topics = ''.join(f'<button type="button" data-map-topic="{key}" aria-pressed="false" title="{esc(c["english"])}" style="--topic:{c["color"]}"><i aria-hidden="true"></i>{esc(c["displayLabel"])}<span>{counts[key]}</span></button>' for key,c in categories.items())
-    rows = ''.join(f'<li data-map-row="{esc(p["id"])}"><a href="{esc(p["detailUrl"])}" data-map-paper="{esc(p["id"])}"><span class="map-list-dot" style="--topic:{categories[p["mapTopic"]]["color"]}" aria-hidden="true"></span><span class="map-list-copy"><strong>{esc(p["title"])}</strong><small>{esc(categories[p["mapTopic"]]["displayLabel"])} / {esc(problem_label(p["classification"]["problemLabel"]))} · {esc(p["display"]["yearLabel"])} · {"分类暂定" if p["classification"]["needsReview"] else "主来源支持的编目判断"}</small></span><span aria-hidden="true">↗</span></a></li>' for p in data['papers'])
+    rows = ''.join(f'<li data-map-row="{esc(p["id"])}"><a href="{esc(p["detailUrl"])}" data-map-paper="{esc(p["id"])}"><span class="map-list-dot" style="--topic:{categories[p["mapTopic"]]["color"]}" aria-hidden="true"></span><span class="map-list-copy"><strong>{esc(p["title"])}</strong><small>{esc(p["authors"])} · {esc(p["display"]["yearLabel"])}</small><small>{esc(categories[p["mapTopic"]]["displayLabel"])} · {"分类暂定" if p["classification"]["needsReview"] else "主来源支持的编目判断"}</small></span><span class="map-row-action">查看详情 →</span></a><details class="map-row-summary"><summary>阅读摘要</summary><p>{esc(p["summary"]) if p["summary"] else "这篇论文尚未整理摘要。可打开详情查看原文与来源；不据标题推断方法或结论。"}</p><a href="{esc(p["detailUrl"])}">打开论文页面 ↗</a></details></li>' for p in data['papers'])
     payload = json.dumps(data, ensure_ascii=False, separators=(',', ':')).replace('<', '\\u003c').replace('>', '\\u003e').replace('&', '\\u0026')
     return f'''<link rel="stylesheet" href="{esc(css)}"><script src="{esc(js)}" defer></script>
 <main id="main" class="paper-map-page">
-  <section class="map-heading"><div><p class="eyebrow">ROBO PAPER ATLAS / 研究地图</p><h1>Atlas</h1></div><p>{len(data['papers'])} 个星点，{len(data['papers'])} 篇真实论文。<br>从研究方向进入问题，再抵达论文与证据。</p></section>
+  <section class="map-heading"><div><p class="eyebrow">RoboPaperAtlas / EXPLORE</p><h1>研究星图</h1></div><p>{len(data['papers'])} 个星点，{len(data['papers'])} 篇真实论文。<br>选择研究方向，右侧立即显示对应论文。</p></section>
   <section class="paper-map" id="paper-map" aria-label="论文主题地图" data-view="list">
     <div class="map-toolbar" hidden>
       <div class="map-search-wrap"><label for="map-search" class="sr-only">搜索地图中的论文</label><span aria-hidden="true">⌕</span><input id="map-search" type="search" role="combobox" autocomplete="off" aria-autocomplete="list" aria-controls="map-suggestions" aria-expanded="false" placeholder="搜索标题、作者、标签…"><button type="button" id="map-search-clear" aria-label="清空地图搜索" hidden>×</button><ul id="map-suggestions" role="listbox" aria-label="匹配的论文" hidden></ul></div>
@@ -107,12 +107,15 @@ def map_html(catalog, base='../', css='../assets/paper-map.css', js='../assets/p
           <div class="map-hover-card" hidden aria-hidden="true"></div>
         </div>
         <p id="map-help" class="map-help">拖动平移 · Ctrl / ⌘ + 滚轮缩放 · 方向键选择</p>
-        <div class="map-list-wrap"><p class="map-list-intro">按主题浏览全部书目。选择论文查看资源，也可直接进入完整详情。</p><ul class="map-paper-list">{rows}</ul><p class="map-list-empty" hidden>没有匹配论文。<button type="button" data-map-reset>清空筛选</button></p></div>
+
       </div>
+      <div class="map-results-column"><div class="map-results-heading"><div><p class="eyebrow">PAPERS IN THIS VIEW</p><h2 id="map-results-title" tabindex="-1">全部论文</h2><p id="map-selection-status" role="status" aria-live="polite">共 {len(data['papers'])} 篇 · 选择左侧星域或上方方向</p></div><button type="button" data-map-reset>清除筛选</button></div>
       <aside class="map-sidebar" aria-label="论文详情与资源">
-        <div class="map-panel-welcome"><span class="map-welcome-symbol" aria-hidden="true">✦</span><p class="eyebrow">从这里开始</p><h2>从研究问题<br>找到论文</h2><p>选择彩色星系进入研究方向，再展开问题子系统。每颗论文星都通向原文、代码与阅读状态。</p><div class="map-welcome-facts"><div><strong>{len(data['papers'])}</strong><span>已收录论文</span></div><div><strong>{len(data['categories']):02d}</strong><span>导航区域</span></div><div><strong>00</strong><span>已核验引用关系</span></div></div><p class="map-truth-note">研究方向、方法标签和资源类型分开展示。分类属于编辑判断；题名暂定与主来源核验范围会逐篇说明，不等于全文精读或复现。73 条原始书目与 22 条增补记录的来源状态保留。</p><a class="map-catalog-link" href="{esc(base)}index.html#catalog">回到完整目录 <span aria-hidden="true">↗</span></a></div>
+        <div class="map-panel-welcome"><span class="map-welcome-symbol" aria-hidden="true">✦</span><p class="eyebrow">从这里开始</p><h2>从研究问题<br>找到论文</h2><p>选择彩色星系进入研究方向，再展开问题子系统。每颗论文星都通向原文、代码与阅读状态。</p><div class="map-welcome-facts"><div><strong>{len(data['papers'])}</strong><span>已收录论文</span></div><div><strong>{len(data['categories']):02d}</strong><span>导航区域</span></div><div><strong>主题</strong><span>当前地图连线类型</span></div></div><p class="map-truth-note">研究方向、方法标签和资源类型分开展示。分类属于编辑判断；题名暂定与主来源核验范围会逐篇说明，不等于全文精读或复现。73 条原始书目与 22 条增补记录的来源状态保留。</p><a class="map-catalog-link" href="{esc(base)}index.html#catalog">回到完整目录 <span aria-hidden="true">↗</span></a></div>
         <div class="map-panel-selected" hidden><div class="map-panel-top"><span>论文与资源</span><button type="button" id="map-panel-close" aria-label="关闭论文详情">关闭 ×</button></div><div id="map-panel-content"></div></div>
       </aside>
+        <div class="map-list-wrap"><p class="map-list-intro">先读摘要，再查看详情与原文。主题位置与距离不表示引用关系。</p><ul class="map-paper-list">{rows}</ul><p class="map-list-empty" hidden>没有匹配论文。<button type="button" data-map-reset>清空筛选</button></p></div>
+      </div>
     </div>
     <div id="map-legend" class="map-legend"><p><span class="map-legend-node" aria-hidden="true"></span> 小星点代表论文，大光点为层级入口；颜色区分研究方向。跨领域资源与跨领域研究单列</p><p><span class="map-legend-edge" aria-hidden="true"></span> 虚线 = 共享标签的主题相近（推断），不是引用或方法继承</p><p>每篇论文只有一个主位置；方法与资源标签可交叉。星云辉光仅为背景；轨道与距离仅用于层级导航，不代表引用、时间，不代表学术影响力或测得的相似度</p></div>
     <p class="map-access-note">不便操作地图？列表提供同一组论文与全部资源入口。普通滚轮保持页面滚动；移动端默认列表，地图可选。</p>

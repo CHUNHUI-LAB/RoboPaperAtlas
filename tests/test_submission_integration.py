@@ -16,7 +16,7 @@ class SubmissionIntegrationTests(unittest.TestCase):
     def test_navigation_uses_stable_path_at_every_depth(self):
         for prefix in ('', '../', '../../', '../../../', '/RoboPaperAtlas/'):
             page = shell('test', '<main id="main"></main>', prefix=prefix, page='submit')
-            self.assertIn(f'href="{prefix}submit/index.html" aria-current="page">Submit</a>', page)
+            self.assertIn(f'href="{prefix}submit/index.html" aria-current="page">投稿指南</a>', page)
 
     def test_scope_and_media(self):
         css = scoped_styles(':root{--x:1}body{margin:0}nav a{color:red}@media(max-width:700px){header{height:auto}main{padding:1px}}')
