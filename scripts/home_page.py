@@ -35,31 +35,7 @@ def render(data, card, categories, shell, esc):
     year_options = ''.join(f'<option value="{y}">{y}</option>' for y in years)
     ordered = sorted(papers, key=lambda p: (not p['citation_verified'], -(p.get('bibliographic_year') or 0), p['title'].casefold()))
 
-    # Entry points use real records and exact catalog summaries. No paper imagery.
-    by_id = {p['id']: p for p in papers}
-    features = []
-    for pid in ['agenticnav-tool-harness', 'rpa-0062', 'rpa-0067']:
-        p = by_id[pid]
-        title = (p.get('verified_overlay') or {}).get('title') or p['title']
-        features.append(f'''<article class="library-feature">
-  <span class="feature-document" aria-hidden="true"><svg viewBox="0 0 24 28" fill="none" stroke="#c9c3ff" stroke-width="1.4"><path d="M4 1h10l6 6v20H4zM14 1v7h6M8 13h8M8 18h8M8 23h5"/></svg></span>
-  <div class="library-feature-heading"><h3><a data-catalog-link href="papers/{pid}/index.html" title="{esc(title)}">{esc({'agenticnav-tool-harness': 'AgenticNav', 'rpa-0067': 'Visual Whole-Body Control', 'rpa-0062': 'UMI on Legs'}.get(pid) or p.get('short_name') or title)}</a></h3></div>
-  <p>{esc(p.get('summary') or FEATURE_SUMMARIES[pid])}</p>
-  <div class="feature-actions"><button type="button" class="feature-preview" data-preview="{pid}" aria-label="速览 {esc(title)}">阅读概览 <span aria-hidden="true">→</span></button><a data-catalog-link href="papers/{pid}/index.html">查看论文 <span aria-hidden="true">↗</span></a></div>
-</article>''')
-    features_html = f'''<section class="library-features" aria-labelledby="features-title">
-      <div class="library-feature-label"><div><p>精选论文</p><h2 id="features-title">发现值得深入阅读的研究</h2></div><a href="#catalog-results">查看全部 <span aria-hidden="true">→</span></a></div>
-      <div class="library-feature-grid">{''.join(features)}</div>
-    </section>'''
-    galaxy_version = hashlib.sha256((root / 'assets/library-galaxy.webp').read_bytes()).hexdigest()[:12]
     body = f'''<main id="main" class="atlas-experience library-main">
-  <div class="library-galaxy-art" aria-hidden="true"><img src="assets/library-galaxy.webp?v={galaxy_version}" alt="" width="1440" height="720" fetchpriority="high"><span class="galaxy-focus"></span></div>
-  <section class="library-overview" aria-labelledby="hero-title">
-    <div class="library-brand-panel">
-      <h1 id="hero-title">探索机器人研究的联系</h1>
-      <p class="library-scope">从论文出发，连接方法、证据与新的问题</p>
-    </div>
-  </section>
   <section class="catalog-section" id="catalog" aria-labelledby="catalog-title">
     <form class="library-search" role="search" aria-label="搜索当前论文目录">
       <label class="sr-only" for="search">搜索标题、作者或关键词</label><span class="library-search-icon" aria-hidden="true">⌕</span>
@@ -70,10 +46,8 @@ def render(data, card, categories, shell, esc):
       <div class="topic-filters" role="group" aria-label="交叉浏览入口，选择一个方向">{tabs}</div>
       <label class="mobile-topic-select">研究方向<select id="topic-select"><option value="all">全部 · {total}</option>{topic_options}</select></label>
     </div>
-    <p class="galaxy-focus-description" aria-live="polite" data-galaxy-status>按研究问题探索 · 星系为抽象视觉，不表示论文引用关系</p>
-    {features_html}
-    <div class="catalog-heading" id="catalog-results"><div><p class="library-eyebrow">LIBRARY / 全部论文</p><h2 id="catalog-title">继续探索 {total} 篇论文</h2></div><a href="about/index.html#standards">收录与核验说明 ↗</a></div>
-    <p class="catalog-scope-note">每次选择一个浏览方向；四个分组可交叉，数量不可相加。来源核验与阅读完成分开记录。</p>
+    <div class="catalog-heading" id="catalog-results"><div><p class="library-eyebrow">论文库</p><h1 id="catalog-title">全部论文 · {total} 篇</h1></div><button type="button" id="clear-all-filters" hidden>清除筛选 ×</button></div>
+    <p id="topic-description" class="topic-description">按研究问题查找论文，再查看概览、原文和阅读报告。</p><p class="catalog-scope-note">分组可交叉，数量不可相加 · 来源核验与全文阅读分开记录</p>
     <div class="catalog-main">
       <div class="results-bar"><p id="result-count" role="status" aria-live="polite">共 {total} 篇论文</p>
         <div class="results-actions">

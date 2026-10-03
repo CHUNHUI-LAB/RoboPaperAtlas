@@ -96,3 +96,52 @@
 /* Only rendered labels receive native pointer events (including optional touch map). */
 .map-node.is-label .map-node-label,.map-node:focus .map-node-label,.map-node.is-selected .map-node-label{pointer-events:all;cursor:pointer}
 .paper-map[data-level=galaxy] .map-node-label{pointer-events:none}
+
+/* Split research view: stars navigate, the adjacent paper list remains readable. */
+.paper-map-page{max-width:1600px;padding:40px 40px 64px;background:#fff}
+.paper-map-page .map-heading{margin-bottom:26px;align-items:center}
+.paper-map-page .map-heading h1{font-size:36px;letter-spacing:-.04em;font-weight:600}
+.paper-map-page .map-heading .eyebrow{color:#697584;margin-bottom:8px}
+.paper-map .map-workspace{display:grid;grid-template-columns:minmax(320px,.85fr) minmax(0,1.25fr);align-items:start;gap:0;border:1px solid #dee5ec;border-radius:12px;overflow:clip;background:#fff}
+.paper-map .map-explore{min-width:0;position:sticky;top:20px;background:#0c111a}
+.paper-map .map-canvas-wrap{height:680px;min-height:540px;border:0;border-radius:0}
+.paper-map .map-results-column{min-width:0;padding:28px;background:#fff;color:#172331}
+.paper-map .map-results-heading{display:flex;align-items:start;justify-content:space-between;gap:16px;padding-bottom:22px;border-bottom:1px solid #e4eaf0}
+.paper-map .map-results-heading .eyebrow{font-size:11px;letter-spacing:.1em;color:#6d7886;margin:0 0 10px}
+.paper-map .map-results-heading h2{font-size:27px;line-height:1.3;letter-spacing:-.025em;margin:0;font-weight:600;scroll-margin-top:90px}
+.paper-map #map-selection-status{font-size:14px;line-height:1.7;color:#647183;margin:9px 0 0}
+.paper-map .map-results-heading>button{min-height:44px;border:1px solid #cbd8e4;border-radius:6px;background:#f6f9fc;color:#205479;padding:8px 12px;font-size:14px;white-space:nowrap}
+.paper-map .map-list-wrap{display:block;background:#fff;padding:0;height:auto;max-height:none;overflow:visible}
+.paper-map .map-list-intro{color:#647183;margin:18px 0;font-size:14px;line-height:1.8}
+.paper-map .map-paper-list{padding:0;margin:0;list-style:none}
+.paper-map .map-paper-list>li{border:1px solid #e0e6ed;border-radius:9px;margin:0 0 14px;background:#fff;overflow:clip;transition:border-color 160ms ease,background 160ms ease}
+.paper-map .map-paper-list>li:hover{border-color:#afc6d9;background:#fbfdff}
+.paper-map .map-paper-list>li>a{padding:20px 18px;display:flex;gap:12px;align-items:start;border:0;min-height:44px;background:transparent}
+.paper-map .map-list-copy strong{font-size:18px;line-height:1.45;color:#172638;font-weight:600}
+.paper-map .map-list-copy small{font-size:13px;line-height:1.75;color:#637184;display:block;margin-top:6px}
+.paper-map .map-list-dot{margin-top:8px;flex-shrink:0}
+.paper-map .map-row-action{font-size:13px;white-space:nowrap;color:#17639a;padding-top:3px}
+.paper-map .map-row-summary{padding:0 18px 16px 38px;color:#35475a;font-size:15px;line-height:1.85}
+.paper-map .map-row-summary summary{cursor:pointer;min-height:44px;display:list-item;list-style:disclosure-closed;color:#17639a;padding:8px 0}
+.paper-map .map-row-summary[open] summary{list-style:disclosure-open}
+.paper-map .map-row-summary p{margin:8px 0 14px}
+.paper-map .map-row-summary>a{color:#17639a;display:inline-flex;align-items:center;min-height:44px;text-decoration:underline}
+.paper-map .map-panel-welcome{display:none}
+.paper-map .map-sidebar,.paper-map[data-view=map] .map-sidebar{background:#f5f8fc;border:0;max-height:none;padding:0;margin:0;color:#172638;overflow:visible;scroll-margin-top:90px}
+.paper-map .map-panel-selected{padding:24px;margin-top:22px;border:1px solid #cbd8e6;border-radius:9px}
+.paper-map[data-view=map] .map-sidebar p,.paper-map[data-view=map] .map-sidebar small,.paper-map[data-view=map] .map-sidebar h3,.paper-map[data-view=map] .map-sidebar strong{color:#42566c}
+.paper-map[data-view=map] .map-sidebar h2{color:#172638}
+.paper-map[data-view=map] .map-sidebar a,.paper-map[data-view=map] .map-sidebar button{color:#17639a}
+.paper-map .map-topics button{border-radius:6px;font-size:15px;gap:8px}
+.paper-map .map-topics button[aria-pressed=true]{background:#e9f4fd;color:#145788;border-color:#b6d4eb}
+.paper-map .map-legend{margin-top:18px;background:#f7f9fb;border-radius:8px;padding:18px;color:#5a6978}
+.paper-map[data-view=list] .map-workspace{grid-template-columns:1fr}
+.paper-map[data-view=list] .map-explore{display:none}
+.paper-map .map-row-summary summary:focus-visible,.paper-map .map-results-heading button:focus-visible{outline:2px solid #17639a;outline-offset:3px}
+@media(max-width:1000px){.paper-map-page{padding:30px 24px}.paper-map .map-workspace{grid-template-columns:minmax(280px,.8fr) minmax(0,1.2fr)}.paper-map .map-results-column{padding:20px}.paper-map .map-row-action{display:none}.paper-map .map-canvas-wrap{height:700px}}
+@media(max-width:760px){.paper-map-page{padding:24px 16px 40px}.paper-map-page .map-heading{display:block}.paper-map-page .map-heading h1{font-size:30px}.paper-map-page .map-heading>p{font-size:15px;margin-top:12px}.paper-map .map-workspace{display:flex;flex-direction:column;border:0;overflow:visible}.paper-map .map-explore{position:static;order:0;width:100%;border-radius:10px;overflow:clip}.paper-map .map-canvas-wrap{height:420px;min-height:420px}.paper-map .map-results-column{order:1;width:100%;padding:22px 0;box-sizing:border-box}.paper-map .map-results-heading h2{font-size:24px}.paper-map .map-list-copy strong{font-size:17px}.paper-map .map-topics{flex-wrap:nowrap;overflow-x:auto;padding-bottom:16px}.paper-map .map-topics button{flex-shrink:0}.paper-map .map-row-summary{padding-left:20px}.paper-map .map-panel-selected{padding:20px}.paper-map .map-legend{font-size:13px}.paper-map .map-toolbar{flex-wrap:wrap}.paper-map .map-search-wrap{flex-basis:100%;max-width:none}.paper-map .map-toolbar>p{flex:1}}
+@media(prefers-reduced-motion:reduce){.paper-map .map-paper-list>li{transition:none}}
+.paper-map[data-view=map] .map-panel-tags span{color:#38516a;background:#e8eef5}
+.paper-map[data-view=map] .map-resource-links a:hover,.paper-map[data-view=map] .map-related-list button:hover{color:#114c78;background:#e4eff9}
+.paper-map[data-view=map] .map-classification-evidence strong,.paper-map[data-view=map] .map-classification-evidence small{color:#42566c}
+.paper-map[data-view=map] .map-classification-pending{color:#805313!important}

@@ -347,6 +347,9 @@
     $('.map-empty').hidden = !!filtered.length; $('.map-list-empty').hidden = !!filtered.length;
     $('#map-search-clear').hidden = !state.query;
     $$('[data-map-topic]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.mapTopic === state.topic)));
+    const resultTitle = $('#map-results-title'), resultStatus = $('#map-selection-status');
+    if (resultTitle) resultTitle.textContent = state.query ? `搜索：${state.query}` : state.problem ? displayLabel(hierarchy.subsystems[state.problem]) : state.topic !== 'all' ? displayLabel(categories.get(state.topic)) : '全部论文';
+    if (resultStatus) resultStatus.textContent = `共 ${filtered.length} 篇 · ${state.query ? '标题、作者与标签匹配' : '按已记录的主方向归类'}`;
     renderNavigation();
     drawCamera(); // Restore equal default star sizes immediately when a selection closes.
   }
@@ -422,7 +425,7 @@
   }
   function renderView() {
     $('#map-help').textContent = smallScreen.matches ? '点击节点查看 · 使用按钮缩放 · 页面可正常滚动' : '拖动平移 · Ctrl / ⌘ + 滚轮缩放 · 方向键选择';
-    root.dataset.view = state.view; canvas.hidden = state.view !== 'map'; listWrap.hidden = state.view !== 'list';
+    root.dataset.view = state.view; canvas.hidden = state.view !== 'map'; listWrap.hidden = false;
     $$('[data-map-view]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.mapView === state.view)));
     if (state.view !== 'map') cancelCamera(); else resize();
   }
@@ -452,7 +455,7 @@
     if (writeHistory) syncURL(true);
     // This panel is intentionally non-modal. Focus never gets trapped.
     if (focusPanel) $('#map-selected-title').focus({ preventScroll: true });
-    if (smallScreen.matches) panel.scrollIntoView({ behavior: 'instant', block: 'start' });
+    panel.scrollIntoView({ behavior: 'instant', block: 'start' });
   }
   function closePanel({ restore = true, writeHistory = true } = {}) {
     const previous = state.selected; state.selected = ''; cancelCamera(); renderMap(); renderPanel(false); hover.hidden = true;

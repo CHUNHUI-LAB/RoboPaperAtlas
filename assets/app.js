@@ -191,7 +191,12 @@
     const selectedTopic = topicButtons.find(b => b.dataset.topic === topic)?.querySelector('span')?.textContent;
     if (heading) heading.textContent = topic !== 'all'
       ? `${selectedTopic} · ${match.length} 篇论文`
-      : `继续探索 ${match.length} 篇论文`;
+      : `全部论文 · ${match.length} 篇`;
+    const descriptions = {'navigation-space':'导航、定位与空间理解：从环境感知到目标搜索与长程行动。','motion-manipulation':'运动与操作：关注机器人身体、末端与环境交互的协调。','robot-learning':'机器人学习：关注策略、表征与跨任务泛化。','methods-resources':'方法与资源：检索基础方法、仿真工具、数据和评测。'};
+    const description = document.querySelector('#topic-description');
+    if (description) description.textContent = descriptions[topic] || '按研究问题查找论文，再查看概览、原文和阅读报告。';
+    const clearAll = document.querySelector('#clear-all-filters');
+    if (clearAll) clearAll.hidden = topic === 'all' && !terms.length && !filterSelects.some(select => select.value !== 'all');
     const features = document.querySelector('.library-features');
     if (features) features.hidden = topic !== 'all' || terms.length > 0 || filterSelects.some(select => select.value !== 'all');
     empty.hidden = match.length !== 0;
@@ -226,6 +231,7 @@
   methodButtons.forEach(b => b.addEventListener('click', () => { cancelPendingSearch(); method.value = method.value === b.dataset.methodChip ? 'all' : b.dataset.methodChip; apply(); }));
   viewButtons.forEach(b => b.addEventListener('click', () => { cancelPendingSearch(); view = b.dataset.view; syncView(); apply(search.value.trim() !== appliedSearch); }));
   [...filterSelects, sort].forEach(select => select.addEventListener('change', () => { cancelPendingSearch(); apply(); }));
+  document.querySelector('#clear-all-filters')?.addEventListener('click', () => { cancelPendingSearch(); clearFilters(); apply(); revealResults(); });
   topicButtons.forEach(b => b.addEventListener('click', () => { cancelPendingSearch(); topic = b.dataset.topic; apply(); revealResults(); }));
   topicSelect?.addEventListener('change', () => { cancelPendingSearch(); topic = validSelect(topicSelect, topicSelect.value); apply(); revealResults(); });
   more.addEventListener('click', () => {

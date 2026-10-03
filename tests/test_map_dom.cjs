@@ -142,3 +142,6 @@ test('overlapping visible text chooses nearest star with stable ID tie break, no
 test('canvas clipping rejects off-canvas label coordinates',()=>{
  const f=labelFixture(),node=f.$('[data-paper-id="agenticnav-tool-harness"]');node.classList.add('is-label');node.querySelector('.map-node-label').getBoundingClientRect=()=>({left:-100,right:100,top:100,bottom:125,width:200,height:25});pointerPick(f,{clientX:-20,clientY:112},node);assert.equal(selected(f),'');assert(f.$('.map-hover-card').hidden);
 });
+
+// Split-view regression checks run in the established map CI suite.
+require('./test_split_starmap.cjs');
