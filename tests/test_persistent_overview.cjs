@@ -29,7 +29,7 @@ test('explicit drill can return through topic overview before clearing the direc
  const f=fixture({reduced:true});drill(f);f.click('#atlas-back');assert.equal(f.$('#paper-map').dataset.level,'galaxy');assert.equal(visible(f,'.atlas-system').length,9);assert.equal(visible(f,'[data-map-row]').length,18);assert.equal(f.$('[data-atlas-system="navigation"]').getAttribute('aria-pressed'),'true');f.click('[data-map-reset]');assert.equal(visible(f,'[data-map-row]').length,95);assert(!f.$$('.atlas-system').some(el=>el.getAttribute('aria-pressed')==='true'));
 });
 
-test('mobile list drill back keeps focus in visible paper results',()=>{
+test('mobile list drill back reveals and focuses the visible results heading',()=>{
  const f=fixture({mobile:true,reduced:true});
  assert.equal(f.$('#paper-map').dataset.view,'list');
  f.click('[data-map-topic="navigation"]');f.click('.map-drill-direction');
@@ -37,6 +37,6 @@ test('mobile list drill back keeps focus in visible paper results',()=>{
  f.$('#atlas-back').focus();f.click('#atlas-back');
  assert.equal(f.$('#paper-map').dataset.level,'galaxy');
  assert.equal(f.document.activeElement.closest('.map-canvas-wrap'),null);
- assert(f.document.activeElement.closest('[data-map-row]'));
- assert.equal(f.document.activeElement.closest('[data-map-row]').hidden,false);
+ assert.equal(f.document.activeElement,f.$('#map-results-title'));
+ assert.equal(f.document.activeElement.scrolled,true);
 });

@@ -51,9 +51,9 @@ test('Back and Forward retain connected visible focus after replacing a paper pa
  f.goBack();assert(f.document.activeElement.isConnected);assert(!f.document.activeElement.closest('[hidden]'));assert.equal(f.document.activeElement.id,'map-selected-title');
  f.goForward();assert(f.document.activeElement.isConnected);assert(!f.document.activeElement.closest('[hidden]'));assert.equal(f.document.activeElement.id,'map-selected-title');
 });
-test('list breadcrumbs and history keep focus on visible list controls',()=>{
- const f=fixture({mobile:true});f.click('[data-map-topic="navigation"]');const crumb=f.$('#atlas-breadcrumbs').children[0];crumb.focus();crumb.emit('click',{button:0});
- assert(f.document.activeElement.isConnected);assert(!f.document.activeElement.closest('[hidden]'));assert.equal(f.document.activeElement.tagName,'A');
+test('list breadcrumbs and history reveal the focused results heading',()=>{
+ const f=fixture({mobile:true});f.click('[data-map-topic="navigation"]');f.click('.map-drill-direction');const crumb=f.$('#atlas-breadcrumbs').children[0];crumb.focus();crumb.emit('click',{button:0});
+ assert(f.document.activeElement.isConnected);assert(!f.document.activeElement.closest('[hidden]'));assert.equal(f.document.activeElement,f.$('#map-results-title'));assert.equal(f.document.activeElement.scrolled,true);
  f.goBack();assert(f.document.activeElement.isConnected);assert(!f.document.activeElement.closest('[hidden]'));
 });
 test('pending classification notes meet readable contrast on both list and dark map panels',()=>{

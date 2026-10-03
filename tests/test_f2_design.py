@@ -94,6 +94,16 @@ class F2DesignTests(unittest.TestCase):
     h=re.search(r'<header\b.*?</header>',reader(ROOT,current,stage,self.records),re.S)[0]
     for legacy in ['Library','Atlas','Radar']:
      self.assertNotIn('>'+legacy+'</a>',h)
+ def test_standard_headers_keep_archive_link_and_copy_is_not_external(self):
+  for page in ['catalog','detail','map','frontier','reading','submit','about']:
+   document=shell('test','<main id="main"></main>',prefix='../../',page=page,library=page=='catalog')
+   nav=re.search(r'<nav id="main-nav".*?</nav>',document,re.S)[0]
+   self.assertEqual(nav.count('reading/index.html'),1,page)
+   for label in ['论文库','星图','前沿动态','阅读档案','投稿指南','关于与贡献']:
+    self.assertIn(label,nav,page)
+  document=details(self.data['papers'][0])
+  self.assertIn('class="copy-page" type="button">复制本页链接</button>',document)
+  self.assertNotIn('复制本页链接 ↗',document)
  def test_design_contract_and_no_external_fonts(self):
   css=(ROOT/'assets/f2.css').read_text()
   for contract in ['font-size:18px','font-size:16px','font-size:14px','line-height:1.65','min-height:44px','--f2-hover:160ms','--f2-panel:220ms','--f2-radius:8px','--f2-panel-radius:12px','prefers-reduced-motion:reduce',':focus-visible']:
