@@ -127,7 +127,7 @@ ROLOMA_FROZEN['stage2'] = {'version': 'v1',
 
 
 # Exact independently reviewed VBC formal Stage 1; no other stage is admitted.
-VBC_FROZEN = {'stage1': {'version': 'v1', 'sha256': '8ded597adad595ca8dd24dbdc6bc9d832ba6f26f8d5676fd867071c6b8a98320', 'nav': '<nav class="reader-stages" aria-label="阅读阶段"><a href="#section-01" aria-current="page"><small>01</small>初读</a><span aria-disabled="true"><small>02</small>写作精读 · 未收录</span><span aria-disabled="true"><small>03</small>方法与代码 · 未收录</span></nav>', 'note': '<p class="reader-document-note">阅读报告 v1 · 核验日期 2026-10-03 · 内容已独立审阅；公开页面视觉验收尚未完成。用“作者表述 / 概括 / 直接观察”区分证据性质；E01–E10 是本页证据单元编号。原文内部的数值与计数异常均显式保留。</p>', 'return_link': '<a class="atlas-return" href="https://chunhui-lab.github.io/RoboPaperAtlas/papers/rpa-0067/index.html">回到论文详情</a>', 'current_return': '<a class="atlas-return" href="../index.html#reading">回到论文详情</a>'}}
+VBC_FROZEN = {'stage1': {'version': 'v2', 'sha256': '4db81619423125d9eeb6d2369ee56b764c81e40719cca55da224e8ee82b9c6d9', 'nav': '<nav class="reader-stages" aria-label="阅读阶段"><a href="#section-01" aria-current="page"><small>01</small>初读</a><span aria-disabled="true"><small>02</small>写作精读 · 未收录</span><span aria-disabled="true"><small>03</small>方法与代码 · 未收录</span></nav>', 'note': '<p class="reader-document-note">阅读报告 v2 · 仅修正 Fig. 2 懒加载前的尺寸占位，正文与图像未改 · 核验日期 2026-10-03 · 内容已独立审阅；公开页面视觉验收尚未完成。用“作者表述 / 概括 / 直接观察”区分证据性质；E01–E10 是本页证据单元编号。原文内部的数值与计数异常均显式保留。</p>', 'return_link': '<a class="atlas-return" href="https://chunhui-lab.github.io/RoboPaperAtlas/papers/rpa-0067/index.html">回到论文详情</a>', 'current_return': '<a class="atlas-return" href="../index.html#reading">回到论文详情</a>'}}
 
 
 def entry_path(paper_id, stage):

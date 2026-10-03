@@ -7,6 +7,12 @@ from reports import (ReportHTML, ALLOWED_TAGS, TAG_ATTRS, require, sha, _read,
 
 IDENTITY = dict(paper_id='rpa-0067', stage='stage1', version='v1', filename='first-pass.html')
 POLICY_PATH = 'data/report-rpa-0067-stage1-v1-policy.json'
+# Both reviewed identities are explicit; no path is derived from registry input.
+IDENTITY_V2 = dict(IDENTITY, version='v2')
+POLICIES = (
+    (IDENTITY, POLICY_PATH),
+    (IDENTITY_V2, 'data/report-rpa-0067-stage1-v2-policy.json'),
+)
 POLICY_FIELDS = set(IDENTITY) | {'document_sha256', 'source_pdf_sha256',
                                'style_sha256', 'script_sha256', 'title'}
 SECTION_IDS = tuple(f'section-{i:02}' for i in range(1, 13))
@@ -72,10 +78,13 @@ class VBCFirstReader(ReportHTML):
 
 
 def prepare(root,record,payload):
-    require({key:record.get(key) for key in IDENTITY}==IDENTITY, 'Unapproved VBC first-reader identity')
-    policy=json.loads(_read(root,POLICY_PATH,20000).decode(),object_pairs_hook=_json_object)
-    _keys(policy,POLICY_FIELDS,'VBC Stage 1 v1 policy')
-    require(all(policy[key]==value for key,value in IDENTITY.items()), 'Wrong VBC reader policy')
+    identity={key:record.get(key) for key in IDENTITY}
+    selected=next((item for item in POLICIES if identity==item[0]),None)
+    require(selected is not None, 'Unapproved VBC first-reader identity')
+    approved_identity,policy_path=selected
+    policy=json.loads(_read(root,policy_path,20000).decode(),object_pairs_hook=_json_object)
+    _keys(policy,POLICY_FIELDS,'VBC Stage 1 reviewed policy')
+    require(all(policy[key]==value for key,value in approved_identity.items()), 'Wrong VBC reader policy')
     for key in ('document_sha256','source_pdf_sha256','style_sha256','script_sha256'):_digest(policy[key],'Reader fingerprint')
     require(record['source_sha256']==policy['source_pdf_sha256'], 'Wrong VBC formal-paper source fingerprint')
     require(sha(payload)==policy['document_sha256'], 'Reader document fingerprint differs from reviewed policy')

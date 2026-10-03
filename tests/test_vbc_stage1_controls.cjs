@@ -3,7 +3,9 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
-const html = fs.readFileSync(__dirname + '/../artifacts/rpa-0067/v1/first-pass.html', 'utf8');
+const v1 = fs.readFileSync(__dirname + '/../artifacts/rpa-0067/v1/first-pass.html', 'utf8');
+const html = fs.readFileSync(__dirname + '/../artifacts/rpa-0067/v2/first-pass.html', 'utf8');
+assert.deepEqual([...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m=>m[1]), [...v1.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m=>m[1]), 'v2 preserves the reviewed v1 interaction script');
 const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];
 assert.equal(scripts.length, 1);
 let focused, document;

@@ -24,10 +24,10 @@ class RoLoMaWritingTests(unittest.TestCase):
  def set_policy(self,payload,**updates):(self.root/POLICY_PATH).write_text(json.dumps(dict(self.policy,document_sha256=r.sha(payload),**updates)))
  def admit(self,payload,**updates):self.set_policy(payload,**updates);return r.split_report(self.root,self.record,payload)
  def test_all_eighteen_prior_records_and_chunks_are_immutable(self):
-  self.assertEqual(len(FROZEN),18);self.assertEqual(len(self.records),20)
+  self.assertEqual(len(FROZEN),18);self.assertEqual(len(self.records),21)
   for rec in self.records:
    key='/'.join(rec[k] for k in ('paper_id','version','stage'))
-   if key in {'rpa-0054/v1/stage2','rpa-0067/v1/stage1'}:continue
+   if key in {'rpa-0054/v1/stage2','rpa-0067/v1/stage1','rpa-0067/v2/stage1'}:continue
    self.assertEqual(rec['sha256'],FROZEN[key]);self.assertEqual(r.sha((ROOT/r.report_path(rec)).read_bytes()),FROZEN[key])
    for part in rec['parts']:self.assertEqual(r.sha((ROOT/r._parts_path(rec)/part['file']).read_bytes()),part['sha256'])
   first=next(x for x in self.records if x['paper_id']=='rpa-0054' and x['stage']=='stage1')

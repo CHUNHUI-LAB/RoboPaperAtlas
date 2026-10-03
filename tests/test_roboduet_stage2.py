@@ -44,10 +44,10 @@ class RoboDuetStage2Tests(unittest.TestCase):
         (self.root / POLICY_PATH).write_text(json.dumps(policy))
 
     def test_one_new_report_and_all_existing_bytes_are_immutable(self):
-        self.assertEqual(len(self.records), len(FROZEN) + 5)
+        self.assertEqual(len(self.records), len(FROZEN) + 6)
         for record in self.records:
             key = '/'.join(record[k] for k in ('paper_id', 'version', 'stage'))
-            if key in ('rpa-0052/v1/stage2', 'rpa-0052/v1/stage3', 'rpa-0054/v1/stage1', 'rpa-0054/v1/stage2', 'rpa-0067/v1/stage1'):
+            if key in ('rpa-0052/v1/stage2', 'rpa-0052/v1/stage3', 'rpa-0054/v1/stage1', 'rpa-0054/v1/stage2', 'rpa-0067/v1/stage1', 'rpa-0067/v2/stage1'):
                 continue
             self.assertEqual(record['sha256'], FROZEN[key])
             self.assertEqual(reports.sha((ROOT / reports.report_path(record)).read_bytes()), FROZEN[key])

@@ -37,7 +37,7 @@ PART_FIELDS = {'file', 'bytes', 'sha256'}
 REPORT_PAPERS = {
     'rpa-0067': {
         'title': 'Visual Whole-Body Control',
-        'versions': {'v1': {'stage1'}},
+        'versions': {'v1': {'stage1'}, 'v2': {'stage1'}},
         'review_status': 'content_approved',
         'source_urls': {'https://proceedings.mlr.press/v270/liu25b.html'},
         'pdf_urls': {'https://raw.githubusercontent.com/mlresearch/v270/main/assets/liu25b/liu25b.pdf'},

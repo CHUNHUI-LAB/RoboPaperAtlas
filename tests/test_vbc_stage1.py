@@ -26,7 +26,7 @@ class VBCFirstTests(unittest.TestCase):
   (self.root/POLICY_PATH).write_text(json.dumps(dict(self.policy,document_sha256=r.sha(payload),**updates)))
  def admit(self,payload,**updates):self.set_policy(payload,**updates);return r.split_report(self.root,self.record,payload)
  def test_all_nineteen_historical_records_bytes_and_parts_unchanged(self):
-  self.assertEqual((len(FROZEN),len(RECORDS_FROZEN),len(self.records)),(19,19,20))
+  self.assertEqual((len(FROZEN),len(RECORDS_FROZEN),len(self.records)),(19,19,21))
   for rec in self.records:
    if rec['paper_id']=='rpa-0067':continue
    key='/'.join(rec[k]for k in ('paper_id','version','stage'))
@@ -83,16 +83,18 @@ class VBCFirstTests(unittest.TestCase):
   self.assertEqual(json.loads((ROOT/'data/classification.json').read_text())['catalog_sha256'],r.sha((ROOT/'data/catalog.json').read_bytes()))
  def test_current_view_preserves_scientific_body_and_return_context(self):
   page=current.render(ROOT,self.paper,'stage1',self.records)
+  current_record=next(x for x in self.records if x['paper_id']=='rpa-0067' and x['version']=='v2')
+  current_text=(ROOT/r.report_path(current_record)).read_text()
   self.assertIn('href="stage1.html"',page);self.assertNotIn('href="stage2.html"',page);self.assertNotIn('href="stage3.html"',page)
   self.assertIn('href="../index.html#reading"',page);self.assertEqual(page.count(current.context_script(ROOT)),1)
-  for tag in ('article','style','script'):self.assertEqual(re.findall(rf'<{tag}\b.*?</{tag}>',page.replace(current.context_script(ROOT),''),re.S),re.findall(rf'<{tag}\b.*?</{tag}>',self.text,re.S))
+  for tag in ('article','style','script'):self.assertEqual(re.findall(rf'<{tag}\b.*?</{tag}>',page.replace(current.context_script(ROOT),''),re.S),re.findall(rf'<{tag}\b.*?</{tag}>',current_text,re.S))
   with patch.dict(current.VBC_FROZEN,{'stage1':dict(current.VBC_FROZEN['stage1'],sha256='0'*64)}):
    with self.assertRaisesRegex(ValueError,'Unreviewed VBC'):current.render(ROOT,self.paper,'stage1',self.records)
- def test_76_utf8_parts_and_only_one_public_html(self):
+ def test_v1_76_utf8_parts_and_two_versioned_public_htmls(self):
   self.assertEqual(len(self.record['parts']),76)
   for part in self.record['parts']:
    raw=(ROOT/r._parts_path(self.record)/part['file']).read_bytes();raw.decode('utf-8');self.assertLessEqual(len(raw),48000);self.assertEqual(r.sha(raw),part['sha256'])
-  self.assertEqual(sorted(x.name for x in (ROOT/'artifacts/rpa-0067').rglob('*')if x.is_file()),['first-pass.html'])
+  self.assertEqual(sorted(x.name for x in (ROOT/'artifacts/rpa-0067').rglob('*')if x.is_file()),['first-pass.html','first-pass.html'])
  def test_packaged_reader_controls_in_python_discovery(self):
   result=subprocess.run(['node',str(ROOT/'tests/test_vbc_stage1_controls.cjs')],cwd=ROOT,capture_output=True,text=True,timeout=20)
   self.assertEqual(result.returncode,0,result.stdout+result.stderr)

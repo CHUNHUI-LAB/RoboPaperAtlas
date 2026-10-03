@@ -26,10 +26,10 @@ class RoLoMaFirstTests(unittest.TestCase):
   (self.root/POLICY_PATH).write_text(json.dumps(dict(self.policy,document_sha256=r.sha(payload),**updates)))
  def admit(self,payload,**updates):self.set_policy(payload,**updates);return r.split_report(self.root,self.record,payload)
  def test_seventeen_reports_and_ninety_four_other_catalog_objects_unchanged(self):
-  self.assertEqual(len(FROZEN),17);self.assertEqual(len(self.records),20);self.assertEqual(len(CATALOG_FROZEN),94)
+  self.assertEqual(len(FROZEN),17);self.assertEqual(len(self.records),21);self.assertEqual(len(CATALOG_FROZEN),94)
   for rec in self.records:
    key='/'.join(rec[k] for k in ('paper_id','version','stage'))
-   if key in {'rpa-0054/v1/stage1','rpa-0054/v1/stage2','rpa-0067/v1/stage1'}:continue
+   if key in {'rpa-0054/v1/stage1','rpa-0054/v1/stage2','rpa-0067/v1/stage1','rpa-0067/v2/stage1'}:continue
    self.assertEqual(rec['sha256'],FROZEN[key]);self.assertEqual(r.sha((ROOT/r.report_path(rec)).read_bytes()),FROZEN[key])
   for paper in self.catalog['papers']:
    if paper['id'] not in {'rpa-0054','rpa-0067'}:self.assertEqual(canonical(paper),CATALOG_FROZEN[paper['id']])

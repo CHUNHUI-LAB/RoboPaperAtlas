@@ -331,8 +331,31 @@ widen any historical report's permissions. Packaging uses 76 UTF-8-safe parts, a
 most 48,000 bytes each. The current view preserves scientific body, inline style,
 images and reader-controls script, changing only declared navigation signatures.
 
-The registry contains 20 versioned records and 12 current stages across five papers,
+That initial registration brought the registry to 20 versioned records and 12 current stages across five papers,
 with three papers complete through Stage 3. All 19 historical records/chunks and
 all 94 other catalog objects remain unchanged. VBC Stage 2, Stage 3 and reproduction
 remain incomplete. Content review/static tests do not imply actual-browser visual
 acceptance; that remains a separate release check.
+
+
+## VBC Stage 1 layout revision v2
+
+`rpa-0067/v2/stage1` changes only the compact Fig. 2 image rule from `width:auto`
+to its existing intrinsic `width:384px`, retaining `max-width:100%`, `height:auto`
+and the 384×579 HTML dimensions. This reserves the same aspect-ratio height before
+lazy decoding to address the known 579px chapter-target shift. Narrow screens
+can still shrink the image; the unchanged checkbox shows its original 384px width.
+Print rules remain unchanged. Title, kicker, footer and the visible version note identify v2
+and disclose this layout-only change. The complete article, ten embedded PNG byte
+streams, scientific claims/citations/attribution and reader script are unchanged.
+
+The strict importer admits only the separately pinned v1 and v2 identities. The
+current reader is pinned to v2; v1 and all 20 prior registry records and 412 parts
+remain immutable. V2 has 77 lossless UTF-8 parts: only the changed first two v1 parts are
+repartitioned into three, the final part changes only the footer version, and the
+remaining 73 parts retain their exact bytes, including boundary whitespace. This avoids creating new image blobs for unchanged chunks.
+The catalog adds only the VBC v2 artifact and retains v1; the classification change
+is only its required catalog hash. There are 21 historical versioned records,
+12 current stages across five papers, and three fully covered papers. Browser
+acceptance remains pending actual post-release cold-load, mobile and print checks;
+static tests and content review are not browser acceptance.
