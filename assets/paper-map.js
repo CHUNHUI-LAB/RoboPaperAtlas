@@ -302,7 +302,8 @@
     } else moveCamera(fitCamera(scopePoints(), width, height), animate);
   }
   function focusScope() {
-    const target = state.selected ? $('#map-selected-title') : state.view === 'list' ? rows.get(currentNodes()[0]?.id)?.querySelector('a') : state.problem ? nodeEls.get(currentNodes()[0]?.id) : !isOverview() && state.topic !== 'all' ? [...problemEls.values()].find(g => !g.hidden) : [...systemEls.values()].find(g => !g.hidden);
+    const target = state.selected ? $('#map-selected-title') : state.view === 'list' ? $('#map-results-title') : state.problem ? nodeEls.get(currentNodes()[0]?.id) : !isOverview() && state.topic !== 'all' ? [...problemEls.values()].find(g => !g.hidden) : [...systemEls.values()].find(g => !g.hidden);
+    if (state.view === 'list') target?.scrollIntoView({ block: 'nearest', behavior: 'auto' });
     target?.focus({ preventScroll: true });
   }
   function navigate(topic = 'all', problem = '', { push = true, animate = true, drill = false } = {}) {
