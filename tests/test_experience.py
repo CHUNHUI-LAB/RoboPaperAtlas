@@ -66,6 +66,7 @@ class ExperienceTests(unittest.TestCase):
   self.assertNotIn('<canvas',page)
   css=(ROOT/'assets/library-galaxy.css').read_text()
   self.assertIn('prefers-reduced-motion:reduce',css)
+  self.assertRegex(css,r'\.library-main\{[^}]*overflow-x:clip')
   js=(ROOT/'assets/library-galaxy.js').read_text()
   for forbidden in ['requestAnimationFrame','setInterval','fetch(','innerHTML']:
    self.assertNotIn(forbidden,js)
