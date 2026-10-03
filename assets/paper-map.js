@@ -316,7 +316,7 @@
     fit(animate);
     if (movingFocus) focusScope();
   }
-  function goUp() { if (state.selected) closePanel(); else if (state.problem) { const id = state.problem; navigate(state.topic,'',{drill:true}); if (state.view === 'map') problemEls.get(id)?.focus({ preventScroll: true }); else focusScope(); } else if (state.drill && state.topic !== 'all') { const id=state.topic; navigate(id); systemEls.get(id)?.focus({preventScroll:true}); } else if (state.topic !== 'all') { const id = state.topic; navigate(); if (state.view === 'map') systemEls.get(id)?.focus({ preventScroll: true }); else focusScope(); } }
+  function goUp() { if (state.selected) closePanel(); else if (state.problem) { const id = state.problem; navigate(state.topic,'',{drill:true}); if (state.view === 'map') problemEls.get(id)?.focus({ preventScroll: true }); else focusScope(); } else if (state.drill && state.topic !== 'all') { const id=state.topic; navigate(id); if (state.view === 'map') systemEls.get(id)?.focus({preventScroll:true}); else focusScope(); } else if (state.topic !== 'all') { const id = state.topic; navigate(); if (state.view === 'map') systemEls.get(id)?.focus({ preventScroll: true }); else focusScope(); } }
   function renderNavigation() {
     root.dataset.level = state.query ? 'search' : state.problem ? 'problem' : state.drill && state.topic !== 'all' ? 'system' : 'galaxy';
     drillButton.hidden = state.topic === 'all' || !!state.query || !!state.problem || state.drill;

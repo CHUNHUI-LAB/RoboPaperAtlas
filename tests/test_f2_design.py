@@ -70,6 +70,30 @@ class F2DesignTests(unittest.TestCase):
   for marker in ['.code-language','.code-number','.code-toolbar a','.code-foot a','.reader-equation .math-label','figure label','figure summary','.reader-paper-link span','.reader-section-stepper>span']:
    self.assertIn('.f2-current-reader .reader-',css)
    self.assertIn(marker,css)
+ def test_hosted_corrections_preserve_titles_and_focusable_results(self):
+  css=(ROOT/'assets/f2.css').read_text()
+  self.assertIn('.f2-theme .mobile-menu{width:auto;white-space:nowrap;flex-shrink:0}',css)
+  document=home(self.data)
+  self.assertIn('<div class="results-bar" id="catalog-results"><div class="catalog-heading">',document)
+  self.assertEqual(document.count('id="catalog-title"'),1)
+  self.assertIn("description.hidden = topic === 'all'",(ROOT/'assets/app.js').read_text())
+  paper=next(p for p in self.data['papers'] if p['id']=='rpa-0062')
+  page=details(paper)
+  self.assertIn('<h1>UMI-on-Legs</h1>',page)
+  self.assertIn('<p class="f2-full-paper-title">',page)
+  self.assertIn(paper['verified_overlay']['title'],page)
+ def test_live_reader_header_uses_shared_labels(self):
+  paper=next(p for p in self.data['papers'] if p['id']=='rpa-0062')
+  page=reader(ROOT,paper,'stage2',self.records)
+  header=re.search(r'<header\b.*?</header>',page,re.S)[0]
+  self.assertIn('>星图</a>',header);self.assertIn('>前沿动态</a>',header)
+  self.assertNotIn('>Atlas</a>',header);self.assertNotIn('>Radar</a>',header)
+  for current in self.data['papers']:
+   for stage,state in current['stages'].items():
+    if state['status']!='imported':continue
+    h=re.search(r'<header\b.*?</header>',reader(ROOT,current,stage,self.records),re.S)[0]
+    for legacy in ['Library','Atlas','Radar']:
+     self.assertNotIn('>'+legacy+'</a>',h)
  def test_design_contract_and_no_external_fonts(self):
   css=(ROOT/'assets/f2.css').read_text()
   for contract in ['font-size:18px','font-size:16px','font-size:14px','line-height:1.65','min-height:44px','--f2-hover:160ms','--f2-panel:220ms','--f2-radius:8px','--f2-panel-radius:12px','prefers-reduced-motion:reduce',':focus-visible']:

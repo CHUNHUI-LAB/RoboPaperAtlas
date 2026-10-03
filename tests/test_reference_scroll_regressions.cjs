@@ -43,7 +43,7 @@ test('desktop-to-mobile media transition recomputes independently reachable syst
 test('animated back navigation keeps the restored distant system focus visible',()=>{
  const f=fixture();const canvas=f.$('.map-canvas-wrap'),scroll=f.$('.map-explore');scroll.clientHeight=600;
  canvas.getBoundingClientRect=()=>({x:0,y:0,left:0,top:0,width:500,height:parseFloat(canvas.style.height)||2000});f.resizers[0].cb();
- f.click('[data-atlas-system="cross-domain"]');f.step();f.$('#atlas-back').focus();f.click('#atlas-back');f.step();
+ f.click('[data-atlas-system="cross-domain"]');f.step();f.click('.map-drill-direction');f.step();f.$('#atlas-back').focus();f.click('#atlas-back');f.step();
  const active=f.document.activeElement;assert.equal(active.dataset.atlasSystem,'cross-domain');const c=camera(f),p=point(active),y=c.y+p.y*c.k;
  assert(y-27>=scroll.scrollTop&&y+105<=scroll.scrollTop+scroll.clientHeight,`restored system y=${y} is outside visible scroll ${scroll.scrollTop}..${scroll.scrollTop+scroll.clientHeight}`);
 });

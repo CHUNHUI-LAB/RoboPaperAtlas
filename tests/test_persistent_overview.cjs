@@ -26,5 +26,17 @@ test('invalid drill URL does not create an empty system-less galaxy',()=>{
  for(const query of ['?explore=1','?topic=bad&explore=1','?topic=navigation&problem=bad']){const f=fixture({url:'https://example.org/RoboPaperAtlas/map/'+query,reduced:true});assert.equal(visible(f,'.atlas-system').length,9,query);}
 });
 test('explicit drill can return through topic overview before clearing the direction',()=>{
- const f=fixture({reduced:true});drill(f);f.click('#atlas-back');assert.equal(f.$('#paper-map').dataset.level,'galaxy');assert.equal(visible(f,'.atlas-system').length,9);assert.equal(visible(f,'[data-map-row]').length,18);assert.equal(f.$('[data-atlas-system="navigation"]').getAttribute('aria-pressed'),'true');f.click('#atlas-back');assert.equal(visible(f,'[data-map-row]').length,95);assert(!f.$$('.atlas-system').some(el=>el.getAttribute('aria-pressed')==='true'));
+ const f=fixture({reduced:true});drill(f);f.click('#atlas-back');assert.equal(f.$('#paper-map').dataset.level,'galaxy');assert.equal(visible(f,'.atlas-system').length,9);assert.equal(visible(f,'[data-map-row]').length,18);assert.equal(f.$('[data-atlas-system="navigation"]').getAttribute('aria-pressed'),'true');f.click('[data-map-reset]');assert.equal(visible(f,'[data-map-row]').length,95);assert(!f.$$('.atlas-system').some(el=>el.getAttribute('aria-pressed')==='true'));
+});
+
+test('mobile list drill back keeps focus in visible paper results',()=>{
+ const f=fixture({mobile:true,reduced:true});
+ assert.equal(f.$('#paper-map').dataset.view,'list');
+ f.click('[data-map-topic="navigation"]');f.click('.map-drill-direction');
+ assert.equal(f.$('#paper-map').dataset.level,'system');
+ f.$('#atlas-back').focus();f.click('#atlas-back');
+ assert.equal(f.$('#paper-map').dataset.level,'galaxy');
+ assert.equal(f.document.activeElement.closest('.map-canvas-wrap'),null);
+ assert(f.document.activeElement.closest('[data-map-row]'));
+ assert.equal(f.document.activeElement.closest('[data-map-row]').hidden,false);
 });

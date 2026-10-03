@@ -194,7 +194,7 @@
       : `全部论文 · ${match.length} 篇`;
     const descriptions = {'navigation-space':'导航、定位与空间理解：从环境感知到目标搜索与长程行动。','motion-manipulation':'运动与操作：关注机器人身体、末端与环境交互的协调。','robot-learning':'机器人学习：关注策略、表征与跨任务泛化。','methods-resources':'方法与资源：检索基础方法、仿真工具、数据和评测。'};
     const description = document.querySelector('#topic-description');
-    if (description) description.textContent = descriptions[topic] || '按研究问题查找论文，再查看概览、原文和阅读报告。';
+    if (description) { description.textContent = descriptions[topic] || '按研究问题查找论文，再查看概览、原文和阅读报告。'; description.hidden = topic === 'all'; }
     const clearAll = document.querySelector('#clear-all-filters');
     if (clearAll) clearAll.hidden = topic === 'all' && !terms.length && !filterSelects.some(select => select.value !== 'all');
     const features = document.querySelector('.library-features');
