@@ -123,3 +123,6 @@
 .library-page .noscript-note{color:var(--muted)}
 .library-page .library-feature h3 a{display:block;width:auto;min-height:36px}
 .library-feature:nth-child(2) h3 a{white-space:nowrap}
+
+/* Curated suggestions must not conceal or contradict an active query. */
+.library-features[hidden]{display:none}

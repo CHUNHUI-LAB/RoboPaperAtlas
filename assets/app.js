@@ -118,6 +118,14 @@
     document.dispatchEvent(new CustomEvent('catalog:updated'));
   }
   function focusSearch() { search.focus({preventScroll: true}); }
+  function revealResults() {
+    const heading = document.querySelector('#catalog-title');
+    const results = document.querySelector('#catalog-results');
+    if (!heading || !results) return;
+    heading.setAttribute('tabindex', '-1');
+    heading.focus({preventScroll: true});
+    results.scrollIntoView({block: 'start', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'});
+  }
   function clearFilters() {
     search.value = '';
     topic = 'all';
@@ -179,6 +187,13 @@
     cards.forEach(c => c.hidden = true);
     match.forEach((c, i) => { c.hidden = i >= limit; grid.appendChild(c); });
     count.textContent = `找到 ${match.length} 篇论文${match.length > limit ? ` · 已显示 ${limit} 篇` : ''}`;
+    const heading = document.querySelector('#catalog-title');
+    const selectedTopic = topicButtons.find(b => b.dataset.topic === topic)?.querySelector('span')?.textContent;
+    if (heading) heading.textContent = topic !== 'all'
+      ? `${selectedTopic} · ${match.length} 篇论文`
+      : `继续探索 ${match.length} 篇论文`;
+    const features = document.querySelector('.library-features');
+    if (features) features.hidden = topic !== 'all' || terms.length > 0 || filterSelects.some(select => select.value !== 'all');
     empty.hidden = match.length !== 0;
     const emptyQuery = document.querySelector('#empty-query');
     if (emptyQuery) emptyQuery.textContent = search.value.trim() ? `“${search.value.trim()}”在当前条件下没有匹配。试试作者或方法名，或清除筛选。` : '当前筛选条件没有匹配。试试放宽研究方向、年份或阅读状态。';
@@ -211,8 +226,8 @@
   methodButtons.forEach(b => b.addEventListener('click', () => { cancelPendingSearch(); method.value = method.value === b.dataset.methodChip ? 'all' : b.dataset.methodChip; apply(); }));
   viewButtons.forEach(b => b.addEventListener('click', () => { cancelPendingSearch(); view = b.dataset.view; syncView(); apply(search.value.trim() !== appliedSearch); }));
   [...filterSelects, sort].forEach(select => select.addEventListener('change', () => { cancelPendingSearch(); apply(); }));
-  topicButtons.forEach(b => b.addEventListener('click', () => { cancelPendingSearch(); topic = b.dataset.topic; apply(); }));
-  topicSelect?.addEventListener('change', () => { cancelPendingSearch(); topic = validSelect(topicSelect, topicSelect.value); apply(); });
+  topicButtons.forEach(b => b.addEventListener('click', () => { cancelPendingSearch(); topic = b.dataset.topic; apply(); revealResults(); }));
+  topicSelect?.addEventListener('change', () => { cancelPendingSearch(); topic = validSelect(topicSelect, topicSelect.value); apply(); revealResults(); });
   more.addEventListener('click', () => {
     cancelPendingSearch();
     if (search.value.trim() !== appliedSearch) { apply(); focusSearch(); return; }

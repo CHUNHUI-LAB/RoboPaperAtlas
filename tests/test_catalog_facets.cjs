@@ -39,3 +39,6 @@ test('curated UMI abbreviation finds original UMI and keeps existing UMI family 
  for(const id of ['rpa-0064','rpa-0062','rpa-0017'])assert(matches.some(p=>p.id===id),id+' should match global search');
  assert.equal(index.length,95);assert.equal(matches.length,3);assert.equal(ids.length,3);
 });
+
+// Topic activation must expose visible results in the existing CI suite.
+require("./test_topic_activation_feedback.cjs");
