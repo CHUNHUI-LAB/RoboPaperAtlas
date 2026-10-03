@@ -20,10 +20,11 @@ def render(data, shell, esc, display_title, stages):
             artifact = state['artifacts'][0]
             path = entry_path(paper['id'], key) or artifact['path']
             review = '内容已审阅' if artifact['review_status'] == 'content_approved' else '已导入'
+            history = ''.join(f'<a href="../{esc(a["path"])}">固定版本 {esc(a["version"])} ↗</a>' for a in state['artifacts'])
             rows.append(f'<li class="reading-stage"><a class="reading-stage-link" href="../{esc(path)}">'
                         f'<span>{name} · {label} ↗</span>'
                         f'<small>{esc(artifact["version"])} · {review}</small></a>'
-                        f'<p>{esc(artifact["source_edition"])}</p></li>')
+                        f'<p>{esc(artifact["source_edition"])}</p><details class="f2-version-history"><summary>固定与历史版本</summary><div>{history}</div></details></li>')
         sections.append(f'<section class="reading-paper" aria-labelledby="{esc(paper["id"])}">'
                         f'<h2 id="{esc(paper["id"])}">{esc(display_title(paper))}</h2>'
                         f'<p><a href="../papers/{esc(paper["id"])}/index.html#reading">论文详情与历史版本 ↗</a></p>'

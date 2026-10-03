@@ -8,7 +8,7 @@ test('map labels stay readable in screen space after zooming',()=>{
  for(const step of [null,'[data-camera="in"]','[data-camera="out"]']){
   if(step)f.click(step);
   assert(Math.abs(screenSize(f,f.$('.atlas-system').querySelector('.atlas-navigation-label'))-19)<.01);
-  assert(Math.abs(screenSize(f,f.$('.atlas-navigation-meta'))-13)<.01);
+  assert(Math.abs(screenSize(f,f.$('.atlas-navigation-meta'))-14)<.01);
   assert(Math.abs(screenSize(f,f.$('.map-node-label'))-14)<.01);
  }
 });

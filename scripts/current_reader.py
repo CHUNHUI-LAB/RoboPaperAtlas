@@ -1,5 +1,6 @@
 """Deterministic live navigation views derived from validated immutable reports."""
 import hashlib
+import re
 from html import escape
 
 CURRENT_READER_PAPERS = frozenset({'rpa-0012', 'rpa-0062', 'rpa-0052', 'rpa-0054', 'rpa-0067'})
@@ -202,9 +203,20 @@ def render(root, paper, stage, records):
             nav.append(f'<a href="{key}.html"{current}><small>{index:02}</small>{label}</a>')
         else:
             nav.append(f'<span aria-disabled="true"><small>{index:02} · 未完成</small>{label}</span>')
-    provenance = (f'当前导航视图 · 基于固定报告 {escape(record["version"])} 生成，仅更新阶段导航、返回入口与本说明；'
-                  f'正文、原报告脚本与样式保持原样；另加载目录上下文导航。<a href="../../../{escape(report_path(record), quote=True)}">打开固定版本报告 ↗</a> ')
+    provenance = (f'当前导航视图 · 基于固定报告 {escape(record["version"])} 生成，保留正文，更新阶段导航、返回入口与统一阅读界面；'
+                  f'正文与原报告脚本保持原样；保留原有样式并叠加 F2 界面样式，另加载目录上下文导航。<a href="../../../{escape(report_path(record), quote=True)}">打开固定版本报告 ↗</a> ')
     navigation_script = context_script(root)
+    # A presentation-only stylesheet on current routes; immutable artifacts stay byte-identical.
+    theme_digest = hashlib.sha256((root / 'assets/f2.css').read_bytes()).hexdigest()[:12]
+    theme = f'<link rel="stylesheet" href="../../../assets/f2.css?v={theme_digest}">'
+    # Load after the final fixed stylesheet, before the inline reader runtime measures layout.
+    style_end = page.rfind('</style>') + len('</style>')
+    if style_end < len('</style>'):
+        raise ValueError('Current reader requires its fixed source styles')
+    page = page[:style_end] + theme + page[style_end:]
+    page = re.sub(r'<body([^>]*)>', lambda m: '<body' + (
+        re.sub(r'class="([^"]*)"', r'class="\1 f2-theme f2-current-reader"', m[1])
+        if 'class="' in m[1] else m[1] + ' class="f2-theme f2-current-reader"') + '>', page, count=1)
     if page.count('</body>') != 1:
         raise ValueError('Unexpected current reader body signature')
     return (page.replace(frozen, OPEN + ''.join(nav) + '</nav>', 1)

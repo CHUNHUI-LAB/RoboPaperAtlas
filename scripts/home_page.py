@@ -36,6 +36,7 @@ def render(data, card, categories, shell, esc):
     ordered = sorted(papers, key=lambda p: (not p['citation_verified'], -(p.get('bibliographic_year') or 0), p['title'].casefold()))
 
     body = f'''<main id="main" class="atlas-experience library-main">
+  <header class="f2-page-intro"><h1>论文库</h1><p>从研究问题出发，连接方法、证据与实现。</p></header>
   <section class="catalog-section" id="catalog" aria-labelledby="catalog-title">
     <form class="library-search" role="search" aria-label="搜索当前论文目录">
       <label class="sr-only" for="search">搜索标题、作者或关键词</label><span class="library-search-icon" aria-hidden="true">⌕</span>
@@ -46,7 +47,7 @@ def render(data, card, categories, shell, esc):
       <div class="topic-filters" role="group" aria-label="交叉浏览入口，选择一个方向">{tabs}</div>
       <label class="mobile-topic-select">研究方向<select id="topic-select"><option value="all">全部 · {total}</option>{topic_options}</select></label>
     </div>
-    <div class="catalog-heading" id="catalog-results"><div><p class="library-eyebrow">论文库</p><h1 id="catalog-title">全部论文 · {total} 篇</h1></div><button type="button" id="clear-all-filters" hidden>清除筛选 ×</button></div>
+    <div class="catalog-heading" id="catalog-results"><div><p class="library-eyebrow">论文库</p><h2 id="catalog-title">全部论文 · {total} 篇</h2></div><button type="button" id="clear-all-filters" hidden>清除筛选 ×</button></div>
     <p id="topic-description" class="topic-description">按研究问题查找论文，再查看概览、原文和阅读报告。</p><p class="catalog-scope-note">分组可交叉，数量不可相加 · 来源核验与全文阅读分开记录</p>
     <div class="catalog-main">
       <div class="results-bar"><p id="result-count" role="status" aria-live="polite">共 {total} 篇论文</p>
