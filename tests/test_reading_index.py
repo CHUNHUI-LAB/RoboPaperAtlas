@@ -37,7 +37,7 @@ class ReadingIndexTests(unittest.TestCase):
                     self.assertNotIn(f'href="../{old["path"]}"', page)
             if any(s['status'] == 'imported' for s in paper['stages'].values()):
                 self.assertIn(f'href="../papers/{paper["id"]}/index.html#reading"', page)
-        self.assertIn('class="experience-route route-reading" href="reading/index.html"', home(self.catalog))
+        self.assertIn('href="reading/index.html">Reading</a>', home(self.catalog))
         self.assertIn('阅读完成不等于独立复现', page)
 
     def test_empty_registry_does_not_invent_reports(self):

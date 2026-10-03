@@ -1,39 +1,107 @@
-"""Editorial research home. Data and stages remain separate from presentation."""
+"""Content-first Library. Existing catalogue evidence and routes remain intact."""
 from pathlib import Path
 import hashlib
-from topic_labels import TOPIC_LABELS, TOPIC_HINTS, primary_topic, method_tags, resource_kinds, RESOURCE_LABELS, OVERLAY, CHINESE
-from discovery_facets import GROUPS,for_catalog,counts as group_counts,method_label
-def render(data,card,categories,shell,esc):
- root=Path(__file__).resolve().parents[1]
- title_svg=(root/'assets/preview-title.svg').read_text()
- papers=data['papers'];reading_href='reading/index.html';report_count=sum(s['status']=='imported' for p in papers for s in p['stages'].values());reading_intro=f'{report_count} 份报告已导入，按论文与阶段查阅。' if report_count else '了解分阶段阅读。实际报告尚未导入。';total=len(papers);memberships=for_catalog(papers,OVERLAY['records']);counts=group_counts(memberships);categories={key:(label,english)for key,label,english in GROUPS}
- topic_labels={k:v[0]for k,v in categories.items()};hints={k:v[1]for k,v in categories.items()}
- topic_links=''.join(f'<li><a data-atlas-topic="{key}" href="index.html?topic={key}#catalog" title="{esc(hints[key])}" aria-label="{esc(topic_labels[key])}，{counts[key]} 条书目">{esc(topic_labels[key])}<small>{counts[key]} ↗</small></a></li>' for key in categories)
- fallback_version=hashlib.sha256((root/'assets/hero-atlas.svg').read_bytes()).hexdigest()[:12]
- example_ids={key:[p['id'] for p in sorted((p for p in papers if key in memberships[p['id']]['groups']),key=lambda p:(not any(s['status']=='imported' for s in p['stages'].values()),not p['citation_verified'],p['id']))[:2]] for key in categories}
- by_id={p['id']:p for p in papers}
- previews='<div class="atlas-galaxy__preview"><div class="atlas-galaxy__overview"><span>探索知识星图</span><p>悬停或聚焦方向，展开局部星域。按 ↓ 查看论文入口。</p></div>'
- for key in categories:
-  examples=[]
-  for pid in example_ids[key]:
-   paper=by_id[pid];title=(paper.get('verified_overlay') or {}).get('title') or paper['title']
-   status='原始书目已核验' if paper['citation_verified'] else '原始书目待核验'
-   examples.append(f'<a href="papers/{pid}/index.html" title="{esc(title)}"><span>{esc(title)}</span><small>{status} ↗</small></a>')
-  previews+=f'<section class="atlas-galaxy__paper-panel" id="atlas-panel-{key}" data-atlas-panel="{key}" aria-label="{esc(topic_labels[key])}的目录示例" aria-hidden="true" inert><header><strong title="{esc(hints[key])}">{esc(topic_labels[key])}</strong><span>{counts[key]} 条匹配 · 可交叉</span></header><div>{"".join(examples)}</div></section>'
- previews+='</div><p class="sr-only" data-atlas-status role="status" aria-live="polite"></p>'
- atlas_svg=f'<figure class="atlas-galaxy"><div class="atlas-galaxy__field"><img class="atlas-galaxy__fallback" src="assets/hero-atlas.svg?v={fallback_version}" alt="" width="560" height="408"><canvas width="560" height="408" aria-hidden="true"></canvas><ul class="atlas-galaxy__topics" aria-label="按研究方向探索">{topic_links}</ul></div>{previews}<figcaption><span>知识星图 · 抽象视觉，非引用关系</span><button type="button" data-atlas-toggle hidden aria-pressed="false">暂停星图</button></figcaption></figure>'
+from topic_labels import TOPIC_LABELS, method_tags, resource_kinds, RESOURCE_LABELS, OVERLAY, CHINESE
+from discovery_facets import GROUPS, for_catalog, counts as group_counts, method_label
 
- tabs=f'<button class="topic-filter active" type="button" data-topic="all" aria-pressed="true"><span>全部</span><b>{total}</b></button>'
- labels=topic_labels
- tabs+=''.join(f'<button class="topic-filter" type="button" data-topic="{key}" aria-pressed="false" title="{esc(hints[key])}" aria-label="{esc(topic_labels[key])}"><span>{esc(labels[key])}</span><b>{counts[key]}</b></button>' for key in categories)
- years=sorted({p['publication_year'] for p in papers if p.get('publication_year')},reverse=True)
- methods=sorted({t for p in papers for t in method_tags(p)},key=str.casefold)
- method_options=''.join(f'<option value="{esc(t)}">{esc(method_label(t))}</option>' for t in methods)
- resources=sorted({t for p in papers for t in resource_kinds(p)})
- resource_options=''.join(f'<option value="{t}">{RESOURCE_LABELS[t]}</option>' for t in resources)
- direction_options=''.join(f'<option value="{key}">{esc(CHINESE[key])}</option>'for key in TOPIC_LABELS)
- common_methods=''.join(f'<button type="button" class="method-chip" data-method-chip="{t}" aria-pressed="false">{esc(method_label(t))}</button>'for t in ['WBC','MPC','RL','Imitation Learning','VLA','World Model'])
- options=''.join(f'<option value="{y}">{y}</option>' for y in years)
- ordered=sorted(papers,key=lambda p:(not p['citation_verified'],-(p.get('bibliographic_year') or 0),p['title'].casefold()))
- body=f'''<main id="main" class="atlas-experience"><section class="experience-hero" aria-labelledby="hero-title"><div class="experience-hero-copy"><h1 id="hero-title" class="experience-title"><span class="sr-only">RoboPaperAtlas</span>{title_svg}</h1><p>探索机器人研究的论文、方法与原始证据。<br>从一篇论文开始，把发现放回可追溯的研究路径。</p><div class="experience-hero-actions"><a class="experience-primary vector-button" href="#catalog">浏览论文 <span aria-hidden="true">↗</span><i class="corner c1" aria-hidden="true"></i><i class="corner c2" aria-hidden="true"></i><i class="corner c3" aria-hidden="true"></i><i class="corner c4" aria-hidden="true"></i></a><a class="experience-secondary" href="frontier/index.html">阅读本期摘要 ↗</a></div></div><div class="experience-hero-scene">{atlas_svg}</div></section><section class="experience-routes" aria-label="探索入口"><a class="experience-route route-catalog" href="#catalog"><span aria-hidden="true">⌕</span><div><h2>Library</h2><p>{total} 条书目，从标题、作者或研究方向开始。</p></div></a><a class="experience-route route-frontier" href="frontier/index.html#daily-brief"><span aria-hidden="true">↗</span><div><h2>Radar</h2><p>先看摘要速览，再展开自动匹配的候选线索。</p></div></a><a class="experience-route route-reading" href="{reading_href}"><span aria-hidden="true">≡</span><div><h2>Reading</h2><p>{reading_intro}</p></div></a></section><section class="catalog-section" id="catalog" aria-labelledby="catalog-title"><div class="section-heading"><div><h2 id="catalog-title">Library<span> / 论文目录</span></h2><p>{total} 条论文书目 · 四个交叉浏览入口，数量不可相加；方法与资源类型独立筛选 · 来源核验与阅读完成分开</p></div><a class="text-link" href="about/index.html#standards">收录与核验说明 ↗</a></div><div class="catalog-toolbar"><div class="topic-filters" role="group" aria-label="交叉浏览入口">{tabs}<span class="topic-indicator" aria-hidden="true"></span></div><button type="button" class="catalog-search-trigger" data-search-trigger><span id="catalog-search-label">搜索标题、作者或关键词</span><kbd>/</kbd></button></div><div class="catalog-main"><input id="search" type="hidden" value=""><div class="results-bar"><p id="result-count" role="status" aria-live="polite">共 {total} 篇论文</p><div class="results-actions"><details class="filter-disclosure"><summary>更多筛选 <span aria-hidden="true">＋</span></summary><div class="filter-panel"><div class="common-methods" role="group" aria-label="常用方法">{common_methods}</div><label>细分研究方向<select id="direction-filter"><option value="all">全部细分方向</option>{direction_options}</select></label><label>全部方法<select id="method-filter"><option value="all">全部方法</option>{method_options}</select></label><label>资源类型<select id="resource-filter"><option value="all">全部类型</option>{resource_options}</select></label><label>出版年份<select id="year-filter"><option value="all">全部年份</option>{options}<option value="unknown">未知 / 尚无正式出版年</option></select></label><label>原始书目核验状态<select id="status-filter"><option value="all">全部状态</option><option value="verified">原始书目已核验</option><option value="pending">原始书目待核验</option></select></label><p>核验状态筛选只依据原始书目记录；独立补充的核验状态见各条详情。顶部入口是可交叉的检索分组，不改写论文的研究分类。细分方向、方法与资源类型独立保留；四条分类边界仍待复核。正式出版年份只使用已核验值。</p></div></details><label class="sort-label"><span class="sr-only">排序</span><select id="sort"><option value="curated">来源核验优先</option><option value="newest">记录年份降序</option><option value="title">标题 A → Z</option></select></label><div class="view-switch" role="group" aria-label="目录显示方式"><button type="button" data-view="list" aria-pressed="false" aria-label="列表视图">☷</button><button type="button" data-view="cards" aria-pressed="true" aria-label="卡片视图">▦</button></div></div></div><div class="active-filters" id="active-filters" aria-label="当前筛选条件" hidden></div><div class="paper-grid" id="paper-grid">{''.join(card(p) for p in ordered)}</div><div class="empty-state" id="empty-state" hidden><h3>暂时没有匹配的论文</h3><p>换一个关键词，或放宽筛选条件。</p><button class="secondary-button" id="reset-filters" type="button">重置筛选</button></div><button class="load-more" id="load-more" type="button" hidden>显示更多论文 ↓</button><noscript><p class="noscript-note">当前已显示全部论文。搜索、筛选和快捷预览需要 JavaScript；点击题名仍可打开完整详情页。</p></noscript></div></section><section class="reading-roadmap"><div><h2>每一次阅读，<br>都留下可追溯的路径。</h2><p>按已导入的实际报告，逐阶段与版本查阅。<br>来源核验、阅读完成与独立复现，始终分开记录。</p></div><div class="roadmap-stages"><div><span>01</span><h3>初读</h3><p>建立研究问题、核心贡献与证据入口。</p></div><div><span>02</span><h3>写作精读</h3><p>梳理论证结构、研究缺口与表达。</p></div><div><span>03</span><h3>方法精读</h3><p>结合公式、框架与公开代码理解方法。</p></div></div></section></main>'''
- return shell('RoboPaperAtlas',body)
+
+def render(data, card, categories, shell, esc):
+    root = Path(__file__).resolve().parents[1]
+    papers = data['papers']
+    total = len(papers)
+    report_count = sum(s['status'] == 'imported' for p in papers for s in p['stages'].values())
+    memberships = for_catalog(papers, OVERLAY['records'])
+    counts = group_counts(memberships)
+    topic_labels = {key: label for key, label, _ in GROUPS}
+    hints = {key: english for key, _, english in GROUPS}
+    short_labels = {**topic_labels, 'methods-resources': '方法与资源'}
+    tabs = f'<button class="topic-filter active" type="button" data-topic="all" aria-pressed="true"><span>全部</span><b>{total}</b></button>'
+    tabs += ''.join(
+        f'<button class="topic-filter" type="button" data-topic="{key}" aria-pressed="false" title="{esc(hints[key])}" aria-label="{esc(short_labels[key])}"><span>{esc(short_labels[key])}</span><b>{counts[key]}</b></button>'
+        for key in topic_labels)
+    topic_options = ''.join(f'<option value="{key}">{esc(short_labels[key])} · {counts[key]}</option>' for key in topic_labels)
+    years = sorted({p['publication_year'] for p in papers if p.get('publication_year')}, reverse=True)
+    methods = sorted({t for p in papers for t in method_tags(p)}, key=str.casefold)
+    method_options = ''.join(f'<option value="{esc(t)}">{esc(method_label(t))}</option>' for t in methods)
+    resources = sorted({t for p in papers for t in resource_kinds(p)})
+    resource_options = ''.join(f'<option value="{t}">{RESOURCE_LABELS[t]}</option>' for t in resources)
+    direction_options = ''.join(f'<option value="{key}">{esc(CHINESE[key])}</option>' for key in TOPIC_LABELS)
+    common_methods = ''.join(f'<button type="button" class="method-chip" data-method-chip="{t}" aria-pressed="false">{esc(method_label(t))}</button>' for t in ['WBC', 'MPC', 'RL', 'Imitation Learning', 'VLA', 'World Model'])
+    year_options = ''.join(f'<option value="{y}">{y}</option>' for y in years)
+    ordered = sorted(papers, key=lambda p: (not p['citation_verified'], -(p.get('bibliographic_year') or 0), p['title'].casefold()))
+
+    # Editorial entry points reuse exact existing summaries, never imply completed reading.
+    by_id = {p['id']: p for p in papers}
+    features = []
+    for pid in ['agenticnav-tool-harness', 'ham-vln']:
+        p = by_id[pid]
+        title = (p.get('verified_overlay') or {}).get('title') or p['title']
+        features.append(f'''<article class="library-feature">
+  <div class="library-feature-heading"><h3><a data-catalog-link href="papers/{pid}/index.html" title="{esc(title)}">{esc(p.get('short_name') or title)}</a></h3><button type="button" class="feature-preview" data-preview="{pid}" aria-label="速览 {esc(title)}">速览 <span aria-hidden="true">↗</span></button></div>
+  <p>{esc(p['summary'])}</p>
+</article>''')
+    star_version = hashlib.sha256((root / 'assets/hero-atlas.svg').read_bytes()).hexdigest()[:12]
+    body = f'''<main id="main" class="atlas-experience library-main">
+  <section class="library-overview" aria-labelledby="hero-title">
+    <div class="library-brand-panel">
+      <img class="library-constellation" src="assets/hero-atlas.svg?v={star_version}" alt="" width="160" height="117">
+      <p class="library-eyebrow">ROBOPAPERATLAS / LIBRARY</p>
+      <h1 id="hero-title">论文目录</h1>
+      <p class="library-scope">按研究问题探索论文，<br>查阅方法、原始证据与阅读报告。</p>
+      <p class="library-stats"><strong>{total}</strong> 条书目 <span aria-hidden="true">·</span> <a href="reading/index.html">{report_count} 份报告已导入 ↗</a></p>
+      <a class="library-atlas-link" href="map/index.html">探索 Atlas 星图 <span aria-hidden="true">↗</span><span class="sr-only">，抽象视觉，非引用关系</span></a>
+    </div>
+    <a class="library-mobile-jump" href="#catalog" data-catalog-jump>直接搜索 / 跳到 {total} 篇目录 <span aria-hidden="true">↓</span></a>
+    <section class="library-features" aria-labelledby="features-title">
+      <div class="library-feature-label"><h2 id="features-title">研究线索</h2><span>预印本 · 来源已核验</span></div>
+      {''.join(features)}
+    </section>
+  </section>
+  <section class="catalog-section" id="catalog" aria-labelledby="catalog-title">
+    <div class="catalog-heading"><h2 id="catalog-title">论文目录</h2><a href="about/index.html#standards">收录与核验说明 ↗</a></div>
+    <form class="library-search" role="search" aria-label="搜索当前论文目录">
+      <label class="sr-only" for="search">搜索标题、作者或关键词</label><span class="library-search-icon" aria-hidden="true">⌕</span>
+      <input id="search" class="catalog-search-trigger" type="search" maxlength="512" placeholder="搜索标题、作者或关键词" autocomplete="off" aria-controls="paper-grid">
+      <button id="clear-catalog-search" type="button" aria-label="清除目录搜索" hidden>✕</button><kbd aria-hidden="true">/</kbd>
+    </form>
+    <div class="catalog-toolbar">
+      <div class="topic-filters" role="group" aria-label="交叉浏览入口，选择一个方向">{tabs}</div>
+      <label class="mobile-topic-select">研究方向<select id="topic-select"><option value="all">全部 · {total}</option>{topic_options}</select></label>
+    </div>
+    <p class="catalog-scope-note">每次选择一个浏览方向；四个分组可交叉，数量不可相加。来源核验与阅读完成分开记录。</p>
+    <div class="catalog-main">
+      <div class="results-bar"><p id="result-count" role="status" aria-live="polite">共 {total} 篇论文</p>
+        <div class="results-actions">
+          <details class="filter-disclosure"><summary>更多筛选 <span aria-hidden="true">＋</span></summary>
+            <div class="filter-panel">
+              <div class="filter-panel-heading"><h2 id="catalog-filter-title">筛选论文</h2><button type="button" data-filter-close aria-label="关闭筛选">✕</button></div>
+              <div class="common-methods" role="group" aria-label="常用方法">{common_methods}</div>
+              <div class="filter-fields">
+                <label>细分研究方向<select id="direction-filter"><option value="all">全部细分方向</option>{direction_options}</select></label>
+                <label>全部方法<select id="method-filter"><option value="all">全部方法</option>{method_options}</select></label>
+                <label>资源类型<select id="resource-filter"><option value="all">全部类型</option>{resource_options}</select></label>
+                <label>出版年份<select id="year-filter"><option value="all">全部年份</option>{year_options}<option value="unknown">未知 / 尚无正式出版年</option></select></label>
+                <label>原始书目核验状态<select id="status-filter"><option value="all">全部状态</option><option value="verified">原始书目已核验</option><option value="pending">原始书目待核验</option></select></label>
+                <label>阅读报告<select id="reading-filter"><option value="all">全部阅读状态</option><option value="imported">已有阶段报告</option><option value="not-imported">尚未导入报告</option></select></label>
+              </div>
+              <p>核验状态筛选只依据原始书目记录；独立补充的核验状态见各条详情。正式出版年份只使用已核验值。细分方向、方法与资源类型独立保留；四条分类边界仍待复核。</p>
+              <button id="apply-catalog-filters" class="primary-link" type="button" data-filter-close>查看 {total} 篇结果</button>
+            </div>
+          </details>
+          <label class="sort-label"><span class="sr-only">排序</span><select id="sort"><option value="curated">来源核验优先</option><option value="newest">记录年份降序</option><option value="title">标题 A → Z</option></select></label>
+          <div class="view-switch" role="group" aria-label="目录显示方式"><button type="button" data-view="list" aria-pressed="true" aria-label="列表视图">☷</button><button type="button" data-view="cards" aria-pressed="false" aria-label="卡片视图">▦</button></div>
+        </div>
+      </div>
+      <div class="active-filters" id="active-filters" aria-label="当前筛选条件" hidden></div>
+      <div class="paper-grid list-view" id="paper-grid" data-default-view="list">{''.join(card(p, library=True) for p in ordered)}</div>
+      <div class="empty-state" id="empty-state" hidden><h3>暂时没有匹配的论文</h3><p id="empty-query">试试作者或方法名，或放宽当前筛选条件。</p><button class="secondary-button" id="reset-filters" type="button">清除搜索与筛选</button></div>
+      <button class="load-more" id="load-more" type="button" hidden>显示更多论文 ↓</button>
+      <noscript><p class="noscript-note">当前已显示全部论文。搜索、筛选和快捷预览需要 JavaScript；点击题名仍可打开完整详情页。</p></noscript>
+    </div>
+  </section>
+  <section class="reading-roadmap" aria-labelledby="reading-roadmap-title">
+    <div><p class="library-eyebrow">READING / 阅读档案</p><h2 id="reading-roadmap-title">每次阅读，都有迹可循</h2><p>按论文、阶段与版本查阅实际报告。阅读完成与独立复现分别记录。</p><a class="text-link" href="reading/index.html">浏览 {report_count} 份阶段报告 ↗</a></div>
+    <div class="roadmap-stages"><div><span>01</span><h3>初读</h3><p>建立研究问题、核心贡献与证据入口。</p></div><div><span>02</span><h3>写作精读</h3><p>梳理论证结构、研究缺口与表达。</p></div><div><span>03</span><h3>方法精读</h3><p>结合公式、框架与公开代码理解方法。</p></div></div>
+  </section>
+</main>'''
+    return shell('RoboPaperAtlas', body, library=True)

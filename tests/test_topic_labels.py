@@ -32,7 +32,7 @@ class ReviewedClassificationTests(unittest.TestCase):
   page=home(self.catalog);mapped=map_data(self.catalog,report_records=self.reports)
   groups=counts(for_catalog(self.papers,OVERLAY['records']))
   for key,label,_ in GROUPS:
-   self.assertIn('data-atlas-topic="'+key+'"',page);self.assertIn('<span>'+html.escape(label)+'</span><b>'+str(groups[key]),page)
+   self.assertIn('data-topic="'+key+'"',page);self.assertIn('aria-label="'+html.escape('方法与资源' if key=='methods-resources' else label)+'"',page);self.assertIn('<span>'+html.escape('方法与资源' if key=='methods-resources' else label)+'</span><b>'+str(groups[key]),page)
   for p,m in zip(self.papers,mapped['papers']):
    self.assertEqual(m['mapTopic'],primary_topic(p));self.assertIn('data-topics="'+' '.join(browse_groups(p))+'"',card(p))
    d=details(p);self.assertIn('研究问题与分类证据',d);self.assertIn(html.escape(classification(p)['problemLabel']),d)

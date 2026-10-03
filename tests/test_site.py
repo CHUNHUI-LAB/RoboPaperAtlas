@@ -69,14 +69,15 @@ class EditorialInterfaceTests(unittest.TestCase):
  def test_single_search_entry_and_editorial_home(self):
   from build import home
   page=home(json.loads((ROOT/'data/catalog.json').read_text()))
-  self.assertIn('class="experience-hero"',page)
+  self.assertIn('class="library-overview"',page)
   self.assertNotIn('id="coordinate-field"',page)
   self.assertNotIn('id="motion-toggle"',page)
   self.assertIn('<title>RoboPaperAtlas</title>',page)
-  self.assertIn('class="paper-grid"',page)
+  self.assertIn('class="paper-grid list-view"',page)
   self.assertNotIn('class="catalog-sidebar"',page)
   self.assertNotIn('class="research-routes"',page)
-  self.assertIn('<input id="search" type="hidden"',page)
+  self.assertIn('<input id="search" class="catalog-search-trigger" type="search"',page)
+  self.assertNotIn('class="experience-routes"',page)
  def test_assets_have_real_content_hash(self):
   from build import asset_url
   import hashlib
