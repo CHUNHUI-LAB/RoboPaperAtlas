@@ -47,10 +47,10 @@ def render(data, card, categories, shell, esc):
       <div class="topic-filters" role="group" aria-label="交叉浏览入口，选择一个方向">{tabs}</div>
       <label class="mobile-topic-select">研究方向<select id="topic-select"><option value="all">全部 · {total}</option>{topic_options}</select></label>
     </div>
-    <div class="catalog-heading" id="catalog-results"><div><p class="library-eyebrow">论文库</p><h2 id="catalog-title">全部论文 · {total} 篇</h2></div><button type="button" id="clear-all-filters" hidden>清除筛选 ×</button></div>
-    <p id="topic-description" class="topic-description">按研究问题查找论文，再查看概览、原文和阅读报告。</p><p class="catalog-scope-note">分组可交叉，数量不可相加 · 来源核验与全文阅读分开记录</p>
+    <p class="catalog-scope-note">分组可交叉，数量不可相加 · 来源核验与全文阅读分开记录</p>
+    <p id="topic-description" class="topic-description" hidden>按研究问题查找论文，再查看概览、原文和阅读报告。</p>
     <div class="catalog-main">
-      <div class="results-bar"><p id="result-count" role="status" aria-live="polite">共 {total} 篇论文</p>
+      <div class="results-bar" id="catalog-results"><div class="catalog-heading"><div><h2 id="catalog-title">全部论文 · {total} 篇</h2><p id="result-count" role="status" aria-live="polite">共 {total} 篇论文</p></div><button type="button" id="clear-all-filters" hidden>清除筛选 ×</button></div>
         <div class="results-actions">
           <details class="filter-disclosure"><summary>更多筛选 <span aria-hidden="true">＋</span></summary>
             <div class="filter-panel">

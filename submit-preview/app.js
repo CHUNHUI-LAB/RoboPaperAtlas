@@ -132,7 +132,7 @@ function route(event){
  $('experience-browse').hidden=view==='experiences'&&!!state.id;
  $('experience-back').hidden=!(view==='experiences'&&state.id);
  $('experience-back').setAttribute('href',routeHref('experiences','',state.params));
- const titles={venues:['会议与期刊','了解各渠道的主题、论文风格与适合的研究，再核对本届投稿要求。'],experiences:['投稿经验','先看跨来源归纳，再按渠道或问题读每篇经验的要点与完整整理。'],deadlines:['截止日期','首轮投稿与评审、回复、终稿分开看。日期未确认时明确留空。'],papers:['发表渠道 × 研究主题','这是 8 篇已核验示例的字段演示，完整论文目录请使用顶部 Library。']};
+ const titles={venues:['会议与期刊','了解各渠道的主题、论文风格与适合的研究，再核对本届投稿要求。'],experiences:['投稿经验','先看跨来源归纳，再按渠道或问题读每篇经验的要点与完整整理。'],deadlines:['截止日期','首轮投稿与评审、回复、终稿分开看。日期未确认时明确留空。'],papers:['发表渠道 × 研究主题','这是 8 篇已核验示例的字段演示，完整论文目录请使用顶部论文库。']};
  $('page-title').textContent=titles[view][0];$('page-description').textContent=titles[view][1];
  if(view==='venues'){
   if(state.id){openVenue(state.id);focusTarget($('venue-title'),$('detail-actions'))}
