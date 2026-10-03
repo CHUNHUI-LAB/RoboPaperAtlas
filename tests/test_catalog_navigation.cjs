@@ -103,7 +103,50 @@ test('Library default list and five discrete filter changes are reversible witho
 test('loaded results and scroll survive Back and explicit detail-return navigation',()=>{
  const storage=new Map(),f=make('?view=cards#catalog',storage);f.click('#load-more');assert.equal(visible(f).length,48);assert.equal(f.historyStack.length,1);
  f.window.scrollY=915;select(f,'#method-filter','VLA');f.goBack();assert.equal(visible(f).length,48);assert.equal(f.window.scrollY,915);
- f.window.emit('pagehide');const returned=make('?view=cards#catalog',storage);assert.equal(visible(returned).length,48);assert.equal(returned.window.scrollY,915);
+ f.window.emit('pagehide');const returned=make('?view=cards#catalog',storage);assert.equal(visible(returned).length,48);
+ returned.window.emit('pageshow',{persisted:false});returned.step();returned.step();assert.equal(returned.window.scrollY,915);
+});
+
+test('cold explicit return restores once after native fragment positioning without moving focus',()=>{
+ const storage=new Map(),f=make('?sort=title#catalog',storage);
+ for(let i=0;i<3;i++)f.click('#load-more');f.window.scrollY=17061;f.window.emit('pagehide');
+ const returned=make('?sort=title#catalog',storage);assert.equal(visible(returned).length,95);
+ returned.window.scrollY=342;const focused=returned.document.activeElement;
+ returned.window.emit('pageshow',{persisted:false});returned.step();assert.equal(returned.window.scrollY,342);
+ returned.step();assert.equal(returned.window.scrollY,17061);assert.equal(returned.document.activeElement,focused);assert.equal(returned.raf.size,0);
+ const fresh=make('?sort=title#catalog');fresh.window.scrollY=342;fresh.window.emit('pageshow',{persisted:false});fresh.step();fresh.step();assert.equal(fresh.window.scrollY,342);
+});
+
+test('late return restoration yields to user actions, new filters, fragment jumps and page exit',()=>{
+ const storage=new Map(),f=make('?sort=title#catalog',storage);f.click('#load-more');f.window.scrollY=915;f.window.emit('pagehide');
+ const actions=[
+  x=>x.document.emit('pointerdown'),x=>x.document.emit('keydown',{key:'Tab'}),
+  x=>x.document.emit('wheel'),x=>x.document.emit('touchstart'),
+  x=>select(x,'#sort','newest'),x=>x.window.emit('hashchange'),x=>x.window.emit('pagehide')
+ ];
+ for(const action of actions){
+  const returned=make('?sort=title#catalog',new Map(storage));returned.window.scrollY=342;
+  returned.window.emit('pageshow',{persisted:false});returned.step();action(returned);returned.step();
+  assert.equal(returned.window.scrollY,342);assert.equal(returned.raf.size,0);
+ }
+});
+
+test('history and BFCache restoration settle after native scrolling and replace stale frames',()=>{
+ const f=make('#catalog');f.click('#load-more');f.window.scrollY=915;select(f,'#sort','title');f.window.scrollY=120;
+ f.goBack();f.window.scrollY=342;f.step();f.step();assert.equal(visible(f).length,48);assert.equal(f.window.scrollY,915);
+ f.window.emit('pageshow',{persisted:true});f.window.scrollY=342;f.step();f.step();assert.equal(f.window.scrollY,915);
+ f.goForward();f.goBack();f.window.scrollY=342;f.step();f.step();assert.equal(f.window.scrollY,915);assert.equal(f.raf.size,0);
+});
+
+test('interaction before first pageshow preserves pending input and a deliberate scroll',()=>{
+ const storage=new Map(),saved=make('?sort=title#catalog',storage);saved.click('#load-more');saved.window.scrollY=17061;saved.window.emit('pagehide');
+ const scrolled=make('?sort=title#catalog',storage);scrolled.document.emit('wheel');scrolled.window.scrollY=620;
+ scrolled.window.emit('pageshow',{persisted:false});scrolled.step();scrolled.step();assert.equal(scrolled.window.scrollY,620);assert.equal(scrolled.raf.size,0);
+ for(const cache of [storage,new Map()]){
+  const typed=make('?sort=title#catalog',cache),input=typed.$('#search');input.value='UMI';input.emit('input');
+  typed.window.emit('pageshow',{persisted:false});typed.step();typed.step();assert.equal(input.value,'UMI');assert.equal(typed.timers.size,1);
+  typed.flushTimers();assert.equal(new URLSearchParams(typed.location.search).get('q'),'UMI');
+ }
 });
 
 test('debounced search respects IME, cancels pending Back work and cannot collapse cleared results later',()=>{

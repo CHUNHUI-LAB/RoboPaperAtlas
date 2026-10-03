@@ -27,6 +27,26 @@
   const stateKey = 'robopaperatlas:catalog:v1';
   let topic = 'all', limit = 24, committedLimit = 24, timer, composing = false;
   let view = defaultView, appliedSearch = '';
+  let scrollRestoreFrame, scrollRestoreRevision = 0;
+  function cancelScrollRestore() {
+    scrollRestoreRevision++;
+    if (scrollRestoreFrame !== undefined) cancelAnimationFrame(scrollRestoreFrame);
+    scrollRestoreFrame = undefined;
+  }
+  function scheduleScrollRestore(saved) {
+    if (!saved) return;
+    const revision = scrollRestoreRevision, href = window.location.href;
+    // Native fragment/history positioning happens after deferred scripts. Restore
+    // once the rendered result set has settled, without racing a newer action.
+    scrollRestoreFrame = requestAnimationFrame(() => {
+      if (revision !== scrollRestoreRevision) return;
+      scrollRestoreFrame = requestAnimationFrame(() => {
+        scrollRestoreFrame = undefined;
+        if (revision === scrollRestoreRevision && href === window.location.href)
+          window.scrollTo?.({top: saved.scrollY, behavior: 'instant'});
+      });
+    });
+  }
   const validSelect = (select, value) => Array.from(select.options).some(o => o.value === value) ? value : 'all';
   const cleanQuery = value => globalThis.RoboCatalogNavigation?.cleanQuery(value) ?? new URLSearchParams(value).toString();
   const boundedLimit = value => Number.isInteger(value) && value >= 24 && value <= Math.max(24, cards.length + 23) ? value : 24;
@@ -139,6 +159,7 @@
     }
   });
   function apply(reset = true, save = true) {
+    if (save) cancelScrollRestore();
     if (reset) limit = 24;
     search.value = search.value.slice(0, 512).replace(/[\uD800-\uDBFF]$/, '');
     const terms = search.value.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
@@ -178,6 +199,7 @@
   }
   const cancelPendingSearch = () => { if (timer !== undefined) { clearTimeout(timer); timer = undefined; } };
   function queueSearch() {
+    cancelScrollRestore();
     cancelPendingSearch();
     if (!composing) timer = setTimeout(() => { timer = undefined; apply(); }, 180);
   }
@@ -206,17 +228,28 @@
     }
   });
   function restore(state, scroll = true) {
+    cancelScrollRestore();
     cancelPendingSearch();
     readQuery();
     const saved = restoredSnapshot(state);
     limit = saved?.limit || 24;
     committedLimit = limit;
     apply(false, false);
-    if (saved && scroll) window.scrollTo?.({top: saved.scrollY, behavior: 'instant'});
+    if (scroll) scheduleScrollRestore(saved);
   }
   window.addEventListener('popstate', event => restore(event.state));
-  window.addEventListener('pageshow', event => { if (event.persisted) restore(window.history.state); });
-  window.addEventListener('pagehide', () => { cancelPendingSearch(); saveSnapshot(); });
+  window.addEventListener('pageshow', event => {
+    if (event.persisted) restore(window.history.state);
+    else if (initialReturn && initialReturn.revision === scrollRestoreRevision && initialReturn.href === window.location.href)
+      scheduleScrollRestore(initialReturn.saved);
+    initialReturn = null;
+  });
+  window.addEventListener('pagehide', () => { cancelScrollRestore(); cancelPendingSearch(); saveSnapshot(); });
+  window.addEventListener('hashchange', cancelScrollRestore);
+  ['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach(type =>
+    document.addEventListener(type, cancelScrollRestore, {capture: true, passive: true}));
   document.addEventListener('click', event => { if (event.target.closest('a')) saveSnapshot(); });
-  restore(window.history.state);
+  // Render immediately; pageshow runs after native initial fragment positioning.
+  restore(window.history.state, false);
+  let initialReturn = {saved: restoredSnapshot(window.history.state), revision: scrollRestoreRevision, href: window.location.href};
 })();
