@@ -5,6 +5,11 @@ from topic_labels import TOPIC_LABELS, method_tags, resource_kinds, RESOURCE_LAB
 from discovery_facets import GROUPS, for_catalog, counts as group_counts, method_label
 
 
+# Official abstract: https://proceedings.mlr.press/v270/liu25b.html (checked 2026-10-03).
+# Presentation copy only; does not mutate canonical metadata or reading status.
+FEATURE_SUMMARIES = {'rpa-0067': '以视觉输入生成移动与末端目标，通过低层全身跟踪协调腿与臂。'}
+
+
 def render(data, card, categories, shell, esc):
     root = Path(__file__).resolve().parents[1]
     papers = data['papers']
@@ -30,44 +35,44 @@ def render(data, card, categories, shell, esc):
     year_options = ''.join(f'<option value="{y}">{y}</option>' for y in years)
     ordered = sorted(papers, key=lambda p: (not p['citation_verified'], -(p.get('bibliographic_year') or 0), p['title'].casefold()))
 
-    # Editorial entry points reuse exact existing summaries, never imply completed reading.
+    # Entry points use real records and exact catalog summaries. No paper imagery.
     by_id = {p['id']: p for p in papers}
     features = []
-    for pid in ['agenticnav-tool-harness', 'ham-vln']:
+    for pid in ['agenticnav-tool-harness', 'rpa-0062', 'rpa-0067']:
         p = by_id[pid]
         title = (p.get('verified_overlay') or {}).get('title') or p['title']
         features.append(f'''<article class="library-feature">
-  <div class="library-feature-heading"><h3><a data-catalog-link href="papers/{pid}/index.html" title="{esc(title)}">{esc(p.get('short_name') or title)}</a></h3><button type="button" class="feature-preview" data-preview="{pid}" aria-label="速览 {esc(title)}">速览 <span aria-hidden="true">↗</span></button></div>
-  <p>{esc(p['summary'])}</p>
+  <span class="feature-document" aria-hidden="true"><svg viewBox="0 0 24 28" fill="none" stroke="#c9c3ff" stroke-width="1.4"><path d="M4 1h10l6 6v20H4zM14 1v7h6M8 13h8M8 18h8M8 23h5"/></svg></span>
+  <div class="library-feature-heading"><h3><a data-catalog-link href="papers/{pid}/index.html" title="{esc(title)}">{esc({'agenticnav-tool-harness': 'AgenticNav', 'rpa-0067': 'Visual Whole-Body Control', 'rpa-0062': 'UMI on Legs'}.get(pid) or p.get('short_name') or title)}</a></h3></div>
+  <p>{esc(p.get('summary') or FEATURE_SUMMARIES[pid])}</p>
+  <div class="feature-actions"><button type="button" class="feature-preview" data-preview="{pid}" aria-label="速览 {esc(title)}">阅读概览 <span aria-hidden="true">→</span></button><a data-catalog-link href="papers/{pid}/index.html">查看论文 <span aria-hidden="true">↗</span></a></div>
 </article>''')
-    star_version = hashlib.sha256((root / 'assets/hero-atlas.svg').read_bytes()).hexdigest()[:12]
+    features_html = f'''<section class="library-features" aria-labelledby="features-title">
+      <div class="library-feature-label"><div><p>精选论文</p><h2 id="features-title">发现值得深入阅读的研究</h2></div><a href="#catalog-results">查看全部 <span aria-hidden="true">→</span></a></div>
+      <div class="library-feature-grid">{''.join(features)}</div>
+    </section>'''
+    galaxy_version = hashlib.sha256((root / 'assets/library-galaxy.webp').read_bytes()).hexdigest()[:12]
     body = f'''<main id="main" class="atlas-experience library-main">
+  <div class="library-galaxy-art" aria-hidden="true"><img src="assets/library-galaxy.webp?v={galaxy_version}" alt="" width="1440" height="720" fetchpriority="high"><span class="galaxy-focus"></span></div>
   <section class="library-overview" aria-labelledby="hero-title">
     <div class="library-brand-panel">
-      <img class="library-constellation" src="assets/hero-atlas.svg?v={star_version}" alt="" width="160" height="117">
-      <p class="library-eyebrow">ROBOPAPERATLAS / LIBRARY</p>
-      <h1 id="hero-title">论文目录</h1>
-      <p class="library-scope">按研究问题探索论文，<br>查阅方法、原始证据与阅读报告。</p>
-      <p class="library-stats"><strong>{total}</strong> 条书目 <span aria-hidden="true">·</span> <a href="reading/index.html">{report_count} 份报告已导入 ↗</a></p>
-      <a class="library-atlas-link" href="map/index.html">探索 Atlas 星图 <span aria-hidden="true">↗</span><span class="sr-only">，抽象视觉，非引用关系</span></a>
+      <h1 id="hero-title">探索机器人研究的联系</h1>
+      <p class="library-scope">从论文出发，连接方法、证据与新的问题</p>
     </div>
-    <a class="library-mobile-jump" href="#catalog" data-catalog-jump>直接搜索 / 跳到 {total} 篇目录 <span aria-hidden="true">↓</span></a>
-    <section class="library-features" aria-labelledby="features-title">
-      <div class="library-feature-label"><h2 id="features-title">研究线索</h2><span>预印本 · 来源已核验</span></div>
-      {''.join(features)}
-    </section>
   </section>
   <section class="catalog-section" id="catalog" aria-labelledby="catalog-title">
-    <div class="catalog-heading"><h2 id="catalog-title">论文目录</h2><a href="about/index.html#standards">收录与核验说明 ↗</a></div>
     <form class="library-search" role="search" aria-label="搜索当前论文目录">
       <label class="sr-only" for="search">搜索标题、作者或关键词</label><span class="library-search-icon" aria-hidden="true">⌕</span>
-      <input id="search" class="catalog-search-trigger" type="search" maxlength="512" placeholder="搜索标题、作者或关键词" autocomplete="off" aria-controls="paper-grid">
-      <button id="clear-catalog-search" type="button" aria-label="清除目录搜索" hidden>✕</button><kbd aria-hidden="true">/</kbd>
+      <input id="search" class="catalog-search-trigger" type="search" maxlength="512" placeholder="搜索论文、作者或关键词" autocomplete="off" aria-controls="paper-grid">
+      <button id="clear-catalog-search" type="button" aria-label="清除目录搜索" hidden>✕</button><button class="library-search-submit" type="submit" aria-label="搜索论文"><span aria-hidden="true">→</span></button>
     </form>
     <div class="catalog-toolbar">
       <div class="topic-filters" role="group" aria-label="交叉浏览入口，选择一个方向">{tabs}</div>
       <label class="mobile-topic-select">研究方向<select id="topic-select"><option value="all">全部 · {total}</option>{topic_options}</select></label>
     </div>
+    <p class="galaxy-focus-description" aria-live="polite" data-galaxy-status>按研究问题探索 · 星系为抽象视觉，不表示论文引用关系</p>
+    {features_html}
+    <div class="catalog-heading" id="catalog-results"><div><p class="library-eyebrow">LIBRARY / 全部论文</p><h2 id="catalog-title">继续探索 {total} 篇论文</h2></div><a href="about/index.html#standards">收录与核验说明 ↗</a></div>
     <p class="catalog-scope-note">每次选择一个浏览方向；四个分组可交叉，数量不可相加。来源核验与阅读完成分开记录。</p>
     <div class="catalog-main">
       <div class="results-bar"><p id="result-count" role="status" aria-live="polite">共 {total} 篇论文</p>
@@ -100,8 +105,9 @@ def render(data, card, categories, shell, esc):
     </div>
   </section>
   <section class="reading-roadmap" aria-labelledby="reading-roadmap-title">
-    <div><p class="library-eyebrow">READING / 阅读档案</p><h2 id="reading-roadmap-title">每次阅读，都有迹可循</h2><p>按论文、阶段与版本查阅实际报告。阅读完成与独立复现分别记录。</p><a class="text-link" href="reading/index.html">浏览 {report_count} 份阶段报告 ↗</a></div>
+    <div><p class="library-eyebrow">READING / 阅读档案</p><h2 id="reading-roadmap-title">每次阅读，都有迹可循</h2><p>按论文、阶段与版本查阅实际报告。阅读完成与独立复现分别记录。</p><a class="text-link" href="reading/index.html">浏览阅读档案 · {report_count} 份报告已导入 ↗</a></div>
     <div class="roadmap-stages"><div><span>01</span><h3>初读</h3><p>建立研究问题、核心贡献与证据入口。</p></div><div><span>02</span><h3>写作精读</h3><p>梳理论证结构、研究缺口与表达。</p></div><div><span>03</span><h3>方法精读</h3><p>结合公式、框架与公开代码理解方法。</p></div></div>
   </section>
 </main>'''
     return shell('RoboPaperAtlas', body, library=True)
+
