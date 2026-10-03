@@ -22,9 +22,10 @@ class ReadingIndexTests(unittest.TestCase):
     def page(self, data=None):
         return render(data or self.catalog, shell, esc, display_title, STAGES)
 
-    def test_current_stages_count_once_and_historical_versions_stay_in_detail(self):
+    def test_current_stages_count_once_and_historical_versions_use_disclosures(self):
         page = self.page()
         self.assertIn('5 篇论文 · 12 份已导入阶段报告', page)
+        self.assertEqual(page.count('class="f2-version-history"'), 12)
         self.assertEqual(page.count('class="reading-stage-link"'), 12)
         self.assertEqual(page.count('class="reading-stage unavailable"'), 3)
         for paper in self.catalog['papers']:
@@ -34,7 +35,7 @@ class ReadingIndexTests(unittest.TestCase):
                 path = current_reader.entry_path(paper['id'], stage) or state['artifacts'][0]['path']
                 self.assertEqual(page.count(f'href="../{path}"'), 1)
                 for old in state['artifacts'][1:]:
-                    self.assertNotIn(f'href="../{old["path"]}"', page)
+                    self.assertEqual(page.count(f'href="../{old["path"]}"'), 1)
             if any(s['status'] == 'imported' for s in paper['stages'].values()):
                 self.assertIn(f'href="../papers/{paper["id"]}/index.html#reading"', page)
         self.assertIn('href="reading/index.html">阅读档案</a>', home(self.catalog))

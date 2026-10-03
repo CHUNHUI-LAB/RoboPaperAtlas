@@ -39,7 +39,9 @@
     directions.forEach((direction, index) => {
       const angle = -Math.PI / 2 + index * Math.PI * 2 / count;
       // Fixed coordinates are navigation geometry, never citation or importance data.
-      const center = { x: Math.cos(angle) * 1900, y: Math.sin(angle) * 1350, rx: 565, ry: 440 };
+      const positions = [[-80,0],[-540,1050],[540,1350],[-80,2350],[-540,3400],[540,3700],[-80,4700],[-540,5750],[540,6050]];
+      const [x,y] = positions[index] || [index % 2 ? 540 : -540, index * 780];
+      const center = { x, y, rx: 565, ry: 440 };
       centers[direction.id] = center;
       const children = problems.filter(p => p.direction === direction.id).slice().sort(stableCompare);
       systems[direction.id] = { ...direction, ...center, children: children.map(p => p.id) };
@@ -134,13 +136,21 @@
   const svg = $('#map-canvas'), world = $('.map-world'), nodeLayer = $('.map-nodes'), edgeLayer = $('.map-edges');
   const canvas = $('.map-canvas-wrap'), listWrap = $('.map-list-wrap'), panel = $('.map-sidebar');
   const input = $('#map-search'), suggestions = $('#map-suggestions'), hover = $('.map-hover-card');
+  const drillButton = create('button', '展开研究问题 →', 'map-drill-direction');
+  drillButton.type='button'; drillButton.hidden=true;
+  drillButton.addEventListener('click',()=>navigate(state.topic,'',{drill:true}));
+  $('.map-results-heading').append(drillButton);
+  const moreDirections = create('button', '更多研究方向 ↓', 'map-more-directions');
+  moreDirections.type = 'button'; moreDirections.setAttribute('aria-label', '向下浏览其余研究方向，全部九个方向也可通过上方筛选访问');
+  moreDirections.addEventListener('click', () => { if (canvas.parentElement) canvas.parentElement.scrollTop += 430; });
+  canvas.parentElement.append(moreDirections);
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const smallScreen = window.matchMedia('(max-width: 760px)');
   const nodeEls = new Map(), rows = new Map($$('[data-map-row]').map(el => [el.dataset.mapRow, el]));
-  let camera = { x: 0, y: 0, k: .5 }, width = 1, height = 1, animation = 0, cameraEpoch = 0;
+  let camera = { x: 0, y: 0, k: .5 }, width = 1, height = 1, overviewScale = .2, animation = 0, cameraEpoch = 0;
   let visible = true, activeSuggestions = [], suggestionIndex = -1, pointer = null, ignoreClickUntil = 0;
   let opener = null, focusedId = nodes[0]?.id || '', lastViewExplicit = false;
-  let state = { topic: 'all', problem: '', query: '', selected: '', view: smallScreen.matches ? 'list' : 'map' };
+  let state = { topic: 'all', problem: '', query: '', selected: '', view: smallScreen.matches ? 'list' : 'map', drill: false };
   const yearText = p => p.display?.yearLabel || (p.year ? `${p.year}${p.yearBasis === 'user_provided' ? ' · 原始记录年' : p.yearBasis === 'preprint' ? ' · 预印本年' : ' · 出版年'}` : '年份待核验');
   const shortLabel = p => {
     const title = p.shortName || p.title;
@@ -148,6 +158,7 @@
     const preferred = colon > 1 && colon < 24 ? title.slice(0, colon) : title;
     return preferred.length > 31 ? preferred.slice(0, 29).trim() + '…' : preferred;
   };
+  const isOverview = () => !state.drill && !state.problem && !state.query && !state.selected;
   const currentNodes = () => search(nodes.filter(p => (state.topic === 'all' || p.mapTopic === state.topic) && (!state.problem || p.classification.problem === state.problem)), state.query);
   const systemEls = new Map(), problemEls = new Map();
 
@@ -162,8 +173,9 @@
     const label = createSvg('text', { class: 'atlas-navigation-label' }); label.textContent = displayLabel(item);
     const meta = createSvg('text', { class: 'atlas-navigation-meta' });
     const number = nodes.filter(p => kind === 'system' ? p.mapTopic === item.id : p.classification.problem === item.id).length;
-    meta.textContent = `${number} 篇论文${kind === 'system' ? ` / ${item.children.length} ${item.id === 'resources' || item.id === 'cross-domain' ? '个分组' : '个问题'}` : ''}`;
-    g.append(title, halo, ring, hit, core, label, meta); layer.append(g); return g;
+    meta.textContent = `${number} 篇`;
+    const plate = createSvg('rect', {class:'atlas-selection-plate', rx:6, 'aria-hidden':'true'});
+    g.append(title, halo, ring, hit, core, plate, label, meta); layer.append(g); return g;
   }
   const centerTitle = createSvg('text', { x: 0, y: 0, class: 'atlas-galaxy-title', 'text-anchor': 'middle', 'aria-hidden': 'true' }); centerTitle.textContent = 'Atlas';
   const centerNote = createSvg('text', { x: 0, y: 0, class: 'atlas-galaxy-note', 'text-anchor': 'middle', 'aria-hidden': 'true' }); centerNote.textContent = `${nodes.length} 篇论文 / 研究地图`;
@@ -187,11 +199,11 @@
     const scale = 1 / camera.k;
     centerTitle.style.fontSize = `${(smallScreen.matches ? 19 : 32) * scale}px`; centerTitle.setAttribute('y', -8 * scale);
     centerNote.style.fontSize = `${(smallScreen.matches ? 11 : 13) * scale}px`; centerNote.setAttribute('y', 13 * scale);
-    centerTitle.style.display = centerNote.style.display = state.topic === 'all' && !state.query ? '' : 'none';
+    centerTitle.style.display = centerNote.style.display = 'none';
     for (const [collection, kind] of [[systemEls, 'system'], [problemEls, 'problem']]) collection.forEach(group => {
       const hit = group.querySelector('.atlas-navigation-hit');
       const text = group.querySelector('.atlas-navigation-label').textContent;
-      const compact = smallScreen.matches && kind === 'system';
+      const compact = false;
       const labelSize = smallScreen.matches ? 16 : kind === 'system' ? 19 : 17;
       // Account for full-width Chinese glyphs in the screen-space hit target.
       const labelWidth = Array.from(text).reduce((sum, char) => sum + (/[^\x00-\x7f]/.test(char) ? 1 : .6), 0) * labelSize;
@@ -205,11 +217,23 @@
       const label = group.querySelector('.atlas-navigation-label'), meta = group.querySelector('.atlas-navigation-meta');
       label.setAttribute('x', offset * scale); meta.setAttribute('x', offset * scale);
       label.style.fontSize = `${labelSize * scale}px`;
-      label.setAttribute('y', (kind === 'system' ? 62 : 30) * scale); meta.style.fontSize = `${13 * scale}px`; meta.setAttribute('y', (kind === 'system' ? 84 : 52) * scale);
+      label.setAttribute('y', (kind === 'system' ? 62 : 30) * scale); meta.style.fontSize = `${14 * scale}px`; meta.setAttribute('y', (kind === 'system' ? 84 : 52) * scale);
+      const selectedSystem = kind === 'system' && state.topic === item.id && isOverview();
+      const plate = group.querySelector('.atlas-selection-plate');
+      plate.style.display = selectedSystem ? '' : 'none';
+      if (selectedSystem) {
+        const boxWidth = Math.max(140,labelWidth+26);
+        const labelX = clamp(screenX + 32, 12, width-boxWidth-12)-screenX;
+        plate.setAttribute('x',labelX*scale); plate.setAttribute('y',-30*scale); plate.setAttribute('width',boxWidth*scale); plate.setAttribute('height',65*scale);
+        const left=Math.min(-27,labelX),right=Math.max(27,labelX+boxWidth);
+        hit.setAttribute('x',left*scale);hit.setAttribute('y',-30*scale);hit.setAttribute('width',(right-left)*scale);hit.setAttribute('height',70*scale);
+        label.setAttribute('x',(labelX+13)*scale); label.setAttribute('y',-3*scale); label.style.textAnchor='start';
+        meta.setAttribute('x',(labelX+13)*scale); meta.setAttribute('y',20*scale); meta.style.textAnchor='start';
+      } else { label.style.textAnchor='middle'; meta.style.textAnchor='middle'; }
     });
     nodeEls.forEach((group, id) => {
       group.querySelector('.map-node-hit').setAttribute('r', 22 * scale);
-      group.querySelector('.map-node-dot').setAttribute('r', (id === state.selected ? 3 : state.topic === 'all' && !state.query ? 1.3 : 2) * scale);
+      group.querySelector('.map-node-dot').setAttribute('r', (id === state.selected ? 3 : isOverview() ? 1.3 : 2) * scale);
       group.querySelector('.map-node-aura').setAttribute('r', (id === state.selected ? 13 : 8) * scale);
       group.querySelector('.map-node-ring').setAttribute('r', 8.5 * scale);
       const label = group.querySelector('.map-node-label');
@@ -239,6 +263,7 @@
       const elapsed = clamp((now - started) / 360, 0, 1), ease = 1 - Math.pow(1 - elapsed, 3);
       camera = { x: start.x + (target.x - start.x) * ease, y: start.y + (target.y - start.y) * ease, k: start.k + (target.k - start.k) * ease };
       drawCamera(); animation = elapsed < 1 ? requestAnimationFrame(tick) : 0;
+      if (elapsed === 1) { const active = document.activeElement?.closest('[data-atlas-system]'); if (active) revealSystem(hierarchy.systems[active.dataset.atlasSystem]); }
     };
     animation = requestAnimationFrame(tick);
   }
@@ -248,23 +273,53 @@
     if (state.query) return currentNodes();
     return Object.values(hierarchy.systems).flatMap(p => [{ x: p.x - 360, y: p.y - 280 }, { x: p.x + 360, y: p.y + 280 }]);
   }
-  function fit(animate = true) { moveCamera(fitCamera(scopePoints(), width, height), animate); }
+  function measureMap() {
+    const rect = canvas.getBoundingClientRect();
+    if (!rect.width) return;
+    width = rect.width;
+    const overview = isOverview();
+    const visibleHeight = Math.max(420, (window.innerHeight || 1024) - Math.max(72, rect.top || 72) - 36);
+    const scale = Math.max(.12, Math.min((width - 80) / 1680, (visibleHeight - 240) / 2350));
+    overviewScale = scale;
+    const bottom = Math.max(...Object.values(hierarchy.systems).map(item => item.y + 360));
+    height = overview ? Math.ceil(150 + bottom * scale + 180) : smallScreen.matches ? 420 : 680;
+    canvas.style.height = `${height}px`; canvas.style.minHeight = `${height}px`;
+    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  }
+  function resetMapScroll() { if (canvas.parentElement) canvas.parentElement.scrollTop = 0; }
+  function revealSystem(item) {
+    if (!isOverview()) return;
+    const viewport = canvas.parentElement;
+    const y = item.y * camera.k + camera.y;
+    const viewportHeight = viewport.clientHeight || 600;
+    if (y - 40 < viewport.scrollTop || y + 105 > viewport.scrollTop + viewportHeight)
+      viewport.scrollTop = Math.max(0, y - viewportHeight / 2);
+  }
+  function fit(animate = true) {
+    measureMap(); resetMapScroll();
+    if (isOverview()) {
+      moveCamera({x:width / 2,y:150,k:overviewScale},animate);
+    } else moveCamera(fitCamera(scopePoints(), width, height), animate);
+  }
   function focusScope() {
-    const target = state.selected ? $('#map-selected-title') : state.view === 'list' ? rows.get(currentNodes()[0]?.id)?.querySelector('a') : state.problem ? nodeEls.get(currentNodes()[0]?.id) : state.topic !== 'all' ? [...problemEls.values()].find(g => !g.hidden) : [...systemEls.values()].find(g => !g.hidden);
+    const target = state.selected ? $('#map-selected-title') : state.view === 'list' ? rows.get(currentNodes()[0]?.id)?.querySelector('a') : state.problem ? nodeEls.get(currentNodes()[0]?.id) : !isOverview() && state.topic !== 'all' ? [...problemEls.values()].find(g => !g.hidden) : [...systemEls.values()].find(g => !g.hidden);
     target?.focus({ preventScroll: true });
   }
-  function navigate(topic = 'all', problem = '', { push = true, animate = true } = {}) {
+  function navigate(topic = 'all', problem = '', { push = true, animate = true, drill = false } = {}) {
     const active = document.activeElement;
-    const movingFocus = active?.closest('[data-atlas-system]') || active?.closest('[data-atlas-problem]') || active?.closest('[data-paper-id]') || active?.closest('#atlas-breadcrumbs') || active?.closest('#map-panel-content');
+    const movingFocus = active === drillButton || active?.closest('[data-atlas-system]') || active?.closest('[data-atlas-problem]') || active?.closest('[data-paper-id]') || active?.closest('#atlas-breadcrumbs') || active?.closest('#map-panel-content');
     cancelCamera(); closeSuggestions(); hover.hidden = true; state.topic = categories.has(topic) ? topic : 'all';
-    state.problem = hierarchy.subsystems[problem]?.direction === state.topic ? problem : '';
+    state.problem = hierarchy.subsystems[problem]?.direction === state.topic ? problem : ''; state.drill = drill || !!state.problem;
     state.query = ''; state.selected = ''; input.value = ''; opener = null;
-    renderMap(); renderPanel(false); renderNavigation(); syncURL(push); fit(animate);
+    renderMap(); renderPanel(false); renderNavigation(); syncURL(push);
+    if (canvas.parentElement) canvas.parentElement.scrollTop = 0;
+    fit(animate);
     if (movingFocus) focusScope();
   }
-  function goUp() { if (state.selected) closePanel(); else if (state.problem) { const id = state.problem; navigate(state.topic); if (state.view === 'map') problemEls.get(id)?.focus({ preventScroll: true }); else focusScope(); } else if (state.topic !== 'all') { const id = state.topic; navigate(); if (state.view === 'map') systemEls.get(id)?.focus({ preventScroll: true }); else focusScope(); } }
+  function goUp() { if (state.selected) closePanel(); else if (state.problem) { const id = state.problem; navigate(state.topic,'',{drill:true}); if (state.view === 'map') problemEls.get(id)?.focus({ preventScroll: true }); else focusScope(); } else if (state.drill && state.topic !== 'all') { const id=state.topic; navigate(id); systemEls.get(id)?.focus({preventScroll:true}); } else if (state.topic !== 'all') { const id = state.topic; navigate(); if (state.view === 'map') systemEls.get(id)?.focus({ preventScroll: true }); else focusScope(); } }
   function renderNavigation() {
-    root.dataset.level = state.query ? 'search' : state.problem ? 'problem' : state.topic !== 'all' ? 'system' : 'galaxy';
+    root.dataset.level = state.query ? 'search' : state.problem ? 'problem' : state.drill && state.topic !== 'all' ? 'system' : 'galaxy';
+    drillButton.hidden = state.topic === 'all' || !!state.query || !!state.problem || state.drill;
     const crumbs = $('#atlas-breadcrumbs'); crumbs.replaceChildren();
     const add = (label, topic, problem, current) => { const button = create('button', label); button.type = 'button'; button.dataset.atlasCrumb = topic; button.dataset.atlasProblem = problem || ''; if (current) button.setAttribute('aria-current', 'location'); crumbs.append(button); };
     add('全部方向', 'all', '', state.topic === 'all');
@@ -274,6 +329,7 @@
     $('#atlas-level-description').textContent = state.query ? `搜索全部 ${nodes.length} 篇论文` : state.problem ? '选择论文，查看分类证据与资源' : state.topic !== 'all' ? (state.topic === 'resources' ? '跨领域资源：独立资源集合，不作为研究方向' : state.topic === 'cross-domain' ? '跨领域研究：尚无唯一主方向归属' : '选择研究问题，或直接查看论文') : '选择研究方向，展开具体问题';
   }
   function focusPaper(id, animate = true) {
+    measureMap(); resetMapScroll();
     const p = nodeById.get(id); if (!p) return;
     const k = smallScreen.matches ? .98 : 1.13;
     moveCamera({ x: width / 2 - p.x * k, y: height * .47 - p.y * k, k }, animate);
@@ -290,9 +346,10 @@
   }
   function syncURL(push = false) {
     const url = new URL(location.href);
-    for (const key of ['paper', 'topic', 'problem', 'q', 'view']) url.searchParams.delete(key);
+    for (const key of ['paper', 'topic', 'problem', 'q', 'view', 'explore']) url.searchParams.delete(key);
     if (state.selected) url.searchParams.set('paper', state.selected);
     if (state.topic !== 'all') url.searchParams.set('topic', state.topic);
+    if (state.drill && !state.problem) url.searchParams.set('explore','1');
     if (state.problem) url.searchParams.set('problem', state.problem);
     if (state.query) url.searchParams.set('q', state.query);
     if (lastViewExplicit) url.searchParams.set('view', state.view);
@@ -303,21 +360,23 @@
     const topic = params.get('topic') || 'all', paper = params.get('paper') || '', view = params.get('view');
     lastViewExplicit = view === 'map' || view === 'list';
     state = { topic: categories.has(topic) ? topic : 'all', problem: hierarchy.subsystems[params.get('problem')]?.direction === topic ? params.get('problem') : '', query: (params.get('q') || '').slice(0, 300),
-      selected: nodeById.has(paper) ? paper : '', view: lastViewExplicit ? view : smallScreen.matches ? 'list' : 'map' };
-    if (state.query) { state.topic = 'all'; state.problem = ''; }
-    if (state.selected) { const p = nodeById.get(state.selected); state.topic = p.mapTopic; state.problem = p.classification.problem; state.query = ''; }
+      drill: params.get('explore') === '1' || !!params.get('problem'), selected: nodeById.has(paper) ? paper : '', view: lastViewExplicit ? view : smallScreen.matches ? 'list' : 'map' };
+    if (state.topic === 'all') state.drill = false;
+    if (!state.problem && params.get('explore') !== '1') state.drill = false;
+    if (state.query) { state.topic = 'all'; state.problem = ''; state.drill = false; }
+    if (state.selected) { const p = nodeById.get(state.selected); state.topic = p.mapTopic; state.problem = p.classification.problem; state.drill = true; state.query = ''; }
     input.value = state.query;
   }
   function setRoving(id, focus = false) {
     if (id && nodeEls.has(id)) focusedId = id;
-    nodeEls.forEach((group, key) => group.setAttribute('tabindex', key === focusedId && !group.hidden && (state.topic !== 'all' || state.query) ? '0' : '-1'));
+    nodeEls.forEach((group, key) => group.setAttribute('tabindex', key === focusedId && !group.hidden && !isOverview() ? '0' : '-1'));
     if (focus) nodeEls.get(focusedId)?.focus({ preventScroll: true });
   }
   function renderMap() {
     const filtered = currentNodes(), ids = new Set(filtered.map(p => p.id));
     const relations = related(nodes, state.selected), relatedIds = new Set(relations.items.map(item => item.paper.id));
     nodeEls.forEach((group, id) => {
-      const showing = ids.has(id);
+      const showing = isOverview() || ids.has(id);
       group.style.display = showing ? '' : 'none'; group.hidden = !showing;
       group.setAttribute('aria-hidden', String(!showing));
       group.classList.toggle('is-selected', id === state.selected);
@@ -332,8 +391,8 @@
     });
     if (!ids.has(focusedId)) focusedId = filtered[0]?.id || '';
     setRoving(focusedId);
-    systemEls.forEach((group, id) => { const showing = state.topic === 'all' && !state.query; group.hidden = !showing; group.style.display = showing ? '' : 'none'; group.setAttribute('tabindex', showing ? '0' : '-1'); });
-    problemEls.forEach((group, id) => { const showing = state.topic !== 'all' && !state.problem && hierarchy.subsystems[id].direction === state.topic && !state.query; group.hidden = !showing; group.style.display = showing ? '' : 'none'; group.setAttribute('tabindex', showing ? '0' : '-1'); });
+    systemEls.forEach((group, id) => { const showing = isOverview(); group.classList.toggle('is-active-system',isOverview() && state.topic === id); group.setAttribute('aria-pressed',String(isOverview() && state.topic === id)); group.hidden = !showing; group.style.display = showing ? '' : 'none'; group.setAttribute('tabindex', showing ? '0' : '-1'); });
+    problemEls.forEach((group, id) => { const showing = state.drill && state.topic !== 'all' && !state.problem && hierarchy.subsystems[id].direction === state.topic && !state.query; group.hidden = !showing; group.style.display = showing ? '' : 'none'; group.setAttribute('tabindex', showing ? '0' : '-1'); });
     edgeLayer.replaceChildren();
     if (state.selected && ids.has(state.selected) && relations.mode === 'shared-tags') {
       const from = nodeById.get(state.selected);
@@ -448,7 +507,7 @@
     const p = nodeById.get(id); if (!p) return;
     cancelCamera(); closeSuggestions(); hover.hidden = true;
     opener = source?.isConnected ? source : nodeEls.get(id);
-    state.topic = p.mapTopic; state.problem = p.classification.problem;
+    state.topic = p.mapTopic; state.problem = p.classification.problem; state.drill = true;
     state.query = ''; input.value = ''; state.selected = id;
     renderMap(); renderPanel(animate); setRoving(id);
     if (state.view === 'map') focusPaper(id, animate);
@@ -472,7 +531,7 @@
   }
 
   input.addEventListener('input', () => {
-    state.query = input.value.slice(0, 300); state.topic = 'all'; state.problem = ''; state.selected = '';
+    state.drill = false; state.query = input.value.slice(0, 300); state.topic = 'all'; state.problem = ''; state.selected = '';
     renderMap(); renderPanel(false); renderSuggestions(); syncURL(false); if (state.view === 'map') fit();
   });
   input.addEventListener('focus', () => { if (input.value.trim()) renderSuggestions(); });
@@ -489,7 +548,7 @@
   });
   suggestions.addEventListener('pointerdown', event => event.preventDefault());
   suggestions.addEventListener('click', event => { const option = event.target.closest('[data-suggest-paper]'); if (option) selectPaper(option.dataset.suggestPaper, input, { focusPanel: true }); });
-  $('#map-search-clear').addEventListener('click', () => { state.query = ''; input.value = ''; closeSuggestions(); renderMap(); syncURL(false); fit(); input.focus(); });
+  $('#map-search-clear').addEventListener('click', () => { state.drill = false; state.query = ''; input.value = ''; closeSuggestions(); renderMap(); syncURL(false); fit(); input.focus(); });
   document.addEventListener('pointerdown', event => { if (!event.target.closest('.map-search-wrap')) closeSuggestions(); });
   root.addEventListener('focusout', () => queueMicrotask(() => { if (!document.activeElement?.closest('.map-search-wrap')) closeSuggestions(); }));
   $$('[data-map-topic]').forEach(button => button.addEventListener('click', () => navigate(button.dataset.mapTopic)));
@@ -506,7 +565,7 @@
         const next = nearest(candidates, candidates.find(p => p.id === id), event.key); if (next) collection.get(next.id).focus({ preventScroll: true });
       }
     });
-    group.addEventListener('focusin', () => group.classList.add('is-hovered'));
+    group.addEventListener('focusin', () => { group.classList.add('is-hovered'); if (kind === 'system') revealSystem(hierarchy.systems[id]); });
     group.addEventListener('focusout', () => group.classList.remove('is-hovered'));
   });
   $$('[data-map-view]').forEach(button => button.addEventListener('click', () => {
@@ -529,7 +588,7 @@
   });
 
   function paperAtPointer(event) {
-    if (state.topic === 'all' && !state.query) return undefined;
+    if (isOverview()) return undefined;
     if (!Number.isFinite(event.clientX) || !Number.isFinite(event.clientY)) return event.target.closest('[data-paper-id]')?.dataset.paperId;
     const rect = svg.getBoundingClientRect(), x = event.clientX - rect.left, y = event.clientY - rect.top;
     if (x < 0 || y < 0 || x > rect.width || y > rect.height) return undefined;
@@ -579,7 +638,7 @@
     zoom(Math.exp(-clamp(event.deltaY, -100, 100) * .006), event.clientX - rect.left, event.clientY - rect.top, false);
   }, { passive: false });
   svg.addEventListener('keydown', event => {
-    if (state.topic === 'all' && !state.query) {
+    if (isOverview()) {
       if (['Enter', ' ', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) { event.preventDefault(); [...systemEls.values()].find(g => !g.hidden)?.focus({ preventScroll: true }); return; }
     }
     const id = event.target.closest('[data-paper-id]')?.dataset.paperId || focusedId;

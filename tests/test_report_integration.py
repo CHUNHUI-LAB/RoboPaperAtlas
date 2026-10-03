@@ -39,7 +39,7 @@ class ReportIntegrationTests(unittest.TestCase):
    output=Path(d);paper=output/'papers/rpa-0062/index.html';paper.parent.mkdir(parents=True);paper.write_text('<html><body>Paper</body></html>')
    for r in self.records:
     path=report_path(r);dest=output/path;dest.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(ROOT/path,dest)
-   (output/'assets').mkdir();shutil.copyfile(ROOT/'assets/catalog-navigation.js',output/'assets/catalog-navigation.js')
+   (output/'assets').mkdir();shutil.copyfile(ROOT/'assets/catalog-navigation.js',output/'assets/catalog-navigation.js');shutil.copyfile(ROOT/'assets/f2.css',output/'assets/f2.css')
    write_current_readers(ROOT,output,[self.paper],self.records)
    self.assertEqual(validate_output(output,self.records),14)
    changed=output/report_path(self.records[0]);changed.write_bytes(changed.read_bytes()+b' ')

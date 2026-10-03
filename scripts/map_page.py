@@ -81,24 +81,23 @@ def map_data(catalog, base='../',report_records=()):
 
 def map_html(catalog, base='../', css='../assets/paper-map.css', js='../assets/paper-map.js',report_records=()):
     data = map_data(catalog, base,report_records)
+    # Display palette only; canonical category IDs, membership and counts are unchanged.
+    visual_palette = {'navigation': '#62def3', 'locomotion': '#7ce398'}
+    data['categories'] = [{**c, 'color': visual_palette.get(c['id'], c['color'])} for c in data['categories']]
     categories = {c['id']: c for c in data['categories']}
     counts = {key: sum(p['mapTopic'] == key for p in data['papers']) for key in categories}
     topics = ''.join(f'<button type="button" data-map-topic="{key}" aria-pressed="false" title="{esc(c["english"])}" style="--topic:{c["color"]}"><i aria-hidden="true"></i>{esc(c["displayLabel"])}<span>{counts[key]}</span></button>' for key,c in categories.items())
+    topic_buttons = topics.split('</button>')[:-1]
+    topics = ''.join(button + '</button>' for button in topic_buttons[:4]) + '<details class="map-extra-directions"><summary>更多方向</summary><div>' + ''.join(button + '</button>' for button in topic_buttons[4:]) + '</div></details>'
     rows = ''.join(f'<li data-map-row="{esc(p["id"])}"><a href="{esc(p["detailUrl"])}" data-map-paper="{esc(p["id"])}"><span class="map-list-dot" style="--topic:{categories[p["mapTopic"]]["color"]}" aria-hidden="true"></span><span class="map-list-copy"><strong>{esc(p["title"])}</strong><small>{esc(p["authors"])} · {esc(p["display"]["yearLabel"])}</small><small>{esc(categories[p["mapTopic"]]["displayLabel"])} · {"分类暂定" if p["classification"]["needsReview"] else "主来源支持的编目判断"}</small></span><span class="map-row-action">查看详情 →</span></a><details class="map-row-summary"><summary>阅读摘要</summary><p>{esc(p["summary"]) if p["summary"] else "这篇论文尚未整理摘要。可打开详情查看原文与来源；不据标题推断方法或结论。"}</p><a href="{esc(p["detailUrl"])}">打开论文页面 ↗</a></details></li>' for p in data['papers'])
     payload = json.dumps(data, ensure_ascii=False, separators=(',', ':')).replace('<', '\\u003c').replace('>', '\\u003e').replace('&', '\\u0026')
     return f'''<link rel="stylesheet" href="{esc(css)}"><script src="{esc(js)}" defer></script>
 <main id="main" class="paper-map-page">
-  <section class="map-heading"><div><p class="eyebrow">RoboPaperAtlas / EXPLORE</p><h1>研究星图</h1></div><p>{len(data['papers'])} 个星点，{len(data['papers'])} 篇真实论文。<br>选择研究方向，右侧立即显示对应论文。</p></section>
+
   <section class="paper-map" id="paper-map" aria-label="论文主题地图" data-view="list">
-    <div class="map-toolbar" hidden>
-      <div class="map-search-wrap"><label for="map-search" class="sr-only">搜索地图中的论文</label><span aria-hidden="true">⌕</span><input id="map-search" type="search" role="combobox" autocomplete="off" aria-autocomplete="list" aria-controls="map-suggestions" aria-expanded="false" placeholder="搜索标题、作者、标签…"><button type="button" id="map-search-clear" aria-label="清空地图搜索" hidden>×</button><ul id="map-suggestions" role="listbox" aria-label="匹配的论文" hidden></ul></div>
-      <p id="map-result-count" role="status" aria-live="polite">{len(data['papers'])} 篇论文</p>
-      <div class="map-view-toggle" role="group" aria-label="浏览方式"><button type="button" data-map-view="map" aria-pressed="false"><span aria-hidden="true">⊙</span> 地图</button><button type="button" data-map-view="list" aria-pressed="true"><span aria-hidden="true">☷</span> 列表</button></div>
-    </div>
-    <div class="map-topics" aria-label="研究方向与独立资源区域" hidden><button type="button" data-map-topic="all" aria-pressed="true">全部方向<span>{len(data['papers'])}</span></button>{topics}</div>
-    <div class="atlas-navigation" hidden><nav id="atlas-breadcrumbs" aria-label="地图当前位置"></nav><button type="button" id="atlas-back" disabled>← 返回上一级</button><p id="atlas-level-description" role="status" aria-live="polite"></p></div>
     <div class="map-workspace">
       <div class="map-explore">
+  <section class="map-heading map-star-heading"><div><p class="eyebrow">RoboPaperAtlas / EXPLORE</p><h1>研究星图</h1></div><p>{len(data['papers'])} 个星点，{len(data['papers'])} 篇真实论文。<br>选择研究方向，右侧立即显示对应论文。</p></section>
         <div class="map-canvas-wrap" hidden>
           <svg id="map-canvas" role="group" aria-label="论文主题地图。方向键切换论文，Enter 查看，加减键缩放，Home 显示全部。" aria-describedby="map-help map-legend" tabindex="0"><defs><radialGradient id="map-nebula"><stop offset="0" stop-color="#b5cae0" stop-opacity=".16"/><stop offset=".4" stop-color="#7995b3" stop-opacity=".07"/><stop offset="1" stop-color="#597086" stop-opacity="0"/></radialGradient><radialGradient id="map-star-glow"><stop offset="0" stop-color="#f1f8ff" stop-opacity=".8"/><stop offset=".24" stop-color="#d8e8ff" stop-opacity=".22"/><stop offset="1" stop-color="#acc8f0" stop-opacity="0"/></radialGradient></defs><g class="map-world"><g class="map-regions" aria-hidden="true"></g><g class="map-edges" aria-hidden="true"></g><g class="map-nodes"></g><g class="atlas-systems"></g><g class="atlas-problems"></g></g></svg>
           <div class="map-canvas-top"><span><i aria-hidden="true"></i> 研究地图</span><span>{len(data['papers'])} 篇论文 / 按问题探索</span></div>
@@ -109,7 +108,15 @@ def map_html(catalog, base='../', css='../assets/paper-map.css', js='../assets/p
         <p id="map-help" class="map-help">拖动平移 · Ctrl / ⌘ + 滚轮缩放 · 方向键选择</p>
 
       </div>
-      <div class="map-results-column"><div class="map-results-heading"><div><p class="eyebrow">PAPERS IN THIS VIEW</p><h2 id="map-results-title" tabindex="-1">全部论文</h2><p id="map-selection-status" role="status" aria-live="polite">共 {len(data['papers'])} 篇 · 选择左侧星域或上方方向</p></div><button type="button" data-map-reset>清除筛选</button></div>
+      <div class="map-results-column">
+    <div class="map-toolbar" hidden>
+      <div class="map-search-wrap"><label for="map-search" class="sr-only">搜索地图中的论文</label><span aria-hidden="true">⌕</span><input id="map-search" type="search" role="combobox" autocomplete="off" aria-autocomplete="list" aria-controls="map-suggestions" aria-expanded="false" placeholder="搜索标题、作者、标签…"><button type="button" id="map-search-clear" aria-label="清空地图搜索" hidden>×</button><ul id="map-suggestions" role="listbox" aria-label="匹配的论文" hidden></ul></div>
+      <p id="map-result-count" role="status" aria-live="polite">{len(data['papers'])} 篇论文</p>
+      <div class="map-view-toggle" role="group" aria-label="浏览方式"><button type="button" data-map-view="map" aria-pressed="false"><span aria-hidden="true">⊙</span> 地图</button><button type="button" data-map-view="list" aria-pressed="true"><span aria-hidden="true">☷</span> 列表</button></div>
+    </div>
+    <div class="map-topics" aria-label="研究方向与独立资源区域" hidden><button type="button" data-map-topic="all" aria-pressed="true">全部方向<span>{len(data['papers'])}</span></button>{topics}</div>
+    <div class="atlas-navigation" hidden><nav id="atlas-breadcrumbs" aria-label="地图当前位置"></nav><button type="button" id="atlas-back" disabled>← 返回上一级</button><p id="atlas-level-description" role="status" aria-live="polite"></p></div>
+<div class="map-results-heading"><div><p class="eyebrow">PAPERS IN THIS VIEW</p><h2 id="map-results-title" tabindex="-1">全部论文</h2><p id="map-selection-status" role="status" aria-live="polite">共 {len(data['papers'])} 篇 · 选择左侧星域或上方方向</p></div><button type="button" data-map-reset>清除筛选</button></div>
       <aside class="map-sidebar" aria-label="论文详情与资源">
         <div class="map-panel-welcome"><span class="map-welcome-symbol" aria-hidden="true">✦</span><p class="eyebrow">从这里开始</p><h2>从研究问题<br>找到论文</h2><p>选择彩色星系进入研究方向，再展开问题子系统。每颗论文星都通向原文、代码与阅读状态。</p><div class="map-welcome-facts"><div><strong>{len(data['papers'])}</strong><span>已收录论文</span></div><div><strong>{len(data['categories']):02d}</strong><span>导航区域</span></div><div><strong>主题</strong><span>当前地图连线类型</span></div></div><p class="map-truth-note">研究方向、方法标签和资源类型分开展示。分类属于编辑判断；题名暂定与主来源核验范围会逐篇说明，不等于全文精读或复现。73 条原始书目与 22 条增补记录的来源状态保留。</p><a class="map-catalog-link" href="{esc(base)}index.html#catalog">回到完整目录 <span aria-hidden="true">↗</span></a></div>
         <div class="map-panel-selected" hidden><div class="map-panel-top"><span>论文与资源</span><button type="button" id="map-panel-close" aria-label="关闭论文详情">关闭 ×</button></div><div id="map-panel-content"></div></div>

@@ -18,7 +18,7 @@ test('related-node selection and Back restore correct panel and URL',()=>{
  const f=fixture();pick(f,'Deep Whole-Body Control');const before=selected(f);f.click('[data-related-paper]');f.step();assert.notEqual(selected(f),before);f.goBack();assert.equal(selected(f),before);assert(f.location.search.includes('rpa-0012'));
 });
 test('category single-click counts, global search resets category, empty results recover',()=>{
- const f=fixture();for(const [topic,n]of[['navigation',18],['wbc',20],['mobile-manipulation',19],['policy-learning',21],['spatial-representations',3],['locomotion',2],['general-ml',4],['resources',7],['cross-domain',1],['all',95]]){f.click(`[data-map-topic="${topic}"]`);f.step();assert.equal(f.$$('.map-node').filter(n=>!n.hidden).length,n)}
+ const f=fixture();for(const [topic,n]of[['navigation',18],['wbc',20],['mobile-manipulation',19],['policy-learning',21],['spatial-representations',3],['locomotion',2],['general-ml',4],['resources',7],['cross-domain',1],['all',95]]){f.click(`[data-map-topic="${topic}"]`);f.step();assert.equal(f.$$('.map-node').filter(n=>!n.hidden).length,95);assert.equal(f.$$('[data-map-row]').filter(row=>!row.hidden).length,n)}
  f.click('[data-map-topic="wbc"]');pick(f,'HarnessVLN');assert.match(selected(f),/HarnessVLN/);assert.equal(f.$('[data-map-topic="navigation"]').getAttribute('aria-pressed'),'true');
  f.input('q_not_present');f.step();assert.equal(f.$$('.map-node').filter(n=>!n.hidden).length,0);assert.equal(f.$('.map-empty').hidden,false);f.click('[data-map-reset]');f.step();assert.equal(f.$$('.map-node').filter(n=>!n.hidden).length,95);
 });
@@ -79,7 +79,7 @@ test('invisible star targets stay44px across zoom while paper marks stay equal-s
  }
 });
 test('overlapping44px targets select nearest actual star, independent of SVG paint order',()=>{
- const f=fixture(),svg=f.$('#map-canvas');f.click('[data-map-topic="wbc"]');f.step();const world=f.$('.map-world').getAttribute('transform').match(/translate\(([-\d.]+) ([-\d.]+)\) scale\(([-\d.]+)\)/);
+ const f=fixture(),svg=f.$('#map-canvas');f.click('[data-map-topic="wbc"]');f.step();f.click('.map-drill-direction');f.step();const world=f.$('.map-world').getAttribute('transform').match(/translate\(([-\d.]+) ([-\d.]+)\) scale\(([-\d.]+)\)/);
  const node=f.$('[data-paper-id="rpa-0012"]'),point=node.getAttribute('transform').match(/translate\(([-\d.]+) ([-\d.]+)\)/);
  const clientX=Number(world[1])+Number(point[1])*Number(world[3]),clientY=Number(world[2])+Number(point[2])*Number(world[3]);
  // The simulated SVG hit target is intentionally the wrong star, as can occur with overlapping hit circles.
@@ -94,7 +94,7 @@ test('closing or replacing selection restores equal default star sizes immediate
 });
 
 test('overlapping hit targets refresh nearest-star tooltip on pointermove and clear in empty space',()=>{
- const f=fixture(),svg=f.$('#map-canvas');f.click('[data-map-topic="navigation"]');f.step();f.click('[data-camera="out"]');f.step();
+ const f=fixture(),svg=f.$('#map-canvas');f.click('[data-map-topic="navigation"]');f.step();f.click('.map-drill-direction');f.step();f.click('[data-camera="out"]');f.step();
  const world=f.$('.map-world').getAttribute('transform').match(/translate\(([-\d.]+) ([-\d.]+)\) scale\(([-\d.]+)\)/);
  const point=id=>{const el=f.$(`[data-paper-id="${id}"]`),p=el.getAttribute('transform').match(/translate\(([-\d.]+) ([-\d.]+)\)/);return{clientX:Number(world[1])+Number(p[1])*Number(world[3]),clientY:Number(world[2])+Number(p[2])*Number(world[3])}};
  const oldTarget=f.$('[data-paper-id="agenticnav-tool-harness"]');oldTarget.emit('pointerover',{pointerType:'mouse',...point('agenticnav-tool-harness')});assert.match(f.$('.map-hover-card').textContent,/AgenticNav/);
@@ -145,3 +145,7 @@ test('canvas clipping rejects off-canvas label coordinates',()=>{
 
 // Split-view regression checks run in the established map CI suite.
 require('./test_split_starmap.cjs');
+
+// Keep reference-C regressions in the existing CI entry point.
+require('./test_reference_scroll_regressions.cjs');
+require('./test_persistent_overview.cjs');

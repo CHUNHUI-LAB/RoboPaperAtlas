@@ -16,7 +16,7 @@ class MapIntegrationTests(unittest.TestCase):
   body=map_html(self.catalog,css=asset_url('../','paper-map.css'),js=asset_url('../','paper-map.js'),report_records=load_reports(ROOT))
   page=shell('论文地图',body,prefix='../',page='map')
   self.assertIn('<title>RoboPaperAtlas</title>',page)
-  self.assertIn('class="page-map"',page)
+  self.assertIn('class="f2-theme page-map"',page)
   self.assertIn('href="../map/index.html" aria-current="page"',page)
   self.assertIn('assets/experience.css?v=',page)
   self.assertIn('assets/paper-map.css?v=',page)
