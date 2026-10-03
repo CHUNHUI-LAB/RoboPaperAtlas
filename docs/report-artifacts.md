@@ -73,7 +73,7 @@ independently valid UTF-8, and carries its exact byte count and SHA-256. Assembl
 concatenates those original bytes without newline, Unicode, whitespace, or HTML
 normalization. The final byte count and SHA-256 must also match. This bounds a
 single report at 47,952,000 bytes. The whole registry is limited to 2 MB and the exact
-reviewed paper/stage/version identities in `REPORT_PAPERS` (currently eighteen
+reviewed paper/stage/version identities in `REPORT_PAPERS` (currently twenty
 records, including ten UMI versions across its three stages).
 
 No registry value is accepted as a directory or arbitrary input/output path.
@@ -307,7 +307,32 @@ Actual browser visual QA is separate from content review and static validation.
 
 See [RoLoMa writing close reading](roloma-stage2.md). The new formal-version
 Stage 2 adds 36 licensed source-sentence/Chinese analysis pairs and scoped counts.
-The registry now contains 19 fixed records, 11 current stages across 4 papers,
+That addition brought the registry to 19 fixed records, 11 current stages across 4 papers,
 with 3 fully covered papers. All 18 predecessors, including RoLoMa Stage 1's
 48 fragments and fixed artifact, remain byte-identical. The current Stage 1
 view gains only its generated Stage 2 link; Stage 3 remains unavailable.
+
+
+## VBC formal-version Stage 1
+
+`rpa-0067/v1/stage1` adds the twelve-section first reading of the publisher-designated
+24-page paper, PMLR 270:234–257 (2025), from CoRL 2024. The source hash is
+`7309333a5ebe9752534fd087ba23f139b18f0a535255313866de19107e4be879`.
+Its seven original figure crops and three table crops retain author/PMLR attribution,
+CC BY 4.0 links and alteration notices. The exact signed OpenReview agreement is
+indexed but direct retrieval remains unavailable, disclosed in the report alongside
+the directly verified PMLR agreement. The separate code license is CC BY-NC 4.0;
+no source code or complete PDF is republished.
+
+The narrow `report_vbc_stage1.py` importer pins exact identity, source/document/style/
+script hashes, all ten image hashes and their order, twelve sections, ten evidence
+anchors, ten passive checkbox controls and exactly five conclusions. It does not
+widen any historical report's permissions. Packaging uses 76 UTF-8-safe parts, at
+most 48,000 bytes each. The current view preserves scientific body, inline style,
+images and reader-controls script, changing only declared navigation signatures.
+
+The registry contains 20 versioned records and 12 current stages across five papers,
+with three papers complete through Stage 3. All 19 historical records/chunks and
+all 94 other catalog objects remain unchanged. VBC Stage 2, Stage 3 and reproduction
+remain incomplete. Content review/static tests do not imply actual-browser visual
+acceptance; that remains a separate release check.

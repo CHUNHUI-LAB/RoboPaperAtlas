@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-02",
+  "updated_at": "2026-10-03",
   "papers": [
     {
       "id": "rpa-0001",
@@ -4078,7 +4078,7 @@
         "preprint_year": 2024,
         "venue": "Conference on Robot Learning (CoRL 2024); PMLR 270",
         "doi": null,
-        "verification_scope": "已核验出版方书目与官方来源，尚未开展全文精读或复现。"
+        "verification_scope": "已核验正式出版记录、24 页出版方指定 PDF，并完成该正式版本的 Stage 1 初读内容审阅；未开展后续阶段或独立复现。"
       },
       "bibliographic_year": 2024,
       "publication_year": 2025,
@@ -4094,36 +4094,51 @@
       "summary": null,
       "citation_verified": false,
       "metadata_status": "user_provided_unverified",
-      "verified_at": "2026-09-30",
-      "verification_scope": "原始书目字段保留为用户提供、未核验记录；已单独核验并补充正式出版题名、作者、出版年及官方来源。此核验不代表已完成论文阅读或复现。",
+      "verified_at": "2026-10-03",
+      "verification_scope": "原始书目保留；正式出版题名、七位作者、PMLR 270:234–257（2025）、CoRL 2024 会议归属与正式 24 页 PDF 已核验。完成 Stage 1 初读内容审阅；后续阶段、模型执行及复现未完成。",
       "publication_status": "verified_primary_metadata",
       "paper_url": "https://proceedings.mlr.press/v270/liu25b.html",
       "preprint_url": "https://arxiv.org/abs/2403.16967",
       "pdf_url": "https://raw.githubusercontent.com/mlresearch/v270/main/assets/liu25b/liu25b.pdf",
       "pdf_kind": "publisher",
       "pdf_edition": "version_of_record",
-      "pdf_note": "已核验正式出版方指定的 PDF 链接；本次为书目与链接核验，未完成全文检查。",
+      "pdf_note": "已获取并逐页核验出版方指定正式 24 页 PDF（含附录 A–J）；原文 33/34 个 YCB 物体计数不一致及 Table 1 的 81.87 异常值在初读报告中保留说明。仅链接出版方 PDF，不镜像完整论文。",
       "project_url": "https://wholebody-b1.github.io/",
       "code_urls": [
         "https://github.com/Ericonaldo/visual_wholebody"
       ],
-      "code_note": "已发现官方实现仓库，但未运行代码或独立复现。 Publisher-linked code includes high-level, low-level and third_party directories; README describes policy training and links low-level weights.",
+      "code_note": "出版方与作者项目页均链接 Ericonaldo/visual_wholebody。已静态核验 README、目录及固定提交 869104c31953718f30ad20675e5291fcb5c5ea23 的许可：根目录 CC BY-NC 4.0，低层及第三方另有许可；未执行代码，未核验权重可下载、实机部署完整性或与正式 PDF 的逐项实现一致性。",
       "doi": null,
       "sources": [
         "https://proceedings.mlr.press/v270/liu25b.html",
         "https://proceedings.mlr.press/v270/",
         "https://arxiv.org/abs/2403.16967",
         "https://wholebody-b1.github.io/",
-        "https://github.com/Ericonaldo/visual_wholebody"
+        "https://github.com/Ericonaldo/visual_wholebody",
+        "https://proceedings.mlr.press/pmlr-license-agreement.html",
+        "https://openreview.net/attachment?id=cT2N3p1AcE&name=publication_agreement",
+        "https://github.com/Ericonaldo/visual_wholebody/commit/869104c31953718f30ad20675e5291fcb5c5ea23"
       ],
       "notes": [
         "Conference/preprint 2024, official PMLR citation year 2025. Publisher lists all seven authors; old repository BibTeX omits Ri-Zhao Qiu and should not override publisher. No publication DOI listed by PMLR.",
-        "Official PDF link verified from publisher; full PDF content not checked in this metadata pass."
+        "正式出版 PDF 已全文及图表核验，Stage 1 内容已独立审阅；12 项初读包含 7 幅图、3 张表，保留 33/34 计数与 81.87 原表异常值。",
+        "作者描述的视觉自主拾取以人工初始化目标掩码为前置条件；全仿真训练不等于没有人类参与。",
+        "Stage 2、Stage 3 和独立复现未完成。Stage 1 内容审阅与实际浏览器视觉验收分开；图像复用按论文 CC BY 4.0 标注，代码 CC BY-NC 4.0 不由论文许可替代。"
       ],
       "stages": {
         "stage1": {
-          "status": "not_imported",
-          "artifacts": []
+          "status": "imported",
+          "artifacts": [
+            {
+              "kind": "html",
+              "version": "v1",
+              "path": "artifacts/rpa-0067/v1/first-pass.html",
+              "sha256": "8ded597adad595ca8dd24dbdc6bc9d832ba6f26f8d5676fd867071c6b8a98320",
+              "source_edition": "CoRL 2024 · PMLR 270:234–257（2025）· 出版方指定正式 PDF，24 页；PDF 页序含附录 A–J",
+              "created_at": "2026-10-03",
+              "review_status": "content_approved"
+            }
+          ]
         },
         "stage2": {
           "status": "not_imported",

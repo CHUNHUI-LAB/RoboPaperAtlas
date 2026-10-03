@@ -47,6 +47,11 @@ class MapIntegrationTests(unittest.TestCase):
   self.assertEqual(roloma['stages']['stage1']['status'],'imported')
   original=json.loads((ROOT/'tests/fixtures/roloma-before-registration.json').read_text())
   roloma.clear();roloma.update(original)
+  # Normalize VBC's separately hash-pinned first-reading metadata overlay.
+  vbc=next(p for p in self.catalog['papers'] if p['id']=='rpa-0067')
+  self.assertEqual(vbc['stages']['stage1']['status'],'imported')
+  original=json.loads((ROOT/'tests/fixtures/vbc-before-registration.json').read_text())
+  vbc.clear();vbc.update(original)
   payload=json.dumps([p for p in self.catalog['papers'] if p['id']!='rpa-0062'],ensure_ascii=False,sort_keys=True,separators=(',',':')).encode()
   self.assertEqual(hashlib.sha256(payload).hexdigest(),'efa2b769f740904ccac886cf8a5b0f821bc7184b1539451946d37490ad9dfb66')
  def test_verified_force_control_author_preserves_original(self):

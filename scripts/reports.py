@@ -35,6 +35,14 @@ RECORD_FIELDS = {
 COMPUTED_FIELDS = {'sha256', 'bytes', 'parts'}
 PART_FIELDS = {'file', 'bytes', 'sha256'}
 REPORT_PAPERS = {
+    'rpa-0067': {
+        'title': 'Visual Whole-Body Control',
+        'versions': {'v1': {'stage1'}},
+        'review_status': 'content_approved',
+        'source_urls': {'https://proceedings.mlr.press/v270/liu25b.html'},
+        'pdf_urls': {'https://raw.githubusercontent.com/mlresearch/v270/main/assets/liu25b/liu25b.pdf'},
+        'arxiv_id': None,
+    },
     'rpa-0054': {
         'title': 'RoLoMa',
         'versions': {'v1': {'stage1', 'stage2'}},
@@ -414,7 +422,10 @@ def _parse_html(record, payload, root=ROOT):
     except UnicodeDecodeError as exc:
         raise ValueError('Report must contain exact UTF-8 bytes') from exc
     require(not re.search(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', text), 'HTML contains control characters')
-    if record['paper_id'] == 'rpa-0054' and record['stage'] == 'stage2':
+    if record['paper_id'] == 'rpa-0067':
+        from report_vbc_stage1 import prepare
+        text,parser=prepare(root,record,payload)
+    elif record['paper_id'] == 'rpa-0054' and record['stage'] == 'stage2':
         from report_roloma_stage2 import prepare
         text,parser=prepare(root,record,payload)
     elif record['paper_id'] == 'rpa-0054':

@@ -24,10 +24,10 @@ class RoLoMaWritingTests(unittest.TestCase):
  def set_policy(self,payload,**updates):(self.root/POLICY_PATH).write_text(json.dumps(dict(self.policy,document_sha256=r.sha(payload),**updates)))
  def admit(self,payload,**updates):self.set_policy(payload,**updates);return r.split_report(self.root,self.record,payload)
  def test_all_eighteen_prior_records_and_chunks_are_immutable(self):
-  self.assertEqual(len(FROZEN),18);self.assertEqual(len(self.records),19)
+  self.assertEqual(len(FROZEN),18);self.assertEqual(len(self.records),20)
   for rec in self.records:
    key='/'.join(rec[k] for k in ('paper_id','version','stage'))
-   if key=='rpa-0054/v1/stage2':continue
+   if key in {'rpa-0054/v1/stage2','rpa-0067/v1/stage1'}:continue
    self.assertEqual(rec['sha256'],FROZEN[key]);self.assertEqual(r.sha((ROOT/r.report_path(rec)).read_bytes()),FROZEN[key])
    for part in rec['parts']:self.assertEqual(r.sha((ROOT/r._parts_path(rec)/part['file']).read_bytes()),part['sha256'])
   first=next(x for x in self.records if x['paper_id']=='rpa-0054' and x['stage']=='stage1')
@@ -35,7 +35,7 @@ class RoLoMaWritingTests(unittest.TestCase):
  def test_ninety_four_other_catalog_objects_are_unchanged(self):
   self.assertEqual(len(CATALOG_FROZEN),94)
   for p in self.catalog['papers']:
-   if p['id']!='rpa-0054':self.assertEqual(canonical(p),CATALOG_FROZEN[p['id']])
+   if p['id'] not in {'rpa-0054','rpa-0067'}:self.assertEqual(canonical(p),CATALOG_FROZEN[p['id']])
  def test_exact_pairs_sections_and_licensed_source_not_a_full_pdf(self):
   parsed=r._parse_html(self.record,self.raw,ROOT)
   self.assertEqual(tuple(parsed.source_rows),UNIT_IDS);self.assertEqual(len(UNIT_IDS),36)
@@ -77,12 +77,12 @@ class RoLoMaWritingTests(unittest.TestCase):
    with self.assertRaisesRegex(ValueError,'CSS'):self.admit(changed,style_sha256=r.sha(style))
  def test_eleven_current_stages_four_papers_only_three_complete(self):
   self.assertEqual(validate_catalog(self.catalog,self.records),95)
-  self.assertEqual(sum(s['status']=='imported' for p in self.catalog['papers'] for s in p['stages'].values()),11)
-  self.assertEqual(sum(any(s['status']=='imported' for s in p['stages'].values()) for p in self.catalog['papers']),4)
+  self.assertEqual(sum(s['status']=='imported' for p in self.catalog['papers'] for s in p['stages'].values()),12)
+  self.assertEqual(sum(any(s['status']=='imported' for s in p['stages'].values()) for p in self.catalog['papers']),5)
   self.assertEqual(sum(all(s['status']=='imported' for s in p['stages'].values()) for p in self.catalog['papers']),3)
   self.assertFalse(self.paper['citation_verified']);self.assertEqual(self.paper['metadata_status'],'user_provided_unverified')
   self.assertEqual(self.paper['stages']['stage2'],expected_stage('rpa-0054','stage2',self.records));self.assertEqual(self.paper['stages']['stage3'],{'status':'not_imported','artifacts':[]})
-  self.assertIn('2 个已导入报告',details(self.paper));self.assertIn('11 份报告已导入',home(self.catalog))
+  self.assertIn('2 个已导入报告',details(self.paper));self.assertIn('12 份报告已导入',home(self.catalog))
   self.assertEqual(json.loads((ROOT/'data/classification.json').read_text())['catalog_sha256'],r.sha((ROOT/'data/catalog.json').read_bytes()))
  def test_current_views_link_two_stages_and_keep_context_and_article(self):
   for stage in ('stage1','stage2'):

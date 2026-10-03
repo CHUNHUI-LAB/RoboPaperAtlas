@@ -22,10 +22,10 @@ class RoboDuetMethodTests(unittest.TestCase):
   (self.root/POLICY_PATH).write_text(json.dumps(dict(self.policy,document_sha256=r.sha(payload),**updates)))
  def admit(self,payload,**updates):self.set_policy(payload,**updates);return r.split_report(self.root,self.record,payload)
  def test_sixteen_historical_reports_are_byte_immutable(self):
-  self.assertEqual(len(FROZEN),16);self.assertEqual(len(self.records),19)
+  self.assertEqual(len(FROZEN),16);self.assertEqual(len(self.records),20)
   for rec in self.records:
    key='/'.join(rec[k] for k in ('paper_id','version','stage'))
-   if key in {'rpa-0052/v1/stage3','rpa-0054/v1/stage1','rpa-0054/v1/stage2'}:continue
+   if key in {'rpa-0052/v1/stage3','rpa-0054/v1/stage1','rpa-0054/v1/stage2','rpa-0067/v1/stage1'}:continue
    self.assertEqual(rec['sha256'],FROZEN[key]);self.assertEqual(r.sha((ROOT/r.report_path(rec)).read_bytes()),FROZEN[key])
  def test_exact_reviewed_counts_and_source_scope(self):
   parsed=r._parse_html(self.record,self.raw,ROOT)
@@ -63,7 +63,7 @@ class RoboDuetMethodTests(unittest.TestCase):
    with self.assertRaisesRegex(ValueError,'CSS'):self.admit(changed,style_sha256=r.sha(style))
  def test_catalog_nine_current_stages_three_complete_papers(self):
   self.assertEqual(validate_catalog(self.catalog,self.records),95)
-  self.assertEqual(sum(s['status']=='imported' for p in self.catalog['papers'] for s in p['stages'].values()),11)
+  self.assertEqual(sum(s['status']=='imported' for p in self.catalog['papers'] for s in p['stages'].values()),12)
   self.assertEqual(sum(all(s['status']=='imported' for s in p['stages'].values()) for p in self.catalog['papers']),3)
   self.assertFalse(self.paper['citation_verified']);self.assertEqual(self.paper['stages']['stage3'],expected_stage('rpa-0052','stage3',self.records))
   self.assertIn('方法与代码内容已审阅',details(self.paper))
