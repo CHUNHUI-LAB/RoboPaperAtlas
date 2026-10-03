@@ -21,7 +21,7 @@ class ReaderPreviewTests(unittest.TestCase):
  def setUpClass(cls):cls.source=(ROOT/SOURCE_FILE).read_text();cls.page=render(ROOT,shell,asset_url)
  def test_real_shared_shell_and_one_page_scope(self):
   self.assertIn('class="site-header"',self.page)
-  for name in ['Library','Atlas','Radar']:self.assertIn('>'+name+'</a>',self.page)
+  for href,name in [('index.html#catalog','论文库'),('map/index.html','星图'),('frontier/index.html','前沿动态')]:self.assertIn('href="../../'+href+'">'+name+'</a>',self.page)
   self.assertIn('Reader preview',self.page);self.assertIn('不会替换已发布报告',self.page);self.assertIn('已发布 v1',self.page)
  def test_all_nine_code_blocks_preserve_exact_source(self):
   source=re.findall(r'<pre><code>(.*?)</code></pre>',self.source,re.S);blocks=re.findall(r'<div class="code-reader".*?<pre[^>]*>(.*?)</pre>',self.page,re.S)
