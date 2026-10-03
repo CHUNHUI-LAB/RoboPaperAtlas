@@ -17,6 +17,7 @@ const topics = [
 function make(reduced = false) {
   const buttons = topics.map(([topic, label, count]) => ({
     dataset: {topic}, events: {},
+    getAttribute(name) {return name === 'aria-pressed' ? String(this.pressed || false) : null;},
     querySelector(selector) {
       if (selector === 'span') return {textContent: label};
       if (selector === 'b') return {textContent: count};
@@ -36,7 +37,7 @@ function make(reduced = false) {
       return {'[data-galaxy-status]': status, '.library-search': form, '#catalog-results': results}[selector] || null;
     },
   };
-  const document = {activeElement: null, querySelector(selector) {return selector === '.library-main' ? root : null;}};
+  const document = {events: {}, addEventListener(type, callback) {this.events[type] = callback;}, activeElement: null, querySelector(selector) {return selector === '.library-main' ? root : null;}};
   const window = {matchMedia(query) {assert.equal(query, '(prefers-reduced-motion: reduce)'); return {matches: reduced};}};
   vm.runInNewContext(code, {document, window});
   return {buttons, root, status, document, form, scrolls};
