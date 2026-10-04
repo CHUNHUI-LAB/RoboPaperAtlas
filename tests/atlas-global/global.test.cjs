@@ -1,5 +1,35 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const program=require('./program.cjs'),M=program.model,D=program.data,{fixture}=require('./dom_fixture.cjs');
+const sha=value=>require('node:crypto').createHash('sha256').update(value).digest('hex');
+const graphData=html=>html.match(/<script id="atlas-data" type="application\/json">([\s\S]*?)<\/script>/)[1];
+function immutableGraphHTML(){
+ const directory=path.join(__dirname,'../../data/atlas-global-preview-parts'),manifest=JSON.parse(fs.readFileSync(path.join(directory,'manifest.json'),'utf8'));
+ const payload=Buffer.concat(manifest.parts.map((part,index)=>{
+  assert.equal(part.path,`part-${String(index+1).padStart(3,'0')}.txt`);
+  const bytes=fs.readFileSync(path.join(directory,part.path));assert.equal(bytes.length,part.bytes);assert.equal(sha(bytes),part.sha256);return bytes;
+ }));
+ assert.equal(payload.length,manifest.bytes);assert.equal(sha(payload),manifest.sha256);
+ return payload.toString('utf8');
+}
+function maskReadingStages(raw){
+ const papers=JSON.parse(raw).papers,parts=[],key=/"stages":/g;
+ let cursor=0,index=0,match;
+ while((match=key.exec(raw))){
+  const start=key.lastIndex;assert.equal(raw[start],'[');
+  let end=start,depth=0,quoted=false,escaped=false;
+  for(;end<raw.length;end++){
+   const char=raw[end];
+   if(quoted){if(escaped)escaped=false;else if(char==='\\')escaped=true;else if(char==='"')quoted=false;continue}
+   if(char==='"'){quoted=true;continue}
+   if(char==='[')depth++;
+   else if(char===']'&&--depth===0){end++;break}
+  }
+  assert.equal(depth,0);assert(index<papers.length);
+  assert.deepEqual(JSON.parse(raw.slice(start,end)),papers[index++].stages);
+  parts.push(raw.slice(cursor,start),'[]');cursor=end;key.lastIndex=end;
+ }
+ assert.equal(index,papers.length);parts.push(raw.slice(cursor));return parts.join('');
+}
 test('95 unique canonical records have stable, finite, distinct coordinates independent of input order',()=>{assert.equal(D.papers.length,95);assert.equal(new Set(D.papers.map(p=>p.id)).size,95);const a=M.layout(D.papers),b=M.layout([...D.papers].reverse());assert.deepEqual(a,b);assert.equal(new Set(a.map(p=>p.x+','+p.y)).size,95);assert(a.every(p=>Number.isFinite(p.x)&&Number.isFinite(p.y)&&M.colors[p.category]));});
 test('all titles, Chinese task/method names, authors and outside-pilot papers searchable',()=>{for(const p of D.papers)assert(M.search(p,p.title,'',''));for(const p of D.papers.filter(p=>p.methods.includes('RL')))assert(M.search(p,'强化学习','',''));assert.equal(D.papers.filter(p=>M.search(p,'ODYSSEY','','')).length,1)});
 test('11 typed verified records retain 8 directed pairs and exact evidence',()=>{const n=M.neighborhood('rpa-0062',D.relations.edges);assert.equal(n.records.length,11);assert.equal(n.ids.size,9);assert.equal(M.pairs(n.records).length,8);assert(n.records.every(e=>e.directed&&e.evidence.every(v=>v.url.startsWith('https://')&&v.pdf_page>0)));assert.equal(n.records.filter(e=>e.type==='uses_method_or_resource').length,3)});
@@ -42,9 +72,10 @@ test('narrow selection shows only selected and hovered or focused labels, retain
 
 const overlaps=(a,b)=>a.x<b.x+b.width+5&&a.x+a.width+5>b.x&&a.y<b.y+b.height+5&&a.y+a.height+5>b.y;
 
-test('review prototype preserves the complete input dataset and relationship evidence byte-for-byte',()=>{
- const raw=program.html.match(/<script id="atlas-data" type="application\/json">([\s\S]*?)<\/script>/)[1];
- assert.equal(require('node:crypto').createHash('sha256').update(raw).digest('hex'),'1ae66d5bd377cbc623dff58f71221a9fcdd6e902e37eadf850f53e45e8ff114c');
+test('review prototype changes only reading-stage values in the authenticated input dataset',()=>{
+ const original=graphData(immutableGraphHTML());
+ assert.equal(sha(original),'1ae66d5bd377cbc623dff58f71221a9fcdd6e902e37eadf850f53e45e8ff114c');
+ assert.equal(maskReadingStages(graphData(program.html)),maskReadingStages(original));
 });
 
 test('selection and panel expansion never change global projection base or shuffle model coordinates',()=>{
@@ -256,10 +287,10 @@ test('unindexed papers retain honest relationship status and do not receive a fa
  const f=fixture({reduced:true});f.window.AtlasDebug.select('rpa-0042');assert.equal(f.$('#detail').querySelector('.relation-jump'),null);assert.match(f.$('#detail').textContent,/关系尚未索引/);assert.equal(f.$$('.edge').length,0);assert(f.$('#detail').querySelector('.full-paper-title'));
 });
 
-test('deep-link patch preserves the accepted CSS and exact scientific data',()=>{
- const sha=value=>require('node:crypto').createHash('sha256').update(value).digest('hex'),css=program.html.match(/<style>([\s\S]*?)<\/style>/)[1];
+test('deep-link patch preserves the accepted CSS and all non-reading scientific data bytes',()=>{
+ const css=program.html.match(/<style>([\s\S]*?)<\/style>/)[1];
  assert.equal(sha(css),'ef3a77811e454d09746be23aebf441cf6ceb655dfdda7a5433673a410867cb66');
- assert.equal(sha(program.html.match(/<script id="atlas-data" type="application\/json">([\s\S]*?)<\/script>/)[1]),'1ae66d5bd377cbc623dff58f71221a9fcdd6e902e37eadf850f53e45e8ff114c');
+ assert.equal(maskReadingStages(graphData(program.html)),maskReadingStages(graphData(immutableGraphHTML())));
 });
 
 test('cold ?paper=rpa-0062 starts focused with all 95 papers and exactly the verified 8 pairs / 11 records',()=>{

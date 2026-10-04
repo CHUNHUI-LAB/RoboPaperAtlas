@@ -1,6 +1,7 @@
-"""Strict lossless transport for one global95 Atlas interaction preview."""
+"""Authenticated preview transport with derived current reading-state output."""
 import hashlib,json,re
 from pathlib import Path
+from preview_reading import hydrate_reading_stages
 ROUTE='atlas-global-preview/index.html'
 def digest(b):return hashlib.sha256(b).hexdigest()
 def pairs(items):
@@ -33,4 +34,4 @@ def write_preview(root,output):
  if directory.is_symlink():raise ValueError('Symlinked preview destination')
  directory.mkdir(parents=True,exist_ok=True);target=directory/'index.html'
  if target.is_symlink() or output not in target.resolve().parents:raise ValueError('Unsafe preview destination')
- payload=read_preview(root);target.write_bytes(payload);return digest(payload)
+ payload=hydrate_reading_stages(read_preview(root),root,'atlas-data');target.write_bytes(payload);return digest(payload)

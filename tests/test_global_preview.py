@@ -2,15 +2,22 @@ import unittest,json,hashlib,tempfile,shutil,sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT/'scripts'))
 from global_preview import read_preview,write_preview,ROUTE
+from preview_reading import hydrate_reading_stages
 class GlobalPreviewArtifactTests(unittest.TestCase):
  def setUp(self):
   self.tmp=tempfile.TemporaryDirectory();self.root=Path(self.tmp.name);shutil.copytree(ROOT/'data/atlas-global-preview-parts',self.root/'data/atlas-global-preview-parts');self.index=self.root/'data/atlas-global-preview-parts/manifest.json'
  def tearDown(self):self.tmp.cleanup()
  def mutate(self,fn):
   x=json.loads(self.index.read_text());fn(x);self.index.write_text(json.dumps(x))
- def test_exact_assembled_bytes_and_bounded_output(self):
+ def test_exact_transport_bytes_and_derived_output(self):
+  for name in ('catalog.json','reports.json'):shutil.copyfile(ROOT/'data'/name,self.root/'data'/name)
+  shutil.copytree(ROOT/'data/report-parts',self.root/'data/report-parts')
+  for policy in (ROOT/'data').glob('report-*-policy.json'):shutil.copyfile(policy,self.root/'data'/policy.name)
   x=json.loads(self.index.read_text());b=read_preview(self.root);self.assertEqual(len(b),x['bytes']);self.assertEqual(hashlib.sha256(b).hexdigest(),x['sha256'])
-  self.assertEqual(write_preview(self.root,self.root/'dist'),x['sha256']);self.assertEqual((self.root/'dist'/ROUTE).read_bytes(),b)
+  expected=hydrate_reading_stages(b,self.root,'atlas-data')
+  self.assertNotEqual(expected,b)
+  self.assertEqual(write_preview(self.root,self.root/'dist'),hashlib.sha256(expected).hexdigest());self.assertEqual((self.root/'dist'/ROUTE).read_bytes(),expected)
+  self.assertEqual(read_preview(self.root),b)
   self.assertEqual(len(x['parts']),5);self.assertTrue(all(p['bytes']<=48000 for p in x['parts']))
  def test_part_tamper_and_reorder_fail(self):
   p=self.root/'data/atlas-global-preview-parts/part-001.txt';p.write_bytes(p.read_bytes()+b' ')
