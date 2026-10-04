@@ -1,13 +1,13 @@
 'use strict';
 const {test}=require('node:test'),assert=require('node:assert/strict');
 const {fixture}=require('./map_dom_fixture.cjs');
-const counts={'navigation-space':29,'motion-manipulation':46,'robot-learning':48,'methods-resources':29};
+const counts={'navigation-space':29,'motion-manipulation':46,'robot-learning':50,'methods-resources':29};
 const make=url=>{const f=fixture({htmlFile:'dist/index.html',url:url||'https://example.org/RoboPaperAtlas/index.html'});f.$$('option').forEach(o=>o.value=o.getAttribute('value')||'');f.runAsset('app.js');return f};
 const select=(f,id,value)=>{f.$(id).value=value;f.$(id).emit('change')};
 const visible=f=>f.$$('.paper-card').filter(c=>!c.hidden);
 test('Library shows only All plus4Chinese browse groups; counts overlap without reassigning primaries',()=>{
  const f=make(),cards=f.$$('.paper-card'),before=cards.map(c=>[c.dataset.canonicalCategory,c.dataset.category,c.dataset.topics]);assert.equal(cards.length,95);assert.equal(f.$$('[data-topic]').length,5);
- for(const [topic,count]of Object.entries(counts)){f.click(`[data-topic="${topic}"]`);assert.match(f.$('#result-count').textContent,new RegExp(`找到 ${count} 篇论文`));f.click('#load-more');assert.equal(visible(f).length,count);visible(f).forEach(c=>assert(c.dataset.topics.split(' ').includes(topic)))}
+ for(const [topic,count]of Object.entries(counts)){f.click(`[data-topic="${topic}"]`);assert.match(f.$('#result-count').textContent,new RegExp(`找到 ${count} 篇论文`));while(!f.$('#load-more').hidden)f.click('#load-more');assert.equal(visible(f).length,count);visible(f).forEach(c=>assert(c.dataset.topics.split(' ').includes(topic)))}
  assert.deepEqual(cards.map(c=>[c.dataset.canonicalCategory,c.dataset.category,c.dataset.topics]),before);assert.equal(cards.filter(c=>c.dataset.canonicalCategory==='foundations').length,31);assert(cards.every(c=>c.dataset.topics));
 });
 test('legacy Mobile Manip. link still means19 exact papers and optional WBC method never reclassifies ODYSSEY',()=>{

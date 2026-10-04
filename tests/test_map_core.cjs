@@ -99,3 +99,16 @@ test('shared stage routing accepts exact paper/version/stage paths and rejects u
  }
  assert.equal(reportEntryPath('../rpa-0012','stage1','artifacts/../rpa-0012/v1/first-pass.html','v1'),null);
 });
+
+test('reviewed taxonomy search adds Chinese methods without changing tags or relations', () => {
+  const input = [{id:'a',title:'RMA',authors:'Author',tags:['original'],classificationSearch:'运动与步态 机器人学习 强化学习（RL）'},
+    {id:'b',title:'Control',authors:'Another',tags:['original'],classificationSearch:'全身控制（WBC）'}];
+  const before=JSON.stringify(input), relatedBefore=core.related(input,'a');
+  assert.deepEqual(core.search(input,'强化学习').map(p=>p.id),['a']);
+  assert.deepEqual(core.search(input,'机器人学习 ＲＬ').map(p=>p.id),['a']);
+  assert.deepEqual(core.search(input,'全身控制').map(p=>p.id),['b']);
+  assert.deepEqual(core.search(input,'强化学习 WBC'),[]);
+  assert.deepEqual(core.search(input,'   '),input);
+  assert.deepEqual(core.search(input,'不存在的方向'),[]);
+  assert.equal(JSON.stringify(input),before);assert.deepEqual(core.related(input,'a'),relatedBefore);
+});

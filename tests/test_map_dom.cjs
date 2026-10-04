@@ -149,3 +149,15 @@ require('./test_split_starmap.cjs');
 // Keep reference-C regressions in the existing CI entry point.
 require('./test_reference_scroll_regressions.cjs');
 require('./test_persistent_overview.cjs');
+
+test('Chinese method search finds evidence-backed RMA and RoboDuet and clears repeatedly',()=>{
+ const f=fixture();
+ for(const [query,title] of [['RMA 强化学习','RMA:'],['RoboDuet 强化学习','RoboDuet:']]){
+  pick(f,query);assert(selected(f).startsWith(title));
+  assert(f.$('.map-panel-tags').textContent.includes('强化学习（RL） · 方法'));
+  if(title==='RoboDuet:')assert(f.$('.map-panel-tags').textContent.includes('全身控制（WBC） · 方法'));
+  f.click('#map-panel-close');f.input('不存在的方向');f.step();
+  assert.equal(f.$$('[data-map-row]').filter(p=>!p.hidden).length,0);
+  f.click('[data-map-reset]');f.step();assert.equal(f.$$('[data-map-row]').filter(p=>!p.hidden).length,95);
+ }
+});

@@ -236,7 +236,9 @@ class PreviewReadingTests(unittest.TestCase):
             for module, key in PREVIEWS:
                 returned = module.write_preview(ROOT, temporary)
                 output = (Path(temporary) / module.ROUTE).read_bytes()
-                self.assertEqual(output, self.outputs[key])
+                from preview_discovery import hydrate_discovery
+                expected=hydrate_discovery(self.outputs[key]) if key=='atlas-data' else self.outputs[key]
+                self.assertEqual(output, expected)
                 self.assertEqual(returned, hashlib.sha256(output).hexdigest())
                 target = Path(temporary) / module.ROUTE
                 target.write_bytes(b'previous output')

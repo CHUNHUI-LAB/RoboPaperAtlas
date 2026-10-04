@@ -53,11 +53,14 @@ class MapPageTests(unittest.TestCase):
         data=copy.deepcopy(self.catalog);data['papers'][0]['stages']['stage1']={'status':'complete','artifacts':[]}
         with self.assertRaises(ValueError):map_data(data,report_records=self.reports)
     def test_public_projection_allowlist(self):
-        keys={'id','title','shortName','authors','category','mapTopic','topics','classification','tags','year','yearBasis','display','originalRecord','sourceChecked','hasVerifiedOverlay','verificationScope','summary','paperUrl','pdfUrl','pdfKind','pdfNote','projectUrl','codeUrls','codeNote','detailUrl','catalogUrl','stages'}
+        keys={'id','title','shortName','classificationSearch','authors','category','mapTopic','topics','classification','tags','year','yearBasis','display','originalRecord','sourceChecked','hasVerifiedOverlay','verificationScope','summary','paperUrl','pdfUrl','pdfKind','pdfNote','projectUrl','codeUrls','codeNote','detailUrl','catalogUrl','stages'}
         for paper in self.data['papers']:
             self.assertEqual(set(paper),keys)
-            self.assertEqual(set(paper['display']),{'yearLabel','metadataLabel','pdfNoteHeading','codeNote','classificationRationale','classificationEvidenceScope'})
-            self.assertTrue(all(isinstance(value,str) for value in paper['display'].values()))
+            self.assertEqual(set(paper['display']),{'methodLabels','yearLabel','metadataLabel','pdfNoteHeading','codeNote','classificationRationale','classificationEvidenceScope'})
+            self.assertEqual(set(paper['display']['methodLabels']),{t['label'] for t in paper['classification']['methodTags']})
+            self.assertTrue(all(isinstance(k,str) and isinstance(v,str) for k,v in paper['display']['methodLabels'].items()))
+            self.assertIsInstance(paper['classificationSearch'],str)
+            self.assertTrue(all(isinstance(value,str) for key,value in paper['display'].items() if key != 'methodLabels'))
     def test_html_fallback_and_accessibility(self):
         self.assertEqual(self.html.count('data-map-paper='),95)
         self.assertEqual(self.html.count('data-map-row='),95)

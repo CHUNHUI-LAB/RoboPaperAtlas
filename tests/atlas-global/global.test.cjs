@@ -28,7 +28,13 @@ function maskReadingStages(raw){
   assert.deepEqual(JSON.parse(raw.slice(start,end)),papers[index++].stages);
   parts.push(raw.slice(cursor,start),'[]');cursor=end;key.lastIndex=end;
  }
- assert.equal(index,papers.length);parts.push(raw.slice(cursor));return parts.join('');
+ assert.equal(index,papers.length);parts.push(raw.slice(cursor));
+ const data=JSON.parse(parts.join(''));
+ for(const p of data.papers)if(['rpa-0050','rpa-0052'].includes(p.id)){
+  p.methods=[];p.searchAliases=[];p.classification.methodTags=[];
+  p.navigation.groups=[];p.navigation.labels=[];p.navigation.reasons={};
+ }
+ return JSON.stringify(data);
 }
 test('95 unique canonical records have stable, finite, distinct coordinates independent of input order',()=>{assert.equal(D.papers.length,95);assert.equal(new Set(D.papers.map(p=>p.id)).size,95);const a=M.layout(D.papers),b=M.layout([...D.papers].reverse());assert.deepEqual(a,b);assert.equal(new Set(a.map(p=>p.x+','+p.y)).size,95);assert(a.every(p=>Number.isFinite(p.x)&&Number.isFinite(p.y)&&M.colors[p.category]));});
 test('all titles, Chinese task/method names, authors and outside-pilot papers searchable',()=>{for(const p of D.papers)assert(M.search(p,p.title,'',''));for(const p of D.papers.filter(p=>p.methods.includes('RL')))assert(M.search(p,'强化学习','',''));assert.equal(D.papers.filter(p=>M.search(p,'ODYSSEY','','')).length,1)});
@@ -46,7 +52,7 @@ test('clicking a relation exposes its source details without changing the select
 test('Close and Escape restore keyboard focus to the selected visible star, or Overview',()=>{const f=fixture();f.window.AtlasDebug.select('rpa-0062');const close=f.$('#detail').querySelector('button');close.focus();close.emit('click');assert(f.$('#detail').hidden);assert.equal(f.document.activeElement.dataset.id,'rpa-0062');f.window.AtlasDebug.select('rpa-0042');f.$('#detail').querySelector('button').focus();const event=f.window.emit('keydown',{key:'Escape'});assert(event.defaultPrevented);assert.equal(f.document.activeElement.dataset.id,'rpa-0042');assert(f.$('#detail').hidden);f.window.emit('keydown',{key:'Escape'});assert.equal(f.document.activeElement.id,'overview')});
 test('Relation role button supports Space without scrolling the page',()=>{const f=fixture();f.window.AtlasDebug.select('rpa-0062');f.step(600);const event=f.$('.edge').emit('keydown',{key:' '});assert(event.defaultPrevented);assert(f.$$('.evidence').some(e=>e.open));assert.equal(f.window.AtlasDebug.getState().selected,'rpa-0062')});
 
-test('four broad Chinese groups cover all95 with transparent overlaps and no primary reassignment',()=>{const expected={'navigation-space':29,'motion-manipulation':46,'robot-learning':48,'methods-resources':29};assert.equal(Object.keys(D.browseLabels).length,4);for(const[key,n]of Object.entries(expected))assert.equal(D.papers.filter(p=>M.search(p,'',key,'')).length,n);assert(D.papers.every(p=>p.navigation.groups.length));const od=D.papers.find(p=>p.label.includes('ODYSSEY'));assert.equal(od.classification.direction,'mobile-manipulation');assert(od.navigation.groups.includes('motion-manipulation'));for(const id of ['rpa-0008','rpa-0018','rpa-0046','rpa-0058'])assert.deepEqual(D.papers.find(p=>p.id===id).navigation.groups,['methods-resources'])});
+test('four broad Chinese groups cover all95 with transparent overlaps and no primary reassignment',()=>{const expected={'navigation-space':29,'motion-manipulation':46,'robot-learning':50,'methods-resources':29};assert.equal(Object.keys(D.browseLabels).length,4);for(const[key,n]of Object.entries(expected))assert.equal(D.papers.filter(p=>M.search(p,'',key,'')).length,n);assert(D.papers.every(p=>p.navigation.groups.length));const od=D.papers.find(p=>p.label.includes('ODYSSEY'));assert.equal(od.classification.direction,'mobile-manipulation');assert(od.navigation.groups.includes('motion-manipulation'));for(const id of ['rpa-0008','rpa-0018','rpa-0046','rpa-0058'])assert.deepEqual(D.papers.find(p=>p.id===id).navigation.groups,['methods-resources'])});
 test('browse and source-backed method filtering intersect without hiding all95 context',()=>{const f=fixture();f.$('#task').value='motion-manipulation';f.$('#method').value='WBC';f.window.AtlasDebug.filter();assert.equal(f.$$('.node').length,95);const state=f.window.AtlasDebug.getState();assert(state.matching.includes('rpa-0062'));state.matching.forEach(id=>assert(D.papers.find(p=>p.id===id).methods.includes('WBC')));assert.equal(f.$('#task').options.length,5)});
 
 test('optional methods and resources form independent axes and clear together',()=>{const f=fixture();assert.equal(f.$('#commonMethods').children.length,6);const chip=f.$('#commonMethods').children.find(b=>b.dataset.method==='WBC');chip.emit('click');assert.equal(f.$('#method').value,'WBC');assert.equal(chip.getAttribute('aria-pressed'),'true');f.$('#resource').value='dataset';f.window.AtlasDebug.filter();f.window.AtlasDebug.getState().matching.forEach(id=>{const p=D.papers.find(p=>p.id===id);assert(p.methods.includes('WBC'));assert(p.classification.resourceKinds.includes('dataset'))});f.click('#clear');assert.equal(f.$('#resource').value,'');assert.equal(f.$('#method').value,'');assert.equal(f.window.AtlasDebug.getState().matching.length,95)});
@@ -352,3 +358,15 @@ test('reselecting the same paper keeps one URL entry and stores the resulting cl
 test('non-web environments do not expose a local/private share URL or claim a successful clipboard operation',()=>{
  const f=fixture({url:'file:///tmp/example-atlas.html?paper=rpa-0062',reduced:true});assert.equal(f.window.AtlasDebug.paperURL('rpa-0062'),null);assert.equal(f.$('#paperLink'),null);assert.match(f.$('#detail').textContent,/无法生成网页分享链接/);assert(!f.$('#detail').textContent.includes('file:///'));assert(!f.$('#detail').textContent.includes('已复制'));
 });
+
+ test('two targeted RL additions are derived from current reviewed evidence only',()=>{
+ const overlay=JSON.parse(fs.readFileSync(path.join(__dirname,'../../data/classification.json'),'utf8'));
+ for(const id of ['rpa-0050','rpa-0052']){
+  const p=D.papers.find(p=>p.id===id),r=overlay.records.find(p=>p.id===id);
+  assert.deepEqual(p.classification.methodTags,r.method_tags);
+  assert.equal(p.classification.direction,r.primary_direction);
+  assert(p.methods.includes('RL'));assert(p.navigation.groups.includes('robot-learning'));
+  assert(M.search(p,'强化学习','robot-learning','RL'));
+  assert(p.navigation.reasons['robot-learning'].some(v=>v.basis==='reviewed-method'&&v.value==='RL'));
+ }
+ });

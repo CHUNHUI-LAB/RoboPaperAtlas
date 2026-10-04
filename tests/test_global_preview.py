@@ -3,6 +3,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT/'scripts'))
 from global_preview import read_preview,write_preview,ROUTE
 from preview_reading import hydrate_reading_stages
+from preview_discovery import hydrate_discovery
 class GlobalPreviewArtifactTests(unittest.TestCase):
  def setUp(self):
   self.tmp=tempfile.TemporaryDirectory();self.root=Path(self.tmp.name);shutil.copytree(ROOT/'data/atlas-global-preview-parts',self.root/'data/atlas-global-preview-parts');self.index=self.root/'data/atlas-global-preview-parts/manifest.json'
@@ -14,7 +15,7 @@ class GlobalPreviewArtifactTests(unittest.TestCase):
   shutil.copytree(ROOT/'data/report-parts',self.root/'data/report-parts')
   for policy in (ROOT/'data').glob('report-*-policy.json'):shutil.copyfile(policy,self.root/'data'/policy.name)
   x=json.loads(self.index.read_text());b=read_preview(self.root);self.assertEqual(len(b),x['bytes']);self.assertEqual(hashlib.sha256(b).hexdigest(),x['sha256'])
-  expected=hydrate_reading_stages(b,self.root,'atlas-data')
+  expected=hydrate_discovery(hydrate_reading_stages(b,self.root,'atlas-data'))
   self.assertNotEqual(expected,b)
   self.assertEqual(write_preview(self.root,self.root/'dist'),hashlib.sha256(expected).hexdigest());self.assertEqual((self.root/'dist'/ROUTE).read_bytes(),expected)
   self.assertEqual(read_preview(self.root),b)
