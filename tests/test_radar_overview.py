@@ -47,8 +47,45 @@ class RadarOverviewTests(unittest.TestCase):
   failed_sha=hashlib.sha256(json.dumps(failed).encode()).hexdigest()
   self.assert_current_snapshot_contract(retained,failed,failed_sha,{'previous':current})
   with self.assertRaises(AssertionError):self.assert_current_snapshot_contract(retained,failed,failed_sha,{})
-  falsely_fresh=copy.deepcopy(retained);falsely_fresh['status']='ready'
+  # Exercise freshness independently of whichever daily state is latest.
+  # A no-material brief cannot become a schema-valid ready brief by changing
+  # only its status: that correctly fails earlier for missing themes.
+  falsely_fresh=copy.deepcopy(self.data);validate_brief(falsely_fresh)
+  self.assertEqual(falsely_fresh['status'],'ready')
+  self.assertNotEqual(falsely_fresh['source_snapshot']['sha256'],failed_sha)
   with self.assertRaises(AssertionError):self.assert_current_snapshot_contract(falsely_fresh,failed,failed_sha,{'previous':current})
+ def test_status_boundaries_for_empty_and_nonempty_windows(self):
+  populated=copy.deepcopy(self.data)
+  self.assertGreater(populated['counts']['window_candidates'],0)
+  self.assertTrue(populated['research_overview']['themes'])
+  empty=copy.deepcopy(populated)
+  empty['candidate_ids']=[]
+  empty['counts'].update(window_candidates=0,new=0,revisions=0)
+  overview=empty['research_overview']
+  overview['candidate_records']=[];overview['keyword_caveats']=[]
+  for row in overview['topic_distribution']:
+   row.update(count=0,new=0,revisions=0,candidate_ids=[])
+  for candidate in (empty,populated):
+   # No-material is permitted even with candidates, but cannot recycle a
+   # theme or selection. Stale may retain a valid prior editorial result.
+   unselected=copy.deepcopy(candidate)
+   unselected['new_papers']=[];unselected['revised_papers']=[];unselected['reading_priority']=[]
+   unselected['counts'].update(selected_new=0,selected_revisions=0,complete_abstracts_checked_for_selection=0)
+   overview=unselected['research_overview']
+   overview['themes']=[];overview['evidence_sources']=[];overview['keyword_caveats']=[]
+   overview['coverage'].update(candidate_metadata_screened=unselected['counts']['window_candidates'],count_denominator=unselected['counts']['window_candidates'],complete_abstracts_checked=0)
+   for status in ('no_material_update','stale'):
+    with self.subTest(candidates=unselected['counts']['window_candidates'],status=status):
+     record=copy.deepcopy(unselected);record['status']=status;validate_brief(record)
+   invalid=copy.deepcopy(unselected);invalid['status']='ready'
+   with self.assertRaisesRegex(ValueError,'Ready overview requires themes'):validate_brief(invalid)
+  for status in ('ready','stale'):
+   record=copy.deepcopy(populated);record['status']=status;validate_brief(record)
+  invalid=copy.deepcopy(populated);invalid['status']='no_material_update'
+  with self.assertRaisesRegex(ValueError,'No-material/error states cannot retain selected cards'):validate_brief(invalid)
+  invalid['new_papers']=[];invalid['revised_papers']=[];invalid['reading_priority']=[]
+  invalid['counts'].update(selected_new=0,selected_revisions=0)
+  with self.assertRaisesRegex(ValueError,'Error/no-material overview must not repeat themes'):validate_brief(invalid)
  def test_boolean_counts_rejected(self):
   self.reject(lambda d:d['research_overview']['coverage'].update(count_denominator=True))
   self.reject(lambda d:d['research_overview']['topic_distribution'][0].update(count=True))
