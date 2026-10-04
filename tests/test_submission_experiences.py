@@ -112,8 +112,19 @@ class SubmissionExperienceTests(unittest.TestCase):
         self.assertEqual(len(check['links']), 2)
         self.assertNotIn('deadlines', check)
         edition = next(e for e in self.data['editions'] if e['id'] == 'icra-2027')
-        self.assertEqual(edition['status'], 'needs_confirmation')
-        self.assertEqual(edition['deadlines'][0]['status'], 'conflicted')
+        # Resolving the closed initial submission does not resolve final-paper rules.
+        self.assertEqual(edition['status'], 'reviewing')
+        full = next(d for d in edition['deadlines'] if d['kind'] == 'full_paper')
+        self.assertEqual(full['status'], 'verified')
+        self.assertLess(full['date'], edition['checked_at'])
+        self.assertEqual((full['date'], full['time'], full['timezone_label']),
+                         ('2026-09-16', '23:59', 'PST'))
+        for key in ('utc_offset', 'timezone_iana', 'utc_datetime'):
+            self.assertIsNone(full[key])
+        self.assertIn('maintenance-icra27-extension-20260916', full['source_ids'])
+        self.assertFalse(any(d['kind'] == 'registration' for d in edition['deadlines']))
+        for phrase in ('2025-03-06', '2027-02-06', '待定'):
+            self.assertIn(phrase, ' '.join(edition['notes']))
         self.assertFalse(any(d['kind'] == 'camera_ready' for d in edition['deadlines']))
 
 
