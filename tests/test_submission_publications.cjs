@@ -1,10 +1,10 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
 const root=path.resolve(__dirname,'..'),data=JSON.parse(fs.readFileSync(path.join(root,'submit-preview/data/venues.json'),'utf8'));
-function setup(){
+function setup(fixture=data){
  const nodes={};function get(id){if(!nodes[id])nodes[id]={value:'',textContent:'',_html:'',options:[],attributes:{},setAttribute(k,v){this.attributes[k]=String(v)},classList:{remove(){}},add(o){this.options.push(o)},set innerHTML(v){this._html=v;if(v.startsWith('<option')){this.options=[{value:''}];this.value=''}},get innerHTML(){return this._html}};return nodes[id]}
  const ctx=vm.createContext({document:{getElementById:get,querySelectorAll:()=>[]},URL,URLSearchParams,Option:function(text,value){this.text=text;this.value=value},location:{hash:''},history:{replaceState(){}},console});
- const src=fs.readFileSync(path.join(root,'submit-preview/app.js'),'utf8').split("const sourceURL=")[0];vm.runInContext(src,ctx);ctx.fixture=data;vm.runInContext('data=fixture',ctx);get('p-yearmode').value='publication_year';return {ctx,get,run:s=>vm.runInContext(s,ctx)};
+ const src=fs.readFileSync(path.join(root,'submit-preview/app.js'),'utf8').split("const sourceURL=")[0];vm.runInContext(src,ctx);ctx.fixture=fixture;vm.runInContext('data=fixture',ctx);get('p-yearmode').value='publication_year';return {ctx,get,run:s=>vm.runInContext(s,ctx)};
 }
 test('same-publication venue, year, forum, status and topic intersection',()=>{const {ctx,run}=setup();ctx.p=data.publications.find(p=>p.paper_id==='rpa-0052');assert.equal(run("matchesPublication(p,{venue:'ral',yearmode:'publication_year',year:'2025',forum:'journal',status:'published',topic:'wbc'})"),true);assert.equal(run("matchesPublication(p,{venue:'icra',forum:'workshop'})"),false);assert.equal(run("matchesPublication(p,{yearmode:'edition_year',year:'2025'})"),false);ctx.p=data.publications.find(p=>p.paper_id==='rpa-0012');assert.equal(run("matchesPublication(p,{yearmode:'edition_year',year:'2022',forum:'main_conference'})"),true);assert.equal(run("matchesPublication(p,{yearmode:'publication_year',year:'2023'})"),true);assert.equal(run("matchesPublication(p,{yearmode:'publication_year',year:'2022'})"),false)});
 test('derived counts and journal rendering do not fabricate conference editions',()=>{const {get,run}=setup();run('renderPapers()');assert.match(get('paper-count').textContent,/8 篇匹配.*8 篇/);assert.match(get('migration-notice').textContent,/8 篇.*95.*87/);assert.match(get('paper-list').innerHTML,/IEEE RA-L · 期刊/);assert.match(get('paper-list').innerHTML,/AAAI · 主会/);assert.doesNotMatch(get('paper-list').innerHTML,/届次 null/);get('p-forum').value='journal';run('renderPapers()');assert.match(get('paper-count').textContent,/1 篇匹配/);assert.doesNotMatch(get('paper-list').innerHTML,/会议届次与出版年份不同/);get('p-forum').value='workshop';run('renderPapers()');assert.match(get('paper-count').textContent,/0 篇匹配/)});
@@ -84,7 +84,8 @@ test('global experiences show all unique summaries and provenance, with honest e
  get('e-venue').value='jfr';run('renderExperienceOverview()');assert.match(get('experience-count').textContent,/0 条已读来源/);assert.match(get('experience-list').innerHTML,/没有收录不代表没有相关经验/);
 });
 test('deadline overview separates initial, conditional, historical and disputed information',()=>{
- const {get,run}=setup();run('renderDeadlines()');const html=get('deadline-list').innerHTML,first=html.split('常规期刊、待确认与历史届次')[0];
+ const fixture=structuredClone(data);fixture.editions[fixture.editions.findIndex(e=>e.id==='icra-2027')]=structuredClone(data.maintenance_history.find(h=>h.checked_at==='2026-10-04').prior_records['icra-2027']);
+ const {get,run}=setup(fixture);run('renderDeadlines()');const html=get('deadline-list').innerHTML,first=html.split('常规期刊、待确认与历史届次')[0];
  assert.match(first,/3 个已核验节点/);assert.match(first,/2026-11-10/);assert.match(first,/2026-11-16/);assert.match(first,/2026-12-04/);
  assert.doesNotMatch(first,/2027-04-16|2026-10-12|2026-09-16/);
  assert.match(html,/仅适用于已完成前置阶段并获邀请的作者/);assert.match(html,/日期存在冲突/);assert.match(html,/本届官网来源待确认/);assert.match(html,/全年接收投稿/);
@@ -127,4 +128,25 @@ test('new evidence renders escaped content and never makes unsafe supporting lin
  const html=run("renderExperiences('ijrr')+renderExperiences('jfr')+renderExperiences('rss')+renderExperiences('corl')");
  assert.doesNotMatch(html,/<img|<svg|<iframe|href="(?:javascript|data):/);
  assert.match(html,/&lt;img/);assert.match(html,/&lt;svg/);assert.match(html,/&lt;iframe/);
+});
+
+
+test('current verified ICRA history stays closed while final instructions remain unresolved',()=>{
+ const icra=data.editions.find(e=>e.id==='icra-2027');
+ assert.equal(icra.status,'reviewing');assert.equal(icra.deadlines.find(d=>d.kind==='full_paper').status,'verified');
+ const {get,run}=setup();get('d-venue').value='icra';run('renderDeadlines()');const html=get('deadline-list').innerHTML;
+ assert.match(html,/0 个已核验节点/);assert.match(html,/评审阶段/);assert.doesNotMatch(html,/日期存在冲突/);
+ get('e-venue').value='icra';run('renderExperienceOverview()');assert.match(get('experience-checks').innerHTML,/终稿冲突尚未解决/);
+ run("openVenue('icra')");const detail=get('edition-detail').innerHTML;
+ for(const text of ['2026-09-16','PST','2027-02-06','2025-03-06','待定'])assert.ok(detail.includes(text),text);
+ assert.ok(detail.includes('UTC offset、IANA 时区及 UTC 时间仍留空'));
+});
+
+test('RA-L transfer windows and eligibility stay separate from regular submission deadlines',()=>{
+ const {get,run}=setup();get('d-venue').value='ral';run('renderDeadlines()');
+ assert.match(get('deadline-list').innerHTML,/0 个已核验节点/);assert.match(get('deadline-list').innerHTML,/全年接收投稿/);
+ run("openVenue('ral')");const html=get('venue-profile').innerHTML+get('edition-detail').innerHTML;
+ for(const text of ['非综述','270 天','一个会议','2026-03-01','2026-12-31','2026-08-01','2027-04-30','不是 RA-L 常规投稿或会议首轮投稿截止'])assert.ok(html.includes(text),text);
+ assert.deepEqual(data.editions.find(e=>e.id==='ral-policy-20261001').deadlines,[]);
+ assert.deepEqual(data.editions.find(e=>e.id==='iros-2027').deadlines,[]);
 });

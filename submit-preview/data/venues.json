@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "status": "independent_public_candidate_not_integrated",
-  "checked_at": "2026-10-02",
+  "checked_at": "2026-10-04",
   "venues": [
     {
       "id": "icra",
@@ -753,14 +753,15 @@
       "venue_id": "icra",
       "edition_year": 2027,
       "kind": "conference_event",
-      "status": "needs_confirmation",
+      "status": "reviewing",
       "source_ids": [
         "icra27-cfp",
         "maintenance-icra27-cfp-details",
         "maintenance-icra27-final",
-        "maintenance-icra27-registration"
+        "maintenance-icra27-registration",
+        "maintenance-icra27-extension-20260916"
       ],
-      "checked_at": "2026-10-02",
+      "checked_at": "2026-10-04",
       "channels": [
         {
           "id": "icra-2027-research",
@@ -783,11 +784,13 @@
           "timezone_iana": null,
           "precision": "minute",
           "utc_datetime": null,
-          "status": "conflicted",
+          "status": "verified",
           "source_ids": [
-            "icra27-cfp"
+            "icra27-cfp",
+            "maintenance-icra27-extension-20260916",
+            "maintenance-icra27-cfp-details"
           ],
-          "checked_at": "2026-10-01",
+          "checked_at": "2026-10-04",
           "original_text": "2026-09-16 23:59 PST",
           "supersedes": null
         },
@@ -827,7 +830,7 @@
         }
       ],
       "notes": [
-        "复核记录：10 月 1 日公告正文未获取；10 月 2 日已直接读取详细 CFP，页面明确首轮投稿关闭，表列延期至 2026-09-16 23:59 PST。公告介绍仍保留 9 月 15 日，原有冲突条目不删除；PST 不擅自换成 PDT 或当地时区。",
+        "2026-10-04 补充核验独立延期公告：2026-09-16 公告明确延期 24 小时至 2026-09-16 23:59 PST；当届详细 CFP 明确首轮关闭。原公告残留 9 月 15 日及此前冲突记录保留在核验历史，当前首轮日期采用独立延期公告。PST 仅保留官网原文；UTC offset、IANA 时区及 UTC 时间仍留空，不作为倒计时依据。",
         "补充视频的两个历史窗口为 2026-08-05 至 09-09、09-18 至 09-22，原文标 23:59 PST；未在初始窗口交视频，之后不能补交。这些不是通用补充材料截止。",
         "CFP 写 2027-02-06 开放终稿入口，这不是终稿截止；其星期标注与数字日期不一致。作者注册在 CFP 写 2027-03-05，注册页却仍称详细日期待定，因此不设为可操作截止。",
         "终稿说明页正文仍指 ICRA 2025 及 2025-03-06，6+n 页不能当成 2027 要求。初稿的 8 页（含参考文献）核对与终稿待确认分开。",
@@ -1448,9 +1451,10 @@
       "status": "current_snapshot",
       "source_ids": [
         "ral-authors",
-        "maintenance-ral-special-call-1"
+        "maintenance-ral-special-call-1",
+        "vp-ral-home"
       ],
-      "checked_at": "2026-10-02",
+      "checked_at": "2026-10-04",
       "channels": [
         {
           "id": "ral-policy-20261001-regular",
@@ -1478,7 +1482,8 @@
       "notes": [
         "Policy snapshot is not an annual conference edition. Special issues require their own channel, scoped deadline and evidence.",
         "RA-L 初投按 RAS 会议样式准备，录用后的期刊样式另有要求；下面两个链接只作为初稿入口。模板二进制内容未在本次核对，不宣称已编译可用。",
-        "专题征稿 Robot Manipulation of Deformable Objects：计划 2026-11-15 开放、12-01 截止，10 月 2 日尚未进入开放期；计划 2027-05-30 最终出版，不是已发表事实。涵盖可变形物体操作、VLA/基础模型、学习与移动操作。此日期没有公布时刻/时区，只适用于该专题，不是常规期刊统一截止；官方链接见本快照来源。"
+        "专题征稿 Robot Manipulation of Deformable Objects：计划 2026-11-15 开放、12-01 截止，10 月 2 日尚未进入开放期；计划 2027-05-30 最终出版，不是已发表事实。涵盖可变形物体操作、VLA/基础模型、学习与移动操作。此日期没有公布时刻/时区，只适用于该专题，不是常规期刊统一截止；官方链接见本快照来源。",
+        "2026-10-04 读取 RA-L 官方主页：已录用非综述论文的 ICRA 2027 展示转报窗口为 2026-03-01 至 2026-12-31，IROS 2027 为 2026-08-01 至 2027-04-30；均须在录用后 270 天内转报且只能展示于一个会议。官网未给这些窗口的时刻或时区；这不是 RA-L 常规投稿或会议首轮投稿截止，不能据此要求加快或延迟评审。"
       ],
       "submission_mode": "rolling_verified",
       "special_issue_notices": [
@@ -4101,8 +4106,8 @@
       "title": "IEEE Robotics and Automation Letters",
       "kind": "official_journal",
       "source_year": null,
-      "checked_at": "2026-10-02",
-      "claim_supported": "纯电子期刊；接收后按条件申请会议展示；不得为展示窗口要求改变评审速度。不引用页内旧会议日期作为当前截止日期",
+      "checked_at": "2026-10-04",
+      "claim_supported": "纯电子期刊；接收后的非综述论文可按条件申请一次会议展示，须在录用后 270 天内转报；不得为展示窗口加速或延迟评审。页面已列 2027 展示转报窗口，不能当作 RA-L 或会议初投截止。",
       "access_status": "source_text_observed",
       "authority": "official",
       "profile_source": true
@@ -4406,6 +4411,17 @@
       "content_hash": null,
       "note": "10 月 2 日取得正文，但含 2009/2010 条文及 Word 2007 等明显旧内容；不据此认证全部条款为现行规则。10 月 1 日失败记录保留。",
       "claim_supported": "10 月 2 日取得正文，但含 2009/2010 条文及 Word 2007 等明显旧内容；不据此认证全部条款为现行规则。10 月 1 日失败记录保留。"
+    },
+    {
+      "id": "maintenance-icra27-extension-20260916",
+      "url": "https://2027.ieee-icra.org/announcements/call-for-papers-submission-deadline-extended/",
+      "title": "ICRA 2027: Call for Papers Submission Deadline Extended!",
+      "authority": "official",
+      "checked_at": "2026-10-04",
+      "access_status": "source_text_observed",
+      "content_hash": null,
+      "note": "2026-10-04 03:04 UTC 直接读取 2026-09-16 独立公告：延期 24 小时，新截止为 2026-09-16 23:59 PST。该事件已发生，首轮关闭状态由当届详细 CFP 同时确认；保留 PST 原文，不归一化为 UTC 或 America/Los_Angeles。",
+      "claim_supported": "独立延期公告明确取代原 9 月 15 日首轮截止；仅支持 2027 届 research 首轮历史时间线，不支持终稿或作者注册截止。"
     }
   ],
   "pending_adjacent_journals": [
@@ -4887,7 +4903,7 @@
           {
             "key": "boundary",
             "label": "阅读与投稿边界",
-            "text": "会议展示资格不等于再次发表一篇会议论文，且展示窗口不能用来要求加速审稿。RA-L 与 T-RO 都是存档期刊，指南明确指出两者之间不适用把会议论文扩展为期刊论文的那套“演进”关系。",
+            "text": "会议展示资格不等于再次发表一篇会议论文，且展示窗口不能用来要求加速审稿。RA-L 与 T-RO 都是存档期刊，指南明确指出两者之间不适用把会议论文扩展为期刊论文的那套“演进”关系。 展示仅适用于已录用的非综述论文，须在录用后 270 天内并在对应会议转报窗口内完成转报，一篇论文只能展示于一个会议；也不能因窗口要求延迟评审。窗口是录用后的会议展示安排，不是 RA-L 或会议的初投截止。",
             "evidence_kind": "official",
             "source_ids": [
               "vp-ral-authors",
@@ -4895,7 +4911,7 @@
             ]
           }
         ],
-        "checked_at": "2026-10-02",
+        "checked_at": "2026-10-04",
         "reference_years": [
           2025
         ],
@@ -4905,7 +4921,7 @@
           "vp-ral-roboduet-crossref"
         ],
         "teaser_evidence_kind": "editorial_synthesis",
-        "reference_note": "范围与作者指南为常驻页面，未标修订年份；另参考所列年份的论文或编辑材料。核验日不代表政策发布日期。"
+        "reference_note": "范围与作者指南为常驻页面，未标修订年份；另参考所列年份的论文或编辑材料。核验日不代表政策发布日期。 2026-10-04 仅补核会议展示资格；其他段落保留 2026-10-02 核读结果，2027 具体转报窗口见本渠道规则快照。"
       },
       {
         "venue_id": "ijrr",
@@ -5743,6 +5759,278 @@
         "original_text": "2026-12-16 ",
         "supersedes": null
       }
+    },
+    {
+      "checked_at": "2026-10-04",
+      "previous_snapshot": "2026-10-02",
+      "scope": "2026-10-04 复核 ICRA 2027 独立延期公告、当届 CFP 首轮关闭、终稿正文年份和注册待定边界；补充 RA-L 已录用论文的 ICRA/IROS 2027 展示转报窗口与资格限制，并补齐 RA-L 总览中的非综述、270 天和单会议边界。只刷新发生内容增量的记录；其余条目与来源日期不变。",
+      "preserved_boundaries": [
+        "原 9 月 15 日/9 月 16 日冲突及先前访问失败记录完整保留",
+        "PST 原文保留，UTC offset、IANA 时区及 UTC 时间留空",
+        "2027 域名终稿页含 2025 正文，不能作为 2027 终稿规则",
+        "作者注册仍存在当届 CFP 与注册页待定说明的边界",
+        "2027-02-06 是终稿入口开放，不是截止",
+        "初稿 8 页规则已有 2026-10-02 核验，不宣称本次新增规则",
+        "RA-L 会议展示转报窗口与期刊常规投稿、会议首轮截稿严格区分；无时刻或时区，不增加普通 deadline。",
+        "15 个渠道及 14 条经验记录、6 条跨来源归纳与经验总览全部保留；本次不新增亲历案例，也不刷新其核读日期。"
+      ],
+      "prior_records": {
+        "icra-2027": {
+          "id": "icra-2027",
+          "venue_id": "icra",
+          "edition_year": 2027,
+          "kind": "conference_event",
+          "status": "needs_confirmation",
+          "source_ids": [
+            "icra27-cfp",
+            "maintenance-icra27-cfp-details",
+            "maintenance-icra27-final",
+            "maintenance-icra27-registration"
+          ],
+          "checked_at": "2026-10-02",
+          "channels": [
+            {
+              "id": "icra-2027-research",
+              "forum_level": "main_conference",
+              "track_kind": "research",
+              "archival_status": "unknown",
+              "parent_edition_id": "icra-2027"
+            }
+          ],
+          "deadlines": [
+            {
+              "id": "icra-2027-full_paper",
+              "channel_id": "icra-2027-research",
+              "kind": "full_paper",
+              "date": "2026-09-16",
+              "end_date": null,
+              "time": "23:59",
+              "timezone_label": "PST",
+              "utc_offset": null,
+              "timezone_iana": null,
+              "precision": "minute",
+              "utc_datetime": null,
+              "status": "conflicted",
+              "source_ids": [
+                "icra27-cfp"
+              ],
+              "checked_at": "2026-10-01",
+              "original_text": "2026-09-16 23:59 PST",
+              "supersedes": null
+            },
+            {
+              "id": "icra-2027-decision",
+              "channel_id": "icra-2027-research",
+              "kind": "decision",
+              "date": "2027-01-31",
+              "end_date": null,
+              "time": null,
+              "timezone_label": null,
+              "utc_offset": null,
+              "timezone_iana": null,
+              "precision": "date",
+              "utc_datetime": null,
+              "status": "verified",
+              "source_ids": [
+                "maintenance-icra27-cfp-details"
+              ],
+              "checked_at": "2026-10-02",
+              "original_text": "Notification of acceptance/rejection: January 31, 2027",
+              "supersedes": null
+            }
+          ],
+          "templates": [
+            {
+              "label": "ICRA CFP 指向的 PaperCept LaTeX 支持入口",
+              "url": "https://ras.papercept.net/conferences/support/tex.php",
+              "status": "source_text_observed",
+              "checked_at": "2026-10-02"
+            },
+            {
+              "label": "ICRA CFP 指向的 PaperCept Word 支持入口",
+              "url": "https://ras.papercept.net/conferences/support/word.php",
+              "status": "source_text_observed",
+              "checked_at": "2026-10-02"
+            }
+          ],
+          "notes": [
+            "复核记录：10 月 1 日公告正文未获取；10 月 2 日已直接读取详细 CFP，页面明确首轮投稿关闭，表列延期至 2026-09-16 23:59 PST。公告介绍仍保留 9 月 15 日，原有冲突条目不删除；PST 不擅自换成 PDT 或当地时区。",
+            "补充视频的两个历史窗口为 2026-08-05 至 09-09、09-18 至 09-22，原文标 23:59 PST；未在初始窗口交视频，之后不能补交。这些不是通用补充材料截止。",
+            "CFP 写 2027-02-06 开放终稿入口，这不是终稿截止；其星期标注与数字日期不一致。作者注册在 CFP 写 2027-03-05，注册页却仍称详细日期待定，因此不设为可操作截止。",
+            "终稿说明页正文仍指 ICRA 2025 及 2025-03-06，6+n 页不能当成 2027 要求。初稿的 8 页（含参考文献）核对与终稿待确认分开。",
+            "以下 PaperCept LaTeX / Word 链接由当届 CFP 的稿件准备入口指向；支持页正文已看，模板文件未在本次下载或编译。以当届匿名、页数与格式要求优先。"
+          ]
+        },
+        "ral-policy-20261001": {
+          "id": "ral-policy-20261001",
+          "venue_id": "ral",
+          "edition_year": null,
+          "kind": "journal_policy_snapshot",
+          "status": "current_snapshot",
+          "source_ids": [
+            "ral-authors",
+            "maintenance-ral-special-call-1"
+          ],
+          "checked_at": "2026-10-02",
+          "channels": [
+            {
+              "id": "ral-policy-20261001-regular",
+              "forum_level": "journal",
+              "track_kind": "regular",
+              "archival_status": "archival",
+              "parent_edition_id": "ral-policy-20261001"
+            }
+          ],
+          "deadlines": [],
+          "templates": [
+            {
+              "label": "RA-L 初稿 LaTeX（不是终稿样式）",
+              "url": "https://ras.papercept.net/conferences/support/files/ieeeconf.zip",
+              "status": "officially_linked_not_inspected",
+              "checked_at": "2026-10-02"
+            },
+            {
+              "label": "RA-L 初稿 Word（不是终稿样式）",
+              "url": "https://ras.papercept.net/conferences/support/files/ieeeconf_letter.dot",
+              "status": "officially_linked_not_inspected",
+              "checked_at": "2026-10-02"
+            }
+          ],
+          "notes": [
+            "Policy snapshot is not an annual conference edition. Special issues require their own channel, scoped deadline and evidence.",
+            "RA-L 初投按 RAS 会议样式准备，录用后的期刊样式另有要求；下面两个链接只作为初稿入口。模板二进制内容未在本次核对，不宣称已编译可用。",
+            "专题征稿 Robot Manipulation of Deformable Objects：计划 2026-11-15 开放、12-01 截止，10 月 2 日尚未进入开放期；计划 2027-05-30 最终出版，不是已发表事实。涵盖可变形物体操作、VLA/基础模型、学习与移动操作。此日期没有公布时刻/时区，只适用于该专题，不是常规期刊统一截止；官方链接见本快照来源。"
+          ],
+          "submission_mode": "rolling_verified",
+          "special_issue_notices": [
+            {
+              "title": "Robot Manipulation of Deformable Objects",
+              "kind": "journal_special_issue",
+              "status": "announced_not_yet_accepting_per_timeline",
+              "dates": [
+                {
+                  "kind": "submission_open",
+                  "date": "2026-11-15",
+                  "time": null,
+                  "timezone": null
+                },
+                {
+                  "kind": "submission_deadline",
+                  "date": "2026-12-01",
+                  "time": null,
+                  "timezone": null
+                },
+                {
+                  "kind": "scheduled_final_publication",
+                  "date": "2027-05-30",
+                  "time": null,
+                  "timezone": null
+                }
+              ],
+              "source_ids": [
+                "maintenance-ral-special-call-1"
+              ],
+              "checked_at": "2026-10-02",
+              "normalized_as_regular_deadline": false
+            }
+          ]
+        },
+        "vp-ral-home": {
+          "id": "vp-ral-home",
+          "url": "https://www.ieee-ras.org/publications/ra-l/",
+          "title": "IEEE Robotics and Automation Letters",
+          "kind": "official_journal",
+          "source_year": null,
+          "checked_at": "2026-10-02",
+          "claim_supported": "纯电子期刊；接收后按条件申请会议展示；不得为展示窗口要求改变评审速度。不引用页内旧会议日期作为当前截止日期",
+          "access_status": "source_text_observed",
+          "authority": "official",
+          "profile_source": true
+        },
+        "venue-profile-ral": {
+          "venue_id": "ral",
+          "teaser": "机器人与自动化的短篇研究期刊，以精练篇幅及时报告新想法、理论结果或应用成果。",
+          "sections": [
+            {
+              "key": "identity",
+              "label": "定位与范围",
+              "text": "IEEE Robotics and Automation Letters 面向机器人与自动化，官方定位是及时而简洁地发表创新想法、重要理论发现和应用案例。它是经过同行评审的期刊，论文长度接近会议论文并不改变其期刊属性。",
+              "evidence_kind": "official",
+              "source_ids": [
+                "vp-ral-authors"
+              ]
+            },
+            {
+              "key": "themes",
+              "label": "主要主题",
+              "text": "官方关键词覆盖机器人学习、视觉感知、SLAM、抓取操作、全身控制、运动规划、软体机器人及自动化应用；也包括机器人数据集与制造物流。关键词中的深度学习等通用方法，均须与机器人或自动化有关。",
+              "evidence_kind": "official",
+              "source_ids": [
+                "vp-ral-keywords"
+              ]
+            },
+            {
+              "key": "style",
+              "label": "研究与表达风格",
+              "text": "可理解为用有限篇幅讲清一个相对集中的贡献及关键证据，而非压缩版技术报告。RoboDuet 以双策略协作解决足式移动操作，并验证全身控制与跨机体迁移，体现了方法主线集中、实验紧扣主张的写法。",
+              "evidence_kind": "editorial_synthesis",
+              "source_ids": [
+                "vp-ral-authors",
+                "vp-ral-roboduet-project",
+                "vp-ral-roboduet-crossref"
+              ]
+            },
+            {
+              "key": "robotics_fit",
+              "label": "机器人／具身关联",
+              "text": "具身学习、触觉、操作、腿足控制和机器人感知都能在其主题范围内找到位置。读相关论文时，可重点拆出“具体机器人问题—新机制—任务证据”这条线；恶劣天气方法也应说明对机器人或自动化的实际关联。",
+              "evidence_kind": "editorial_synthesis",
+              "source_ids": [
+                "vp-ral-keywords",
+                "vp-ral-roboduet-project"
+              ]
+            },
+            {
+              "key": "publication",
+              "label": "发表形式",
+              "text": "全年接收投稿，采用纯电子、混合开放获取出版。正文通常为IEEE双栏6页，含图表和参考文献，付费加页后最多8页；欢迎代码、数据和视频。获接收论文可按资格申请在指定RAS会议展示。",
+              "evidence_kind": "official",
+              "source_ids": [
+                "vp-ral-authors",
+                "vp-ral-home"
+              ]
+            },
+            {
+              "key": "boundary",
+              "label": "阅读与投稿边界",
+              "text": "会议展示资格不等于再次发表一篇会议论文，且展示窗口不能用来要求加速审稿。RA-L 与 T-RO 都是存档期刊，指南明确指出两者之间不适用把会议论文扩展为期刊论文的那套“演进”关系。",
+              "evidence_kind": "official",
+              "source_ids": [
+                "vp-ral-authors",
+                "vp-ral-home"
+              ]
+            }
+          ],
+          "checked_at": "2026-10-02",
+          "reference_years": [
+            2025
+          ],
+          "teaser_source_ids": [
+            "vp-ral-authors",
+            "vp-ral-roboduet-project",
+            "vp-ral-roboduet-crossref"
+          ],
+          "teaser_evidence_kind": "editorial_synthesis",
+          "reference_note": "范围与作者指南为常驻页面，未标修订年份；另参考所列年份的论文或编辑材料。核验日不代表政策发布日期。"
+        }
+      },
+      "source_ids": [
+        "maintenance-icra27-extension-20260916",
+        "maintenance-icra27-cfp-details",
+        "maintenance-icra27-final",
+        "maintenance-icra27-registration",
+        "vp-ral-home"
+      ]
     }
   ]
 }

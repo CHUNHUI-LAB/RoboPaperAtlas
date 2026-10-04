@@ -89,10 +89,20 @@ class SubmissionProfileTests(unittest.TestCase):
 
     def test_official_maintenance_preserves_unresolved_deadline_boundaries(self):
         self.assertEqual(self.data['checked_at'], self.data['maintenance_history'][-1]['checked_at'])
-        self.assertEqual(self.data['maintenance_history'][-1]['previous_snapshot'], '2026-10-01')
+        history = self.data['maintenance_history']
+        self.assertEqual(history[0]['previous_snapshot'], '2026-10-01')
+        for previous, current in zip(history, history[1:]):
+            self.assertEqual(current['previous_snapshot'], previous['checked_at'])
+            self.assertLess(previous['checked_at'], current['checked_at'])
         editions = {e['id']: e for e in self.data['editions']}
-        self.assertEqual(editions['icra-2027']['status'], 'needs_confirmation')
-        self.assertEqual(editions['icra-2027']['deadlines'][0]['status'], 'conflicted')
+        icra = editions['icra-2027']
+        self.assertEqual(icra['status'], 'reviewing')
+        self.assertEqual(next(d for d in icra['deadlines'] if d['kind'] == 'full_paper')['status'], 'verified')
+        self.assertFalse(any(d['kind'] in {'camera_ready', 'registration'} for d in icra['deadlines']))
+        self.assertIn('待定', ' '.join(icra['notes']))
+        prior = history[-1]['prior_records']['icra-2027']
+        self.assertEqual(prior['status'], 'needs_confirmation')
+        self.assertEqual(next(d for d in prior['deadlines'] if d['kind'] == 'full_paper')['status'], 'conflicted')
         self.assertEqual(editions['iros-2027']['status'], 'source_unresolved')
         self.assertFalse(editions['iros-2027']['deadlines'])
 
