@@ -53,6 +53,22 @@ test('mobile begins with results and evidence, with an explicit optional graph',
 test('invalid URLs fail closed and imported Stage availability remains factual',()=>{
  const f=fixture({url:'https://example.org/prototype/?paper=unknown&method=wrong&task=wrong&relation=fake'});assert.equal(f.$('#inspection-title').textContent,'UMI on Legs');assert.equal(f.$('.stage-links').children.filter(x=>x.tagName==='A').length,3);f.click('[data-paper="rpa-0013"]');assert(f.$('.stage-links').children.every(x=>x.tagName==='SPAN'));
 });
+test('all five imported papers expose exact current versions and incomplete stages remain unavailable',()=>{
+ const catalog=JSON.parse(fs.readFileSync(require('node:path').join(__dirname,'../../data/catalog.json'),'utf8'));
+ let imported=0;
+ for(const paper of catalog.papers.filter(p=>Object.values(p.stages).some(s=>s.status==='imported'))){
+  const f=fixture({url:`https://example.org/prototype/?paper=${paper.id}`}),links=f.$('.stage-links').children;
+  assert.equal(links.length,3);
+  for(let index=0;index<3;index++){
+   const stage=paper.stages[`stage${index+1}`],link=links[index];
+   if(stage.status==='imported'){
+    imported++;assert.equal(link.tagName,'A');
+    assert.equal(link.href,'https://chunhui-lab.github.io/RoboPaperAtlas/'+stage.artifacts[0].path);
+   }else{assert.equal(link.tagName,'SPAN');assert.match(link.textContent,/尚未导入/);}
+  }
+ }
+ assert.equal(imported,12);
+});
 test('production script has no network, model, physics or persistent tracking calls',()=>{
  const s=require('./program.cjs').source;assert(!/\bfetch\s*\(|XMLHttpRequest|WebSocket|sendBeacon|localStorage|eval\s*\(/.test(s));
 });
