@@ -1,0 +1,765 @@
+{
+  "schema_version": "weekly-1.0",
+  "id": "arxiv-weekly-2026-10-04",
+  "date": "2026-10-04",
+  "title": "Radar 周报｜证据、记忆与执行接口",
+  "status": "ready",
+  "generated_at": "2026-10-04T13:12:00Z",
+  "language": "zh-CN",
+  "window": {
+    "start": "2026-09-27T12:41:03Z",
+    "end": "2026-10-04T12:41:03Z",
+    "timezone": "UTC",
+    "date_field": "updated_at",
+    "inclusive": true,
+    "duration_hours": 168
+  },
+  "source_snapshot": {
+    "name": "frontier.json",
+    "sha256": "7319fa1fc3b2dd83ecb63e09c74b6e583148b1fa042c44caf2b1e73a9604c02c",
+    "generated_at": "2026-10-04T12:42:28Z",
+    "fetched_at": "2026-10-04T12:42:28Z",
+    "status": "ok",
+    "query": "(cat:cs.RO OR cat:cs.CV OR cat:cs.AI OR cat:cs.LG OR cat:cs.CL) AND (all:\"vision-language navigation\" OR all:\"vision language navigation\" OR all:VLN OR all:ObjectNav OR all:\"object-goal\" OR all:\"object goal\" OR ((ti:navigation OR abs:navigation) AND (all:agent OR all:memory OR all:feedback OR all:harness OR all:reflection)) OR all:\"spatial memory\" OR all:\"episodic memory\" OR all:\"mobile manipulation\" OR all:\"mobile manipulator\" OR all:quadruped OR all:\"whole-body\" OR all:\"whole body\" OR all:\"end-effector\" OR all:\"end effector\" OR all:\"vision-language-action\" OR all:\"vision language action\" OR all:\"world-action model\" OR all:\"world action model\" OR ((all:VLA OR all:MoE OR all:\"mixture of experts\" OR all:\"mixture-of-experts\" OR all:\"world model\" OR all:\"world models\") AND (all:robot OR all:robotic OR all:robotics OR all:manipulation OR all:navigation OR all:embodied)))",
+    "rule_version": "2026-09-30.3",
+    "coverage_complete": true,
+    "coverage_truncated": false,
+    "coverage_start": "2026-09-27T12:41:03Z",
+    "coverage_end": "2026-10-04T12:41:03Z"
+  },
+  "counts": {
+    "window_candidates": 238,
+    "source_seven_day_candidates": 238,
+    "new": 151,
+    "revisions": 87
+  },
+  "candidate_manifest": "2026-10-04/manifest.json",
+  "research_overview": {
+    "headline": "把证据、记忆与预测接到可执行动作上",
+    "executive_summary": "本期关注四个问题：行动前怎样补足观测，跨任务记忆何时失效，预测如何影响导航决策，以及目标到达怎样转成可执行操作。先按问题比较方法，再看具体论文。以下是基于本周完整官方摘要的编辑归纳。",
+    "coverage": {
+      "candidate_metadata_screened": 238,
+      "complete_abstracts_checked": 11,
+      "full_papers_read": 0,
+      "revision_diffs_checked": 0,
+      "comparison_window_available": false,
+      "topic_count_method": "existing_title_abstract_keyword_heuristic_multilabel",
+      "count_denominator": 238
+    },
+    "topic_distribution": [
+      {
+        "topic": "end_effector_trajectories",
+        "label": "末端轨迹",
+        "count": 18,
+        "new": 14,
+        "revisions": 4,
+        "candidate_ids": [
+          "2610.01698v1",
+          "2610.01612v1",
+          "2609.30965v2",
+          "2609.39950v1",
+          "2609.39388v1",
+          "2609.39323v1",
+          "2609.16405v2",
+          "2609.38709v1",
+          "2609.37181v1",
+          "2609.35231v2",
+          "2609.35709v1",
+          "2609.35000v1",
+          "2609.34666v1",
+          "2609.34485v1",
+          "2609.34362v1",
+          "2609.34256v1",
+          "2609.33951v1",
+          "2503.19225v4"
+        ]
+      },
+      {
+        "topic": "mobile_manipulation",
+        "label": "移动操作",
+        "count": 32,
+        "new": 22,
+        "revisions": 10,
+        "candidate_ids": [
+          "2610.01726v1",
+          "2610.01612v1",
+          "2610.01477v1",
+          "2610.01171v1",
+          "2610.01102v1",
+          "2602.14363v2",
+          "2610.00438v1",
+          "2609.35450v2",
+          "2609.39665v1",
+          "2609.34199v2",
+          "2609.39388v1",
+          "2609.38046v2",
+          "2609.38989v1",
+          "2609.38709v1",
+          "2609.30594v2",
+          "2609.38588v1",
+          "2609.38537v1",
+          "2609.37519v1",
+          "2609.37181v1",
+          "2609.23439v2",
+          "2606.06493v4",
+          "2609.36602v1",
+          "2609.36575v1",
+          "2609.36031v1",
+          "2609.35761v1",
+          "2609.35709v1",
+          "2609.35652v1",
+          "2609.35249v1",
+          "2602.23024v7",
+          "2609.34724v1",
+          "2609.04552v2",
+          "2601.21667v3"
+        ]
+      },
+      {
+        "topic": "navigation_agents",
+        "label": "导航 Agent / Harness",
+        "count": 22,
+        "new": 13,
+        "revisions": 9,
+        "candidate_ids": [
+          "2609.39166v2",
+          "2607.16956v2",
+          "2602.02220v3",
+          "2609.40245v2",
+          "2610.00878v1",
+          "2609.39915v1",
+          "2603.26741v2",
+          "2609.39579v1",
+          "2609.39207v1",
+          "2609.37353v1",
+          "2603.10971v4",
+          "2609.15195v3",
+          "2606.08729v2",
+          "2609.35965v1",
+          "2609.34969v1",
+          "2609.34833v1",
+          "2609.35916v1",
+          "2609.34759v1",
+          "2609.34707v1",
+          "2609.34687v1",
+          "2609.34276v1",
+          "2609.27145v2"
+        ]
+      },
+      {
+        "topic": "robot_moe",
+        "label": "机器人 MoE",
+        "count": 1,
+        "new": 0,
+        "revisions": 1,
+        "candidate_ids": [
+          "2606.06493v4"
+        ]
+      },
+      {
+        "topic": "robot_vla",
+        "label": "机器人 VLA",
+        "count": 131,
+        "new": 79,
+        "revisions": 52,
+        "candidate_ids": [
+          "2601.22153v2",
+          "2610.02161v1",
+          "2610.01939v1",
+          "2610.01856v1",
+          "2605.13632v3",
+          "2606.27663v2",
+          "2610.01741v1",
+          "2605.30226v3",
+          "2604.16067v2",
+          "2610.01351v1",
+          "2610.01083v1",
+          "2610.00982v1",
+          "2610.00981v1",
+          "2510.23576v2",
+          "2609.30965v2",
+          "2609.09158v2",
+          "2609.36413v2",
+          "2610.00913v1",
+          "2610.00899v1",
+          "2609.36416v2",
+          "2610.00801v1",
+          "2610.00604v1",
+          "2610.00601v1",
+          "2610.00575v1",
+          "2609.40306v1",
+          "2610.00438v1",
+          "2606.00773v2",
+          "2609.40165v1",
+          "2609.40134v1",
+          "2607.04171v4",
+          "2609.28984v2",
+          "2609.40007v1",
+          "2609.39973v1",
+          "2609.35450v2",
+          "2609.39822v1",
+          "2609.39820v1",
+          "2609.39794v1",
+          "2609.39670v1",
+          "2609.39514v1",
+          "2609.34792v2",
+          "2609.39403v1",
+          "2609.39235v1",
+          "2609.39198v1",
+          "2608.22591v2",
+          "2609.39178v1",
+          "2607.02195v2",
+          "2609.39145v1",
+          "2609.39038v1",
+          "2609.38046v2",
+          "2609.38989v1",
+          "2609.38890v1",
+          "2609.38855v1",
+          "2609.19104v2",
+          "2608.16889v3",
+          "2609.34220v2",
+          "2604.18484v2",
+          "2605.27759v4",
+          "2609.38616v1",
+          "2603.18532v4",
+          "2609.38401v1",
+          "2602.11291v3",
+          "2607.18060v3",
+          "2609.38164v1",
+          "2609.38078v1",
+          "2609.37922v1",
+          "2506.11261v2",
+          "2609.37810v1",
+          "2609.37772v1",
+          "2609.37771v1",
+          "2609.25187v2",
+          "2609.37530v1",
+          "2606.18363v3",
+          "2609.37334v1",
+          "2609.19878v3",
+          "2609.37307v1",
+          "2608.25798v2",
+          "2609.29382v2",
+          "2609.37181v1",
+          "2609.37150v1",
+          "2606.08495v2",
+          "2609.23580v3",
+          "2605.21862v3",
+          "2603.12717v2",
+          "2609.36967v1",
+          "2609.36915v1",
+          "2606.20092v3",
+          "2609.34911v2",
+          "2609.34467v2",
+          "2609.36720v1",
+          "2609.35575v2",
+          "2609.35231v2",
+          "2609.36588v1",
+          "2610.00317v1",
+          "2609.36540v1",
+          "2609.36518v1",
+          "2609.36471v1",
+          "2609.36352v1",
+          "2609.36118v1",
+          "2609.35761v1",
+          "2609.35709v1",
+          "2609.35469v1",
+          "2609.35432v1",
+          "2609.35427v1",
+          "2609.18232v2",
+          "2608.29537v2",
+          "2609.35249v1",
+          "2605.07931v4",
+          "2609.35039v1",
+          "2609.35003v1",
+          "2609.34982v1",
+          "2510.24795v3",
+          "2608.30643v2",
+          "2609.20646v2",
+          "2609.34684v1",
+          "2607.13429v2",
+          "2609.34554v1",
+          "2609.34550v1",
+          "2607.18580v2",
+          "2609.34384v1",
+          "2609.34319v1",
+          "2609.34261v1",
+          "2609.34256v1",
+          "2609.34170v1",
+          "2609.05178v3",
+          "2609.34061v1",
+          "2609.22973v2",
+          "2609.33765v1",
+          "2606.00537v3",
+          "2609.33707v1",
+          "2609.33647v1",
+          "2609.33575v1"
+        ]
+      },
+      {
+        "topic": "robot_world_models",
+        "label": "机器人世界模型",
+        "count": 54,
+        "new": 37,
+        "revisions": 17,
+        "candidate_ids": [
+          "2609.40177v2",
+          "2610.02120v1",
+          "2610.01698v1",
+          "2610.01559v1",
+          "2610.01162v1",
+          "2609.18197v2",
+          "2610.01019v1",
+          "2608.11605v2",
+          "2609.36413v2",
+          "2610.00638v1",
+          "2610.00575v1",
+          "2609.40341v1",
+          "2609.40153v1",
+          "2609.39973v1",
+          "2609.39873v1",
+          "2609.39870v1",
+          "2609.39763v1",
+          "2609.39751v1",
+          "2603.26741v2",
+          "2609.39685v1",
+          "2609.34199v2",
+          "2609.39388v1",
+          "2609.39235v1",
+          "2609.39151v1",
+          "2609.38984v1",
+          "2608.16889v3",
+          "2608.23927v2",
+          "2602.11291v3",
+          "2609.38163v1",
+          "2609.38057v1",
+          "2607.06559v2",
+          "2607.06558v3",
+          "2609.37810v1",
+          "2609.37793v1",
+          "2609.37721v1",
+          "2609.37398v1",
+          "2609.06302v2",
+          "2609.33299v2",
+          "2609.36471v1",
+          "2608.28995v2",
+          "2609.36012v1",
+          "2609.35652v1",
+          "2609.35439v1",
+          "2609.35311v1",
+          "2609.35249v1",
+          "2605.07931v4",
+          "2609.35047v1",
+          "2608.29434v2",
+          "2609.34362v1",
+          "2607.22530v2",
+          "2609.34286v1",
+          "2609.34250v1",
+          "2609.33832v1",
+          "2609.33581v1"
+        ]
+      },
+      {
+        "topic": "spatial_episodic_memory",
+        "label": "空间／情景记忆",
+        "count": 12,
+        "new": 5,
+        "revisions": 7,
+        "candidate_ids": [
+          "2610.01856v1",
+          "2609.39166v2",
+          "2609.03774v2",
+          "2609.39794v1",
+          "2607.18060v3",
+          "2608.12743v3",
+          "2609.37187v1",
+          "2609.04802v3",
+          "2606.20092v3",
+          "2608.29537v2",
+          "2609.34969v1",
+          "2609.34554v1"
+        ]
+      },
+      {
+        "topic": "vln_objectnav",
+        "label": "VLN / ObjectNav",
+        "count": 18,
+        "new": 14,
+        "revisions": 4,
+        "candidate_ids": [
+          "2609.09158v2",
+          "2610.00878v1",
+          "2609.27218v2",
+          "2609.39915v1",
+          "2609.39579v1",
+          "2609.39207v1",
+          "2609.38640v1",
+          "2609.37591v1",
+          "2609.37353v1",
+          "2609.15195v3",
+          "2609.32292v2",
+          "2609.35965v1",
+          "2609.35570v1",
+          "2609.34969v1",
+          "2609.34759v1",
+          "2609.34707v1",
+          "2609.34163v1",
+          "2609.33581v1"
+        ]
+      },
+      {
+        "topic": "whole_body_control",
+        "label": "全身控制",
+        "count": 11,
+        "new": 6,
+        "revisions": 5,
+        "candidate_ids": [
+          "2609.18197v2",
+          "2610.01102v1",
+          "2609.09158v2",
+          "2609.34199v2",
+          "2609.39000v1",
+          "2609.16405v2",
+          "2609.38087v1",
+          "2609.37181v1",
+          "2606.06493v4",
+          "2609.35761v1",
+          "2609.35094v1"
+        ]
+      }
+    ],
+    "themes": [
+      {
+        "id": "evidence-and-action",
+        "title": "先补证据，还是先行动？",
+        "summary": "主动观察、执行偏离监控与目标完成验证，把证据放在不同的导航接口。",
+        "shared_problem": "局部动作看似合理，不等于长期执行仍符合指令；不足的观测也可能被误当成足够证据。",
+        "method_routes": [
+          {
+            "text": "SeekVLN 用专家未来动作构造补充视角和证据标注，再比较同状态的求证分支与直接导航分支，通过强化微调学习何时补观察。",
+            "evidence_ids": [
+              "2609.37353v1"
+            ]
+          },
+          {
+            "text": "AVERT-VLN 以独立 Monitor 异步检查指令与执行的一致性；接受 LOST 判定后暂停自主执行并请求人工指引，再把失败转成离线偏好学习数据。",
+            "evidence_ids": [
+              "2609.39579v1"
+            ]
+          },
+          {
+            "text": "NavHarness Adaptive Goals 将局部目标、动作执行、完成验证与历史压缩分工；验证目标完成后才压缩对应历史。",
+            "evidence_ids": [
+              "2609.39915v1"
+            ]
+          }
+        ],
+        "open_question": "应分别检查求证动作成本、人工介入频率与延迟、误判完成和压缩消融。AVERT 的成功率属于人工辅助评估；SeekVLN 需要训练；不能当作相同成本的自主系统排榜。",
+        "evidence_ids": [
+          "2609.37353v1",
+          "2609.39579v1",
+          "2609.39915v1"
+        ],
+        "related_topics": [
+          "navigation_agents",
+          "vln_objectnav"
+        ],
+        "attribution": "curator_synthesis",
+        "comparison_scope": "within_window_no_temporal_trend"
+      },
+      {
+        "id": "memory-validity",
+        "title": "记忆何时可信，何时需要更新？",
+        "summary": "持续经验、动态目标 belief 与搜索预算切换，对应三种不同的记忆和探索问题。",
+        "shared_problem": "历史记录可能不完整、与新观测冲突，或在机器人到达前失效；保存更多历史并不能自动解决这些问题。",
+        "method_routes": [
+          {
+            "text": "NavHarness Lifelong 在连续任务中复用地图、任务记录与房屋知识，同时检查新观测、记录修正并整理经验；结构化恢复交接与等长度总结的比较值得继续核查。",
+            "evidence_ids": [
+              "2609.34276v1"
+            ]
+          },
+          {
+            "text": "EvolvingNav 由带时间戳的物体历史预测检查时刻的目标占据状态，保留未知位置概率，并用视野条件检测概率处理负观测，避免同一证据重复计入。",
+            "evidence_ids": [
+              "2609.39166v2"
+            ]
+          },
+          {
+            "text": "SOR-Nav 以三维物体簇和可达前沿簇组织 ObjectNav，判断继续探索当前区域还是转移，重点是搜索预算分配。",
+            "evidence_ids": [
+              "2609.34707v1"
+            ]
+          }
+        ],
+        "open_question": "需核查旧证据冲突如何定位、负观测如何校准、去掉时间先验后的收益，以及相同预算下的整理增益。EvolvingNav 的摘要明确收益在可学习时间规律下最清楚，不能推广到任意随机变化。",
+        "evidence_ids": [
+          "2609.34276v1",
+          "2609.39166v2",
+          "2609.34707v1"
+        ],
+        "related_topics": [
+          "spatial_episodic_memory",
+          "navigation_agents"
+        ],
+        "attribution": "curator_synthesis",
+        "comparison_scope": "within_window_no_temporal_trend"
+      },
+      {
+        "id": "prediction-interface",
+        "title": "预测信息进入哪一个决策接口？",
+        "summary": "地图预测监督、长短期潜在导航引导与连续三维轨迹输出，不能只因同属世界模型就互换。",
+        "shared_problem": "未来表示只有改变了可执行决策，才能支持导航；预测形式、使用时机与计算开销必须分开看。",
+        "method_routes": [
+          {
+            "text": "InsightMap 用俯视地图作显式空间记忆和动作条件预测目标；地图预测是训练辅助监督，不能描述为部署时反复生成未来地图搜索。",
+            "evidence_ids": [
+              "2609.37187v1"
+            ]
+          },
+          {
+            "text": "ForeFly 为 UAV 长程指令跟随分开近未来与路线关键未来的潜在预测，并通过非对称动作细化接口利用二者。",
+            "evidence_ids": [
+              "2609.33581v1"
+            ]
+          },
+          {
+            "text": "DiffWAM 从冻结视频模型的预测特征恢复连续三维相机轨迹；完整视频生成和多帧重建用于离线监督，部署时跳过。FastDreamer 进行带时间戳的异步轨迹交接。",
+            "evidence_ids": [
+              "2609.39763v1"
+            ]
+          }
+        ],
+        "open_question": "需检查预测失误回退、相同观测预算的消融、端到端延迟与能耗。UAV、自建轨迹基准与地面 VLN 指标不能直接比较；模型流水线延迟不等于整体控制周期。",
+        "evidence_ids": [
+          "2609.37187v1",
+          "2609.33581v1",
+          "2609.39763v1"
+        ],
+        "related_topics": [
+          "robot_world_models",
+          "vln_objectnav"
+        ],
+        "attribution": "curator_synthesis",
+        "comparison_scope": "within_window_no_temporal_trend"
+      },
+      {
+        "id": "execution-interface",
+        "title": "从导航到达，走向可操作与可执行",
+        "summary": "足臂控制和移动操作模型，从不同层次补齐高层目标与物理执行的接口。",
+        "shared_problem": "到目标附近不等于处于可操作位姿；底座接到命令也不等于按规划器预测的方式运动。",
+        "method_routes": [
+          {
+            "text": "ReCo 训练响应一致的行走策略，再辨识闭环响应模型，让 MPC 联合规划行走命令与机械臂运动。摘要中的末端误差降低来自仿真比较，不能转写为实机提升。",
+            "evidence_ids": [
+              "2610.01612v1"
+            ]
+          },
+          {
+            "text": "UniWAM 共享骨干但分离导航与操作动作流，用 Manipulation Anchor Pose 监督停止位置与朝向，并用合成数据扩展监督。两条动作流不自动意味着解决了全部全身控制问题。",
+            "evidence_ids": [
+              "2609.39388v1"
+            ]
+          }
+        ],
+        "open_question": "需核查 ReCo 对新负载、接触与步态变化的模型误差，以及 UniWAM 的停靠位姿定义、数据隔离和导航／操作拆分消融。两者都需区分规划正确与实际执行正确。",
+        "evidence_ids": [
+          "2610.01612v1",
+          "2609.39388v1"
+        ],
+        "related_topics": [
+          "whole_body_control",
+          "mobile_manipulation",
+          "robot_vla"
+        ],
+        "attribution": "curator_synthesis",
+        "comparison_scope": "within_window_no_temporal_trend"
+      }
+    ],
+    "evidence_sources": [
+      {
+        "versioned_id": "2609.37353v1",
+        "version_url": "https://arxiv.org/abs/2609.37353v1",
+        "source_url": "https://arxiv.org/abs/2609.37353v1",
+        "title": "Seek Before You Move: Evidence Seeking for Progress Grounding in Vision-Language Navigation",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_abstract_page",
+        "checked_at": "2026-10-04T13:09:50Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1854,
+        "abstract_sha256": "94f1d1ecb084da8801980b08e8326a636c01514c527da4b70d8abc7c8b646dc0"
+      },
+      {
+        "versioned_id": "2609.39579v1",
+        "version_url": "https://arxiv.org/abs/2609.39579v1",
+        "source_url": "https://arxiv.org/abs/2609.39579v1",
+        "title": "AVERT-VLN: Abstention-aware Visual Error Recovery and Training for Vision-and-Language Navigation",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_abstract_page",
+        "checked_at": "2026-10-04T13:09:50Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1920,
+        "abstract_sha256": "915e8dbc779cc626bf6107f6084ffd5c29656eaf00c9ab841618b67b66b65756"
+      },
+      {
+        "versioned_id": "2609.39915v1",
+        "version_url": "https://arxiv.org/abs/2609.39915v1",
+        "source_url": "https://arxiv.org/abs/2609.39915v1",
+        "title": "NavHarness: Adaptive Goals for Agentic Vision-Language Navigation",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_abstract_page",
+        "checked_at": "2026-10-04T13:09:50Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1645,
+        "abstract_sha256": "485d0308a4c0f3e4acd0087016e33402118a2133522b8fcdbd272e8d29d6bbba"
+      },
+      {
+        "versioned_id": "2609.34276v1",
+        "version_url": "https://arxiv.org/abs/2609.34276v1",
+        "source_url": "https://arxiv.org/abs/2609.34276v1",
+        "title": "NavHarness: Towards Lifelong Embodied Navigation",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_abstract_page",
+        "checked_at": "2026-10-04T13:09:50Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1694,
+        "abstract_sha256": "87fa8de6df6dc16bdd63c6744d2284f8c3df0fbb1156ca7ca7bd400384eb2093"
+      },
+      {
+        "versioned_id": "2609.39166v2",
+        "version_url": "https://arxiv.org/abs/2609.39166v2",
+        "source_url": "https://arxiv.org/abs/2609.39166v2",
+        "title": "Beyond the Remembered World: Predictive 4D Belief for Persistent Navigation in Evolving Worlds",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_abstract_page",
+        "checked_at": "2026-10-04T13:09:50Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1892,
+        "abstract_sha256": "68b3075149180704df42b5cf39c4648b1192a3d6a1104f3208fac4ed18a8b5b4"
+      },
+      {
+        "versioned_id": "2609.34707v1",
+        "version_url": "https://arxiv.org/abs/2609.34707v1",
+        "source_url": "https://arxiv.org/abs/2609.34707v1",
+        "title": "SOR-Nav: Search or Relocate? Context-Gated Exploration and Cross-Region Relocation for Object Navigation",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_abstract_page",
+        "checked_at": "2026-10-04T13:09:50Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1445,
+        "abstract_sha256": "d6974eb0d6a5b033500267b071085417cc3bb80d85170a2847b6bf34e90d20cc"
+      },
+      {
+        "versioned_id": "2609.37187v1",
+        "version_url": "https://arxiv.org/abs/2609.37187v1",
+        "source_url": "https://arxiv.org/abs/2609.37187v1",
+        "title": "InsightMap: Structured Spatial Modeling for Embodied Multimodal Reasoning",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_abstract_page",
+        "checked_at": "2026-10-04T13:09:50Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1262,
+        "abstract_sha256": "90b00578404a87b0270e264f42fc7ae98998e636ad2799682a944cb9184480c0"
+      },
+      {
+        "versioned_id": "2609.33581v1",
+        "version_url": "https://arxiv.org/abs/2609.33581v1",
+        "source_url": "https://arxiv.org/abs/2609.33581v1",
+        "title": "ForeFly: A Dual-Horizon World Action Model for Aerial Vision-Language Navigation",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_abstract_page",
+        "checked_at": "2026-10-04T13:09:50Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1233,
+        "abstract_sha256": "30a5a6057b21afc604a6efb9fa199759f8a4346486444a9d6877ea0302d044aa"
+      },
+      {
+        "versioned_id": "2609.39763v1",
+        "version_url": "https://arxiv.org/abs/2609.39763v1",
+        "source_url": "https://arxiv.org/abs/2609.39763v1",
+        "title": "DiffWAM: A Fast and Efficient Navigation World Action Model",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_abstract_page",
+        "checked_at": "2026-10-04T13:09:50Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1793,
+        "abstract_sha256": "f4d1e94d3595b73d438f21d771f0a7269aed222001ee7eb0b1adc98b5ba7a704"
+      },
+      {
+        "versioned_id": "2610.01612v1",
+        "version_url": "https://arxiv.org/abs/2610.01612v1",
+        "source_url": "https://arxiv.org/abs/2610.01612v1",
+        "title": "ReCo: Response-Consistent Locomotion with Policy-Aware MPC for Legged Manipulation",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_abstract_page",
+        "checked_at": "2026-10-04T13:09:50Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1081,
+        "abstract_sha256": "7b1a28a9014e69f9c193c05099627bd5d24f907ae4bcb910e49a1b53af6f9f66"
+      },
+      {
+        "versioned_id": "2609.39388v1",
+        "version_url": "https://arxiv.org/abs/2609.39388v1",
+        "source_url": "https://arxiv.org/abs/2609.39388v1",
+        "title": "UniWAM Technical Report: Unified Mobile Manipulation via Mixed-Stream World-Action Modeling and Manipulation Anchor Pose Supervision",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_abstract_page",
+        "checked_at": "2026-10-04T13:09:50Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1649,
+        "abstract_sha256": "3946355d924ba1ca6a938710bc1c320140ccf080bb2fef7f6a093cdb703d45b1"
+      }
+    ],
+    "revision_note": "首版与修订按所取 arXiv 版本标记，不等于首次进入网站或研究贡献的新旧。EvolvingNav 使用 v2；本次未对任何论文做版本差分，不能声称修订新增了哪些方法或实验。",
+    "limitations": [
+      "覆盖仅限已声明的 arXiv 查询、类别与更新时间窗口；关键词可能误分、漏分，延迟收录和其他出版渠道不在覆盖保证内。",
+      "238 条仅做标题与最长600字符摘要片段筛查；11 篇核查完整官方摘要，全文、附录和代码未精读，实验未独立复现。",
+      "主题相关性为编辑推断；方法与结果来自作者摘要陈述。不同训练、人机协作和评测协议不可直接排榜。",
+      "按预印本使用；正式发表与同行评审状态未核实，后续精读应先检查正式出版版本。",
+      "完整摘要指纹按取回的官方页面摘要折叠空白后的 Unicode 字符与 UTF-8 SHA-256 计算；页面排版字符可能与 API 文本不同。",
+      "这是所选七天窗口内的方法对照，不是跨周趋势分析或领域共识；周报按共同问题归纳，不拼接七份日报。"
+    ],
+    "keyword_caveats": [
+      {
+        "versioned_id": "2609.34276v1",
+        "topic": "spatial_episodic_memory",
+        "issue": "missed_match",
+        "explanation": "NavHarness Lifelong 的完整摘要明确讨论地图、任务记录、经验持久化与记忆整理，但现有关键词只赋予 navigation_agents，未赋予 spatial_episodic_memory。这是人工核查发现的漏分，不回写候选标签。",
+        "evidence_basis": "complete_abstract"
+      }
+    ]
+  }
+}
