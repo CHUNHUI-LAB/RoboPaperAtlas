@@ -13,7 +13,7 @@ test('topic activation exposes filtered result heading and gives keyboard focus'
  assert.equal(f.$('#clear-all-filters').hidden,false);
 });
 test('repeated topic switch and All update real counts without hiding records',()=>{
- const f=make();for(const [key,label,n]of [['motion-manipulation','运动与操作',46],['robot-learning','机器人学习',48],['navigation-space','导航与空间理解',29]]){
+ const f=make();for(const [key,label,n]of [['motion-manipulation','运动与操作',46],['robot-learning','机器人学习',50],['navigation-space','导航与空间理解',29]]){
  f.click(`[data-topic="${key}"]`);assert.equal(f.$('#catalog-title').textContent,`${label} · ${n} 篇论文`);
  }
  f.click('[data-topic="all"]');assert.equal(f.$('#catalog-title').textContent,'全部论文 · 95 篇');assert.match(f.$('#result-count').textContent,/95/);assert.equal(f.$('#clear-all-filters').hidden,true);

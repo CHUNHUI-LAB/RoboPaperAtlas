@@ -11,7 +11,7 @@ const topics = [
   ['all', '全部', '95'],
   ['navigation-space', '导航与空间理解', '29'],
   ['motion-manipulation', '运动与操作', '46'],
-  ['robot-learning', '机器人学习', '48'],
+  ['robot-learning', '机器人学习', '50'],
   ['methods-resources', '方法与资源', '29'],
 ];
 function make(reduced = false) {

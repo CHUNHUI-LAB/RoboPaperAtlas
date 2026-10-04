@@ -43,9 +43,19 @@ class UIClarityTests(unittest.TestCase):
   self.assertEqual(sum(p['citation_verified'] for p in self.catalog['papers']),22)
   self.assertEqual(sum('data-status="verified"' in card(p) for p in self.catalog['papers']),22)
   self.assertIn('核验状态筛选只依据原始书目记录',home(self.catalog))
- def test_catalog_classification_and_reports_match_vbc_stage1_integration(self):
+ def test_catalog_reports_and_pre_rl_classification_remain_immutable(self):
   expected={'data/catalog.json': '0dcf3daf54009c9d29c5b2dc74ecfe50492e07643f8ec7f55ab5feff100484f7', 'data/classification.json': 'f11bf23a57fa179e6e26c39d2e8a4a8b3bd5d8e0effc2190b1491c18303730c4', 'data/reports.json': '5eaeaca879b95b0ec6081b8018bda43d7b2f134cd5a67c9d8d0c48b575d06f3a'}
-  for name,sha in expected.items():self.assertEqual(hashlib.sha256((ROOT/name).read_bytes()).hexdigest(),sha)
+  for name,sha in expected.items():
+   content=(ROOT/name).read_bytes()
+   if name=='data/classification.json':
+    data=json.loads(content)
+    for record in data['records']:
+     if record['id'] in {'rpa-0050','rpa-0052'}:
+      self.assertEqual(record['method_tags'][-1]['label'],'RL')
+      record['method_tags'].pop()
+      record['method_evidence_note']=record['method_evidence_note'].split('; RL added 2026-10-04:',1)[0]
+    content=(json.dumps(data,ensure_ascii=False,indent=2)+'\n').encode()
+   self.assertEqual(hashlib.sha256(content).hexdigest(),sha)
 
  def test_map_year_label_requires_complete_formal_overlay(self):
   p=copy.deepcopy(self.byid['rpa-0012'])

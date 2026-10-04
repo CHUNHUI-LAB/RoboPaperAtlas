@@ -64,7 +64,7 @@
     const terms = normalize(query).trim().split(/\s+/).filter(Boolean);
     if (!terms.length) return papers.slice();
     return papers.filter(p => {
-      const haystack = normalize([p.title, p.shortName, p.authors, ...(p.tags || [])].join(' '));
+      const haystack = normalize([p.title, p.shortName, p.authors, p.classificationSearch || '', ...(p.tags || [])].join(' '));
       return terms.every(term => haystack.includes(term));
     }).sort((a, b) => Number(normalize(b.title) === normalize(query).trim()) - Number(normalize(a.title) === normalize(query).trim()));
   }
@@ -438,7 +438,7 @@
     if (classification.reviewNote) evidence.append(create('p', classification.reviewNote, 'map-classification-pending'));
     content.append(evidence);
     const crossTags = create('div', null, 'map-panel-tags');
-    classification.methodTags.forEach(tag => { const span = create('span', `${tag.label} · 方法`); span.title = tag.evidence_scope; crossTags.append(span); });
+    classification.methodTags.forEach(tag => { const span = create('span', `${p.display?.methodLabels?.[tag.label] || tag.label} · 方法`); span.title = tag.evidence_scope; crossTags.append(span); });
     classification.resourceKinds.forEach(kind => crossTags.append(create('span', `${resourceLabels[kind] || kind} · 资源`)));
     classification.secondaryDirections.forEach(id => crossTags.append(create('span', `${displayLabel(categories.get(id)) || id} · 次要方向`)));
     if (crossTags.children.length) content.append(crossTags);

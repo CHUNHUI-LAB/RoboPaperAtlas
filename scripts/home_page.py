@@ -57,7 +57,7 @@ def render(data, card, categories, shell, esc):
               <div class="filter-panel-heading"><h2 id="catalog-filter-title">筛选论文</h2><button type="button" data-filter-close aria-label="关闭筛选">✕</button></div>
               <div class="common-methods" role="group" aria-label="常用方法">{common_methods}</div>
               <div class="filter-fields">
-                <label>细分研究方向<select id="direction-filter"><option value="all">全部细分方向</option>{direction_options}</select></label>
+                <label>主研究方向<select id="direction-filter"><option value="all">全部主方向</option>{direction_options}</select></label>
                 <label>全部方法<select id="method-filter"><option value="all">全部方法</option>{method_options}</select></label>
                 <label>资源类型<select id="resource-filter"><option value="all">全部类型</option>{resource_options}</select></label>
                 <label>出版年份<select id="year-filter"><option value="all">全部年份</option>{year_options}<option value="unknown">未知 / 尚无正式出版年</option></select></label>

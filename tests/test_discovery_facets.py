@@ -7,7 +7,7 @@ class DiscoveryFacetTests(unittest.TestCase):
  def setUpClass(cls):cls.papers=json.loads((ROOT/'data/catalog.json').read_text())['papers'];cls.records=json.loads((ROOT/'data/classification.json').read_text())['records'];cls.groups=for_catalog(cls.papers,cls.records)
  def test_every_record_has_evidenced_membership_without_mutation(self):
   original=copy.deepcopy(self.records);self.assertEqual(set(self.groups),{p['id']for p in self.papers});self.assertTrue(all(v['groups']and v['reasons']for v in self.groups.values()));self.assertEqual(self.records,original)
-  self.assertEqual(counts(self.groups),{'navigation-space':29,'motion-manipulation':46,'robot-learning':48,'methods-resources':29});self.assertGreater(sum(counts(self.groups).values()),95)
+  self.assertEqual(counts(self.groups),{'navigation-space':29,'motion-manipulation':46,'robot-learning':50,'methods-resources':29});self.assertGreater(sum(counts(self.groups).values()),95)
  def test_foundations_are_not_automatically_robot_learning(self):
   for pid in ['rpa-0008','rpa-0018','rpa-0046','rpa-0058']:self.assertEqual(self.groups[pid]['groups'],['methods-resources'])
   self.assertIn('motion-manipulation',self.groups['rpa-0062']['groups']);self.assertIn('robot-learning',self.groups['rpa-0062']['groups']);self.assertIn('motion-manipulation',self.groups['rpa-0070']['groups'])
@@ -19,6 +19,7 @@ class DiscoveryFacetTests(unittest.TestCase):
   with self.assertRaises(ValueError):for_catalog(self.papers,self.records[:-1])
  def test_global_and_library_share_exact_membership(self):
   from global_preview import read_preview
-  page=read_preview(ROOT).decode();data=json.loads(re.search(r'<script id="atlas-data" type="application/json">(.*?)</script>',page,re.S)[1])
+  from preview_discovery import hydrate_discovery
+  page=hydrate_discovery(read_preview(ROOT)).decode();data=json.loads(re.search(r'<script id="atlas-data" type="application/json">(.*?)</script>',page,re.S)[1])
   self.assertEqual(data['browseLabels'],{key:label for key,label,_ in GROUPS})
   for p in data['papers']:self.assertEqual(p['navigation']['groups'],self.groups[p['id']]['groups']);self.assertEqual(p['navigation']['reasons'],self.groups[p['id']]['reasons'])

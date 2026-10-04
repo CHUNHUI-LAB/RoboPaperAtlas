@@ -9,6 +9,8 @@ from urllib.parse import quote
 from validate import validate_catalog
 from atlas_taxonomy import atlas_projection
 from topic_labels import TOPIC_CHINESE
+from catalog_search import classification_search
+from discovery_facets import method_label
 from presentation import map_year_label, metadata_label, pdf_note_heading, translate, evidence_label
 
 
@@ -47,11 +49,13 @@ def map_data(catalog, base='../',report_records=()):
         papers.append({
             'id': p['id'], 'title': overlay.get('title') or p['title'],
             'shortName': p.get('short_name') or '',
+            'classificationSearch': classification_search(p),
             'authors': ', '.join(authors) if isinstance(authors, list) else authors,
             'category': p['category'], 'mapTopic': taxonomy['placements'][p['id']]['direction'],
             'topics': [taxonomy['placements'][p['id']]['direction']], 'classification': taxonomy['placements'][p['id']], 'tags': p.get('tags') or [],
             'year': p.get('bibliographic_year'), 'yearBasis': p.get('year_basis'),
             'display': {
+                'methodLabels': {t['label']: method_label(t['label']) for t in taxonomy['placements'][p['id']]['methodTags']},
                 'yearLabel': map_year_label(p), 'metadataLabel': metadata_label(p),
                 'pdfNoteHeading': pdf_note_heading(p), 'codeNote': translate(p.get('code_note') or ''),
                 'classificationRationale': translate(taxonomy['placements'][p['id']]['rationale']),
@@ -110,7 +114,7 @@ def map_html(catalog, base='../', css='../assets/paper-map.css', js='../assets/p
       </div>
       <div class="map-results-column">
     <div class="map-toolbar" hidden>
-      <div class="map-search-wrap"><label for="map-search" class="sr-only">搜索地图中的论文</label><span aria-hidden="true">⌕</span><input id="map-search" type="search" role="combobox" autocomplete="off" aria-autocomplete="list" aria-controls="map-suggestions" aria-expanded="false" placeholder="搜索标题、作者、标签…"><button type="button" id="map-search-clear" aria-label="清空地图搜索" hidden>×</button><ul id="map-suggestions" role="listbox" aria-label="匹配的论文" hidden></ul></div>
+      <div class="map-search-wrap"><label for="map-search" class="sr-only">搜索地图中的论文</label><span aria-hidden="true">⌕</span><input id="map-search" type="search" role="combobox" autocomplete="off" aria-autocomplete="list" aria-controls="map-suggestions" aria-expanded="false" placeholder="搜索标题、作者、方向、方法…"><button type="button" id="map-search-clear" aria-label="清空地图搜索" hidden>×</button><ul id="map-suggestions" role="listbox" aria-label="匹配的论文" hidden></ul></div>
       <p id="map-result-count" role="status" aria-live="polite">{len(data['papers'])} 篇论文</p>
       <div class="map-view-toggle" role="group" aria-label="浏览方式"><button type="button" data-map-view="map" aria-pressed="false"><span aria-hidden="true">⊙</span> 地图</button><button type="button" data-map-view="list" aria-pressed="true"><span aria-hidden="true">☷</span> 列表</button></div>
     </div>

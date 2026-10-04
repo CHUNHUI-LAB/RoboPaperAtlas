@@ -123,6 +123,10 @@ class VBCLayoutV2Tests(unittest.TestCase):
         self.assertEqual(r.sha((json.dumps(restored, ensure_ascii=False, indent=2) + '\n').encode()), BEFORE['catalog_sha256'])
         classification = json.loads((ROOT / 'data/classification.json').read_text())
         self.assertEqual(classification['catalog_sha256'], r.sha((ROOT / 'data/catalog.json').read_bytes()))
+        for record in classification['records']:
+            if record['id'] in {'rpa-0050','rpa-0052'}:
+                self.assertEqual(record['method_tags'].pop()['label'],'RL')
+                record['method_evidence_note']=record['method_evidence_note'].split('; RL added 2026-10-04:',1)[0]
         classification['catalog_sha256'] = BEFORE['catalog_sha256']
         self.assertEqual(r.sha((json.dumps(classification, ensure_ascii=False, indent=2) + '\n').encode()), BEFORE['classification_sha256'])
         stages = [s for p in self.catalog['papers'] for s in p['stages'].values()]
