@@ -183,17 +183,17 @@ def main():
     from frontier_page import render as frontier_render
     frontier=json.loads((ROOT/'data/frontier.json').read_text()); validate_frontier(frontier)
     from briefs import load_archive, section as brief_section
-    from weekly_briefs import build as build_weekly, navigation as radar_navigation, load_archive as load_weekly, home_overview
+    from weekly_briefs import build as build_weekly, navigation as radar_navigation, load_archive as load_weekly, home_overview, daily_landing
     brief_index, brief_records=load_archive(ROOT)
     latest_brief=brief_records[brief_index['latest']]
     weekly_index,weekly_records=load_weekly(ROOT)
     (target/'frontier').mkdir(); (target/'frontier/index.html').write_text(frontier_render(frontier,data,shell,link,home_overview(weekly_index,weekly_records,brief_index,brief_records,prefix='../'),overview=True))
     for date,record in brief_records.items():
         folder=target/'frontier/briefs'/date;folder.mkdir(parents=True)
-        content='<main id="main" class="brief-archive-page"><a class="back-link" href="../../index.html">← 返回前沿动态</a>'+brief_section(record,brief_index,prefix='../../../',archive=True)+'</main>'
+        content='<main id="main" class="brief-archive-page"><a class="back-link" href="../../index.html">← 返回近期研究概览</a>'+radar_navigation('../../../',current='')+brief_section(record,brief_index,prefix='../../../',archive=True)+'</main>'
         (folder/'index.html').write_text(shell(record['title'],content,prefix='../../../',page='frontier'))
     daily_folder=target/'frontier/daily';daily_folder.mkdir()
-    (daily_folder/'index.html').write_text(shell(latest_brief['title'],'<main id="main" class="brief-archive-page">'+radar_navigation('../../')+brief_section(latest_brief,brief_index,prefix='../../',archive=True)+'</main>',prefix='../../',page='frontier'))
+    (daily_folder/'index.html').write_text(shell(latest_brief['title'],'<main id="main" class="brief-archive-page">'+daily_landing(weekly_index,weekly_records,brief_index,brief_records,prefix='../../')+'</main>',prefix='../../',page='frontier'))
     from brief_history import build as build_brief_history
     build_brief_history(ROOT,target,shell,brief_index)
     (target/'data').mkdir(exist_ok=True); (target/'data/briefs').mkdir(); shutil.copyfile(ROOT/'data/briefs/index.json',target/'data/briefs/index.json')
