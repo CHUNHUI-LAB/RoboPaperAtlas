@@ -28,7 +28,7 @@ class SubmissionExperienceTests(unittest.TestCase):
                          '97a136ccc742cc3e7eb0a6e8fee966275ff979216c6e58b58b2aa4cd0c50dee8')
 
     def test_source_identity_scope_and_cross_venue_references(self):
-        self.assertEqual(len(self.records), 14)
+        self.assertEqual(len(self.records), 19)
         venues = {v['id'] for v in self.data['venues']}
         new = self.pack['records'][3:7]
         self.assertEqual([r['source_type'] for r in new],
@@ -51,7 +51,7 @@ class SubmissionExperienceTests(unittest.TestCase):
 
     def test_editorial_synthesis_has_provenance_and_no_fabricated_consensus(self):
         notes = self.pack['editorial_synthesis']
-        self.assertEqual(len(notes), 6)
+        self.assertEqual(len(notes), 8)
         for note in notes:
             self.assertIn('编辑归纳', note['text'])
             self.assertGreaterEqual(len(note['source_record_ids']), 2)
@@ -60,10 +60,10 @@ class SubmissionExperienceTests(unittest.TestCase):
         self.assertIn('不是原作者共同结论或官方要求', script)
 
     def test_expansion_keeps_unknown_dates_and_record_level_summaries(self):
-        self.assertEqual(len(self.pack['overview']['records']), 14)
-        new = self.pack['records'][7:]
+        self.assertEqual(len(self.pack['overview']['records']), 19)
+        new = self.pack['records'][7:14]
         self.assertEqual(len(new), 7)
-        self.assertEqual(len({r['source_url'] for r in self.pack['records']}), 14)
+        self.assertEqual(len({r['source_url'] for r in self.pack['records']}), 19)
         for record in new:
             self.assertEqual(record['checked_at'], '2026-10-02')
             self.assertTrue(all(m.startswith('编辑启发：') for m in record['methods']))

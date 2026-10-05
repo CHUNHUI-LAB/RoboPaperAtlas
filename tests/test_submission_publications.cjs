@@ -14,7 +14,7 @@ test('historical identity never becomes a sixteenth recommendation or policy sna
 test('experience types and links stay source-specific across venues',()=>{
  const {run}=setup();
  const icra=run("renderExperiences('icra')");
- assert.match(icra,/5 条已读来源/);
+ assert.match(icra,/10 条已读来源/);
  assert.match(icra,/作者建议 · 非会议规范/);
  assert.match(icra,/匿名网友自述 · 未独立认证/);
  assert.match(icra,/Seita’s Place/);
@@ -22,11 +22,11 @@ test('experience types and links stay source-specific across venues',()=>{
  assert.match(icra,/页面仅显示约 3 个月前；绝对日期未核定/);
  assert.doesNotMatch(icra,/查看知乎原文|RA-L 官方说明|3 条历史亲历|null 年/);
  const cvpr=run("renderExperiences('cvpr')");
- assert.match(cvpr,/1 条已读来源/);
+ assert.match(cvpr,/2 条已读来源/);
  assert.match(cvpr,/Devi Parikh、Dhruv Batra、Stefan Lee/);
  assert.doesNotMatch(cvpr,/RA-L 官方说明|作者自报 · 非独立认证|2027 页数/);
  const ral=run("renderExperiences('ral')");
- assert.match(ral,/4 条已读来源/);
+ assert.match(ral,/7 条已读来源/);
  assert.match(ral,/RA-L 官方说明/);
  for(const record of data.experiences.records.filter(r=>r.source_type==='first_person_self_report'&&r.venue_id==='ral'))assert.match(ral,new RegExp(record.id));
 });
@@ -48,8 +48,8 @@ test('empty and unrelated venues never borrow an RA-L label or source',()=>{
 });
 test('cross-venue relevance does not duplicate the underlying source records',()=>{
  const {run}=setup();
- assert.equal(data.experiences.records.length,14);
- assert.equal(new Set(data.experiences.records.map(r=>r.id)).size,14);
+ assert.equal(data.experiences.records.length,19);
+ assert.equal(new Set(data.experiences.records.map(r=>r.id)).size,19);
  assert.equal(run("experienceMatches(data.experiences.records.find(r=>r.id==='milford-robotics-paper-structure-2023'),'iros')"),true);
  assert.equal(run("experienceMatches(data.experiences.records.find(r=>r.id==='parikh-batra-lee-rebuttals-2020'),'ral')"),false);
 });
@@ -75,12 +75,12 @@ test('venue overview exposes source-backed summaries before any selection',()=>{
 });
 test('global experiences show all unique summaries and provenance, with honest empty states',()=>{
  const {get,run}=setup();run('renderExperienceOverview()');
- assert.equal((get('experience-list').innerHTML.match(/data-experience-id=/g)||[]).length,14);
- assert.equal((get('experience-synthesis').innerHTML.match(/class="synthesis-card"/g)||[]).length,6);
+ assert.equal((get('experience-list').innerHTML.match(/data-experience-id=/g)||[]).length,19);
+ assert.equal((get('experience-synthesis').innerHTML.match(/class="synthesis-card"/g)||[]).length,8);
  assert.match(get('experience-overview').innerHTML,/不是原作者共同结论或官方要求/);assert.doesNotMatch(get('experience-synthesis').innerHTML,/<details|<summary/);
  for(const r of data.experiences.records)assert.ok(get('experience-list').innerHTML.includes(r.body_summary));
- get('e-venue').value='icra';run('renderExperienceOverview()');assert.match(get('experience-count').textContent,/5 条已读来源/);assert.match(get('experience-checks').innerHTML,/终稿冲突尚未解决/);
- get('e-type').value='author_advice';run('renderExperienceOverview()');assert.match(get('experience-count').textContent,/1 条已读来源/);
+ get('e-venue').value='icra';run('renderExperienceOverview()');assert.match(get('experience-count').textContent,/10 条已读来源/);assert.match(get('experience-checks').innerHTML,/终稿冲突尚未解决/);
+ get('e-type').value='author_advice';run('renderExperienceOverview()');assert.match(get('experience-count').textContent,/4 条已读来源/);
  get('e-venue').value='jfr';run('renderExperienceOverview()');assert.match(get('experience-count').textContent,/0 条已读来源/);assert.match(get('experience-list').innerHTML,/没有收录不代表没有相关经验/);
 });
 test('deadline overview separates initial, conditional, historical and disputed information',()=>{
@@ -149,4 +149,22 @@ test('RA-L transfer windows and eligibility stay separate from regular submissio
  for(const text of ['非综述','270 天','一个会议','2026-03-01','2026-12-31','2026-08-01','2027-04-30','不是 RA-L 常规投稿或会议首轮投稿截止'])assert.ok(html.includes(text),text);
  assert.deepEqual(data.editions.find(e=>e.id==='ral-policy-20261001').deadlines,[]);
  assert.deepEqual(data.editions.find(e=>e.id==='iros-2027').deadlines,[]);
+});
+
+
+test('reconstructed source dates and unread-source limits remain visible in full cards',()=>{
+ const {ctx,run}=setup();
+ const cases=[
+  ['tokekar-robotics-writing-2019',['2019-11-23为作者公开分享日','非已核定的讲座日或最早公开日','未观看讲座录像']],
+  ['milford-iros-writing-anticipation-2024',['网页发表于2025-01-24','介绍IROS 2024活动','未观看视频']],
+  ['zhang-robotics-metrics-2023',['ChenJacker（Robook署名）','知乎中文原页未核读']],
+  ['reddit-ral-baseline-gap-2022',['发表年份与绝对日期未核定','未见后来改投或录用结果','绝对日期未核定']],
+  ['ye-cooperative-perception-reflection-2023',['页面署名：丰色','2023-10-23是量子位转载页日期','未读取知乎原页或评论']]
+ ];
+ for(const [id,phrases]of cases){
+  ctx.record=data.experiences.records.find(r=>r.id===id);
+  const html=run('experienceCard(record,true)');
+  for(const phrase of phrases)assert.ok(html.includes(phrase),id+': '+phrase);
+  assert.doesNotMatch(html,/null 年|原文发布 null/);
+ }
 });
