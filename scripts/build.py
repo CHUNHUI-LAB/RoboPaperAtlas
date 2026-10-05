@@ -146,6 +146,8 @@ def about(report_count=0, report_records=()):
 
 def main():
     parser=argparse.ArgumentParser(); parser.add_argument('--output',default='dist'); args=parser.parse_args()
+    from radar_tree_preview import validate_preview as validate_radar_tree_preview
+    validate_radar_tree_preview(ROOT, ROOT/args.output)
     target=(ROOT/args.output).resolve()
     if target==ROOT or ROOT not in target.parents: raise SystemExit('Output must be a subdirectory of this repository.')
     if not (ROOT/'data/frontier.json').exists():
@@ -209,6 +211,8 @@ def main():
     (target/'.nojekyll').write_text(''); (target/'404.html').write_text(shell('未找到页面','<main id="main" class="about-main"><p class="eyebrow">404 / OFF THE MAP</p><h1>这条路径暂未收录。</h1><p>页面可能移动了，试试从目录重新寻找。</p><a class="primary-link" href="/RoboPaperAtlas/index.html">返回论文目录 →</a></main>',prefix='/RoboPaperAtlas/'))
     from navigation_stage1_preview import write_preview as write_navigation_preview
     write_navigation_preview(ROOT,target)
+    from radar_tree_preview import write_preview as write_radar_tree_preview
+    write_radar_tree_preview(ROOT, target)
     print(f'Built {len(data["papers"])} papers → {target.relative_to(ROOT)}')
 if __name__=='__main__': main()
 

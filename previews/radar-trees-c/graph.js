@@ -1,0 +1,268 @@
+/* Public-only local projection. No fetch, external libraries, persistence or graph writes. */
+(function (root, factory) {
+  'use strict';
+  const api = factory();
+  if (typeof module === 'object' && module.exports) module.exports = api;
+  if (root && root.document) {
+    root.RadarGraph = api;
+    try { root.radarGraphApp = api.mount(root.document, root.RADAR_GRAPH_DATA); }
+    catch (error) { const fallback = root.document.getElementById('load-error'); if (fallback) fallback.hidden = false; root.console?.error('Graph initialization failed:', error); }
+  }
+})(typeof window !== 'undefined' ? window : null, function () {
+  'use strict';
+  const representatives = {'route-runtime':'harnessvln','route-spatial-memory':'navharness','route-context':'agenticnav-tool-harness','route-learned-policy':'qwen-robotnav','route-protocol':'krantz2020vlnce'};
+  const WIDTH = 1280, MAX_ZOOM = 4, NS = 'http://www.w3.org/2000/svg';
+  const attrNames = {author_claim:'作者主张', direct_observation:'原文直接观察', curator_inference:'编辑推断', curator_summary:'编辑归纳', curator_organization:'编辑组织'};
+  const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const safeId = value => String(value).replace(/[^a-zA-Z0-9_-]/g, '_');
+  const initialState = () => ({mode:'baseline', task:'all', search:'', selected:{kind:'paper', canonical:'navharness'}, expandedRoutes:new Set(), expandedGroups:new Set(), expandedChallenges:new Set(['navharness']), focus:true, tab:'overview', zoom:1, selectionNotice:''});
+  function activePapers(data, state) { return state.mode === 'weekly' ? data.candidates : data.papers; }
+  function filteredPapers(data, state) {
+    const query = state.search.toLocaleLowerCase().trim();
+    const labels = Object.fromEntries([...data.tasks,...data.routes].map(n=>[n.id,n.label+' '+n.subtitle]));
+    return activePapers(data,state).filter(p => (state.task === 'all' || p.tasks.includes(state.task)) && (!query || [p.short_name,p.title,p.challenge,p.problem,p.insight,p.author_solution,p.pipeline,p.canonical_id,...p.tasks.map(x=>labels[x]),...p.routes.map(x=>labels[x])].join(' ').toLocaleLowerCase().includes(query)));
+  }
+  function reconcileSelection(data, state) {
+    if(state.selected?.canonical && !filteredPapers(data,state).some(p=>p.canonical_id===state.selected.canonical)) {
+      state.selected=null;state.tab='overview';
+      state.selectionNotice='筛选变更已清除原选中论文；请在当前结果中重新选择。';
+    }
+  }
+  function buildScene(data, state) {
+    const papers = filteredPapers(data,state), byPaper = Object.fromEntries(papers.map(p=>[p.canonical_id,p]));
+    const nodes=[],edges=[]; const selectedCanonical=state.selected?.canonical;
+    const addNode = n => (nodes.push(n), n);
+    const addEdge = (source,target,extra={}) => edges.push({id:source+'--'+target,source,target,attribution:'curator_organization',...extra});
+    const shownRoutes = data.routes.filter(r=>state.task==='all'||data.task_routes.some(e=>e.source===state.task&&e.target===r.id));
+    let leftY=45;
+    for(const route of shownRoutes){
+      const all=papers.filter(p=>p.routes.includes(route.id));
+      const preferred = state.mode==='baseline' ? all.find(p=>p.canonical_id===representatives[route.id]) : null;
+      let visible = state.expandedRoutes.has(route.id) ? all : (preferred?[preferred]:all.slice(0,1));
+      if(selectedCanonical && all.some(p=>p.canonical_id===selectedCanonical) && !visible.some(p=>p.canonical_id===selectedCanonical)) visible.push(byPaper[selectedCanonical]);
+      const block=Math.max(105,visible.length*86+12);
+      const routeNode=addNode({id:route.id,kind:'route',label:route.label,subtitle:route.subtitle,x:218,y:leftY+block/2-36,w:184,h:72,full:route.full_label,total:all.length,expanded:state.expandedRoutes.has(route.id),canExpand:all.length>1});
+      visible.forEach((p,i)=>{
+        const placement=p.placements?.find(x=>x.node_id===route.id);
+        const n=addNode({id:'paper-'+route.id+'-'+p.canonical_id,kind:'paper',canonical:p.canonical_id,paper:p,label:p.short_name,subtitle:state.mode==='weekly'?p.versioned_id+' · 摘要候选':(p.year?p.year+' · ':'')+'指定正文段落',x:443,y:leftY+i*86+7,w:195,h:68,candidate:state.mode==='weekly',partial:placement?.fit==='partial',full:p.title});
+        addEdge(route.id,n.id,{candidate:state.mode==='weekly',partial:placement?.fit==='partial'});
+      });
+      leftY+=block+11;
+    }
+    const leftHeight=leftY+22;
+    const shownTasks=data.tasks.filter(t=>state.task==='all'||t.id===state.task);
+    shownTasks.forEach((task,i)=>{
+      const y=shownTasks.length===1 ? leftHeight/2-34 : 76+i*Math.max(146,(leftHeight-200)/(shownTasks.length-1));
+      addNode({id:task.id,kind:'task',label:task.label,subtitle:task.subtitle,x:20,y,w:171,h:72,full:task.full_label});
+      data.task_routes.filter(e=>e.source===task.id&&shownRoutes.some(r=>r.id===e.target)).forEach(e=>addEdge(e.source,e.target));
+    });
+    let rightY=45;
+    const groups=data.groups.filter(g=>state.mode==='weekly' ? papers.some(p=>p.groups.includes(g.id)) : g.id!=='prediction-interface');
+    for(const group of groups){
+      const all=papers.filter(p=>p.groups.includes(group.id));
+      let visible=state.expandedGroups.has(group.id)?all:all.slice(0,1);
+      if(selectedCanonical&&all.some(p=>p.canonical_id===selectedCanonical)&&!visible.some(p=>p.canonical_id===selectedCanonical)) visible.push(byPaper[selectedCanonical]);
+      let childY=rightY; const groupChildren=[];
+      for(const p of visible){
+        const cid='challenge-'+group.id+'-'+p.canonical_id;
+        const problem=p.mode==='weekly'?p.problem:p.challenge;
+        const ch=addNode({id:cid,kind:'challenge',canonical:p.canonical_id,paper:p,label:problem,subtitle:p.short_name,x:971,y:childY,w:283,h:93,full:problem,expanded:state.expandedChallenges.has(p.canonical_id),canExpand:true,candidate:state.mode==='weekly'});
+        groupChildren.push(ch); addEdge('group-'+group.id,cid,{candidate:state.mode==='weekly'});
+        childY+=106;
+        if(state.expandedChallenges.has(p.canonical_id)){
+          const iid='insight-'+group.id+'-'+p.canonical_id, eid='evidence-'+group.id+'-'+p.canonical_id;
+          addNode({id:iid,kind:'insight',canonical:p.canonical_id,paper:p,label:p.mode==='weekly'?p.author_solution:p.insight,subtitle:p.mode==='weekly'?'作者方案 · 摘要级':attrNames[p.insight_attribution]||'编辑归纳',x:986,y:childY,w:268,h:93,full:p.mode==='weekly'?p.author_solution:p.insight,candidate:state.mode==='weekly'});
+          addEdge(cid,iid,{vertical:true,candidate:state.mode==='weekly'}); childY+=106;
+          addNode({id:eid,kind:'evidence',canonical:p.canonical_id,paper:p,label:p.mode==='weekly'?'摘要证据 · 全文待核':p.evidence.length+' 条指定证据 · 未独立复现',subtitle:p.mode==='weekly'?'查看位置贴合度与后续核查':'查看来源段落与适用条件',x:1002,y:childY,w:252,h:60,candidate:state.mode==='weekly'});
+          addEdge(iid,eid,{vertical:true,candidate:state.mode==='weekly'});childY+=77;
+        }
+      }
+      const block=Math.max(145,childY-rightY+24);
+      addNode({id:'group-'+group.id,kind:'group',group:group.id,label:group.label,subtitle:group.subtitle,x:719,y:rightY+Math.min(94,block/2)-39,w:196,h:78,full:group.note,total:all.length,expanded:state.expandedGroups.has(group.id),canExpand:all.length>1});
+      rightY+=block+15;
+    }
+    // Every bridge joins the same canonical paper's two projections. No academic relations are inferred.
+    for(const paperNode of nodes.filter(n=>n.kind==='paper')){
+      const challenges=nodes.filter(n=>n.kind==='challenge'&&n.canonical===paperNode.canonical);
+      for(const challenge of challenges) addEdge(paperNode.id,challenge.id,{cross:true,same_paper:paperNode.canonical,candidate:state.mode==='weekly'});
+    }
+    let related=new Set();
+    const sel=state.selected;
+    if(sel?.canonical && byPaper[sel.canonical]) related.add(sel.canonical);
+    if(sel?.kind==='task') papers.filter(p=>p.tasks.includes(sel.id)).forEach(p=>related.add(p.canonical_id));
+    if(sel?.kind==='route') papers.filter(p=>p.routes.includes(sel.id)).forEach(p=>related.add(p.canonical_id));
+    if(sel?.kind==='group') papers.filter(p=>p.groups.includes(sel.group)).forEach(p=>related.add(p.canonical_id));
+    const relevant=papers.filter(p=>related.has(p.canonical_id));
+    const active=new Set();
+    for(const node of nodes){
+      if(node.canonical&&related.has(node.canonical))active.add(node.id);
+      if(node.kind==='task'&&relevant.some(p=>p.tasks.includes(node.id)))active.add(node.id);
+      if(node.kind==='route'&&relevant.some(p=>p.routes.includes(node.id)))active.add(node.id);
+      if(node.kind==='group'&&relevant.some(p=>p.groups.includes(node.group)))active.add(node.id);
+      node.selected=sel?.canonical ? (node.canonical===sel.canonical && (node.kind===sel.kind || (sel.kind==='paper' && node.kind==='paper'))) : node.id===sel?.id;
+      node.active=active.has(node.id);
+      node.dim=state.focus&&related.size>0&&!node.active;
+    }
+    edges.forEach(e=>{e.active=active.has(e.source)&&active.has(e.target);e.dim=state.focus&&related.size>0&&!e.active;});
+    return {nodes,edges,papers,width:WIDTH,height:Math.max(670,leftHeight,rightY+20),uniqueVisible:new Set(nodes.filter(n=>n.kind==='paper').map(n=>n.canonical)).size,empty:papers.length===0};
+  }
+  function wrapText(text, maxUnits, maxLines=3) {
+    const out=[];let line='',units=0;
+    for(const char of String(text??'')){
+      const u=/[\u0020-\u007e]/.test(char)?.55:1;
+      if(units+u>maxUnits&&line){out.push(line);line='';units=0;}
+      line+=char;units+=u;
+    }
+    if(line)out.push(line);
+    if(out.length>maxLines){out.length=maxLines;out[maxLines-1]=out[maxLines-1].replace(/.{1,2}$/u,'')+'…';}
+    return out;
+  }
+  function computeFitZoom(viewportWidth, viewportHeight, sceneWidth, sceneHeight) {
+    if(!(viewportWidth>0&&viewportHeight>0&&sceneWidth>0&&sceneHeight>0))return 1;
+    return Math.min(1,(viewportHeight*sceneWidth)/(sceneHeight*viewportWidth));
+  }
+  function applyAction(state, action) {
+    if(action.type==='mode'){state.mode=action.mode;state.task='all';state.search='';state.selected={kind:'paper',canonical:'navharness'};state.expandedRoutes.clear();state.expandedGroups.clear();state.expandedChallenges=new Set(['navharness']);state.tab='overview';state.zoom=1;state.selectionNotice='';}
+    if(action.type==='select'){
+      const n=action.node;state.selectionNotice='';
+      state.selected={kind:n.kind,id:n.id,canonical:n.canonical,group:n.group};state.tab=n.kind==='evidence'?'evidence':'overview';
+      if(n.kind==='route')state.expandedRoutes.has(n.id)?state.expandedRoutes.delete(n.id):state.expandedRoutes.add(n.id);
+      if(n.kind==='group')state.expandedGroups.has(n.group)?state.expandedGroups.delete(n.group):state.expandedGroups.add(n.group);
+      if(n.kind==='challenge')state.expandedChallenges.has(n.canonical)?state.expandedChallenges.delete(n.canonical):state.expandedChallenges.add(n.canonical);
+      if(n.kind==='paper')state.expandedChallenges.add(n.canonical);
+    }
+    if(action.type==='clear'){state.selected=null;state.selectionNotice='';}
+    if(action.type==='zoom')state.zoom=Math.max(.65,Math.min(MAX_ZOOM,Math.round(action.value*100)/100));
+    return state;
+  }
+  function mount(doc,data) {
+    if(!data||data.schema!=='radar-c-view/1')throw new Error('Missing graph-data.js');
+    let state=initialState(),scene;
+    const $=id=>doc.getElementById(id);
+    const svg=$('research-graph');
+    const element=(tag,attrs={},parent)=>{const el=doc.createElementNS(NS,tag);Object.entries(attrs).forEach(([key,value])=>el.setAttribute(key,String(value)));if(parent)parent.appendChild(el);return el;};
+    const putText=(parent,text,x,y,cls)=>{const t=element('text',{x,y,class:cls},parent);t.textContent=text;return t;};
+    const icons={task:'M1 15 8 1 15 15 8 11Z',route:'M1 2 6 0 11 3 16 1V15L11 17 6 14 1 16ZM6 0V14M11 3V17',paper:'M2 0H10L15 5V18H2ZM10 0V5H15M5 9H12M5 12H12',group:'M8 0A7 7 0 0 1 12 13V17H4V13A7 7 0 0 1 8 0M5 20H11',challenge:'M8 1A8 8 0 1 1 7.99 1M8 5V10L12 12',insight:'M2 3H15M2 8H15M2 13H15M-2 3H-1M-2 8H-1M-2 13H-1',evidence:'M2 0H10L15 5V18H2ZM10 0V5H15M5 10 7 12 12 7'};
+    const section=(title,content,attribution='')=>`<section class="detail-section"><h3>${escape(title)}${attribution?`<span class="attribution">${escape(attribution)}</span>`:''}</h3>${content}</section>`;
+    const paragraph=text=>`<p>${escape(text)}</p>`;
+    const list=items=>`<ul>${items.map(t=>`<li>${escape(t)}</li>`).join('')}</ul>`;
+    const source=p=>`<a class="source-button" href="${escape(p.source_url)}" target="_blank" rel="noopener noreferrer">阅读固定版本原文 ↗</a>`;
+    const paperButtons=papers=>papers.map(p=>`<button class="paper-button" type="button" data-paper-id="${escape(p.canonical_id)}">${escape(p.short_name)}<span>${escape(p.mode==='weekly'?p.versioned_id+' · 摘要候选':p.version+' · 指定段落')}</span></button>`).join('');
+    function renderDetails(){
+      const sel=state.selected,p=sel?.canonical?scene.papers.find(p=>p.canonical_id===sel.canonical):null;
+      $('detail-tabs').hidden=!p;
+      if(!p){
+        let title='探索这张地图',subtitle='导航领域首个试点',content='';
+        if(sel?.kind==='route'){const r=data.routes.find(r=>r.id===sel.id);title=r.label;subtitle='现有方法路线 · 编辑组织';content=section('路线范围',paragraph(r.full_label))+section('当前范围内的论文',paperButtons(scene.papers.filter(p=>p.routes.includes(sel.id))));}
+        else if(sel?.kind==='task'){const t=data.tasks.find(t=>t.id===sel.id);title=t.label;subtitle=t.full_label;content=section('任务下的论文',paperButtons(scene.papers.filter(p=>p.tasks.includes(sel.id))));}
+        else if(sel?.kind==='group'){const g=data.groups.find(g=>g.id===sel.group);title=g.label;subtitle='编辑归组 · 非学术关系';content=section('分组说明',paragraph(g.note))+section('同组论文分别核证',paperButtons(scene.papers.filter(p=>p.groups.includes(g.id))));}
+        else content=section('怎么读',paragraph('左侧从任务进入方法路线；右侧回到同一篇论文的问题、思路与证据。点击方法或问题卡片展开下一层。'))+section('范围',paragraph(state.mode==='weekly'?'本期 238 条候选中有 11 条摘要证据；仅 6 篇在本轮重新核摘要并定位，5 篇未定位。':'导航试点有 10 篇核心正文段落核查记录，另有 4 篇摘要关系锚点。本图展示 10 篇核心记录，不等于全部机器人领域覆盖。'));
+        if(state.selectionNotice)content=section('选择已随筛选更新',paragraph(state.selectionNotice))+content;
+        $('selection-summary').innerHTML=`<div class="selection-card"><span class="selection-type">${escape(subtitle)}</span><h3>${escape(title)}</h3><p>图中连接只表示编辑组织；同一论文的多处投影共用一个身份</p></div>`;
+        $('detail-content').innerHTML=content+section('证据边界',paragraph('关联图不新增引用、采用、比较或因果关系。未建分支只是当前组织覆盖缺口，不能据此认定研究空白。'));
+      } else {
+        const weekly=p.mode==='weekly';
+        $('selection-summary').innerHTML=`<div class="selection-card"><span class="selection-type"><span>${weekly?'本期摘要候选':'领域基线 · 指定正文'}</span><span>${weekly?'10-04 周窗':'同篇关联'}</span></span><h3>${escape(p.short_name)}</h3><p>${escape(weekly?p.versioned_id:p.version)}</p><div class="id-label">统一论文 ID：${escape(p.canonical_id)}</div></div>`;
+        let content='';
+        if(state.tab==='overview'){
+          content=section('本文问题',paragraph(weekly?p.problem:p.challenge),weekly?'编辑问题归纳':'编辑归纳');
+          content+=section(weekly?'作者方案':'解决思路',paragraph(weekly?p.author_solution:p.insight),weekly?'作者主张 · 摘要':attrNames[p.insight_attribution]||'编辑归纳');
+          if(!weekly)content+=section('方法路径',paragraph(p.pipeline));
+          content+=section('证据状态',`<span class="status-badge ${weekly?'warning':''}">${weekly?'候选位置 · 仅完整摘要':'已核指定正文段落 · 非全文'}</span>`+paragraph(weekly?'本轮未读全文、未比较版本、未独立复现实验；位置贴合度不是学术关系。':data.core_definition+'；未独立复现实验。'));
+          content+=source(p);
+        } else if(state.tab==='evidence'){
+          if(weekly){content=section('已核来源',paragraph(p.title)+`<span class="locator">${escape(p.locator)} · 核查 ${escape(p.fresh_checked_at)}</span>`+paragraph('primary_complete_abstract · 原始事件 '+p.event_at));
+            content+=section('位置候选',p.placements.map(m=>{const n=[...data.tasks,...data.routes].find(n=>n.id===m.node_id);return `<div class="placement"><b>${escape(n?.label||m.node_id)}</b><span class="fit-label">${m.fit==='partial'?'部分贴合':'直接贴合'} · 编辑组织</span><p>${escape(m.why)}</p></div>`;}).join(''));
+            content+=section('证据没有覆盖',list(['全文未读','修订前后未比较','实验未独立核验','未新增学术关系']));
+          } else {
+            content=section('指定原文证据',p.evidence.map(e=>`<div class="evidence-card"><span class="attribution">${escape(attrNames[e.attribution]||e.attribution)}</span><p>${escape(e.statement)}</p><a class="locator" href="${escape(p.source_url)}" target="_blank" rel="noopener noreferrer">${escape(e.locator)} ↗</a></div>`).join(''));
+            content+=section('实际阅读范围',list(p.read_locations));
+            content+=section('未读与未验证',list(p.not_read));
+          }
+          content+=source(p);
+        } else {
+          if(weekly){content=section('比较与适用边界',list(p.comparison_limits));content+=section('下一步核查',list(p.next_checks),'尚未执行');
+            if(p.branch_proposals.length)content+=section('待建分支候选',p.branch_proposals.map(b=>`<div class="evidence-card"><p><b>${escape(b.label)}</b></p><p>${escape(b.why)}</p><span class="locator">未创建 · 组织覆盖缺口，非研究空白</span></div>`).join(''));
+          } else {content=section('任务与条件',paragraph(p.task)+list(p.conditions));content+=section('适用与比较边界',paragraph(p.limits));content+=section('待核问题',paragraph(p.open_question),'编辑提出 · 非新颖性结论');}
+          content+=paragraph('图中跨树连接的是同一论文的两种阅读入口；不意味着另一篇论文已解决了这里的问题。');
+        }
+        $('detail-content').innerHTML=content;
+      }
+      doc.querySelectorAll('[data-tab]').forEach(b=>{const chosen=b.dataset.tab===state.tab;b.setAttribute('aria-selected',String(chosen));b.setAttribute('tabindex',chosen?'0':'-1');});
+      $('detail-content').setAttribute('aria-labelledby','tab-'+state.tab);
+    }
+    function renderGraph(){
+      scene=buildScene(data,state);
+      while(svg.lastChild)svg.removeChild(svg.lastChild);
+      const title=element('title',{id:'graph-title'},svg);title.textContent='导航领域首个试点：文献脉络与 Challenge–Insight 双树';
+      const desc=element('desc',{id:'graph-desc'},svg);desc.textContent='所有连线均为编辑组织。跨树线仅连同一论文，不是引用、采用或因果关系。点击方法、编辑分组及问题可逐层展开。';
+      const defs=element('defs',{},svg), filter=element('filter',{id:'selected-shadow',x:'-15%',y:'-30%',width:'140%',height:'170%'},defs);element('feDropShadow',{dx:0,dy:2,stdDeviation:3,'flood-color':'#bd442a','flood-opacity':'.11'},filter);
+      svg.setAttribute('viewBox',`0 0 ${WIDTH} ${scene.height}`);
+      element('line',{x1:676,y1:14,x2:676,y2:scene.height-12,class:'graph-split'},svg);
+      putText(svg,'任务',27,23,'graph-group-label');putText(svg,'方法路线',224,23,'graph-group-label');putText(svg,'论文 · 多父投影',449,23,'graph-group-label');putText(svg,'编辑归组',725,23,'graph-group-label');putText(svg,'本文问题 / 思路 / 证据',977,23,'graph-group-label');
+      const edgeLayer=element('g',{'aria-hidden':'true'},svg), nodeLayer=element('g',{},svg);
+      const byId=Object.fromEntries(scene.nodes.map(n=>[n.id,n]));
+      scene.edges.sort((a,b)=>Number(a.active)-Number(b.active)).forEach(e=>{
+        const s=byId[e.source],t=byId[e.target];if(!s||!t)return;
+        let d;
+        if(e.vertical){const x=t.x+13;d=`M ${s.x+13} ${s.y+s.h} C ${s.x+13} ${s.y+s.h+13}, ${x} ${t.y-13}, ${x} ${t.y}`;}
+        else {const x=s.x+s.w,y=s.y+s.h/2,tx=t.x,ty=t.y+t.h/2;const mid=e.cross?x+(tx-x)*.56:(x+tx)/2;d=`M ${x} ${y} C ${mid} ${y}, ${mid} ${ty}, ${tx} ${ty}`;}
+        element('path',{d,class:['graph-edge',e.active?'active':'',e.dim?'dim':'',e.cross?'cross':'',e.partial?'partial':'',e.candidate?'candidate':''].join(' '),'data-source':e.source,'data-target':e.target,'data-edge-semantics':'curator_organization',...(e.same_paper?{'data-same-paper':e.same_paper}:{})},edgeLayer);
+      });
+      scene.nodes.forEach(n=>{
+        const classes=['graph-node',n.kind,n.active?'active':'',n.dim?'dim':'',n.selected?'selected':'',n.candidate?'candidate':''].join(' ');
+        const label=n.label+(n.subtitle?'，'+n.subtitle:'')+(n.canExpand?'，'+(n.expanded?'点击收起':'点击展开'):'，查看详情');
+        const g=element('g',{id:'node-'+safeId(n.id),class:classes,transform:`translate(${n.x} ${n.y})`,role:'button',tabindex:0,'aria-label':label,'aria-pressed':String(n.selected),'data-node-id':n.id,'data-kind':n.kind,...(n.canonical?{'data-canonical-id':n.canonical}:{}),...(n.canExpand?{'aria-expanded':String(Boolean(n.expanded))}:{})},nodeLayer);
+        const tt=element('title',{},g);tt.textContent=(n.full||n.label)+(n.partial?' · 此位置仅部分贴合':'');
+        element('rect',{x:0,y:0,width:n.w,height:n.h,rx:n.kind==='task'?14:8,class:'node-body'},g);
+        element('path',{d:icons[n.kind]||icons.paper,transform:`translate(13 ${n.kind==='challenge'||n.kind==='insight'?31:24})`,class:'node-icon'},g);
+        const long=n.kind==='challenge'||n.kind==='insight';
+        if(long)putText(g,n.kind==='challenge'?'本文问题':'解决思路',40,17,'node-kicker');
+        const max=(n.w-65)/14;
+        const lines=wrapText(n.label,max,long?3:2);
+        const start=long?36:(lines.length>1?26:29);
+        lines.forEach((text,i)=>putText(g,text,40,start+i*17,'node-label'));
+        if(n.subtitle)putText(g,wrapText(n.subtitle,(n.w-55)/10,1)[0],40,n.h-10,'node-subtitle');
+        if(n.canExpand)putText(g,n.expanded?'−':'+',n.w-16,16,'node-badge');
+        if(n.total!==undefined)putText(g,String(n.total),n.w-18,n.h-11,'node-count');
+        if(n.partial)element('circle',{cx:n.w-10,cy:n.h-11,r:3,fill:'#b78654'},g);
+        const choose=()=>{applyAction(state,{type:'select',node:n});render();const fresh=$('node-'+safeId(n.id));fresh?.focus?.({preventScroll:true});};
+        g.addEventListener('click',choose);g.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();choose();}});
+      });
+      $('graph-empty').hidden=!scene.empty;
+      $('visible-count').textContent=`${scene.uniqueVisible} / ${scene.papers.length} 篇可见`;
+      applyZoom();
+    }
+    function applyZoom(){svg.style.minWidth='0';svg.style.width=state.zoom*100+'%';$('zoom-level').textContent=Math.round(state.zoom*100)+'%';$('zoom-out').disabled=state.zoom<=.65;$('zoom-in').disabled=state.zoom>=MAX_ZOOM;}
+    function fitZoom(){const viewport=$('graph-viewport');state.zoom=computeFitZoom(viewport.clientWidth,viewport.clientHeight,WIDTH,scene.height);applyZoom();viewport.scrollLeft=0;viewport.scrollTop=0;}
+    function render(){
+      reconcileSelection(data,state);
+      renderGraph();renderDetails();
+      doc.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===state.mode)));
+      $('scope-label').innerHTML='<i class="status-dot"></i>'+ (state.mode==='weekly'?'10-04 周窗 · 6 篇摘要位置候选 · 无新增学术关系':'导航领域首个试点 · 10 篇指定正文 + 4 篇摘要锚点');
+      $('graph-search').value=state.search;$('task-filter').value=state.task;$('focus-path').checked=state.focus;
+    }
+    data.tasks.forEach(t=>{const option=doc.createElement('option');option.value=t.id;option.textContent=t.label+' · '+t.subtitle;$('task-filter').appendChild(option);});
+    doc.querySelectorAll('[data-mode]').forEach(b=>b.addEventListener('click',()=>{applyAction(state,{type:'mode',mode:b.dataset.mode});render();fitZoom();}));
+    doc.querySelectorAll('[data-tab]').forEach(b=>{b.addEventListener('click',()=>{state.tab=b.dataset.tab;renderDetails();});b.addEventListener('keydown',event=>{if(!['ArrowRight','ArrowLeft','Home','End'].includes(event.key))return;event.preventDefault();const tabs=['overview','evidence','conditions'];let ix=tabs.indexOf(state.tab);ix=event.key==='Home'?0:event.key==='End'?2:(ix+(event.key==='ArrowRight'?1:2))%3;state.tab=tabs[ix];renderDetails();$('tab-'+state.tab).focus();});});
+    $('graph-search').addEventListener('input',()=>{state.search=$('graph-search').value;render();});
+    $('graph-search').addEventListener('keydown',event=>{if(event.key==='Escape'){state.search='';render();}});
+    $('task-filter').addEventListener('change',()=>{state.task=$('task-filter').value;render();});
+    $('focus-path').addEventListener('change',()=>{state.focus=$('focus-path').checked;render();});
+    $('clear-selection').addEventListener('click',()=>{applyAction(state,{type:'clear'});render();});
+    $('clear-filters').addEventListener('click',()=>{state.search='';state.task='all';render();});
+    $('zoom-in').addEventListener('click',()=>{applyAction(state,{type:'zoom',value:state.zoom+.15});applyZoom();});
+    $('zoom-out').addEventListener('click',()=>{applyAction(state,{type:'zoom',value:state.zoom-.15});applyZoom();});
+    $('zoom-fit').addEventListener('click',fitZoom);
+    $('graph-reset').addEventListener('click',()=>{const mode=state.mode;state=initialState();state.mode=mode;render();fitZoom();});
+    $('graph-viewport').addEventListener('keydown',event=>{if(event.key==='Escape'){applyAction(state,{type:'clear'});render();}});
+    $('detail-content').addEventListener('click',event=>{const button=event.target.closest?.('[data-paper-id]');if(!button)return;const p=activePapers(data,state).find(p=>p.canonical_id===button.dataset.paperId);if(p){applyAction(state,{type:'select',node:{id:'paper-'+p.canonical_id,kind:'paper',canonical:p.canonical_id}});render();}});
+    $('scope-details').addEventListener('click',()=>{$('scope-notes').open=true;$('scope-notes').scrollIntoView?.({behavior:'smooth',block:'start'});});
+    $('scope-note-content').innerHTML=paragraph('导航领域首个试点：基础候选池 28 篇；主图使用 10 篇指定正文段落核查记录，另有 4 篇摘要关系锚点。候选池不是已读篇数，也不代表覆盖全部机器人领域。')+paragraph(`今日 ${data.daily.date}：${data.daily.candidate_count} 条候选；无实质更新。本期 ${data.weekly.date}：${data.weekly.candidate_count} 条候选 / ${data.weekly.abstract_count} 条摘要证据，其中 6 篇重新核摘要并定位，5 篇未定位。10-05 的核查不把上周条目标为今日发现。`)+paragraph(`周窗（UTC，updated_at）：${data.weekly.window.start} 至 ${data.weekly.window.end}。`)+list(data.limitations)+`<h3>本轮未定位的 5 篇摘要</h3><ul>${data.weekly.unmapped_abstracts.map(p=>`<li><a href="https://arxiv.org/abs/${escape(p.versioned_id)}" target="_blank" rel="noopener noreferrer">${escape(p.versioned_id)}</a>：${escape(p.reason)}</li>`).join('')}</ul>`+paragraph('未定位不是不相关或已排除；待建分支不自动加入图中，也不是研究空白。')+`<p><a href="${escape(data.method_reference.url)}" target="_blank" rel="noopener noreferrer">${escape(data.method_reference.label)}</a>：${escape(data.method_reference.note)}</p>`;
+    $('method-reference').href=data.method_reference.url;
+    render();fitZoom();
+    $('load-error').hidden=true;
+    return {getState:()=>state,getScene:()=>scene,render,selectPaper:canonical=>{applyAction(state,{type:'select',node:{kind:'paper',canonical}});render();}};
+  }
+  return {initialState,activePapers,filteredPapers,reconcileSelection,buildScene,applyAction,computeFitZoom,wrapText,mount};
+});
