@@ -64,13 +64,43 @@ class WeeklyTests(unittest.TestCase):
   rows=copy.deepcopy(self.rows);rows[1]['versioned_id']=rows[0]['versioned_id'].split('v')[0]+'v9'
   with self.assertRaises(ValueError):self.check(rows=rows)
  def test_matching_snapshot_cross_check(self):
-  raw=(ROOT/'data/frontier.json').read_bytes();f=json.loads(raw);digest=hashlib.sha256(raw).hexdigest();validate_snapshot(self.record,self.rows,f,digest)
+  record,f,raw=self.synthetic_matching_snapshot();digest=hashlib.sha256(raw).hexdigest();validate_snapshot(record,self.rows,f,digest)
   changed=copy.deepcopy(self.rows);changed[0]['title']='Altered source title'
-  with self.assertRaises(ValueError):validate_snapshot(self.record,changed,f,digest)
-  with self.assertRaises(ValueError):validate_snapshot(self.record,self.rows,f,'0'*64)
+  with self.assertRaises(ValueError):validate_snapshot(record,changed,f,digest)
+  with self.assertRaises(ValueError):validate_snapshot(record,self.rows,f,'0'*64)
+  with self.assertRaises(ValueError):validate_snapshot(record,self.rows[:-1],f,digest)
   for field,value in [('query','different query'),('rule_version','different-rule'),('status','limited'),('coverage_complete',False),('coverage_start','2026-09-26T12:41:03Z')]:
-   d=copy.deepcopy(self.record);d['source_snapshot'][field]=value
+   d=copy.deepcopy(record);d['source_snapshot'][field]=value
    with self.assertRaises(ValueError):validate_snapshot(d,self.rows,f,digest)
+ def synthetic_matching_snapshot(self):
+  # Unit-test fixture only: frozen candidate metadata cannot recreate the
+  # historical frontier bytes. Bind a COPY to the actual synthetic byte hash;
+  # never rewrite the real archive's source provenance to fit today's feed.
+  record=copy.deepcopy(self.record);source=record['source_snapshot']
+  frontier={'schema_version':'1.0','generated_at':source['generated_at'],'fetched_at':source['fetched_at'],'status':source['status'],
+   'collection':{'search_query':source['query'],'rule_version':source['rule_version']},
+   'coverage':{'complete':source['coverage_complete'],'truncated':source['coverage_truncated'],'window_start':source['coverage_start'],'window_end':source['coverage_end']},
+   'papers':copy.deepcopy(self.rows)}
+  raw=(json.dumps(frontier,ensure_ascii=False,sort_keys=True)+'\n').encode('utf-8');source['sha256']=hashlib.sha256(raw).hexdigest()
+  self.assertNotEqual(source['sha256'],self.record['source_snapshot']['sha256'])
+  return record,json.loads(raw),raw
+ def test_rolling_frontier_preserves_historical_archive_and_integrity(self):
+  with tempfile.TemporaryDirectory() as tmp:
+   root=Path(tmp);(root/'data').mkdir();shutil.copytree(ROOT/'data/weekly',root/'data/weekly')
+   before={str(p.relative_to(root)):p.read_bytes() for p in (root/'data/weekly').rglob('*') if p.is_file()}
+   _,frontier,_=self.synthetic_matching_snapshot()
+   frontier.update(generated_at='2026-10-05T13:00:00Z',fetched_at='2026-10-05T13:00:00Z',papers=[])
+   frontier['coverage'].update(window_start='2026-09-28T13:00:00Z',window_end='2026-10-05T13:00:00Z')
+   raw=(json.dumps(frontier,ensure_ascii=False)+'\n').encode('utf-8');digest=hashlib.sha256(raw).hexdigest()
+   self.assertNotEqual(digest,self.record['source_snapshot']['sha256']);(root/'data/frontier.json').write_bytes(raw)
+   index,records=load_archive(root);self.assertEqual(index,self.index);historical=records['2026-10-04']
+   self.assertEqual(historical,self.records['2026-10-04'])
+   self.assertEqual(before,{str(p.relative_to(root)):p.read_bytes() for p in (root/'data/weekly').rglob('*') if p.is_file()})
+   # A different current snapshot does not waive an explicit source match.
+   with self.assertRaisesRegex(ValueError,'Weekly source snapshot hash mismatch'):validate_snapshot(self.record,self.rows,frontier,digest)
+   # Nor does it waive the independently frozen candidate-part integrity.
+   part=root/'data/weekly/2026-10-04/000.json';part.write_bytes(part.read_bytes()+b' ')
+   with self.assertRaisesRegex(ValueError,'Candidate part integrity failure'):load_archive(root)
  def test_evidence_union_and_coverage_rejected(self):
   for change in [lambda d:d['research_overview']['themes'][0]['method_routes'][0].update(evidence_ids=[]),lambda d:d['research_overview']['themes'][0].update(evidence_ids=['0000.00000v1']),lambda d:d['source_snapshot'].update(coverage_start='2026-10-01T00:00:00Z'),lambda d:d['source_snapshot'].update(coverage_truncated=True),lambda d:d['source_snapshot'].update(status='error'),lambda d:d['research_overview']['coverage'].update(comparison_window_available=True)]:
    d=copy.deepcopy(self.record);change(d)
