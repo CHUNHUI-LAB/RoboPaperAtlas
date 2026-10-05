@@ -146,6 +146,8 @@ def about(report_count=0, report_records=()):
 
 def main():
     parser=argparse.ArgumentParser(); parser.add_argument('--output',default='dist'); args=parser.parse_args()
+    from radar_tree_preview import validate_preview as validate_radar_tree_preview
+    validate_radar_tree_preview(ROOT, ROOT/args.output)
     target=(ROOT/args.output).resolve()
     if target==ROOT or ROOT not in target.parents: raise SystemExit('Output must be a subdirectory of this repository.')
     if not (ROOT/'data/frontier.json').exists():
@@ -211,6 +213,8 @@ def main():
     write_navigation_preview(ROOT,target)
     from navigation_stage1_v2_preview import write_preview as write_navigation_v2_preview
     write_navigation_v2_preview(ROOT,target)
+    from radar_tree_preview import write_preview as write_radar_tree_preview
+    write_radar_tree_preview(ROOT, target)
     print(f'Built {len(data["papers"])} papers → {target.relative_to(ROOT)}')
 if __name__=='__main__': main()
 
