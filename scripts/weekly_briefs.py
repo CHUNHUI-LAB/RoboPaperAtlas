@@ -63,9 +63,9 @@ def load_archive(root):
  return index,records
 
 def navigation(prefix='',current='daily'):
- return '<nav class="radar-archive" aria-label="Radar 周期"><a href="'+prefix+'frontier/daily/index.html"'+(' aria-current="page"' if current=='daily' else '')+'>日报 · 最近24小时</a><a href="'+prefix+'frontier/weekly/index.html"'+(' aria-current="page"' if current=='weekly' else '')+'>周报 · 七天研究主线</a></nav>'
+ return '<nav class="radar-archive" aria-label="Radar 周期"><a href="'+prefix+'frontier/index.html"'+(' aria-current="page"' if current=='overview' else '')+'>近期研究概览</a><a href="'+prefix+'frontier/daily/index.html"'+(' aria-current="page"' if current=='daily' else '')+'>日报 · 最近24小时</a><a href="'+prefix+'frontier/weekly/index.html"'+(' aria-current="page"' if current=='weekly' else '')+'>周报 · 七天研究主线</a></nav>'
 
-def render(data,index,prefix):
+def render(data,index,prefix,current='weekly'):
  e=lambda s:html.escape(str(s),quote=True);o=data['research_overview'];sources={s['versioned_id']:s for s in o['evidence_sources']};themes=[]
  for ordinal,t in enumerate(o['themes'],1):
   routes=''.join('<li><p>'+e(r['text'])+'</p>'+''.join('<a href="'+e(sources[v]['version_url'])+'">'+e(sources[v]['title'])+' ↗</a><br>' for v in r['evidence_ids'])+'</li>' for r in t['method_routes'])
@@ -73,13 +73,13 @@ def render(data,index,prefix):
  distribution=''.join('<li>'+e(x['label'])+'：'+str(x['count'])+'（'+str(x['new'])+' 首版 / '+str(x['revisions'])+' 修订）</li>' for x in o['topic_distribution']);caveats=''.join('<p>'+e(x['explanation'])+'</p>' for x in o['keyword_caveats']);attempt=index.get('last_attempt');attempt_note=('<p class="radar-state">最近周报更新失败（'+e(attempt['attempted_at'])+'）：'+e(attempt['message'])+'。以下保留上次成功观察窗口。</p>') if attempt else '';state={'ready':'','stale':'更新未完成，保留原始成功观察窗口与旧内容。','error':'本期取数或摘要核查失败；此状态不代表没有新论文。','no_material_update':'本周没有新增研究主线；不拼接或重复旧日报。'}[data['status']]
  partial='完整' if data['source_snapshot']['coverage_complete'] and not data['source_snapshot']['coverage_truncated'] else '部分覆盖；候选数不是本周全部相关论文'
  count=data['counts'];archive=''.join('<a href="'+prefix+'frontier/weekly/'+e(x['date'])+'/index.html">'+e(x['date'])+'</a>' for x in reversed(index['weeks']));candidates=''.join('<li><span>'+('首版' if r['change_type']=='new' else '修订')+' · '+e(r['versioned_id'])+'</span><a href="https://arxiv.org/abs/'+e(r['versioned_id'])+'">'+e(r['title'])+'</a><small>'+e(r['updated_at'])+'</small></li>' for r in o['candidate_records'])
- return '<link rel="stylesheet" href="'+prefix+'assets/radar-overview.css?v='+sha((Path(__file__).resolve().parents[1]/'assets/radar-overview.css').read_bytes())[:12]+'">'+navigation(prefix,'weekly')+attempt_note+'<section class="research-overview" id="weekly-brief"><header class="radar-lead"><p class="radar-date">'+e(data['date'])+' / WEEKLY RESEARCH RADAR</p><h1>'+e(o['headline'])+'</h1><p class="radar-editorial">'+e(o['executive_summary'])+'</p><p class="radar-window">'+e(data['window']['start'])+' → '+e(data['window']['end'])+'（UTC，按更新时间）</p><p>'+e(state)+'</p><p>'+str(count['window_candidates'])+' 条候选 · '+str(count['new'])+' 首版 / '+str(count['revisions'])+' 修订 · 查询覆盖：'+partial+'</p></header><div class="radar-editorial-layout"><div class="radar-main"><h2>七天研究主线</h2>'+''.join(themes)+'<h2>修订的解释边界</h2><p>'+e(o['revision_note'])+'</p></div><aside class="radar-evidence"><h2>证据覆盖</h2><p>'+str(count['window_candidates'])+' 条标题与摘要片段筛查；'+str(len(sources))+' 篇完整官方摘要；全文 / 代码 / 版本差分：0 / 0 / 0</p><ul>'+''.join('<li>'+e(s)+'</li>' for s in o['limitations'])+'</ul><details class="radar-distribution"><summary>关键词分布与局限</summary><p>现有多标签关键词规则，计数重叠；不是人工分类或热度排名。</p><ul>'+distribution+'</ul>'+caveats+'</details><p>本周摘要归纳不改变目录、Stage 或复现状态。</p></aside></div><details class="radar-window-list"><summary>完整七天候选清单（'+str(count['window_candidates'])+'）</summary><ul>'+candidates+'</ul></details><footer class="radar-footer"><a href="'+prefix+'data/weekly/'+data['date']+'.json">公开周报数据 ↗</a><a href="'+prefix+'data/weekly/'+data['date']+'/manifest.json">冻结候选来源清单 ↗</a><p>源快照 SHA-256：'+e(data['source_snapshot']['sha256'])+'</p><nav class="radar-archive" aria-label="周报归档">'+archive+'</nav><p>'+('每周摘要更新已安排。' if index['summary_automation_enabled'] else '周报自动更新尚未启用。')+'</p></footer></section>'
+ return '<link rel="stylesheet" href="'+prefix+'assets/radar-overview.css?v='+sha((Path(__file__).resolve().parents[1]/'assets/radar-overview.css').read_bytes())[:12]+'">'+navigation(prefix,current)+attempt_note+'<section class="research-overview" id="weekly-brief"><header class="radar-lead"><p class="radar-date">'+e(data['date'])+' / WEEKLY RESEARCH RADAR</p><h1>'+e(o['headline'])+'</h1><p class="radar-editorial">'+e(o['executive_summary'])+'</p><p class="radar-window">'+e(data['window']['start'])+' → '+e(data['window']['end'])+'（UTC，按更新时间）</p><p>'+e(state)+'</p><p>'+str(count['window_candidates'])+' 条候选 · '+str(count['new'])+' 首版 / '+str(count['revisions'])+' 修订 · 查询覆盖：'+partial+'</p></header><div class="radar-editorial-layout"><div class="radar-main"><h2>七天研究主线</h2>'+''.join(themes)+'<h2>修订的解释边界</h2><p>'+e(o['revision_note'])+'</p></div><aside class="radar-evidence"><h2>证据覆盖</h2><p>'+str(count['window_candidates'])+' 条标题与摘要片段筛查；'+str(len(sources))+' 篇完整官方摘要；全文 / 代码 / 版本差分：0 / 0 / 0</p><ul>'+''.join('<li>'+e(s)+'</li>' for s in o['limitations'])+'</ul><details class="radar-distribution"><summary>关键词分布与局限</summary><p>现有多标签关键词规则，计数重叠；不是人工分类或热度排名。</p><ul>'+distribution+'</ul>'+caveats+'</details><p>本周摘要归纳不改变目录、Stage 或复现状态。</p></aside></div><details class="radar-window-list"><summary>完整七天候选清单（'+str(count['window_candidates'])+'）</summary><ul>'+candidates+'</ul></details><footer class="radar-footer"><a href="'+prefix+'data/weekly/'+data['date']+'.json">公开周报数据 ↗</a><a href="'+prefix+'data/weekly/'+data['date']+'/manifest.json">冻结候选来源清单 ↗</a><p>源快照 SHA-256：'+e(data['source_snapshot']['sha256'])+'</p><nav class="radar-archive" aria-label="周报归档">'+archive+'</nav><p>'+('每周摘要更新已安排。' if index['summary_automation_enabled'] else '周报自动更新尚未启用。')+'</p></footer></section>'
 
-def home_overview(weekly_index,weekly_records,daily_index,daily_records,prefix='../'):
+def home_overview(weekly_index,weekly_records,daily_index,daily_records,prefix='../',current='overview'):
  from briefs import section as daily_section
  e=lambda value:html.escape(str(value),quote=True)
  daily=daily_records[daily_index['latest']]
- day_state={'ready':'当天摘要已更新','no_material_update':'最近24小时没有新增候选或研究主线','stale':'当天更新未完成，日报保留原窗口','error':'当天更新失败；这不代表没有新论文'}[daily['status']]
+ day_state={'ready':'当天摘要已更新','no_material_update':('最近24小时没有新增候选或研究主线' if daily['counts']['window_candidates']==0 else '最近24小时未新增研究主线；窗口候选保留在完整日报'),'stale':'当天更新未完成，日报保留原窗口','error':'当天更新失败；这不代表没有新论文'}[daily['status']]
  day='<aside class="radar-state"><p>'+e(day_state)+' · '+e(daily['window']['start'])+' → '+e(daily['window']['end'])+'（UTC）</p><a href="'+prefix+'frontier/briefs/'+e(daily['date'])+'/index.html">阅读 '+e(daily['date'])+' 日报与证据范围 ↗</a></aside>'
  usable=[r for r in weekly_records.values() if r['status'] in {'ready','stale'} and r['research_overview']['themes']]
  if usable:
@@ -88,13 +88,22 @@ def home_overview(weekly_index,weekly_records,daily_index,daily_records,prefix='
    reason='最近一周没有新的研究主线' if weekly_records.get(weekly_index['latest'],{}).get('status')=='no_material_update' else '最近周报更新未完成'
    note='<p class="radar-state">'+reason+'，以下保留 '+e(recent['date'])+' 的成功观察窗口。</p>'
   else:note=''
-  return day+note+render(recent,index,prefix)
+  return day+note+render(recent,index,prefix,current=current)
  historical=[r for r in daily_records.values() if r['status']=='ready']
  if historical:
   recent=max(historical,key=lambda r:r['window']['end'])
   note='<p class="radar-state">周报尚无可用研究总览；以下为 '+e(recent['date'])+' 历史日报，观察窗口以原记录为准，不是当天新发现。</p>'
-  return navigation(prefix)+note+daily_section(recent,daily_index,prefix,archive=True)+day
- return navigation(prefix)+day+'<p class="radar-state">近期研究总览暂不可用；下方保留有明确抓取范围的候选队列。</p>'
+  return navigation(prefix,current)+note+daily_section(recent,daily_index,prefix,archive=True)+day
+ return navigation(prefix,current)+day+'<p class="radar-state">近期研究总览暂不可用；可查看完整日报记录，或<a href="'+prefix+'frontier/index.html#frontier-grid">浏览有明确抓取范围的候选队列</a>。</p>'
+
+def daily_landing(weekly_index,weekly_records,daily_index,daily_records,prefix='../../'):
+ """Keep empty daily records intact, but make the rolling reading entry useful."""
+ from briefs import section as daily_section
+ daily=daily_records[daily_index['latest']]
+ if daily['status']=='no_material_update':
+  note='<p class="radar-state">本期日报没有新增研究主线。先阅读下方近期研究概览；内容保留原始日期与观察窗口，不是本期新增。完整日报及候选记录可通过下方日期链接查看。</p>'
+  return note+home_overview(weekly_index,weekly_records,daily_index,daily_records,prefix,current='daily')
+ return navigation(prefix,'daily')+daily_section(daily,daily_index,prefix,archive=True)
 
 def build(root,target,shell):
  index,records=load_archive(root)
