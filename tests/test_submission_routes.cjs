@@ -101,3 +101,32 @@ test('venue experience entry foregrounds its subset while global synthesis remai
  const direct=await fixture('#experiences?ev=ral');assert.equal(direct.document.activeElement.id,'experience-context-title');
  await direct.click('#experience-ral-2023-resubmission .primary-action');await direct.back();assert.equal(direct.$('#e-venue').value,'ral');assert.equal(direct.document.activeElement.id,'experience-ral-2023-resubmission');
 });
+
+// Author names use the same normalized substring search as existing experience fields.
+test('experience search finds displayed authors and retains title, fullwidth and case matching',async()=>{
+ const before=JSON.stringify(dataset),f=await fixture('#experiences');
+ for(const query of ['Tokekar','tOkEkAr',' Ｔｏｋｅｋａｒ ','Pratap Tokekar','研究讲义']){
+  await f.input('#e-query',query);
+  assert.deepEqual(f.$$('#experience-list .experience').map(e=>e.id),['experience-tokekar-robotics-writing-2019']);
+ }
+ await f.input('#e-query','Milford');
+ assert.deepEqual(f.$$('#experience-list .experience').map(e=>e.id),['experience-milford-robotics-paper-structure-2023','experience-milford-iros-writing-anticipation-2024']);
+ await f.input('#e-query','叶小飞');assert.equal(f.$$('#experience-list .experience').length,2);
+ await f.input('#e-query','');assert.equal(f.$$('#experience-list .experience').length,19);
+ assert.equal(JSON.stringify(dataset),before);
+});
+test('author search intersects filters and preserves query through detail, Back, Forward and reset',async()=>{
+ const query=' Ｔｏｋｅｋａｒ ',f=await fixture('#experiences?eq='+encodeURIComponent(query)+'&ev=ral&et=author_advice');
+ assert.equal(f.$$('#experience-list .experience').length,1);
+ await f.click('#experience-tokekar-robotics-writing-2019 .primary-action');
+ assert.equal(f.$$('.experience-full').length,1);assert.equal(f.$('#e-query').value,query);
+ await f.back();assert.equal(f.$$('.experience-preview').length,1);assert.equal(f.$('#e-query').value,query);
+ await f.forward();assert.equal(f.$$('.experience-full').length,1);
+ await f.click('#experience-back');assert.equal(f.$('#e-query').value,query);assert.equal(f.$('#e-venue').value,'ral');assert.equal(f.$('#e-type').value,'author_advice');
+ await f.input('#e-venue','corl');assert.equal(f.$$('#experience-list .experience').length,0);
+ assert.match(f.$('#experience-list').textContent,/暂无匹配的已读经验/);
+ await f.click('#e-reset');assert.equal(f.$$('#experience-list .experience').length,19);
+ assert.equal(f.$('#e-query').value,'');assert.equal(f.$('#e-venue').value,'');assert.equal(f.$('#e-type').value,'');assert.equal(f.location.hash,'#experiences');
+ await f.input('#e-query','nonexistent author');assert.equal(f.$$('#experience-list .experience').length,0);
+ await f.click('#e-reset');assert.equal(f.$$('#experience-list .experience').length,19);assert.equal(f.document.activeElement.id,'e-query');
+});
