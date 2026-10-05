@@ -5,6 +5,8 @@ import json
 from pathlib import Path
 import unittest
 
+from submission_experience_history import project_before_oct4_experience_append
+
 ROOT = Path(__file__).resolve().parents[1]
 UPDATE = '2026-10-04'
 EXTENSION = 'maintenance-icra27-extension-20260916'
@@ -24,7 +26,7 @@ class SubmissionMaintenanceTests(unittest.TestCase):
         self.prior = self.update['prior_records']
 
     def assert_baseline_reconstructs(self, data):
-        restored = copy.deepcopy(data)
+        restored = project_before_oct4_experience_append(data)
         history = restored['maintenance_history']
         self.assertEqual(history[-1]['checked_at'], UPDATE)
         update = history.pop()
@@ -42,8 +44,9 @@ class SubmissionMaintenanceTests(unittest.TestCase):
         profile_index = next(i for i, p in enumerate(restored['venue_profiles']['profiles']) if p['venue_id'] == 'ral')
         restored['venue_profiles']['profiles'][profile_index] = prior['venue-profile-ral']
         restored['checked_at'] = update['previous_snapshot']
-        # Hash of the complete venues.json object at main a0feff3e. This covers
-        # every prior record, source failure, experience, publication and date.
+        # Hash of the complete venues.json object at main a0feff3e. The strict
+        # experience projection first verifies this later append before undoing
+        # it; this original hash still covers every prior field and date.
         self.assertEqual(canonical_sha256(restored), BASELINE_SHA256)
 
     def test_complete_prior_snapshot_is_reconstructable(self):
