@@ -61,9 +61,20 @@ class VBCLayoutV2Tests(unittest.TestCase):
         self.assertEqual(canonical(self.records[:-1]), BEFORE['records_sha256'])
         prefix = (ROOT / 'data/reports.json').read_bytes()[:BEFORE['registry_prefix_bytes']]
         self.assertEqual(r.sha(prefix), BEFORE['registry_prefix_sha256'])
-        paths = sorted((ROOT / 'data/report-parts').rglob('*.txt'))
-        prior_parts = [(str(p.relative_to(ROOT)), r.sha(p.read_bytes())) for p in paths
-                       if '/rpa-0067/v2/' not in str(p)]
+        # New pending chunks are an exact additive cohort, never historical data.
+        pending = json.loads((ROOT / 'candidates/navigation-stage1-v2-pending.json').read_text())
+        additions = pending['reports']
+        self.assertEqual([(x['paper_id'], x['version'], x['stage'], x['review_status']) for x in additions],
+                         [(pid, 'v2', 'stage1', 'pending_candidate') for pid in ('harnessvln', 'navharness', 'holoagent-0')])
+        additional_paths = {r._parts_path(x) + '/' + part['file']: part['sha256']
+                            for x in additions for part in x['parts']}
+        for path, digest in additional_paths.items():
+            self.assertEqual(r.sha((ROOT / path).read_bytes()), digest)
+        registered_paths = {r._parts_path(x) + '/' + part['file'] for x in self.records for part in x['parts']}
+        self.assertEqual({str(p.relative_to(ROOT)) for p in (ROOT / 'data/report-parts').rglob('*.txt')},
+                         registered_paths | set(additional_paths))
+        paths = sorted(ROOT / r._parts_path(x) / part['file'] for x in self.records[:-1] for part in x['parts'])
+        prior_parts = [(str(p.relative_to(ROOT)), r.sha(p.read_bytes())) for p in paths]
         self.assertEqual(len(prior_parts), BEFORE['old_part_count'])
         self.assertEqual(canonical(prior_parts), BEFORE['old_parts_sha256'])
         for record in self.records[:-1]:

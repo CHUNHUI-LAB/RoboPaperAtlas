@@ -359,3 +359,60 @@ is only its required catalog hash. There are 21 historical versioned records,
 12 current stages across five papers, and three fully covered papers. Browser
 acceptance remains pending actual post-release cold-load, mobile and print checks;
 static tests and content review are not browser acceptance.
+
+
+## Navigation Stage 1 v2: fixed-byte controlled QA preview
+
+`candidates/navigation-stage1-v2-pending.json` contains exactly three pending
+Stage 1 v2 records. They remain `pending_candidate` and cannot enter the canonical
+importer. The dedicated `navigation_stage1_v2_preview` module validates their
+exact identities, source editions, full code-pinned payloads and resources without
+relabeling them as approved. It generates seven isolated routes under
+`reader-integration-preview/navigation-stage1-v2-20261005/`. The three fixed HTML
+files are exactly the bytes intended for later canonical artifacts. The current
+reader variants change only navigation destinations and shared presentation.
+
+The permanent report footer is neutral; pending QA state is disclosed by the
+separate index and manifest, not embedded as a future-changing assertion in the
+report. `noindex,follow` remains on report copies; canonical paper-detail pages
+provide indexed discovery. Registration must not rewrite the report bytes.
+
+The source editions remain HarnessVLN arXiv:2609.15195v3, NavHarness
+arXiv:2609.34276v1 and HoloAgent-0 arXiv:2606.23565v1. Report version v2 never
+changes the paper edition. B/v1's seven routes, original policies and chunks stay
+byte-identical. Formal reports/catalog/classification, 21 prior reports, all
+other stages, submission records and author search remain unchanged.
+
+Exact version/state boundaries remain separate: v1/Stage1 `preview_pending`
+only serves the historical preview; v2/Stage1 `content_approved` is the required
+future canonical state; v2 `pending_candidate` only serves the new candidate
+entry point. The canonical loader and legacy v1 preview entry reject pending v2.
+The candidate entry rejects approved or v1 records. No arbitrary versions,
+Stage2/3, user-supplied documents or manifest rehashes are authorized.
+
+Independent source-content audits and their real coverage are recorded in
+`candidates/navigation-stage1-v2-facts-audit.json`. The later neutral wording and
+print-only changes are bounded in `navigation-stage1-v2-presentation-proof.json`:
+removing those exact changes reproduces the independently reviewed report hashes.
+Original screen MathML, scientific values, source images and reader scripts are
+preserved. The print stylesheet constrains wide tables to the page and uses two
+embedded, independently checked equation PNGs only for print. These retain all
+subscripts, sum bounds, logical operators and bold vector notation. No external
+font/image/network resource is needed. Their policy is separately recorded in
+`navigation-stage1-v2-print-policy.json`.
+
+The cloud Chromium Print menu is disabled. A separate WeasyPrint 70 print-CSS
+check can provide pagination evidence; it is not Chrome-native print acceptance.
+That distinction cannot be waived by tests, source-content review or publication
+of the controlled QA preview. The print promotion gate remains explicit until
+its accepted verification scope is recorded. Final-byte desktop, narrow-screen
+and interaction checks also remain separate from source consistency checks.
+
+After gates and authorization, migration appends only three exact records to the
+21-record registry, changes only the three Stage1 catalog states and catalog
+date, and updates only `classification.catalog_sha256`. Stage2/3 and unrelated
+metadata stay unchanged. Temporary test-only overlays exercise the projected
+24 records, 15 stages, 8 papers with reading and 3 fully covered papers; they are
+not registrations or approval findings. No automatic canonical promotion is
+installed. The operation plan remains in
+`candidates/navigation-stage1-v2-migration-plan.json`.
