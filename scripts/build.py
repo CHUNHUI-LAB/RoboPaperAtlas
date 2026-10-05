@@ -207,6 +207,8 @@ def main():
         path=report_path(report);dest=target/path;dest.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(ROOT/path,dest)
     shutil.copyfile(ROOT/'data/reports.json',target/'data/reports.json')
     (target/'.nojekyll').write_text(''); (target/'404.html').write_text(shell('未找到页面','<main id="main" class="about-main"><p class="eyebrow">404 / OFF THE MAP</p><h1>这条路径暂未收录。</h1><p>页面可能移动了，试试从目录重新寻找。</p><a class="primary-link" href="/RoboPaperAtlas/index.html">返回论文目录 →</a></main>',prefix='/RoboPaperAtlas/'))
+    from navigation_stage1_preview import write_preview as write_navigation_preview
+    write_navigation_preview(ROOT,target)
     print(f'Built {len(data["papers"])} papers → {target.relative_to(ROOT)}')
 if __name__=='__main__': main()
 

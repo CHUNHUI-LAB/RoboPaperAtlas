@@ -35,6 +35,27 @@ RECORD_FIELDS = {
 COMPUTED_FIELDS = {'sha256', 'bytes', 'parts'}
 PART_FIELDS = {'file', 'bytes', 'sha256'}
 REPORT_PAPERS = {
+    'harnessvln': {
+        'title': 'HarnessVLN',
+        'versions': {'v1': {'stage1'}},
+        'review_status': 'preview_pending',
+        'source_urls': set(), 'pdf_urls': set(),
+        'arxiv_id': '2609.15195',
+    },
+    'navharness': {
+        'title': 'NavHarness',
+        'versions': {'v1': {'stage1'}},
+        'review_status': 'preview_pending',
+        'source_urls': set(), 'pdf_urls': set(),
+        'arxiv_id': '2609.34276',
+    },
+    'holoagent-0': {
+        'title': 'HoloAgent-0',
+        'versions': {'v1': {'stage1'}},
+        'review_status': 'preview_pending',
+        'source_urls': set(), 'pdf_urls': set(),
+        'arxiv_id': '2606.23565',
+    },
     'rpa-0067': {
         'title': 'Visual Whole-Body Control',
         'versions': {'v1': {'stage1'}, 'v2': {'stage1'}},
@@ -422,7 +443,10 @@ def _parse_html(record, payload, root=ROOT):
     except UnicodeDecodeError as exc:
         raise ValueError('Report must contain exact UTF-8 bytes') from exc
     require(not re.search(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', text), 'HTML contains control characters')
-    if record['paper_id'] == 'rpa-0067':
+    if record['paper_id'] in {'harnessvln','navharness','holoagent-0'}:
+        from report_navigation_stage1 import prepare
+        text,parser=prepare(root,record,payload)
+    elif record['paper_id'] == 'rpa-0067':
         from report_vbc_stage1 import prepare
         text,parser=prepare(root,record,payload)
     elif record['paper_id'] == 'rpa-0054' and record['stage'] == 'stage2':
@@ -487,6 +511,8 @@ def _load(root):
     parsers = {}
     for record in records:
         _validate_record(record)
+        require(record['review_status'] != 'preview_pending',
+                'Preview-pending reports cannot enter the canonical report registry')
         filename = (record['paper_id'],record['version'],record['filename'])
         require(filename not in payloads, 'Duplicate paper/stage/version report')
         directory = _parts_path(record)

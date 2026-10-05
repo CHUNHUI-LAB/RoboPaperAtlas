@@ -3,7 +3,9 @@ import hashlib
 import re
 from html import escape
 
-CURRENT_READER_PAPERS = frozenset({'rpa-0012', 'rpa-0062', 'rpa-0052', 'rpa-0054', 'rpa-0067'})
+NAVIGATION_READER_PAPERS = frozenset({'harnessvln','navharness','holoagent-0'})
+NAVIGATION_FROZEN = {'harnessvln': {'version': 'v1', 'sha256': '923f7f4a707517708eb14d33905b67046d57aca57a44a0adad96d50f19c2b56a', 'nav': '<nav class="reader-stages" aria-label="阅读阶段"><a href="#section-01" aria-current="page"><small>01</small>初读</a><span aria-disabled="true"><small>02</small>写作精读 · 未收录</span><span aria-disabled="true"><small>03</small>方法与代码 · 未收录</span></nav>', 'return_link': '<a class="atlas-return" href="https://chunhui-lab.github.io/RoboPaperAtlas/papers/harnessvln/index.html">回到论文详情</a>', 'note': '<p class="reader-document-note">阅读报告 v1 · 集成预览 · 待视觉验收；内容终审与桌面、窄屏、打印验收尚未完成；受控预览，尚未正式收录。</p>', 'current_return': '<a class="atlas-return" href="../index.html#reading">回到论文详情</a>'}, 'navharness': {'version': 'v1', 'sha256': '290ef898e427462784ce2f4b930893b882d16875b9ced2bddbc3180b8024e23e', 'nav': '<nav class="reader-stages" aria-label="阅读阶段"><a href="#section-01" aria-current="page"><small>01</small>初读</a><span aria-disabled="true"><small>02</small>写作精读 · 未收录</span><span aria-disabled="true"><small>03</small>方法与代码 · 未收录</span></nav>', 'return_link': '<a class="atlas-return" href="https://chunhui-lab.github.io/RoboPaperAtlas/papers/navharness/index.html">回到论文详情</a>', 'note': '<p class="reader-document-note">阅读报告 v1 · 集成预览 · 待视觉验收；内容终审与桌面、窄屏、打印验收尚未完成；受控预览，尚未正式收录。</p>', 'current_return': '<a class="atlas-return" href="../index.html#reading">回到论文详情</a>'}, 'holoagent-0': {'version': 'v1', 'sha256': '665471b396b2154f521b42209b2e2545b28773c4b335788b22b3cb4961c7d4bc', 'nav': '<nav class="reader-stages" aria-label="阅读阶段"><a href="#section-01" aria-current="page"><small>01</small>初读</a><span aria-disabled="true"><small>02</small>写作精读 · 未收录</span><span aria-disabled="true"><small>03</small>方法与代码 · 未收录</span></nav>', 'return_link': '<a class="atlas-return" href="https://chunhui-lab.github.io/RoboPaperAtlas/papers/holoagent-0/index.html">回到论文详情</a>', 'note': '<p class="reader-document-note">阅读报告 v1 · 集成预览 · 待视觉验收；内容终审与桌面、窄屏、打印验收尚未完成；受控预览，尚未正式收录。</p>', 'current_return': '<a class="atlas-return" href="../index.html#reading">回到论文详情</a>'}}
+CURRENT_READER_PAPERS = NAVIGATION_READER_PAPERS | frozenset({'rpa-0012', 'rpa-0062', 'rpa-0052', 'rpa-0054', 'rpa-0067'})
 STAGES = (('stage1', '初读'), ('stage2', '写作精读'), ('stage3', '方法与代码'))
 OPEN = '<nav class="reader-stages" aria-label="阅读阶段">'
 NOTE = '<p class="reader-document-note">正文、嵌入图、代码和已排版公式可离线阅读；站点导航、外部原文与源码链接需联网。阅读覆盖范围以本页声明为准。</p>'
@@ -132,6 +134,8 @@ VBC_FROZEN = {'stage1': {'version': 'v2', 'sha256': '4db81619423125d9eeb6d2369ee
 
 
 def entry_path(paper_id, stage):
+    if paper_id in NAVIGATION_READER_PAPERS and stage != 'stage1':
+        return None
     if paper_id in CURRENT_READER_PAPERS and stage in dict(STAGES):
         return f'papers/{paper_id}/reading/{stage}.html'
     return None
@@ -142,7 +146,7 @@ def context_script(root):
     return f'<script src="../../../assets/catalog-navigation.js?v={digest}" defer></script>'
 
 
-def render(root, paper, stage, records):
+def render(root, paper, stage, records, *, preview_payload=None):
     """Require reviewed bytes; add only the generated navigation-context runtime."""
     from reports import report_path
     state = paper['stages'][stage]
@@ -152,14 +156,25 @@ def render(root, paper, stage, records):
     record = next((r for r in records if report_path(r) == artifact['path']), None)
     if record is None or record['paper_id'] != paper['id'] or record['stage'] != stage:
         raise ValueError('Current reader source is not registered for this stage')
-    source = root / report_path(record)
-    if source.is_symlink() or any(p.is_symlink() for p in source.parents):
-        raise ValueError('Unsafe current reader source')
-    raw = source.read_bytes()
+    if preview_payload is not None:
+        if paper['id'] not in NAVIGATION_READER_PAPERS or record['review_status'] != 'preview_pending':
+            raise ValueError('In-memory source is restricted to the exact navigation previews')
+        raw = preview_payload
+    else:
+        source = root / report_path(record)
+        if source.is_symlink() or any(p.is_symlink() for p in source.parents):
+            raise ValueError('Unsafe current reader source')
+        raw = source.read_bytes()
     if len(raw) != record['bytes'] or hashlib.sha256(raw).hexdigest() != record['sha256']:
         raise ValueError('Current reader source hash mismatch')
     page = raw.decode('utf-8')
-    if paper['id'] == 'rpa-0067':
+    if paper['id'] in NAVIGATION_READER_PAPERS:
+        spec = NAVIGATION_FROZEN[paper['id']]
+        if stage != 'stage1' or (record['version'], record['sha256']) != (spec['version'], spec['sha256']):
+            raise ValueError('Unknown navigation current reader version/hash')
+        frozen, frozen_return, note = spec['nav'], spec['return_link'], spec['note']
+        current_return = spec['current_return']
+    elif paper['id'] == 'rpa-0067':
         spec = VBC_FROZEN.get(stage)
         if spec is None or (record['version'], record['sha256']) != (spec['version'], spec['sha256']):
             raise ValueError('Unreviewed VBC current reader source version/hash')
