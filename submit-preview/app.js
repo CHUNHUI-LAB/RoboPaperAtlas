@@ -60,15 +60,16 @@ function renderExperiences(venueId){
  const official=venueId==='ral'&&pack.official_url?`<p>${external(pack.official_url,'RA-L 官方说明')} <span class="small">原有核对记录：${esc(pack.checked_at)}</span></p>`:'';
  return `<section class="experiences" aria-label="投稿经验与建议"><h3>经验、建议与讨论 <span class="small">${rows.length} 条已读来源</span></h3><p class="notice">${esc(pack.rules_notice)}</p>${official}${renderExperienceChecks(pack,venueId)}${renderExperienceSynthesis(pack,venueId)}${rows.map(r=>experienceCard(r,true)).join('')}</section>`;
 }
+function normalizeExperienceSearch(value){return String(value).normalize('NFKC').trim().toLowerCase()}
 function renderExperienceOverview(){
- const pack=data.experiences,venue=$('e-venue').value,type=$('e-type').value,q=$('e-query').value.trim().toLowerCase();
+ const pack=data.experiences,venue=$('e-venue').value,type=$('e-type').value,q=normalizeExperienceSearch($('e-query').value);
  $('experience-rules').textContent=pack.rules_notice;
  updateReset('e-reset',q||venue||type);
  const overview=pack.overview;
  $('experience-overview').innerHTML=overview?`<h2>这组经验，先记住什么</h2><p class="small">全站总览 · 不随下方筛选变化</p><p>${esc(overview.summary)}</p><p class="small">${esc(overview.evidence_note)} · 不是原作者共同结论或官方要求</p>`:'';
  $('experience-synthesis').innerHTML=pack.editorial_synthesis.map((n,i)=>`<article class="synthesis-card"><p class="synthesis-step">0${i+1}</p><h3>${esc(n.title)}</h3><p>${esc(n.text.replace(/^编辑归纳：/,''))}</p><p class="small synthesis-sources">依据：${n.source_record_ids.map(id=>pack.records.find(r=>r.id===id)).filter(Boolean).map(r=>`<a href="${esc(experienceHref(r.id))}">${esc(r.source_label||r.title)}</a>`).join(' · ')}</p></article>`).join('');
  const recordId=parseRoute().id;
- const rows=recordId?pack.records.filter(r=>r.id===recordId):pack.records.filter(r=>(!venue||experienceMatches(r,venue))&&(!type||r.source_type===type)&&(!q||`${r.title} ${r.body_summary} ${r.methods.join(' ')} ${r.source_label||''} ${experienceSynopsis(r)?.takeaway||''}`.toLowerCase().includes(q)));
+ const rows=recordId?pack.records.filter(r=>r.id===recordId):pack.records.filter(r=>(!venue||experienceMatches(r,venue))&&(!type||r.source_type===type)&&(!q||normalizeExperienceSearch(`${r.title} ${r.source_author||''} ${r.body_summary} ${r.methods.join(' ')} ${r.source_label||''} ${experienceSynopsis(r)?.takeaway||''}`).includes(q)));
  $('experience-count').textContent=`${rows.length} 条已读来源 / 共 ${pack.records.length} 条 · 同一来源跨渠道只计一次`;
  const venueName=data.venues.find(v=>v.id===venue)?.name;
  $('experience-context').hidden=!venueName||!!recordId;
