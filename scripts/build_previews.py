@@ -12,6 +12,7 @@ import subprocess
 import sys
 
 from build_topic_preview import ROOT, require, safe_path, safe_target, validate_source, write_preview
+from radar_c2_preview import validate_preview as validate_c2_preview, write_preview as write_c2_preview
 
 
 SUBMIT_ROUTE = 'submit-preview'
@@ -81,12 +82,14 @@ def main(argv=None):
     target = safe_target(ROOT, ROOT / args.output)
     validate_source(ROOT)
     validate_submit_source(ROOT, target)
+    validate_c2_preview(ROOT, target)
     subprocess.run(
         [sys.executable, str(ROOT / 'scripts/build.py'), '--output', args.output],
         check=True,
     )
     write_preview(ROOT, target)
     write_submit_preview(ROOT, target)
+    write_c2_preview(ROOT, target)
 
 
 if __name__ == '__main__':

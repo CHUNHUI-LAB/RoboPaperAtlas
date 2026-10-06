@@ -1,0 +1,2088 @@
+{
+  "paperId": "harnessvln",
+  "methodSchemaId": "pengsida-paper-analysis-tree-public-image-20261006",
+  "analysisStatus": "evidence_reviewed",
+  "answers": [
+    {
+      "nodeId": "abstract.task",
+      "state": "evidence_linked",
+      "answer": "在没有任务特定导航微调的条件下，用共享Agent Harness同时支持路线指令跟随与目标物体导航。",
+      "assertionKind": "source_paraphrase",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Abstract; §1; §4.2; Appendix 1.2",
+          "pageOrAnchor": "印刷页 1–2, 8, 13",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/abs/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Submission history / metadata",
+          "pageOrAnchor": "v3 2026-09-29; no verified journal-reference field",
+          "evidenceKind": "author_supplement"
+        }
+      ]
+    },
+    {
+      "nodeId": "abstract.challenge",
+      "state": "author_claim_only",
+      "answer": "作者认为，MLLM语义推理增强仍不能保证拟执行动作持续符合空间证据、子目标进度与执行结果。",
+      "assertionKind": "author_statement",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Abstract; §1",
+          "pageOrAnchor": "印刷页 1–2",
+          "evidenceKind": "paper_text"
+        }
+      ],
+      "uncertainty": "缺口是作者的领域判断；本文没有逐篇前作的受控失效验证。"
+    },
+    {
+      "nodeId": "abstract.insight.description",
+      "state": "evidence_linked",
+      "answer": "把语言模型提议当作需要具身证据核验的操作，用持续更新的统一运行时连接记忆、空间状态、执行和停止。",
+      "assertionKind": "reader_inference",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§1 contribution list; §3.1.1",
+          "pageOrAnchor": "印刷页 2–3",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Figure 2",
+          "pageOrAnchor": "印刷页 4",
+          "evidenceKind": "paper_figure",
+          "figureOrTableOrEquation": "Figure 2",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S2.F2"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.1.1",
+          "pageOrAnchor": "印刷页 3",
+          "evidenceKind": "paper_equation",
+          "figureOrTableOrEquation": "Eq. (1)",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.E1"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Algorithm 1; §3.3",
+          "pageOrAnchor": "印刷页 6",
+          "evidenceKind": "paper_text",
+          "figureOrTableOrEquation": "Algorithm 1",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#alg1"
+        }
+      ]
+    },
+    {
+      "nodeId": "abstract.insight.benefit",
+      "state": "evidence_linked",
+      "answer": "读者解释：预期好处是让新观测和失败及时改变进度、检索与下一步动作，同时复用两类任务的交互协议。\n原文结果：实验报告整个组合在若干设置中的增益。\n证据边界：不能把所有收益归于这一句话。",
+      "assertionKind": "reader_inference",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§1 contribution list; §3.1.1",
+          "pageOrAnchor": "印刷页 2–3",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Figure 2",
+          "pageOrAnchor": "印刷页 4",
+          "evidenceKind": "paper_figure",
+          "figureOrTableOrEquation": "Figure 2",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S2.F2"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§4.4; Table 4",
+          "pageOrAnchor": "印刷页 8",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 4",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S4.T4"
+        }
+      ]
+    },
+    {
+      "nodeId": "abstract.contributions.1.description",
+      "state": "evidence_linked",
+      "answer": "贡献一：为指令跟随和ObjectNav设计共享Harness与八类核心工具的统一接口。",
+      "assertionKind": "author_statement",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§1 contribution list; §3.1.1",
+          "pageOrAnchor": "印刷页 2–3",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Figure 2",
+          "pageOrAnchor": "印刷页 4",
+          "evidenceKind": "paper_figure",
+          "figureOrTableOrEquation": "Figure 2",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S2.F2"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.1.2; Table 1",
+          "pageOrAnchor": "印刷页 4–5",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 1",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.T1"
+        }
+      ]
+    },
+    {
+      "nodeId": "abstract.contributions.1.benefit",
+      "state": "evidence_linked",
+      "answer": "作者主张：工具可以替换，任务特定进度与完成条件可以变化而共享协议。\n原文结果：论文给出两任务族及一个实机平台的应用。\n证据边界：没有逐工具替换消融。",
+      "assertionKind": "source_paraphrase",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§1 contribution list; §3.1.1",
+          "pageOrAnchor": "印刷页 2–3",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Figure 2",
+          "pageOrAnchor": "印刷页 4",
+          "evidenceKind": "paper_figure",
+          "figureOrTableOrEquation": "Figure 2",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S2.F2"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.1.2; Table 1",
+          "pageOrAnchor": "印刷页 4–5",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 1",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.T1"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§5.1–5.2; Figure 3",
+          "pageOrAnchor": "印刷页 8–9",
+          "evidenceKind": "paper_figure",
+          "figureOrTableOrEquation": "Figure 3",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S5.F3"
+        }
+      ]
+    },
+    {
+      "nodeId": "abstract.contributions.2.description",
+      "state": "evidence_linked",
+      "answer": "贡献二：层级事件记忆与持久ST Graph结合，并以提议验证和结构化反馈更新任务状态、空间证据和失败记录。",
+      "assertionKind": "author_statement",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§1 contribution list; §3.1.1",
+          "pageOrAnchor": "印刷页 2–3",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Figure 2",
+          "pageOrAnchor": "印刷页 4",
+          "evidenceKind": "paper_figure",
+          "figureOrTableOrEquation": "Figure 2",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S2.F2"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.1.3",
+          "pageOrAnchor": "印刷页 4–5",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§4.4; Table 4",
+          "pageOrAnchor": "印刷页 8",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 4",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S4.T4"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 2.1",
+          "pageOrAnchor": "印刷页 15",
+          "evidenceKind": "paper_appendix",
+          "figureOrTableOrEquation": "Navigation planning prompt"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.2 Persistent representation",
+          "pageOrAnchor": "印刷页 5",
+          "evidenceKind": "paper_equation",
+          "figureOrTableOrEquation": "Eq. (2)",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.E2"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.2 Task-conditioned retrieval; failure-aware updates",
+          "pageOrAnchor": "印刷页 5",
+          "evidenceKind": "paper_equation",
+          "figureOrTableOrEquation": "Eq. (3)",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.E3"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 1.3; Table 5",
+          "pageOrAnchor": "印刷页 13",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 5",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#A1.T5"
+        }
+      ]
+    },
+    {
+      "nodeId": "abstract.contributions.2.benefit",
+      "state": "evidence_linked",
+      "answer": "作者主张：支持带证据的行动、跨子目标检索、失败恢复和停止验证。\n原文结果：论文报告指定顺序的累计消融增量。\n读者解释与证据边界：这些是条件增量，尚不能拆分每项机制的独立效应。",
+      "assertionKind": "source_paraphrase",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.1.3",
+          "pageOrAnchor": "印刷页 4–5",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§4.4; Table 4",
+          "pageOrAnchor": "印刷页 8",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 4",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S4.T4"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 2.1",
+          "pageOrAnchor": "印刷页 15",
+          "evidenceKind": "paper_appendix",
+          "figureOrTableOrEquation": "Navigation planning prompt"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.2 Task-conditioned retrieval; failure-aware updates",
+          "pageOrAnchor": "印刷页 5",
+          "evidenceKind": "paper_equation",
+          "figureOrTableOrEquation": "Eq. (3)",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.E3"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 1.3; Table 5",
+          "pageOrAnchor": "印刷页 13",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 5",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#A1.T5"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.3 Evidence-based termination",
+          "pageOrAnchor": "印刷页 6",
+          "evidenceKind": "paper_equation",
+          "figureOrTableOrEquation": "Eq. (4)",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.E4"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 1.3; Table 5",
+          "pageOrAnchor": "印刷页 13",
+          "evidenceKind": "paper_appendix",
+          "figureOrTableOrEquation": "Table 5 / Geometric stop validation"
+        }
+      ]
+    },
+    {
+      "nodeId": "abstract.contributions.3.description",
+      "state": "evidence_linked",
+      "answer": "作者主张：第三项贡献是经验性验证，即四个仿真基准与人形机器人部署。\n读者解释：它是论文贡献清单中的实验贡献，不应虚构成第三个独立算法创新。",
+      "assertionKind": "source_paraphrase",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§1 contribution list; §3.1.1",
+          "pageOrAnchor": "印刷页 2–3",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Figure 2",
+          "pageOrAnchor": "印刷页 4",
+          "evidenceKind": "paper_figure",
+          "figureOrTableOrEquation": "Figure 2",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S2.F2"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§4.3; Table 2",
+          "pageOrAnchor": "印刷页 7–8",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 2",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.T2"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§4.3; Table 3",
+          "pageOrAnchor": "印刷页 7–8",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 3",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.T3"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§5.1–5.2; Figure 3",
+          "pageOrAnchor": "印刷页 8–9",
+          "evidenceKind": "paper_figure",
+          "figureOrTableOrEquation": "Figure 3",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S5.F3"
+        }
+      ]
+    },
+    {
+      "nodeId": "abstract.contributions.3.benefit",
+      "state": "evidence_linked",
+      "answer": "读者解释：这些结果支持共享框架在所测两类任务和指定实机平台的可行性与部分性能增益。\n证据边界：不支持全部指标领先或总体实机可靠性保证。",
+      "assertionKind": "source_paraphrase",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§1 contribution list; §3.1.1",
+          "pageOrAnchor": "印刷页 2–3",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Figure 2",
+          "pageOrAnchor": "印刷页 4",
+          "evidenceKind": "paper_figure",
+          "figureOrTableOrEquation": "Figure 2",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S2.F2"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§4.3; Table 2",
+          "pageOrAnchor": "印刷页 7–8",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 2",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.T2"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§4.3; Table 3",
+          "pageOrAnchor": "印刷页 7–8",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 3",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.T3"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§5.1–5.2; Figure 3",
+          "pageOrAnchor": "印刷页 8–9",
+          "evidenceKind": "paper_figure",
+          "figureOrTableOrEquation": "Figure 3",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S5.F3"
+        }
+      ]
+    },
+    {
+      "nodeId": "abstract.experiment",
+      "state": "evidence_linked",
+      "answer": "主表SR依次为R2R59.6%、RxR51.4%、HM3D-v2 76.0%、OVON59.3%。同模型Rand100相对AgenticNav SR+3点但SPL−12.6点；实机只是三组任务展示。",
+      "assertionKind": "direct_observation",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§4.3; Table 2",
+          "pageOrAnchor": "印刷页 7–8",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 2",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.T2"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§4.3; Table 3",
+          "pageOrAnchor": "印刷页 7–8",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 3",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.T3"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§5.1–5.2; Figure 3",
+          "pageOrAnchor": "印刷页 8–9",
+          "evidenceKind": "paper_figure",
+          "figureOrTableOrEquation": "Figure 3",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S5.F3"
+        }
+      ]
+    },
+    {
+      "nodeId": "introduction.task",
+      "state": "evidence_linked",
+      "answer": "两类任务都要求在部分可观测环境里把语言与空间观测对应起来，累计环境知识并到达目的地。应用展示包括室内按路标行走、寻找目标物和两者串联。",
+      "assertionKind": "source_paraphrase",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Abstract; §1; §4.2; Appendix 1.2",
+          "pageOrAnchor": "印刷页 1–2, 8, 13",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/abs/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Submission history / metadata",
+          "pageOrAnchor": "v3 2026-09-29; no verified journal-reference field",
+          "evidenceKind": "author_supplement"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§5.1–5.2; Figure 3",
+          "pageOrAnchor": "印刷页 8–9",
+          "evidenceKind": "paper_figure",
+          "figureOrTableOrEquation": "Figure 3",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S5.F3"
+        }
+      ]
+    },
+    {
+      "nodeId": "introduction.challenges.1.previous",
+      "state": "author_claim_only",
+      "answer": "作者陈述：旧组织方式是感知模块供观测、MLLM提出子目标、下游模块grounding和执行。§2同时介绍了前作已有的工具调用、几何检查、TODO和回退能力。\n证据边界：不能省略这些已有能力，将旧方法概括为完全没有工具、验证或记忆。",
+      "assertionKind": "author_statement",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§1; §2",
+          "pageOrAnchor": "印刷页 2–3",
+          "evidenceKind": "paper_text"
+        }
+      ]
+    },
+    {
+      "nodeId": "introduction.challenges.1.failure",
+      "state": "author_claim_only",
+      "answer": "作者的概念性失效说明：执行失败后计划进度与真实状态脱节，发出动作被误当成完成。\n证据边界：本文没有给出某个指定前作的原始轨迹来量化这一失效。",
+      "assertionKind": "author_statement",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Abstract; §1",
+          "pageOrAnchor": "印刷页 1–2",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§1; §2",
+          "pageOrAnchor": "印刷页 2–3",
+          "evidenceKind": "paper_text"
+        }
+      ],
+      "uncertainty": "待独立核前作或作者对照轨迹，才能填成具名旧方法实证failure case。"
+    },
+    {
+      "nodeId": "introduction.challenges.1.reason",
+      "state": "author_claim_only",
+      "answer": "作者归因：证据保留、提议验证与失败处理缺少统一运行时协调。\n证据边界：这是作者动机陈述，并未通过将所有其它条件固定的旧方法诊断得到。",
+      "assertionKind": "author_statement",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Abstract; §1",
+          "pageOrAnchor": "印刷页 1–2",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§1; §2",
+          "pageOrAnchor": "印刷页 2–3",
+          "evidenceKind": "paper_text"
+        }
+      ]
+    },
+    {
+      "nodeId": "introduction.challenges.2.previous",
+      "state": "author_claim_only",
+      "answer": "在目标确认与停止问题上，前作并非完全没有几何检查：§2明确说AgenticNav提供几何安全检查；Uni-LaViRA提供TODO和Second Chance Backtrack。HarnessVLN强调统一空间证据、进度和停止请求的运行时。",
+      "assertionKind": "author_statement",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§1; §2",
+          "pageOrAnchor": "印刷页 2–3",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.3 Evidence-based termination",
+          "pageOrAnchor": "印刷页 6",
+          "evidenceKind": "paper_equation",
+          "figureOrTableOrEquation": "Eq. (4)",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.E4"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 1.3; Table 5",
+          "pageOrAnchor": "印刷页 13",
+          "evidenceKind": "paper_appendix",
+          "figureOrTableOrEquation": "Table 5 / Geometric stop validation"
+        }
+      ]
+    },
+    {
+      "nodeId": "introduction.challenges.2.failure",
+      "state": "author_claim_only",
+      "answer": "作者陈述：“识别到目标”不等于“已到达目标”。\n原文结果：Figure10–11实际展示HarnessVLN自己的失败。\n证据边界：前一句是旧方法挑战的概念说明，后两图不能移作前作失败证据。",
+      "assertionKind": "source_paraphrase",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Abstract; §1",
+          "pageOrAnchor": "印刷页 1–2",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 3.3; Figure 10",
+          "pageOrAnchor": "印刷页 18",
+          "evidenceKind": "paper_figure",
+          "figureOrTableOrEquation": "Figure 10",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#A3.F10"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 1.3; Appendix 3.3; Figure 11",
+          "pageOrAnchor": "印刷页 13, 18",
+          "evidenceKind": "paper_figure",
+          "figureOrTableOrEquation": "Figure 11",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#A3.F11"
+        }
+      ],
+      "uncertainty": "缺少某一旧方法在等条件下的目标误判/过早停止轨迹。"
+    },
+    {
+      "nodeId": "introduction.challenges.2.reason",
+      "state": "evidence_linked",
+      "answer": "原文做法：作者把停止写成语义、几何、任务进度三项核验的合取。\n读者解释：语义识别、内部几何邻近与真实任务完成是不同条件。\n证据边界：三项估计仍可能出错，合取本身不构成成功保证。",
+      "assertionKind": "reader_inference",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Abstract; §1",
+          "pageOrAnchor": "印刷页 1–2",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.3 Evidence-based termination",
+          "pageOrAnchor": "印刷页 6",
+          "evidenceKind": "paper_equation",
+          "figureOrTableOrEquation": "Eq. (4)",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.E4"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 1.3; Table 5",
+          "pageOrAnchor": "印刷页 13",
+          "evidenceKind": "paper_appendix",
+          "figureOrTableOrEquation": "Table 5 / Geometric stop validation"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 3.3; Figure 10",
+          "pageOrAnchor": "印刷页 18",
+          "evidenceKind": "paper_figure",
+          "figureOrTableOrEquation": "Figure 10",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#A3.F10"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 1.3; Appendix 3.3; Figure 11",
+          "pageOrAnchor": "印刷页 13, 18",
+          "evidenceKind": "paper_figure",
+          "figureOrTableOrEquation": "Figure 11",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#A3.F11"
+        }
+      ]
+    },
+    {
+      "nodeId": "introduction.pipeline.key",
+      "state": "evidence_linked",
+      "answer": "以共享Harness管理“组装证据上下文→提出操作→验证→执行→反馈更新”的循环，并将任务事件记忆和空间图分工。",
+      "assertionKind": "source_paraphrase",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§1 contribution list; §3.1.1",
+          "pageOrAnchor": "印刷页 2–3",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Figure 2",
+          "pageOrAnchor": "印刷页 4",
+          "evidenceKind": "paper_figure",
+          "figureOrTableOrEquation": "Figure 2",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S2.F2"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.1.1",
+          "pageOrAnchor": "印刷页 3",
+          "evidenceKind": "paper_equation",
+          "figureOrTableOrEquation": "Eq. (1)",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.E1"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Algorithm 1; §3.3",
+          "pageOrAnchor": "印刷页 6",
+          "evidenceKind": "paper_text",
+          "figureOrTableOrEquation": "Algorithm 1",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#alg1"
+        }
+      ]
+    },
+    {
+      "nodeId": "introduction.pipeline.contribution1.how",
+      "state": "evidence_linked",
+      "answer": "维护任务、观测、位姿、进度、事件记忆和图的统一状态；对八类工具采用统一契约，派发前核验参数、证据时效、几何和子目标一致性。",
+      "assertionKind": "source_paraphrase",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.1.1",
+          "pageOrAnchor": "印刷页 3",
+          "evidenceKind": "paper_equation",
+          "figureOrTableOrEquation": "Eq. (1)",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.E1"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Algorithm 1; §3.3",
+          "pageOrAnchor": "印刷页 6",
+          "evidenceKind": "paper_text",
+          "figureOrTableOrEquation": "Algorithm 1",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#alg1"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.1.2; Table 1",
+          "pageOrAnchor": "印刷页 4–5",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 1",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.T1"
+        }
+      ]
+    },
+    {
+      "nodeId": "introduction.pipeline.contribution1.advantage",
+      "state": "evidence_linked",
+      "answer": "读者解释：该组织方式明确区分语义提议与实际执行，允许结构反馈影响下一轮。\n作者主张：跨任务复用是其架构优势。\n证据边界：任意工具或机器人替换的泛化证据尚缺。",
+      "assertionKind": "reader_inference",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.1.2; Table 1",
+          "pageOrAnchor": "印刷页 4–5",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 1",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.T1"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.3; §4.2",
+          "pageOrAnchor": "印刷页 6, 8",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Table 1",
+          "pageOrAnchor": "印刷页 5",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 1",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.T1"
+        }
+      ]
+    },
+    {
+      "nodeId": "introduction.pipeline.contribution2.problem",
+      "state": "evidence_linked",
+      "answer": "解决长过程中的任务进度与失败上下文保留，以及跨子目标空间证据检索问题。",
+      "assertionKind": "source_paraphrase",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.1.3",
+          "pageOrAnchor": "印刷页 4–5",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§4.4; Table 4",
+          "pageOrAnchor": "印刷页 8",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 4",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S4.T4"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 2.1",
+          "pageOrAnchor": "印刷页 15",
+          "evidenceKind": "paper_appendix",
+          "figureOrTableOrEquation": "Navigation planning prompt"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.2 Persistent representation",
+          "pageOrAnchor": "印刷页 5",
+          "evidenceKind": "paper_equation",
+          "figureOrTableOrEquation": "Eq. (2)",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.E2"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.2 Task-conditioned retrieval; failure-aware updates",
+          "pageOrAnchor": "印刷页 5",
+          "evidenceKind": "paper_equation",
+          "figureOrTableOrEquation": "Eq. (3)",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.E3"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 1.3; Table 5",
+          "pageOrAnchor": "印刷页 13",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 5",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#A1.T5"
+        }
+      ]
+    },
+    {
+      "nodeId": "introduction.pipeline.contribution2.how",
+      "state": "evidence_linked",
+      "answer": "working/progress/reflection三层事件记忆保留任务历史；ST Graph保存地点、实体、关系、观察来源及轻量失败引用，按子目标进行受限检索。",
+      "assertionKind": "source_paraphrase",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.1.3",
+          "pageOrAnchor": "印刷页 4–5",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§4.4; Table 4",
+          "pageOrAnchor": "印刷页 8",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 4",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S4.T4"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 2.1",
+          "pageOrAnchor": "印刷页 15",
+          "evidenceKind": "paper_appendix",
+          "figureOrTableOrEquation": "Navigation planning prompt"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.2 Persistent representation",
+          "pageOrAnchor": "印刷页 5",
+          "evidenceKind": "paper_equation",
+          "figureOrTableOrEquation": "Eq. (2)",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.E2"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.2 Task-conditioned retrieval; failure-aware updates",
+          "pageOrAnchor": "印刷页 5",
+          "evidenceKind": "paper_equation",
+          "figureOrTableOrEquation": "Eq. (3)",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.E3"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 1.3; Table 5",
+          "pageOrAnchor": "印刷页 13",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 5",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#A1.T5"
+        }
+      ]
+    },
+    {
+      "nodeId": "introduction.pipeline.contribution2.advantage",
+      "state": "evidence_linked",
+      "answer": "原文做法：事件记忆保留完整失败，图作为空间索引；检索最多5处而图可继续增长。\n原文结果：累计加图后R2R SR+6点、OVON+1点。\n读者解释与证据边界：这仅支持在已启用memory条件下的增量。",
+      "assertionKind": "reader_inference",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.2 Persistent representation",
+          "pageOrAnchor": "印刷页 5",
+          "evidenceKind": "paper_equation",
+          "figureOrTableOrEquation": "Eq. (2)",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.E2"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.2 Task-conditioned retrieval; failure-aware updates",
+          "pageOrAnchor": "印刷页 5",
+          "evidenceKind": "paper_equation",
+          "figureOrTableOrEquation": "Eq. (3)",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.E3"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 1.3; Table 5",
+          "pageOrAnchor": "印刷页 13",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 5",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#A1.T5"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§4.4; Table 4",
+          "pageOrAnchor": "印刷页 8",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 4",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S4.T4"
+        }
+      ]
+    },
+    {
+      "nodeId": "introduction.demos",
+      "state": "evidence_linked",
+      "answer": "原文结果：三组实机应用为经过806外路口后依次到垃圾桶和冰箱、找打印机、先停入口标牌再找售货机。\n读者解释：它们展示行为可行性。\n证据边界：没有提供总体实机成功率。",
+      "assertionKind": "direct_observation",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§5.1–5.2; Figure 3",
+          "pageOrAnchor": "印刷页 8–9",
+          "evidenceKind": "paper_figure",
+          "figureOrTableOrEquation": "Figure 3",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S5.F3"
+        }
+      ]
+    },
+    {
+      "nodeId": "method.overview.task",
+      "state": "evidence_linked",
+      "answer": "输入：路线指令或目标类别，以及初始和后续位姿对齐RGB-D观测、局部几何地图、执行反馈。输出：经验证工具操作形成的导航轨迹和终止状态；成功与否仍由独立benchmark判定。",
+      "assertionKind": "source_paraphrase",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.1.1",
+          "pageOrAnchor": "印刷页 3",
+          "evidenceKind": "paper_equation",
+          "figureOrTableOrEquation": "Eq. (1)",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.E1"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Algorithm 1; §3.3",
+          "pageOrAnchor": "印刷页 6",
+          "evidenceKind": "paper_text",
+          "figureOrTableOrEquation": "Algorithm 1",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#alg1"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.3; §4.2",
+          "pageOrAnchor": "印刷页 6, 8",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Table 1",
+          "pageOrAnchor": "印刷页 5",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 1",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.T1"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.3 Evidence-based termination",
+          "pageOrAnchor": "印刷页 6",
+          "evidenceKind": "paper_equation",
+          "figureOrTableOrEquation": "Eq. (4)",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.E4"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 1.3; Table 5",
+          "pageOrAnchor": "印刷页 13",
+          "evidenceKind": "paper_appendix",
+          "figureOrTableOrEquation": "Table 5 / Geometric stop validation"
+        }
+      ]
+    },
+    {
+      "nodeId": "method.overview.steps",
+      "state": "evidence_linked",
+      "answer": "第一步：更新观测、事件记忆与ST Graph。第二步：按当前子目标检索证据并组装上下文，MLLM产生语义操作。第三步：Harness验证、派发工具并回写反馈；循环直到终止。此三步是对Algorithm1的编辑性分组，不是原算法只有三行。",
+      "assertionKind": "reader_inference",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.1.1",
+          "pageOrAnchor": "印刷页 3",
+          "evidenceKind": "paper_equation",
+          "figureOrTableOrEquation": "Eq. (1)",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.E1"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Algorithm 1; §3.3",
+          "pageOrAnchor": "印刷页 6",
+          "evidenceKind": "paper_text",
+          "figureOrTableOrEquation": "Algorithm 1",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#alg1"
+        }
+      ]
+    },
+    {
+      "nodeId": "method.module1.motivation",
+      "state": "evidence_linked",
+      "answer": "模块1（Harness与工具接口）：让语义规划与当前证据、真实进度和执行结果持续一致。",
+      "assertionKind": "source_paraphrase",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Abstract; §1",
+          "pageOrAnchor": "印刷页 1–2",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.1.2; Table 1",
+          "pageOrAnchor": "印刷页 4–5",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 1",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.T1"
+        }
+      ]
+    },
+    {
+      "nodeId": "method.module1.how",
+      "state": "evidence_linked",
+      "answer": "用公式(1)统一状态及Algorithm1循环；工具调用先核参数、证据来源/时效、几何可行性与活动子目标，再用结构反馈更新状态。",
+      "assertionKind": "source_paraphrase",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.1.1",
+          "pageOrAnchor": "印刷页 3",
+          "evidenceKind": "paper_equation",
+          "figureOrTableOrEquation": "Eq. (1)",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.E1"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Algorithm 1; §3.3",
+          "pageOrAnchor": "印刷页 6",
+          "evidenceKind": "paper_text",
+          "figureOrTableOrEquation": "Algorithm 1",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#alg1"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.1.2; Table 1",
+          "pageOrAnchor": "印刷页 4–5",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 1",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.T1"
+        }
+      ]
+    },
+    {
+      "nodeId": "method.module1.why",
+      "state": "evidence_linked",
+      "answer": "读者解释：校验层的设计意图是阻止未获证据支持的提议直接成为动作，让反馈减少计划状态长期脱离执行的风险。\n原文证据：论文提供此设计和整套对照。\n证据边界：没有将proposal validation每个检查项单独隔离，不能据此认定该机制保证不会出错。",
+      "assertionKind": "reader_inference",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.1.2; Table 1",
+          "pageOrAnchor": "印刷页 4–5",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 1",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.T1"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§4.4; Appendix 1.2–1.4; Appendix 2",
+          "pageOrAnchor": "印刷页 8, 13–15",
+          "evidenceKind": "paper_appendix",
+          "figureOrTableOrEquation": "Tables 4–6; Figure 4"
+        }
+      ],
+      "uncertainty": "缺少proposal validation独立消融和形式化正确性保证。"
+    },
+    {
+      "nodeId": "method.module1.advantage",
+      "state": "author_claim_only",
+      "answer": "作者主张：语义Planner与执行工具解耦，可共享两类任务协议。\n证据边界：这不是任意工具替换均可靠的实验证明。",
+      "assertionKind": "source_paraphrase",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§1 contribution list; §3.1.1",
+          "pageOrAnchor": "印刷页 2–3",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Figure 2",
+          "pageOrAnchor": "印刷页 4",
+          "evidenceKind": "paper_figure",
+          "figureOrTableOrEquation": "Figure 2",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S2.F2"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.1.2; Table 1",
+          "pageOrAnchor": "印刷页 4–5",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 1",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.T1"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.3; §4.2",
+          "pageOrAnchor": "印刷页 6, 8",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Table 1",
+          "pageOrAnchor": "印刷页 5",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 1",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.T1"
+        }
+      ]
+    },
+    {
+      "nodeId": "method.module2.motivation",
+      "state": "evidence_linked",
+      "answer": "模块2（层级事件记忆）：保留下一步判断所需上下文、可核实的子目标进度及完整失败事件。",
+      "assertionKind": "source_paraphrase",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.1.3",
+          "pageOrAnchor": "印刷页 4–5",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§4.4; Table 4",
+          "pageOrAnchor": "印刷页 8",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 4",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S4.T4"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 2.1",
+          "pageOrAnchor": "印刷页 15",
+          "evidenceKind": "paper_appendix",
+          "figureOrTableOrEquation": "Navigation planning prompt"
+        }
+      ]
+    },
+    {
+      "nodeId": "method.module2.how",
+      "state": "evidence_linked",
+      "answer": "working保留有限近期观测/反馈；progress按稳定ID维护四态且最多一个active；reflection存位置、时间、任务、反馈与观测，图里只放轻量引用。",
+      "assertionKind": "source_paraphrase",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.1.3",
+          "pageOrAnchor": "印刷页 4–5",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§4.4; Table 4",
+          "pageOrAnchor": "印刷页 8",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 4",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S4.T4"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 2.1",
+          "pageOrAnchor": "印刷页 15",
+          "evidenceKind": "paper_appendix",
+          "figureOrTableOrEquation": "Navigation planning prompt"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 2.1–2.2",
+          "pageOrAnchor": "印刷页 15",
+          "evidenceKind": "paper_appendix",
+          "figureOrTableOrEquation": "Two prompt boxes / Execution Contract",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#A2.SS1"
+        }
+      ]
+    },
+    {
+      "nodeId": "method.module2.why",
+      "state": "evidence_linked",
+      "answer": "读者解释：稳定ID和完成证据可以减轻进度错配，完整失败上下文可以支撑恢复。\n原文结果：累加消融首步SR在两任务各+7点。\n证据边界：三层记忆的独立贡献未知。",
+      "assertionKind": "reader_inference",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.1.3",
+          "pageOrAnchor": "印刷页 4–5",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§4.4; Table 4",
+          "pageOrAnchor": "印刷页 8",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 4",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S4.T4"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 2.1",
+          "pageOrAnchor": "印刷页 15",
+          "evidenceKind": "paper_appendix",
+          "figureOrTableOrEquation": "Navigation planning prompt"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§4.4; Appendix 1.2–1.4; Appendix 2",
+          "pageOrAnchor": "印刷页 8, 13–15",
+          "evidenceKind": "paper_appendix",
+          "figureOrTableOrEquation": "Tables 4–6; Figure 4"
+        }
+      ],
+      "uncertainty": "没有working/progress/reflection分别关闭的对照。"
+    },
+    {
+      "nodeId": "method.module2.advantage",
+      "state": "evidence_linked",
+      "answer": "原文做法：任务事件与空间索引不重复保存完整历史，近期工作上下文有界。\n证据边界：文中未给出总体token或延迟随轨迹长度的实测曲线。",
+      "assertionKind": "reader_inference",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.1.3",
+          "pageOrAnchor": "印刷页 4–5",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§4.4; Table 4",
+          "pageOrAnchor": "印刷页 8",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 4",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S4.T4"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 2.1",
+          "pageOrAnchor": "印刷页 15",
+          "evidenceKind": "paper_appendix",
+          "figureOrTableOrEquation": "Navigation planning prompt"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.2 Task-conditioned retrieval; failure-aware updates",
+          "pageOrAnchor": "印刷页 5",
+          "evidenceKind": "paper_equation",
+          "figureOrTableOrEquation": "Eq. (3)",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.E3"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 1.3; Table 5",
+          "pageOrAnchor": "印刷页 13",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 5",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#A1.T5"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§6",
+          "pageOrAnchor": "印刷页 9",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 1.2–1.4",
+          "pageOrAnchor": "印刷页 13–14",
+          "evidenceKind": "paper_appendix"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "全文与Appendix 1–3核读范围",
+          "pageOrAnchor": "印刷页 1–18",
+          "evidenceKind": "paper_text"
+        }
+      ]
+    },
+    {
+      "nodeId": "method.module3.motivation",
+      "state": "evidence_linked",
+      "answer": "模块3（持久ST Graph）：跨子目标保留可复用空间结构、观察来源和失败适用性，而不把全部轨迹塞进每轮模型上下文。",
+      "assertionKind": "source_paraphrase",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.2 Persistent representation",
+          "pageOrAnchor": "印刷页 5",
+          "evidenceKind": "paper_equation",
+          "figureOrTableOrEquation": "Eq. (2)",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.E2"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.2 Task-conditioned retrieval; failure-aware updates",
+          "pageOrAnchor": "印刷页 5",
+          "evidenceKind": "paper_equation",
+          "figureOrTableOrEquation": "Eq. (3)",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.E3"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 1.3; Table 5",
+          "pageOrAnchor": "印刷页 13",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 5",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#A1.T5"
+        }
+      ]
+    },
+    {
+      "nodeId": "method.module3.how",
+      "state": "evidence_linked",
+      "answer": "维护place/entity、NavigableTo/ObservedFrom/Contains关系及时间；按公式(3)排地点，top3种子扩一跳、最多5地点，关联完整事件引用，失败惩罚cap1。",
+      "assertionKind": "source_paraphrase",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.2 Persistent representation",
+          "pageOrAnchor": "印刷页 5",
+          "evidenceKind": "paper_equation",
+          "figureOrTableOrEquation": "Eq. (2)",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.E2"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.2 Task-conditioned retrieval; failure-aware updates",
+          "pageOrAnchor": "印刷页 5",
+          "evidenceKind": "paper_equation",
+          "figureOrTableOrEquation": "Eq. (3)",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.E3"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 1.3; Table 5",
+          "pageOrAnchor": "印刷页 13",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 5",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#A1.T5"
+        }
+      ]
+    },
+    {
+      "nodeId": "method.module3.why",
+      "state": "evidence_linked",
+      "answer": "读者解释：空间与时序来源有助于区分当前或旧证据，带条件的失败惩罚可以减少重试已知坏分支。\n原文结果：加图条件增量为R2R SR+6点、OVON+1点。\n证据边界：各打分项或关系类型的作用仍未隔离。",
+      "assertionKind": "reader_inference",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.2 Persistent representation",
+          "pageOrAnchor": "印刷页 5",
+          "evidenceKind": "paper_equation",
+          "figureOrTableOrEquation": "Eq. (2)",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.E2"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.2 Task-conditioned retrieval; failure-aware updates",
+          "pageOrAnchor": "印刷页 5",
+          "evidenceKind": "paper_equation",
+          "figureOrTableOrEquation": "Eq. (3)",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.E3"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 1.3; Table 5",
+          "pageOrAnchor": "印刷页 13",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 5",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#A1.T5"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§4.4; Table 4",
+          "pageOrAnchor": "印刷页 8",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 4",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S4.T4"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§4.4; Appendix 1.2–1.4; Appendix 2",
+          "pageOrAnchor": "印刷页 8, 13–15",
+          "evidenceKind": "paper_appendix",
+          "figureOrTableOrEquation": "Tables 4–6; Figure 4"
+        }
+      ],
+      "uncertainty": "没有图关系、时间、显著性、failure penalty逐项消融；不能把graph收益归因到某一项。"
+    },
+    {
+      "nodeId": "method.module3.advantage",
+      "state": "evidence_linked",
+      "answer": "原文做法：图允许累积历史而每轮检索集合受限，也能把失败与地点、实体或关系关联供恢复使用。\n证据边界：论文没有给出无限长度正确性或计算复杂度保证。",
+      "assertionKind": "reader_inference",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.2 Persistent representation",
+          "pageOrAnchor": "印刷页 5",
+          "evidenceKind": "paper_equation",
+          "figureOrTableOrEquation": "Eq. (2)",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.E2"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.2 Task-conditioned retrieval; failure-aware updates",
+          "pageOrAnchor": "印刷页 5",
+          "evidenceKind": "paper_equation",
+          "figureOrTableOrEquation": "Eq. (3)",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.E3"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 1.3; Table 5",
+          "pageOrAnchor": "印刷页 13",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 5",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#A1.T5"
+        }
+      ]
+    },
+    {
+      "nodeId": "method.module4.motivation",
+      "state": "evidence_linked",
+      "answer": "模块4（落地执行与终止核验）：识别和计划不能代替到达，选对视觉目标也不代表完成路线；导航和回退需要真实执行反馈。",
+      "assertionKind": "source_paraphrase",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.3; §4.2",
+          "pageOrAnchor": "印刷页 6, 8",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Table 1",
+          "pageOrAnchor": "印刷页 5",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 1",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.T1"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.3 Evidence-based termination",
+          "pageOrAnchor": "印刷页 6",
+          "evidenceKind": "paper_equation",
+          "figureOrTableOrEquation": "Eq. (4)",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.E4"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 1.3; Table 5",
+          "pageOrAnchor": "印刷页 13",
+          "evidenceKind": "paper_appendix",
+          "figureOrTableOrEquation": "Table 5 / Geometric stop validation"
+        }
+      ]
+    },
+    {
+      "nodeId": "method.module4.how",
+      "state": "evidence_linked",
+      "answer": "原文做法：GroundingDINO/SAM、深度和ST Graph落地目标；平面使用FMM，需要时调用NavDP处理楼梯；停止需满足语义、几何和进度三项合取。几何检查优先使用可靠的新鲜深度，以2.5m为门槛；仅当深度缺失或不可靠时，才回退到投影导航目标距离1.0m门槛。可靠深度超出门槛时，不能因投影目标较近而改走回退分支放行。\n证据边界：原文称2.5m/1.0m为threshold，没有明确等号边界使用<还是≤；本次未读源码，不补造比较运算符。新鲜深度可靠性标准明确为5×5 patch标准差至多0.5m。这些内部门槛区别于benchmark的指令3.0m/ObjectNav1.0m测地成功判据。",
+      "assertionKind": "source_paraphrase",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.3; §4.2",
+          "pageOrAnchor": "印刷页 6, 8",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Table 1",
+          "pageOrAnchor": "印刷页 5",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 1",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.T1"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.3 Evidence-based termination",
+          "pageOrAnchor": "印刷页 6",
+          "evidenceKind": "paper_equation",
+          "figureOrTableOrEquation": "Eq. (4)",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.E4"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 1.3; Table 5",
+          "pageOrAnchor": "印刷页 13",
+          "evidenceKind": "paper_appendix",
+          "figureOrTableOrEquation": "Table 5 / Geometric stop validation"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 2.1–2.2",
+          "pageOrAnchor": "印刷页 15",
+          "evidenceKind": "paper_appendix",
+          "figureOrTableOrEquation": "Two prompt boxes / Execution Contract",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#A2.SS1"
+        }
+      ]
+    },
+    {
+      "nodeId": "method.module4.why",
+      "state": "evidence_linked",
+      "answer": "原文结果：Fig9展示拒绝一次过早stop后成功；Table4在Mem+Graph上加Stop，两任务SR各+2点；Fig10–11展示gate通过仍失败。\n读者解释：这些证据与降低部分停止错误的机制相符。\n证据边界：不能从选择性案例及累加消融推出独立因果效应或停止正确性保证。",
+      "assertionKind": "reader_inference",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.3 Evidence-based termination",
+          "pageOrAnchor": "印刷页 6",
+          "evidenceKind": "paper_equation",
+          "figureOrTableOrEquation": "Eq. (4)",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.E4"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 1.3; Table 5",
+          "pageOrAnchor": "印刷页 13",
+          "evidenceKind": "paper_appendix",
+          "figureOrTableOrEquation": "Table 5 / Geometric stop validation"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§4.4; Table 4",
+          "pageOrAnchor": "印刷页 8",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 4",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S4.T4"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 3.3; Figure 10",
+          "pageOrAnchor": "印刷页 18",
+          "evidenceKind": "paper_figure",
+          "figureOrTableOrEquation": "Figure 10",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#A3.F10"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 1.3; Appendix 3.3; Figure 11",
+          "pageOrAnchor": "印刷页 13, 18",
+          "evidenceKind": "paper_figure",
+          "figureOrTableOrEquation": "Figure 11",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#A3.F11"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 3.1; Appendix 3.3; Figure 9",
+          "pageOrAnchor": "印刷页 16, 18",
+          "evidenceKind": "paper_figure",
+          "figureOrTableOrEquation": "Figure 9",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#A3.F9"
+        }
+      ],
+      "uncertainty": "未分别消融semantic/geometric/progress、fresh-depth/fallback；个例不是反事实因果试验。"
+    },
+    {
+      "nodeId": "method.module4.advantage",
+      "state": "evidence_linked",
+      "answer": "原文做法：把停止与普通动作都纳入可记录、可拒绝、可恢复的协议。\n原文结果：OVON加Stop的SPL从34.2降到33.0。\n证据边界：不能概括为全指标改善。",
+      "assertionKind": "reader_inference",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.3 Evidence-based termination",
+          "pageOrAnchor": "印刷页 6",
+          "evidenceKind": "paper_equation",
+          "figureOrTableOrEquation": "Eq. (4)",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.E4"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 1.3; Table 5",
+          "pageOrAnchor": "印刷页 13",
+          "evidenceKind": "paper_appendix",
+          "figureOrTableOrEquation": "Table 5 / Geometric stop validation"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§4.4; Table 4",
+          "pageOrAnchor": "印刷页 8",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 4",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S4.T4"
+        }
+      ]
+    },
+    {
+      "nodeId": "experiments.comparison",
+      "state": "evidence_linked",
+      "answer": "原文结果：主表2–3报告四基准的任务完成表现；Rand100同GPT-5.5下AgenticNav SPL48.4高于Harness35.8；HM3D-v2上DRIVE-Nav SPL41.3高于Harness37.9。Table6同Luna的100子集报告SR/SPL提升，但OVON OSR−SR gap由9增至19。\n读者解释与证据边界：这些比较需区分full split和100子集，不能归纳为全指标领先或停止gap普遍缩小。",
+      "assertionKind": "direct_observation",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§4.1; Appendix 1.1; Table 5",
+          "pageOrAnchor": "印刷页 6–8, 13",
+          "evidenceKind": "paper_appendix",
+          "figureOrTableOrEquation": "Table 5"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§4.3; Table 2",
+          "pageOrAnchor": "印刷页 7–8",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 2",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.T2"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§4.3; Table 3",
+          "pageOrAnchor": "印刷页 7–8",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 3",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.T3"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 1.4; Table 6",
+          "pageOrAnchor": "印刷页 14",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 6",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#A1.T6"
+        }
+      ]
+    },
+    {
+      "nodeId": "experiments.ablation.components",
+      "state": "evidence_linked",
+      "answer": "原文结果：Table4按Mem→Graph→Stop累加，R2R SR43→50→56→58，OVON45→52→53→55；OVON加Graph时OSR72→71，加Stop时SPL34.2→33.0。\n读者解释：它测的是给定前序组件的增量。\n证据边界：没有全因子或leave-one-out，不能声称独立主效应。",
+      "assertionKind": "direct_observation",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§4.4; Table 4",
+          "pageOrAnchor": "印刷页 8",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 4",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S4.T4"
+        }
+      ]
+    },
+    {
+      "nodeId": "experiments.ablation.design-choices",
+      "state": "evidence_linked",
+      "answer": "原文结果：Table6报告换模型后的结果；Figure4对同批1000步轨迹截至500步进行离线重评分。\n证据边界：未报告每个模块内部设计的系统消融，例如检索项/权重、半径、图片预算、三种记忆、stop阈值及各门槛条件；这些问题保持未答。",
+      "assertionKind": "direct_observation",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§4.4; Appendix 1.2–1.4; Appendix 2",
+          "pageOrAnchor": "印刷页 8, 13–15",
+          "evidenceKind": "paper_appendix",
+          "figureOrTableOrEquation": "Tables 4–6; Figure 4"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 1.3 Step budget and observation overhead; Figure 4",
+          "pageOrAnchor": "印刷页 14",
+          "evidenceKind": "paper_figure",
+          "figureOrTableOrEquation": "Figure 4",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#A1.F4"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 1.4; Table 6",
+          "pageOrAnchor": "印刷页 14",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 6",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#A1.T6"
+        }
+      ],
+      "uncertainty": "所问“每一个module的design choices如何影响performance”只获部分回答；固定配置并不证明最优，预算诊断也不是两预算独立运行。"
+    },
+    {
+      "nodeId": "limitation",
+      "state": "evidence_linked",
+      "answer": "作者明确局限：当前依赖预定义编排与验证，尚未实现交互中自演化。\n原文结果：错误语义终点可通过内部stop gate；传感器邻近可在benchmark成功区之外；SPL并非所有设置提高；所测模型间结果差异较大。\n证据边界：未报多次运行方差、token或时延成本、总体实机成功率；没有统计显著性检验支持“模型影响显著”的表述。\n读者核读疑点：Fig2箭头方向与正文可能不一致；Rand100 SPL有35.8/35.9/35.85报告精度差，待核，不据此认定实现错误或不同实验。",
+      "assertionKind": "reader_inference",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§4.3; Table 2",
+          "pageOrAnchor": "印刷页 7–8",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 2",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.T2"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§4.4; Table 4",
+          "pageOrAnchor": "印刷页 8",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 4",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S4.T4"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 1.3 Step budget and observation overhead; Figure 4",
+          "pageOrAnchor": "印刷页 14",
+          "evidenceKind": "paper_figure",
+          "figureOrTableOrEquation": "Figure 4",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#A1.F4"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 1.4; Table 6",
+          "pageOrAnchor": "印刷页 14",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 6",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#A1.T6"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§5.1–5.2; Figure 3",
+          "pageOrAnchor": "印刷页 8–9",
+          "evidenceKind": "paper_figure",
+          "figureOrTableOrEquation": "Figure 3",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S5.F3"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 3.3; Figure 10",
+          "pageOrAnchor": "印刷页 18",
+          "evidenceKind": "paper_figure",
+          "figureOrTableOrEquation": "Figure 10",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#A3.F10"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 1.3; Appendix 3.3; Figure 11",
+          "pageOrAnchor": "印刷页 13, 18",
+          "evidenceKind": "paper_figure",
+          "figureOrTableOrEquation": "Figure 11",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#A3.F11"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§6",
+          "pageOrAnchor": "印刷页 9",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 1.2–1.4",
+          "pageOrAnchor": "印刷页 13–14",
+          "evidenceKind": "paper_appendix"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "全文与Appendix 1–3核读范围",
+          "pageOrAnchor": "印刷页 1–18",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Figure 2; §3.1.2; Algorithm 1",
+          "pageOrAnchor": "印刷页 4, 6",
+          "evidenceKind": "paper_figure",
+          "figureOrTableOrEquation": "Figure 2",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S2.F2"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Table 2; Table 4; Appendix 1.3",
+          "pageOrAnchor": "印刷页 7, 8, 14",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Tables 2, 4"
+        }
+      ]
+    }
+  ],
+  "sourceCoverage": [
+    {
+      "sourceUrl": "https://arxiv.org/html/2609.15195v3",
+      "sourceVersion": "2609.15195v3",
+      "checkedSections": [
+        "Abstract; §1–6",
+        "References entries (not cited papers' full texts)",
+        "Appendix 1.1–1.4",
+        "Appendix 2.1–2.2 including two prompt boxes",
+        "Appendix 3.1–3.3",
+        "Figures 1–11 (pixels and captions)",
+        "Tables 1–6 (pixels and text)",
+        "Equations (1)–(4) and Algorithm 1"
+      ],
+      "missingSections": [
+        "Figure 1: tiny radar labels not independently transcribed; values checked against Tables 2–3",
+        "Figure 3: small ST Graph labels partly illegible",
+        "Figure 5: smallest event-log text not transcribed character by character"
+      ]
+    },
+    {
+      "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+      "sourceVersion": "2609.15195v3",
+      "checkedSections": [
+        "PDF text for printed pages 1–18 and section/figure/table page locators"
+      ],
+      "missingSections": [
+        "No complete set of 18 PDF page-pixel renders; actual visual checks used original HTML/assets"
+      ]
+    },
+    {
+      "sourceUrl": "https://arxiv.org/abs/2609.15195v3",
+      "sourceVersion": "2609.15195v3",
+      "checkedSections": [
+        "Version metadata and submission history"
+      ],
+      "missingSections": [
+        "Formal publication not verified; no v1/v2/v3 difference audit"
+      ]
+    }
+  ],
+  "unresolvedQuestions": [
+    {
+      "nodeId": "introduction.challenges.1.failure",
+      "question": "具名旧方法的受控执行状态漂移failure case在哪里？",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Abstract; §1",
+          "pageOrAnchor": "印刷页 1–2",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§1; §2",
+          "pageOrAnchor": "印刷页 2–3",
+          "evidenceKind": "paper_text"
+        }
+      ]
+    },
+    {
+      "nodeId": "introduction.challenges.2.failure",
+      "question": "某一旧方法过早停止的匹配对照轨迹在哪里？",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Abstract; §1",
+          "pageOrAnchor": "印刷页 1–2",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 3.3; Figure 10",
+          "pageOrAnchor": "印刷页 18",
+          "evidenceKind": "paper_figure",
+          "figureOrTableOrEquation": "Figure 10",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#A3.F10"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 1.3; Appendix 3.3; Figure 11",
+          "pageOrAnchor": "印刷页 13, 18",
+          "evidenceKind": "paper_figure",
+          "figureOrTableOrEquation": "Figure 11",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#A3.F11"
+        }
+      ]
+    },
+    {
+      "nodeId": "experiments.ablation.components",
+      "question": "memory、graph、stop各自独立主效应和交互是多少？",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§4.4; Table 4",
+          "pageOrAnchor": "印刷页 8",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 4",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S4.T4"
+        }
+      ]
+    },
+    {
+      "nodeId": "experiments.ablation.design-choices",
+      "question": "各module内部超参数、关系类型、各停止条件的独立效果？",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§4.4; Appendix 1.2–1.4; Appendix 2",
+          "pageOrAnchor": "印刷页 8, 13–15",
+          "evidenceKind": "paper_appendix",
+          "figureOrTableOrEquation": "Tables 4–6; Figure 4"
+        }
+      ]
+    },
+    {
+      "nodeId": "limitation",
+      "question": "方差/显著性、墙钟时延/费用、总体实机成功及安全指标？",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§5.1–5.2; Figure 3",
+          "pageOrAnchor": "印刷页 8–9",
+          "evidenceKind": "paper_figure",
+          "figureOrTableOrEquation": "Figure 3",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S5.F3"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§6",
+          "pageOrAnchor": "印刷页 9",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 1.2–1.4",
+          "pageOrAnchor": "印刷页 13–14",
+          "evidenceKind": "paper_appendix"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "全文与Appendix 1–3核读范围",
+          "pageOrAnchor": "印刷页 1–18",
+          "evidenceKind": "paper_text"
+        }
+      ]
+    },
+    {
+      "nodeId": "method.module1.how",
+      "question": "论文描述与实际源码是否逐项一致？",
+      "sourceLocators": []
+    }
+  ],
+  "existingStageStateMutation": false
+}
