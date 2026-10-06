@@ -10,7 +10,9 @@ The existing `review/radar-trees-c/` route, its exact nine-file manifest and wee
 
 First integration history: the initial integration used main `880d4fa46d01a5288515062a4cf1d6f34de65903`, tree `69d3b2098220db004cbeb4bacb9200c7bfdc948e`, including the submission-maintenance changes in PR #24. That historical source identity was independently reconstructed from 1,063 Git blobs; it is not the current rebased baseline. The sealed integration proofs preserve all 105 PR #18 added/modified source paths for this release; 105 is not a paper count or a permanent freeze on their evolving builders and tests.
 
-Current rebased integration baseline: main `122a7daa35e61b20b04c827f7b579981800c01a6`, tree `c718c4f923ac4eaae5eec6c99e24946fa2e095ba`, with all 1,068 tracked source paths independently verified. This main includes the five-file reader TOC-focus repair merged in PR #27 (two modified paths and three additions); those files already belong to the baseline and are not C2 additions. All 18 daily changed source paths from PR #25 and all eight submission-maintenance paths from PR #24 are preserved byte-for-byte; these are path counts, not paper counts. Relative to this main, the candidate scope remains the same three appended lines in `scripts/build_previews.py` plus 34 added paths, with no deletions. Any later main must be reconciled before publication.
+Current rebased integration baseline: main `352b424965f685359a56e5c3b2c104fb7dab3c6b`, tree `941c810b152e54afed8464149be2d272b5401fd1`, with all 1,068 tracked source paths independently verified. This main includes the five-file reader TOC-focus repair merged in PR #27 and the three-file inset focus-ring repair merged in PR #28. The PR #28 repair changes only the reader preview builder, its Python test and the reader UI document; it leaves JavaScript unchanged. All these reader paths already belong to the baseline and are not C2 additions. All 18 daily changed source paths from PR #25 and all eight submission-maintenance paths from PR #24 are preserved byte-for-byte; these are path counts, not paper counts. Relative to this main, the candidate scope remains the same three appended lines in `scripts/build_previews.py` plus 34 added paths, with no deletions. Any later main must be reconciled before publication.
+
+Historical reader-rebase baseline: main `122a7daa35e61b20b04c827f7b579981800c01a6`, tree `c718c4f923ac4eaae5eec6c99e24946fa2e095ba`, had 1,068 tracked paths and included PR #27. Its sealed C2 candidate tree `b0c990b3d631a72b9fd64e0cf09c42f2aba2dc88` and verification are historical evidence, not this PR #28-rebased candidate.
 
 Historical daily-rebase baseline: main `1a27cc16d5acb2e8df54ddde880016aa134b352c`, tree `6ed865ef741692c40282a2d67f5b45a382488054`, had 1,065 tracked paths. Its separately sealed C2 CI-contract revision is preserved as historical evidence and is not the current baseline.
 
@@ -41,7 +43,9 @@ The unchanged 31-check typed-tree suite and 38-check C2 suite are invoked from P
 
 The current implementation also checks that the normal old build plus its existing previews and the new wrapper differ only by the new 14-file route. This protects all existing generated reader/Atlas/Radar/report outputs, beyond a mere page-count comparison.
 
-The prior sealed daily-rebased release measured 278 wrapper-output files and 264 original-build files, preserving all original paths and hashes with exactly 14 C2 files added. Its 610 Python / 306 static Node passes, and the later sealed CI-contract revision's 625 Python / 40 C2 / 306 static Node passes, remain historical evidence for those earlier trees. They are not claimed as full-suite results for this reader-rebased candidate. The current candidate preserves the corrected C2 test contract and updates this document; the five reader-repair files come only from the new main. Fresh full-suite results, independently derived output counts, repeated-build hashes and exact source identities are recorded in this candidate's separate release evidence after these document bytes are fixed. Formal data, scientific evidence, the original protection fixture and all frozen C2 inputs remain unchanged. Publication, remote CI and real-browser acceptance remain NOT_RUN.
+The prior sealed daily-rebased release measured 278 wrapper-output files and 264 original-build files, preserving all original paths and hashes with exactly 14 C2 files added. Its 610 Python / 306 static Node passes, and the later sealed CI-contract revision's 625 Python / 40 C2 / 306 static Node passes, remain historical evidence for those earlier trees. The sealed PR #27 reader-rebased C2 tree `b0c990b3d631a72b9fd64e0cf09c42f2aba2dc88` subsequently measured 626 Python / 40 C2 / 318 static Node passes and 265 original-build / 279 wrapper-output files. None of those results is claimed as full-suite verification for this PR #28-rebased candidate. The current candidate preserves the corrected C2 test contract and updates this document; the three inset focus-ring repair paths come only from the new main. Fresh full-suite results, independently derived output counts, repeated-build hashes and exact source identities are recorded in this candidate's separate release evidence after these document bytes are fixed. Formal data, scientific evidence, the original protection fixture and all frozen C2 inputs remain unchanged.
+
+PR #26's earlier head `52277197d4a992c995d0f634335f159084d101b8` had a successful remote CI run `37450596309` for the earlier reader-rebased tree. That historical success does not validate this new candidate. Publication, remote CI for this exact candidate and real-browser acceptance remain NOT_RUN.
 
 ## Permanent CI versus release provenance
 
@@ -96,13 +100,15 @@ pending status or claiming browser/print acceptance, and revalidates all exact
 v2 sources. An additional positive control changes old-C CSS/JavaScript with synchronized
 entry cache hashes and a reviewed manifest, while preserving its graph-data and
 weekly snapshot. The stale-manifest form still fails the actual guard.
-The previous sealed release evidence exercised the real independent five-file
+The earlier sealed release evidence exercised the real independent five-file
 reader TOC-focus repair in a temporary combined repository. That repair is now
-merged in PR #27 and belongs to the current main baseline. Fresh validation runs
-on this exact combined source tree; the C2 patch does not repeat those five
-reader paths. The 105-path PR #18 release comparison is against the current
-base, with PR #27's reader builder/test evolution separately attributed; only
-the 90 historical raw/policy/evidence paths remain permanently pinned by C2.
+merged in PR #27, and the subsequent three-file inset focus-ring repair is
+merged in PR #28. Both belong to the current main baseline. Fresh validation
+runs on this exact combined source tree; the C2 patch does not repeat either
+reader repair. The 105-path PR #18 release comparison is against the current
+base, with PR #27 and PR #28 reader builder/test evolution separately
+attributed; only the 90 historical raw/policy/evidence paths remain
+permanently pinned by C2.
 Other repository tests still contain their own dated
 catalog/report totals and import boundaries; this correction removes the C2
 universal freeze only, and does not claim future imports pass those separate

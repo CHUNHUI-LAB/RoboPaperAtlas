@@ -54,6 +54,12 @@ def output_payloads(root):
         page=page.replace(old,f'<a class="atlas-return" href="https://chunhui-lab.github.io/RoboPaperAtlas/papers/{pid}/index.html#reading">回到正式论文档案</a>',1)
         # Versioned presentation-only addition; immutable reports and v1 routes
         # are deliberately untouched. The original inline runtime stays intact.
+        # Native Tab scrolling exposes the link box, not an exterior outline.
+        # Keep the existing 3px/color focus indicator 1px inside the visible box;
+        # scope this addition to preview TOC links without changing scroll code.
+        ring='<style data-reader-toc-focus-ring="v1">.f2-current-reader .reader-toc a:focus-visible{outline-offset:-4px}</style>'
+        r.require(page.count('</head>')==1,'Unknown v2 preview head signature')
+        page=page.replace('</head>',ring+'</head>',1)
         ui='reader-toc-focus-v1.js'
         digest=hashlib.sha256((Path(root)/'assets'/ui).read_bytes()).hexdigest()[:12]
         page=page.replace('</body>',f'<script src="../../../assets/{ui}?v={digest}" defer></script></body>',1)
