@@ -42,7 +42,8 @@ def project_before_oct4_experience_append(data):
               OCT4_SYNTHESES_SHA256, OCT4_OVERVIEW_FIELDS_SHA256)
     assert all(isinstance(h, str) and len(h) == 64 and
                all(c in '0123456789abcdef' for c in h) for h in frozen), 'Append not frozen'
-    restored = copy.deepcopy(data)
+    from submission_maintenance_oct6_history import project_before_oct6_maintenance
+    restored = project_before_oct6_maintenance(data)
     pack = restored['experiences']
     records, overview, synthesis = pack['records'], pack['overview'], pack['editorial_synthesis']
     assert len(records) == 19, 'Expected exactly 14 old and 5 appended records'

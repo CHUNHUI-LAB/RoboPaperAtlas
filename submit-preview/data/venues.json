@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "status": "independent_public_candidate_not_integrated",
-  "checked_at": "2026-10-04",
+  "checked_at": "2026-10-06",
   "venues": [
     {
       "id": "icra",
@@ -1276,9 +1276,11 @@
       "kind": "conference_event",
       "status": "post_decision",
       "source_ids": [
-        "neurips26-cfp"
+        "neurips26-cfp",
+        "maintenance-neurips26-dates-20261006",
+        "maintenance-neurips26-handbook-20261006"
       ],
-      "checked_at": "2026-10-01",
+      "checked_at": "2026-10-06",
       "channels": [
         {
           "id": "neurips-2026-research",
@@ -1328,11 +1330,35 @@
           "checked_at": "2026-10-01",
           "original_text": "2026-05-06 AoE",
           "supersedes": null
+        },
+        {
+          "id": "neurips-2026-decision",
+          "channel_id": "neurips-2026-research",
+          "kind": "decision",
+          "date": "2026-09-24",
+          "end_date": null,
+          "time": null,
+          "timezone_label": "AoE",
+          "utc_offset": "-12:00",
+          "timezone_iana": null,
+          "precision": "date",
+          "utc_datetime": null,
+          "status": "verified",
+          "source_ids": [
+            "neurips26-cfp"
+          ],
+          "checked_at": "2026-10-06",
+          "original_text": "Author notification: September 24, 2026 AoE",
+          "supersedes": null
         }
       ],
       "templates": [],
       "notes": [
-        "This CFP is main track. Evaluations/datasets and position papers need distinct channels and policies, not workshop labels. No NeurIPS2027 dates inferred."
+        "This CFP is main track. Evaluations/datasets and position papers need distinct channels and policies, not workshop labels. No NeurIPS2027 dates inferred.",
+        "2026-10-06 复核主会 CFP：5 月 6 日全文截止已包含全部补充材料，不另设较晚的补充材料窗口；作者通知为 2026-09-24 AoE，当前为录用后阶段。均不推算成 2027 初投日期。",
+        "官方 Dates 页列出会址分配通知为 2026-10-06 17:00 UTC；这是通知节点，不是作者提交截止。Attendee 栏的早鸟注册截止为 2026-10-30 AoE，未给具体时刻；它不是论文注册、终稿或作者强制注册截止，因此仅保留为参会提示。",
+        "2026 主会手册：初稿正文最多 9 页，录用后正文可增加至 10 页；参考文献、文字附录与 checklist 另计并合入同一 PDF。作者回复通过 OpenReview 逐条讨论，每条最多 10,000 字符；回复阶段不能更新论文或补充材料、不能另传文件。这是历史评审规则，不是当前开放的回复入口。",
+        "至少一位作者须注册主会，Virtual Only Pass 不满足要求；论文须在官方会址展示，严重特殊情况可请他人代为展示。已读取的 CFP、Dates 与主会手册未给出具体终稿截止；手册只说会前提交。本轮未下载或编译模板，不能宣称模板已验证可用。"
       ]
     },
     {
@@ -4710,6 +4736,28 @@
       "content_hash": null,
       "note": "2026-10-04 03:04 UTC 直接读取 2026-09-16 独立公告：延期 24 小时，新截止为 2026-09-16 23:59 PST。该事件已发生，首轮关闭状态由当届详细 CFP 同时确认；保留 PST 原文，不归一化为 UTC 或 America/Los_Angeles。",
       "claim_supported": "独立延期公告明确取代原 9 月 15 日首轮截止；仅支持 2027 届 research 首轮历史时间线，不支持终稿或作者注册截止。"
+    },
+    {
+      "id": "maintenance-neurips26-dates-20261006",
+      "url": "https://neurips.cc/Conferences/2026/Dates",
+      "title": "NeurIPS 2026 Dates and Deadlines",
+      "kind": "official_conference",
+      "source_year": 2026,
+      "checked_at": "2026-10-06",
+      "claim_supported": "主会历史评审节点、会址分配通知及 Attendee 早鸟注册；不将通知或参会注册转换为论文提交截止。",
+      "access_status": "source_text_observed",
+      "authority": "official"
+    },
+    {
+      "id": "maintenance-neurips26-handbook-20261006",
+      "url": "https://neurips.cc/Conferences/2026/MainTrackHandbook",
+      "title": "NeurIPS 2026 Main Track Handbook V2026.3",
+      "kind": "official_conference",
+      "source_year": 2026,
+      "checked_at": "2026-10-06",
+      "claim_supported": "核读 Paper Formatting、Author Responses、Publication of Accepted Submissions、Author Registration and Presentation；终稿时间未具体列明。",
+      "access_status": "source_text_observed",
+      "authority": "official"
     }
   ],
   "pending_adjacent_journals": [
@@ -6319,6 +6367,85 @@
         "maintenance-icra27-registration",
         "vp-ral-home"
       ]
+    },
+    {
+      "checked_at": "2026-10-06",
+      "previous_snapshot": "2026-10-04",
+      "scope": "有界复核当前投稿官方页；仅补充 NeurIPS 2026 已录用后的边界与历史决定节点，不声明官网在本日改规。",
+      "preserved_boundaries": [
+        "15 个渠道、19 条经验及全部阅读状态不变；未复核的来源日期不刷新。",
+        "早鸟参会注册不同于论文注册；通知不同于作者提交截止。",
+        "没有确认终稿日期，不依据上一届或模板猜测。",
+        "ICRA 2027 终稿仍混有 2025 年正文；IROS 2027 来源仍未解决。"
+      ],
+      "prior_records": {
+        "neurips-2026": {
+          "id": "neurips-2026",
+          "venue_id": "neurips",
+          "edition_year": 2026,
+          "kind": "conference_event",
+          "status": "post_decision",
+          "source_ids": [
+            "neurips26-cfp"
+          ],
+          "checked_at": "2026-10-01",
+          "channels": [
+            {
+              "id": "neurips-2026-research",
+              "forum_level": "main_conference",
+              "track_kind": "research",
+              "archival_status": "archival",
+              "parent_edition_id": "neurips-2026"
+            }
+          ],
+          "deadlines": [
+            {
+              "id": "neurips-2026-abstract",
+              "channel_id": "neurips-2026-research",
+              "kind": "abstract",
+              "date": "2026-05-04",
+              "end_date": null,
+              "time": null,
+              "timezone_label": "AoE",
+              "utc_offset": "-12:00",
+              "timezone_iana": null,
+              "precision": "date",
+              "utc_datetime": null,
+              "status": "verified",
+              "source_ids": [
+                "neurips26-cfp"
+              ],
+              "checked_at": "2026-10-01",
+              "original_text": "2026-05-04 AoE",
+              "supersedes": null
+            },
+            {
+              "id": "neurips-2026-full_paper",
+              "channel_id": "neurips-2026-research",
+              "kind": "full_paper",
+              "date": "2026-05-06",
+              "end_date": null,
+              "time": null,
+              "timezone_label": "AoE",
+              "utc_offset": "-12:00",
+              "timezone_iana": null,
+              "precision": "date",
+              "utc_datetime": null,
+              "status": "verified",
+              "source_ids": [
+                "neurips26-cfp"
+              ],
+              "checked_at": "2026-10-01",
+              "original_text": "2026-05-06 AoE",
+              "supersedes": null
+            }
+          ],
+          "templates": [],
+          "notes": [
+            "This CFP is main track. Evaluations/datasets and position papers need distinct channels and policies, not workshop labels. No NeurIPS2027 dates inferred."
+          ]
+        }
+      }
     }
   ]
 }

@@ -100,7 +100,7 @@ class SubmissionProfileTests(unittest.TestCase):
         self.assertEqual(next(d for d in icra['deadlines'] if d['kind'] == 'full_paper')['status'], 'verified')
         self.assertFalse(any(d['kind'] in {'camera_ready', 'registration'} for d in icra['deadlines']))
         self.assertIn('待定', ' '.join(icra['notes']))
-        prior = history[-1]['prior_records']['icra-2027']
+        prior = next(h for h in history if h['checked_at'] == '2026-10-04')['prior_records']['icra-2027']
         self.assertEqual(prior['status'], 'needs_confirmation')
         self.assertEqual(next(d for d in prior['deadlines'] if d['kind'] == 'full_paper')['status'], 'conflicted')
         self.assertEqual(editions['iros-2027']['status'], 'source_unresolved')
