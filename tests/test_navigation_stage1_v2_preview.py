@@ -1,5 +1,5 @@
 """Strict, non-approval v2 preview boundary and immutable report reuse."""
-import copy,json,hashlib,re,shutil,sys,tempfile,unittest
+import copy,json,hashlib,re,shutil,sys,tempfile,unittest,subprocess
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT/'scripts'))
 import reports as r
@@ -20,16 +20,22 @@ class V2PreviewTests(unittest.TestCase):
    for part in record['parts']:shutil.copyfile(ROOT/r._parts_path(record)/part['file'],d/part['file'])
    p=f'data/report-{pid}-stage1-v2-policy.json';shutil.copyfile(ROOT/p,self.root/p)
   (self.root/'candidates').mkdir();shutil.copyfile(ROOT/v2.MANIFEST,self.root/v2.MANIFEST)
+ def test_packaged_toc_focus_controls(self):
+  subprocess.run(['node',str(ROOT/'tests/test_reader_toc_focus_v1.cjs')],check=True,cwd=ROOT,capture_output=True,text=True)
  def test_exact_seven_outputs_and_fixed_raw_bytes(self):
   output=v2.output_payloads(ROOT);self.assertEqual(len(output),7)
   for rec,raw in self.sources:
    pid=rec['paper_id'];self.assertEqual(output[f'{v2.BASE}/{pid}/first-pass.html'],raw)
    page=output[f'{v2.BASE}/{pid}/stage1.html'].decode()
    self.assertEqual(re.findall(r'<section\b.*?</section>',page,re.S),re.findall(r'<section\b.*?</section>',raw.decode(),re.S))
+   self.assertEqual(re.findall(r'<script>(.*?)</script>',page,re.S),re.findall(r'<script>(.*?)</script>',raw.decode(),re.S))
+   digest=hashlib.sha256((ROOT/'assets/reader-toc-focus-v1.js').read_bytes()).hexdigest()[:12]
+   self.assertEqual(page.count(f'../../../assets/reader-toc-focus-v1.js?v={digest}'),1)
    self.assertIn('href="first-pass.html"',page);self.assertNotIn('href="stage2.html"',page);self.assertNotIn('href="stage3.html"',page)
    self.assertIn('noindex,follow',page);self.assertNotIn('尚未正式收录',raw.decode());self.assertNotIn('待视觉验收',raw.decode())
  def test_no_registry_state_changes_and_v1_stays_seven(self):
   self.assertEqual(len(r.load_reports(ROOT)),21);self.assertEqual(len(v1.output_payloads(ROOT)),7)
+  self.assertTrue(all(b'reader-toc-focus-v1' not in raw for raw in v1.output_payloads(ROOT).values()))
   for p,b in self.protected.items():self.assertEqual((ROOT/p).read_bytes(),b)
   cat=json.loads(self.protected['data/catalog.json'])
   for p in cat['papers']:

@@ -2,6 +2,7 @@
 
 The JS suites use an in-memory DOM. None of these are real-browser acceptance.
 """
+import copy
 import hashlib
 from html.parser import HTMLParser
 import json
@@ -9,6 +10,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -19,11 +21,97 @@ from urllib.parse import unquote, urlsplit, parse_qs
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts'))
 import radar_c2_preview as c2
+import radar_tree_preview as old_c
 import build_previews
 
 
 def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+# This file remains the exact initial release provenance, including evolving paths.
+# Permanent CI consumes only its immutable historical projection below; whole-release
+# comparisons belong to the sealed release evidence, not a universal source freeze.
+PROTECTION_FIXTURE = 'tests/fixtures/radar-c2-protection.json'
+PROTECTION_SHA256 = 'd552b96f14599c4eccb877ccde09b31ab477531ebb05991ac020afc2b07cd345'
+SOURCE_DIRS = ('.github', 'assets', 'artifacts', 'candidates', 'data', 'docs',
+               'previews', 'release_checks', 'scripts', 'submit-preview', 'tests')
+
+
+def immutable_history(test, root):
+    test.assertEqual(digest(root / PROTECTION_FIXTURE), PROTECTION_SHA256,
+                     'Initial C2 release provenance must remain unchanged')
+    protection = json.loads((root / PROTECTION_FIXTURE).read_text())
+    test.assertEqual(len(protection['pr18']), 105)  # Historical path count only.
+    for name, expected in protection['pr18'].items():
+        # Reviewed v2 raw chunks, policies and historical evidence are immutable.
+        # Pending gates, migration plans and print-QA metadata are current state,
+        # not fixed raw history. Their report/CSS content keeps its existing v2
+        # validator/test contracts; C2 must not freeze their workflow metadata.
+        if name.startswith(('data/report-parts/', 'data/report-')) or name in (
+                'candidates/navigation-stage1-v2-facts-audit.json',
+                'candidates/navigation-stage1-v2-presentation-proof.json'):
+            content = (root / name).read_bytes()
+            actual = hashlib.sha1(b'blob ' + str(len(content)).encode() + b'\0' + content).hexdigest()
+            test.assertEqual(actual, expected, 'Immutable raw history: ' + name)
+    for name, expected in protection['preserved_sha256'].items():
+        if name in ('previews/radar-trees-c/data/graph-data.json',
+                    'previews/radar-trees-c/data/graph-data.js',
+                    'previews/radar-trees-c/weekly-2026-10-04.html'):
+            test.assertEqual(digest(root / name), expected, 'Immutable old-C archive: ' + name)
+    # Old-C presentation/manifest can receive separately reviewed UI repairs. Its
+    # own exact payload validator remains authoritative for current reviewed bytes.
+    old_c.payloads(root)
+    # The current catalog, registry, builders and test code are deliberately absent
+    # from this fixed projection. C2's own runtime/review seals remain in payloads().
+
+
+def source_hashes(root, outputs=()):
+    # Walk EVERY current/future namespace, including top-level directory entries.
+    # Never follow symlinks. Only known generated destinations, explicit temporary
+    # build destinations, Git/dependencies and Python bytecode are outside inputs.
+    excluded = {root / name for name in ('.git', 'node_modules', 'dist', 'repeat-dist', 'dist-test')}
+    excluded.update(Path(output) for output in outputs)
+    result = {}
+    def visit(path):
+        if path in excluded or path.name == '__pycache__' or path.suffix == '.pyc':
+            return
+        name = path.relative_to(root).as_posix()
+        if path.is_symlink():
+            result[name] = ('symlink', os.readlink(path))
+        elif path.is_file():
+            result[name] = ('file', digest(path))
+        elif path.is_dir():
+            result[name] = ('directory',)
+            for child in sorted(path.iterdir()):
+                visit(child)
+        else:
+            result[name] = ('special', stat.S_IFMT(path.lstat().st_mode))
+    for path in sorted(root.iterdir()):
+        visit(path)
+    return result
+
+
+def formal_counts(root):
+    papers = json.loads((root / 'data/catalog.json').read_text())['papers']
+    reports = json.loads((root / 'data/reports.json').read_text())['reports']
+    return {'catalog_papers': len(papers), 'report_records': len(reports),
+            'imported_stage_slots': sum(s.get('status') == 'imported'
+                for paper in papers for s in paper['stages'].values())}
+
+
+def generate_without_source_changes(test, root, generate, outputs=()):
+    """The same pre/post contract wraps the real C2 writer and CI wrapper builds."""
+    immutable_history(test, root)
+    before_sources = source_hashes(root, outputs)
+    before_counts = formal_counts(root)
+    result = generate()
+    test.assertEqual(formal_counts(root), before_counts,
+                     'C2 generation changed formal catalog/report/Stage counts')
+    test.assertEqual(source_hashes(root, outputs), before_sources,
+                     'C2 generation changed repository inputs')
+    immutable_history(test, root)
+    return result
 
 
 class HTML(HTMLParser):
@@ -157,21 +245,15 @@ class RadarC2SafetyTests(unittest.TestCase):
 
 
 class RadarC2ContractTests(unittest.TestCase):
-    def test_all_105_pr18_paths_and_old_c_formal_data_are_unchanged(self):
-        protection = json.loads((ROOT / 'tests/fixtures/radar-c2-protection.json').read_text())
-        self.assertEqual(len(protection['pr18']), 105)
-        for name, expected in protection['pr18'].items():
-            content = (ROOT / name).read_bytes()
-            actual = hashlib.sha1(b'blob ' + str(len(content)).encode() + b'\0' + content).hexdigest()
-            self.assertEqual(actual, expected, name)
-        for name, expected in protection['preserved_sha256'].items():
-            self.assertEqual(digest(ROOT / name), expected, name)
-        catalog = json.loads((ROOT / 'data/catalog.json').read_text())['papers']
-        reports = json.loads((ROOT / 'data/reports.json').read_text())
-        self.assertEqual(len(catalog), 95)
-        self.assertEqual(len(reports['reports']), 21)
-        self.assertEqual(sum(s.get('status') == 'imported' for p in catalog
-                             for s in p['stages'].values()), 12)
+    def test_immutable_raw_history_and_old_c_archive(self):
+        immutable_history(self, ROOT)
+
+    def test_c2_generation_preserves_current_sources_and_derived_counts(self):
+        with tempfile.TemporaryDirectory(prefix='.c2-state-', dir=ROOT) as target:
+            generate_without_source_changes(self, ROOT, lambda: c2.write_preview(ROOT, Path(target)),
+                                            outputs=(Path(target),))
+            c2.validate_output(ROOT, Path(target))
+
     def test_range_is_independently_derived_and_retains_weekly_only(self):
         graph = json.loads((ROOT / 'previews/radar-trees-c/data/graph-data.json').read_text())
         stats = c2.range_stats(graph)
@@ -244,12 +326,15 @@ class RadarC2ContractTests(unittest.TestCase):
         # against the CI wrapper; generated data must already be prepared as in CI.
         with tempfile.TemporaryDirectory(prefix='.c2-baseline-', dir=ROOT) as baseline, \
              tempfile.TemporaryDirectory(prefix='.c2-integrated-', dir=ROOT) as integrated:
-            subprocess.run([sys.executable, str(ROOT / 'scripts/build.py'), '--output', baseline],
-                           check=True, capture_output=True, text=True, timeout=90)
-            build_previews.write_preview(ROOT, Path(baseline))
-            build_previews.write_submit_preview(ROOT, Path(baseline))
-            subprocess.run([sys.executable, str(ROOT / 'scripts/build_previews.py'), '--output', integrated],
-                           check=True, capture_output=True, text=True, timeout=90)
+            def generate():
+                subprocess.run([sys.executable, str(ROOT / 'scripts/build.py'), '--output', baseline],
+                               check=True, capture_output=True, text=True, timeout=90)
+                build_previews.write_preview(ROOT, Path(baseline))
+                build_previews.write_submit_preview(ROOT, Path(baseline))
+                subprocess.run([sys.executable, str(ROOT / 'scripts/build_previews.py'), '--output', integrated],
+                               check=True, capture_output=True, text=True, timeout=90)
+            generate_without_source_changes(self, ROOT, generate,
+                                            outputs=(Path(baseline), Path(integrated)))
             hashes = lambda folder: {p.relative_to(folder).as_posix(): digest(p)
                                      for p in Path(folder).rglob('*') if p.is_file()}
             old, new = hashes(baseline), hashes(integrated)
@@ -257,6 +342,226 @@ class RadarC2ContractTests(unittest.TestCase):
             self.assertEqual(added, {c2.ROUTE + '/' + n for n in c2.PUBLIC_FILES})
             self.assertEqual(old, {n: h for n, h in new.items() if n not in added})
             c2.validate_output(ROOT, Path(integrated))
+
+
+class RadarC2EvolutionControls(unittest.TestCase):
+    """Mutate isolated repositories, then exercise the actual guarded C2 writer."""
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory(prefix='c2-contract-control-')
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        for name in SOURCE_DIRS:
+            source = ROOT / name
+            if source.is_dir():
+                shutil.copytree(source, self.root / name,
+                                ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
+
+    def generate(self):
+        return generate_without_source_changes(self, self.root,
+                    lambda: c2.write_preview(self.root, self.root / 'dist'))
+
+    def generator_mutation(self, mutation):
+        validate_output = c2.validate_output
+        def mutated_output(*args, **kwargs):
+            result = validate_output(*args, **kwargs)
+            mutation()  # Run inside the real writer, after its own output validation.
+            return result
+        return patch.object(c2, 'validate_output', side_effect=mutated_output)
+
+    def test_generator_mutating_existing_source_is_detected(self):
+        path = self.root / 'scripts/navigation_stage1_v2_preview.py'
+        before = path.read_bytes()
+        with self.generator_mutation(lambda: path.write_bytes(before + b'\n# unintended generator write\n')):
+            with self.assertRaisesRegex(AssertionError, 'C2 generation changed repository inputs'):
+                self.generate()
+        self.assertEqual(path.read_bytes(), before + b'\n# unintended generator write\n')
+        self.assertEqual(len(c2.validate_output(self.root, self.root / 'dist')), len(c2.PUBLIC_FILES))
+
+    def test_generator_mutating_future_source_namespace_is_detected(self):
+        path = self.root / 'future-source-space/module.py'
+        path.parent.mkdir()
+        path.write_text('# independent future source\n')
+        with self.generator_mutation(lambda: path.write_text('# unintended generator mutation\n')):
+            with self.assertRaisesRegex(AssertionError, 'C2 generation changed repository inputs'):
+                self.generate()
+
+    def test_generator_creating_new_source_namespace_is_detected(self):
+        path = self.root / 'new-source-space/module.py'
+        def mutate():
+            path.parent.mkdir()
+            path.write_text('# unintended new source\n')
+        with self.generator_mutation(mutate):
+            with self.assertRaisesRegex(AssertionError, 'C2 generation changed repository inputs'):
+                self.generate()
+
+    def test_generator_replacing_top_level_source_with_symlink_is_detected(self):
+        with tempfile.TemporaryDirectory(prefix='c2-external-source-') as outside:
+            external = Path(outside) / 'docs'
+            shutil.copytree(self.root / 'docs', external)
+            def mutate():
+                shutil.rmtree(self.root / 'docs')
+                (self.root / 'docs').symlink_to(external, target_is_directory=True)
+            with self.generator_mutation(mutate):
+                with self.assertRaisesRegex(AssertionError, 'C2 generation changed repository inputs'):
+                    self.generate()
+            self.assertTrue((self.root / 'docs').is_symlink())
+
+    def test_generator_promoting_stage_state_is_detected(self):
+        path = self.root / 'data/catalog.json'
+        catalog = json.loads(path.read_text())
+        paper = next(p for p in catalog['papers']
+                     if p['stages']['stage1']['status'] == 'not_imported')
+        paper['stages']['stage1']['status'] = 'imported'
+        before = formal_counts(self.root)
+        with self.generator_mutation(lambda: path.write_text(json.dumps(catalog))):
+            with self.assertRaisesRegex(AssertionError, 'C2 generation changed formal catalog/report/Stage counts'):
+                self.generate()
+        self.assertEqual(formal_counts(self.root)['imported_stage_slots'], before['imported_stage_slots'] + 1)
+
+    def test_generator_rewriting_stage_metadata_without_count_change_is_detected(self):
+        path = self.root / 'data/catalog.json'
+        catalog = json.loads(path.read_text())
+        stage = next(s for p in catalog['papers'] for s in p['stages'].values() if s['artifacts'])
+        stage['artifacts'][0]['sha256'] = '0' * 64
+        before = formal_counts(self.root)
+        with self.generator_mutation(lambda: path.write_text(json.dumps(catalog))):
+            with self.assertRaisesRegex(AssertionError, 'C2 generation changed repository inputs'):
+                self.generate()
+        self.assertEqual(formal_counts(self.root), before)
+
+    def test_generator_adding_or_deleting_source_is_detected(self):
+        for operation in ('add', 'delete'):
+            with self.subTest(operation=operation):
+                path = self.root / 'scripts/control-unintended.py'
+                if operation == 'delete':
+                    path.write_text('# pre-existing source\n')
+                mutate = (lambda: path.write_text('# unintended source\n')) if operation == 'add' else path.unlink
+                with self.generator_mutation(mutate):
+                    with self.assertRaisesRegex(AssertionError, 'C2 generation changed repository inputs'):
+                        self.generate()
+                if path.exists():
+                    path.unlink()
+
+    def test_corrupt_immutable_raw_history_rejected_before_generation(self):
+        protection = json.loads((self.root / PROTECTION_FIXTURE).read_text())
+        name = next(n for n in protection['pr18'] if n.startswith('data/report-parts/'))
+        path = self.root / name
+        path.write_bytes(path.read_bytes() + b'\ncorrupt historical raw bytes\n')
+        # The initial hash comes from reviewed history, never a post-attack snapshot.
+        with patch.object(c2, 'write_preview', wraps=c2.write_preview) as writer:
+            with self.assertRaisesRegex(AssertionError, 'Immutable raw history: '):
+                self.generate()
+            writer.assert_not_called()
+        self.assertFalse((self.root / 'dist').exists())
+
+    def test_corrupt_old_c_archive_rejected_before_generation(self):
+        path = self.root / 'previews/radar-trees-c/weekly-2026-10-04.html'
+        path.write_bytes(path.read_bytes() + b'<!-- corrupt archive -->')
+        with patch.object(c2, 'write_preview', wraps=c2.write_preview) as writer:
+            with self.assertRaisesRegex(AssertionError, 'Immutable old-C archive: '):
+                self.generate()
+            writer.assert_not_called()
+
+    def test_independent_catalog_growth_is_allowed_before_generation(self):
+        from validate import validate_catalog
+        import reports
+        path = self.root / 'data/catalog.json'
+        catalog = json.loads(path.read_text())
+        paper = copy.deepcopy(next(p for p in catalog['papers'] if p['original_metadata']
+                      and all(s['status'] == 'not_imported' for s in p['stages'].values())))
+        paper.update(id='c2-evolution-control', title='Independent synthetic catalog evolution control',
+                     authors='Test-only synthetic metadata')
+        paper['original_metadata'].update(title=paper['title'], authors=paper['authors'])
+        before = formal_counts(self.root)
+        catalog['papers'].append(paper)
+        path.write_text(json.dumps(catalog, ensure_ascii=False, indent=2) + '\n')
+        records = reports.load_reports(self.root)
+        self.assertEqual(validate_catalog(catalog, records), before['catalog_papers'] + 1)
+        self.generate()
+        self.assertEqual(formal_counts(self.root), dict(before, catalog_papers=before['catalog_papers'] + 1))
+        self.assertEqual(c2.payloads(self.root), c2.payloads(ROOT))
+
+    def test_independent_formal_import_is_allowed_in_synthetic_repository(self):
+        # Simulate a separately approved import using an already code-pinned exact
+        # report. This temporary assumption is NOT approval or publication of the
+        # real pending candidate; its original manifest/provenance is untouched.
+        import reports
+        from validate import expected_stage, validate_catalog
+        before = formal_counts(self.root)
+        candidate = json.loads((self.root / 'candidates/navigation-stage1-v2-pending.json').read_text())['reports'][0]
+        record = dict(candidate, review_status=reports.expected_review_status(candidate))
+        registry_path = self.root / 'data/reports.json'
+        registry = json.loads(registry_path.read_text())
+        registry['reports'].append(record)
+        registry_path.write_text(json.dumps(registry))
+        records = reports.load_reports(self.root)  # Exact transport/security validation.
+        path = self.root / 'data/catalog.json'
+        catalog = json.loads(path.read_text())
+        paper = next(p for p in catalog['papers'] if p['id'] == record['paper_id'])
+        self.assertEqual(paper['stages'][record['stage']]['status'], 'not_imported')
+        paper['stages'][record['stage']] = expected_stage(paper['id'], record['stage'], records)
+        path.write_text(json.dumps(catalog))
+        self.assertEqual(validate_catalog(catalog, records), before['catalog_papers'])
+        self.generate()
+        self.assertEqual(formal_counts(self.root), dict(before,
+                         report_records=before['report_records'] + 1,
+                         imported_stage_slots=before['imported_stage_slots'] + 1))
+        self.assertEqual(c2.payloads(self.root), c2.payloads(ROOT))
+
+    def test_independent_candidate_gate_evidence_update_is_allowed(self):
+        import navigation_stage1_v2_preview as v2
+        before_sources = v2.load_sources(self.root)
+        path = self.root / v2.MANIFEST
+        candidate = json.loads(path.read_text())
+        candidate['gates']['control_evidence'] = 'synthetic_metadata_only_not_acceptance'
+        path.write_text(json.dumps(candidate))
+        path = self.root / 'candidates/navigation-stage1-v2-migration-plan.json'
+        plan = json.loads(path.read_text())
+        plan['required_gates']['control_evidence'] = 'synthetic_metadata_only_not_acceptance'
+        path.write_text(json.dumps(plan))
+        path = self.root / 'candidates/navigation-stage1-v2-print-policy.json'
+        policy = json.loads(path.read_text())
+        policy['control_evidence'] = 'synthetic_metadata_only_not_acceptance'
+        path.write_text(json.dumps(policy))
+        self.assertFalse(policy['chrome_native_print_verified'])
+        self.assertEqual(candidate['status'], 'pending_candidate')
+        self.assertEqual(v2.load_sources(self.root), before_sources)
+        self.generate()
+        self.assertEqual(c2.payloads(self.root), c2.payloads(ROOT))
+
+    def test_independent_old_c_ui_repair_with_reviewed_manifest_is_allowed(self):
+        source = self.root / old_c.SOURCE
+        css = source / 'graph.css'
+        css.write_bytes(css.read_bytes() + b'\nbutton:focus-visible { outline-offset: 3px; }\n')
+        script = source / 'graph.js'
+        script.write_bytes(script.read_bytes() + b'\n// Independent presentation maintenance control.\n')
+        entry = source / 'index.html'
+        text = entry.read_text()
+        for name in ('graph.css', 'graph.js'):
+            text, count = re.subn(re.escape(name) + r'\?v=([0-9a-f]+)',
+                                 lambda match: name + '?v=' + digest(source / name)[:len(match[1])], text)
+            self.assertEqual(count, 1)
+        entry.write_text(text)
+        # A stale/missing review hash is still rejected by the actual guard.
+        with self.assertRaisesRegex(ValueError, 'Radar C reviewed source hash mismatch'):
+            self.generate()
+        manifest_path = self.root / old_c.MANIFEST
+        manifest = json.loads(manifest_path.read_text())
+        for name in ('graph.css', 'graph.js', 'index.html'):
+            manifest['files'][name] = digest(source / name)
+        manifest_path.write_text(json.dumps(manifest))
+        self.assertEqual(len(old_c.payloads(self.root)), len(old_c.FILES))
+        self.generate()
+        self.assertEqual(c2.payloads(self.root), c2.payloads(ROOT))
+
+    def test_independent_preview_generator_repair_is_allowed_before_generation(self):
+        path = self.root / 'scripts/navigation_stage1_v2_preview.py'
+        # A portable smoke control for the path that formerly failed PR18's hash
+        # pin. Release evidence also tests the actual five-file reader-focus fix.
+        path.write_bytes(path.read_bytes() + b'\n# Independent shell maintenance control.\n')
+        compile(path.read_bytes(), str(path), 'exec')
+        self.generate()
+        self.assertEqual(c2.payloads(self.root), c2.payloads(ROOT))
 
 
 if __name__ == '__main__':

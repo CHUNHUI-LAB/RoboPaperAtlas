@@ -4,7 +4,7 @@ Pending records stay pending throughout validation and rendering. The dedicated
 candidate entry point shares only passive parsing/presentation internals with
 canonical readers. Neither approval nor catalog state is inferred from QA.
 """
-import json
+import json,hashlib
 from pathlib import Path
 from html import escape
 import reports as r
@@ -52,6 +52,11 @@ def output_payloads(root):
         old=NAVIGATION_CANONICAL_FROZEN[pid]['current_return']
         r.require(page.count(old)==1,'Unknown v2 return signature')
         page=page.replace(old,f'<a class="atlas-return" href="https://chunhui-lab.github.io/RoboPaperAtlas/papers/{pid}/index.html#reading">回到正式论文档案</a>',1)
+        # Versioned presentation-only addition; immutable reports and v1 routes
+        # are deliberately untouched. The original inline runtime stays intact.
+        ui='reader-toc-focus-v1.js'
+        digest=hashlib.sha256((Path(root)/'assets'/ui).read_bytes()).hexdigest()[:12]
+        page=page.replace('</body>',f'<script src="../../../assets/{ui}?v={digest}" defer></script></body>',1)
         outputs[f'{BASE}/{pid}/first-pass.html']=raw
         outputs[f'{BASE}/{pid}/stage1.html']=page.encode('utf-8')
         links.append(f'<li><a href="{pid}/stage1.html">{TITLES[pid]} · Stage 1 · 报告v2</a><small>固定源版本：{escape(record["source_edition"].split(";")[0])} · <a href="{pid}/first-pass.html">核对最终固定报告</a></small></li>')
