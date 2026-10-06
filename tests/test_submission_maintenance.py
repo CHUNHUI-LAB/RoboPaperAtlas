@@ -55,7 +55,7 @@ class SubmissionMaintenanceTests(unittest.TestCase):
     def test_preservation_rejects_history_and_unrelated_data_loss(self):
         mutations = [
             lambda d: d['maintenance_history'][0]['preserved_boundaries'].pop(),
-            lambda d: d['maintenance_history'][-1]['prior_records']['vp-ral-home'].update(claim_supported='rewritten'),
+            lambda d: next(h for h in d['maintenance_history'] if h['checked_at'] == '2026-10-04')['prior_records']['vp-ral-home'].update(claim_supported='rewritten'),
             lambda d: d['experiences']['records'].pop(),
             lambda d: d['experiences']['overview']['records'][0].update(takeaway='rewritten'),
             lambda d: d['publications'].pop(),

@@ -53,7 +53,7 @@ class SubmissionExperienceOctober4Tests(unittest.TestCase):
             'official check changed': lambda d: d['experiences']['official_checks'][0].update(status='verified'),
             'experience envelope changed': lambda d: d['experiences'].update(checked_at='2026-10-04'),
             'history lost': lambda d: d['maintenance_history'][0]['preserved_boundaries'].pop(),
-            'prior source rewritten': lambda d: d['maintenance_history'][-1]['prior_records']['vp-ral-home'].update(claim_supported='changed'),
+            'prior source rewritten': lambda d: next(h for h in d['maintenance_history'] if h['checked_at'] == '2026-10-04')['prior_records']['vp-ral-home'].update(claim_supported='changed'),
             'policy changed': lambda d: d['editions'][0]['notes'].append('new rule'),
             'source removed': lambda d: d['sources'].pop(),
             'publication removed': lambda d: d['publications'].pop(),
