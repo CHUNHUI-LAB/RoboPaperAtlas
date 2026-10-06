@@ -2,8 +2,8 @@ window.RADAR_GRAPH_DATA = {
   "schema": "radar-c-view/1",
   "title": "RoboPaperAtlas Radar",
   "public_only": true,
-  "checked_at": "2026-10-05",
-  "graph_revision": 2,
+  "checked_at": "2026-10-06",
+  "graph_revision": 3,
   "edge_semantics": "curator_organization",
   "academic_edges": [],
   "tasks": [
@@ -24,6 +24,12 @@ window.RADAR_GRAPH_DATA = {
       "label": "持续导航",
       "subtitle": "跨任务经验与记忆",
       "full_label": "跨任务经验与持续导航"
+    },
+    {
+      "id": "task-eqa",
+      "label": "具身问答邻域",
+      "subtitle": "主动观察 · 证据核验",
+      "full_label": "具身问答与主动观察支撑（非标准导航评测）"
     }
   ],
   "routes": [
@@ -123,6 +129,31 @@ window.RADAR_GRAPH_DATA = {
       "source": "task-continual",
       "target": "route-protocol",
       "attribution": "curator_organization"
+    },
+    {
+      "source": "task-continual",
+      "target": "route-learned-policy",
+      "attribution": "curator_organization"
+    },
+    {
+      "source": "task-eqa",
+      "target": "route-runtime",
+      "attribution": "curator_organization"
+    },
+    {
+      "source": "task-eqa",
+      "target": "route-spatial-memory",
+      "attribution": "curator_organization"
+    },
+    {
+      "source": "task-eqa",
+      "target": "route-context",
+      "attribution": "curator_organization"
+    },
+    {
+      "source": "task-continual",
+      "target": "route-context",
+      "attribution": "curator_organization"
     }
   ],
   "groups": [
@@ -136,7 +167,25 @@ window.RADAR_GRAPH_DATA = {
         "harnessvln",
         "holoagent-0",
         "krantz2020vlnce",
-        "batra2020objectnav"
+        "batra2020objectnav",
+        "instructnav",
+        "esc",
+        "l3mvn",
+        "lfg",
+        "voronav",
+        "trihelper",
+        "imaginenav",
+        "vlmnav",
+        "engineering-outruns-intelligence",
+        "ma2019regretful",
+        "rana2023sayplan",
+        "rajvanshi2024saynav",
+        "navmcp",
+        "sap-nav",
+        "safevantage",
+        "profocus",
+        "arxiv:2609.39915",
+        "ham-vln"
       ]
     },
     {
@@ -149,7 +198,18 @@ window.RADAR_GRAPH_DATA = {
         "navharness",
         "krantz2023ivln",
         "goat",
-        "goat-bench"
+        "goat-bench",
+        "navgpt2",
+        "li2024memonav",
+        "werby2024hovsg",
+        "anwar2025remembr",
+        "xu2026memoir",
+        "wang2026lmee",
+        "navmcp",
+        "hypothesis-graph-refinement",
+        "safevantage",
+        "3d-mem",
+        "ham-vln"
       ]
     },
     {
@@ -160,7 +220,13 @@ window.RADAR_GRAPH_DATA = {
       "note": "编辑归组，不是论文作者共同提出的研究分类；分组不建立论文之间的学术关系。",
       "paper_ids": [
         "qwen-robotnav",
-        "agenticnav-tool-harness"
+        "agenticnav-tool-harness",
+        "navgpt",
+        "mapgpt",
+        "discussnav",
+        "profocus",
+        "arxiv:2609.39915",
+        "ham-vln"
       ]
     },
     {
@@ -237,7 +303,32 @@ window.RADAR_GRAPH_DATA = {
       "challenge_attribution": "curator_summary",
       "conditions": [
         "版本与实际读到的范围以来源记录为准。"
-      ]
+      ],
+      "harness_relation": {
+        "kind": "direct_harness",
+        "attribution": "curator_organization",
+        "basis": "题名明确以 agent harness / tool-calling harness / NavHarness 为系统；功能范围仍以原固定版本和已读段落为准。",
+        "not_claimed": [
+          "academic inheritance",
+          "full-paper reading",
+          "complete navigation harness merely from topical similarity"
+        ]
+      },
+      "identity": {
+        "canonical_id": "harnessvln",
+        "arxiv_ids": [
+          "2609.15195"
+        ],
+        "normalized_title": "harnessvlnunifyingtrainingfreeembodiednavigationthroughanagentharness",
+        "source_urls": [
+          "https://arxiv.org/html/2609.15195v3"
+        ],
+        "dedup_scope": "recovered baseline records and this expansion; historical pool not fully recovered"
+      },
+      "overview_zh": "研究导航中“看到目标、提出动作”与“真正完成任务”的差距，用事件记忆和带观测来源的时空图，管理执行前检查、进度更新与停止验证。已读证据包含固定子集上的逐项累加消融，适合理解执行管理流程，不能据此分离所有组件的独立贡献。",
+      "overview_label_zh": "研究概述",
+      "overview_attribution": "curator_summary_of_reviewed_sections",
+      "overview_scope_note_zh": "依据现有已审段落记录编写的编者概述；未新读全文，不是完整摘要或全文翻译。"
     },
     {
       "paper_id": "navharness",
@@ -302,7 +393,32 @@ window.RADAR_GRAPH_DATA = {
       "challenge_attribution": "curator_summary",
       "conditions": [
         "版本与实际读到的范围以来源记录为准。"
-      ]
+      ],
+      "harness_relation": {
+        "kind": "direct_harness",
+        "attribution": "curator_organization",
+        "basis": "题名明确以 agent harness / tool-calling harness / NavHarness 为系统；功能范围仍以原固定版本和已读段落为准。",
+        "not_claimed": [
+          "academic inheritance",
+          "full-paper reading",
+          "complete navigation harness merely from topical similarity"
+        ]
+      },
+      "identity": {
+        "canonical_id": "navharness",
+        "arxiv_ids": [
+          "2609.34276"
+        ],
+        "normalized_title": "navharnesstowardslifelongembodiednavigation",
+        "source_urls": [
+          "https://arxiv.org/html/2609.34276v1"
+        ],
+        "dedup_scope": "recovered baseline records and this expansion; historical pool not fully recovered"
+      },
+      "overview_zh": "研究连续任务和恢复会话如何利用旧经验，把地图、任务记录与长期房屋知识分层保存，并在交接时区分已搜索区域和有证据排除的目标。系统还核验结果、整理经验，但评测限于静态模拟序列，尚不能据此认定具备真实长期运行或动态环境适应能力。",
+      "overview_label_zh": "研究概述",
+      "overview_attribution": "curator_summary_of_reviewed_sections",
+      "overview_scope_note_zh": "依据现有已审段落记录编写的编者概述；未新读全文，不是完整摘要或全文翻译。"
     },
     {
       "paper_id": "agenticnav-tool-harness",
@@ -366,7 +482,32 @@ window.RADAR_GRAPH_DATA = {
       "challenge_attribution": "curator_summary",
       "conditions": [
         "版本与实际读到的范围以来源记录为准。"
-      ]
+      ],
+      "harness_relation": {
+        "kind": "direct_harness",
+        "attribution": "curator_organization",
+        "basis": "题名明确以 agent harness / tool-calling harness / NavHarness 为系统；功能范围仍以原固定版本和已读段落为准。",
+        "not_claimed": [
+          "academic inheritance",
+          "full-paper reading",
+          "complete navigation harness merely from topical similarity"
+        ]
+      },
+      "identity": {
+        "canonical_id": "agenticnav-tool-harness",
+        "arxiv_ids": [
+          "2606.10577"
+        ],
+        "normalized_title": "agenticnavzeroshotvisionandlanguagenavigationasatoolcallingharness",
+        "source_urls": [
+          "https://arxiv.org/html/2606.10577v3"
+        ],
+        "dedup_scope": "recovered baseline records and this expansion; historical pool not fully recovered"
+      },
+      "overview_zh": "研究固定候选路点和冗长历史对指令导航的限制，让模型选择图像目标像素、按需查询深度，再由工具完成几何检查与移动，并选择性回看历史。记忆限于当前任务回合，已读评测使用百条轨迹子集，结果随基础模型变化，不能直接外推到完整验证集。",
+      "overview_label_zh": "研究概述",
+      "overview_attribution": "curator_summary_of_reviewed_sections",
+      "overview_scope_note_zh": "依据现有已审段落记录编写的编者概述；未新读全文，不是完整摘要或全文翻译。"
     },
     {
       "paper_id": "qwen-robotnav",
@@ -424,7 +565,32 @@ window.RADAR_GRAPH_DATA = {
       "challenge_attribution": "curator_summary",
       "conditions": [
         "版本与实际读到的范围以来源记录为准。"
-      ]
+      ],
+      "harness_relation": {
+        "kind": "supporting_method",
+        "attribution": "curator_organization",
+        "basis": "空间记忆、学习策略或具身系统的邻近支撑；未由题名/主题相似推定完整harness。",
+        "not_claimed": [
+          "academic inheritance",
+          "full-paper reading",
+          "complete navigation harness merely from topical similarity"
+        ]
+      },
+      "identity": {
+        "canonical_id": "qwen-robotnav",
+        "arxiv_ids": [
+          "2606.18112"
+        ],
+        "normalized_title": "qwenrobotnavtechnicalreportascalablenavigationmodeldesignedforanagenticnavigationsystem",
+        "source_urls": [
+          "https://arxiv.org/html/2606.18112v3"
+        ],
+        "dedup_scope": "recovered baseline records and this expansion; historical pool not fully recovered"
+      },
+      "overview_zh": "研究不同导航任务对历史长度和近期视觉细节的不同需求，以时间衰减、相机权重和预算上下限分配视觉信息，再预测路点轨迹。已读部分重点是可调上下文接口及预算扫描，分配规则属启发式且收益并非严格单调，不能代替完整训练与数据审查。",
+      "overview_label_zh": "研究概述",
+      "overview_attribution": "curator_summary_of_reviewed_sections",
+      "overview_scope_note_zh": "依据现有已审段落记录编写的编者概述；未新读全文，不是完整摘要或全文翻译。"
     },
     {
       "paper_id": "holoagent-0",
@@ -483,7 +649,32 @@ window.RADAR_GRAPH_DATA = {
       "challenge_attribution": "curator_summary",
       "conditions": [
         "版本与实际读到的范围以来源记录为准。"
-      ]
+      ],
+      "harness_relation": {
+        "kind": "supporting_method",
+        "attribution": "curator_organization",
+        "basis": "空间记忆、学习策略或具身系统的邻近支撑；未由题名/主题相似推定完整harness。",
+        "not_claimed": [
+          "academic inheritance",
+          "full-paper reading",
+          "complete navigation harness merely from topical similarity"
+        ]
+      },
+      "identity": {
+        "canonical_id": "holoagent-0",
+        "arxiv_ids": [
+          "2606.23565"
+        ],
+        "normalized_title": "holoagent0aunifiedembodiedagentframeworkwith3dspatialmemory",
+        "source_urls": [
+          "https://arxiv.org/html/2606.23565v1"
+        ],
+        "dedup_scope": "recovered baseline records and this expansion; historical pool not fully recovered"
+      },
+      "overview_zh": "研究机器人异构技能部分失败、反馈不完整时怎样继续执行，通过空间记忆、结构化技能接口和状态反馈来监控任务并重新规划。已读定量证据主要覆盖导航与建图，全系统能力另以定性演示呈现，不能把技能组合展示当作统一端到端成功率验证。",
+      "overview_label_zh": "研究概述",
+      "overview_attribution": "curator_summary_of_reviewed_sections",
+      "overview_scope_note_zh": "依据现有已审段落记录编写的编者概述；未新读全文，不是完整摘要或全文翻译。"
     },
     {
       "paper_id": "krantz2023ivln",
@@ -544,7 +735,32 @@ window.RADAR_GRAPH_DATA = {
       "challenge_attribution": "curator_summary",
       "conditions": [
         "版本与实际读到的范围以来源记录为准。"
-      ]
+      ],
+      "harness_relation": {
+        "kind": "supporting_method",
+        "attribution": "curator_organization",
+        "basis": "空间记忆、学习策略或具身系统的邻近支撑；未由题名/主题相似推定完整harness。",
+        "not_claimed": [
+          "academic inheritance",
+          "full-paper reading",
+          "complete navigation harness merely from topical similarity"
+        ]
+      },
+      "identity": {
+        "canonical_id": "krantz2023ivln",
+        "arxiv_ids": [
+          "2210.03087"
+        ],
+        "normalized_title": "iterativevisionandlanguagenavigation",
+        "source_urls": [
+          "https://arxiv.org/html/2210.03087v3"
+        ],
+        "dedup_scope": "recovered baseline records and this expansion; historical pool not fully recovered"
+      },
+      "overview_zh": "研究同一场景内连续执行多条指令时如何保留经验，比较显式语义栅格、跨回合隐状态及历史，并切换地图重置周期检验记忆作用。任务序列中存在纠偏和带往下一起点的理想辅助及沿途观察，因此这些结果不能直接代表无外部帮助的长期自主部署。",
+      "overview_label_zh": "研究概述",
+      "overview_attribution": "curator_summary_of_reviewed_sections",
+      "overview_scope_note_zh": "依据现有已审段落记录编写的编者概述；未新读全文，不是完整摘要或全文翻译。"
     },
     {
       "paper_id": "goat",
@@ -574,7 +790,7 @@ window.RADAR_GRAPH_DATA = {
         {
           "kind": "protocol",
           "locator": "§4.2, L210–219; Table 1",
-          "statement": "定量主测Spot：9宅、15类；每目标200步、STOP且距离\u003c1m",
+          "statement": "定量主测Spot：9宅、15类；每目标200步、STOP且距离<1m",
           "attribution": "direct_observation"
         },
         {
@@ -605,7 +821,32 @@ window.RADAR_GRAPH_DATA = {
       "challenge_attribution": "curator_summary",
       "conditions": [
         "版本与实际读到的范围以来源记录为准。"
-      ]
+      ],
+      "harness_relation": {
+        "kind": "supporting_method",
+        "attribution": "curator_organization",
+        "basis": "空间记忆、学习策略或具身系统的邻近支撑；未由题名/主题相似推定完整harness。",
+        "not_claimed": [
+          "academic inheritance",
+          "full-paper reading",
+          "complete navigation harness merely from topical similarity"
+        ]
+      },
+      "identity": {
+        "canonical_id": "goat",
+        "arxiv_ids": [
+          "2311.06430"
+        ],
+        "normalized_title": "goatgotoanything",
+        "source_urls": [
+          "https://arxiv.org/html/2311.06430v1"
+        ],
+        "dedup_scope": "recovered baseline records and this expansion; historical pool not fully recovered"
+      },
+      "overview_zh": "研究机器人如何依次找到由类别、图片或语言指定的目标，以语义地图和多视角实例记忆进行匹配，未找到时继续探索，再交给局部规划与控制。已读实机证据覆盖有限住宅和目标类别，匹配还会误报或漏报，不能把任务设定中的多模态范围等同任意目标均已验证。",
+      "overview_label_zh": "研究概述",
+      "overview_attribution": "curator_summary_of_reviewed_sections",
+      "overview_scope_note_zh": "依据现有已审段落记录编写的编者概述；未新读全文，不是完整摘要或全文翻译。"
     },
     {
       "paper_id": "goat-bench",
@@ -666,7 +907,32 @@ window.RADAR_GRAPH_DATA = {
       "challenge_attribution": "curator_summary",
       "conditions": [
         "版本与实际读到的范围以来源记录为准。"
-      ]
+      ],
+      "harness_relation": {
+        "kind": "benchmark_protocol",
+        "attribution": "curator_organization",
+        "basis": "提供任务或观察/动作/成功判定契约的评测支撑；不等同完整运行harness。",
+        "not_claimed": [
+          "academic inheritance",
+          "full-paper reading",
+          "complete navigation harness merely from topical similarity"
+        ]
+      },
+      "identity": {
+        "canonical_id": "goat-bench",
+        "arxiv_ids": [
+          "2404.06609"
+        ],
+        "normalized_title": "goatbenchabenchmarkformultimodallifelongnavigation",
+        "source_urls": [
+          "https://arxiv.org/html/2404.06609v1"
+        ],
+        "dedup_scope": "recovered baseline records and this expansion; historical pool not fully recovered"
+      },
+      "overview_zh": "研究怎样可重复地评测连续多目标、多模态导航，建立类别、描述和实例图像任务，并比较实例地图、分模态技能组合与跨子任务隐状态。记忆清空实验有助于观察路线复用，但特定循环网络的表现不能否定所有长期记忆方法，目标输入扰动也不等于观测噪声测试。",
+      "overview_label_zh": "研究概述",
+      "overview_attribution": "curator_summary_of_reviewed_sections",
+      "overview_scope_note_zh": "依据现有已审段落记录编写的编者概述；未新读全文，不是完整摘要或全文翻译。"
     },
     {
       "paper_id": "krantz2020vlnce",
@@ -726,7 +992,32 @@ window.RADAR_GRAPH_DATA = {
       "challenge_attribution": "curator_summary",
       "conditions": [
         "版本与实际读到的范围以来源记录为准。"
-      ]
+      ],
+      "harness_relation": {
+        "kind": "benchmark_protocol",
+        "attribution": "curator_organization",
+        "basis": "提供任务或观察/动作/成功判定契约的评测支撑；不等同完整运行harness。",
+        "not_claimed": [
+          "academic inheritance",
+          "full-paper reading",
+          "complete navigation harness merely from topical similarity"
+        ]
+      },
+      "identity": {
+        "canonical_id": "krantz2020vlnce",
+        "arxiv_ids": [
+          "2004.02857"
+        ],
+        "normalized_title": "beyondthenavgraphvisionandlanguagenavigationincontinuousenvironments",
+        "source_urls": [
+          "https://arxiv.org/html/2004.02857v2"
+        ],
+        "dedup_scope": "recovered baseline records and this expansion; historical pool not fully recovered"
+      },
+      "overview_zh": "研究指令导航从预定义视点图转入连续可导航空间后的感知与执行难点，将图像、深度和语言编码交给循环网络，直接预测前进、转向与停止动作。这里的空间连续不表示动作取值连续，且图版与连续版存在轨迹转换等条件差异，不能直接按原始分数排名。",
+      "overview_label_zh": "研究概述",
+      "overview_attribution": "curator_summary_of_reviewed_sections",
+      "overview_scope_note_zh": "依据现有已审段落记录编写的编者概述；未新读全文，不是完整摘要或全文翻译。"
     },
     {
       "paper_id": "batra2020objectnav",
@@ -785,7 +1076,3661 @@ window.RADAR_GRAPH_DATA = {
       "challenge_attribution": "curator_summary",
       "conditions": [
         "版本与实际读到的范围以来源记录为准。"
-      ]
+      ],
+      "harness_relation": {
+        "kind": "benchmark_protocol",
+        "attribution": "curator_organization",
+        "basis": "提供任务或观察/动作/成功判定契约的评测支撑；不等同完整运行harness。",
+        "not_claimed": [
+          "academic inheritance",
+          "full-paper reading",
+          "complete navigation harness merely from topical similarity"
+        ]
+      },
+      "identity": {
+        "canonical_id": "batra2020objectnav",
+        "arxiv_ids": [
+          "2006.13171"
+        ],
+        "normalized_title": "objectnavrevisitedonevaluationofembodiedagentsnavigatingtoobjects",
+        "source_urls": [
+          "https://arxiv.org/html/2006.13171v2"
+        ],
+        "dedup_scope": "recovered baseline records and this expansion; historical pool not fully recovered"
+      },
+      "overview_zh": "研究物体目标导航应怎样定义“找到目标”和衡量路径效率，将成功拆为主动停止、位置合法、目标距离与可见性等条件，而非提出新导航策略。已读内容指出二元成功和路径指标的盲区，具体距离及可见性规则需随实现核对，不能假定所有物体导航基准一致。",
+      "overview_label_zh": "研究概述",
+      "overview_attribution": "curator_summary_of_reviewed_sections",
+      "overview_scope_note_zh": "依据现有已审段落记录编写的编者概述；未新读全文，不是完整摘要或全文翻译。"
+    },
+    {
+      "paper_id": "navgpt",
+      "short_name": "NavGPT",
+      "version": "arXiv 2305.16986v2 (2023-05-29)",
+      "source_url": "https://arxiv.org/html/2305.16986v2",
+      "read_scope": "section",
+      "read_locations": [
+        "完整摘要",
+        "§3.1–3.4，L94–129",
+        "§4.2–4.3，L155–195"
+      ],
+      "not_read": [
+        "未逐图视觉核验",
+        "未通读全部补充材料",
+        "代码未读未运行"
+      ],
+      "task": "task-vln",
+      "pipeline": "视觉模型转文本，prompt manager组织观测、规则与历史；每步先推理再选图上动作。",
+      "representation": "当前导航的观测、动作、推理轨迹及摘要。",
+      "module": "LLM决策外围有感知转换、历史压缩和动作解析；属于离散图导航外层。",
+      "challenge": "语言模型如何接收多视角感知并连续跟踪指令进度？",
+      "insight": "LLM决策外围有感知转换、历史压缩和动作解析；属于离散图导航外层。",
+      "evidence": [
+        {
+          "kind": "method",
+          "locator": "§3.3 L122–125",
+          "attribution": "author_claim",
+          "statement": "明确采用ReAct式推理/动作交替；推理本身不产生环境观测。"
+        },
+        {
+          "kind": "protocol",
+          "locator": "§4.2–4.3 Tables 1–3",
+          "attribution": "direct_observation",
+          "statement": "主结果用GPT-4；视觉消融改用GPT-3.5及216样本，不能混作同一条件。"
+        }
+      ],
+      "open_question": "待核：正式版本差异、实现及同协议下的适用边界；不以跨论文主表排名。",
+      "limits": "正式AAAI PDF超过工具容量；未声称v2与正式版相同。；作者指出视觉文字化、历史摘要损失信息；图上可导航动作不等于连续几何执行。",
+      "tasks": [
+        "task-vln"
+      ],
+      "routes": [
+        "route-runtime",
+        "route-context"
+      ],
+      "title": "NavGPT: Explicit Reasoning in Vision-and-Language Navigation with Large Language Models",
+      "year": 2024,
+      "canonical_id": "navgpt",
+      "groups": [
+        "context-allocation"
+      ],
+      "mode": "baseline",
+      "insight_attribution": "curator_summary",
+      "challenge_attribution": "curator_summary",
+      "conditions": [
+        "编辑归组，不自动认定完整harness；见方法范围。",
+        "出版元数据：AAAI 2024（正文读取预印本）",
+        "正式来源：https://ojs.aaai.org/index.php/AAAI/article/download/28597/29161",
+        "正文所读版本：arXiv 2305.16986v2 (2023-05-29)",
+        "全文未通读；代码未读未运行；未独立复现；不改变阅读Stage。",
+        "版本及适用限制：正式AAAI PDF超过工具容量；未声称v2与正式版相同。；作者指出视觉文字化、历史摘要损失信息；图上可导航动作不等于连续几何执行。"
+      ],
+      "harness_relation": {
+        "kind": "supporting_method",
+        "attribution": "curator_organization",
+        "basis": "LLM决策外围有感知转换、历史压缩和动作解析；属于离散图导航外层。 这里只认定所述机制为支撑方法，不提升为完整harness。",
+        "not_claimed": [
+          "academic inheritance",
+          "full-paper reading",
+          "complete navigation harness merely from topical similarity"
+        ]
+      },
+      "source_provenance": {
+        "evidence_level": "primary_complete_abstract_plus_targeted_body",
+        "read_version": "arXiv 2305.16986v2 (2023-05-29)",
+        "formal_publication": "AAAI 2024（正文读取预印本）",
+        "formal_source_url": "https://ojs.aaai.org/index.php/AAAI/article/download/28597/29161",
+        "checked_at": "2026-10-06T03:13:00Z",
+        "read_locations": [
+          "完整摘要",
+          "§3.1–3.4，L94–129",
+          "§4.2–4.3，L155–195"
+        ],
+        "not_read": [
+          "未逐图视觉核验",
+          "未通读全部补充材料",
+          "代码未读未运行"
+        ],
+        "full_paper_read": false,
+        "code_read": false,
+        "experiments_independently_verified": false,
+        "stage_changed": false,
+        "source_record_sha256": "592247af421ac86410dbf28f399f5d207d5b4b2350c0d85dabe596acc32bfa34"
+      },
+      "identity": {
+        "canonical_id": "navgpt",
+        "arxiv_ids": [
+          "2305.16986"
+        ],
+        "normalized_title": "navgptexplicitreasoninginvisionandlanguagenavigationwithlargelanguagemodels",
+        "source_urls": [
+          "https://arxiv.org/html/2305.16986v2",
+          "https://ojs.aaai.org/index.php/AAAI/article/download/28597/29161"
+        ],
+        "dedup_scope": "recovered baseline records and this expansion; historical pool not fully recovered"
+      },
+      "overview_zh": "研究语言模型怎样理解多视角观测并跟踪导航指令，把视觉结果转成文字，由提示管理器整理规则、历史和观测，再交替推理与选择图上动作。文字化和历史摘要可能损失信息，已读评测还含不同模型与子集配置，因此这些图上决策结果不能直接代表连续空间执行能力。",
+      "overview_label_zh": "研究概述",
+      "overview_attribution": "curator_summary_of_reviewed_sections",
+      "overview_scope_note_zh": "依据现有已审段落记录编写的编者概述；未新读全文，不是完整摘要或全文翻译。"
+    },
+    {
+      "paper_id": "mapgpt",
+      "short_name": "MapGPT",
+      "version": "ACL 2024 final, pp.9796–9810",
+      "source_url": "https://aclanthology.org/2024.acl-long.529.pdf",
+      "read_scope": "section",
+      "read_locations": [
+        "完整摘要",
+        "§3.1–3.3 pp.9798–9801",
+        "§4.1–4.2 Tables 1–2 pp.9801–9802"
+      ],
+      "not_read": [
+        "未逐图视觉核验",
+        "未通读全部补充材料",
+        "代码未读未运行"
+      ],
+      "task": "task-vln",
+      "pipeline": "在线拓扑图文字化，保存上轮多步计划，逐步重规划。",
+      "representation": "观测节点连通图、历史动作、上轮计划。",
+      "module": "单专家在图与计划上下文中选下一动作；回溯由已知图支持。",
+      "challenge": "仅看局部可行动作时，如何回溯和继续探索？",
+      "insight": "单专家在图与计划上下文中选下一动作；回溯由已知图支持。",
+      "evidence": [
+        {
+          "kind": "protocol",
+          "locator": "§3.2 L366–380",
+          "attribution": "direct_observation",
+          "statement": "邻接可导航节点由模拟器给出，在线记录图结构。"
+        },
+        {
+          "kind": "protocol",
+          "locator": "§4.1–4.2 L499–514",
+          "attribution": "direct_observation",
+          "statement": "REVERIE只评导航，不评object grounding；216轨迹子集与val-unseen分列。"
+        }
+      ],
+      "open_question": "待核：正式版本差异、实现及同协议下的适用边界；不以跨论文主表排名。",
+      "limits": "图拓扑环境不等同VLN-CE。；GPT-4与GPT-4V条件分列；增SR可能伴随更长路径。",
+      "tasks": [
+        "task-vln"
+      ],
+      "routes": [
+        "route-runtime",
+        "route-spatial-memory",
+        "route-context"
+      ],
+      "title": "MapGPT: Map-Guided Prompting with Adaptive Path Planning for Vision-and-Language Navigation",
+      "year": 2024,
+      "canonical_id": "mapgpt",
+      "groups": [
+        "context-allocation"
+      ],
+      "mode": "baseline",
+      "insight_attribution": "curator_summary",
+      "challenge_attribution": "curator_summary",
+      "conditions": [
+        "编辑归组，不自动认定完整harness；见方法范围。",
+        "出版元数据：ACL 2024",
+        "正式来源：https://aclanthology.org/2024.acl-long.529/",
+        "正文所读版本：ACL 2024 final, pp.9796–9810",
+        "全文未通读；代码未读未运行；未独立复现；不改变阅读Stage。",
+        "版本及适用限制：图拓扑环境不等同VLN-CE。；GPT-4与GPT-4V条件分列；增SR可能伴随更长路径。"
+      ],
+      "harness_relation": {
+        "kind": "supporting_method",
+        "attribution": "curator_organization",
+        "basis": "单专家在图与计划上下文中选下一动作；回溯由已知图支持。 这里只认定所述机制为支撑方法，不提升为完整harness。",
+        "not_claimed": [
+          "academic inheritance",
+          "full-paper reading",
+          "complete navigation harness merely from topical similarity"
+        ]
+      },
+      "source_provenance": {
+        "evidence_level": "primary_complete_abstract_plus_targeted_body",
+        "read_version": "ACL 2024 final, pp.9796–9810",
+        "formal_publication": "ACL 2024",
+        "formal_source_url": "https://aclanthology.org/2024.acl-long.529/",
+        "checked_at": "2026-10-06T03:13:00Z",
+        "read_locations": [
+          "完整摘要",
+          "§3.1–3.3 pp.9798–9801",
+          "§4.1–4.2 Tables 1–2 pp.9801–9802"
+        ],
+        "not_read": [
+          "未逐图视觉核验",
+          "未通读全部补充材料",
+          "代码未读未运行"
+        ],
+        "full_paper_read": false,
+        "code_read": false,
+        "experiments_independently_verified": false,
+        "stage_changed": false,
+        "source_record_sha256": "a8fd38933e59617b4c4ec17268c75cad877ce3f7ec87a10ee3f33727bdcfbc95"
+      },
+      "identity": {
+        "canonical_id": "mapgpt",
+        "arxiv_ids": [],
+        "normalized_title": "mapgptmapguidedpromptingwithadaptivepathplanningforvisionandlanguagenavigation",
+        "source_urls": [
+          "https://aclanthology.org/2024.acl-long.529.pdf",
+          "https://aclanthology.org/2024.acl-long.529/"
+        ],
+        "dedup_scope": "recovered baseline records and this expansion; historical pool not fully recovered"
+      },
+      "overview_zh": "研究仅依靠局部候选动作时如何回溯与继续探索，将在线记录的拓扑图转为文字，同时保留上一轮多步计划，逐步调整下一动作。其相邻可导航节点由模拟器提供，部分评测也只覆盖导航，不能据此推断连续空间控制或目标定位能力，成功增加还可能伴随路线变长。",
+      "overview_label_zh": "研究概述",
+      "overview_attribution": "curator_summary_of_reviewed_sections",
+      "overview_scope_note_zh": "依据现有已审段落记录编写的编者概述；未新读全文，不是完整摘要或全文翻译。"
+    },
+    {
+      "paper_id": "discussnav",
+      "short_name": "DiscussNav",
+      "version": "arXiv 2309.11382v1 (2023-09-20)",
+      "source_url": "https://arxiv.org/html/2309.11382v1",
+      "read_scope": "section",
+      "read_locations": [
+        "完整摘要",
+        "§III-B–C L88–123",
+        "§IV-A–C L125–159，Tables I–III"
+      ],
+      "not_read": [
+        "未逐图视觉核验",
+        "未通读全部补充材料",
+        "代码未读未运行"
+      ],
+      "task": "task-vln",
+      "pipeline": "按角色调用指令、感知、完成估计、决策检验专家，融合不一致候选。",
+      "representation": "摘要历史轨迹，以及已执行/进行中/待执行动作。",
+      "module": "显式固定讨论顺序；五路候选不一致才交决策检验。",
+      "challenge": "单轮推理如何处理指令、感知和进度多种子任务？",
+      "insight": "显式固定讨论顺序；五路候选不一致才交决策检验。",
+      "evidence": [
+        {
+          "kind": "method",
+          "locator": "§III-C L118–123",
+          "attribution": "author_claim",
+          "statement": "轨迹摘要和完成估计反馈进入动作决策。"
+        },
+        {
+          "kind": "protocol",
+          "locator": "§IV-A–C L126–157",
+          "attribution": "direct_observation",
+          "statement": "GPT-4导航n=5；真实机器人仅20条指令，移动配激光避障规则。"
+        }
+      ],
+      "open_question": "待核：正式版本差异、实现及同协议下的适用边界；不以跨论文主表排名。",
+      "limits": "角色不代表相互独立模型；多次调用预算须计入。；正式发表由作者机构确认；预印本未与正式IEEE文本逐页比较。",
+      "tasks": [
+        "task-vln"
+      ],
+      "routes": [
+        "route-runtime",
+        "route-context"
+      ],
+      "title": "Discuss Before Moving: Visual Language Navigation via Multi-expert Discussions",
+      "year": 2024,
+      "canonical_id": "discussnav",
+      "groups": [
+        "context-allocation"
+      ],
+      "mode": "baseline",
+      "insight_attribution": "curator_summary",
+      "challenge_attribution": "curator_summary",
+      "conditions": [
+        "编辑归组，不自动认定完整harness；见方法范围。",
+        "出版元数据：ICRA 2024（正文读取预印本）",
+        "正式来源：https://cfcs.pku.edu.cn/news/42cfcs242060.htm",
+        "正文所读版本：arXiv 2309.11382v1 (2023-09-20)",
+        "全文未通读；代码未读未运行；未独立复现；不改变阅读Stage。",
+        "版本及适用限制：角色不代表相互独立模型；多次调用预算须计入。；正式发表由作者机构确认；预印本未与正式IEEE文本逐页比较。"
+      ],
+      "harness_relation": {
+        "kind": "supporting_method",
+        "attribution": "curator_organization",
+        "basis": "显式固定讨论顺序；五路候选不一致才交决策检验。 这里只认定所述机制为支撑方法，不提升为完整harness。",
+        "not_claimed": [
+          "academic inheritance",
+          "full-paper reading",
+          "complete navigation harness merely from topical similarity"
+        ]
+      },
+      "source_provenance": {
+        "evidence_level": "primary_complete_abstract_plus_targeted_body",
+        "read_version": "arXiv 2309.11382v1 (2023-09-20)",
+        "formal_publication": "ICRA 2024（正文读取预印本）",
+        "formal_source_url": "https://cfcs.pku.edu.cn/news/42cfcs242060.htm",
+        "checked_at": "2026-10-06T03:13:00Z",
+        "read_locations": [
+          "完整摘要",
+          "§III-B–C L88–123",
+          "§IV-A–C L125–159，Tables I–III"
+        ],
+        "not_read": [
+          "未逐图视觉核验",
+          "未通读全部补充材料",
+          "代码未读未运行"
+        ],
+        "full_paper_read": false,
+        "code_read": false,
+        "experiments_independently_verified": false,
+        "stage_changed": false,
+        "source_record_sha256": "f80b0a4ca4469d563e8fc8cea89b33df037393962409bb39d1f77bcd1aa9f4ab"
+      },
+      "identity": {
+        "canonical_id": "discussnav",
+        "arxiv_ids": [
+          "2309.11382"
+        ],
+        "normalized_title": "discussbeforemovingvisuallanguagenavigationviamultiexpertdiscussions",
+        "source_urls": [
+          "https://arxiv.org/html/2309.11382v1",
+          "https://cfcs.pku.edu.cn/news/42cfcs242060.htm"
+        ],
+        "dedup_scope": "recovered baseline records and this expansion; historical pool not fully recovered"
+      },
+      "overview_zh": "研究导航决策如何兼顾指令理解、感知和完成进度，按固定顺序调用不同角色，并在候选动作不一致时加入决策检验，以轨迹摘要反馈后续行动。不同角色不代表彼此独立的模型，多次调用应计入预算；已读真实机器人测试规模较小，移动还配有激光避障规则。",
+      "overview_label_zh": "研究概述",
+      "overview_attribution": "curator_summary_of_reviewed_sections",
+      "overview_scope_note_zh": "依据现有已审段落记录编写的编者概述；未新读全文，不是完整摘要或全文翻译。"
+    },
+    {
+      "paper_id": "instructnav",
+      "short_name": "InstructNav",
+      "version": "arXiv 2406.04882v1 (2024-06-07); formal metadata verified",
+      "source_url": "https://arxiv.org/html/2406.04882v1",
+      "read_scope": "section",
+      "read_locations": [
+        "正式版完整摘要",
+        "预印本§3.1–3.4 L85–153",
+        "§4.1–4.4 Tables 1–5，L188–246"
+      ],
+      "not_read": [
+        "未逐图视觉核验",
+        "未通读全部补充材料",
+        "代码未读未运行"
+      ],
+      "task": "task-vln / task-objectnav",
+      "pipeline": "DCoN逐次更新动作与地标；四种value map合成目标，再用A*及低层控制。",
+      "representation": "场景点云、地标语义与抑制重复访问的轨迹图。",
+      "module": "无可导航点时向视觉模型反馈重预测；DCoN Flag或VLM判断触发停止。",
+      "challenge": "不同指令类型的语言规划怎样转成连续空间可执行轨迹？",
+      "insight": "无可导航点时向视觉模型反馈重预测；DCoN Flag或VLM判断触发停止。",
+      "evidence": [
+        {
+          "kind": "method",
+          "locator": "§3.3.4–3.4 L145–152",
+          "attribution": "author_claim",
+          "statement": "显式失败反馈、障碍屏蔽、规划执行及停止接口。"
+        },
+        {
+          "kind": "protocol",
+          "locator": "§4.3.1 L208–225",
+          "attribution": "direct_observation",
+          "statement": "模块消融每任务随机100条，不能等同全验证集主表。"
+        }
+      ],
+      "open_question": "待核：正式版本差异、实现及同协议下的适用边界；不以跨论文主表排名。",
+      "limits": "正式PDF抓取失败，正文结论限固定v1；无版本等价声明。；作者承认遮挡影响语义图、最优结果依赖闭源模型。",
+      "tasks": [
+        "task-vln",
+        "task-objectnav"
+      ],
+      "routes": [
+        "route-runtime",
+        "route-spatial-memory"
+      ],
+      "title": "InstructNav: Zero-shot System for Generic Instruction Navigation in Unexplored Environment",
+      "year": 2025,
+      "canonical_id": "instructnav",
+      "groups": [
+        "evidence-and-action"
+      ],
+      "mode": "baseline",
+      "insight_attribution": "curator_summary",
+      "challenge_attribution": "curator_summary",
+      "conditions": [
+        "编辑归组，不自动认定完整harness；见方法范围。",
+        "出版元数据：CoRL 2024 / PMLR 270 (2025)",
+        "正式来源：https://proceedings.mlr.press/v270/long25b.html",
+        "正文所读版本：arXiv 2406.04882v1 (2024-06-07); formal metadata verified",
+        "全文未通读；代码未读未运行；未独立复现；不改变阅读Stage。",
+        "版本及适用限制：正式PDF抓取失败，正文结论限固定v1；无版本等价声明。；作者承认遮挡影响语义图、最优结果依赖闭源模型。"
+      ],
+      "harness_relation": {
+        "kind": "supporting_method",
+        "attribution": "curator_organization",
+        "basis": "无可导航点时向视觉模型反馈重预测；DCoN Flag或VLM判断触发停止。 这里只认定所述机制为支撑方法，不提升为完整harness。",
+        "not_claimed": [
+          "academic inheritance",
+          "full-paper reading",
+          "complete navigation harness merely from topical similarity"
+        ]
+      },
+      "source_provenance": {
+        "evidence_level": "primary_complete_abstract_plus_targeted_body",
+        "read_version": "arXiv 2406.04882v1 (2024-06-07); formal metadata verified",
+        "formal_publication": "CoRL 2024 / PMLR 270 (2025)",
+        "formal_source_url": "https://proceedings.mlr.press/v270/long25b.html",
+        "checked_at": "2026-10-06T03:13:00Z",
+        "read_locations": [
+          "正式版完整摘要",
+          "预印本§3.1–3.4 L85–153",
+          "§4.1–4.4 Tables 1–5，L188–246"
+        ],
+        "not_read": [
+          "未逐图视觉核验",
+          "未通读全部补充材料",
+          "代码未读未运行"
+        ],
+        "full_paper_read": false,
+        "code_read": false,
+        "experiments_independently_verified": false,
+        "stage_changed": false,
+        "source_record_sha256": "90c70618a306ac19464820cd9d227d129393774ac59eb4d8350ce7a3add7ddfa"
+      },
+      "identity": {
+        "canonical_id": "instructnav",
+        "arxiv_ids": [
+          "2406.04882"
+        ],
+        "normalized_title": "instructnavzeroshotsystemforgenericinstructionnavigationinunexploredenvironment",
+        "source_urls": [
+          "https://arxiv.org/html/2406.04882v1",
+          "https://proceedings.mlr.press/v270/long25b.html"
+        ],
+        "dedup_scope": "recovered baseline records and this expansion; historical pool not fully recovered"
+      },
+      "overview_zh": "研究不同类型的语言指令怎样落到连续空间轨迹，通过动态更新动作与地标、合成多种价值地图，再用路径搜索和低层控制执行，并反馈不可导航情况。已读证据限固定预印本版本，组件消融使用随机子集，且遮挡会影响语义地图，不能直接把消融与全量主表混作同条件结果。",
+      "overview_label_zh": "研究概述",
+      "overview_attribution": "curator_summary_of_reviewed_sections",
+      "overview_scope_note_zh": "依据现有已审段落记录编写的编者概述；未新读全文，不是完整摘要或全文翻译。"
+    },
+    {
+      "paper_id": "esc",
+      "short_name": "ESC",
+      "version": "PMLR 202 final, pp.42829–42842",
+      "source_url": "https://proceedings.mlr.press/v202/zhou23r/zhou23r.pdf",
+      "read_scope": "section",
+      "read_locations": [
+        "完整摘要",
+        "§2–3.3 pp.2–5",
+        "§4.1–4.3及Table 1 pp.5–6"
+      ],
+      "not_read": [
+        "未逐图视觉核验",
+        "未通读全部补充材料",
+        "代码未读未运行"
+      ],
+      "task": "task-objectnav",
+      "pipeline": "GLIP生成房间/物体语义，DeBERTa给关联分数，PSL软规则联合距离选frontier。",
+      "representation": "当前episode的2D占据/房间/物体地图。",
+      "module": "确定性局部策略执行frontier；发现目标后切换接近目标。",
+      "challenge": "常识是概率性线索，如何变成可执行探索选择？",
+      "insight": "确定性局部策略执行frontier；发现目标后切换接近目标。",
+      "evidence": [
+        {
+          "kind": "method",
+          "locator": "§3.3.2 pp.4–5",
+          "attribution": "author_claim",
+          "statement": "优化软约束后选一个frontier，不是自由文本工具调用。"
+        },
+        {
+          "kind": "protocol",
+          "locator": "§4.1 p.5",
+          "attribution": "direct_observation",
+          "statement": "MP3D/HM3D/RoboTHOR均500步；前两者提供GPS。"
+        }
+      ],
+      "open_question": "待核：正式版本差异、实现及同协议下的适用边界；不以跨论文主表排名。",
+      "limits": "主实验不是生成式chat agent；应标“语义探索控制”支撑路线。；SR跨传感器/目标类别不可直接排名。",
+      "tasks": [
+        "task-objectnav"
+      ],
+      "routes": [
+        "route-runtime",
+        "route-spatial-memory"
+      ],
+      "title": "ESC: Exploration with Soft Commonsense Constraints for Zero-shot Object Navigation",
+      "year": 2023,
+      "canonical_id": "esc",
+      "groups": [
+        "evidence-and-action"
+      ],
+      "mode": "baseline",
+      "insight_attribution": "curator_summary",
+      "challenge_attribution": "curator_summary",
+      "conditions": [
+        "编辑归组，不自动认定完整harness；见方法范围。",
+        "出版元数据：ICML 2023",
+        "正式来源：https://proceedings.mlr.press/v202/zhou23r.html",
+        "正文所读版本：PMLR 202 final, pp.42829–42842",
+        "全文未通读；代码未读未运行；未独立复现；不改变阅读Stage。",
+        "版本及适用限制：主实验不是生成式chat agent；应标“语义探索控制”支撑路线。；SR跨传感器/目标类别不可直接排名。"
+      ],
+      "harness_relation": {
+        "kind": "supporting_method",
+        "attribution": "curator_organization",
+        "basis": "确定性局部策略执行frontier；发现目标后切换接近目标。 这里只认定所述机制为支撑方法，不提升为完整harness。",
+        "not_claimed": [
+          "academic inheritance",
+          "full-paper reading",
+          "complete navigation harness merely from topical similarity"
+        ]
+      },
+      "source_provenance": {
+        "evidence_level": "primary_complete_abstract_plus_targeted_body",
+        "read_version": "PMLR 202 final, pp.42829–42842",
+        "formal_publication": "ICML 2023",
+        "formal_source_url": "https://proceedings.mlr.press/v202/zhou23r.html",
+        "checked_at": "2026-10-06T03:13:00Z",
+        "read_locations": [
+          "完整摘要",
+          "§2–3.3 pp.2–5",
+          "§4.1–4.3及Table 1 pp.5–6"
+        ],
+        "not_read": [
+          "未逐图视觉核验",
+          "未通读全部补充材料",
+          "代码未读未运行"
+        ],
+        "full_paper_read": false,
+        "code_read": false,
+        "experiments_independently_verified": false,
+        "stage_changed": false,
+        "source_record_sha256": "e8a9d1d164cffd4f17ad0ba43e328096b0a1bcfbf7b61d20400f0f7df4423aaa"
+      },
+      "identity": {
+        "canonical_id": "esc",
+        "arxiv_ids": [],
+        "normalized_title": "escexplorationwithsoftcommonsenseconstraintsforzeroshotobjectnavigation",
+        "source_urls": [
+          "https://proceedings.mlr.press/v202/zhou23r/zhou23r.pdf",
+          "https://proceedings.mlr.press/v202/zhou23r.html"
+        ],
+        "dedup_scope": "recovered baseline records and this expansion; historical pool not fully recovered"
+      },
+      "overview_zh": "研究如何把带不确定性的语言常识转成探索选择，先识别房间和物体语义，再将关联得分、软逻辑规则与距离联合用于选择探索边界，最后由局部策略执行。其语言模块承担语义评分，已读实验的传感器条件并不统一，因此不能按原始成功率跨配置比较或当作自由工具调用系统。",
+      "overview_label_zh": "研究概述",
+      "overview_attribution": "curator_summary_of_reviewed_sections",
+      "overview_scope_note_zh": "依据现有已审段落记录编写的编者概述；未新读全文，不是完整摘要或全文翻译。"
+    },
+    {
+      "paper_id": "l3mvn",
+      "short_name": "L3MVN",
+      "version": "arXiv 2304.05501v2 (2023-12-25)",
+      "source_url": "https://arxiv.org/html/2304.05501v2",
+      "read_scope": "section",
+      "read_locations": [
+        "完整摘要",
+        "§III-B–E L105–165",
+        "§IV-A L198–212，Table I"
+      ],
+      "not_read": [
+        "未逐图视觉核验",
+        "未通读全部补充材料",
+        "代码未读未运行"
+      ],
+      "task": "task-objectnav",
+      "pipeline": "语言得分或训练的embedding head为frontier估分，置信区间规则融合cost-utility。",
+      "representation": "episode初始化清空的语义地图。",
+      "module": "每步更新local map/goal，FMM执行；LM是评分器。",
+      "challenge": "frontier缺乏语义时怎样平衡常识与探索成本？",
+      "insight": "每步更新local map/goal，FMM执行；LM是评分器。",
+      "evidence": [
+        {
+          "kind": "method",
+          "locator": "§III-D.4–E L159–164",
+          "attribution": "author_claim",
+          "statement": "语义低分时回退cost-utility，局部FMM逐步重规划。"
+        },
+        {
+          "kind": "protocol",
+          "locator": "§IV-A.2 L202–209",
+          "attribution": "direct_observation",
+          "statement": "使用finetuned RedNet；feed-forward版本另训练RoBERTa/head。"
+        }
+      ],
+      "open_question": "待核：正式版本差异、实现及同协议下的适用边界；不以跨论文主表排名。",
+      "limits": "零样本指导航范式，不能推成所有模块无训练。；预印本III-A写0.1m成功距离；未从代码校准该口径。",
+      "tasks": [
+        "task-objectnav"
+      ],
+      "routes": [
+        "route-runtime",
+        "route-spatial-memory"
+      ],
+      "title": "L3MVN: Leveraging Large Language Models for Visual Target Navigation",
+      "year": 2023,
+      "canonical_id": "l3mvn",
+      "groups": [
+        "evidence-and-action"
+      ],
+      "mode": "baseline",
+      "insight_attribution": "curator_summary",
+      "challenge_attribution": "curator_summary",
+      "conditions": [
+        "编辑归组，不自动认定完整harness；见方法范围。",
+        "出版元数据：IROS 2023（正文读取预印本）",
+        "正式来源：https://doi.org/10.1109/IROS55552.2023.10342512",
+        "正文所读版本：arXiv 2304.05501v2 (2023-12-25)",
+        "全文未通读；代码未读未运行；未独立复现；不改变阅读Stage。",
+        "版本及适用限制：零样本指导航范式，不能推成所有模块无训练。；预印本III-A写0.1m成功距离；未从代码校准该口径。"
+      ],
+      "harness_relation": {
+        "kind": "supporting_method",
+        "attribution": "curator_organization",
+        "basis": "每步更新local map/goal，FMM执行；LM是评分器。 这里只认定所述机制为支撑方法，不提升为完整harness。",
+        "not_claimed": [
+          "academic inheritance",
+          "full-paper reading",
+          "complete navigation harness merely from topical similarity"
+        ]
+      },
+      "source_provenance": {
+        "evidence_level": "primary_complete_abstract_plus_targeted_body",
+        "read_version": "arXiv 2304.05501v2 (2023-12-25)",
+        "formal_publication": "IROS 2023（正文读取预印本）",
+        "formal_source_url": "https://doi.org/10.1109/IROS55552.2023.10342512",
+        "checked_at": "2026-10-06T03:13:00Z",
+        "read_locations": [
+          "完整摘要",
+          "§III-B–E L105–165",
+          "§IV-A L198–212，Table I"
+        ],
+        "not_read": [
+          "未逐图视觉核验",
+          "未通读全部补充材料",
+          "代码未读未运行"
+        ],
+        "full_paper_read": false,
+        "code_read": false,
+        "experiments_independently_verified": false,
+        "stage_changed": false,
+        "source_record_sha256": "ad7e9dedc5151b9994029b8450034ada4f94891e792218d47349a8b4b00fd226"
+      },
+      "identity": {
+        "canonical_id": "l3mvn",
+        "arxiv_ids": [
+          "2304.05501"
+        ],
+        "normalized_title": "l3mvnleveraginglargelanguagemodelsforvisualtargetnavigation",
+        "source_urls": [
+          "https://arxiv.org/html/2304.05501v2",
+          "https://doi.org/10.1109/IROS55552.2023.10342512"
+        ],
+        "dedup_scope": "recovered baseline records and this expansion; historical pool not fully recovered"
+      },
+      "overview_zh": "研究探索边界缺乏语义线索时如何平衡常识与移动成本，用语言得分或经过训练的特征评分为候选区域排序，低置信时转向成本收益规则并逐步规划。地图在每个任务回合重置，部分感知和评分模块需要训练，因此导航任务的零样本设定不能解释为整个系统完全免训练。",
+      "overview_label_zh": "研究概述",
+      "overview_attribution": "curator_summary_of_reviewed_sections",
+      "overview_scope_note_zh": "依据现有已审段落记录编写的编者概述；未新读全文，不是完整摘要或全文翻译。"
+    },
+    {
+      "paper_id": "lfg",
+      "short_name": "LFG",
+      "version": "PMLR 229 final, pp.2683–2699",
+      "source_url": "https://proceedings.mlr.press/v229/shah23c/shah23c.pdf",
+      "read_scope": "section",
+      "read_locations": [
+        "完整摘要",
+        "§4–5 pp.3–5 / Algorithms 1–2",
+        "§6.1–6.2和§7 pp.6–8"
+      ],
+      "not_read": [
+        "未逐图视觉核验",
+        "未通读全部补充材料",
+        "代码未读未运行"
+      ],
+      "task": "task-objectnav",
+      "pipeline": "正负提示多次采样形成启发分数，与距离联合指导frontier搜索。",
+      "representation": "episode地图及观测语义标签。",
+      "module": "固定频率重规划；几何/拓扑地图加独立控制器执行。",
+      "challenge": "如何利用可能出错的语言常识而不把它当完整导航计划？",
+      "insight": "固定频率重规划；几何/拓扑地图加独立控制器执行。",
+      "evidence": [
+        {
+          "kind": "method",
+          "locator": "§5 Eq.1，Algorithm 2",
+          "attribution": "author_claim",
+          "statement": "语言分数只是搜索启发项；目标已见则用地图取位置。"
+        },
+        {
+          "kind": "protocol",
+          "locator": "§6.1 pp.6–7",
+          "attribution": "direct_observation",
+          "statement": "模拟每场景10 episode，所有模拟baseline采用GT语义。"
+        }
+      ],
+      "open_question": "待核：正式版本差异、实现及同协议下的适用边界；不以跨论文主表排名。",
+      "limits": "不能把68.9%直接与使用真实检测的HM3D全文结果比较。；作者指出多次云端调用慢且需联网；真实测试仅室内两类场景。",
+      "tasks": [
+        "task-objectnav"
+      ],
+      "routes": [
+        "route-runtime",
+        "route-spatial-memory"
+      ],
+      "title": "Navigation with Large Language Models: Semantic Guesswork as a Heuristic for Planning",
+      "year": 2023,
+      "canonical_id": "lfg",
+      "groups": [
+        "evidence-and-action"
+      ],
+      "mode": "baseline",
+      "insight_attribution": "curator_summary",
+      "challenge_attribution": "curator_summary",
+      "conditions": [
+        "编辑归组，不自动认定完整harness；见方法范围。",
+        "出版元数据：CoRL 2023",
+        "正式来源：https://proceedings.mlr.press/v229/shah23c.html",
+        "正文所读版本：PMLR 229 final, pp.2683–2699",
+        "全文未通读；代码未读未运行；未独立复现；不改变阅读Stage。",
+        "版本及适用限制：不能把68.9%直接与使用真实检测的HM3D全文结果比较。；作者指出多次云端调用慢且需联网；真实测试仅室内两类场景。"
+      ],
+      "harness_relation": {
+        "kind": "supporting_method",
+        "attribution": "curator_organization",
+        "basis": "固定频率重规划；几何/拓扑地图加独立控制器执行。 这里只认定所述机制为支撑方法，不提升为完整harness。",
+        "not_claimed": [
+          "academic inheritance",
+          "full-paper reading",
+          "complete navigation harness merely from topical similarity"
+        ]
+      },
+      "source_provenance": {
+        "evidence_level": "primary_complete_abstract_plus_targeted_body",
+        "read_version": "PMLR 229 final, pp.2683–2699",
+        "formal_publication": "CoRL 2023",
+        "formal_source_url": "https://proceedings.mlr.press/v229/shah23c.html",
+        "checked_at": "2026-10-06T03:13:00Z",
+        "read_locations": [
+          "完整摘要",
+          "§4–5 pp.3–5 / Algorithms 1–2",
+          "§6.1–6.2和§7 pp.6–8"
+        ],
+        "not_read": [
+          "未逐图视觉核验",
+          "未通读全部补充材料",
+          "代码未读未运行"
+        ],
+        "full_paper_read": false,
+        "code_read": false,
+        "experiments_independently_verified": false,
+        "stage_changed": false,
+        "source_record_sha256": "5a8a6164b9f613ffda6b64af4f213e07255d95bad08f69421771f98b02d746cb"
+      },
+      "identity": {
+        "canonical_id": "lfg",
+        "arxiv_ids": [],
+        "normalized_title": "navigationwithlargelanguagemodelssemanticguessworkasaheuristicforplanning",
+        "source_urls": [
+          "https://proceedings.mlr.press/v229/shah23c/shah23c.pdf",
+          "https://proceedings.mlr.press/v229/shah23c.html"
+        ],
+        "dedup_scope": "recovered baseline records and this expansion; historical pool not fully recovered"
+      },
+      "overview_zh": "研究怎样利用可能出错的语言常识辅助目标搜索，用正负提示多次采样形成启发得分，与距离共同选择探索方向，几何地图和独立控制器负责执行。已读模拟比较采用真值语义标注，不能与依赖实际检测的结果直接排名；多次云端调用的延迟与联网需求也限制部署条件。",
+      "overview_label_zh": "研究概述",
+      "overview_attribution": "curator_summary_of_reviewed_sections",
+      "overview_scope_note_zh": "依据现有已审段落记录编写的编者概述；未新读全文，不是完整摘要或全文翻译。"
+    },
+    {
+      "paper_id": "voronav",
+      "short_name": "VoroNav",
+      "version": "arXiv 2401.02695v2 (2024-02-06); formal metadata verified",
+      "source_url": "https://arxiv.org/html/2401.02695v2",
+      "read_scope": "section",
+      "read_locations": [
+        "完整摘要",
+        "§3.1–3.4 L112–168",
+        "§4.1–4.2.2 Tables 1–2 L169–237"
+      ],
+      "not_read": [
+        "未逐图视觉核验",
+        "未通读全部补充材料",
+        "代码未读未运行"
+      ],
+      "task": "task-objectnav",
+      "pipeline": "从在线语义图提取Reduced Voronoi Graph，融合路径与远视描述给LLM。",
+      "representation": "已探索空间、语义图、经过的图节点。",
+      "module": "到图节点转一圈采观测；拓扑探索/效率奖励约束语义分，FMM执行。",
+      "challenge": "何时/何处停下来决策才能获得更有用观测？",
+      "insight": "到图节点转一圈采观测；拓扑探索/效率奖励约束语义分，FMM执行。",
+      "evidence": [
+        {
+          "kind": "method",
+          "locator": "§3.3–3.4 L141–168",
+          "attribution": "author_claim",
+          "statement": "决策点与图结构绑定，非固定步数盲选frontier。"
+        },
+        {
+          "kind": "protocol",
+          "locator": "Table 1 / §4.1",
+          "attribution": "direct_observation",
+          "statement": "部分baseline视觉模块改为Grounded-SAM；HM3D 2000/HSSD 1200 episode。"
+        }
+      ],
+      "open_question": "待核：正式版本差异、实现及同协议下的适用边界；不以跨论文主表排名。",
+      "limits": "正式PDF及OpenReview未成功取正文，使用固定v2。；改造baseline不能等同原论文配置；未声称跨任务持久记忆。",
+      "tasks": [
+        "task-objectnav"
+      ],
+      "routes": [
+        "route-runtime",
+        "route-spatial-memory"
+      ],
+      "title": "VoroNav: Voronoi-based Zero-shot Object Navigation with Large Language Model",
+      "year": 2024,
+      "canonical_id": "voronav",
+      "groups": [
+        "evidence-and-action"
+      ],
+      "mode": "baseline",
+      "insight_attribution": "curator_summary",
+      "challenge_attribution": "curator_summary",
+      "conditions": [
+        "编辑归组，不自动认定完整harness；见方法范围。",
+        "出版元数据：ICML 2024（正文读取预印本）",
+        "正式来源：https://proceedings.mlr.press/v235/wu24u.html",
+        "正文所读版本：arXiv 2401.02695v2 (2024-02-06); formal metadata verified",
+        "全文未通读；代码未读未运行；未独立复现；不改变阅读Stage。",
+        "版本及适用限制：正式PDF及OpenReview未成功取正文，使用固定v2。；改造baseline不能等同原论文配置；未声称跨任务持久记忆。"
+      ],
+      "harness_relation": {
+        "kind": "supporting_method",
+        "attribution": "curator_organization",
+        "basis": "到图节点转一圈采观测；拓扑探索/效率奖励约束语义分，FMM执行。 这里只认定所述机制为支撑方法，不提升为完整harness。",
+        "not_claimed": [
+          "academic inheritance",
+          "full-paper reading",
+          "complete navigation harness merely from topical similarity"
+        ]
+      },
+      "source_provenance": {
+        "evidence_level": "primary_complete_abstract_plus_targeted_body",
+        "read_version": "arXiv 2401.02695v2 (2024-02-06); formal metadata verified",
+        "formal_publication": "ICML 2024（正文读取预印本）",
+        "formal_source_url": "https://proceedings.mlr.press/v235/wu24u.html",
+        "checked_at": "2026-10-06T03:13:00Z",
+        "read_locations": [
+          "完整摘要",
+          "§3.1–3.4 L112–168",
+          "§4.1–4.2.2 Tables 1–2 L169–237"
+        ],
+        "not_read": [
+          "未逐图视觉核验",
+          "未通读全部补充材料",
+          "代码未读未运行"
+        ],
+        "full_paper_read": false,
+        "code_read": false,
+        "experiments_independently_verified": false,
+        "stage_changed": false,
+        "source_record_sha256": "ae03589804b68b57fdeb93bd8f6e7ae6d91233aa3fc1bf7988b3097729f43fb9"
+      },
+      "identity": {
+        "canonical_id": "voronav",
+        "arxiv_ids": [
+          "2401.02695"
+        ],
+        "normalized_title": "voronavvoronoibasedzeroshotobjectnavigationwithlargelanguagemodel",
+        "source_urls": [
+          "https://arxiv.org/html/2401.02695v2",
+          "https://proceedings.mlr.press/v235/wu24u.html"
+        ],
+        "dedup_scope": "recovered baseline records and this expansion; historical pool not fully recovered"
+      },
+      "overview_zh": "研究机器人何时、在何处停下来获取有用观测，从在线语义地图提取简化的Voronoi路径图，在图节点采集周围信息，再结合路径和远视描述选择探索方向。已读评测中部分对照方法更换了视觉模块，结论需保留这些配置条件，且当前记录不支持跨任务持续记忆的判断。",
+      "overview_label_zh": "研究概述",
+      "overview_attribution": "curator_summary_of_reviewed_sections",
+      "overview_scope_note_zh": "依据现有已审段落记录编写的编者概述；未新读全文，不是完整摘要或全文翻译。"
+    },
+    {
+      "paper_id": "trihelper",
+      "short_name": "TriHelper",
+      "version": "arXiv 2403.15223v1 (2024-03-22)",
+      "source_url": "https://arxiv.org/html/2403.15223v1",
+      "read_scope": "section",
+      "read_locations": [
+        "完整摘要",
+        "§III-B / IV-B–C L97–161",
+        "§V-A–F Tables I–II L165–254"
+      ],
+      "not_read": [
+        "未逐图视觉核验",
+        "未通读全部补充材料",
+        "代码未读未运行"
+      ],
+      "task": "task-objectnav",
+      "pipeline": "增加碰撞、探索、检测三个动态helper。",
+      "representation": "episode语义图含误检目标通道。",
+      "module": "不可达/碰撞→最大连通区中心；重复近目标→LM暂眠；误检→遮蔽记录再探索。",
+      "challenge": "现有语义探索如何处理卡住、重复目标与误检？",
+      "insight": "不可达/碰撞→最大连通区中心；重复近目标→LM暂眠；误检→遮蔽记录再探索。",
+      "evidence": [
+        {
+          "kind": "method",
+          "locator": "§IV-C.1 L153–155",
+          "attribution": "author_claim",
+          "statement": "误检不永久排除，超阈值未发现目标时允许返回记录点。"
+        },
+        {
+          "kind": "protocol",
+          "locator": "§V-E–F Tables I–II",
+          "attribution": "direct_observation",
+          "statement": "自动SR与人工复核SR分列；三helper同时使用时探索失败反而增多。"
+        }
+      ],
+      "open_question": "待核：正式版本差异、实现及同协议下的适用边界；不以跨论文主表排名。",
+      "limits": "作者解释多层探索与误检遮蔽可造成失败。；repo README与论文VLM型号不同，未核代码版本；不能声称实现等价。",
+      "tasks": [
+        "task-objectnav"
+      ],
+      "routes": [
+        "route-runtime",
+        "route-spatial-memory"
+      ],
+      "title": "TriHelper: Zero-Shot Object Navigation with Dynamic Assistance",
+      "year": 2024,
+      "canonical_id": "trihelper",
+      "groups": [
+        "evidence-and-action"
+      ],
+      "mode": "baseline",
+      "insight_attribution": "curator_summary",
+      "challenge_attribution": "curator_summary",
+      "conditions": [
+        "编辑归组，不自动认定完整harness；见方法范围。",
+        "出版元数据：IROS 2024（正文读取预印本）",
+        "正式来源：https://github.com/linglingxiansen/TriHelper",
+        "正文所读版本：arXiv 2403.15223v1 (2024-03-22)",
+        "全文未通读；代码未读未运行；未独立复现；不改变阅读Stage。",
+        "版本及适用限制：作者解释多层探索与误检遮蔽可造成失败。；repo README与论文VLM型号不同，未核代码版本；不能声称实现等价。"
+      ],
+      "harness_relation": {
+        "kind": "supporting_method",
+        "attribution": "curator_organization",
+        "basis": "不可达/碰撞→最大连通区中心；重复近目标→LM暂眠；误检→遮蔽记录再探索。 这里只认定所述机制为支撑方法，不提升为完整harness。",
+        "not_claimed": [
+          "academic inheritance",
+          "full-paper reading",
+          "complete navigation harness merely from topical similarity"
+        ]
+      },
+      "source_provenance": {
+        "evidence_level": "primary_complete_abstract_plus_targeted_body",
+        "read_version": "arXiv 2403.15223v1 (2024-03-22)",
+        "formal_publication": "IROS 2024（正文读取预印本）",
+        "formal_source_url": "https://github.com/linglingxiansen/TriHelper",
+        "checked_at": "2026-10-06T03:13:00Z",
+        "read_locations": [
+          "完整摘要",
+          "§III-B / IV-B–C L97–161",
+          "§V-A–F Tables I–II L165–254"
+        ],
+        "not_read": [
+          "未逐图视觉核验",
+          "未通读全部补充材料",
+          "代码未读未运行"
+        ],
+        "full_paper_read": false,
+        "code_read": false,
+        "experiments_independently_verified": false,
+        "stage_changed": false,
+        "source_record_sha256": "f5356c2603fa99e27c35283d761ee2be9a5e194c67c06c261d9d730b390c58b0"
+      },
+      "identity": {
+        "canonical_id": "trihelper",
+        "arxiv_ids": [
+          "2403.15223"
+        ],
+        "normalized_title": "trihelperzeroshotobjectnavigationwithdynamicassistance",
+        "source_urls": [
+          "https://arxiv.org/html/2403.15223v1",
+          "https://github.com/linglingxiansen/TriHelper"
+        ],
+        "dedup_scope": "recovered baseline records and this expansion; historical pool not fully recovered"
+      },
+      "overview_zh": "研究语义探索中卡住、反复接近目标与误检等失败，增设碰撞、探索和检测三个辅助模块，调整探索位置、暂停语言引导并记录可疑目标，必要时再访问。模块同时启用并非所有失败类型都改善，且自动成功率与人工复核结果分列，不能把恢复机制概括为普遍有效。",
+      "overview_label_zh": "研究概述",
+      "overview_attribution": "curator_summary_of_reviewed_sections",
+      "overview_scope_note_zh": "依据现有已审段落记录编写的编者概述；未新读全文，不是完整摘要或全文翻译。"
+    },
+    {
+      "paper_id": "imaginenav",
+      "short_name": "ImagineNav",
+      "version": "ICLR 2025 final",
+      "source_url": "https://proceedings.iclr.cc/paper_files/paper/2025/file/eb261df4322a8bd0a73093c4d8a0d02d-Paper-Conference.pdf",
+      "read_scope": "section",
+      "read_locations": [
+        "完整摘要",
+        "§3.1–3.3 pp.4–5",
+        "§4.1–4.4 Tables 1–2 pp.6–8"
+      ],
+      "not_read": [
+        "未逐图视觉核验",
+        "未通读全部补充材料",
+        "代码未读未运行"
+      ],
+      "task": "task-objectnav",
+      "pipeline": "Where2Imagine预测候选位姿，NVS合成未来视图，VLM选择后交PointNav。",
+      "representation": "本次核到的是mapless决策，未验证跨任务记忆。",
+      "module": "想象→选视图→局部执行→新观测循环。",
+      "challenge": "如何把空间规划转换成VLM擅长的视觉选项判断？",
+      "insight": "想象→选视图→局部执行→新观测循环。",
+      "evidence": [
+        {
+          "kind": "protocol",
+          "locator": "§3.2 p.5",
+          "attribution": "direct_observation",
+          "statement": "Where2Imagine用Habitat-Web人类轨迹训练ResNet18。"
+        },
+        {
+          "kind": "protocol",
+          "locator": "§4.3 Table 1 p.7",
+          "attribution": "direct_observation",
+          "statement": "真实未来图像的Oracle结果与NVS运行结果分开。"
+        }
+      ],
+      "open_question": "待核：正式版本差异、实现及同协议下的适用边界；不以跨论文主表排名。",
+      "limits": "zero-shot泛化不等于整系统training-free。；Table 1写200 epochs，评测样本口径需再核；不扩写为完整2000 episode。",
+      "tasks": [
+        "task-objectnav"
+      ],
+      "routes": [
+        "route-runtime",
+        "route-learned-policy"
+      ],
+      "title": "ImagineNav: Prompting Vision-Language Models as Embodied Navigator through Scene Imagination",
+      "year": 2025,
+      "canonical_id": "imaginenav",
+      "groups": [
+        "evidence-and-action"
+      ],
+      "mode": "baseline",
+      "insight_attribution": "curator_summary",
+      "challenge_attribution": "curator_summary",
+      "conditions": [
+        "编辑归组，不自动认定完整harness；见方法范围。",
+        "出版元数据：ICLR 2025",
+        "正式来源：https://proceedings.iclr.cc/paper_files/paper/2025/file/eb261df4322a8bd0a73093c4d8a0d02d-Paper-Conference.pdf",
+        "正文所读版本：ICLR 2025 final",
+        "全文未通读；代码未读未运行；未独立复现；不改变阅读Stage。",
+        "版本及适用限制：zero-shot泛化不等于整系统training-free。；Table 1写200 epochs，评测样本口径需再核；不扩写为完整2000 episode。"
+      ],
+      "harness_relation": {
+        "kind": "supporting_method",
+        "attribution": "curator_organization",
+        "basis": "想象→选视图→局部执行→新观测循环。 这里只认定所述机制为支撑方法，不提升为完整harness。",
+        "not_claimed": [
+          "academic inheritance",
+          "full-paper reading",
+          "complete navigation harness merely from topical similarity"
+        ]
+      },
+      "source_provenance": {
+        "evidence_level": "primary_complete_abstract_plus_targeted_body",
+        "read_version": "ICLR 2025 final",
+        "formal_publication": "ICLR 2025",
+        "formal_source_url": "https://proceedings.iclr.cc/paper_files/paper/2025/file/eb261df4322a8bd0a73093c4d8a0d02d-Paper-Conference.pdf",
+        "checked_at": "2026-10-06T03:13:00Z",
+        "read_locations": [
+          "完整摘要",
+          "§3.1–3.3 pp.4–5",
+          "§4.1–4.4 Tables 1–2 pp.6–8"
+        ],
+        "not_read": [
+          "未逐图视觉核验",
+          "未通读全部补充材料",
+          "代码未读未运行"
+        ],
+        "full_paper_read": false,
+        "code_read": false,
+        "experiments_independently_verified": false,
+        "stage_changed": false,
+        "source_record_sha256": "063605125f28d01b1768c070094eba6ffb3d6ac17926948c38175b408f6ebdec"
+      },
+      "identity": {
+        "canonical_id": "imaginenav",
+        "arxiv_ids": [],
+        "normalized_title": "imaginenavpromptingvisionlanguagemodelsasembodiednavigatorthroughsceneimagination",
+        "source_urls": [
+          "https://proceedings.iclr.cc/paper_files/paper/2025/file/eb261df4322a8bd0a73093c4d8a0d02d-Paper-Conference.pdf"
+        ],
+        "dedup_scope": "recovered baseline records and this expansion; historical pool not fully recovered"
+      },
+      "overview_zh": "研究怎样将空间规划变成视觉模型更易处理的选项判断，先预测候选位姿并合成未来视图，再选择视图交给短程导航策略执行，随后依据新观测循环决策。候选预测模块经过训练，真实未来图像的理想上限与合成视图运行结果也分别报告，因此零样本泛化不代表整套系统免训练。",
+      "overview_label_zh": "研究概述",
+      "overview_attribution": "curator_summary_of_reviewed_sections",
+      "overview_scope_note_zh": "依据现有已审段落记录编写的编者概述；未新读全文，不是完整摘要或全文翻译。"
+    },
+    {
+      "paper_id": "vlmnav",
+      "short_name": "VLMnav",
+      "version": "arXiv 2411.05755v1 (2024-11-08)",
+      "source_url": "https://arxiv.org/html/2411.05755v1",
+      "read_scope": "section",
+      "read_locations": [
+        "完整摘要",
+        "§3.1–3.5 L74–118",
+        "§4–4.2 L121–151，Tables 1–2"
+      ],
+      "not_read": [
+        "未逐图视觉核验",
+        "未通读全部补充材料",
+        "代码未读未运行"
+      ],
+      "task": "task-objectnav / task-continual",
+      "pipeline": "深度可通行性与探索偏置构造动作，再投影到图像供VLM选择；停止另调模型。",
+      "representation": "探索体素图；此处未核完整历史长度消融。",
+      "module": "无候选时允许转身；连续两次stop才终止，首次stop后撤掉探索偏置。",
+      "challenge": "怎样让VLM选出空间上可执行动作并可靠停止？",
+      "insight": "无候选时允许转身；连续两次stop才终止，首次stop后撤掉探索偏置。",
+      "evidence": [
+        {
+          "kind": "method",
+          "locator": "§3.2–3.5 L83–118",
+          "attribution": "author_claim",
+          "statement": "外部动作提议和独立停止调用仍存在，端到端不等于无外层工程。"
+        },
+        {
+          "kind": "protocol",
+          "locator": "§4.1 Table 1 L127–141",
+          "attribution": "direct_observation",
+          "statement": "allow_slide关闭后SR 50.4→12.9；成功阈值1.2m。"
+        }
+      ],
+      "open_question": "待核：正式版本差异、实现及同协议下的适用边界；不以跨论文主表排名。",
+      "limits": "作者明确指出可通行性未考虑机器人尺寸形状，可能碰撞。；不能把其SR与不同滑动/距离配置直接排名；未核正式出版状态。",
+      "tasks": [
+        "task-objectnav",
+        "task-continual"
+      ],
+      "routes": [
+        "route-runtime",
+        "route-spatial-memory"
+      ],
+      "title": "End-to-End Navigation with Vision Language Models: Transforming Spatial Reasoning into Question-Answering",
+      "year": 2024,
+      "canonical_id": "vlmnav",
+      "groups": [
+        "evidence-and-action"
+      ],
+      "mode": "baseline",
+      "insight_attribution": "curator_summary",
+      "challenge_attribution": "curator_summary",
+      "conditions": [
+        "编辑归组，不自动认定完整harness；见方法范围。",
+        "出版元数据：arXiv preprint",
+        "正式来源：https://arxiv.org/abs/2411.05755v1",
+        "正文所读版本：arXiv 2411.05755v1 (2024-11-08)",
+        "全文未通读；代码未读未运行；未独立复现；不改变阅读Stage。",
+        "版本及适用限制：作者明确指出可通行性未考虑机器人尺寸形状，可能碰撞。；不能把其SR与不同滑动/距离配置直接排名；未核正式出版状态。"
+      ],
+      "harness_relation": {
+        "kind": "supporting_method",
+        "attribution": "curator_organization",
+        "basis": "无候选时允许转身；连续两次stop才终止，首次stop后撤掉探索偏置。 这里只认定所述机制为支撑方法，不提升为完整harness。",
+        "not_claimed": [
+          "academic inheritance",
+          "full-paper reading",
+          "complete navigation harness merely from topical similarity"
+        ]
+      },
+      "source_provenance": {
+        "evidence_level": "primary_complete_abstract_plus_targeted_body",
+        "read_version": "arXiv 2411.05755v1 (2024-11-08)",
+        "formal_publication": "arXiv preprint",
+        "formal_source_url": "https://arxiv.org/abs/2411.05755v1",
+        "checked_at": "2026-10-06T03:13:00Z",
+        "read_locations": [
+          "完整摘要",
+          "§3.1–3.5 L74–118",
+          "§4–4.2 L121–151，Tables 1–2"
+        ],
+        "not_read": [
+          "未逐图视觉核验",
+          "未通读全部补充材料",
+          "代码未读未运行"
+        ],
+        "full_paper_read": false,
+        "code_read": false,
+        "experiments_independently_verified": false,
+        "stage_changed": false,
+        "source_record_sha256": "20832ad4b15ce23a081530fd32f47770dfadd248a6c42c1d37a05e62013cf972"
+      },
+      "identity": {
+        "canonical_id": "vlmnav",
+        "arxiv_ids": [
+          "2411.05755"
+        ],
+        "normalized_title": "endtoendnavigationwithvisionlanguagemodelstransformingspatialreasoningintoquestionanswering",
+        "source_urls": [
+          "https://arxiv.org/html/2411.05755v1",
+          "https://arxiv.org/abs/2411.05755v1"
+        ],
+        "dedup_scope": "recovered baseline records and this expansion; historical pool not fully recovered"
+      },
+      "overview_zh": "研究视觉语言模型怎样选择可执行移动并判断停止，以深度可通行性和探索偏置构造图像上的动作候选，另行调用模型判断停止，并要求连续两次确认。已读结果对模拟滑动设置敏感，可通行性又未纳入机器人尺寸和形状，因此不能据分数直接推断实际避碰能力或跨配置优势。",
+      "overview_label_zh": "研究概述",
+      "overview_attribution": "curator_summary_of_reviewed_sections",
+      "overview_scope_note_zh": "依据现有已审段落记录编写的编者概述；未新读全文，不是完整摘要或全文翻译。"
+    },
+    {
+      "paper_id": "navgpt2",
+      "short_name": "NavGPT-2",
+      "version": "ECCV 2024 final",
+      "source_url": "https://www.ecva.net/papers/eccv_2024/papers_ECCV/papers/01143.pdf",
+      "read_scope": "section",
+      "read_locations": [
+        "完整摘要",
+        "§3.1–3.3 pp.5–9",
+        "§4.1–4.2和Table 1 pp.9–10"
+      ],
+      "not_read": [
+        "未逐图视觉核验",
+        "未通读全部补充材料",
+        "代码未读未运行"
+      ],
+      "task": "task-vln",
+      "pipeline": "冻结LLM视觉latent供拓扑图策略；先训Q-former，再训动作policy。",
+      "representation": "在线已访及相邻未访节点图。",
+      "module": "图策略全局选节点并沿最短图路径执行，另有stop节点。",
+      "challenge": "怎样保留语言解释能力又接上有效的导航策略？",
+      "insight": "图策略全局选节点并沿最短图路径执行，另有stop节点。",
+      "evidence": [
+        {
+          "kind": "method",
+          "locator": "§3.2 pp.6–8",
+          "attribution": "author_claim",
+          "statement": "图保存历史与支持回溯；策略借用DUET图方法。"
+        },
+        {
+          "kind": "protocol",
+          "locator": "§3.3 / §4.1",
+          "attribution": "direct_observation",
+          "statement": "10k GPT-4V推理数据，BC+DAgger训练；最优版本用PREVALENT合成数据。"
+        }
+      ],
+      "open_question": "待核：正式版本差异、实现及同协议下的适用边界；不以跨论文主表排名。",
+      "limits": "冻结LLM不等于training-free；这是学习策略支路而非纯harness。；预定义导航图、训练量与零样本LLM agent不同。",
+      "tasks": [
+        "task-vln"
+      ],
+      "routes": [
+        "route-learned-policy",
+        "route-spatial-memory"
+      ],
+      "title": "NavGPT-2: Unleashing Navigational Reasoning Capability for Large Vision-Language Models",
+      "year": 2024,
+      "canonical_id": "navgpt2",
+      "groups": [
+        "memory-validity"
+      ],
+      "mode": "baseline",
+      "insight_attribution": "curator_summary",
+      "challenge_attribution": "curator_summary",
+      "conditions": [
+        "编辑归组，不自动认定完整harness；见方法范围。",
+        "出版元数据：ECCV 2024",
+        "正式来源：https://www.ecva.net/papers/eccv_2024/papers_ECCV/papers/01143.pdf",
+        "正文所读版本：ECCV 2024 final",
+        "全文未通读；代码未读未运行；未独立复现；不改变阅读Stage。",
+        "版本及适用限制：冻结LLM不等于training-free；这是学习策略支路而非纯harness。；预定义导航图、训练量与零样本LLM agent不同。"
+      ],
+      "harness_relation": {
+        "kind": "supporting_method",
+        "attribution": "curator_organization",
+        "basis": "图策略全局选节点并沿最短图路径执行，另有stop节点。 这里只认定所述机制为支撑方法，不提升为完整harness。",
+        "not_claimed": [
+          "academic inheritance",
+          "full-paper reading",
+          "complete navigation harness merely from topical similarity"
+        ]
+      },
+      "source_provenance": {
+        "evidence_level": "primary_complete_abstract_plus_targeted_body",
+        "read_version": "ECCV 2024 final",
+        "formal_publication": "ECCV 2024",
+        "formal_source_url": "https://www.ecva.net/papers/eccv_2024/papers_ECCV/papers/01143.pdf",
+        "checked_at": "2026-10-06T03:13:00Z",
+        "read_locations": [
+          "完整摘要",
+          "§3.1–3.3 pp.5–9",
+          "§4.1–4.2和Table 1 pp.9–10"
+        ],
+        "not_read": [
+          "未逐图视觉核验",
+          "未通读全部补充材料",
+          "代码未读未运行"
+        ],
+        "full_paper_read": false,
+        "code_read": false,
+        "experiments_independently_verified": false,
+        "stage_changed": false,
+        "source_record_sha256": "e8b4f55f597a8889087942080c93645aef31d68e4f5ff18027a6be00e2d8b75b"
+      },
+      "identity": {
+        "canonical_id": "navgpt2",
+        "arxiv_ids": [],
+        "normalized_title": "navgpt2unleashingnavigationalreasoningcapabilityforlargevisionlanguagemodels",
+        "source_urls": [
+          "https://www.ecva.net/papers/eccv_2024/papers_ECCV/papers/01143.pdf"
+        ],
+        "dedup_scope": "recovered baseline records and this expansion; historical pool not fully recovered"
+      },
+      "overview_zh": "研究如何保留语言推理表达同时得到有效导航策略，将冻结语言模型产生的视觉特征交给拓扑图策略，分阶段训练视觉接口与动作策略，并利用已访节点支持回溯。系统仍需要策略训练和预定义导航图，不能把冻结语言模型等同免训练，也不能与零样本代理忽略条件直接比较。",
+      "overview_label_zh": "研究概述",
+      "overview_attribution": "curator_summary_of_reviewed_sections",
+      "overview_scope_note_zh": "依据现有已审段落记录编写的编者概述；未新读全文，不是完整摘要或全文翻译。"
+    },
+    {
+      "paper_id": "engineering-outruns-intelligence",
+      "short_name": "Engineering Outruns Intelligence",
+      "version": "arXiv 2507.20021v3 (2026-05-05)",
+      "source_url": "https://arxiv.org/html/2507.20021v3",
+      "read_scope": "section",
+      "read_locations": [
+        "完整摘要",
+        "§4–6.1 L136–292",
+        "§8及limitations L329–342"
+      ],
+      "not_read": [
+        "未逐图视觉核验",
+        "未通读全部补充材料",
+        "代码未读未运行"
+      ],
+      "task": "task-objectnav",
+      "pipeline": "在InstructNav框架内比较几何FPE与轻量语义SHF。",
+      "representation": "共同轨迹/占据地图，不新增持久记忆机制。",
+      "module": "保留地图/执行框架，替换探索value map；是受控归因比较。",
+      "challenge": "LLM、几何与检测对收益的贡献能否分开？",
+      "insight": "保留地图/执行框架，替换探索value map；是受控归因比较。",
+      "evidence": [
+        {
+          "kind": "protocol",
+          "locator": "§5 L234–244",
+          "attribution": "direct_observation",
+          "statement": "主实验换为GPT-4.1并采用GT语义；FPE终点接近/停止仍依赖语义。"
+        },
+        {
+          "kind": "protocol",
+          "locator": "§6.1 L283–292",
+          "attribution": "direct_observation",
+          "statement": "GLEE子集上FPE SR不胜InstructNav，结论有传感器条件。"
+        }
+      ],
+      "open_question": "待核：正式版本差异、实现及同协议下的适用边界；不以跨论文主表排名。",
+      "limits": "旧搜索摘要为v1 DWFE，不能与v3 FPE混用。；GT主表与历史非GT结果非统一公平排名；不能概括为LLM导航无用。",
+      "tasks": [
+        "task-objectnav"
+      ],
+      "routes": [
+        "route-runtime",
+        "route-protocol"
+      ],
+      "title": "When Engineering Outruns Intelligence: Rethinking Instruction-Guided Navigation",
+      "year": 2026,
+      "canonical_id": "engineering-outruns-intelligence",
+      "groups": [
+        "evidence-and-action"
+      ],
+      "mode": "baseline",
+      "insight_attribution": "curator_summary",
+      "challenge_attribution": "curator_summary",
+      "conditions": [
+        "编辑归组，不自动认定完整harness；见方法范围。",
+        "出版元数据：arXiv preprint",
+        "正式来源：https://arxiv.org/abs/2507.20021v3",
+        "正文所读版本：arXiv 2507.20021v3 (2026-05-05)",
+        "全文未通读；代码未读未运行；未独立复现；不改变阅读Stage。",
+        "版本及适用限制：旧搜索摘要为v1 DWFE，不能与v3 FPE混用。；GT主表与历史非GT结果非统一公平排名；不能概括为LLM导航无用。"
+      ],
+      "harness_relation": {
+        "kind": "benchmark_protocol",
+        "attribution": "curator_organization",
+        "basis": "在固定导航框架内做组件归因比较；不能作为完整harness的新方法。",
+        "not_claimed": [
+          "academic inheritance",
+          "full-paper reading",
+          "complete navigation harness merely from topical similarity"
+        ]
+      },
+      "source_provenance": {
+        "evidence_level": "primary_complete_abstract_plus_targeted_body",
+        "read_version": "arXiv 2507.20021v3 (2026-05-05)",
+        "formal_publication": "arXiv preprint",
+        "formal_source_url": "https://arxiv.org/abs/2507.20021v3",
+        "checked_at": "2026-10-06T03:13:00Z",
+        "read_locations": [
+          "完整摘要",
+          "§4–6.1 L136–292",
+          "§8及limitations L329–342"
+        ],
+        "not_read": [
+          "未逐图视觉核验",
+          "未通读全部补充材料",
+          "代码未读未运行"
+        ],
+        "full_paper_read": false,
+        "code_read": false,
+        "experiments_independently_verified": false,
+        "stage_changed": false,
+        "source_record_sha256": "1332ec498992d29168df8921c0de9ba4c8bf114886c1127997b9cd45fefb710f"
+      },
+      "identity": {
+        "canonical_id": "engineering-outruns-intelligence",
+        "arxiv_ids": [
+          "2507.20021"
+        ],
+        "normalized_title": "whenengineeringoutrunsintelligencerethinkinginstructionguidednavigation",
+        "source_urls": [
+          "https://arxiv.org/html/2507.20021v3",
+          "https://arxiv.org/abs/2507.20021v3"
+        ],
+        "dedup_scope": "recovered baseline records and this expansion; historical pool not fully recovered"
+      },
+      "overview_zh": "研究导航成绩中的语言模型、几何探索与语义检测各起多大作用，在共同地图和执行框架内替换探索价值图，对比几何方法与轻量语义启发。主实验采用真值语义标注，而实际检测子集呈现不同结果，因此结论依赖感知条件，不能概括为语言模型对导航没有价值。",
+      "overview_label_zh": "研究概述",
+      "overview_attribution": "curator_summary_of_reviewed_sections",
+      "overview_scope_note_zh": "依据现有已审段落记录编写的编者概述；未新读全文，不是完整摘要或全文翻译。"
+    },
+    {
+      "paper_id": "ma2019regretful",
+      "short_name": "Regretful Agent",
+      "version": "CVF accepted PDF；另交叉核arXiv:1903.01602v1 (2019-03-05)",
+      "source_url": "https://openaccess.thecvf.com/content_CVPR_2019/papers/Ma_The_Regretful_Agent_Heuristic-Aided_Navigation_Through_Progress_Estimation_CVPR_2019_paper.pdf",
+      "read_scope": "section",
+      "read_locations": [
+        "完整摘要；§2–6，Tables 1–3；未逐图、补充材料/代码未读"
+      ],
+      "not_read": [
+        "未宣称全文通读",
+        "代码未读/未运行",
+        "正式版与预印本未逐页对照；所读具体版本见记录"
+      ],
+      "task": "task-vln",
+      "pipeline": "Regret Module比较相邻进度估计，混合前进/回退表示；Progress Marker把已访视点的估计附着到候选方向。",
+      "representation": "范围见方法与证据记录；不由memory命名推断跨任务持久性。",
+      "module": "经典失败恢复/动作选择支撑；不是LLM harness，也不是连续机器人安全恢复",
+      "challenge": "贪心导航一旦走错，缺少按进度主动回退的机制；beam search又会拉长实际路线。",
+      "insight": "把已有progress monitor用作行动时的学习启发式，而不只作训练辅助。",
+      "evidence": [
+        {
+          "kind": "method",
+          "locator": "完整摘要；§2–6，Tables 1–3；未逐图、补充材料/代码未读",
+          "statement": "Regret Module比较相邻进度估计，混合前进/回退表示；Progress Marker把已访视点的估计附着到候选方向。",
+          "attribution": "author_claim"
+        },
+        {
+          "kind": "protocol",
+          "locator": "完整摘要；§2–6，Tables 1–3；未逐图、补充材料/代码未读",
+          "statement": "R2R离散图评测；Table2组件消融与Table3禁用回退实验，能区分进度提示和回退机制贡献。",
+          "attribution": "direct_observation"
+        }
+      ],
+      "open_question": "待核：估计进度不是独立完成证据；依赖视点ID与可回退离散动作。禁用回退并非所有指标都降，不能说全面优势。",
+      "limits": "估计进度不是独立完成证据；依赖视点ID与可回退离散动作。禁用回退并非所有指标都降，不能说全面优势。",
+      "tasks": [
+        "task-vln"
+      ],
+      "routes": [
+        "route-runtime",
+        "route-learned-policy"
+      ],
+      "title": "The Regretful Agent: Heuristic-Aided Navigation Through Progress Estimation",
+      "year": 2019,
+      "canonical_id": "ma2019regretful",
+      "groups": [
+        "evidence-and-action"
+      ],
+      "mode": "baseline",
+      "insight_attribution": "curator_summary",
+      "challenge_attribution": "curator_summary",
+      "conditions": [
+        "出版元数据（保留核验边界）：CVPR 2019, pp.6732–6740",
+        "正文所读版本：CVF accepted PDF；另交叉核arXiv:1903.01602v1 (2019-03-05)",
+        "编辑归类：经典失败恢复/动作选择支撑；不是LLM harness，也不是连续机器人安全恢复",
+        "实际范围：完整摘要；§2–6，Tables 1–3；未逐图、补充材料/代码未读",
+        "来源：https://openaccess.thecvf.com/content_CVPR_2019/html/Ma_The_Regretful_Agent_Heuristic-Aided_Navigation_Through_Progress_Estimation_CVPR_2019_paper.html ; https://openaccess.thecvf.com/content_CVPR_2019/papers/Ma_The_Regretful_Agent_Heuristic-Aided_Navigation_Through_Progress_Estimation_CVPR_2019_paper.pdf ; https://arxiv.org/html/1903.01602v1",
+        "全文/代码/独立复现/Stage均未完成或改变。",
+        "版本对照未完成，不能把作者稿等同出版社最终版。"
+      ],
+      "harness_relation": {
+        "kind": "supporting_method",
+        "attribution": "curator_organization",
+        "basis": "经典失败恢复/动作选择支撑；不是LLM harness，也不是连续机器人安全恢复 这里只认定所述机制为支撑方法，不提升为完整harness。",
+        "not_claimed": [
+          "academic inheritance",
+          "full-paper reading",
+          "complete navigation harness merely from topical similarity"
+        ]
+      },
+      "authors": "Chih-Yao Ma; Zuxuan Wu; Ghassan AlRegib; Caiming Xiong; Zsolt Kira",
+      "source_provenance": {
+        "evidence_level": "primary_complete_abstract_plus_targeted_body",
+        "read_version": "CVF accepted PDF；另交叉核arXiv:1903.01602v1 (2019-03-05)",
+        "formal_publication": "CVPR 2019, pp.6732–6740",
+        "source_urls": [
+          "https://openaccess.thecvf.com/content_CVPR_2019/html/Ma_The_Regretful_Agent_Heuristic-Aided_Navigation_Through_Progress_Estimation_CVPR_2019_paper.html",
+          "https://openaccess.thecvf.com/content_CVPR_2019/papers/Ma_The_Regretful_Agent_Heuristic-Aided_Navigation_Through_Progress_Estimation_CVPR_2019_paper.pdf",
+          "https://arxiv.org/html/1903.01602v1"
+        ],
+        "checked_at": "2026-10-06T03:10:00Z/2026-10-06T03:16:00Z",
+        "read_locations": [
+          "完整摘要；§2–6，Tables 1–3；未逐图、补充材料/代码未读"
+        ],
+        "not_read": [
+          "未宣称全文通读",
+          "代码未读/未运行",
+          "正式版与预印本未逐页对照；所读具体版本见记录"
+        ],
+        "full_paper_read": false,
+        "code_read": false,
+        "experiments_independently_verified": false,
+        "stage_changed": false,
+        "source_record_sha256": "fa5bed7e3f8c836c7dc2c4b6e293bf765480c75168a1c5bceff15cd487e967e6"
+      },
+      "identity": {
+        "canonical_id": "ma2019regretful",
+        "arxiv_ids": [
+          "1903.01602"
+        ],
+        "normalized_title": "theregretfulagentheuristicaidednavigationthroughprogressestimation",
+        "source_urls": [
+          "https://openaccess.thecvf.com/content_CVPR_2019/html/Ma_The_Regretful_Agent_Heuristic-Aided_Navigation_Through_Progress_Estimation_CVPR_2019_paper.html",
+          "https://openaccess.thecvf.com/content_CVPR_2019/papers/Ma_The_Regretful_Agent_Heuristic-Aided_Navigation_Through_Progress_Estimation_CVPR_2019_paper.pdf",
+          "https://arxiv.org/html/1903.01602v1"
+        ],
+        "dedup_scope": "recovered baseline records and this expansion; historical pool not fully recovered"
+      },
+      "overview_zh": "研究导航走错后如何依据进度主动回退，比较相邻步骤的进度估计来混合前进与回退选择，并把已访视点的进度标记附到候选方向。已读实验限可回退的离散导航图，估计进度本身也不是完成证据，且禁用回退并非所有指标都下降，不能外推为通用机器人安全恢复。",
+      "overview_label_zh": "研究概述",
+      "overview_attribution": "curator_summary_of_reviewed_sections",
+      "overview_scope_note_zh": "依据现有已审段落记录编写的编者概述；未新读全文，不是完整摘要或全文翻译。"
+    },
+    {
+      "paper_id": "rana2023sayplan",
+      "short_name": "SayPlan",
+      "version": "PMLR正式PDF（本次已保存并计算SHA256）",
+      "source_url": "https://proceedings.mlr.press/v229/rana23a/rana23a.pdf",
+      "read_scope": "section",
+      "read_locations": [
+        "完整摘要；§1–6、Algorithm1、Tables1–3；附录未系统阅读"
+      ],
+      "not_read": [
+        "未宣称全文通读",
+        "代码未读/未运行",
+        "正式版与预印本未逐页对照；所读具体版本见记录"
+      ],
+      "task": "task-objectnav",
+      "pipeline": "expand/contract选择子图，Dijkstra补齐房间间路径，图模拟器verify_plan返回失败信息并触发重规划。",
+      "representation": "范围见方法与证据记录；不由memory命名推断跨任务持久性。",
+      "module": "工具调用、规划验证的邻近支撑；只取移动导航接口，不扩成操作任务大全",
+      "challenge": "大场景图超出上下文预算，长计划会产生不满足前置条件的动作。",
+      "insight": "让LLM检索任务子图；把低层路径和计划可执行性交给外部工具。",
+      "evidence": [
+        {
+          "kind": "method",
+          "locator": "完整摘要；§1–6、Algorithm1、Tables1–3；附录未系统阅读",
+          "statement": "expand/contract选择子图，Dijkstra补齐房间间路径，图模拟器verify_plan返回失败信息并触发重规划。",
+          "attribution": "author_claim"
+        },
+        {
+          "kind": "protocol",
+          "locator": "完整摘要；§1–6、Algorithm1、Tables1–3；附录未系统阅读",
+          "statement": "两种大环境；区分计划Correctness与Executability，比较开放环LLM和仅加路径规划器的变体。",
+          "attribution": "direct_observation"
+        }
+      ],
+      "open_question": "待核：预建图且假设物体静态；图级可执行不等于感知真实、运动安全或任务正确。正文与摘要的场景规模/压缩数有口径差，未复用这些数。",
+      "limits": "预建图且假设物体静态；图级可执行不等于感知真实、运动安全或任务正确。正文与摘要的场景规模/压缩数有口径差，未复用这些数。",
+      "tasks": [
+        "task-objectnav"
+      ],
+      "routes": [
+        "route-runtime",
+        "route-spatial-memory",
+        "route-context"
+      ],
+      "title": "SayPlan: Grounding Large Language Models using 3D Scene Graphs for Scalable Robot Task Planning",
+      "year": 2023,
+      "canonical_id": "rana2023sayplan",
+      "groups": [
+        "evidence-and-action"
+      ],
+      "mode": "baseline",
+      "insight_attribution": "curator_summary",
+      "challenge_attribution": "curator_summary",
+      "conditions": [
+        "出版元数据（保留核验边界）：CoRL 2023, PMLR 229:23–72",
+        "正文所读版本：PMLR正式PDF（本次已保存并计算SHA256）",
+        "编辑归类：工具调用、规划验证的邻近支撑；只取移动导航接口，不扩成操作任务大全",
+        "实际范围：完整摘要；§1–6、Algorithm1、Tables1–3；附录未系统阅读",
+        "来源：https://proceedings.mlr.press/v229/rana23a.html ; https://proceedings.mlr.press/v229/rana23a/rana23a.pdf",
+        "全文/代码/独立复现/Stage均未完成或改变。",
+        "版本对照未完成，不能把作者稿等同出版社最终版。",
+        "task-objectnav仅为移动导航接口的邻近编辑位置，不声称使用标准ObjectNav协议或完整导航harness。"
+      ],
+      "harness_relation": {
+        "kind": "supporting_method",
+        "attribution": "curator_organization",
+        "basis": "工具调用、规划验证的邻近支撑；只取移动导航接口，不扩成操作任务大全 这里只认定所述机制为支撑方法，不提升为完整harness。",
+        "not_claimed": [
+          "academic inheritance",
+          "full-paper reading",
+          "complete navigation harness merely from topical similarity"
+        ]
+      },
+      "authors": "Krishan Rana; Jesse Haviland; Sourav Garg; Jad Abou-Chakra; Ian Reid; Niko Suenderhauf",
+      "source_provenance": {
+        "evidence_level": "primary_complete_abstract_plus_targeted_body",
+        "read_version": "PMLR正式PDF（本次已保存并计算SHA256）",
+        "formal_publication": "CoRL 2023, PMLR 229:23–72",
+        "source_urls": [
+          "https://proceedings.mlr.press/v229/rana23a.html",
+          "https://proceedings.mlr.press/v229/rana23a/rana23a.pdf"
+        ],
+        "checked_at": "2026-10-06T03:10:00Z/2026-10-06T03:16:00Z",
+        "read_locations": [
+          "完整摘要；§1–6、Algorithm1、Tables1–3；附录未系统阅读"
+        ],
+        "not_read": [
+          "未宣称全文通读",
+          "代码未读/未运行",
+          "正式版与预印本未逐页对照；所读具体版本见记录"
+        ],
+        "full_paper_read": false,
+        "code_read": false,
+        "experiments_independently_verified": false,
+        "stage_changed": false,
+        "source_record_sha256": "88d0ace9564b6931080c0ac0a713940f48893f2ea6df3b106a9f4d793de91fae"
+      },
+      "identity": {
+        "canonical_id": "rana2023sayplan",
+        "arxiv_ids": [],
+        "normalized_title": "sayplangroundinglargelanguagemodelsusing3dscenegraphsforscalablerobottaskplanning",
+        "source_urls": [
+          "https://proceedings.mlr.press/v229/rana23a.html",
+          "https://proceedings.mlr.press/v229/rana23a/rana23a.pdf"
+        ],
+        "dedup_scope": "recovered baseline records and this expansion; historical pool not fully recovered"
+      },
+      "overview_zh": "研究大型场景图超出上下文、长计划违反前置条件的问题，通过展开或收缩子图供语言模型检索，再由路径算法补齐房间间路线，并用图模拟器检查计划、反馈重规划。方法依赖预建图并假设物体静态，图中可执行只说明计划满足该表示的条件，不能同时保证真实感知、运动安全与任务正确。",
+      "overview_label_zh": "研究概述",
+      "overview_attribution": "curator_summary_of_reviewed_sections",
+      "overview_scope_note_zh": "依据现有已审段落记录编写的编者概述；未新读全文，不是完整摘要或全文翻译。"
+    },
+    {
+      "paper_id": "rajvanshi2024saynav",
+      "short_name": "SayNav",
+      "version": "正文arXiv:2309.04077v4 (2024-04-03)；正式摘要/元数据核对，未认定逐字同版",
+      "source_url": "https://arxiv.org/html/2309.04077v4",
+      "read_scope": "section",
+      "read_locations": [
+        "完整摘要；§1–5、Algorithm1、Table1–2、§4.8真机演示说明"
+      ],
+      "not_read": [
+        "未宣称全文通读",
+        "代码未读/未运行",
+        "正式版与预印本未逐页对照；所读具体版本见记录"
+      ],
+      "task": "task-objectnav",
+      "pipeline": "层次图记录房间/大小物体；navigate/look工具转成PointNav；失败后更新计划、探索或补观察。",
+      "representation": "范围见方法与证据记录；不由memory命名推断跨任务持久性。",
+      "module": "直接导航运行架构先驱性支撑（不声称首创）；ObjectNav、多目标与恢复闭环",
+      "challenge": "未知多房间场景不能先写完长计划；短程控制和语义搜索的难点不同。",
+      "insight": "边探索边更新场景图，用局部图生成短期计划。",
+      "evidence": [
+        {
+          "kind": "method",
+          "locator": "完整摘要；§1–5、Algorithm1、Table1–2、§4.8真机演示说明",
+          "statement": "层次图记录房间/大小物体；navigate/look工具转成PointNav；失败后更新计划、探索或补观察。",
+          "attribution": "author_claim"
+        },
+        {
+          "kind": "protocol",
+          "locator": "完整摘要；§1–5、Algorithm1、Table1–2、§4.8真机演示说明",
+          "statement": "132个ProcTHOR房屋、每次3目标；Table1区分GT/视觉图与oracle/学习控制器，防止混淆上限和可执行配置。",
+          "attribution": "direct_observation"
+        }
+      ],
+      "open_question": "待核：§5明确将计划验证与反馈机制列为未来工作；识别不到开门状态会重复失败，故不能标完整证据验证。",
+      "limits": "§5明确将计划验证与反馈机制列为未来工作；识别不到开门状态会重复失败，故不能标完整证据验证。",
+      "tasks": [
+        "task-objectnav"
+      ],
+      "routes": [
+        "route-runtime",
+        "route-spatial-memory"
+      ],
+      "title": "SayNav: Grounding Large Language Models for Dynamic Planning to Navigation in New Environments",
+      "year": 2024,
+      "canonical_id": "rajvanshi2024saynav",
+      "groups": [
+        "evidence-and-action"
+      ],
+      "mode": "baseline",
+      "insight_attribution": "curator_summary",
+      "challenge_attribution": "curator_summary",
+      "conditions": [
+        "出版元数据（保留核验边界）：ICAPS 2024, 34(1):464–474; DOI 10.1609/icaps.v34i1.31506; published 2024-05-30",
+        "正文所读版本：正文arXiv:2309.04077v4 (2024-04-03)；正式摘要/元数据核对，未认定逐字同版",
+        "编辑归类：直接导航运行架构先驱性支撑（不声称首创）；ObjectNav、多目标与恢复闭环",
+        "实际范围：完整摘要；§1–5、Algorithm1、Table1–2、§4.8真机演示说明",
+        "来源：https://ojs.aaai.org/index.php/ICAPS/article/view/31506 ; https://arxiv.org/html/2309.04077v4",
+        "全文/代码/独立复现/Stage均未完成或改变。",
+        "版本对照未完成，不能把作者稿等同出版社最终版。"
+      ],
+      "harness_relation": {
+        "kind": "supporting_method",
+        "attribution": "curator_organization",
+        "basis": "直接导航运行架构先驱性支撑（不声称首创）；ObjectNav、多目标与恢复闭环 这里只认定所述机制为支撑方法，不提升为完整harness。",
+        "not_claimed": [
+          "academic inheritance",
+          "full-paper reading",
+          "complete navigation harness merely from topical similarity"
+        ]
+      },
+      "authors": "Abhinav Rajvanshi; Karan Sikka; Xiao Lin; Bhoram Lee; Han-Pang Chiu; Alvaro Velasquez",
+      "source_provenance": {
+        "evidence_level": "primary_complete_abstract_plus_targeted_body",
+        "read_version": "正文arXiv:2309.04077v4 (2024-04-03)；正式摘要/元数据核对，未认定逐字同版",
+        "formal_publication": "ICAPS 2024, 34(1):464–474; DOI 10.1609/icaps.v34i1.31506; published 2024-05-30",
+        "source_urls": [
+          "https://ojs.aaai.org/index.php/ICAPS/article/view/31506",
+          "https://arxiv.org/html/2309.04077v4"
+        ],
+        "checked_at": "2026-10-06T03:10:00Z/2026-10-06T03:16:00Z",
+        "read_locations": [
+          "完整摘要；§1–5、Algorithm1、Table1–2、§4.8真机演示说明"
+        ],
+        "not_read": [
+          "未宣称全文通读",
+          "代码未读/未运行",
+          "正式版与预印本未逐页对照；所读具体版本见记录"
+        ],
+        "full_paper_read": false,
+        "code_read": false,
+        "experiments_independently_verified": false,
+        "stage_changed": false,
+        "source_record_sha256": "0e4a087755b672392b82dc315eb0d3d0052b5e4086f6699090f975fa8045dc37"
+      },
+      "identity": {
+        "canonical_id": "rajvanshi2024saynav",
+        "arxiv_ids": [
+          "2309.04077"
+        ],
+        "normalized_title": "saynavgroundinglargelanguagemodelsfordynamicplanningtonavigationinnewenvironments",
+        "source_urls": [
+          "https://ojs.aaai.org/index.php/ICAPS/article/view/31506",
+          "https://arxiv.org/html/2309.04077v4"
+        ],
+        "dedup_scope": "recovered baseline records and this expansion; historical pool not fully recovered"
+      },
+      "overview_zh": "研究未知多房间场景中如何边探索边做短期导航计划，以层次场景图记录房间与物体，将移动、观察工具转换为短程导航，并在失败后更新计划或补充观察。已读评测区分理想信息与视觉建图、不同控制器配置，而计划验证仍列为未来工作，不能标为完整的证据验证闭环。",
+      "overview_label_zh": "研究概述",
+      "overview_attribution": "curator_summary_of_reviewed_sections",
+      "overview_scope_note_zh": "依据现有已审段落记录编写的编者概述；未新读全文，不是完整摘要或全文翻译。"
+    },
+    {
+      "paper_id": "li2024memonav",
+      "short_name": "MemoNav",
+      "version": "CVF accepted PDF；补充限制核arXiv:2402.19161v2 (2024-03-28)",
+      "source_url": "https://openaccess.thecvf.com/content/CVPR2024/papers/Li_MemoNav_Working_Memory_Model_for_Visual_Navigation_CVPR_2024_paper.pdf",
+      "read_scope": "section",
+      "read_locations": [
+        "完整摘要；§3–5、Tables1–3、补充§13；未核全部附录图"
+      ],
+      "not_read": [
+        "未宣称全文通读",
+        "代码未读/未运行",
+        "正式版与预印本未逐页对照；所读具体版本见记录"
+      ],
+      "task": "task-objectnav",
+      "pipeline": "从VGM扩展：注意力遗忘STM，global node聚合LTM，GATv2生成WM；换目标恢复被遗忘节点。",
+      "representation": "范围见方法与证据记录；不由memory命名推断跨任务持久性。",
+      "module": "记忆选择与上下文分配的经典支撑；学习策略分支，非training-free harness",
+      "challenge": "所有历史节点都参与决策，会引入目标无关信息。",
+      "insight": "按目标相关性临时排除记忆，同时保留全局聚合通路。",
+      "evidence": [
+        {
+          "kind": "method",
+          "locator": "完整摘要；§3–5、Tables1–3、补充§13；未核全部附录图",
+          "statement": "从VGM扩展：注意力遗忘STM，global node聚合LTM，GATv2生成WM；换目标恢复被遗忘节点。",
+          "attribution": "author_claim"
+        },
+        {
+          "kind": "protocol",
+          "locator": "完整摘要；§3–5、Tables1–3、补充§13；未核全部附录图",
+          "statement": "Habitat中的Gibson/MP3D、多目标ImageNav；组件和LTM消融；SR/PR改善不等于所有SPL/PPL最优。",
+          "attribution": "direct_observation"
+        }
+      ],
+      "open_question": "待核：遗忘是推理时后处理，节点仍保留供定位，作者明确说不降低存储占用；LTM不自动等同跨部署情节库。",
+      "limits": "遗忘是推理时后处理，节点仍保留供定位，作者明确说不降低存储占用；LTM不自动等同跨部署情节库。",
+      "tasks": [
+        "task-objectnav"
+      ],
+      "routes": [
+        "route-spatial-memory",
+        "route-context",
+        "route-learned-policy"
+      ],
+      "title": "MemoNav: Working Memory Model for Visual Navigation",
+      "year": 2024,
+      "canonical_id": "li2024memonav",
+      "groups": [
+        "memory-validity"
+      ],
+      "mode": "baseline",
+      "insight_attribution": "curator_summary",
+      "challenge_attribution": "curator_summary",
+      "conditions": [
+        "出版元数据（保留核验边界）：CVPR 2024, pp.17913–17922",
+        "正文所读版本：CVF accepted PDF；补充限制核arXiv:2402.19161v2 (2024-03-28)",
+        "编辑归类：记忆选择与上下文分配的经典支撑；学习策略分支，非training-free harness",
+        "实际范围：完整摘要；§3–5、Tables1–3、补充§13；未核全部附录图",
+        "来源：https://openaccess.thecvf.com/content/CVPR2024/html/Li_MemoNav_Working_Memory_Model_for_Visual_Navigation_CVPR_2024_paper.html ; https://openaccess.thecvf.com/content/CVPR2024/papers/Li_MemoNav_Working_Memory_Model_for_Visual_Navigation_CVPR_2024_paper.pdf ; https://arxiv.org/html/2402.19161v2",
+        "全文/代码/独立复现/Stage均未完成或改变。",
+        "版本对照未完成，不能把作者稿等同出版社最终版。",
+        "当前任务枝为物体与多模态目标；本工作实际是ImageNav，不改称ObjectNav。"
+      ],
+      "harness_relation": {
+        "kind": "supporting_method",
+        "attribution": "curator_organization",
+        "basis": "记忆选择与上下文分配的经典支撑；学习策略分支，非training-free harness 这里只认定所述机制为支撑方法，不提升为完整harness。",
+        "not_claimed": [
+          "academic inheritance",
+          "full-paper reading",
+          "complete navigation harness merely from topical similarity"
+        ]
+      },
+      "authors": "Hongxin Li; Zeyu Wang; Xu Yang; Yuran Yang; Shuqi Mei; Zhaoxiang Zhang",
+      "source_provenance": {
+        "evidence_level": "primary_complete_abstract_plus_targeted_body",
+        "read_version": "CVF accepted PDF；补充限制核arXiv:2402.19161v2 (2024-03-28)",
+        "formal_publication": "CVPR 2024, pp.17913–17922",
+        "source_urls": [
+          "https://openaccess.thecvf.com/content/CVPR2024/html/Li_MemoNav_Working_Memory_Model_for_Visual_Navigation_CVPR_2024_paper.html",
+          "https://openaccess.thecvf.com/content/CVPR2024/papers/Li_MemoNav_Working_Memory_Model_for_Visual_Navigation_CVPR_2024_paper.pdf",
+          "https://arxiv.org/html/2402.19161v2"
+        ],
+        "checked_at": "2026-10-06T03:10:00Z/2026-10-06T03:16:00Z",
+        "read_locations": [
+          "完整摘要；§3–5、Tables1–3、补充§13；未核全部附录图"
+        ],
+        "not_read": [
+          "未宣称全文通读",
+          "代码未读/未运行",
+          "正式版与预印本未逐页对照；所读具体版本见记录"
+        ],
+        "full_paper_read": false,
+        "code_read": false,
+        "experiments_independently_verified": false,
+        "stage_changed": false,
+        "source_record_sha256": "4997527c0b4a8cbca306abff9a927878152aacb4845953739728ad376024957b"
+      },
+      "identity": {
+        "canonical_id": "li2024memonav",
+        "arxiv_ids": [
+          "2402.19161"
+        ],
+        "normalized_title": "memonavworkingmemorymodelforvisualnavigation",
+        "source_urls": [
+          "https://openaccess.thecvf.com/content/CVPR2024/html/Li_MemoNav_Working_Memory_Model_for_Visual_Navigation_CVPR_2024_paper.html",
+          "https://openaccess.thecvf.com/content/CVPR2024/papers/Li_MemoNav_Working_Memory_Model_for_Visual_Navigation_CVPR_2024_paper.pdf",
+          "https://arxiv.org/html/2402.19161v2"
+        ],
+        "dedup_scope": "recovered baseline records and this expansion; historical pool not fully recovered"
+      },
+      "overview_zh": "研究全部历史节点参与视觉导航决策时带来的无关信息，通过按目标相关性暂时遗忘部分节点、全局节点聚合以及图注意力形成工作记忆，换目标时可恢复节点。被忽略的节点仍保留供定位，因而不减少存储占用；这里的长期记忆也不能自动解释为跨部署保存的经验库。",
+      "overview_label_zh": "研究概述",
+      "overview_attribution": "curator_summary_of_reviewed_sections",
+      "overview_scope_note_zh": "依据现有已审段落记录编写的编者概述；未新读全文，不是完整摘要或全文翻译。"
+    },
+    {
+      "paper_id": "werby2024hovsg",
+      "short_name": "HOV-SG",
+      "version": "RSS正式PDF",
+      "source_url": "https://roboticsproceedings.org/rss20/p077.pdf",
+      "read_scope": "section",
+      "read_locations": [
+        "完整摘要；§II–IV，TablesI、IV–VI；非全文附录精读"
+      ],
+      "not_read": [
+        "未宣称全文通读",
+        "代码未读/未运行",
+        "正式版与预印本未逐页对照；所读具体版本见记录"
+      ],
+      "task": "task-objectnav",
+      "pipeline": "RGB-D/里程计形成分段特征，再建楼层—房间—物体图；分层查询目标，由跨楼层Voronoi图导航。",
+      "representation": "范围见方法与证据记录；不由memory命名推断跨任务持久性。",
+      "module": "空间/语义记忆到几何执行的桥接支撑；连接已在28池内的VLMaps/ConceptGraphs",
+      "challenge": "平面物体检索难表达楼层和房间约束，也不能直接给跨层路径。",
+      "insight": "把开放词汇语义层级和可通行路径图关联。",
+      "evidence": [
+        {
+          "kind": "method",
+          "locator": "完整摘要；§II–IV，TablesI、IV–VI；非全文附录精读",
+          "statement": "RGB-D/里程计形成分段特征，再建楼层—房间—物体图；分层查询目标，由跨楼层Voronoi图导航。",
+          "attribution": "author_claim"
+        },
+        {
+          "kind": "protocol",
+          "locator": "完整摘要；§II–IV，TablesI、IV–VI；非全文附录精读",
+          "statement": "ScanNet/Replica/HM3DSem与Spot双层楼实验；TableVI把检索成功与导航成功分开，41物体试次为29次检索成功、23次导航成功。",
+          "attribution": "direct_observation"
+        }
+      ],
+      "open_question": "待核：依赖建图和里程计质量；检索/掩膜匹配与1米导航成功不可互换。不是在线开放世界持续适应证明。",
+      "limits": "依赖建图和里程计质量；检索/掩膜匹配与1米导航成功不可互换。不是在线开放世界持续适应证明。",
+      "tasks": [
+        "task-objectnav"
+      ],
+      "routes": [
+        "route-spatial-memory",
+        "route-runtime"
+      ],
+      "title": "Hierarchical Open-Vocabulary 3D Scene Graphs for Language-Grounded Robot Navigation",
+      "year": 2024,
+      "canonical_id": "werby2024hovsg",
+      "groups": [
+        "memory-validity"
+      ],
+      "mode": "baseline",
+      "insight_attribution": "curator_summary",
+      "challenge_attribution": "curator_summary",
+      "conditions": [
+        "出版元数据（保留核验边界）：RSS 2024; DOI 10.15607/RSS.2024.XX.077",
+        "正文所读版本：RSS正式PDF",
+        "编辑归类：空间/语义记忆到几何执行的桥接支撑；连接已在28池内的VLMaps/ConceptGraphs",
+        "实际范围：完整摘要；§II–IV，TablesI、IV–VI；非全文附录精读",
+        "来源：https://roboticsproceedings.org/rss20/p077.html ; https://roboticsproceedings.org/rss20/p077.pdf ; https://hovsg.github.io",
+        "全文/代码/独立复现/Stage均未完成或改变。",
+        "版本对照未完成，不能把作者稿等同出版社最终版。"
+      ],
+      "harness_relation": {
+        "kind": "supporting_method",
+        "attribution": "curator_organization",
+        "basis": "空间/语义记忆到几何执行的桥接支撑；连接已在28池内的VLMaps/ConceptGraphs 这里只认定所述机制为支撑方法，不提升为完整harness。",
+        "not_claimed": [
+          "academic inheritance",
+          "full-paper reading",
+          "complete navigation harness merely from topical similarity"
+        ]
+      },
+      "authors": "Abdelrhman Werby; Chenguang Huang; Martin Büchner; Abhinav Valada; Wolfram Burgard",
+      "source_provenance": {
+        "evidence_level": "primary_complete_abstract_plus_targeted_body",
+        "read_version": "RSS正式PDF",
+        "formal_publication": "RSS 2024; DOI 10.15607/RSS.2024.XX.077",
+        "source_urls": [
+          "https://roboticsproceedings.org/rss20/p077.html",
+          "https://roboticsproceedings.org/rss20/p077.pdf",
+          "https://hovsg.github.io"
+        ],
+        "checked_at": "2026-10-06T03:10:00Z/2026-10-06T03:16:00Z",
+        "read_locations": [
+          "完整摘要；§II–IV，TablesI、IV–VI；非全文附录精读"
+        ],
+        "not_read": [
+          "未宣称全文通读",
+          "代码未读/未运行",
+          "正式版与预印本未逐页对照；所读具体版本见记录"
+        ],
+        "full_paper_read": false,
+        "code_read": false,
+        "experiments_independently_verified": false,
+        "stage_changed": false,
+        "source_record_sha256": "81f1d7f4cd35f8398722db5f224cf6d66dc53897da08eb21869e89a75aacd7e8"
+      },
+      "identity": {
+        "canonical_id": "werby2024hovsg",
+        "arxiv_ids": [],
+        "normalized_title": "hierarchicalopenvocabulary3dscenegraphsforlanguagegroundedrobotnavigation",
+        "source_urls": [
+          "https://roboticsproceedings.org/rss20/p077.html",
+          "https://roboticsproceedings.org/rss20/p077.pdf",
+          "https://hovsg.github.io"
+        ],
+        "dedup_scope": "recovered baseline records and this expansion; historical pool not fully recovered"
+      },
+      "overview_zh": "研究带楼层、房间限制的语言目标怎样连接可通行路线，从图像、深度与里程计构建楼层—房间—物体层次图，分层检索后由跨楼层路径图执行导航。已读证据将检索成功与导航成功分开，方法依赖建图与里程计质量，不能把识别到目标直接当作到达，也未证明持续开放世界适应。",
+      "overview_label_zh": "研究概述",
+      "overview_attribution": "curator_summary_of_reviewed_sections",
+      "overview_scope_note_zh": "依据现有已审段落记录编写的编者概述；未新读全文，不是完整摘要或全文翻译。"
+    },
+    {
+      "paper_id": "anwar2025remembr",
+      "short_name": "ReMEmbR",
+      "version": "arXiv:2409.13682v1 (2024-09-20)；ICRA最终全文差异未核",
+      "source_url": "https://arxiv.org/html/2409.13682v1",
+      "read_scope": "section",
+      "read_locations": [
+        "完整摘要；§III–VIII、TablesI–II；官方项目/仓库说明，代码未读"
+      ],
+      "not_read": [
+        "未宣称全文通读",
+        "代码未读/未运行",
+        "正式版与预印本未逐页对照；所读具体版本见记录"
+      ],
+      "task": "task-objectnav",
+      "pipeline": "VILA分段caption进入向量库；LLM调用文本/时间/位置检索，输出结构化答案及坐标。",
+      "representation": "范围见方法与证据记录；不由memory命名推断跨任务持久性。",
+      "module": "情节/时空记忆及工具检索支撑；优先补缺，harness-adjacent而非完整导航harness",
+      "challenge": "长期机器人历史无法全部塞入上下文，纯文字回答也未必能变成导航目标。",
+      "insight": "把记忆构建与按需多轮检索分离，并保留时间与位置。",
+      "evidence": [
+        {
+          "kind": "method",
+          "locator": "完整摘要；§III–VIII、TablesI–II；官方项目/仓库说明，代码未读",
+          "statement": "VILA分段caption进入向量库；LLM调用文本/时间/位置检索，输出结构化答案及坐标。",
+          "attribution": "author_claim"
+        },
+        {
+          "kind": "protocol",
+          "locator": "完整摘要；§III–VIII、TablesI–II；官方项目/仓库说明，代码未读",
+          "statement": "NaVQA：7段CODa视频、210问题，评时空误差与描述正确性；比较单轮/多轮检索，并有Nova Carter部署。",
+          "attribution": "direct_observation"
+        }
+      ],
+      "open_question": "待核：主要是QA与目标生成，非完整导航成功率benchmark；空间正确阈值15米，不能当精确到点。caption遗漏仍会丢证据。",
+      "limits": "主要是QA与目标生成，非完整导航成功率benchmark；空间正确阈值15米，不能当精确到点。caption遗漏仍会丢证据。",
+      "tasks": [
+        "task-objectnav"
+      ],
+      "routes": [
+        "route-spatial-memory",
+        "route-context"
+      ],
+      "title": "ReMEmbR: Building and Reasoning Over Long-Horizon Spatio-Temporal Memory for Robot Navigation",
+      "year": 2025,
+      "canonical_id": "anwar2025remembr",
+      "groups": [
+        "memory-validity"
+      ],
+      "mode": "baseline",
+      "insight_attribution": "curator_summary",
+      "challenge_attribution": "curator_summary",
+      "conditions": [
+        "出版元数据（保留核验边界）：ICRA 2025（作者官方项目确认）；DOI/页码未作本轮一手核验，不填入正式字段",
+        "正文所读版本：arXiv:2409.13682v1 (2024-09-20)；ICRA最终全文差异未核",
+        "编辑归类：情节/时空记忆及工具检索支撑；优先补缺，harness-adjacent而非完整导航harness",
+        "实际范围：完整摘要；§III–VIII、TablesI–II；官方项目/仓库说明，代码未读",
+        "来源：https://nvidia-ai-iot.github.io/remembr/ ; https://arxiv.org/html/2409.13682v1 ; https://github.com/NVIDIA-AI-IOT/remembr",
+        "全文/代码/独立复现/Stage均未完成或改变。",
+        "版本对照未完成，不能把作者稿等同出版社最终版。",
+        "task-objectnav仅为移动导航接口的邻近编辑位置，不声称使用标准ObjectNav协议或完整导航harness。"
+      ],
+      "harness_relation": {
+        "kind": "supporting_method",
+        "attribution": "curator_organization",
+        "basis": "情节/时空记忆及工具检索支撑；优先补缺，harness-adjacent而非完整导航harness 这里只认定所述机制为支撑方法，不提升为完整harness。",
+        "not_claimed": [
+          "academic inheritance",
+          "full-paper reading",
+          "complete navigation harness merely from topical similarity"
+        ]
+      },
+      "authors": "Abrar Anwar; John Welsh; Joydeep Biswas; Soha Pouya; Yan Chang",
+      "source_provenance": {
+        "evidence_level": "primary_complete_abstract_plus_targeted_body",
+        "read_version": "arXiv:2409.13682v1 (2024-09-20)；ICRA最终全文差异未核",
+        "formal_publication": "ICRA 2025（作者官方项目确认）；DOI/页码未作本轮一手核验，不填入正式字段",
+        "source_urls": [
+          "https://nvidia-ai-iot.github.io/remembr/",
+          "https://arxiv.org/html/2409.13682v1",
+          "https://github.com/NVIDIA-AI-IOT/remembr"
+        ],
+        "checked_at": "2026-10-06T03:10:00Z/2026-10-06T03:16:00Z",
+        "read_locations": [
+          "完整摘要；§III–VIII、TablesI–II；官方项目/仓库说明，代码未读"
+        ],
+        "not_read": [
+          "未宣称全文通读",
+          "代码未读/未运行",
+          "正式版与预印本未逐页对照；所读具体版本见记录"
+        ],
+        "full_paper_read": false,
+        "code_read": false,
+        "experiments_independently_verified": false,
+        "stage_changed": false,
+        "source_record_sha256": "9d70326f7d08c8d017bc9638008010a5cae52d6baeb9a512ae995d236ab37d43"
+      },
+      "identity": {
+        "canonical_id": "anwar2025remembr",
+        "arxiv_ids": [
+          "2409.13682"
+        ],
+        "normalized_title": "remembrbuildingandreasoningoverlonghorizonspatiotemporalmemoryforrobotnavigation",
+        "source_urls": [
+          "https://nvidia-ai-iot.github.io/remembr/",
+          "https://arxiv.org/html/2409.13682v1",
+          "https://github.com/NVIDIA-AI-IOT/remembr"
+        ],
+        "dedup_scope": "recovered baseline records and this expansion; historical pool not fully recovered"
+      },
+      "overview_zh": "研究长时机器人历史如何按需检索并转成导航目标，将视频片段描述连同时间与位置存入向量库，再由语言模型多轮调用检索工具，输出结构化回答和坐标。已读评测主要针对问答及目标生成，空间容差较宽且文字描述可能遗漏信息，不能作为精确到点或完整导航成功率的验证。",
+      "overview_label_zh": "研究概述",
+      "overview_attribution": "curator_summary_of_reviewed_sections",
+      "overview_scope_note_zh": "依据现有已审段落记录编写的编者概述；未新读全文，不是完整摘要或全文翻译。"
+    },
+    {
+      "paper_id": "xu2026memoir",
+      "short_name": "Memoir",
+      "version": "arXiv:2510.08553v2 (2026-03-30)",
+      "source_url": "https://arxiv.org/html/2510.08553v2",
+      "read_scope": "section",
+      "read_locations": [
+        "完整摘要；§II–V-A/B、Algorithms1–3、TablesII–III、retrieval limitation段；非全附录阅读"
+      ],
+      "not_read": [
+        "未宣称全文通读",
+        "代码未读/未运行",
+        "正式版与预印本未逐页对照；所读具体版本见记录"
+      ],
+      "task": "task-vln / task-continual",
+      "pipeline": "按视点锚定观测库与行为历史库；想象匹配检索后，由扩展DUET的三个编码分支融合。",
+      "representation": "范围见方法与证据记录；不由memory命名推断跨任务持久性。",
+      "module": "2026正式期刊支撑：跨episode记忆检索；连接IVLN、OVER-NAV",
+      "challenge": "全库注入或固定邻域检索会带入噪声，也遗漏行为经验。",
+      "insight": "让世界模型的未来状态作为检索query，而非直接把幻想当环境事实。",
+      "evidence": [
+        {
+          "kind": "method",
+          "locator": "完整摘要；§II–V-A/B、Algorithms1–3、TablesII–III、retrieval limitation段；非全附录阅读",
+          "statement": "按视点锚定观测库与行为历史库；想象匹配检索后，由扩展DUET的三个编码分支融合。",
+          "attribution": "author_claim"
+        },
+        {
+          "kind": "protocol",
+          "locator": "完整摘要；§II–V-A/B、Algorithms1–3、TablesII–III、retrieval limitation段；非全附录阅读",
+          "statement": "IR2R与GSA-R2R；TableII区分基础模型、增广和full-graph预训练。GR-DUET对应IR2R unseen SPL 67.9→73.3，为5.4百分点。",
+          "attribution": "direct_observation"
+        }
+      ],
+      "open_question": "待核：seen/unseen tour长度不同；检索空间细节会失配。仅固定作者稿正文，不能混作出版社逐字版本，也不是LLM工具harness。",
+      "limits": "seen/unseen tour长度不同；检索空间细节会失配。仅固定作者稿正文，不能混作出版社逐字版本，也不是LLM工具harness。",
+      "tasks": [
+        "task-vln",
+        "task-continual"
+      ],
+      "routes": [
+        "route-spatial-memory",
+        "route-learned-policy"
+      ],
+      "title": "Dream to Recall: Imagination-Guided Experience Retrieval for Memory-Persistent Vision-and-Language Navigation",
+      "year": 2026,
+      "canonical_id": "xu2026memoir",
+      "groups": [
+        "memory-validity"
+      ],
+      "mode": "baseline",
+      "insight_attribution": "curator_summary",
+      "challenge_attribution": "curator_summary",
+      "conditions": [
+        "出版元数据（保留核验边界）：TPAMI 2026 accepted（作者arXiv）；PubMed编目48(8):9035–9049, DOI 10.1109/TPAMI.2026.3679426；出版社最终版未直接打开",
+        "正文所读版本：arXiv:2510.08553v2 (2026-03-30)",
+        "编辑归类：2026正式期刊支撑：跨episode记忆检索；连接IVLN、OVER-NAV",
+        "实际范围：完整摘要；§II–V-A/B、Algorithms1–3、TablesII–III、retrieval limitation段；非全附录阅读",
+        "来源：https://arxiv.org/html/2510.08553v2 ; https://arxiv.org/abs/2510.08553v2 ; https://pubmed.ncbi.nlm.nih.gov/41915513/",
+        "全文/代码/独立复现/Stage均未完成或改变。",
+        "版本对照未完成，不能把作者稿等同出版社最终版。"
+      ],
+      "harness_relation": {
+        "kind": "supporting_method",
+        "attribution": "curator_organization",
+        "basis": "2026正式期刊支撑：跨episode记忆检索；连接IVLN、OVER-NAV 这里只认定所述机制为支撑方法，不提升为完整harness。",
+        "not_claimed": [
+          "academic inheritance",
+          "full-paper reading",
+          "complete navigation harness merely from topical similarity"
+        ]
+      },
+      "authors": "Yunzhe Xu; Yiyuan Pan; Zhe Liu",
+      "source_provenance": {
+        "evidence_level": "primary_complete_abstract_plus_targeted_body",
+        "read_version": "arXiv:2510.08553v2 (2026-03-30)",
+        "formal_publication": "TPAMI 2026 accepted（作者arXiv）；PubMed编目48(8):9035–9049, DOI 10.1109/TPAMI.2026.3679426；出版社最终版未直接打开",
+        "source_urls": [
+          "https://arxiv.org/html/2510.08553v2",
+          "https://arxiv.org/abs/2510.08553v2",
+          "https://pubmed.ncbi.nlm.nih.gov/41915513/"
+        ],
+        "checked_at": "2026-10-06T03:10:00Z/2026-10-06T03:16:00Z",
+        "read_locations": [
+          "完整摘要；§II–V-A/B、Algorithms1–3、TablesII–III、retrieval limitation段；非全附录阅读"
+        ],
+        "not_read": [
+          "未宣称全文通读",
+          "代码未读/未运行",
+          "正式版与预印本未逐页对照；所读具体版本见记录"
+        ],
+        "full_paper_read": false,
+        "code_read": false,
+        "experiments_independently_verified": false,
+        "stage_changed": false,
+        "source_record_sha256": "74eb1181add90a7de0206f03f14d4fd0d98f9a138e094928ed7955a23f3f00a2"
+      },
+      "identity": {
+        "canonical_id": "xu2026memoir",
+        "arxiv_ids": [
+          "2510.08553"
+        ],
+        "normalized_title": "dreamtorecallimaginationguidedexperienceretrievalformemorypersistentvisionandlanguagenavigation",
+        "source_urls": [
+          "https://arxiv.org/html/2510.08553v2",
+          "https://arxiv.org/abs/2510.08553v2",
+          "https://pubmed.ncbi.nlm.nih.gov/41915513/"
+        ],
+        "dedup_scope": "recovered baseline records and this expansion; historical pool not fully recovered"
+      },
+      "overview_zh": "研究跨任务记忆检索如何减少无关历史并利用行为经验，以视点组织观测和行为记录，用想象匹配选择相关经验，再由扩展的图导航模型融合。已读证据受训练配置、任务序列长度和检索失配影响，适合讨论跨回合记忆的选择方式，不能据此认定是完整的语言模型工具调用系统。",
+      "overview_label_zh": "研究概述",
+      "overview_attribution": "curator_summary_of_reviewed_sections",
+      "overview_scope_note_zh": "依据现有已审段落记录编写的编者概述；未新读全文，不是完整摘要或全文翻译。"
+    },
+    {
+      "paper_id": "wang2026lmee",
+      "short_name": "LMEE / MemoryExplorer",
+      "version": "CVF accepted PDF；补充§7/14/15核arXiv:2601.10744v2 (2026-03-22)",
+      "source_url": "https://openaccess.thecvf.com/content/CVPR2026/papers/Wang_Explore_with_Long-term_Memory_A_Benchmark_and_Multimodal_LLM-based_Reinforcement_CVPR_2026_paper.pdf",
+      "read_scope": "section",
+      "read_locations": [
+        "完整摘要；§3–5、Tables2–4；作者稿补充§7、§14–15；非所有附录/图"
+      ],
+      "not_read": [
+        "未宣称全文通读",
+        "代码未读/未运行",
+        "正式版与预印本未逐页对照；所读具体版本见记录"
+      ],
+      "task": "task-objectnav / task-continual",
+      "pipeline": "GRPO奖励动作/frontier/回答/格式；模型调用CLIP检索工具，限单轮调用。",
+      "representation": "范围见方法与证据记录；不由memory命名推断跨任务持久性。",
+      "module": "2026评测与学习型工具使用支撑；基准与模型分开挂树",
+      "challenge": "仅测终点成功看不出是否有效调用历史，也难判断探索过程。",
+      "insight": "多目标导航加目标相关记忆问答，把主动检索纳入学习与评测。",
+      "evidence": [
+        {
+          "kind": "method",
+          "locator": "完整摘要；§3–5、Tables2–4；作者稿补充§7、§14–15；非所有附录/图",
+          "statement": "GRPO奖励动作/frontier/回答/格式；模型调用CLIP检索工具，限单轮调用。",
+          "attribution": "author_claim"
+        },
+        {
+          "kind": "protocol",
+          "locator": "完整摘要；§3–5、Tables2–4；作者稿补充§7、§14–15；非所有附录/图",
+          "statement": "LMEE主表58/166任务，补充给全量；GOAT比较只取36场景278子任务，Table3明确另有全量原论文基线。",
+          "attribution": "direct_observation"
+        }
+      ],
+      "open_question": "待核：混列子集与原表不能推全榜优势；QA含模型评分；作者稿称推理慢、非实时，voxel实现不支持多层。",
+      "limits": "混列子集与原表不能推全榜优势；QA含模型评分；作者稿称推理慢、非实时，voxel实现不支持多层。",
+      "tasks": [
+        "task-objectnav",
+        "task-continual"
+      ],
+      "routes": [
+        "route-spatial-memory",
+        "route-learned-policy",
+        "route-protocol"
+      ],
+      "title": "Explore with Long-term Memory: A Benchmark and Multimodal LLM-based Reinforcement Learning Framework for Embodied Exploration",
+      "year": 2026,
+      "canonical_id": "wang2026lmee",
+      "groups": [
+        "memory-validity"
+      ],
+      "mode": "baseline",
+      "insight_attribution": "curator_summary",
+      "challenge_attribution": "curator_summary",
+      "conditions": [
+        "出版元数据（保留核验边界）：CVPR 2026, pp.37098–37108",
+        "正文所读版本：CVF accepted PDF；补充§7/14/15核arXiv:2601.10744v2 (2026-03-22)",
+        "编辑归类：2026评测与学习型工具使用支撑；基准与模型分开挂树",
+        "实际范围：完整摘要；§3–5、Tables2–4；作者稿补充§7、§14–15；非所有附录/图",
+        "来源：https://openaccess.thecvf.com/content/CVPR2026/html/Wang_Explore_with_Long-term_Memory_A_Benchmark_and_Multimodal_LLM-based_Reinforcement_CVPR_2026_paper.html ; https://openaccess.thecvf.com/content/CVPR2026/papers/Wang_Explore_with_Long-term_Memory_A_Benchmark_and_Multimodal_LLM-based_Reinforcement_CVPR_2026_paper.pdf ; https://arxiv.org/html/2601.10744v2",
+        "全文/代码/独立复现/Stage均未完成或改变。",
+        "版本对照未完成，不能把作者稿等同出版社最终版。"
+      ],
+      "harness_relation": {
+        "kind": "supporting_method",
+        "attribution": "curator_organization",
+        "basis": "2026评测与学习型工具使用支撑；基准与模型分开挂树 这里只认定所述机制为支撑方法，不提升为完整harness。",
+        "not_claimed": [
+          "academic inheritance",
+          "full-paper reading",
+          "complete navigation harness merely from topical similarity"
+        ]
+      },
+      "authors": "Sen Wang; Bangwei Liu; Zhenkun Gao; Lizhuang Ma; Xuhong Wang; Yuan Xie; Xin Tan",
+      "source_provenance": {
+        "evidence_level": "primary_complete_abstract_plus_targeted_body",
+        "read_version": "CVF accepted PDF；补充§7/14/15核arXiv:2601.10744v2 (2026-03-22)",
+        "formal_publication": "CVPR 2026, pp.37098–37108",
+        "source_urls": [
+          "https://openaccess.thecvf.com/content/CVPR2026/html/Wang_Explore_with_Long-term_Memory_A_Benchmark_and_Multimodal_LLM-based_Reinforcement_CVPR_2026_paper.html",
+          "https://openaccess.thecvf.com/content/CVPR2026/papers/Wang_Explore_with_Long-term_Memory_A_Benchmark_and_Multimodal_LLM-based_Reinforcement_CVPR_2026_paper.pdf",
+          "https://arxiv.org/html/2601.10744v2"
+        ],
+        "checked_at": "2026-10-06T03:10:00Z/2026-10-06T03:16:00Z",
+        "read_locations": [
+          "完整摘要；§3–5、Tables2–4；作者稿补充§7、§14–15；非所有附录/图"
+        ],
+        "not_read": [
+          "未宣称全文通读",
+          "代码未读/未运行",
+          "正式版与预印本未逐页对照；所读具体版本见记录"
+        ],
+        "full_paper_read": false,
+        "code_read": false,
+        "experiments_independently_verified": false,
+        "stage_changed": false,
+        "source_record_sha256": "6ede72040c3af36d217ff56bf31b2bbaff8c6cb215dbe121d39fc02390f33fb9"
+      },
+      "identity": {
+        "canonical_id": "wang2026lmee",
+        "arxiv_ids": [
+          "2601.10744"
+        ],
+        "normalized_title": "explorewithlongtermmemoryabenchmarkandmultimodalllmbasedreinforcementlearningframeworkforembodiedexploration",
+        "source_urls": [
+          "https://openaccess.thecvf.com/content/CVPR2026/html/Wang_Explore_with_Long-term_Memory_A_Benchmark_and_Multimodal_LLM-based_Reinforcement_CVPR_2026_paper.html",
+          "https://openaccess.thecvf.com/content/CVPR2026/papers/Wang_Explore_with_Long-term_Memory_A_Benchmark_and_Multimodal_LLM-based_Reinforcement_CVPR_2026_paper.pdf",
+          "https://arxiv.org/html/2601.10744v2"
+        ],
+        "dedup_scope": "recovered baseline records and this expansion; historical pool not fully recovered"
+      },
+      "overview_zh": "研究如何同时衡量多目标探索与历史记忆利用，结合导航任务和目标相关问答，并训练模型调用视觉记忆检索工具，用动作、探索边界与回答等反馈优化策略。已读比较含任务子集与原论文全量结果，问答还使用模型评分，推理速度和多层地图支持也有限，不能据此推出统一榜单优势。",
+      "overview_label_zh": "研究概述",
+      "overview_attribution": "curator_summary_of_reviewed_sections",
+      "overview_scope_note_zh": "依据现有已审段落记录编写的编者概述；未新读全文，不是完整摘要或全文翻译。"
+    },
+    {
+      "paper_id": "navmcp",
+      "canonical_id": "navmcp",
+      "external_ids": {
+        "arxiv": "2608.30396"
+      },
+      "short_name": "NavMCP",
+      "title": "Scaffolding Foundation Models into Physical-World Agents Pushes the Frontier of Long-Horizon Navigation",
+      "authors": [
+        "Zixing Lei",
+        "Gengze Zhou",
+        "Xiong-Hui Chen",
+        "Jiazhao Zhang",
+        "Yiyang Huang",
+        "Hang Yin",
+        "Haoqi Yuan",
+        "Qi Wu",
+        "Weixin Li",
+        "Siheng Chen"
+      ],
+      "year": 2026,
+      "canonical_url": "https://arxiv.org/abs/2608.30396",
+      "fixed_version_url": "https://arxiv.org/html/2608.30396v1",
+      "version": "arXiv 2608.30396v1 (2026-08-31)",
+      "source_url": "https://arxiv.org/html/2608.30396v1",
+      "checked_at": "2026-10-06T05:38:00Z",
+      "read_scope": "section",
+      "read_locations": [
+        "固定版完整摘要；arXiv HTML L87–93",
+        "§3.1–3.4 L134–163",
+        "§4.1–4.5及Tables 1–5 L164–279",
+        "§5限制 L280–288"
+      ],
+      "not_read": [
+        "全文未通读；未逐图视觉核验",
+        "未核全部附录和补充材料",
+        "代码未读、未运行；实验未独立复现",
+        "未执行不同版次逐项比较；不改变已有阅读阶段"
+      ],
+      "abstract_summary_zh": "以意图、轨迹观测与记忆三通道连接VLM推理和导航基础模型，把多次导航转为可追溯的取证过程；作者在EQA及实机搜索中检验。",
+      "abstract_summary_attribution": "curator_summary_of_complete_abstract",
+      "task": "task-eqa",
+      "pipeline": "证据需求→语义导航调用→轨迹证据→跨调用记忆。",
+      "representation": "来源关联的旅程摘要、证据账本与未解目标。",
+      "module": "VLM选取证目标；导航模型闭环执行。",
+      "challenge": "如何把分段导航调用接成长程取证过程？",
+      "insight": "先保留途中证据，再压缩交互历史。",
+      "evidence": [
+        {
+          "kind": "method",
+          "locator": "§3.2–3.4",
+          "statement": "调用包含模式、子目标和预算；观测摘要关联关键帧，账本保留正负证据与未解目标。",
+          "attribution": "author_claim",
+          "source_url": "https://arxiv.org/html/2608.30396v1"
+        },
+        {
+          "kind": "protocol",
+          "locator": "§4.1、§4.4 Table 4",
+          "statement": "固定推理和执行骨干的整套episodic接口消融下降14.9点；仅terminal-only观测返回下降5.9点。",
+          "attribution": "direct_observation",
+          "source_url": "https://arxiv.org/html/2608.30396v1"
+        }
+      ],
+      "open_question": "待核：实现、不同版次差异及同协议适用范围。",
+      "limits": "EQA回答质量与导航SR不是同一协议；等效步数不等于端到端计算成本。记忆结论限episode内跨调用。",
+      "tasks": [
+        "task-eqa"
+      ],
+      "routes": [
+        "route-runtime",
+        "route-spatial-memory",
+        "route-context"
+      ],
+      "groups": [
+        "evidence-and-action",
+        "memory-validity"
+      ],
+      "mode": "baseline",
+      "insight_attribution": "curator_summary",
+      "challenge_attribution": "curator_summary",
+      "harness_relation": {
+        "kind": "direct_harness",
+        "basis": "作者明确称agentic scaffolding；以调用接口、轨迹返回和持久上下文组织模型协作。实验任务属于EQA邻域。",
+        "attribution": "curator_organization",
+        "not_claimed": [
+          "academic inheritance",
+          "full-paper reading",
+          "cross-protocol performance superiority"
+        ]
+      },
+      "conditions": [
+        "归类是编辑判断；机制与实验陈述归于论文作者。",
+        "不据跨论文主表排名；未独立验证作者实验。",
+        "EQA回答质量与导航SR不是同一协议；等效步数不等于端到端计算成本。记忆结论限episode内跨调用。"
+      ],
+      "source_provenance": {
+        "checked_at": "2026-10-06T05:38:00Z",
+        "source_type": "primary_paper",
+        "canonical_source": "https://arxiv.org/abs/2608.30396",
+        "fixed_version": "2608.30396v1",
+        "fixed_version_url": "https://arxiv.org/html/2608.30396v1",
+        "metadata_url": "https://arxiv.org/abs/2608.30396v1",
+        "version_date": "2026-08-31",
+        "complete_abstract_read": true,
+        "body_read_scope": "selected_method_and_experiment_sections",
+        "formal_publication": {
+          "status": "not_verified",
+          "note": "本次核到固定arXiv版本；正式出版状态未独立核定，不能据此推定未发表。"
+        },
+        "source_aliases": [],
+        "conflicts": [],
+        "full_paper_read": false,
+        "code_read": false,
+        "code_run": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "stage_changed": false,
+        "read_version": "arXiv 2608.30396v1 (2026-08-31)",
+        "read_locations": [
+          "固定版完整摘要；arXiv HTML L87–93",
+          "§3.1–3.4 L134–163",
+          "§4.1–4.5及Tables 1–5 L164–279",
+          "§5限制 L280–288"
+        ],
+        "not_read": [
+          "全文未通读；未逐图视觉核验",
+          "未核全部附录和补充材料",
+          "代码未读、未运行；实验未独立复现",
+          "未执行不同版次逐项比较；不改变已有阅读阶段"
+        ],
+        "source_urls": [
+          "https://arxiv.org/html/2608.30396v1",
+          "https://arxiv.org/abs/2608.30396v1"
+        ]
+      },
+      "identity": {
+        "canonical_id": "navmcp",
+        "arxiv_ids": [
+          "2608.30396"
+        ],
+        "normalized_title": "scaffoldingfoundationmodelsintophysicalworldagentspushesthefrontieroflonghorizonnavigation",
+        "source_urls": [
+          "https://arxiv.org/html/2608.30396v1",
+          "https://arxiv.org/abs/2608.30396v1"
+        ],
+        "dedup_scope": "recovered baseline records and this expansion; historical pool not fully recovered"
+      }
+    },
+    {
+      "paper_id": "sap-nav",
+      "canonical_id": "sap-nav",
+      "external_ids": {
+        "arxiv": "2608.12707"
+      },
+      "short_name": "SAP-Nav",
+      "title": "SAP-Nav: Spatial Semantic Representation Meets Active Perception for Hierarchical Open-Vocabulary Object Navigation",
+      "authors": [
+        "Xuetong Pei",
+        "Jian Liu",
+        "Vidura Munasinghe",
+        "Bo Miao",
+        "U-Xuan Tan",
+        "Wenrui Ding",
+        "Na Zhao"
+      ],
+      "year": 2026,
+      "canonical_url": "https://arxiv.org/abs/2608.12707",
+      "fixed_version_url": "https://arxiv.org/html/2608.12707v1",
+      "version": "arXiv 2608.12707v1 (2026-08-13)",
+      "source_url": "https://arxiv.org/html/2608.12707v1",
+      "checked_at": "2026-10-06T05:38:00Z",
+      "read_scope": "section",
+      "read_locations": [
+        "固定版完整摘要；L54–58",
+        "Method：QSSR与AVV L102–177",
+        "实验设置、Tables 1–2与实机段 L178–223"
+      ],
+      "not_read": [
+        "全文未通读；未逐图视觉核验",
+        "未核全部附录和补充材料",
+        "代码未读、未运行；实验未独立复现",
+        "未执行不同版次逐项比较；不改变已有阅读阶段"
+      ],
+      "abstract_summary_zh": "面向分层开放词汇物体导航，在线构建可查询房间语义与图像记录；对候选先判断观测充分性，必要时换视角再验证类别和属性。",
+      "abstract_summary_attribution": "curator_summary_of_complete_abstract",
+      "task": "task-objectnav",
+      "pipeline": "在线空间语义查询→视点充分性判断→移位验证→接受或继续搜索。",
+      "representation": "房间语义BEV、房间快照、候选黑名单。",
+      "module": "QSSR空间约束查询；AVV主动取景验证。",
+      "challenge": "局部视角能否支持房间约束和实例属性判定？",
+      "insight": "把主动采集房间证据与候选验证连接起来。",
+      "evidence": [
+        {
+          "kind": "method",
+          "locator": "Method / Active Viewpoint Verification",
+          "statement": "先评分可见性和观察角度；最多三次换位后用最高充分性视图验证，拒绝候选进入黑名单。",
+          "attribution": "author_claim",
+          "source_url": "https://arxiv.org/html/2608.12707v1"
+        },
+        {
+          "kind": "protocol",
+          "locator": "Experimental Setup、Real-world Deployment",
+          "statement": "LangMap单目标与HM3D-OVON分列；实机段为Lite3配RGB-D/LiDAR及Nav2的定性示例。",
+          "attribution": "direct_observation",
+          "source_url": "https://arxiv.org/html/2608.12707v1"
+        }
+      ],
+      "open_question": "待核：实现、不同版次差异及同协议适用范围。",
+      "limits": "零样本指无任务专用导航训练；不能据实机示例推定量化成功率。正文说明主动换位会增加路径长度。",
+      "tasks": [
+        "task-objectnav"
+      ],
+      "routes": [
+        "route-runtime",
+        "route-spatial-memory"
+      ],
+      "groups": [
+        "evidence-and-action"
+      ],
+      "mode": "baseline",
+      "insight_attribution": "curator_summary",
+      "challenge_attribution": "curator_summary",
+      "harness_relation": {
+        "kind": "supporting_method",
+        "basis": "按本文所读机制归入空间证据与主动验证支撑方法；此归类不否定其完整导航管线。",
+        "attribution": "curator_organization",
+        "not_claimed": [
+          "academic inheritance",
+          "full-paper reading",
+          "cross-protocol performance superiority"
+        ]
+      },
+      "conditions": [
+        "归类是编辑判断；机制与实验陈述归于论文作者。",
+        "不据跨论文主表排名；未独立验证作者实验。",
+        "零样本指无任务专用导航训练；不能据实机示例推定量化成功率。正文说明主动换位会增加路径长度。"
+      ],
+      "source_provenance": {
+        "checked_at": "2026-10-06T05:38:00Z",
+        "source_type": "primary_paper",
+        "canonical_source": "https://arxiv.org/abs/2608.12707",
+        "fixed_version": "2608.12707v1",
+        "fixed_version_url": "https://arxiv.org/html/2608.12707v1",
+        "metadata_url": "https://arxiv.org/abs/2608.12707v1",
+        "version_date": "2026-08-13",
+        "complete_abstract_read": true,
+        "body_read_scope": "selected_method_and_experiment_sections",
+        "formal_publication": {
+          "status": "not_verified",
+          "note": "本次核到固定arXiv版本；正式出版状态未独立核定，不能据此推定未发表。"
+        },
+        "source_aliases": [
+          {
+            "url": "https://xuetongpei.github.io/SAP-Nav/",
+            "kind": "author_project_link",
+            "status": "linked_in_paper_not_opened"
+          }
+        ],
+        "conflicts": [],
+        "full_paper_read": false,
+        "code_read": false,
+        "code_run": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "stage_changed": false,
+        "read_version": "arXiv 2608.12707v1 (2026-08-13)",
+        "read_locations": [
+          "固定版完整摘要；L54–58",
+          "Method：QSSR与AVV L102–177",
+          "实验设置、Tables 1–2与实机段 L178–223"
+        ],
+        "not_read": [
+          "全文未通读；未逐图视觉核验",
+          "未核全部附录和补充材料",
+          "代码未读、未运行；实验未独立复现",
+          "未执行不同版次逐项比较；不改变已有阅读阶段"
+        ],
+        "source_urls": [
+          "https://arxiv.org/html/2608.12707v1",
+          "https://arxiv.org/abs/2608.12707v1",
+          "https://xuetongpei.github.io/SAP-Nav/"
+        ]
+      },
+      "identity": {
+        "canonical_id": "sap-nav",
+        "arxiv_ids": [
+          "2608.12707"
+        ],
+        "normalized_title": "sapnavspatialsemanticrepresentationmeetsactiveperceptionforhierarchicalopenvocabularyobjectnavigation",
+        "source_urls": [
+          "https://arxiv.org/html/2608.12707v1",
+          "https://arxiv.org/abs/2608.12707v1",
+          "https://xuetongpei.github.io/SAP-Nav/"
+        ],
+        "dedup_scope": "recovered baseline records and this expansion; historical pool not fully recovered"
+      }
+    },
+    {
+      "paper_id": "hypothesis-graph-refinement",
+      "canonical_id": "hypothesis-graph-refinement",
+      "external_ids": {
+        "arxiv": "2604.04108"
+      },
+      "short_name": "HGR",
+      "title": "Hypothesis Graph Refinement: Hypothesis-Driven Exploration with Cascade Error Correction for Embodied Navigation",
+      "authors": [
+        "Peixin Chen",
+        "Guoxi Zhang",
+        "Jianwei Ma",
+        "Qing Li"
+      ],
+      "year": 2026,
+      "canonical_url": "https://arxiv.org/abs/2604.04108",
+      "fixed_version_url": "https://arxiv.org/html/2604.04108v1",
+      "version": "arXiv 2604.04108v1 (2026-04-05)",
+      "source_url": "https://arxiv.org/html/2604.04108v1",
+      "checked_at": "2026-10-06T05:38:00Z",
+      "read_scope": "section",
+      "read_locations": [
+        "固定版完整摘要 L91–97",
+        "§3.1–3.4、Algorithm 1 L132–217",
+        "§4.1–4.2及Table 1 L218–258"
+      ],
+      "not_read": [
+        "全文未通读；未逐图视觉核验",
+        "未核全部附录和补充材料",
+        "代码未读、未运行；实验未独立复现",
+        "未执行不同版次逐项比较；不改变已有阅读阶段"
+      ],
+      "abstract_summary_zh": "把未探索区域语义预测保存为可修订假设，显式记录依赖关系；实地观测反驳假设时沿依赖图撤回后续推断。作者在持续导航与EQA中评测。",
+      "abstract_summary_attribution": "curator_summary_of_complete_abstract",
+      "task": "task-objectnav / task-continual / task-eqa",
+      "pipeline": "frontier语义假设→探索→现场验证→确认或级联撤回。",
+      "representation": "观测节点、未验证假设及依赖DAG。",
+      "module": "语义残差检验与依赖子图删除。",
+      "challenge": "错误预测进入长期记忆后如何撤回其影响？",
+      "insight": "将预测与已观测内容分开并记录推导依赖。",
+      "evidence": [
+        {
+          "kind": "method",
+          "locator": "§3.1、§3.4",
+          "statement": "导航连通边与推导依赖DAG分开；反驳后删除该假设及传递依赖节点。",
+          "attribution": "author_claim",
+          "source_url": "https://arxiv.org/html/2604.04108v1"
+        },
+        {
+          "kind": "protocol",
+          "locator": "§4.1–4.2 Table 1",
+          "statement": "GOAT-Bench的72.41% SR与56.22% SPL对应278-subtask子集；全验证集另列。",
+          "attribution": "direct_observation",
+          "source_url": "https://arxiv.org/html/2604.04108v1"
+        }
+      ],
+      "open_question": "待核：实现、不同版次差异及同协议适用范围。",
+      "limits": "基线由作者在共同框架中重实现；未核代码。主摘要数字不应标作整个GOAT-Bench验证集结果。",
+      "tasks": [
+        "task-objectnav",
+        "task-continual",
+        "task-eqa"
+      ],
+      "routes": [
+        "route-spatial-memory",
+        "route-runtime"
+      ],
+      "groups": [
+        "memory-validity"
+      ],
+      "mode": "baseline",
+      "insight_attribution": "curator_summary",
+      "challenge_attribution": "curator_summary",
+      "harness_relation": {
+        "kind": "supporting_method",
+        "basis": "按已读方法归入导航图记忆的验证与纠错支撑路线；不依据名称宣称通用agent harness。",
+        "attribution": "curator_organization",
+        "not_claimed": [
+          "academic inheritance",
+          "full-paper reading",
+          "cross-protocol performance superiority"
+        ]
+      },
+      "conditions": [
+        "归类是编辑判断；机制与实验陈述归于论文作者。",
+        "不据跨论文主表排名；未独立验证作者实验。",
+        "基线由作者在共同框架中重实现；未核代码。主摘要数字不应标作整个GOAT-Bench验证集结果。"
+      ],
+      "source_provenance": {
+        "checked_at": "2026-10-06T05:38:00Z",
+        "source_type": "primary_paper",
+        "canonical_source": "https://arxiv.org/abs/2604.04108",
+        "fixed_version": "2604.04108v1",
+        "fixed_version_url": "https://arxiv.org/html/2604.04108v1",
+        "metadata_url": "https://arxiv.org/abs/2604.04108v1",
+        "version_date": "2026-04-05",
+        "complete_abstract_read": true,
+        "body_read_scope": "selected_method_and_experiment_sections",
+        "formal_publication": {
+          "status": "not_verified",
+          "note": "本次核到固定arXiv版本；正式出版状态未独立核定，不能据此推定未发表。"
+        },
+        "source_aliases": [
+          {
+            "url": "https://github.com/chenpppx/Hypothesis_Graph_Refinement",
+            "kind": "author_code_link",
+            "status": "linked_in_paper_not_read_or_run"
+          }
+        ],
+        "conflicts": [],
+        "full_paper_read": false,
+        "code_read": false,
+        "code_run": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "stage_changed": false,
+        "read_version": "arXiv 2604.04108v1 (2026-04-05)",
+        "read_locations": [
+          "固定版完整摘要 L91–97",
+          "§3.1–3.4、Algorithm 1 L132–217",
+          "§4.1–4.2及Table 1 L218–258"
+        ],
+        "not_read": [
+          "全文未通读；未逐图视觉核验",
+          "未核全部附录和补充材料",
+          "代码未读、未运行；实验未独立复现",
+          "未执行不同版次逐项比较；不改变已有阅读阶段"
+        ],
+        "source_urls": [
+          "https://arxiv.org/html/2604.04108v1",
+          "https://arxiv.org/abs/2604.04108v1",
+          "https://github.com/chenpppx/Hypothesis_Graph_Refinement"
+        ]
+      },
+      "identity": {
+        "canonical_id": "hypothesis-graph-refinement",
+        "arxiv_ids": [
+          "2604.04108"
+        ],
+        "normalized_title": "hypothesisgraphrefinementhypothesisdrivenexplorationwithcascadeerrorcorrectionforembodiednavigation",
+        "source_urls": [
+          "https://arxiv.org/html/2604.04108v1",
+          "https://arxiv.org/abs/2604.04108v1",
+          "https://github.com/chenpppx/Hypothesis_Graph_Refinement"
+        ],
+        "dedup_scope": "recovered baseline records and this expansion; historical pool not fully recovered"
+      }
+    },
+    {
+      "paper_id": "safevantage",
+      "canonical_id": "safevantage",
+      "external_ids": {
+        "arxiv": "2609.36906"
+      },
+      "short_name": "SafeVantage",
+      "title": "SafeVantage: Vantage-Aware Memory for Reliable Embodied Decisions",
+      "authors": [
+        "Sean Hardesty Lewis",
+        "Zuyi Guo",
+        "Benwang Chen",
+        "Zirui Li",
+        "Hongyi Lin",
+        "Heye Huang"
+      ],
+      "year": 2026,
+      "canonical_url": "https://arxiv.org/abs/2609.36906",
+      "fixed_version_url": "https://arxiv.org/html/2609.36906v2",
+      "version": "arXiv 2609.36906v2 (2026-10-01)",
+      "source_url": "https://arxiv.org/html/2609.36906v2",
+      "checked_at": "2026-10-06T05:38:00Z",
+      "read_scope": "section",
+      "read_locations": [
+        "v2完整摘要 L42–46；abs公开文本补核作者",
+        "§III-A–C L86–129",
+        "§IV-A–E L130–225",
+        "§V Limitations L226–228"
+      ],
+      "not_read": [
+        "全文未通读；未逐图视觉核验",
+        "未核全部附录和补充材料",
+        "代码未读、未运行；实验未独立复现",
+        "未执行不同版次逐项比较；不改变已有阅读阶段"
+      ],
+      "abstract_summary_zh": "按命题保留支持视图、位姿与目标位置，把正面支持和搜索覆盖分开；预测候选视点可见性以选择新观测，再作Yes、No或Abstain决策。",
+      "abstract_summary_attribution": "curator_summary_of_complete_abstract",
+      "task": "task-eqa",
+      "pipeline": "命题记忆→候选可见性预测→主动取景→选择性决策。",
+      "representation": "支持视点及目标几何；独立覆盖信息。",
+      "module": "学习的可见性模型和校准决策头。",
+      "challenge": "语义匹配分数如何连接到足够的观察证据？",
+      "insight": "保留支持来源，用证据状态驱动取景与决策。",
+      "evidence": [
+        {
+          "kind": "method",
+          "locator": "§III-B–C",
+          "statement": "按预期终局决策损失下降及路程代价选视点；Yes还要求来自不同位置的几何一致支持。",
+          "attribution": "author_claim",
+          "source_url": "https://arxiv.org/html/2609.36906v2"
+        },
+        {
+          "kind": "protocol",
+          "locator": "§IV-A、§V",
+          "statement": "主任务为ProcTHOR类别存在判断；离散视点图固定预算，连续导航与真实机器人列为后续评估。",
+          "attribution": "direct_observation",
+          "source_url": "https://arxiv.org/html/2609.36906v2"
+        }
+      ],
+      "open_question": "待核：实现、不同版次差异及同协议适用范围。",
+      "limits": "不能把category-presence的macro-F1当VLN/ObjectNav成功率；可见性模型与决策头有训练和校准。",
+      "tasks": [
+        "task-eqa"
+      ],
+      "routes": [
+        "route-spatial-memory",
+        "route-runtime"
+      ],
+      "groups": [
+        "memory-validity",
+        "evidence-and-action"
+      ],
+      "mode": "baseline",
+      "insight_attribution": "curator_summary",
+      "challenge_attribution": "curator_summary",
+      "harness_relation": {
+        "kind": "supporting_method",
+        "basis": "属于类别存在性判断/EQA邻域的证据获取支撑方法；论文限定离散视点图和固定预算。",
+        "attribution": "curator_organization",
+        "not_claimed": [
+          "academic inheritance",
+          "full-paper reading",
+          "cross-protocol performance superiority"
+        ]
+      },
+      "conditions": [
+        "归类是编辑判断；机制与实验陈述归于论文作者。",
+        "不据跨论文主表排名；未独立验证作者实验。",
+        "不能把category-presence的macro-F1当VLN/ObjectNav成功率；可见性模型与决策头有训练和校准。"
+      ],
+      "source_provenance": {
+        "checked_at": "2026-10-06T05:38:00Z",
+        "source_type": "primary_paper",
+        "canonical_source": "https://arxiv.org/abs/2609.36906",
+        "fixed_version": "2609.36906v2",
+        "fixed_version_url": "https://arxiv.org/html/2609.36906v2",
+        "metadata_url": "https://arxiv.org/abs/2609.36906v2",
+        "version_date": "2026-10-01",
+        "complete_abstract_read": true,
+        "body_read_scope": "selected_method_and_experiment_sections",
+        "formal_publication": {
+          "status": "not_verified",
+          "note": "本次核到固定arXiv版本；正式出版状态未独立核定，不能据此推定未发表。"
+        },
+        "source_aliases": [
+          {
+            "url": "https://safevantage.github.io",
+            "kind": "author_project_link",
+            "status": "linked_in_paper_not_opened"
+          }
+        ],
+        "conflicts": [],
+        "full_paper_read": false,
+        "code_read": false,
+        "code_run": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "metadata_access_note": "abs网页直取cache miss；公开提取器读到完整摘要及作者。v2日期取固定HTML页首（2026-10-01），首次发布索引日期为2026-09-29。",
+        "stage_changed": false,
+        "read_version": "arXiv 2609.36906v2 (2026-10-01)",
+        "read_locations": [
+          "v2完整摘要 L42–46；abs公开文本补核作者",
+          "§III-A–C L86–129",
+          "§IV-A–E L130–225",
+          "§V Limitations L226–228"
+        ],
+        "not_read": [
+          "全文未通读；未逐图视觉核验",
+          "未核全部附录和补充材料",
+          "代码未读、未运行；实验未独立复现",
+          "未执行不同版次逐项比较；不改变已有阅读阶段"
+        ],
+        "source_urls": [
+          "https://arxiv.org/html/2609.36906v2",
+          "https://arxiv.org/abs/2609.36906v2",
+          "https://safevantage.github.io"
+        ]
+      },
+      "identity": {
+        "canonical_id": "safevantage",
+        "arxiv_ids": [
+          "2609.36906"
+        ],
+        "normalized_title": "safevantagevantageawarememoryforreliableembodieddecisions",
+        "source_urls": [
+          "https://arxiv.org/html/2609.36906v2",
+          "https://arxiv.org/abs/2609.36906v2",
+          "https://safevantage.github.io"
+        ],
+        "dedup_scope": "recovered baseline records and this expansion; historical pool not fully recovered"
+      }
+    },
+    {
+      "paper_id": "profocus",
+      "canonical_id": "profocus",
+      "external_ids": {
+        "arxiv": "2603.05530"
+      },
+      "short_name": "ProFocus",
+      "title": "ProFocus: Proactive Perception and Focused Reasoning in Vision-and-Language Navigation",
+      "authors": [
+        "Wei Xue",
+        "Mingcheng Li",
+        "Xuecheng Wu",
+        "Jingqun Tang",
+        "Dingkang Yang",
+        "Lihua Zhang"
+      ],
+      "year": 2026,
+      "canonical_url": "https://arxiv.org/abs/2603.05530",
+      "fixed_version_url": "https://arxiv.org/html/2603.05530v2",
+      "version": "arXiv 2603.05530v2 (2026-03-15)",
+      "source_url": "https://arxiv.org/html/2603.05530v2",
+      "checked_at": "2026-10-06T05:38:00Z",
+      "read_scope": "section",
+      "read_locations": [
+        "CVPR2026官方元数据与完整摘要",
+        "固定arXiv v2完整摘要 L38–42",
+        "§3.1–3.3 L78–140",
+        "§4.1–4.2、Tables 1–2 L141–197"
+      ],
+      "not_read": [
+        "全文未通读；未逐图视觉核验",
+        "未核全部附录和补充材料",
+        "代码未读、未运行；实验未独立复现",
+        "未执行不同版次逐项比较；不改变已有阅读阶段"
+      ],
+      "abstract_summary_zh": "通过编排、感知与决策三个代理组织导航；先按缺失信息提出聚焦视觉查询，再用分支多样MCTS筛选高价值历史航点及其上下文。",
+      "abstract_summary_attribution": "curator_summary_of_complete_abstract",
+      "task": "task-vln",
+      "pipeline": "语义地图→局部视觉查询循环→BD-MCTS筛选→决策。",
+      "representation": "自中心语义地图、航点上下文记忆与搜索树。",
+      "module": "编排代理检查信息充分性；决策代理读取候选相关历史。",
+      "challenge": "怎样聚焦当前所需视觉证据与历史候选？",
+      "insight": "把感知查询与历史候选筛选置于推理模型外围。",
+      "evidence": [
+        {
+          "kind": "method",
+          "locator": "§3.2–3.3",
+          "statement": "视觉查询针对当前全景中的裁剪区域；BD-MCTS筛选航点并检索路径上下文。",
+          "attribution": "author_claim",
+          "source_url": "https://arxiv.org/html/2603.05530v2"
+        },
+        {
+          "kind": "protocol",
+          "locator": "§4.1",
+          "statement": "REVERIE只评导航，不评object grounding；重实现基线与原论文报告结果分列。",
+          "attribution": "direct_observation",
+          "source_url": "https://arxiv.org/html/2603.05530v2"
+        }
+      ],
+      "open_question": "待核：实现、不同版次差异及同协议适用范围。",
+      "limits": "图上航点导航不等于连续执行协议；主动感知含图像区域查询，不能一概说成移动换视角。正式全文未逐项核对。",
+      "tasks": [
+        "task-vln"
+      ],
+      "routes": [
+        "route-runtime",
+        "route-context"
+      ],
+      "groups": [
+        "context-allocation",
+        "evidence-and-action"
+      ],
+      "mode": "baseline",
+      "insight_attribution": "curator_summary",
+      "challenge_attribution": "curator_summary",
+      "harness_relation": {
+        "kind": "direct_harness",
+        "basis": "编辑按三代理外层编排、感知反馈循环及记忆检索判为直接运行框架；作者称training-free VLN framework。",
+        "attribution": "curator_organization",
+        "not_claimed": [
+          "academic inheritance",
+          "full-paper reading",
+          "cross-protocol performance superiority"
+        ]
+      },
+      "conditions": [
+        "归类是编辑判断；机制与实验陈述归于论文作者。",
+        "不据跨论文主表排名；未独立验证作者实验。",
+        "图上航点导航不等于连续执行协议；主动感知含图像区域查询，不能一概说成移动换视角。正式全文未逐项核对。"
+      ],
+      "source_provenance": {
+        "checked_at": "2026-10-06T05:38:00Z",
+        "source_type": "primary_paper",
+        "canonical_source": "https://arxiv.org/abs/2603.05530",
+        "fixed_version": "2603.05530v2",
+        "fixed_version_url": "https://arxiv.org/html/2603.05530v2",
+        "metadata_url": "https://arxiv.org/abs/2603.05530v2",
+        "version_date": "2026-03-15",
+        "complete_abstract_read": true,
+        "body_read_scope": "selected_method_and_experiment_sections",
+        "formal_publication": {
+          "status": "verified_official_metadata",
+          "venue": "Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)",
+          "year": 2026,
+          "pages": "18129–18139",
+          "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Xue_ProFocus_Proactive_Perception_and_Focused_Reasoning_in_Vision-and-Language_Navigation_CVPR_2026_paper.html",
+          "read_scope": "完整官方元数据与摘要",
+          "access_note": "普通网页直取失败；公开网页提取器成功读取该CVF页。正文实际阅读arXiv v2，未声称与正式PDF逐项一致。"
+        },
+        "source_aliases": [
+          {
+            "url": "https://openaccess.thecvf.com/content/CVPR2026/html/Xue_ProFocus_Proactive_Perception_and_Focused_Reasoning_in_Vision-and-Language_Navigation_CVPR_2026_paper.html",
+            "kind": "official_publication",
+            "status": "metadata_and_complete_abstract_read"
+          }
+        ],
+        "conflicts": [],
+        "full_paper_read": false,
+        "code_read": false,
+        "code_run": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "stage_changed": false,
+        "read_version": "arXiv 2603.05530v2 (2026-03-15)",
+        "read_locations": [
+          "CVPR2026官方元数据与完整摘要",
+          "固定arXiv v2完整摘要 L38–42",
+          "§3.1–3.3 L78–140",
+          "§4.1–4.2、Tables 1–2 L141–197"
+        ],
+        "not_read": [
+          "全文未通读；未逐图视觉核验",
+          "未核全部附录和补充材料",
+          "代码未读、未运行；实验未独立复现",
+          "未执行不同版次逐项比较；不改变已有阅读阶段"
+        ],
+        "source_urls": [
+          "https://arxiv.org/html/2603.05530v2",
+          "https://arxiv.org/abs/2603.05530v2",
+          "https://openaccess.thecvf.com/content/CVPR2026/html/Xue_ProFocus_Proactive_Perception_and_Focused_Reasoning_in_Vision-and-Language_Navigation_CVPR_2026_paper.html"
+        ]
+      },
+      "identity": {
+        "canonical_id": "profocus",
+        "arxiv_ids": [
+          "2603.05530"
+        ],
+        "normalized_title": "profocusproactiveperceptionandfocusedreasoninginvisionandlanguagenavigation",
+        "source_urls": [
+          "https://arxiv.org/html/2603.05530v2",
+          "https://arxiv.org/abs/2603.05530v2",
+          "https://openaccess.thecvf.com/content/CVPR2026/html/Xue_ProFocus_Proactive_Perception_and_Focused_Reasoning_in_Vision-and-Language_Navigation_CVPR_2026_paper.html"
+        ],
+        "dedup_scope": "recovered baseline records and this expansion; historical pool not fully recovered"
+      }
+    },
+    {
+      "paper_id": "arxiv:2609.39915",
+      "canonical_id": "arxiv:2609.39915",
+      "external_ids": {
+        "arxiv": "2609.39915"
+      },
+      "short_name": "NavHarness · Adaptive Goals",
+      "title": "NavHarness: Adaptive Goals for Agentic Vision-Language Navigation",
+      "authors": [
+        "Haoxiang Shi",
+        "Zaijing Li",
+        "Muhe Ding",
+        "Xiang Deng",
+        "Yaowei Wang",
+        "Liqiang Nie"
+      ],
+      "year": 2026,
+      "canonical_url": "https://arxiv.org/abs/2609.39915",
+      "fixed_version_url": "https://arxiv.org/html/2609.39915v1",
+      "version": "arXiv 2609.39915v1 (2026-09-30)",
+      "source_url": "https://arxiv.org/html/2609.39915v1",
+      "checked_at": "2026-10-06T05:38:00Z",
+      "read_scope": "section",
+      "read_locations": [
+        "固定版完整摘要；abs L16–19 / HTML L83–87",
+        "§3.1–3.5 L125–163",
+        "§4.1–4.5、Tables 1–3 L164–250",
+        "§5 L264–268；Appendix D后段及E L486–500"
+      ],
+      "not_read": [
+        "全文未通读；未逐图视觉核验",
+        "未核全部附录和补充材料",
+        "代码未读、未运行；实验未独立复现",
+        "未执行不同版次逐项比较；不改变已有阅读阶段"
+      ],
+      "abstract_summary_zh": "目标代理生成自适应局部目标与完成问题，视动代理执行，验证代理据观测反馈推进或修订目标；目标确认完成后压缩该段多模态历史。",
+      "abstract_summary_attribution": "curator_summary_of_complete_abstract",
+      "task": "task-vln",
+      "pipeline": "局部目标→执行→观测验证→继续/修订/推进→完成段压缩。",
+      "representation": "完成目标摘要、验证结果、关键帧及未完成状态。",
+      "module": "Goal、Verify、Visuomotor、Memory四角色。",
+      "challenge": "如何把路线进度、局部执行和上下文压缩对齐？",
+      "insight": "验证完成同时作为目标推进与记忆压缩边界。",
+      "evidence": [
+        {
+          "kind": "method",
+          "locator": "§3.2–3.5",
+          "statement": "验证根据已观测结果给出未满足条件；修订目标不视为完成，完成段才触发压缩。",
+          "attribution": "author_claim",
+          "source_url": "https://arxiv.org/html/2609.39915v1"
+        },
+        {
+          "kind": "protocol",
+          "locator": "§4.3 Table 2、§4.4、Appendix E",
+          "statement": "压缩的token节约伴随部分SR/SPL下降；框架消融未分别隔离目标与验证。实机8条路线各3次。",
+          "attribution": "direct_observation",
+          "source_url": "https://arxiv.org/html/2609.39915v1"
+        }
+      ],
+      "open_question": "待核：实现、不同版次差异及同协议适用范围。",
+      "limits": "与2609.34276 Lifelong NavHarness是不同论文。局部输入降幅不等于episode总token节省；不据主表跨协议排名。",
+      "tasks": [
+        "task-vln"
+      ],
+      "routes": [
+        "route-runtime",
+        "route-context"
+      ],
+      "groups": [
+        "evidence-and-action",
+        "context-allocation"
+      ],
+      "mode": "baseline",
+      "insight_attribution": "curator_summary",
+      "challenge_attribution": "curator_summary",
+      "harness_relation": {
+        "kind": "direct_harness",
+        "basis": "作者提出agentic VLN框架；完成条件、执行反馈和压缩边界具有显式控制接口。",
+        "attribution": "curator_organization",
+        "not_claimed": [
+          "academic inheritance",
+          "full-paper reading",
+          "cross-protocol performance superiority"
+        ]
+      },
+      "conditions": [
+        "归类是编辑判断；机制与实验陈述归于论文作者。",
+        "不据跨论文主表排名；未独立验证作者实验。",
+        "与2609.34276 Lifelong NavHarness是不同论文。局部输入降幅不等于episode总token节省；不据主表跨协议排名。"
+      ],
+      "source_provenance": {
+        "checked_at": "2026-10-06T05:38:00Z",
+        "source_type": "primary_paper",
+        "canonical_source": "https://arxiv.org/abs/2609.39915",
+        "fixed_version": "2609.39915v1",
+        "fixed_version_url": "https://arxiv.org/html/2609.39915v1",
+        "metadata_url": "https://arxiv.org/abs/2609.39915v1",
+        "version_date": "2026-09-30",
+        "complete_abstract_read": true,
+        "body_read_scope": "selected_method_and_experiment_sections",
+        "formal_publication": {
+          "status": "not_verified",
+          "note": "本次核到固定arXiv版本；正式出版状态未独立核定，不能据此推定未发表。"
+        },
+        "source_aliases": [
+          {
+            "url": "https://navharness.github.io",
+            "kind": "author_project_link",
+            "status": "linked_in_paper_not_opened"
+          }
+        ],
+        "conflicts": [
+          {
+            "kind": "title_variant",
+            "metadata_title": "NavHarness: Adaptive Goals for Agentic Vision-Language Navigation",
+            "html_title": "NavHarness: Adaptive Goals for Vision-and-Language Navigation",
+            "resolution": "保留arXiv摘要元数据题名为主标题，HTML题名作异文；未擅自修正文献。",
+            "status": "documented_not_resolved"
+          }
+        ],
+        "full_paper_read": false,
+        "code_read": false,
+        "code_run": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "stage_changed": false,
+        "read_version": "arXiv 2609.39915v1 (2026-09-30)",
+        "read_locations": [
+          "固定版完整摘要；abs L16–19 / HTML L83–87",
+          "§3.1–3.5 L125–163",
+          "§4.1–4.5、Tables 1–3 L164–250",
+          "§5 L264–268；Appendix D后段及E L486–500"
+        ],
+        "not_read": [
+          "全文未通读；未逐图视觉核验",
+          "未核全部附录和补充材料",
+          "代码未读、未运行；实验未独立复现",
+          "未执行不同版次逐项比较；不改变已有阅读阶段"
+        ],
+        "source_urls": [
+          "https://arxiv.org/html/2609.39915v1",
+          "https://arxiv.org/abs/2609.39915v1",
+          "https://navharness.github.io"
+        ]
+      },
+      "identity_notes": {
+        "do_not_merge_with": [
+          "arxiv:2609.34276",
+          "navharness"
+        ],
+        "existing_weekly_candidate_canonical_id": "arxiv:2609.39915",
+        "integration_instruction": "新增独立baseline章节阅读记录；保留旧weekly摘要阅读快照，不将旧周窗证据提升为section。"
+      },
+      "identity": {
+        "canonical_id": "arxiv:2609.39915",
+        "arxiv_ids": [
+          "2609.39915"
+        ],
+        "normalized_title": "navharnessadaptivegoalsforagenticvisionlanguagenavigation",
+        "source_urls": [
+          "https://arxiv.org/html/2609.39915v1",
+          "https://arxiv.org/abs/2609.39915v1",
+          "https://navharness.github.io"
+        ],
+        "dedup_scope": "recovered baseline records and this expansion; historical pool not fully recovered"
+      }
+    },
+    {
+      "paper_id": "3d-mem",
+      "canonical_id": "3d-mem",
+      "external_ids": {
+        "arxiv": "2411.17735"
+      },
+      "short_name": "3D-Mem",
+      "title": "3D-Mem: 3D Scene Memory for Embodied Exploration and Reasoning",
+      "authors": [
+        "Yuncong Yang",
+        "Han Yang",
+        "Jiachen Zhou",
+        "Peihao Chen",
+        "Hongxin Zhang",
+        "Yilun Du",
+        "Chuang Gan"
+      ],
+      "year": 2025,
+      "canonical_url": "https://arxiv.org/abs/2411.17735",
+      "fixed_version_url": "https://arxiv.org/html/2411.17735v5",
+      "version": "arXiv 2411.17735v5 (2025-04-04)",
+      "source_url": "https://arxiv.org/html/2411.17735v5",
+      "checked_at": "2026-10-06T05:38:00Z",
+      "read_scope": "section",
+      "read_locations": [
+        "CVPR2025官方元数据与完整摘要",
+        "arXiv v5完整摘要 L59–63",
+        "§3.1–3.3 L107–202",
+        "§4.1–4.3 Tables 1–3 L203–278",
+        "Appendix §6全量与子集区分 L283–292"
+      ],
+      "not_read": [
+        "全文未通读；未逐图视觉核验",
+        "未核全部附录和补充材料",
+        "代码未读、未运行；实验未独立复现",
+        "未执行不同版次逐项比较；不改变已有阅读阶段"
+      ],
+      "abstract_summary_zh": "以包含共可见对象及背景的记忆快照压缩已探索场景，并用frontier快照描述待探索空间；增量构建及预筛选支持EQA和持续物体导航。",
+      "abstract_summary_attribution": "curator_summary_of_complete_abstract",
+      "task": "task-objectnav / task-continual / task-eqa",
+      "pipeline": "共可见聚类→增量快照→按目标预筛选→回答或探索。",
+      "representation": "Memory Snapshots与Frontier Snapshots。",
+      "module": "VLM读取快照；已知区域由独立路径规划执行。",
+      "challenge": "怎样以紧凑视觉记忆同时表达已知与待探索空间？",
+      "insight": "把图像快照保留为可供视觉模型直接读取的记忆。",
+      "evidence": [
+        {
+          "kind": "method",
+          "locator": "§3.2–3.3",
+          "statement": "以相关对象类别预筛选快照；探索使用Habitat-sim pathfinder在已探索区域计算无碰撞路径。",
+          "attribution": "author_claim",
+          "source_url": "https://arxiv.org/html/2411.17735v5"
+        },
+        {
+          "kind": "protocol",
+          "locator": "§4.1、§4.3、Appendix §6",
+          "statement": "主表A-EQA为184问题子集，GOAT-Bench为278子任务子集；全量结果另列。",
+          "attribution": "direct_observation",
+          "source_url": "https://arxiv.org/html/2411.17735v5"
+        }
+      ],
+      "open_question": "待核：实现、不同版次差异及同协议适用范围。",
+      "limits": "EM-EQA给定轨迹，不含主动探索；GOAT-Bench子任务间保留记忆。不能把独立路径规划前提等同真实机器人避障验证。",
+      "tasks": [
+        "task-objectnav",
+        "task-continual",
+        "task-eqa"
+      ],
+      "routes": [
+        "route-spatial-memory",
+        "route-context"
+      ],
+      "groups": [
+        "memory-validity"
+      ],
+      "mode": "baseline",
+      "insight_attribution": "curator_summary",
+      "challenge_attribution": "curator_summary",
+      "harness_relation": {
+        "kind": "supporting_method",
+        "basis": "场景记忆与探索支撑方法，覆盖GOAT-Bench和EQA；不把记忆模块名称直接等同完整harness。",
+        "attribution": "curator_organization",
+        "not_claimed": [
+          "academic inheritance",
+          "full-paper reading",
+          "cross-protocol performance superiority"
+        ]
+      },
+      "conditions": [
+        "归类是编辑判断；机制与实验陈述归于论文作者。",
+        "不据跨论文主表排名；未独立验证作者实验。",
+        "EM-EQA给定轨迹，不含主动探索；GOAT-Bench子任务间保留记忆。不能把独立路径规划前提等同真实机器人避障验证。"
+      ],
+      "source_provenance": {
+        "checked_at": "2026-10-06T05:38:00Z",
+        "source_type": "primary_paper",
+        "canonical_source": "https://arxiv.org/abs/2411.17735",
+        "fixed_version": "2411.17735v5",
+        "fixed_version_url": "https://arxiv.org/html/2411.17735v5",
+        "metadata_url": "https://arxiv.org/abs/2411.17735v5",
+        "version_date": "2025-04-04",
+        "complete_abstract_read": true,
+        "body_read_scope": "selected_method_and_experiment_sections",
+        "formal_publication": {
+          "status": "verified_official_metadata",
+          "venue": "Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)",
+          "year": 2025,
+          "pages": "17294–17303",
+          "url": "https://openaccess.thecvf.com/content/CVPR2025/html/Yang_3D-Mem_3D_Scene_Memory_for_Embodied_Exploration_and_Reasoning_CVPR_2025_paper.html",
+          "read_scope": "完整官方元数据与摘要",
+          "access_note": "公开网页提取器成功读取CVF元数据页；正式PDF直取403。正文阅读arXiv v5，未声称与正式PDF逐项一致。"
+        },
+        "source_aliases": [
+          {
+            "url": "https://openaccess.thecvf.com/content/CVPR2025/html/Yang_3D-Mem_3D_Scene_Memory_for_Embodied_Exploration_and_Reasoning_CVPR_2025_paper.html",
+            "kind": "official_publication",
+            "status": "metadata_and_complete_abstract_read"
+          },
+          {
+            "url": "https://umass-embodied-agi.github.io/3D-Mem/",
+            "kind": "author_project_link",
+            "status": "linked_in_paper_not_opened"
+          }
+        ],
+        "conflicts": [],
+        "full_paper_read": false,
+        "code_read": false,
+        "code_run": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "stage_changed": false,
+        "read_version": "arXiv 2411.17735v5 (2025-04-04)",
+        "read_locations": [
+          "CVPR2025官方元数据与完整摘要",
+          "arXiv v5完整摘要 L59–63",
+          "§3.1–3.3 L107–202",
+          "§4.1–4.3 Tables 1–3 L203–278",
+          "Appendix §6全量与子集区分 L283–292"
+        ],
+        "not_read": [
+          "全文未通读；未逐图视觉核验",
+          "未核全部附录和补充材料",
+          "代码未读、未运行；实验未独立复现",
+          "未执行不同版次逐项比较；不改变已有阅读阶段"
+        ],
+        "source_urls": [
+          "https://arxiv.org/html/2411.17735v5",
+          "https://arxiv.org/abs/2411.17735v5",
+          "https://openaccess.thecvf.com/content/CVPR2025/html/Yang_3D-Mem_3D_Scene_Memory_for_Embodied_Exploration_and_Reasoning_CVPR_2025_paper.html",
+          "https://umass-embodied-agi.github.io/3D-Mem/"
+        ]
+      },
+      "identity": {
+        "canonical_id": "3d-mem",
+        "arxiv_ids": [
+          "2411.17735"
+        ],
+        "normalized_title": "3dmem3dscenememoryforembodiedexplorationandreasoning",
+        "source_urls": [
+          "https://arxiv.org/html/2411.17735v5",
+          "https://arxiv.org/abs/2411.17735v5",
+          "https://openaccess.thecvf.com/content/CVPR2025/html/Yang_3D-Mem_3D_Scene_Memory_for_Embodied_Exploration_and_Reasoning_CVPR_2025_paper.html",
+          "https://umass-embodied-agi.github.io/3D-Mem/"
+        ],
+        "dedup_scope": "recovered baseline records and this expansion; historical pool not fully recovered"
+      }
+    },
+    {
+      "paper_id": "ham-vln",
+      "canonical_id": "ham-vln",
+      "external_ids": {
+        "arxiv": "2607.29600",
+        "doi": "10.48550/arXiv.2607.29600"
+      },
+      "short_name": "HAM-VLN",
+      "title": "HAM-VLN: Harnessing Hierarchical Agentic Memory for Zero-Shot Vision-and-Language Navigation",
+      "authors": [
+        "An Liu",
+        "Bingxi Liu",
+        "Hongyu Ding",
+        "Yixuan Jiang",
+        "Yaran Chen",
+        "Fulin Tang",
+        "Cong Leng",
+        "Hong Zhang",
+        "Jian Cheng"
+      ],
+      "year": 2026,
+      "canonical_url": "https://arxiv.org/abs/2607.29600",
+      "fixed_version_url": "https://arxiv.org/html/2607.29600v1",
+      "version": "arXiv 2607.29600v1 (2026-07-31)",
+      "source_url": "https://arxiv.org/html/2607.29600v1",
+      "checked_at": "2026-10-06T05:43:30Z",
+      "read_scope": "section",
+      "read_locations": [
+        "固定v1完整摘要：HTML L56–60；PDF p.1 Abstract",
+        "§3.1–3.4及Algorithm 1：HTML L107–225；PDF pp.2–5",
+        "§4.1–4.5、Tables 1–4与§5：HTML L226–336；PDF pp.5–7",
+        "arXiv v1摘要页元数据与提交历史；PDF末页范围及appendix引用定位核对"
+      ],
+      "not_read": [
+        "未完成全篇及逐图视觉核验；本记录不构成Stage 1/2/3导入或升级",
+        "未读代码、未运行模型或实验、未独立复现；未作版次间比较",
+        "§4.1提到的subset-to-full附录未核到；不把引用的既往比较当作本次验证",
+        "未核实正式出版版本；未依据第三方解读补方法细节"
+      ],
+      "abstract_summary_zh": "把决策时写入的地点、对象、进度与失败信息存入世界图；保留短期原始观察，按子目标检索旧经验。作者报告零样本导航及上下文效率收益。",
+      "abstract_summary_attribution": "curator_summary_of_complete_abstract",
+      "task": "task-vln / task-objectnav",
+      "pipeline": "观察与检索→决策及写回→执行／回退→下一航点。",
+      "representation": "episode内地点—对象图、进度记录与有界工作记忆。",
+      "module": "System 2规划、System 1视觉定位、确定性几何控制器。",
+      "challenge": "怎样让历史证据持续影响决策而不累积全部原始上下文？",
+      "insight": "把记忆写入与决策耦合，再按子目标读取。",
+      "evidence": [
+        {
+          "kind": "method",
+          "locator": "§3.2–3.3，Eq.2–5；HTML L125–176",
+          "statement": "同次规划返回动作与记忆更新；旧历史由相关性、时近性、显著性及一跳拓扑检索。",
+          "attribution": "author_claim",
+          "source_url": "https://arxiv.org/html/2607.29600v1"
+        },
+        {
+          "kind": "method",
+          "locator": "§3.4、Algorithm 1；HTML L177–225",
+          "statement": "回退理由附于放弃的地点；检索到该处才重读。失败笔记不改得分、不禁止访问。",
+          "attribution": "author_claim",
+          "source_url": "https://arxiv.org/html/2607.29600v1"
+        },
+        {
+          "kind": "protocol",
+          "locator": "§4.1；HTML L253–261；PDF p.5",
+          "statement": "三基准各100条val-unseen子集、3次运行；工作窗口K=1。",
+          "attribution": "direct_observation",
+          "source_url": "https://arxiv.org/html/2607.29600v1"
+        },
+        {
+          "kind": "protocol",
+          "locator": "§4.3 Table 3；HTML L272–310；PDF p.7",
+          "statement": "R2R-CE：244.9k API tokens/episode；相较全历史降67.2%，相较K=3降34.8%。",
+          "attribution": "direct_observation",
+          "source_url": "https://arxiv.org/html/2607.29600v1"
+        },
+        {
+          "kind": "protocol",
+          "locator": "§4.4 Table 4；HTML L311–328；PDF pp.6–7",
+          "statement": "固定规划、定位及控制器；去反思记忆仍保留回退，SR 61.0→55.7，SPL 48.1→36.9。",
+          "attribution": "direct_observation",
+          "source_url": "https://arxiv.org/html/2607.29600v1"
+        }
+      ],
+      "open_question": "待核正式版本、缺失附录与实现；Fig.4的rejected stop不足以独立确认停止验证器的接口。",
+      "limits": "记忆限episode内；子集不等于全量，主表混列既往结果。token降幅不是端到端时延或费用降幅；回退笔记不是硬约束，轨迹案例不视为实机验证。",
+      "tasks": [
+        "task-vln",
+        "task-objectnav"
+      ],
+      "routes": [
+        "route-spatial-memory",
+        "route-context",
+        "route-runtime"
+      ],
+      "groups": [
+        "memory-validity",
+        "context-allocation",
+        "evidence-and-action"
+      ],
+      "mode": "baseline",
+      "insight_attribution": "curator_summary",
+      "challenge_attribution": "curator_summary",
+      "harness_relation": {
+        "kind": "supporting_method",
+        "basis": "按已读记忆读写、检索和回退机制归为harness支撑方法；题名Harnessing不构成完整harness证据。此分类不否定其导航管线。",
+        "attribution": "curator_organization",
+        "not_claimed": [
+          "complete general-purpose navigation harness",
+          "cross-episode persistence",
+          "hard safety constraints",
+          "academic inheritance",
+          "cross-protocol performance superiority"
+        ]
+      },
+      "conditions": [
+        "分类、问题与insight是编辑组织；机制及实验结论归作者，未独立验证",
+        "可加入双树作为已读正文支撑方法；不能提升catalog现有Stage状态",
+        "不据主表作跨协议排名；不推测NavDP/Nav2实现或未读代码"
+      ],
+      "source_provenance": {
+        "checked_at": "2026-10-06T05:43:30Z",
+        "source_type": "primary_paper",
+        "canonical_source": "https://arxiv.org/abs/2607.29600",
+        "fixed_version": "2607.29600v1",
+        "fixed_version_url": "https://arxiv.org/html/2607.29600v1",
+        "metadata_url": "https://arxiv.org/abs/2607.29600v1",
+        "version_date": "2026-07-31",
+        "submission_timestamp": "2026-07-31T16:32:38Z",
+        "complete_abstract_read": true,
+        "body_read_scope": "selected_method_and_experiment_sections",
+        "formal_publication": {
+          "status": "not_verified",
+          "note": "已查arXiv元数据及精确题名出版检索，未核到正式出版社条目；不能推定未发表。搜索片段的相邻论文会议信息未采纳。"
+        },
+        "source_aliases": [
+          {
+            "url": "https://arxiv.org/pdf/2607.29600v1",
+            "kind": "same_fixed_version_pdf",
+            "status": "text_extraction_checked_metadata_protocol_tables_and_end_range"
+          }
+        ],
+        "conflicts": [],
+        "evidence_gaps": [
+          "v1 HTML及9页PDF已读取范围未找到§4.1所指附录，subset-to-full比较仍未核验",
+          "停止验证接口未独立核实；不由Fig.4例子推定具备独立验证代理"
+        ],
+        "full_paper_read": false,
+        "code_read": false,
+        "code_run": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "stage_changed": false,
+        "read_version": "arXiv 2607.29600v1 (2026-07-31)",
+        "read_locations": [
+          "固定v1完整摘要：HTML L56–60；PDF p.1 Abstract",
+          "§3.1–3.4及Algorithm 1：HTML L107–225；PDF pp.2–5",
+          "§4.1–4.5、Tables 1–4与§5：HTML L226–336；PDF pp.5–7",
+          "arXiv v1摘要页元数据与提交历史；PDF末页范围及appendix引用定位核对"
+        ],
+        "not_read": [
+          "未完成全篇及逐图视觉核验；本记录不构成Stage 1/2/3导入或升级",
+          "未读代码、未运行模型或实验、未独立复现；未作版次间比较",
+          "§4.1提到的subset-to-full附录未核到；不把引用的既往比较当作本次验证",
+          "未核实正式出版版本；未依据第三方解读补方法细节"
+        ],
+        "source_urls": [
+          "https://arxiv.org/html/2607.29600v1",
+          "https://arxiv.org/abs/2607.29600v1",
+          "https://arxiv.org/pdf/2607.29600v1"
+        ]
+      },
+      "identity_notes": {
+        "existing_catalog_paper_id": "ham-vln",
+        "aliases": [
+          "arxiv:2607.29600",
+          "2607.29600",
+          "https://arxiv.org/abs/2607.29600",
+          "https://arxiv.org/html/2607.29600v1"
+        ],
+        "integration_instruction": "沿用既有ham-vln canonical；仅补双树阅读证据，不另建catalog条目，不修改任一Stage状态。"
+      },
+      "identity": {
+        "canonical_id": "ham-vln",
+        "arxiv_ids": [
+          "2607.29600"
+        ],
+        "normalized_title": "hamvlnharnessinghierarchicalagenticmemoryforzeroshotvisionandlanguagenavigation",
+        "source_urls": [
+          "https://arxiv.org/html/2607.29600v1",
+          "https://arxiv.org/abs/2607.29600v1",
+          "https://arxiv.org/pdf/2607.29600v1"
+        ],
+        "dedup_scope": "recovered baseline records and this expansion; historical pool not fully recovered"
+      }
     }
   ],
   "candidates": [
@@ -1325,14 +5270,21 @@ window.RADAR_GRAPH_DATA = {
     "核查发生在10月5日，不把上周论文改标为今日发现。",
     "本overlay只提出编辑性位置候选，不修改已有双树节点或学术关系。",
     "缺分支是当前组织覆盖缺口，不是研究空白；修订不等于贡献变化。",
-    "全文、代码、独立复现和跨期比较均未在本轮执行。"
+    "全文、代码、独立复现和跨期比较均未在本轮执行。",
+    "2026-10-06扩充只纳入有固定公开版本与指定阅读范围的记录；不是当日新发现、全文精读或Stage完成。",
+    "原28候选池尚未完整恢复；保留原历史声明，不作当前总收录分母，亦不宣称全池核验。",
+    "当前收录、筛选匹配与画布可见数须由实际canonical记录分别计算；折叠不等于未收录。",
+    "harness_relation是有来源边界的编辑分类；支撑方法、评测协议与直接harness分开，不由题名含memory/agent推导完整能力。",
+    "所有新增挂树关系均为编辑组织；未核关系提案、SALI隔离候选不进入academic_edges。"
   ],
   "core_definition": "实际读取指定正文段落与评测/限制；非全文阅读",
   "pool_counts": {
     "candidate_pool": 28,
-    "targeted_body_core": 10,
+    "targeted_body_core": 39,
     "full_papers_read": 0,
-    "independent_reproductions": 0
+    "independent_reproductions": 0,
+    "candidate_pool_scope": "historical_unrecovered_claim_not_current_count",
+    "candidate_pool_recovered": false
   },
   "method_reference": {
     "url": "https://aoiota.github.io/ResearchVoyager/review/editorial/",
@@ -1345,5 +5297,66 @@ window.RADAR_GRAPH_DATA = {
     "navigation-evidence.json",
     "candidate-pool.json",
     "radar-tree-overlay.json"
-  ]
+  ],
+  "coverage": {
+    "schema": "radar-c-coverage/1",
+    "baseline_unique_papers": 39,
+    "weekly_unique_papers": 6,
+    "all_scopes_unique_papers": 43,
+    "targeted_body_papers": 39,
+    "classification_counts": {
+      "benchmark_protocol": 4,
+      "direct_harness": 6,
+      "supporting_method": 29
+    },
+    "historical_candidate_pool": {
+      "claimed_count": 28,
+      "recovery_status": "not_fully_recovered",
+      "source": "graph-data.json at main 246c1d2360cf8f96c069894047ffb4bc007c0a5f",
+      "not_current_corpus_count": true
+    },
+    "full_papers_read": 0,
+    "independent_reproductions": 0,
+    "academic_edges": 0
+  },
+  "expansion_provenance": {
+    "baseline_commit": "246c1d2360cf8f96c069894047ffb4bc007c0a5f",
+    "baseline_graph_sha256": "3376924be714e1b774145534a1b030d7dfc726ed828d270295bb532a17085ed0",
+    "added_canonical_ids": [
+      "navgpt",
+      "mapgpt",
+      "discussnav",
+      "instructnav",
+      "esc",
+      "l3mvn",
+      "lfg",
+      "voronav",
+      "trihelper",
+      "imaginenav",
+      "vlmnav",
+      "navgpt2",
+      "engineering-outruns-intelligence",
+      "ma2019regretful",
+      "rana2023sayplan",
+      "rajvanshi2024saynav",
+      "li2024memonav",
+      "werby2024hovsg",
+      "anwar2025remembr",
+      "xu2026memoir",
+      "wang2026lmee",
+      "navmcp",
+      "sap-nav",
+      "hypothesis-graph-refinement",
+      "safevantage",
+      "profocus",
+      "arxiv:2609.39915",
+      "3d-mem",
+      "ham-vln"
+    ],
+    "read_scope": "complete abstracts and specified body sections only",
+    "stage_changes": false,
+    "weekly_daily_snapshots_changed": false,
+    "relation_proposals_integrated": false,
+    "candidate_pool_recovery": "Old full candidate pool not recovered; no complete pool or all-field coverage claim."
+  }
 };

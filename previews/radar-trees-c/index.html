@@ -4,8 +4,8 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="在同一张图中探索导航文献脉络与 Challenge–Insight：公开证据、明确阅读范围、逐层展开。">
 <title>关联地图 · RoboPaperAtlas Radar</title>
-<link rel="stylesheet" href="graph.css?v=37f093da0572">
-<script defer src="data/graph-data.js?v=f83fc946342b"></script><script defer src="graph.js?v=a5914a01ed9d"></script>
+<link rel="stylesheet" href="graph.css?v=fd948fe5c6">
+<script defer src="data/graph-data.js?v=349c19f327"></script><script defer src="graph.js?v=ec8769a0a8"></script>
 </head>
 <body>
 <a class="skip" href="#detail-panel">跳至选中内容</a>
@@ -17,32 +17,39 @@
 <main>
  <section class="intro" aria-labelledby="page-title">
   <div class="intro-heading"><span class="eyebrow">C / 关联地图</span><h1 id="page-title">两棵树，一张研究地图</h1><p>导航领域首个试点 · 从任务找到方法，从问题读懂证据</p></div>
-  <div id="period-switch" class="segmented" role="group" aria-label="图谱数据范围"><button type="button" id="mode-baseline" data-mode="baseline" aria-pressed="true">领域基线 <span>10</span></button><button type="button" id="mode-weekly" data-mode="weekly" aria-pressed="false">本期候选 <span>6</span></button></div>
+  <div id="period-switch" class="segmented" role="group" aria-label="图谱数据范围"><button type="button" id="mode-baseline" data-mode="baseline" aria-pressed="true">领域基线 <span id="baseline-count">—</span></button><button type="button" id="mode-weekly" data-mode="weekly" aria-pressed="false">本期候选 <span id="weekly-count">—</span></button></div>
  </section>
- <section class="context-strip" aria-label="数据范围说明"><span id="scope-label"><i class="status-dot"></i>导航领域首个试点 · 10 篇指定正文 + 4 篇摘要锚点</span><span id="period-counts">今日 10-05：0 条候选 · 本期 10-04：238 候选 / 11 条摘要 / 6 篇定位 / 5 篇未定位</span><a class="text-button" href="weekly-2026-10-04.html">本期详情 ↗</a><button type="button" id="scope-details" class="text-button" aria-label="查看本期数据范围与未定位条目">查看范围 ↗</button></section>
+ <section class="context-strip" aria-label="数据范围说明"><span id="scope-label"><i class="status-dot"></i>导航领域试点 · 证据范围逐篇说明</span><span id="period-counts">读取当前快照范围…</span><a class="text-button" href="weekly-2026-10-04.html">本期详情 ↗</a><button type="button" id="scope-details" class="text-button" aria-label="查看本期数据范围与未定位条目">查看范围 ↗</button></section>
+ <section class="coverage-panel" aria-label="当前范围的论文收录与显示数量">
+  <div class="coverage-counts" aria-live="polite"><div><span>本范围总收录</span><strong id="count-total">—</strong></div><div><span>当前筛选匹配</span><strong id="count-matched">—</strong></div><div><span>左树可见论文</span><strong id="count-visible">—</strong></div></div>
+  <div class="coverage-actions"><button type="button" id="show-all-papers" class="primary-control">显示全部匹配论文</button><button type="button" id="collapse-papers">收起为代表项</button><button type="button" id="return-overview">回到总览</button></div>
+  <p id="coverage-note" class="coverage-note">图谱默认折叠；暂时隐藏的论文仍在收录范围内</p>
+ </section>
  <section class="toolbar" aria-label="图谱工具">
   <label class="select-wrap"><span class="sr-only">按任务筛选</span><select id="task-filter" aria-label="按任务筛选"><option value="all">全部任务</option></select></label>
   <label class="search-wrap"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="m12 12 5 5"/></svg><input id="graph-search" type="search" placeholder="搜索论文、问题或方法…" aria-label="搜索论文、问题或方法"></label>
+  <button type="button" id="clear-filters-toolbar" class="quiet-control">清除筛选</button>
   <label class="focus-switch"><input id="focus-path" type="checkbox" checked><span class="switch-track" aria-hidden="true"></span>聚焦选中路径</label>
-  <a class="text-link" href="literature.html" id="text-alternative">文字版 ↗</a>
+  <a class="text-link" href="literature.html" id="text-alternative">当前文字替代 ↗</a>
  </section>
+ <p id="filter-summary" class="filter-summary">筛选：全部任务 · 无关键词</p>
  <div class="workspace">
   <section class="map-panel" aria-label="双树关联图">
-   <div class="tree-headings"><div><span class="tree-icon">⌑</span><div><h2>文献脉络树</h2><p>任务 → 方法路线 → 代表文献</p></div></div><div><span class="tree-icon">♧</span><div><h2>Challenge–Insight 树</h2><p>编辑归组 → 本文问题 → 思路与证据</p></div></div></div>
-   <div class="map-hint"><span>点卡片查看 · 点“展开 / 收起”改变层级 · 每篇仅一个节点，多条路线可连入</span><span id="visible-count" aria-live="polite"></span></div>
-   <div id="current-path" class="current-path" aria-live="polite"></div>
+   <div class="tree-headings"><div><span class="tree-icon">⌑</span><div><h2>文献脉络树</h2><p>1 选任务 / 方法方向 → 2 查看论文</p></div></div><div><span class="tree-icon">♧</span><div><h2>Challenge–Insight 树</h2><p>3 对照同篇问题 → 4 核对证据</p></div></div></div>
+   <div class="map-hint"><span>点卡片查看 · 点“展开 / 收起”改变显示数量 · 每篇仅一个论文节点</span><span id="visible-count" aria-live="polite"></span></div>
+   <div class="path-row"><div id="current-path" class="current-path" aria-live="polite"></div><button type="button" id="show-details" class="quiet-control">查看选中详情 ↓</button></div>
    <div id="graph-viewport" class="graph-viewport" tabindex="0" aria-label="图谱画布，可滚动；用下方按钮缩放。节点支持 Enter 与空格，Escape 清除选择。">
     <svg id="research-graph" xmlns="http://www.w3.org/2000/svg" role="group" aria-labelledby="graph-title graph-desc" viewBox="0 0 1280 740"><title id="graph-title">文献脉络与 Challenge–Insight 双树</title><desc id="graph-desc">连接仅用于编辑组织；跨树线连接同一论文的内容，不是引用或采用关系。</desc></svg>
     <div id="graph-empty" class="graph-empty" hidden><h3>没有匹配的论文</h3><p>可换个关键词，或返回全部任务</p><button type="button" id="clear-filters">清除筛选</button></div>
    </div>
-   <div class="map-footer"><div class="zoom-controls" role="group" aria-label="缩放图谱"><button type="button" id="zoom-out" aria-label="缩小图谱">−</button><output id="zoom-level" aria-label="当前缩放">100%</output><button type="button" id="zoom-in" aria-label="放大图谱">+</button><button type="button" id="zoom-fit" aria-label="适配可读宽度，保留滚动浏览">适配</button><button type="button" id="locate-selection">定位选中</button><button type="button" id="graph-reset" aria-label="恢复默认全图、展开状态与选中论文">重置</button></div><div class="legend" aria-label="图例"><span><i class="legend-line active"></i>选中路径</span><span><i class="legend-line"></i>编辑组织</span><span><i class="legend-line dashed"></i>摘要候选 / 部分贴合</span></div></div>
+   <div class="map-footer"><div class="zoom-controls" role="group" aria-label="缩放图谱"><button type="button" id="zoom-out" aria-label="缩小图谱">−</button><output id="zoom-level" aria-label="当前缩放">100%</output><button type="button" id="zoom-in" aria-label="放大图谱">+</button><button type="button" id="zoom-fit" aria-label="适配可读宽度，保留滚动浏览">适配</button><button type="button" id="locate-selection">定位选中</button><button type="button" id="graph-reset" aria-label="清除筛选和选择，回到代表项总览">回总览</button></div><div class="legend" aria-label="图例"><span><i class="legend-line active"></i>选中路径</span><span><i class="legend-line"></i>编辑组织</span><span><i class="legend-line dashed"></i>摘要候选 / 部分贴合</span></div></div>
   </section>
-  <aside id="detail-panel" class="detail-panel" aria-label="选中节点的证据、问题、思路与条件"><div class="detail-heading"><h2 id="detail-title">选中论文</h2><button type="button" id="clear-selection" aria-label="清除选中节点">×</button></div><div id="selection-summary"></div><div id="detail-tabs" class="detail-tabs" role="tablist" aria-label="论文详情"><button type="button" id="tab-overview" role="tab" data-tab="overview" aria-selected="true" aria-controls="detail-content">概览</button><button type="button" id="tab-evidence" role="tab" data-tab="evidence" aria-selected="false" aria-controls="detail-content">证据</button><button type="button" id="tab-conditions" role="tab" data-tab="conditions" aria-selected="false" aria-controls="detail-content">适用条件</button></div><div id="detail-content" role="tabpanel" aria-labelledby="tab-overview" tabindex="0"></div></aside>
+  <aside id="detail-panel" class="detail-panel" aria-label="选中节点的证据、问题、思路与条件"><div class="detail-heading"><h2 id="detail-title">研究总览</h2><button type="button" id="clear-selection" aria-label="清除选中节点">×</button></div><button type="button" id="back-to-direction" class="back-direction" hidden>← 返回方向</button><div id="selection-summary"></div><div id="detail-tabs" class="detail-tabs" role="tablist" aria-label="论文详情"><button type="button" id="tab-overview" role="tab" data-tab="overview" aria-selected="true" aria-controls="detail-content">概览</button><button type="button" id="tab-evidence" role="tab" data-tab="evidence" aria-selected="false" aria-controls="detail-content">证据</button><button type="button" id="tab-conditions" role="tab" data-tab="conditions" aria-selected="false" aria-controls="detail-content">适用条件</button></div><div id="detail-content" role="tabpanel" aria-labelledby="tab-overview" tabindex="0"></div></aside>
  </div>
  <footer class="page-footer"><span><b>阅读路径</b>　① 放入任务与方法　→　② 对照同篇问题　→　③ 核对证据与条件</span><span>图中所有连接均为编辑组织 · <a id="method-reference" href="https://aoiota.github.io/ResearchVoyager/review/editorial/" target="_blank" rel="noopener noreferrer">公开方法说明 ↗</a></span></footer>
- <details id="scope-notes" class="scope-notes"><summary>阅读范围与未定位条目</summary><div id="scope-note-content"><p>当前导航试点含 10 篇指定正文段落核查记录与 4 篇摘要关系锚点；本图主干展示 10 篇核心记录，不代表全部机器人领域覆盖或全文阅读。周候选仅 6 篇摘要定位；5 篇摘要未在本轮定位，238 条候选未全部挂树。未建分支是组织覆盖缺口，不是研究空白。</p></div></details>
- <noscript><section class="fallback"><h2>文字替代</h2><p>启用 JavaScript 后可查看可交互双树。当前基线包含 VLN、ObjectNav 与持续导航三个任务，以及运行闭环、空间记忆、上下文、学习策略、评测协议五条路线。代表论文包括 HarnessVLN、NavHarness、AgenticNav、Qwen-RobotNav、HoloAgent-0、IVLN、GOAT、GOAT-Bench、VLN-CE、ObjectNav Revisited。读取范围是指定正文段落，非全文核读。周候选仅摘要级定位。</p><a href="literature.html">阅读文献脉络文字版</a> · <a href="challenge.html">阅读问题与思路文字版</a></section></noscript>
- <div id="load-error" class="fallback" role="alert"><h2>图谱暂未载入</h2><p>请将 index.html、graph.js、graph.css 与 data 文件夹保留在同一目录。仍可访问<a href="literature.html">文献脉络文字版</a>与<a href="challenge.html">问题与思路文字版</a>。领域基线有 3 个任务、5 条方法路线、10 篇指定正文段落核查记录；本期只定位了 6 篇摘要候选，不是全部 238 条候选。</p></div>
+ <details id="scope-notes" class="scope-notes"><summary>阅读范围与未定位条目</summary><div id="scope-note-content"><p>当前总收录只统计本图所选范围中的独立论文；正式 Library、候选池和周窗发现队列分别管理。折叠不改变收录，筛选只改变匹配结果。每篇论文的实际证据与未读范围请查看详情。</p></div></details>
+ <noscript><section class="fallback"><h2>文字替代</h2><p>启用 JavaScript 后可查看当前可交互双树。下方文字页与当前已审图谱使用同一数据快照，完整列出基线已收录论文；旧周窗仍保留自己的日期与摘要证据范围。任务、方法路线和论文的完整范围由当前图谱数据决定。每个方向默认收起为代表项；这不代表只收录代表项。阅读范围由每篇详情说明，不等于全文核读。周候选仅摘要级定位。</p><a href="literature.html">阅读文献脉络文字版</a> · <a href="challenge.html">阅读问题与思路文字版</a></section></noscript>
+ <div id="load-error" class="fallback" role="alert"><h2>图谱暂未载入</h2><p>请将 index.html、graph.js、graph.css 与 data 文件夹保留在同一目录。仍可访问与当前图谱同源生成的完整基线文字替代：<a href="literature.html">文献脉络文字版</a>与<a href="challenge.html">问题与思路文字版</a>；它们的范围以各页说明为准。图中收录量、筛选匹配量和当前可见量是不同指标；周窗定位只覆盖本期候选的一部分。</p></div>
 </main>
 </body>
 </html>
