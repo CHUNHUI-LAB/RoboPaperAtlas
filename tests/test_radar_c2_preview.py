@@ -290,6 +290,8 @@ class RadarC2ContractTests(unittest.TestCase):
         # Deployment-neutral wording preserves the isolated route without claiming acceptance.
         self.assertIn('<title>双树逐层导航 · 隔离预览</title>', entry)
         self.assertIn('<span class="local-badge">隔离预览</span>', entry)
+        self.assertIn('class="skip" href="#global-map"', entry)
+        self.assertIn('id="global-map" tabindex="-1"', entry)
         analysis = (source / 'analysis/c2.js').read_text()
         self.assertIn("<span>隔离预览 · '+esc(paper.version)+'</span>", analysis)
         for rendered_source in (entry, analysis):
@@ -323,6 +325,9 @@ class RadarC2ContractTests(unittest.TestCase):
             run = subprocess.run(['node', str(site / 'tests/integration.test.cjs')], check=True,
                                  capture_output=True, text=True, timeout=30)
             self.assertEqual(len(re.findall(r'^PASS ', run.stdout, re.M)), 2, run.stdout)
+            for script in ('analysis/tests/global-first.test.cjs', 'tests/global-dual.test.cjs'):
+                subprocess.run(['node', str(site / script)], check=True, capture_output=True,
+                               text=True, timeout=60)
             before_bundle = (site / 'analysis/data/bundle.js').read_bytes()
             subprocess.run([sys.executable, str(site / 'analysis/build_bundle.py')],
                            check=True, capture_output=True, text=True)

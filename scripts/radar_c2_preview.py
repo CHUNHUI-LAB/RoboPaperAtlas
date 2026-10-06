@@ -28,7 +28,8 @@ REVIEW_INPUTS = frozenset((
     'analysis/data/ledger.json', 'analysis/data/UPSTREAM-VERIFICATION.json',
     'analysis/build_bundle.py', 'tests/navigation.test.cjs',
     'tests/dom_fixture.cjs', 'tests/integration.test.cjs', 'analysis/tests/c2.test.cjs',
-    'analysis/tests/dom_fixture.cjs',
+    'analysis/tests/dom_fixture.cjs', 'analysis/tests/global-first.test.cjs',
+    'tests/global-dual.test.cjs',
 ))
 # Source namespaces are never valid clean-build output destinations.
 SOURCE_DIRS = frozenset(('.git', '.github', 'assets', 'artifacts', 'candidates',
