@@ -37,22 +37,25 @@ PART_FIELDS = {'file', 'bytes', 'sha256'}
 REPORT_PAPERS = {
     'harnessvln': {
         'title': 'HarnessVLN',
-        'versions': {'v1': {'stage1'}},
-        'review_status': 'preview_pending',
+        'versions': {'v1': {'stage1'}, 'v2': {'stage1'}},
+        'review_states': {'v1': {'stage1': 'preview_pending'},
+                          'v2': {'stage1': 'content_approved'}},
         'source_urls': set(), 'pdf_urls': set(),
         'arxiv_id': '2609.15195',
     },
     'navharness': {
         'title': 'NavHarness',
-        'versions': {'v1': {'stage1'}},
-        'review_status': 'preview_pending',
+        'versions': {'v1': {'stage1'}, 'v2': {'stage1'}},
+        'review_states': {'v1': {'stage1': 'preview_pending'},
+                          'v2': {'stage1': 'content_approved'}},
         'source_urls': set(), 'pdf_urls': set(),
         'arxiv_id': '2609.34276',
     },
     'holoagent-0': {
         'title': 'HoloAgent-0',
-        'versions': {'v1': {'stage1'}},
-        'review_status': 'preview_pending',
+        'versions': {'v1': {'stage1'}, 'v2': {'stage1'}},
+        'review_states': {'v1': {'stage1': 'preview_pending'},
+                          'v2': {'stage1': 'content_approved'}},
         'source_urls': set(), 'pdf_urls': set(),
         'arxiv_id': '2606.23565',
     },
@@ -157,10 +160,24 @@ def _identity(record):
     require(record.get('filename') == STAGE_FILES[stage], 'Filename must match its stage')
 
 
+def expected_review_status(record):
+    """Exact identity contract, not evidence that a candidate has been approved."""
+    _identity(record)
+    policy = REPORT_PAPERS[record['paper_id']]
+    if 'review_states' in policy:
+        return policy['review_states'][record['version']][record['stage']]
+    return policy['review_status']
+
+
 def _validate_record(record):
+    _validate_record_fields(record)
+    require(record['review_status'] == expected_review_status(record), 'Report must have its explicitly approved review state')
+
+
+def _validate_record_fields(record):
+    """Validate structure only; every external entry point must enforce its state."""
     _keys(record, RECORD_FIELDS, 'Report')
     _identity(record)
-    require(record['review_status'] == REPORT_PAPERS[record['paper_id']]['review_status'], 'Report must have its explicitly approved review state')
     for key in ('source_edition', 'rights_note'):
         _text(record[key], key)
     for key in ('sha256', 'source_sha256'):
@@ -474,6 +491,11 @@ def _parse_html(record, payload, root=ROOT):
         from report_v2 import prepare
         text,parser=prepare(root,record,payload)
     else:parser = ReportHTML(record['filename'], record['paper_id'])
+    return _finish_html_parse(record, text, parser)
+
+
+def _finish_html_parse(record, text, parser):
+    require(not re.search(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', text), 'HTML contains control characters')
     try:
         parser.feed(text)
         parser.close()

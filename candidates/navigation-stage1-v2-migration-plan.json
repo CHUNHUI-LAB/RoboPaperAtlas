@@ -1,0 +1,81 @@
+{
+  "status": "pending_candidate_no_registry_write",
+  "base_B_commit": "e06c49085b82687cd28e03673574777bb848800e",
+  "base_B_tree": "e32e817a9fe52411e29bf6d472754f9e255af5eb",
+  "active_files_sha256": {
+    "data/reports.json": "5eaeaca879b95b0ec6081b8018bda43d7b2f134cd5a67c9d8d0c48b575d06f3a",
+    "data/catalog.json": "0dcf3daf54009c9d29c5b2dc74ecfe50492e07643f8ec7f55ab5feff100484f7",
+    "data/classification.json": "d793e7c697f6dac6e9883f7531f2fcfcfaaa4e70585153371ffab339f21fd833"
+  },
+  "required_gates": {
+    "final_bytes_independent_facts": "passed_source_consistency_only",
+    "actual_print": "pending",
+    "final_byte_browser_qa": "pending",
+    "independent_code_review": "pending",
+    "full_ci": "pending"
+  },
+  "candidate_manifest": "candidates/navigation-stage1-v2-pending.json",
+  "operations_after_gates": [
+    {
+      "file": "data/reports.json",
+      "operation": "Append exactly the three candidate identities after exact-byte signoff; set review_status to the exact expected state only after gates. Preserve first 21 records."
+    },
+    {
+      "file": "data/catalog.json",
+      "operation": "Update only these three papers Stage 1 states/artifacts from exact promoted records and updated_at. Keep all metadata, other papers, and Stage 2/3 unchanged."
+    },
+    {
+      "file": "data/classification.json",
+      "operation": "Change catalog_sha256 only, to hash of final promoted catalog bytes."
+    },
+    {
+      "file": "docs/report-artifacts.md",
+      "operation": "Record exact completed and blocked gates truthfully, with evidence hashes; no implied print acceptance."
+    }
+  ],
+  "proposed_identities": [
+    {
+      "paper_id": "harnessvln",
+      "stage": "stage1",
+      "version": "v2",
+      "filename": "first-pass.html",
+      "sha256": "83bd72851dd8ff67bb6c7dd56ef492848cabdf279481b3f4147070fead96fff2",
+      "current_state": "pending_candidate"
+    },
+    {
+      "paper_id": "navharness",
+      "stage": "stage1",
+      "version": "v2",
+      "filename": "first-pass.html",
+      "sha256": "279d81743598ef2b1b2b95c4c1abc7b3197b5a296718891310a92f70db465fb5",
+      "current_state": "pending_candidate"
+    },
+    {
+      "paper_id": "holoagent-0",
+      "stage": "stage1",
+      "version": "v2",
+      "filename": "first-pass.html",
+      "sha256": "8e10161884ccc7cea77ca6a98da6cef3829e6049635ea9923e8f5ed27acbd9b5",
+      "current_state": "pending_candidate"
+    }
+  ],
+  "expected_totals": {
+    "formal_reports": 24,
+    "imported_stages": 15,
+    "papers_with_reading": 8,
+    "fully_imported_papers": 3,
+    "catalog_papers": 95
+  },
+  "limits": [
+    "Actual canonical v2 build/output cannot be exercised on unchanged active registry; use a labeled synthetic temporary overlay only.",
+    "Final-byte HTTPS/browser/print QA cannot be inferred from contract tests or B acceptance.",
+    "The isolated v2 QA preview is separate from canonical promotion; the latter still requires explicit completion/acceptance of the print and final-byte QA gates."
+  ],
+  "isolated_preview": {
+    "base": "reader-integration-preview/navigation-stage1-v2-20261005",
+    "state": "pending_candidate",
+    "raw_bytes_equal_future_canonical_artifact": true,
+    "report_indexing": "noindex,follow retained permanently; canonical paper details provide indexed discovery",
+    "no_runtime_state_relabeling": true
+  }
+}

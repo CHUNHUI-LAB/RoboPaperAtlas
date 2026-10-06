@@ -1,0 +1,93 @@
+/2609.34276v1#A4.F12" target="_blank" rel="noopener">HTML Fig. 12 / PDF Fig. 13</a></p></section><section id="section-09" tabindex="-1"><h2>09 Future Work / Research Implications</h2><p><span class="tag">作者表述</span>以下仅整理作者在Appendix E提出的方向，不添加本文以外的研究设想。 <a class="source" href="https://arxiv.org/html/2609.34276v1#A5" target="_blank" rel="noopener">App. E</a></p><ul><li>让更快、更强的具身局部策略接管local rollout，大模型负责目标、记忆与任务边界；需要局部控制器返回足够支持推理与核验的观测。<a class="source" href="https://arxiv.org/html/2609.34276v1#A5.SS1" target="_blank" rel="noopener">E.1</a></li><li>开展真实机器人、独立轨迹测量和更长时间、变化环境下的评测，包括物体移动、布局与人员变化。<a class="source" href="https://arxiv.org/html/2609.34276v1#A5.SS3" target="_blank" rel="noopener">E.3</a>；<a class="source" href="https://arxiv.org/html/2609.34276v1#A5.SS6" target="_blank" rel="noopener">E.6</a></li><li>考虑dense 3D或change-aware 4D空间后端，适配map-query和update工具；处理更长历史下的选择性检索、陈旧与冲突记录。<a class="source" href="https://arxiv.org/html/2609.34276v1#A5.SS4" target="_blank" rel="noopener">E.4–E.5</a></li><li>适配较小模型；在独立验证不可靠judge标签后，利用目标、帧、执行记录、声明、判定与更新记录作long-horizon post-training或process supervision。当前工作不更新模型参数。<a class="source" href="https://arxiv.org/html/2609.34276v1#A5.SS7" target="_blank" rel="noopener">E.7</a></li><li>考察监督触发位置与频率、低延迟连续监督接口；独立训练的judge、真实跨house识别仍是必要测试。<a class="source" href="https://arxiv.org/html/2609.34276v1#A5.SS8" target="_blank" rel="noopener">E.8–E.9</a></li></ul></section><section id="section-10" tabindex="-1"><h2>10 论文逻辑链</h2><ol class="flow"><li><strong>现实问题</strong><p><span class="tag">概括</span>连续请求发生在已经探索过的房屋，机器人须借用旧经验决定下一步。 <a class="source" href="https://arxiv.org/html/2609.34276v1#S1" target="_blank" rel="noopener">Sec. 1 第1段</a></p></li><li><strong>现有方法</strong><p><span class="tag">概括</span>已有长期导航保留空间知识、检索历史观测，通用代理能读写外部记录。 <a class="source" href="https://arxiv.org/html/2609.34276v1#S2" target="_blank" rel="noopener">Sec. 2</a></p></li><li><strong>为什么不够</strong><p><span class="tag">概括</span>当前研究需要说明不同记录怎样一起使用，以及什么搜索证据应穿过会话边界。 <a class="source" href="https://arxiv.org/html/2609.34276v1#S1" target="_blank" rel="noopener">Sec. 1 第3–4段</a></p></li><li><strong>关键认识</strong><p><span class="tag">概括</span>访问过却未找到不等于排除，存下的描述也可能与新视野冲突。 <a class="source" href="https://arxiv.org/html/2609.34276v1#S1" target="_blank" rel="noopener">Sec. 1 第2段</a></p></li><li><strong>核心思想</strong><p><span class="tag">概括</span>让连续新会话接续可查证的经验，并在行动中继续核对与修订。 <a class="source" href="https://arxiv.org/html/2609.34276v1#S1" target="_blank" rel="noopener">Sec. 1 第4–5段</a></p></li><li><strong>具体方法</strong><p><span class="tag">概括</span>外层编排task／recovery边界，内层会话按需查地图与记录，配合结构化交接、完成核查和run-end整合。 <a class="source" href="https://arxiv.org/html/2609.34276v1#S3" target="_blank" rel="noopener">Sec. 3</a></p></li><li><strong>实验验证</strong><p><span class="tag">概括</span>同backbone完整系统比较、组件干预和36-house consolidation对照分别回答不同层次的问题。 <a class="source" href="https://arxiv.org/html/2609.34276v1#S4" target="_blank" rel="noopener">Sec. 4</a></p></li><li><strong>结论</strong><p><span class="tag">概括</span>作者认为长期导航应围绕能继承、核查并继续修订经验的连续推理会话来构建。 <a class="source" href="https://arxiv.org/html/2609.34276v1#S5" target="_blank" rel="noopener">Sec. 5</a></p></li></ol></section><section id="section-11" tabindex="-1"><h2>11 第一遍阅读结束后，我应该记住的东西</h2><ol class="remember"><li><p><span class="tag">概括</span>问题是新导航会话怎样接续不完整、可能有错的历史搜索，而不是只完成一个孤立目标。 <a class="source" href="https://arxiv.org/html/2609.34276v1#S1" target="_blank" rel="noopener">Sec. 1</a></p></li><li><p><span class="tag">概括</span>核心gap是经验被保留以后如何联合使用、核对与交接；作者没有把所有先前方法一概描述成“没有记忆”。 <a class="source" href="https://arxiv.org/html/2609.34276v1#S2" target="_blank" rel="noopener">Sec. 2</a></p></li><li><p><span class="tag">概括</span>关键认识是searched与ruled out不同，过去记录必须与当前观测对照。 <a class="source" href="https://arxiv.org/html/2609.34276v1#S3.SS3" target="_blank" rel="noopener">Sec. 3.3</a></p></li><li><p><span class="tag">概括</span>最核心变化是替换对话时保留身体、预算和可寻址证据，并用结构化交接支持新尝试。 <a class="source" href="https://arxiv.org/html/2609.34276v1#S3" target="_blank" rel="noopener">Sec. 3</a></p></li><li><p><span class="tag">概括</span>最有针对性的结果是Opus在同预算下结构化交接比等长摘要高8.3 pp；完整Astra系统在GOAT达83.7% s-SR，但整链e-SR为36.9%。 <a class="source" href="https://arxiv.org/html/2609.34276v1#S4.T3" target="_blank" rel="noopener">Tables 1、3</a></p></li></ol></section><section id="section-12" tabindex="-1"><h2>12 暂时不要深入的内容</h2><ul><li>完整状态和会话更新公式、hop执行优先级与Algorithm 1：之后返回App. A.1，Eq. (1)–(2)，PDF pp.15–16。</li><li>RGB-D位姿、深度反投影、栅格高度阈值、A*路径长度及tracker失效重锚定：之后返回App. A.2，Eq. (3)–(6)，PDF pp.17–19。</li><li>任务记录的certified／not done／unresolved／claimed状态、place graph与house-note更新：之后返回App. A.4，Eq. (8)–(11)，PDF pp.20–22。</li><li>recovery scope控制器与结构化note字段，尤其progress代理量与最小scope原则：之后返回App. A.5，Eq. (12)–(17)，Table 7，PDF pp.22–24。</li><li>pre-stop／post-stop状态机、判定复用条件与局部STOP反事实统计：之后返回App. A.6、C.5，Eq. (18)–(19)，Tables 15–16，PDF pp.24–25、32–33。</li><li>三house的14个案例、48个案例的人工编码与证据链：之后返回App. D.2–D.3，PDF Figs.12–27（HTML Figs.11–26），PDF pp.34–50。</li></ul><p><span class="tag">概括</span>Stage 1到此结束。以上是原文初读，不包含代码实现核对、个人课题迁移或新的研究方向。 </p></section></article></div></div></main><footer class="reader-license-note">资料：arXiv:2609.34276v1及作者官方项目页。论文与原图由原作者拥有，原论文采用CC BY 4.0；本页保留作者、版本与原图来源。阅读页为离线自包含单文件；外部原文链接仍需联网。已进行静态结构、锚点及图像检查，未进行浏览器桌面／窄屏及打印视觉验收，图片放大交互亦未实测。<h3>作者、来源与公开使用说明</h3><p>NavHarness: Towards Lifelong Embodied Navigation。作者：Xunyi Zhao、Jian Zhou、Sihao Lin、Gengze Zhou、Zerui Li、Xinyu Yan、Jiajun Liu、Anton van den Hengel、Qi Wu。来源：<a href="https://arxiv.org/abs/2609.34276v1">arXiv:2609.34276v1</a>，采用<a href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International（CC BY 4.0）</a>。四张嵌图均从指定PDF裁剪，保留原图、图例与英文caption；页面按显示宽度缩放，中文图注与分析为整理者转述。本页不是作者官方报告，不暗示作者认可或背书；不重新分发完整PDF。第三方单独标注材料仍以其原有权利说明为准。</p></footer><p class="reader-footer">阅读报告 v2 · 指定原文版本与阅读范围见本页说明 · 不代表独立复现 · 原文及项目链接需联网</p><div class="reader-toast" role="status" aria-live="polite" hidden></div><script>/* Reader controls only: no models, analytics, remote scripts or automatic PDF fetch. */
+(() => {
+ 'use strict';
+ const page=document.querySelector('.reader-page');if(!page)return;
+ const reduced=matchMedia('(prefers-reduced-motion: reduce)'),toc=page.querySelector('.reader-toc'),tocButton=page.querySelector('.reader-toc-toggle');
+ const compact=matchMedia('(max-width:767px)'),position=page.querySelector('.reader-position'),previousSection=page.querySelector('[data-reader-previous]'),nextSection=page.querySelector('[data-reader-next]'),sectionLabel=page.querySelector('[data-reader-section-label]');let currentSection=0,programmaticTarget=null;
+ const sections=[...page.querySelectorAll('.reader-article>section[id]')],tocLinks=[...toc.querySelectorAll('a[href^="#"]')];
+ let frame=0,toastTimer=0,toast=document.querySelector('.reader-toast');
+ const siteHeader=document.querySelector('.atlas-site-header'),stagebar=page.querySelector('.reader-stagebar');
+ function syncChrome(){
+  if(!siteHeader||!stagebar)return;
+  const headerHeight=siteHeader.getBoundingClientRect().height,barHeight=stagebar.getBoundingClientRect().height;
+  if(!(headerHeight>0&&barHeight>0))return;
+  document.documentElement.style.setProperty('--atlas-header-height',headerHeight+'px');
+  document.documentElement.style.setProperty('--reader-chrome-bottom',(headerHeight+barHeight)+'px');
+  document.documentElement.style.setProperty('--reader-anchor-offset',(headerHeight+barHeight+16)+'px');
+ }
+ syncChrome();
+ function announce(message){clearTimeout(toastTimer);toast.textContent=message;toast.hidden=false;toastTimer=setTimeout(()=>{toast.hidden=true;},2400);}
+ function selectSection(index){
+  currentSection=Math.max(0,Math.min(sections.length-1,index));
+  tocLinks.forEach(link=>{const active=link.hash==='#'+sections[currentSection]?.id;link.classList.toggle('is-current',active);if(active)link.setAttribute('aria-current','location');else link.removeAttribute('aria-current');});
+  if(position)position.textContent=String(currentSection+1).padStart(2,'0')+' / '+String(sections.length).padStart(2,'0');
+  if(previousSection)previousSection.disabled=currentSection===0;if(nextSection)nextSection.disabled=currentSection===sections.length-1;
+  if(sectionLabel)sectionLabel.textContent=tocLinks[currentSection]?.textContent||'';
+ }
+ function updatePosition(){
+  frame=0;const offset=Number.parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop)||144;
+  const effectiveTop=section=>section.getBoundingClientRect().top-(Number.parseFloat(getComputedStyle(section).scrollMarginTop)||0);
+  const atBottom=Number.isFinite(window.scrollY)&&window.scrollY>0&&window.innerHeight+window.scrollY>=document.documentElement.scrollHeight-2;
+  if(programmaticTarget!==null){
+   const targetTop=effectiveTop(sections[programmaticTarget]);
+   if(Math.abs(targetTop-offset)<=6||(atBottom&&targetTop>=offset-6))programmaticTarget=null;
+   else{selectSection(programmaticTarget);return;}
+  }
+  let current=sections[0];for(const section of sections){if(effectiveTop(section)<=offset+6)current=section;else break;}
+  if(atBottom)current=sections[sections.length-1];selectSection(Math.max(0,sections.indexOf(current)));
+ }
+
+ const schedule=()=>{if(!frame&&!document.hidden)frame=requestAnimationFrame(updatePosition);};
+ window.addEventListener('scroll',schedule,{passive:true});window.addEventListener('resize',()=>{syncChrome();schedule();});window.addEventListener('hashchange',()=>{programmaticTarget=null;schedule();});window.addEventListener('pageshow',()=>{syncChrome();schedule();});
+ if(typeof ResizeObserver==='function'&&siteHeader&&stagebar){const chromeObserver=new ResizeObserver(()=>{syncChrome();schedule();});chromeObserver.observe(siteHeader);chromeObserver.observe(stagebar);}
+ const interruptScroll=()=>{programmaticTarget=null;schedule();};
+ const isSectionControl=target=>[previousSection,nextSection,tocButton,...tocLinks].some(control=>control&&(control===target||control.contains(target)));
+ const pointerIntent=e=>{if(!isSectionControl(e.target))interruptScroll();};
+ window.addEventListener('wheel',interruptScroll,{passive:true});window.addEventListener('touchstart',pointerIntent,{passive:true});window.addEventListener('touchmove',interruptScroll,{passive:true});window.addEventListener('pointerdown',pointerIntent,{passive:true});
+ window.addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','PageUp','PageDown','Home','End'].includes(e.key)||(e.key===' '&&!isSectionControl(e.target)))interruptScroll();});
+ // A prior animation can emit scrollend after a newer navigation has started.
+ // Only geometry (above) or genuine manual intent may settle that new target.
+ window.addEventListener('scrollend',schedule);
+ document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelAnimationFrame(frame);frame=0;programmaticTarget=null;}else schedule();});
+ function closeToc(restore=false){toc.classList.remove('is-open');toc.inert=compact.matches;tocButton.setAttribute('aria-expanded','false');if(restore)tocButton.focus({preventScroll:true});}
+ tocButton.addEventListener('click',()=>{const open=!toc.classList.contains('is-open');toc.classList.toggle('is-open',open);toc.inert=compact.matches&&!open;tocButton.setAttribute('aria-expanded',String(open));if(open){const target=toc.querySelector('.is-current')||tocLinks[0];target?.focus({preventScroll:true});if(target)toc.scrollTop=Math.max(0,target.offsetTop-toc.clientHeight/2);}});
+ tocLinks.forEach(link=>link.addEventListener('click',e=>{if(e.defaultPrevented||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey||e.button>0)return;const index=sections.findIndex(section=>'#'+section.id===link.hash);if(index<0)return;e.preventDefault();closeToc();history.pushState(null,'',link.hash);goSection(index);}));
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&toc.classList.contains('is-open')&&!document.querySelector('dialog[open]')){e.preventDefault();closeToc(true);}});
+ document.addEventListener('focusin',e=>{if(toc.classList.contains('is-open')&&e.target!==tocButton&&!toc.contains(e.target))closeToc();});
+ compact.addEventListener?.('change',()=>{closeToc(compact.matches&&toc.contains(document.activeElement));schedule();});toc.inert=compact.matches;
+ function goSection(index){const target=sections[index];if(!target)return;
+  // Focus can interrupt an in-flight browser scroll even with preventScroll.
+  // Finish focus changes first, then make this navigation the last scroll request.
+  target.focus({preventScroll:true});programmaticTarget=index;selectSection(index);target.scrollIntoView({block:'start',behavior:reduced.matches?'auto':'smooth'});
+ }
+ previousSection?.addEventListener('click',()=>goSection(currentSection-1));nextSection?.addEventListener('click',()=>goSection(currentSection+1));
+ const copies=new WeakMap();
+ page.querySelectorAll('[data-copy-code]').forEach(button=>button.addEventListener('click',async()=>{
+  const holder=button.closest('.code-reader'),lines=[...holder.querySelectorAll('.code-text')].map(line=>line.textContent),token=(copies.get(button)||0)+1;copies.set(button,token);
+  try{await navigator.clipboard.writeText(lines.join('\n'));if(copies.get(button)===token&&button.isConnected)announce('代码片段已复制，未包含行号');}
+  catch{if(copies.get(button)===token&&button.isConnected)announce('未能访问剪贴板，可在代码框中手动选择复制');}
+ }));
+ page.querySelectorAll('[data-code-focus]').forEach(button=>button.addEventListener('click',()=>{
+  const holder=button.closest('.code-reader'),active=!holder.classList.contains('is-focused');holder.classList.toggle('is-focused',active);button.setAttribute('aria-pressed',String(active));
+  const pre=holder.querySelector('pre'),first=holder.querySelector('.code-line.is-key');
+  if(active&&first)pre.scrollTo({top:Math.max(0,first.offsetTop-pre.clientHeight/3),behavior:reduced.matches?'auto':'smooth'});
+ }));
+ const sourceData=page.querySelector('[data-source-units]');
+ if(sourceData){
+  let units=[];try{units=JSON.parse(sourceData.textContent);}catch{};
+  const panel=page.querySelector('.reader-source-panel'),rows=page.querySelectorAll('[data-source-row]'),buttons=page.querySelectorAll('[data-source-unit]');let selected=0;
+  const show=(id,scroll=false)=>{const index=units.findIndex(x=>x.id===id);if(index<0)return;selected=index;const unit=units[index];
+   panel.querySelector('[data-source-id]').textContent=unit.id;panel.querySelector('[data-source-location]').textContent=unit.location;panel.querySelector('[data-source-paraphrase]').textContent=unit.paraphrase;
+   const quote=panel.querySelector('[data-source-quote]');quote.hidden=!unit.quote;quote.textContent=unit.quote||'';
+   const a=panel.querySelector('[data-source-open]');a.href=unit.url;a.textContent=(unit.link_label||'打开原文位置')+' ↗';
+   panel.querySelector('[data-source-previous]').disabled=index===0;panel.querySelector('[data-source-next]').disabled=index===units.length-1;
+   rows.forEach(row=>(row.closest('.source-row')||row).classList.toggle('is-current',row.dataset.sourceRow===id));buttons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.sourceUnit===id)));
+   if(scroll){interruptScroll();page.querySelector('[data-source-row="'+CSS.escape(id)+'"]')?.scrollIntoView({block:'start',behavior:reduced.matches?'auto':'smooth'});}
+  };
+  buttons.forEach(b=>b.addEventListener('click',()=>{show(b.dataset.sourceUnit);if(innerWidth<=1050){const unit=units.find(x=>x.id===b.dataset.sourceUnit);announce(unit?.location||'已选择原文位置');}}));
+  panel.querySelector('[data-source-previous]').addEventListener('click',()=>show(units[Math.max(0,selected-1)].id,true));panel.querySelector('[data-source-next]').addEventListener('click',()=>show(units[Math.min(units.length-1,selected+1)].id,true));
+  const toggle=page.querySelector('[data-source-toggle]');toggle?.addEventListener('click',()=>{const off=page.classList.toggle('reader-source-collapsed');toggle.setAttribute('aria-pressed',String(!off));});if(units.length)show(units[0].id);
+ }
+ updatePosition();
+})();
+</script></body></html>

@@ -5,6 +5,8 @@ from html import escape
 
 NAVIGATION_READER_PAPERS = frozenset({'harnessvln','navharness','holoagent-0'})
 NAVIGATION_FROZEN = {'harnessvln': {'version': 'v1', 'sha256': '923f7f4a707517708eb14d33905b67046d57aca57a44a0adad96d50f19c2b56a', 'nav': '<nav class="reader-stages" aria-label="阅读阶段"><a href="#section-01" aria-current="page"><small>01</small>初读</a><span aria-disabled="true"><small>02</small>写作精读 · 未收录</span><span aria-disabled="true"><small>03</small>方法与代码 · 未收录</span></nav>', 'return_link': '<a class="atlas-return" href="https://chunhui-lab.github.io/RoboPaperAtlas/papers/harnessvln/index.html">回到论文详情</a>', 'note': '<p class="reader-document-note">阅读报告 v1 · 集成预览 · 待视觉验收；内容终审与桌面、窄屏、打印验收尚未完成；受控预览，尚未正式收录。</p>', 'current_return': '<a class="atlas-return" href="../index.html#reading">回到论文详情</a>'}, 'navharness': {'version': 'v1', 'sha256': '290ef898e427462784ce2f4b930893b882d16875b9ced2bddbc3180b8024e23e', 'nav': '<nav class="reader-stages" aria-label="阅读阶段"><a href="#section-01" aria-current="page"><small>01</small>初读</a><span aria-disabled="true"><small>02</small>写作精读 · 未收录</span><span aria-disabled="true"><small>03</small>方法与代码 · 未收录</span></nav>', 'return_link': '<a class="atlas-return" href="https://chunhui-lab.github.io/RoboPaperAtlas/papers/navharness/index.html">回到论文详情</a>', 'note': '<p class="reader-document-note">阅读报告 v1 · 集成预览 · 待视觉验收；内容终审与桌面、窄屏、打印验收尚未完成；受控预览，尚未正式收录。</p>', 'current_return': '<a class="atlas-return" href="../index.html#reading">回到论文详情</a>'}, 'holoagent-0': {'version': 'v1', 'sha256': '665471b396b2154f521b42209b2e2545b28773c4b335788b22b3cb4961c7d4bc', 'nav': '<nav class="reader-stages" aria-label="阅读阶段"><a href="#section-01" aria-current="page"><small>01</small>初读</a><span aria-disabled="true"><small>02</small>写作精读 · 未收录</span><span aria-disabled="true"><small>03</small>方法与代码 · 未收录</span></nav>', 'return_link': '<a class="atlas-return" href="https://chunhui-lab.github.io/RoboPaperAtlas/papers/holoagent-0/index.html">回到论文详情</a>', 'note': '<p class="reader-document-note">阅读报告 v1 · 集成预览 · 待视觉验收；内容终审与桌面、窄屏、打印验收尚未完成；受控预览，尚未正式收录。</p>', 'current_return': '<a class="atlas-return" href="../index.html#reading">回到论文详情</a>'}}
+# These exact v2 signatures are inactive until canonical records pass promotion.
+NAVIGATION_CANONICAL_FROZEN = {'harnessvln': {'version': 'v2', 'sha256': '83bd72851dd8ff67bb6c7dd56ef492848cabdf279481b3f4147070fead96fff2', 'nav': '<nav class="reader-stages" aria-label="阅读阶段"><a href="#section-01" aria-current="page"><small>01</small>初读</a><span aria-disabled="true"><small>02</small>写作精读 · 未收录</span><span aria-disabled="true"><small>03</small>方法与代码 · 未收录</span></nav>', 'return_link': '<a class="atlas-return" href="https://chunhui-lab.github.io/RoboPaperAtlas/papers/harnessvln/index.html">回到论文详情</a>', 'note': '<p class="reader-document-note">阅读报告 v2 · 2026-10-05 · 基于指定原文版本；阅读范围及来源边界见本页说明。阅读报告版本不等于论文版本；不代表独立复现。</p>', 'current_return': '<a class="atlas-return" href="../index.html#reading">回到论文详情</a>'}, 'navharness': {'version': 'v2', 'sha256': '279d81743598ef2b1b2b95c4c1abc7b3197b5a296718891310a92f70db465fb5', 'nav': '<nav class="reader-stages" aria-label="阅读阶段"><a href="#section-01" aria-current="page"><small>01</small>初读</a><span aria-disabled="true"><small>02</small>写作精读 · 未收录</span><span aria-disabled="true"><small>03</small>方法与代码 · 未收录</span></nav>', 'return_link': '<a class="atlas-return" href="https://chunhui-lab.github.io/RoboPaperAtlas/papers/navharness/index.html">回到论文详情</a>', 'note': '<p class="reader-document-note">阅读报告 v2 · 2026-10-05 · 基于指定原文版本；阅读范围及来源边界见本页说明。阅读报告版本不等于论文版本；不代表独立复现。</p>', 'current_return': '<a class="atlas-return" href="../index.html#reading">回到论文详情</a>'}, 'holoagent-0': {'version': 'v2', 'sha256': '8e10161884ccc7cea77ca6a98da6cef3829e6049635ea9923e8f5ed27acbd9b5', 'nav': '<nav class="reader-stages" aria-label="阅读阶段"><a href="#section-01" aria-current="page"><small>01</small>初读</a><span aria-disabled="true"><small>02</small>写作精读 · 未收录</span><span aria-disabled="true"><small>03</small>方法与代码 · 未收录</span></nav>', 'return_link': '<a class="atlas-return" href="https://chunhui-lab.github.io/RoboPaperAtlas/papers/holoagent-0/index.html">回到论文详情</a>', 'note': '<p class="reader-document-note">阅读报告 v2 · 2026-10-05 · 基于指定原文版本；阅读范围及来源边界见本页说明。阅读报告版本不等于论文版本；不代表独立复现。</p>', 'current_return': '<a class="atlas-return" href="../index.html#reading">回到论文详情</a>'}}
 CURRENT_READER_PAPERS = NAVIGATION_READER_PAPERS | frozenset({'rpa-0012', 'rpa-0062', 'rpa-0052', 'rpa-0054', 'rpa-0067'})
 STAGES = (('stage1', '初读'), ('stage2', '写作精读'), ('stage3', '方法与代码'))
 OPEN = '<nav class="reader-stages" aria-label="阅读阶段">'
@@ -157,7 +159,7 @@ def render(root, paper, stage, records, *, preview_payload=None):
     if record is None or record['paper_id'] != paper['id'] or record['stage'] != stage:
         raise ValueError('Current reader source is not registered for this stage')
     if preview_payload is not None:
-        if paper['id'] not in NAVIGATION_READER_PAPERS or record['review_status'] != 'preview_pending':
+        if paper['id'] not in NAVIGATION_READER_PAPERS or record['version'] != 'v1' or record['review_status'] != 'preview_pending':
             raise ValueError('In-memory source is restricted to the exact navigation previews')
         raw = preview_payload
     else:
@@ -169,7 +171,12 @@ def render(root, paper, stage, records, *, preview_payload=None):
         raise ValueError('Current reader source hash mismatch')
     page = raw.decode('utf-8')
     if paper['id'] in NAVIGATION_READER_PAPERS:
-        spec = NAVIGATION_FROZEN[paper['id']]
+        if record['version']=='v1' and preview_payload is not None:
+            spec = NAVIGATION_FROZEN[paper['id']]
+        elif record['version']=='v2' and record['review_status']=='content_approved' and preview_payload is None:
+            spec = NAVIGATION_CANONICAL_FROZEN[paper['id']]
+        else:
+            raise ValueError('Navigation preview and canonical source boundaries differ')
         if stage != 'stage1' or (record['version'], record['sha256']) != (spec['version'], spec['sha256']):
             raise ValueError('Unknown navigation current reader version/hash')
         frozen, frozen_return, note = spec['nav'], spec['return_link'], spec['note']
@@ -201,6 +208,11 @@ def render(root, paper, stage, records, *, preview_payload=None):
     else:
         frozen, frozen_return, note = FROZEN_NAV[stage], FROZEN_RETURN[stage], NOTE
         current_return = '<a class="atlas-return" href="../index.html#reading">回到论文详情</a>'
+    return _render_reviewed_page(root,paper,stage,record,page,frozen,frozen_return,note,current_return,report_path(record))
+
+
+def _render_reviewed_page(root,paper,stage,record,page,frozen,frozen_return,note,current_return,artifact_path):
+    """Pure shared presentation; callers own exact identity/content/state validation."""
     if page.count(OPEN) != 1 or page.count(frozen) != 1 or page.count(note) != 1 or page.count(frozen_return) != 1:
         raise ValueError('Unexpected current reader navigation signature')
     # The reviewed UMI layout hides its stagebar paper brand below 767px.
@@ -219,7 +231,7 @@ def render(root, paper, stage, records, *, preview_payload=None):
         else:
             nav.append(f'<span aria-disabled="true"><small>{index:02} · 未完成</small>{label}</span>')
     provenance = (f'当前导航视图 · 基于固定报告 {escape(record["version"])} 生成，保留正文，更新阶段导航、返回入口与统一阅读界面；'
-                  f'正文与原报告脚本保持原样；保留原有样式并叠加 F2 界面样式，另加载目录上下文导航。<a href="../../../{escape(report_path(record), quote=True)}">打开固定版本报告 ↗</a> ')
+                  f'正文与原报告脚本保持原样；保留原有样式并叠加 F2 界面样式，另加载目录上下文导航。<a href="../../../{escape(artifact_path, quote=True)}">打开固定版本报告 ↗</a> ')
     # Align live reader navigation wording without rewriting fixed reports or article content.
     page = re.sub(r'<header\b.*?</header>', lambda match: match[0].replace('>Library</a>', '>论文库</a>').replace('>Atlas</a>', '>星图</a>').replace('>Radar</a>', '>前沿动态</a>'), page, count=1, flags=re.S)
     navigation_script = context_script(root)
@@ -240,6 +252,22 @@ def render(root, paper, stage, records, *, preview_payload=None):
             .replace(frozen_return, current_return, 1)
             .replace(note, note.replace('>', '>' + provenance, 1), 1)
             .replace('</body>', navigation_script + '</body>', 1))
+
+
+def render_navigation_v2_candidate(root,record,raw):
+    """Render only the exact pending v2 report in a non-canonical view-model."""
+    from report_navigation_stage1 import prepare_candidate_v2
+    from reports import _finish_html_parse
+    text,parser=prepare_candidate_v2(root,record,raw)
+    _finish_html_parse(record,text,parser)
+    pid=record['paper_id'];spec=NAVIGATION_CANONICAL_FROZEN[pid]
+    if (record['version'],record['sha256'])!=(spec['version'],spec['sha256']):
+        raise ValueError('Unknown exact v2 candidate reader bytes')
+    artifact_path=f"artifacts/{pid}/v2/first-pass.html"
+    paper={'id':pid,'stages':{key:{'status':'not_imported','artifacts':[]}for key in ('stage1','stage2','stage3')}}
+    # Display-only navigation model; no registry entry or approval is produced.
+    paper['stages']['stage1']={'status':'imported','artifacts':[{'path':artifact_path}]}
+    return _render_reviewed_page(root,paper,'stage1',record,raw.decode('utf-8'),spec['nav'],spec['return_link'],spec['note'],spec['current_return'],artifact_path)
 
 
 def write_current_readers(root, target, papers, records):

@@ -1,0 +1,135 @@
+{
+  "status": "source_consistency_checked_promotion_blocked",
+  "review_date_utc": "2026-10-05",
+  "scope": "Independent bounded initial source-content reviews plus exact final-byte differential checks. This is not canonical content_approved state, legal clearance, print acceptance or authorization to publish.",
+  "reports": [
+    {
+      "paper_id": "harnessvln",
+      "source_content_result": "pass_for_exact_bytes_only",
+      "report_sha256": "d67373cd65d92fc96d17e5e1d37fb25adefa75b0c1beffba09a03ff1b26f2680",
+      "report_bytes": 2482383,
+      "initial_review_file": "harnessvln-review.json",
+      "initial_review_sha256": "fab19d391437a38629aed9e0098db728360d1cb5651c939fc0dfcd7b13894bc3",
+      "final_review_file": "harnessvln-finalbytes-review.json",
+      "final_review_sha256": "999eacc7d02d56c8e3698e0b7723a99c2faf43f66f5f28415b8e7add6b0ebd67",
+      "scope": {
+        "text_pages": 18,
+        "pdf_pages": 18,
+        "visual_pdf_pages": 14,
+        "report_sections": 12,
+        "initial_claims": 82,
+        "closing_conclusions": 5,
+        "changes": [
+          "H01: Figure 2 direct observation separated from source-backed runtime summary",
+          "H02: author statement separated from direct Table 6 comparison"
+        ],
+        "limits": [
+          "References are paper entries only; cited works not independently read",
+          "No code execution, reproduction, or HTML/browser/print acceptance"
+        ]
+      }
+    },
+    {
+      "paper_id": "navharness",
+      "source_content_result": "pass_for_exact_bytes_only",
+      "report_sha256": "f204ec207d6211257e145b8be0af13a8e32ac81fbaccb3acf749cb6b181c5de1",
+      "report_bytes": 1361872,
+      "initial_review_file": "navharness-review.json",
+      "initial_review_sha256": "40245a37c9d221dd61257ddc031c6a1ffceb5d3fa9e754bdea8758590eb467d1",
+      "final_review_file": "navharness-finalbytes-review.json",
+      "final_review_sha256": "b11e3bacc44aa0ba565f56a98291db5a59d993b547bf3bc51f0ee44e771ead3d",
+      "scope": {
+        "text_pages": 44,
+        "pdf_pages": 52,
+        "visual_pdf_pages": 5,
+        "report_sections": 12,
+        "initial_claims": 84,
+        "closing_conclusions": 5,
+        "changes": [
+          "N1: added exact Case 13 attribution",
+          "N2: GOAT episode / IR2R tour episode-start boundary",
+          "N3: limited reading coverage and historical metadata checks disclosed",
+          "Exact added Relocation source label corrected"
+        ],
+        "limits": [
+          "PDF pp.11–14 references and pp.38–41 Cases1–4 not read paragraph by paragraph",
+          "Not all 52 pages/figures visually inspected",
+          "No equation-by-equation derivation, code execution, reproduction, or HTML/browser/print acceptance"
+        ]
+      }
+    },
+    {
+      "paper_id": "holoagent-0",
+      "source_content_result": "pass_for_exact_bytes_only",
+      "report_sha256": "8564c48224a2b0c1a0e1d18f87bb021d88aa137c05321ecadba07211f02db084",
+      "report_bytes": 100121,
+      "initial_review_file": "holoagent-0-review.json",
+      "initial_review_sha256": "c7e86a661cf056fa84603856e5da4c2ee7493298dec2928fda6a9b40ba45e5c9",
+      "final_review_file": "holoagent-0-finalbytes-review.json",
+      "final_review_sha256": "f2e1d7bf581caeb69a2c2de430e2ee10a40c1a79e67cfa40ba4a6cd3693e908b",
+      "scope": {
+        "text_pages": 21,
+        "pdf_pages": 21,
+        "visual_pdf_pages": 10,
+        "report_sections": 12,
+        "initial_claims": 44,
+        "closing_conclusions": 5,
+        "changes": [
+          "P1: narrowed digital-framework scope",
+          "P2: restored possibility and relations to view-boundary claim",
+          "F1: footer report version corrected to v2"
+        ],
+        "limits": [
+          "115 factual values, 18 Online markers, 3 absent-value markers checked within source scope",
+          "No new project/video or publication search claims",
+          "No original figures republished; no author permission or legal clearance asserted",
+          "No code execution, reproduction, or HTML/browser/print acceptance"
+        ]
+      }
+    }
+  ],
+  "print_gate": "pending_blocked_cloud_chromium_print_disabled",
+  "canonical_registry_changed": false,
+  "published": false,
+  "post_review_footer_only_change": {
+    "old_footer": "阅读报告 v2 · 集成预览 · 待视觉验收 · 受控预览，尚未正式收录 · 原文及项目链接需联网",
+    "final_footer": "阅读报告 v2 · 指定原文版本与阅读范围见本页说明 · 不代表独立复现 · 原文及项目链接需联网",
+    "verification": "Reversing this exact single replacement reproduces independently reviewed bytes; no scientific/style/script/image change",
+    "reports": [
+      {
+        "paper": "harnessvln",
+        "previous_reviewed_sha256": "d67373cd65d92fc96d17e5e1d37fb25adefa75b0c1beffba09a03ff1b26f2680",
+        "final_sha256": "41724fa81cc6af8570bc8be8825fb38bef51a938e7768675804047d4113a554f",
+        "bytes": 2482388,
+        "only_change": "exact single reader-footer text replacement",
+        "science_style_script_images_unchanged": true,
+        "noindex_follow_retained": true
+      },
+      {
+        "paper": "navharness",
+        "previous_reviewed_sha256": "f204ec207d6211257e145b8be0af13a8e32ac81fbaccb3acf749cb6b181c5de1",
+        "final_sha256": "c83c5aaf8a408f5c391ebe67881c87dff5fa7b83a01cb06fe6a5e93b9ee1c787",
+        "bytes": 1361877,
+        "only_change": "exact single reader-footer text replacement",
+        "science_style_script_images_unchanged": true,
+        "noindex_follow_retained": true
+      },
+      {
+        "paper": "holoagent-0",
+        "previous_reviewed_sha256": "8564c48224a2b0c1a0e1d18f87bb021d88aa137c05321ecadba07211f02db084",
+        "final_sha256": "173afde5fbda87bb886d93dbed28876b29430391c4b4a0189cd7982f547f3ba3",
+        "bytes": 100126,
+        "only_change": "exact single reader-footer text replacement",
+        "science_style_script_images_unchanged": true,
+        "noindex_follow_retained": true
+      }
+    ]
+  },
+  "subsequent_presentation_changes": "candidates/navigation-stage1-v2-presentation-proof.json",
+  "formula_representation_review": {
+    "result": "pass_for_two_print_only_PNGs_against_exact_MathML_and_fixed_source_HTML_PDF",
+    "harnessvln_png_sha256": "4c3b57022a08bd26c5c7ff8e14028913ea57513ff42bd82f2c25b2e2600038f0",
+    "holoagent_png_sha256": "8abc40ae62ba5be877817a0d560b84f3d69325abb982319477594885cebe7a53",
+    "scope": "Cases, word subscripts, bold vectors, AND, i=0..2 sum and Hadamard product; not integrated or native print approval"
+  }
+}

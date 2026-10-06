@@ -81,6 +81,8 @@ def validate_output(root,report_records=()):
     current_paths=validate_current_readers(ROOT,root,json.loads((ROOT/'data/catalog.json').read_text())['papers'],report_records)
     from navigation_stage1_preview import validate_preview as validate_navigation_preview
     navigation_preview_paths=validate_navigation_preview(ROOT,root)
+    from navigation_stage1_v2_preview import validate_preview as validate_navigation_v2_preview
+    navigation_preview_paths |= validate_navigation_v2_preview(ROOT,root)
     preview_path='reader-preview/umi-on-legs/index.html'
     from reader_theme_preview import PREVIEWS, read_preview as read_theme_preview
     theme_preview_paths=set(PREVIEWS)

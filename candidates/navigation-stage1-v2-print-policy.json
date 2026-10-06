@@ -1,0 +1,73 @@
+{
+  "engine_independent_print_fix": true,
+  "chrome_native_print_verified": false,
+  "original_mathml_retained_for_screen": true,
+  "css": "\n/* Fixed print-only fallback: screens retain native MathML and original layout. */\n.math-print-fallback{display:none!important}\n@media print{\n.table-scroll,.table-wrap,.table-container{overflow:visible!important;max-width:100%!important;width:100%!important}\ntable{min-width:0!important;max-width:100%!important;width:100%!important;table-layout:fixed!important}\nth,td{white-space:normal!important;overflow-wrap:anywhere!important;word-break:normal!important;padding:5px!important}\n.equation{break-inside:avoid;page-break-inside:avoid}\n.equation math{display:none!important}\n.math-print-fallback{display:block!important;max-width:100%!important;height:auto!important;margin:8px 0}\n.math-print-harnessvln{width:344px}\n.math-print-holoagent-0{width:135.8px}\n}\n",
+  "css_sha256": "c5aed1025ee9fe9f39cec7a1d710299464f0321f41dcf482b43a3778421d1f1b",
+  "reports": [
+    {
+      "paper": "harnessvln",
+      "before_printfix_sha256": "fd41cd8ba606cb68f26284be13d27cc0bed6dd9104e798def6bc3574a4a883b1",
+      "final_sha256": "83bd72851dd8ff67bb6c7dd56ef492848cabdf279481b3f4147070fead96fff2",
+      "bytes": 2507404,
+      "parts": 53,
+      "inverse_reconstruction_exact": true,
+      "original_mathml_unchanged": true,
+      "only_additions": "bounded print CSS plus one print-only generated formula PNG where a MathML equation exists",
+      "new_print_image": {
+        "paper": "harnessvln",
+        "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\"><mrow><msub><mi>F</mi><mi>stop</mi></msub><mo>=</mo><msub><mi>F</mi><mi>semantic</mi></msub><mo>∧</mo><msub><mi>F</mi><mi>geometric</mi></msub><mo>∧</mo><msub><mi>F</mi><mi>progress</mi></msub></mrow></math>",
+        "mathml_sha256": "bca9be6b8148d975dc61e26f36b0778afee33f2dd06ccb1112262ae839751c76",
+        "tex": "$F_{\\mathrm{stop}} = F_{\\mathrm{semantic}} \\wedge F_{\\mathrm{geometric}} \\wedge F_{\\mathrm{progress}}$",
+        "alt": "F_stop = F_semantic ∧ F_geometric ∧ F_progress",
+        "png_sha256": "4c3b57022a08bd26c5c7ff8e14028913ea57513ff42bd82f2c25b2e2600038f0",
+        "pixels": [
+          1720,
+          108
+        ],
+        "css_width_px": 344.0,
+        "print_only": true,
+        "network_resources": false
+      },
+      "print_css_sha256": "c5aed1025ee9fe9f39cec7a1d710299464f0321f41dcf482b43a3778421d1f1b"
+    },
+    {
+      "paper": "navharness",
+      "before_printfix_sha256": "4b8f655b4301d7a500aaf6ea5455e3e513ba2b31cabc615f45855b45d4ec490a",
+      "final_sha256": "279d81743598ef2b1b2b95c4c1abc7b3197b5a296718891310a92f70db465fb5",
+      "bytes": 1362636,
+      "parts": 29,
+      "inverse_reconstruction_exact": true,
+      "original_mathml_unchanged": true,
+      "only_additions": "bounded print CSS plus one print-only generated formula PNG where a MathML equation exists",
+      "new_print_image": null,
+      "print_css_sha256": "c5aed1025ee9fe9f39cec7a1d710299464f0321f41dcf482b43a3778421d1f1b"
+    },
+    {
+      "paper": "holoagent-0",
+      "before_printfix_sha256": "7a30e770da9d3384d2358b1fc620bf4e51cddac6f1c6d0bda8b2494de74dd316",
+      "final_sha256": "8e10161884ccc7cea77ca6a98da6cef3829e6049635ea9923e8f5ed27acbd9b5",
+      "bytes": 122099,
+      "parts": 3,
+      "inverse_reconstruction_exact": true,
+      "original_mathml_unchanged": true,
+      "only_additions": "bounded print CSS plus one print-only generated formula PNG where a MathML equation exists",
+      "new_print_image": {
+        "paper": "holoagent-0",
+        "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\"><mrow><mi mathvariant=\"bold\">d</mi><mo>=</mo><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>0</mn></mrow><mn>2</mn></munderover><msub><mi mathvariant=\"bold\">w</mi><mi>i</mi></msub><mo>⊙</mo><msub><mi mathvariant=\"bold\">d</mi><mi>i</mi></msub></mrow></math>",
+        "mathml_sha256": "3257bb244e2197852e683822c98b9b6f38badea76c3a114e3cbb7b85cd283e1e",
+        "tex": "$\\mathbf{d} = \\sum_{i=0}^{2} \\mathbf{w}_i \\odot \\mathbf{d}_i$",
+        "alt": "向量 d = 从 i=0 到 2 求和：向量 w_i ⊙ 向量 d_i（逐元素乘积）",
+        "png_sha256": "8abc40ae62ba5be877817a0d560b84f3d69325abb982319477594885cebe7a53",
+        "pixels": [
+          679,
+          279
+        ],
+        "css_width_px": 135.8,
+        "print_only": true,
+        "network_resources": false
+      },
+      "print_css_sha256": "c5aed1025ee9fe9f39cec7a1d710299464f0321f41dcf482b43a3778421d1f1b"
+    }
+  ]
+}
