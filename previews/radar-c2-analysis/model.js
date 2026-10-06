@@ -5,7 +5,7 @@ const unique=xs=>[...new Set(xs)];
 const PAGE_SIZE=4, CATALOG_PAGE_SIZE=10;
 const clone=s=>JSON.parse(JSON.stringify(s));
 const stableId=parts=>'path-'+[...parts.join('|')].reduce((h,c)=>Math.imul(h^c.charCodeAt(0),16777619)>>>0,2166136261).toString(36);
-function initialState(){return {view:'trees',globalTree:'l',query:'',lFacet:'pipeline',l:[],c:[],pages:{l:0,c:0,catalog:0},branchPages:{},paper:null,tab:'evidence',origin:null};}
+function initialState(){return {view:'trees',globalTree:'l',analysisPaper:'harnessvln',query:'',lFacet:'pipeline',l:[],c:[],pages:{l:0,c:0,catalog:0},branchPages:{},paper:null,tab:'evidence',origin:null};}
 function normalizeLiterature(raw={}){
  const nodes=new Map((raw.nodes||[]).map(n=>[n.node_id,{...n,id:n.node_id,label:n.label||n.title,type:n.type}]));
  const paths=(raw.paths||[]).map((p,i)=>({id:p.path_id||p.id||stableId([p.paper_id||p.canonical_id,...(p.node_ids||p.path||p.nodes||[])]),nodeIds:p.node_ids||p.path||p.nodes||[],paperId:p.paper_id||p.canonical_id,evidenceIds:p.evidence_ids||[],status:p.status||p.mapping_status||'',viewKind:p.view_kind||'pipeline',implementationVariant:raw.implementation_variants?.[p.implementation_variant_ref]||null,raw:p})).filter(p=>p.nodeIds.length&&p.nodeIds.every(id=>typeof id==='string'&&nodes.has(id)));
@@ -54,7 +54,7 @@ function catalogResults(model,query=''){
 function coverage(model){const l=unique(model.trees.l.paths.map(p=>p.paperId)),c=unique(model.trees.c.paths.map(p=>p.paperId));return {catalog:model.papers.size,literature:l.length,challenge:c.length,both:l.filter(id=>c.includes(id)).length,unmapped:[...model.papers.keys()].filter(id=>!l.includes(id)&&!c.includes(id)).length};}
 function sanitizeState(model,raw){
  const state={...initialState(),...raw,pages:{...initialState().pages,...raw?.pages},branchPages:{...(raw?.branchPages||{})}};
- state.view=['trees','catalog'].includes(state.view)?state.view:'trees';state.globalTree=['l','c'].includes(state.globalTree)?state.globalTree:'l';state.lFacet=['pipeline','representation'].includes(state.lFacet)?state.lFacet:'pipeline';state.tab=['overview','evidence','paths','analysis'].includes(state.tab)?state.tab:'evidence';state.query=typeof state.query==='string'?state.query.slice(0,500):'';
+ state.view=['trees','catalog'].includes(state.view)?state.view:'trees';state.globalTree=['l','c','a'].includes(state.globalTree)?state.globalTree:'l';state.analysisPaper=model.papers.has(state.analysisPaper)?state.analysisPaper:'harnessvln';state.lFacet=['pipeline','representation'].includes(state.lFacet)?state.lFacet:'pipeline';state.tab=['overview','evidence','paths','analysis'].includes(state.tab)?state.tab:'evidence';state.query=typeof state.query==='string'?state.query.slice(0,500):'';
  for(const key of ['l','c']){state[key]=Array.isArray(state[key])?state[key]:[];while(state[key].length&&!matchingPaths(model.trees[key],state[key],key==='l'?state.lFacet:undefined).length&&!(key==='l'&&state[key].length===1&&model.trees.l.nodes.get(state[key][0])?.type==='task_contract'))state[key].pop();state.pages[key]=Math.max(0,Number(state.pages[key])||0);}
  state.pages.catalog=Math.max(0,Number(state.pages.catalog)||0);if(!model.papers.has(state.paper))state.paper=null;
  if(!state.paper)state.origin=null;else if(state.origin&&(!['l','c'].includes(state.origin.key)||!Array.isArray(state.origin.path)||!model.trees[state.origin.key].paths.some(p=>p.paperId===state.paper&&p.nodeIds.length===state.origin.path.length&&startsWith(p.nodeIds,state.origin.path))))state.origin=null;return state;
@@ -64,7 +64,8 @@ function reduce(model,state,action){
  switch(action.type){
  case 'overview':return initialState();
  case 'global':next.view='trees';break;
- case 'globalTree':if(!['l','c'].includes(action.key))return state;next.globalTree=action.key;next.view='trees';break;
+ case 'analysisPaper':if(!model.papers.has(action.id))return state;next.analysisPaper=action.id;break;
+ case 'globalTree':if(!['l','c','a'].includes(action.key))return state;next.globalTree=action.key;next.view='trees';break;
  case 'root':{const key=action.key;if(!['l','c'].includes(key)||!rootOverview(model,key,key==='l'?next.lFacet:undefined).some(x=>x.node.id===action.id))return state;rememberPage(next,key);next[key]=[action.id];restorePage(next,key);next.view='trees';next.globalTree=key;break;}
  case 'view':next.view=action.view;break;
  case 'facet':rememberPage(next,'l');next.lFacet=action.facet;next.l=next.l.slice(0,1);restorePage(next,'l');break;

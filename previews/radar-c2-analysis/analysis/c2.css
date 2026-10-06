@@ -61,3 +61,13 @@
 @media(max-width:700px){.c2-global-branches{display:block;border-top:0;border-left:1px solid #b8ad9c;padding-top:0;padding-left:8px}.c2-global-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;border-top:1px solid #b8ad9c;padding-top:7px;margin-bottom:7px}.c2-global-row:last-child{grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:0}.c2-global-branch:nth-child(n+4):before{display:block}.c2-global-branch:before{height:8px;top:-9px}}
 #c2-app .c2-node,#c2-focus-title{scroll-margin-top:calc(var(--c2-sticky-height,0px) + 18px)}
 @media(max-width:700px){.c2-global-row{position:relative}.c2-global-row:before{content:"";position:absolute;left:-9px;top:-1px;width:9px;border-top:1px solid #b8ad9c}}
+/* A single full root tree; keep only a compact global locator after drilling in. */
+#c2-app .c2-shell[data-root-view="true"] .c2-focus{display:none!important}
+#c2-app .c2-shell[data-root-view="true"] .c2-overview{position:relative!important;margin-top:4px}
+#c2-app .c2-shell[data-root-view="true"] .c2-global-root{font-size:20px;min-height:45px;padding:8px 16px}
+#c2-app .c2-shell[data-root-view="true"] .c2-global-branch{min-height:88px;padding:13px}
+#c2-app .c2-shell[data-root-view="true"] .c2-global-branch strong{font-size:17px}
+#c2-app .c2-shell[data-root-view="true"] .c2-global-branch span{font-size:13px}
+#c2-app .c2-shell[data-root-view="true"] .c2-mini-current{margin-top:14px}
+.c2-continuation{position:absolute;display:flex;align-items:center;gap:9px;padding:4px 10px;border:0;border-left:2px dotted #b5a58e;border-radius:0;background:#f8f3e9;color:#7b674e;text-align:left;font-size:20px;cursor:pointer}.c2-continuation span{font:12px var(--sans)}.c2-continuation.selected{background:#f6e0d1;border-color:#bd442a}.c2-continuation:focus-visible{outline:3px solid #983b22;outline-offset:3px}
+@media(max-width:700px){#c2-app .c2-shell[data-root-view="true"] .c2-global-branch{min-height:73px;padding:10px}#c2-app .c2-shell[data-root-view="true"] .c2-global-branch strong{font-size:14px}#c2-app .c2-shell[data-root-view="true"] .c2-global-branch span{font-size:12px}}
