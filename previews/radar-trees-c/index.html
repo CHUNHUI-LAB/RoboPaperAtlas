@@ -4,8 +4,8 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="在同一张图中探索导航文献脉络与 Challenge–Insight：公开证据、明确阅读范围、逐层展开。">
 <title>关联地图 · RoboPaperAtlas Radar</title>
-<link rel="stylesheet" href="graph.css?v=233655460a96">
-<script defer src="data/graph-data.js?v=f83fc946342b"></script><script defer src="graph.js?v=cd0856d8d9a6"></script>
+<link rel="stylesheet" href="graph.css?v=37f093da0572">
+<script defer src="data/graph-data.js?v=f83fc946342b"></script><script defer src="graph.js?v=a5914a01ed9d"></script>
 </head>
 <body>
 <a class="skip" href="#detail-panel">跳至选中内容</a>
@@ -29,14 +29,15 @@
  <div class="workspace">
   <section class="map-panel" aria-label="双树关联图">
    <div class="tree-headings"><div><span class="tree-icon">⌑</span><div><h2>文献脉络树</h2><p>任务 → 方法路线 → 代表文献</p></div></div><div><span class="tree-icon">♧</span><div><h2>Challenge–Insight 树</h2><p>编辑归组 → 本文问题 → 思路与证据</p></div></div></div>
-   <div class="map-hint"><span>点击节点逐层展开；同一论文可出现在多条路线</span><span id="visible-count" aria-live="polite"></span></div>
+   <div class="map-hint"><span>点卡片查看 · 点“展开 / 收起”改变层级 · 每篇仅一个节点，多条路线可连入</span><span id="visible-count" aria-live="polite"></span></div>
+   <div id="current-path" class="current-path" aria-live="polite"></div>
    <div id="graph-viewport" class="graph-viewport" tabindex="0" aria-label="图谱画布，可滚动；用下方按钮缩放。节点支持 Enter 与空格，Escape 清除选择。">
     <svg id="research-graph" xmlns="http://www.w3.org/2000/svg" role="group" aria-labelledby="graph-title graph-desc" viewBox="0 0 1280 740"><title id="graph-title">文献脉络与 Challenge–Insight 双树</title><desc id="graph-desc">连接仅用于编辑组织；跨树线连接同一论文的内容，不是引用或采用关系。</desc></svg>
     <div id="graph-empty" class="graph-empty" hidden><h3>没有匹配的论文</h3><p>可换个关键词，或返回全部任务</p><button type="button" id="clear-filters">清除筛选</button></div>
    </div>
-   <div class="map-footer"><div class="zoom-controls" role="group" aria-label="缩放图谱"><button type="button" id="zoom-out" aria-label="缩小图谱">−</button><output id="zoom-level" aria-label="当前缩放">100%</output><button type="button" id="zoom-in" aria-label="放大图谱">+</button><button type="button" id="zoom-fit" aria-label="缩放至全图">适配</button><button type="button" id="graph-reset" aria-label="恢复默认全图、展开状态与选中论文">重置</button></div><div class="legend" aria-label="图例"><span><i class="legend-line active"></i>选中路径</span><span><i class="legend-line"></i>编辑组织</span><span><i class="legend-line dashed"></i>摘要候选 / 部分贴合</span></div></div>
+   <div class="map-footer"><div class="zoom-controls" role="group" aria-label="缩放图谱"><button type="button" id="zoom-out" aria-label="缩小图谱">−</button><output id="zoom-level" aria-label="当前缩放">100%</output><button type="button" id="zoom-in" aria-label="放大图谱">+</button><button type="button" id="zoom-fit" aria-label="适配可读宽度，保留滚动浏览">适配</button><button type="button" id="locate-selection">定位选中</button><button type="button" id="graph-reset" aria-label="恢复默认全图、展开状态与选中论文">重置</button></div><div class="legend" aria-label="图例"><span><i class="legend-line active"></i>选中路径</span><span><i class="legend-line"></i>编辑组织</span><span><i class="legend-line dashed"></i>摘要候选 / 部分贴合</span></div></div>
   </section>
-  <aside id="detail-panel" class="detail-panel" aria-label="选中节点的证据、问题、思路与条件"><div class="detail-heading"><h2>选中关系</h2><button type="button" id="clear-selection" aria-label="清除选中节点">×</button></div><div id="selection-summary"></div><div id="detail-tabs" class="detail-tabs" role="tablist" aria-label="论文详情"><button type="button" id="tab-overview" role="tab" data-tab="overview" aria-selected="true" aria-controls="detail-content">概览</button><button type="button" id="tab-evidence" role="tab" data-tab="evidence" aria-selected="false" aria-controls="detail-content">证据</button><button type="button" id="tab-conditions" role="tab" data-tab="conditions" aria-selected="false" aria-controls="detail-content">适用条件</button></div><div id="detail-content" role="tabpanel" aria-labelledby="tab-overview" tabindex="0"></div></aside>
+  <aside id="detail-panel" class="detail-panel" aria-label="选中节点的证据、问题、思路与条件"><div class="detail-heading"><h2 id="detail-title">选中论文</h2><button type="button" id="clear-selection" aria-label="清除选中节点">×</button></div><div id="selection-summary"></div><div id="detail-tabs" class="detail-tabs" role="tablist" aria-label="论文详情"><button type="button" id="tab-overview" role="tab" data-tab="overview" aria-selected="true" aria-controls="detail-content">概览</button><button type="button" id="tab-evidence" role="tab" data-tab="evidence" aria-selected="false" aria-controls="detail-content">证据</button><button type="button" id="tab-conditions" role="tab" data-tab="conditions" aria-selected="false" aria-controls="detail-content">适用条件</button></div><div id="detail-content" role="tabpanel" aria-labelledby="tab-overview" tabindex="0"></div></aside>
  </div>
  <footer class="page-footer"><span><b>阅读路径</b>　① 放入任务与方法　→　② 对照同篇问题　→　③ 核对证据与条件</span><span>图中所有连接均为编辑组织 · <a id="method-reference" href="https://aoiota.github.io/ResearchVoyager/review/editorial/" target="_blank" rel="noopener noreferrer">公开方法说明 ↗</a></span></footer>
  <details id="scope-notes" class="scope-notes"><summary>阅读范围与未定位条目</summary><div id="scope-note-content"><p>当前导航试点含 10 篇指定正文段落核查记录与 4 篇摘要关系锚点；本图主干展示 10 篇核心记录，不代表全部机器人领域覆盖或全文阅读。周候选仅 6 篇摘要定位；5 篇摘要未在本轮定位，238 条候选未全部挂树。未建分支是组织覆盖缺口，不是研究空白。</p></div></details>
