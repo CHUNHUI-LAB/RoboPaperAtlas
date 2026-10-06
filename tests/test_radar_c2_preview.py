@@ -572,5 +572,55 @@ class RadarC2EvolutionControls(unittest.TestCase):
         self.assertEqual(c2.payloads(self.root), c2.payloads(ROOT))
 
 
+
+class TaskOriginPresentationTests(unittest.TestCase):
+    def test_existing_task_origin_records_and_priority_boundaries(self):
+        # Evaluate production render helpers without bootstrap; no duplicate test implementation.
+        program = r"""
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const root=process.cwd(),file=root+'/previews/radar-c2-analysis/app.js';
+const src=fs.readFileSync(file,'utf8'),cut=src.indexOf('function renderTree(');
+assert(cut>0);
+const context={window:{TreeModel:{}},document:{},Map,console};
+vm.createContext(context);
+vm.runInContext(src.slice(0,cut)+`window.originTest={statusLabel,contractHtml,setEvidence:entries=>{model={trees:{l:{evidence:new Map(entries)}}};}};})();`,context);
+const api=context.window.originTest,task=origin=>({type:'task_contract',origin});
+api.setEvidence([]);
+const negative=task({title:'OVON',first_claim_scope:'不授予所有开放词汇导航首创',read_url:'https://arxiv.org/html/2409.14296v1'});
+assert(!api.statusLabel(negative).includes('作者限定的首创声明'));
+assert(api.statusLabel(negative).includes('首创未核实'));
+assert(api.contractHtml(negative).includes('不授予所有开放词汇导航首创'));
+assert(!api.contractHtml(negative).includes('<b>作者首创声明的范围：</b>'));
+for(const origin of [{},{title:''},{title:' ',first_claim_scope:'some text'},{milestones:[]},{milestones:[{}]}]){
+ assert.equal(api.statusLabel(task(origin)),'起源 / 首创待核');
+ assert(api.contractHtml(task(origin)).includes('原始定义来源待核'));
+}
+const raw=fs.readFileSync(root+'/previews/radar-c2-analysis/data/literature.js','utf8');
+vm.runInContext(raw,context);
+const data=context.window.LITERATURE_TREE;api.setEvidence(data.evidence.map(e=>[e.evidence_id,e]));
+for(const id of ['task-vln-iterative','task-goat-sequence','task-open-eqa-active','task-open-eqa-memory','task-multion','task-embodiedqa-classic']){
+ const node=data.nodes.find(n=>n.node_id===id),html=api.contractHtml(node);
+ assert(html.includes('任务 / 协议来源记录'),id);assert(!html.includes('原始定义来源待核'),id);
+ assert(html.includes('href="https://'),id);assert(!html.includes('[object Object]'),id);
+ assert(api.statusLabel(node).includes('首创未核实'),id);
+}
+const goat=api.contractHtml(data.nodes.find(n=>n.node_id==='task-goat-sequence'));
+assert(goat.includes('https://www.roboticsproceedings.org/rss20/p073.pdf'));
+assert(goat.includes('Khanna_GOAT-Bench_A_Benchmark_for_Multi-Modal_Lifelong_Navigation'));
+const unknown=data.nodes.find(n=>n.node_id==='task-lmee');
+assert(api.contractHtml(unknown).includes('原始定义来源待核'));
+const missing=task({milestones:[{name:'Unlinked task',task_definition:{summary:'Defined task',source_id:'missing'},benchmark_origin:{summary:'Benchmark'}}]});
+assert(api.contractHtml(missing).includes('来源链接待补'));assert(!api.contractHtml(missing).includes('href='));
+const positive=task({title:'R2R',first_claim_scope:'作者声称首个真实建筑benchmark',read_url:'https://example.org/paper'});
+assert(api.statusLabel(positive).includes('首创未核实'));assert(api.contractHtml(positive).includes('作者声称首个真实建筑benchmark'));
+const unsafe=api.contractHtml(task({title:'<script>alert(1)</script>',read_url:'javascript:alert(1)'}));
+assert(unsafe.includes('&lt;script&gt;'));assert(!unsafe.includes('href="javascript:'));
+assert.equal(api.statusLabel({type:'paper_ref'}),'');assert.equal(api.statusLabel({type:'module',status:'pending'}),'待核候选');
+console.log('PASS negative/empty/multiple/nested/pending/missing/positive/escaping task origins');
+"""
+        result = subprocess.run(['node', '-e', program], cwd=ROOT, text=True,
+                                capture_output=True, check=True)
+        self.assertIn('PASS negative/empty/multiple/nested/pending/missing/positive/escaping', result.stdout)
+
 if __name__ == '__main__':
     unittest.main()

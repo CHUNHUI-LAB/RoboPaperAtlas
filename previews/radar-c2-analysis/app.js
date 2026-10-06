@@ -8,8 +8,36 @@ const list=xs=>'<ul>'+(xs||[]).map(x=>'<li>'+e(x)+'</li>').join('')+'</ul>';
 const sourceLink=(url,label)=>/^https:\/\//.test(url||'')?'<a href="'+e(url)+'" target="_blank" rel="noopener noreferrer">'+e(label||'固定版本原文')+' ↗</a>':'<span>来源链接待补</span>';
 const notice=s=>'<div class="notice">'+e(s)+'</div>';
 function evidenceCard(ev,paper){return '<article class="evidence-card"><div class="evidence-kind">'+e(attribution[ev.attribution]||'指定证据记录')+'</div><p>'+e(ev.statement||ev.claim||'')+'</p><div class="locator">'+e(ev.locator||'精确位置待补')+'</div>'+sourceLink(ev.source_url||paper?.source_url,'阅读来源')+'<div class="provenance">'+e(ev.newly_checked||ev.verification_origin?.startsWith('primary_')?'本轮定向核查；不代表全文通读':ev.verification_origin?.includes('finer')?'复用既有概述；该主张定位仍待细化':'复用既有已读范围；未独立复现实验')+'</div></article>';}
-function statusLabel(node){if(node.type==='task_contract'){return node.origin?.first_claim_scope?'作者限定的首创声明':node.origin?.title?'有定义来源 · 全领域首创待核':'起源 / 首创待核';}if(node.type==='paper_ref')return '';if(node.status==='pending')return '待核候选';return '';}
-function contractHtml(n){if(!n)return '';let html='';if(n.type==='task_contract'){html='<dl class="contract">'+[['目标',n.goal_spec],['动作',n.action_regime],['记忆',n.memory_regime],['成功',n.success_contract]].filter(x=>x[1]).map(([k,v])=>'<dt>'+e(k)+'</dt><dd>'+e(v)+'</dd>').join('')+'</dl>';const o=n.origin||{};html+='<p><b>任务来源：</b>'+e(o.title||'原始定义来源待核')+'</p>';if(o.task_definition)html+='<p>'+e(o.task_definition)+'</p>';if(o.first_claim_scope)html+='<p><b>作者首创声明的范围：</b>'+e(o.first_claim_scope)+'</p>';html+='<p><b>全领域优先权：</b>'+e(o.global_priority_status==='pending'?'待核；不标首创':'尚未穷尽核验；不由任务或benchmark提出推成整个领域首创')+'</p>';if(o.caveat)html+='<p>'+e(o.caveat)+'</p>';if(o.read_url)html+=sourceLink(o.read_url,'任务定义来源');}else{if(n.task_conditions?.length)html+='<p><b>任务条件</b></p>'+list(n.task_conditions);if(n.testable_difficulty)html+='<p>'+e(n.testable_difficulty)+'</p>';if(n.conditions?.length)html+=list(n.conditions);if(n.comparison_guardrails?.length)html+='<p><b>比较边界</b></p>'+list(n.comparison_guardrails);if(n.distinction_from_siblings)html+='<p>'+e(n.distinction_from_siblings)+'</p>';}return html;}
+// Render existing definition records, never infer firstness from a nonempty scope string.
+function taskOriginRecords(node){
+ const o=node.origin||{},hasText=x=>typeof x==='string'&&x.trim().length>0;
+ return [o,...(Array.isArray(o.milestones)?o.milestones:[])].filter(r=>r&&(hasText(r.title)||hasText(r.name)||hasText(r.task_definition)||hasText(r.task_definition?.summary)));
+}
+function statusLabel(node){if(node.type==='task_contract')return taskOriginRecords(node).length?'有任务 / 协议来源记录 · 首创未核实':'起源 / 首创待核';if(node.type==='paper_ref')return '';if(node.status==='pending')return '待核候选';return '';}
+function taskOriginHtml(n){
+ const records=taskOriginRecords(n),o=n.origin||{};
+ let html=records.length?records.map(r=>{
+  let row='<p><b>任务 / 协议来源记录：</b>'+e(r.title||r.name||'定义记录')+'</p>';
+  const definition=typeof r.task_definition==='string'?r.task_definition:r.task_definition?.summary;
+  if(definition)row+='<p>'+e(definition)+'</p>';
+  if(r.benchmark_origin?.summary)row+='<p>'+e(r.benchmark_origin.summary)+'</p>';
+  if(r.firstness?.supported)row+='<p><b>原记录支持范围：</b>'+e(r.firstness.supported)+'</p>';
+  if(r.firstness?.not_supported?.length)row+='<p><b>不支持的首创扩展：</b></p>'+list(r.firstness.not_supported);
+  if(r.boundary)row+='<p>'+e(r.boundary)+'</p>';
+  const sourceIds=[...new Set([r.task_definition?.source_id,r.benchmark_origin?.source_id].filter(Boolean))];
+  const evidence=sourceIds.map(id=>model?.trees.l.evidence.get('root-source-'+id)).filter(Boolean);
+  const links=[r.formal_url,r.read_url,...evidence.map(ev=>ev.source_url)].filter(url=>/^https:\/\//.test(url||''));
+  const locators=[...new Set([r.locator,r.task_definition?.locator,r.benchmark_origin?.locator,...evidence.map(ev=>ev.locator)].filter(Boolean))];
+  if(locators.length)row+='<div class="locator">'+locators.map(e).join('；')+'</div>';
+  row+=[...new Set(links)].map(url=>sourceLink(url,'任务 / 协议原始来源')).join(' ')||'<p>来源链接待补；不可据此确认首创</p>';
+  return row;
+ }).join(''):'<p><b>任务来源：</b>原始定义来源待核</p>';
+ if(o.first_claim_scope)html+='<p><b>原记录的首创范围说明（含限制）：</b>'+e(o.first_claim_scope)+'</p>';
+ html+='<p><b>全领域优先权：</b>尚未核实；任务或 benchmark 定义来源不等于全领域首创证明</p>';
+ if(o.caveat)html+='<p>'+e(o.caveat)+'</p>';
+ return html;
+}
+function contractHtml(n){if(!n)return '';let html='';if(n.type==='task_contract'){html='<dl class="contract">'+[['目标',n.goal_spec],['动作',n.action_regime],['记忆',n.memory_regime],['成功',n.success_contract]].filter(x=>x[1]).map(([k,v])=>'<dt>'+e(k)+'</dt><dd>'+e(v)+'</dd>').join('')+'</dl>'+taskOriginHtml(n);}else{if(n.task_conditions?.length)html+='<p><b>任务条件</b></p>'+list(n.task_conditions);if(n.testable_difficulty)html+='<p>'+e(n.testable_difficulty)+'</p>';if(n.conditions?.length)html+=list(n.conditions);if(n.comparison_guardrails?.length)html+='<p><b>比较边界</b></p>'+list(n.comparison_guardrails);if(n.distinction_from_siblings)html+='<p>'+e(n.distinction_from_siblings)+'</p>';}return html;}
 function renderTree(key){const b=M.branch(model,state,key),isL=key==='l',title=isL?'文献脉络树':'Challenge–Insight 树',treeName=isL?'文献树':'Challenge 树';
  const breadcrumbs='<nav class="breadcrumbs" aria-label="'+treeName+'当前路径"><button type="button" data-action="crumb" data-key="'+key+'" data-depth="0">总览</button>'+b.prefix.map((id,i)=>'<span class="crumb-separator" aria-hidden="true">›</span><button type="button" '+(i===b.prefix.length-1?'class="current" aria-current="page" ':'')+'data-action="crumb" data-key="'+key+'" data-depth="'+(i+1)+'">'+e(b.tree.nodes.get(id)?.label||id)+'</button>').join('')+'</nav>';
  const p=b.parent,concept=p?.concept_id?b.tree.raw.concept_catalog?.find(c=>c.concept_id===p.concept_id):null,rootLabel=isL?'从一个明确的任务契约开始':'先选一个领域共同困难',pLabel=p?.label||rootLabel;
