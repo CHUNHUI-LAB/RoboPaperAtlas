@@ -1,0 +1,603 @@
+{
+  "paperId": "harnessvln",
+  "sourceVersion": "2609.15195v3",
+  "title": "HarnessVLN 原文证据台账",
+  "verifiedAt": "2026-10-06",
+  "publicationStatus": "arxiv_preprint_no_formal_version_verified",
+  "sourceUrls": [
+    "https://arxiv.org/html/2609.15195v3",
+    "https://arxiv.org/pdf/2609.15195v3",
+    "https://arxiv.org/abs/2609.15195v3"
+  ],
+  "interpretationPolicy": "作者主张、原文所报事实、读者解释、证据限制分别存储；未运行论文代码或导航实验；本地文档数据格式校验不属于论文实验；不改变Stage状态。",
+  "records": [
+    {
+      "id": "E01",
+      "title": "任务及论文身份",
+      "authorClaim": "作者提出无需任务特定导航训练的统一框架，覆盖指令跟随与目标物体导航。",
+      "sourceObservation": "固定版本为2026-09-29的arXiv v3；PDF 18页，页眉为Preprint。任务分别以路线指令、目标类别为输入；两者都需在部分可观测环境中累计空间信息并到达终点。",
+      "readerInterpretation": "此次按v3预印本处理；未核实正式会议/期刊版本。training-free依文中定义指不做任务特定导航微调，不能理解成所有底层模型从未训练。",
+      "evidenceLimits": "没有做版本差分；不声称v3新增了某项实验。工具包括预训练MLLM、GroundingDINO、SAM和NavDP。",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Abstract; §1; §4.2; Appendix 1.2",
+          "pageOrAnchor": "印刷页 1–2, 8, 13",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/abs/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Submission history / metadata",
+          "pageOrAnchor": "v3 2026-09-29; no verified journal-reference field",
+          "evidenceKind": "author_supplement"
+        }
+      ]
+    },
+    {
+      "id": "E02",
+      "title": "核心technical challenge",
+      "authorClaim": "语义推理能力增强，并不能自动保证动作提议与空间证据、任务进度和执行结果一致。",
+      "sourceObservation": "§1给出概念性失配：认出目标不等于到达，发出动作不等于子目标完成；执行失败会导致计划状态和真实状态偏离。",
+      "readerInterpretation": "挑战应写成动态任务中的证据与执行一致性，而不是笼统的模型不聪明或所有前人没有记忆。",
+      "evidenceLimits": "这是作者对研究缺口的界定；本论文没有逐一复现实验来证明所有已有方法都存在同一缺陷。",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Abstract; §1",
+          "pageOrAnchor": "印刷页 1–2",
+          "evidenceKind": "paper_text"
+        }
+      ]
+    },
+    {
+      "id": "E03",
+      "title": "旧方法与已有能力",
+      "authorClaim": "作者将部分旧式MLLM导航组织为感知—规划—下游落地执行的任务流水线，认为证据保留、提议验证和失败处理缺少统一协调。",
+      "sourceObservation": "§2明确承认AgenticNav已有动作、深度、选择性视觉回忆工具及几何安全检查；Uni-LaViRA已有统一任务、层级动作翻译、TODO List Memory与Second Chance Backtrack。",
+      "readerInterpretation": "差别应比较统一运行时怎样协调状态、证据和反馈，不应把旧方法描述成完全没有工具、验证、记忆或回退。",
+      "evidenceLimits": "未独立核读这些前作全文；这里仅是HarnessVLN的相关工作陈述，不能用来认定全领域优先权。",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§1; §2",
+          "pageOrAnchor": "印刷页 2–3",
+          "evidenceKind": "paper_text"
+        }
+      ]
+    },
+    {
+      "id": "E04",
+      "title": "key insight与具体贡献的区分",
+      "authorClaim": "作者提出用共享Agent Harness统一协调感知、检索、grounding、导航、恢复及停止；两类任务仅在进度表达和完成条件上不同。",
+      "sourceObservation": "§1的三项贡献分别是共享框架及工具接口，层级事件记忆+持久ST Graph+验证反馈运行时，以及四基准和实机结果。",
+      "readerInterpretation": "高层insight：把语义提议视为待核实的操作，依据持续更新的具身证据推进；具体technical contribution则是状态、记忆/图、接口及验证机制的组合。",
+      "evidenceLimits": "“高层insight”的一句话是读者归纳，不是作者原文原句；“引入框架”不是首次创造这些单个技术的证明。",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§1 contribution list; §3.1.1",
+          "pageOrAnchor": "印刷页 2–3",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Figure 2",
+          "pageOrAnchor": "印刷页 4",
+          "evidenceKind": "paper_figure",
+          "figureOrTableOrEquation": "Figure 2",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S2.F2"
+        }
+      ]
+    },
+    {
+      "id": "E05",
+      "title": "输入输出与闭环顺序",
+      "authorClaim": "Harness管理统一状态并在每轮产生受证据约束的工具调用。",
+      "sourceObservation": "公式(1)状态含任务x、位姿对齐RGB-D及局部几何观测ω、位姿p、进度z、事件记忆M、ST Graph G。Algorithm1顺序为必要时重新观测、记录事件、整合图、取当前子目标、检索经验、组装上下文、MLLM提议、验证、派发工具、更新状态；返回终止状态与轨迹。",
+      "readerInterpretation": "它是运行时闭环设计；不应把公式状态元组当成学习目标，也不应把算法返回的verified等同benchmark必成功。",
+      "evidenceLimits": "Algorithm1没有给出形式化正确性证明或收敛/成功保证。",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.1.1",
+          "pageOrAnchor": "印刷页 3",
+          "evidenceKind": "paper_equation",
+          "figureOrTableOrEquation": "Eq. (1)",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.E1"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Algorithm 1; §3.3",
+          "pageOrAnchor": "印刷页 6",
+          "evidenceKind": "paper_text",
+          "figureOrTableOrEquation": "Algorithm 1",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#alg1"
+        }
+      ]
+    },
+    {
+      "id": "E06",
+      "title": "工具接口与proposal validation",
+      "authorClaim": "共享输入输出契约使工具可替换而无需改Planner或Harness协议。",
+      "sourceObservation": "Table1列observe、observe_panorama、retrieve_memory、ground_target、query_depth、navigate_to、backtrack、request_stop八类核心工具。派发前核参数、证据来源与时效、目标几何可行性、当前子目标一致性；返回状态、测量、失败证据。",
+      "readerInterpretation": "合理的机制解释是隔离语义规划与执行校验，使失败成为下一步规划的显式输入。",
+      "evidenceLimits": "可替换性是架构主张；论文未报告逐工具替换的系统消融，也未量化所有验证子项各自效果。",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.1.2; Table 1",
+          "pageOrAnchor": "印刷页 4–5",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 1",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.T1"
+        }
+      ]
+    },
+    {
+      "id": "E07",
+      "title": "事件记忆的做法及证据",
+      "authorClaim": "层级事件记忆承担task-centric的近期上下文、子目标进度和失败诊断。",
+      "sourceObservation": "working保留有限近期视图/目标/反馈；progress每项有稳定ID和pending/active/completed/blocked四状态，最多一个active，完成需观测或成功工具结果；reflection保存事件ID、任务、位置、时间、反馈和观测，完整失败记录留在事件记忆。",
+      "readerInterpretation": "稳定ID与证据支撑的完成更新可降低凭计划假定已完成的风险；这是设计机制解释。Table4首个累加步骤SR在R2R与OVON均+7点。",
+      "evidenceLimits": "没有分别移除working/progress/reflection的消融；首步+7不能分配给每一种记忆。机制不保证模型永不错误更新。",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.1.3",
+          "pageOrAnchor": "印刷页 4–5",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§4.4; Table 4",
+          "pageOrAnchor": "印刷页 8",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 4",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S4.T4"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 2.1",
+          "pageOrAnchor": "印刷页 15",
+          "evidenceKind": "paper_appendix",
+          "figureOrTableOrEquation": "Navigation planning prompt"
+        }
+      ]
+    },
+    {
+      "id": "E08",
+      "title": "持久ST Graph结构",
+      "authorClaim": "ST Graph负责environment-centric的空间结构、证据来源与可复用失败，跨子目标保留。",
+      "sourceObservation": "公式(2)含place/entity节点、typed relations及时间/轻量事件标注。place按空间兼容性合并；NavigableTo连接连续地点，ObservedFrom保留观察视点和时间，Contains关联地点和实体；实体含别名、空间假设、置信与支持视图。",
+      "readerInterpretation": "把任务事件与环境证据分开，可以检索空间上有关的历史而不重复整个执行轨迹。",
+      "evidenceLimits": "论文支持结构定义与用途；没有证明所有空间假设都正确，也没有报告对时序字段、实体关系类型分别消融。",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.2 Persistent representation",
+          "pageOrAnchor": "印刷页 5",
+          "evidenceKind": "paper_equation",
+          "figureOrTableOrEquation": "Eq. (2)",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.E2"
+        }
+      ]
+    },
+    {
+      "id": "E09",
+      "title": "检索打分和失败适用性",
+      "authorClaim": "按当前子目标综合语义相关、近因性、空间显著性及适用失败惩罚来检索。",
+      "sourceObservation": "公式(3)是R+λrecC+λsalA−λfailP。附录使用局部IDF加权余弦相似度；top3种子扩一跳，至多返回5处；近因/显著权重各0.3，每次适用失败0.5，cap1.0；place/entity合并半径0.75/1.00m。失败标注引用完整事件，并随子目标/新证据调整适用性。",
+      "readerInterpretation": "受限检索集合和图的长期增长相分离，是控制输入规模的设计；cap避免把失败分支永久排除。",
+      "evidenceLimits": "未给出这些超参数扫描，也未分别验证相关度、时间、显著性、惩罚项；未报告上下文token随轨迹长度的实测复杂度曲线。",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.2 Task-conditioned retrieval; failure-aware updates",
+          "pageOrAnchor": "印刷页 5",
+          "evidenceKind": "paper_equation",
+          "figureOrTableOrEquation": "Eq. (3)",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.E3"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 1.3; Table 5",
+          "pageOrAnchor": "印刷页 13",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 5",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#A1.T5"
+        }
+      ]
+    },
+    {
+      "id": "E10",
+      "title": "grounding与Navigation Executor",
+      "authorClaim": "Harness先把语义命令落到证据支持、可达、与子目标及失败历史一致的目标，再交给执行器。",
+      "sourceObservation": "执行器返回到达、碰撞、不可达或无进展等结构反馈；平面采用FMM，楼梯时调用NavDP；感知使用640×480 RGB-D、79°FOV、GroundingDINO和SAM。",
+      "readerInterpretation": "把导航与backtrack放进同一验证—执行—更新回路，是系统一致性的做法。",
+      "evidenceLimits": "没有单独的FMM/NavDP选择对照、工具失效鲁棒性或执行器替换泛化统计；不能据工具封装推出任意机器人即插即用。",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.3; §4.2",
+          "pageOrAnchor": "印刷页 6, 8",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Table 1",
+          "pageOrAnchor": "印刷页 5",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 1",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.T1"
+        }
+      ]
+    },
+    {
+      "id": "E11",
+      "title": "停止验证的逻辑与数值门槛",
+      "authorClaim": "Planner只能请求停止；Harness检查语义、几何、任务进度三者后才发环境STOP。",
+      "sourceObservation": "公式(4)是三个条件的合取。新鲜深度来自框锚点5×5 patch的中值，标准差≤0.5m才视为可靠。优先以可靠新鲜深度按2.5m门槛核验；仅深度缺失或不可靠时，才回退到投影导航目标距离1.0m门槛。可靠深度未通过时，不能仅因投影目标较近而放行，Fig9展示了这一点。benchmark成功距离则为指令3.0m、ObjectNav1.0m的测地判据。",
+      "readerInterpretation": "stop gate是内部证据检查，和最终评测不是同一个定义；看到目标、接近一个投影点、评测成功不可混为一谈。",
+      "evidenceLimits": "几何通过不能保证语义终点正确，也不能保证进入benchmark成功区。失败实例E22/E23直接显示此边界。 原文对2.5m和1.0m仅写threshold，未明确等号边界采用<还是≤；不能在未读源码的情况下补造比较运算符。",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§3.3 Evidence-based termination",
+          "pageOrAnchor": "印刷页 6",
+          "evidenceKind": "paper_equation",
+          "figureOrTableOrEquation": "Eq. (4)",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.E4"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 1.3; Table 5",
+          "pageOrAnchor": "印刷页 13",
+          "evidenceKind": "paper_appendix",
+          "figureOrTableOrEquation": "Table 5 / Geometric stop validation"
+        }
+      ]
+    },
+    {
+      "id": "E12",
+      "title": "提示词节选与执行契约",
+      "authorClaim": "同一个MLLM以不同功能提示承担初始化、规划、grounding、验证、恢复。",
+      "sourceObservation": "Appendix2.1第一盒要求用稳定todo_id更新进度、最多一项active、完成附证据、blocked附理由，再从已给导航/回退动作中选一个；到终点可提stop，pending TODO不阻止请求。第二盒要求确认目标类别、排除相似物，不从RGB估距离；选择清楚视角并给[0,1000]框，否则CONTINUE/null/空框。Appendix2.2明确请求还须过Harness几何检查。",
+      "readerInterpretation": "不能把pending TODO不阻止stop请求误读成跳过任务验证。框(x1,y1,x2,y2)按Wx/1000、Hy/1000映射像素。",
+      "evidenceLimits": "作者明确称这些是压缩节选及选定响应字段，不是完整可复现提示词包。未运行任何提示词。",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 2.1–2.2",
+          "pageOrAnchor": "印刷页 15",
+          "evidenceKind": "paper_appendix",
+          "figureOrTableOrEquation": "Two prompt boxes / Execution Contract",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#A2.SS1"
+        }
+      ]
+    },
+    {
+      "id": "E13",
+      "title": "评测范围和协议",
+      "authorClaim": "在两类任务、四个基准中用共享框架评测。",
+      "sourceObservation": "主结果R2R/RxR full val-unseen；R2R全量1839、11场景，另报Rand100。RxR为US English guide instructions。HM3D-v2/OVON分别1000/3000 episode；OVON消融固定100条覆盖32/36场景、49个目标类别。两类任务默认500环境步。",
+      "readerInterpretation": "full split、Rand100和其他固定100子集必须分别标注；跨任务共享协议不等于共享同一个基础模型。",
+      "evidenceLimits": "论文未在本处列出完整100条episode ID清单，也未给出子集随机抽样算法细节；RxR不能扩写为多语言实验。",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§4.1; Appendix 1.1; Table 5",
+          "pageOrAnchor": "印刷页 6–8, 13",
+          "evidenceKind": "paper_appendix",
+          "figureOrTableOrEquation": "Table 5"
+        }
+      ]
+    },
+    {
+      "id": "E14",
+      "title": "R2R/RxR主结果与比较边界",
+      "authorClaim": "作者主张在列出的training-free方法中获得更强任务完成结果。",
+      "sourceObservation": "Table2 full R2R为NE4.08/OSR70.7/SR59.6/SPL43.6；full RxR为NE6.50/SR51.4/SPL38.1/nDTW55.6。相对HSGM，SR分别+11.7/+9.6点。监督方法ABot-N0的SR66.4/69.3、SPL63.9/60.0仍更高。",
+      "readerInterpretation": "主结果支持跨两个指令基准的竞争力，不支持压过全部监督方法或全部指标。",
+      "evidenceLimits": "HSGM标注GPT-5而Harness GPT-5.5；此主表差距不是纯架构的matched-model因果证据。既有结果未被本次独立复现。",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§4.3; Table 2",
+          "pageOrAnchor": "印刷页 7–8",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 2",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.T2"
+        }
+      ]
+    },
+    {
+      "id": "E15",
+      "title": "Rand100同模型对照的成败权衡",
+      "authorClaim": "作者强调相对同GPT-5.5 AgenticNav的SR、OSR和NE改善。",
+      "sourceObservation": "Table2同Rand100：AgenticNav NE5.19/OSR65/SR55/SPL48.4；Harness NE4.24/OSR77/SR58/SPL35.8。差值为NE−0.95m、OSR+12点、SR+3点、SPL−12.6点。",
+      "readerInterpretation": "相同backbone消除一个重要混杂，但结论是任务完成/曾到达更好且路径效率更差，不是全指标领先。",
+      "evidenceLimits": "仍不是所有工具、提示、预算等因素逐项独立匹配的试验；100条上的3点不附置信区间或显著性分析。",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§4.3; Table 2",
+          "pageOrAnchor": "印刷页 7–8",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 2",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.T2"
+        }
+      ]
+    },
+    {
+      "id": "E16",
+      "title": "ObjectNav主结果",
+      "authorClaim": "作者称HM3D-v2 training-free SR最高，OVON在表内所有方法中SR和SPL最高。",
+      "sourceObservation": "Table3 Harness：HM3D-v2 SR76.0/SPL37.9，OVON SR59.3/SPL36.6。HM3D-v2 MSGNav SR74.4；DRIVE-Nav SPL41.3高于Harness37.9；FiLM-Nav训练法SR77.0。OVON DRIVE-Nav50.2/32.6，ABot-N0 SR54.0。",
+      "readerInterpretation": "HM3D-v2的优势是SR，不是SPL；OVON可以严格限定为所列方法内SR/SPL最佳。",
+      "evidenceLimits": "不同方法模型、资源和工具并非全部匹配；不能用主表认定未列方法或后来方法均被超过。",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§4.3; Table 3",
+          "pageOrAnchor": "印刷页 7–8",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 3",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S3.T3"
+        }
+      ]
+    },
+    {
+      "id": "E17",
+      "title": "累加组件消融",
+      "authorClaim": "作者依次启用Mem→Graph→Stop，并明确把每一增量解释为给定此前组件的贡献。",
+      "sourceObservation": "Table4 R2R SR/SPL/OSR：43/24.3/65→50/30.9/73→56/32.4/76→58/35.9/77。OVON：45/32.0/72→52/32.4/72→53/34.2/71→55/33.0/74。全套相对base SR+15/+10点。",
+      "readerInterpretation": "记忆首步+7/+7、加图+6/+1、加stop+2/+2，均是条件增量；OVON加图时OSR−1，加stop时SPL−1.2，不能说每一步每项均提升。",
+      "evidenceLimits": "不是全因子或leave-one-out；不能证明三者独立主效应、交互大小或换顺序仍有相同增益。基线移除的细节和重复运行方差也不充分。",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§4.4; Table 4",
+          "pageOrAnchor": "印刷页 8",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 4",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S4.T4"
+        }
+      ]
+    },
+    {
+      "id": "E18",
+      "title": "设计选择敏感性未充分展开",
+      "authorClaim": "作者提供固定配置和模型、预算诊断。",
+      "sourceObservation": "文中已有设计数值：50张图片预算、2步历史采样、3种子/5地点、一跳、合并半径、权重和stop阈值；并有Table6模型比较及Figure4预算比较。",
+      "readerInterpretation": "可以回答“用了什么值”与“报告了什么诊断”；不能把固定配置列为最佳超参数或每个设计已验证。",
+      "evidenceLimits": "核读正文§1–6、Appendix1–3、全部图表后，未见逐项超参数扫描，未见三种事件记忆、图的各关系/检索项、stop三条件或fresh-depth/fallback的独立消融。",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§4.4; Appendix 1.2–1.4; Appendix 2",
+          "pageOrAnchor": "印刷页 8, 13–15",
+          "evidenceKind": "paper_appendix",
+          "figureOrTableOrEquation": "Tables 4–6; Figure 4"
+        }
+      ]
+    },
+    {
+      "id": "E19",
+      "title": "预算分析的真实实验单位",
+      "authorClaim": "作者分析500与1000步以及观测旋转开销。",
+      "sourceObservation": "Appendix1.3从同批1000步录制轨迹截到500离线重评分。500：NE4.2416、OSR77、SR58、SPL35.85、nDTW46.73；1000：4.1056、81、61、35.63、45.30。Figure4显示平均总步362.91，其中观测旋转199.07，其余163.84；总观测旋转19907/36291=54.85%。",
+      "readerInterpretation": "这是延长轨迹与预算截断的诊断，SR/OSR改善伴随SPL/nDTW下降。删除旋转计数后的163.84不是实际少转动后重新运行的效率。",
+      "evidenceLimits": "不能称两个预算独立运行、实时控制策略消融或已实现54.85%省步。54.85%是汇总动作之比，不是各episode比例的简单平均。",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 1.3 Step budget and observation overhead; Figure 4",
+          "pageOrAnchor": "印刷页 14",
+          "evidenceKind": "paper_figure",
+          "figureOrTableOrEquation": "Figure 4",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#A1.F4"
+        }
+      ]
+    },
+    {
+      "id": "E20",
+      "title": "模型敏感性和ObjectNav同模型对照",
+      "authorClaim": "作者保持Harness协议和工具不变，比较三个MLLM并重测MSGNav同Luna。",
+      "sourceObservation": "Table6固定100子集：MSGNav Luna HM3D 62/27.7/84/gap22，OVON37/18.9/46/gap9；Harness Luna76/40.8/86/gap10、55/33/74/gap19；Astra86/47.1/95/gap9、63/39.4/76/gap13；Qwen72/36.9/85/gap13、51/32.8/75/gap24。",
+      "readerInterpretation": "同Luna时SR/SPL分别+14/+13.1与+18/+14.1点，支持Harness组合在这两子集的增益；所测模型间结果差异较大。",
+      "evidenceLimits": "不能说OSR−SR gap在所有基准缩小：OVON从9到19扩大。这里的100条结果不能冒充Table3全量表现，也不能推断任意模型均有效。",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 1.4; Table 6",
+          "pageOrAnchor": "印刷页 14",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Table 6",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#A1.T6"
+        }
+      ]
+    },
+    {
+      "id": "E21",
+      "title": "实机证据",
+      "authorClaim": "作者在AGIBOT A3 Ultra上以同Harness协议展示三种真实场景。",
+      "sourceObservation": "§5与Fig3为806外路口→左转→饮水机附近垃圾桶→冰箱；找打印机；入口牌停下再找售货机。平台1.74m、LiDAR、多相机、Thor；主视觉头部双目，Fast-FoundationStereo估深度，Qwen-3.8-27B规划，局部规划器执行。",
+      "readerInterpretation": "支持框架能够在该平台执行几种任务并保留跨阶段目标证据的可行性展示。",
+      "evidenceLimits": "没有试验总次数、随机化、多场景分布、失败率/碰撞率/干预率、置信区间或实时延迟；不能写为3/3总体成功率、稳健Sim2Real或任意平台泛化。Fig3小ST Graph细字部分不可读。",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§5.1–5.2; Figure 3",
+          "pageOrAnchor": "印刷页 8–9",
+          "evidenceKind": "paper_figure",
+          "figureOrTableOrEquation": "Figure 3",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S5.F3"
+        }
+      ]
+    },
+    {
+      "id": "E22",
+      "title": "R2R错误终点仍通过stop",
+      "authorClaim": "作者承认目标邻近不证明选对指令终点。",
+      "sourceObservation": "Fig10 R2R839要求下楼进左边房间；step474投影目标距离0.998m通过，step475停止，benchmark goal distance6.48m失败。像素见楼梯视图、靠墙/局部墙面末帧与往返轨迹。",
+      "readerInterpretation": "直接支持内部几何一致并非任务语义正确；可以作为本方法limitation，不能挪为AgenticNav的失败例。",
+      "evidenceLimits": "图/标题提供的是选择性单例；无法统计这类错误占比，也无法仅从静帧确定完整根因。",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 3.3; Figure 10",
+          "pageOrAnchor": "印刷页 18",
+          "evidenceKind": "paper_figure",
+          "figureOrTableOrEquation": "Figure 10",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#A3.F10"
+        }
+      ]
+    },
+    {
+      "id": "E23",
+      "title": "ObjectNav通过深度门槛仍失败",
+      "authorClaim": "作者强调传感器邻近与benchmark成功不同。",
+      "sourceObservation": "Fig11 OVON2469 picture：step46 fresh depth1.20m通过，step47停止时benchmark goal distance2.15m而失败。像素见沙发、相框和短轨迹，不能从图自身量出测地距离。",
+      "readerInterpretation": "几何门槛2.5m与ObjectNav benchmark1.0m且定义不同，会留下通过内部gate却未达成功区的可能；这是作者明确展示的边界。",
+      "evidenceLimits": "不能把误差全部归因于深度传感器不准或幻觉；论文没有对该个例给出更细的因果拆解。",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 1.3; Appendix 3.3; Figure 11",
+          "pageOrAnchor": "印刷页 13, 18",
+          "evidenceKind": "paper_figure",
+          "figureOrTableOrEquation": "Figure 11",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#A3.F11"
+        }
+      ]
+    },
+    {
+      "id": "E24",
+      "title": "拒绝stop后成功的案例",
+      "authorClaim": "作者用可视化展示fresh-depth gate可以拒绝投影目标看似已近的stop。",
+      "sourceObservation": "Fig9 OVON1297 picture：step216投影距离0.40m但fresh depth4.65m，拒停；step429深度1.53m通过，step430成功且终点goal0.13m。像素见两帧壁炉/墙上画及曲折轨迹。",
+      "readerInterpretation": "说明至少这个选例中，优先使用可靠新深度能阻止一次不充分的停止，并继续导航。",
+      "evidenceLimits": "不是没有gate时必失败的反事实试验；当前显示forward视图未必就是验证视角，不能凭截图否定目标是否被验证。",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 3.1; Appendix 3.3; Figure 9",
+          "pageOrAnchor": "印刷页 16, 18",
+          "evidenceKind": "paper_figure",
+          "figureOrTableOrEquation": "Figure 9",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#A3.F9"
+        }
+      ]
+    },
+    {
+      "id": "E25",
+      "title": "成功可视化与dashboard边界",
+      "authorClaim": "作者展示六个录制rollout以解释行为和失败，不作为聚合估计。",
+      "sourceObservation": "Fig6 R2R650投影0.56m@149，成功@150，goal2.39m；Fig7 RxR154投影0.49m@925，成功@926，goal0.43m，是1000步诊断；Fig8 HM3D536深度0.64m@94，成功@95，goal0.05m。Fig5 HM3D536@36，状态条goal3.03m，图例显示几何占据图、路径/目标，右侧ST Graph只报counts。",
+      "readerInterpretation": "dashboard的goal distance是评测诊断而非agent输入；不能把占据图称作ST Graph全图。Fig7不能作为500步设置成功例。",
+      "evidenceLimits": "六个选例不代表全体成功率；帧索引和stop验证事件索引不同，停止检查距离与终端goal距离不同。",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 3.1–3.2; Figures 5–8",
+          "pageOrAnchor": "印刷页 16–17",
+          "evidenceKind": "paper_figure",
+          "figureOrTableOrEquation": "Figures 5–8",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#A3.F5"
+        }
+      ]
+    },
+    {
+      "id": "E26",
+      "title": "作者明示局限与证据不足",
+      "authorClaim": "结论称当前Harness依赖预定义编排和校验，未来研究交互中自演化机制。",
+      "sourceObservation": "§6没有报告自演化实验。附录承认随机模型响应即使模拟器seed0仍可能变化；只给请求temperature和token limits。通篇未见多次随机运行均值/方差、统计显著性、token费用/墙钟延迟或系统级安全保证。",
+      "readerInterpretation": "适合保留为预定义运行时、模型依赖、效率/可靠性证据有限的局限；“为什么work”只可做有证据约束的机制解释。",
+      "evidenceLimits": "不能把缺少报告写成实际一定很慢、昂贵、不稳定；只说这些性质尚未得到本文相应证据支持。",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "§6",
+          "pageOrAnchor": "印刷页 9",
+          "evidenceKind": "paper_text"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Appendix 1.2–1.4",
+          "pageOrAnchor": "印刷页 13–14",
+          "evidenceKind": "paper_appendix"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "全文与Appendix 1–3核读范围",
+          "pageOrAnchor": "印刷页 1–18",
+          "evidenceKind": "paper_text"
+        }
+      ]
+    },
+    {
+      "id": "E27",
+      "title": "图文方向与报告精度疑点",
+      "authorClaim": "正文描述Harness向工具派发，工具反馈回Harness。",
+      "sourceObservation": "Fig2中央Harness下方左箭头向上却标Validated tool call，右箭头向下却标Structured feedback；相对正文§3.1.2/Algorithm1的语义方向显得倒置。另Rand100 SPL Table2=35.8，Table4=35.9，Appendix1.3=35.85。",
+      "readerInterpretation": "机制重建以正文和算法为准，同时留图示方向疑点；三个SPL原值分位置保留，不擅自合并。",
+      "evidenceLimits": "未向作者求证；箭头可能是图示排版问题，但不能确断。精度差可能涉及舍入，本文未解释，不能据此认定用了不同实验。",
+      "sourceLocators": [
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Figure 2; §3.1.2; Algorithm 1",
+          "pageOrAnchor": "印刷页 4, 6",
+          "evidenceKind": "paper_figure",
+          "figureOrTableOrEquation": "Figure 2",
+          "htmlAnchor": "https://arxiv.org/html/2609.15195v3#S2.F2"
+        },
+        {
+          "sourceUrl": "https://arxiv.org/pdf/2609.15195v3",
+          "sourceVersion": "2609.15195v3",
+          "sectionOrAppendix": "Table 2; Table 4; Appendix 1.3",
+          "pageOrAnchor": "印刷页 7, 8, 14",
+          "evidenceKind": "paper_table",
+          "figureOrTableOrEquation": "Tables 2, 4"
+        }
+      ]
+    }
+  ],
+  "revision": "review-fixes-20261006"
+}
