@@ -33,6 +33,50 @@ class V2PreviewTests(unittest.TestCase):
    self.assertEqual(page.count(f'../../../assets/reader-toc-focus-v1.js?v={digest}'),1)
    self.assertIn('href="first-pass.html"',page);self.assertNotIn('href="stage2.html"',page);self.assertNotIn('href="stage3.html"',page)
    self.assertIn('noindex,follow',page);self.assertNotIn('尚未正式收录',raw.decode());self.assertNotIn('待视觉验收',raw.decode())
+ def test_focus_ring_stays_inside_native_tab_visible_link_box(self):
+  marker='<style data-reader-toc-focus-ring="v1">'
+  rule='.f2-current-reader .reader-toc a:focus-visible{outline-offset:-4px}'
+  output=v2.output_payloads(ROOT)
+  for rec,raw in self.sources:
+   page=output[f'{v2.BASE}/{rec["paper_id"]}/stage1.html'].decode()
+   self.assertEqual(page.count(marker+rule+'</style>'),1)
+   self.assertLess(page.index(marker),page.index('</head>'))
+   self.assertNotIn(marker,raw.decode())
+   # Original fixed styles, scripts and article sections remain exact. The
+   # preview alone receives one additive, tightly scoped focus presentation.
+   stripped=page.replace(marker+rule+'</style>','')
+   self.assertEqual(re.findall(r'<style[^>]*>.*?</style>',stripped,re.S),re.findall(r'<style[^>]*>.*?</style>',raw.decode(),re.S))
+  self.assertTrue(all(marker.encode() not in raw for raw in v1.output_payloads(ROOT).values()))
+  f2=(ROOT/'assets/f2.css').read_text()
+  self.assertIn('outline:3px solid var(--f2-focus);outline-offset:4px',f2)
+  # Actual 200% screenshot geometry: a 7px exterior ring clips. Inset by
+  # 1px additionally tolerates fractional box/border rounding at the edge.
+  width=3;old_offset=4;new_offset=-4
+  link={'left':20,'right':557.5,'top':325.1875,'bottom':369.1875}
+  clip={'left':20,'right':562.5,'top':239.59375,'bottom':369}
+  self.assertGreater(link['bottom']+old_offset+width,clip['bottom'])
+  extension=new_offset+width
+  self.assertGreaterEqual(link['left']-extension,clip['left'])
+  self.assertGreaterEqual(link['top']-extension,clip['top'])
+  self.assertLessEqual(link['right']+extension,clip['right'])
+  self.assertLessEqual(link['bottom']+extension,clip['bottom'])
+  # First-row and both side edges: no part of the outline extends beyond
+  # the box exposed by native Tab/Shift+Tab, at desktop or compact widths.
+  for left,top,width,height in [(20,239.59375,537.5,44),(32,164,184,44)]:
+   self.assertGreaterEqual(left-extension,left)
+   self.assertGreaterEqual(top-extension,top)
+   self.assertLessEqual(left+width+extension,left+width)
+   self.assertLessEqual(top+height+extension,top+height)
+  focus=re.search(r'--f2-focus:(#[0-9a-f]{6});',f2)[1]
+  def luminance(color):
+   rgb=[int(color[i:i+2],16)/255 for i in (1,3,5)]
+   linear=[c/12.92 if c<=0.04045 else ((c+0.055)/1.055)**2.4 for c in rgb]
+   return sum(c*w for c,w in zip(linear,(0.2126,0.7152,0.0722)))
+  # Existing ordinary, hover, current and active TOC backgrounds; the patch
+  # leaves stroke width/color intact and its contrast comfortably above3:1.
+  for background in ('#ffffff','#f0f3f7','#f0f7f3','#eef3ef'):
+   a,b=sorted((luminance(focus),luminance(background)))
+   self.assertGreaterEqual((b+0.05)/(a+0.05),3)
  def test_no_registry_state_changes_and_v1_stays_seven(self):
   self.assertEqual(len(r.load_reports(ROOT)),21);self.assertEqual(len(v1.output_payloads(ROOT)),7)
   self.assertTrue(all(b'reader-toc-focus-v1' not in raw for raw in v1.output_payloads(ROOT).values()))

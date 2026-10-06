@@ -19,3 +19,11 @@ Current frozen `first-pass.html` remains historical bytes and retains the legacy
 Boundary: the compact stagebar/button is itself in normal document flow. This layer fixes normal button activation with the TOC in the viewport. Synthetic activation of a fully offscreen TOC is not claimed to expose it; adding a fixed overlay or moving page scroll is deliberately out of scope. Test real late-section/button-return flows on HTTPS before acceptance. All close paths restore the temporary inline height through the existing aria-expanded state, without replacing the original handlers.
 
 The DOM model implements display:none scrollTop reads as zero. It runs the unchanged original opening handler and simulates other close paths through the same expanded-state change; it is not a full browser event/scroll-anchoring test.
+
+## Focus-ring inset follow-up (2026-10-06)
+
+After PR27, actual normal Chromium 200% acceptance confirmed the core focus/scroll fix but found the exterior focus outline clipped when native Tab navigation brought the final row to the lower edge. Observed link bottom369.1875px, panel bottom370px with1px border; existing outline3px plus offset4px extends7px beyond the link.
+
+The three generated v2 preview pages now append one narrowly scoped style: `.f2-current-reader .reader-toc a:focus-visible{outline-offset:-4px}`. This retains the F2 outline color and3px stroke while moving its outside edge1px inside the link, including a small allowance for fractional border/box rounding. No new JavaScript, focus or scroll handlers, height changes, or content edits are introduced. Frozen report styles/scripts and v1 history remain exact. Ordinary links/buttons outside this TOC retain their existing focus styles.
+
+Static regression verifies the unique scoped rule, original style preservation, unchanged fixed/v1 bytes, and the measured rectangle arithmetic. The existing12-case focus/scroll suite remains unchanged. Static geometry is not screenshot acceptance: verify Tab/Shift+Tab on first and final rows at100%/200% on the authorized HTTPS preview, plus Escape, link activation, focus-out and resize.
