@@ -288,7 +288,7 @@ class RadarC2ContractTests(unittest.TestCase):
                     self.assertEqual(parse_qs(url.query).get('v'), [digest(target)[:12]], raw)
         entry = (source / 'index.html').read_text()
         # Deployment-neutral wording preserves the isolated route without claiming acceptance.
-        self.assertIn('<title>双树逐层导航 · 隔离预览</title>', entry)
+        self.assertIn('<title>三树导航 · 隔离预览</title>', entry)
         self.assertIn('<span class="local-badge">隔离预览</span>', entry)
         self.assertIn('class="skip" href="#global-map"', entry)
         self.assertIn('id="global-map" tabindex="-1"', entry)
@@ -297,7 +297,11 @@ class RadarC2ContractTests(unittest.TestCase):
         for rendered_source in (entry, analysis):
             for transient_status in ('本地候选', '本地交互候选', '未发布', '未上线'):
                 self.assertNotIn(transient_status, rendered_source)
-        self.assertLess(entry.index('data-c2-range='), entry.index('<main>'))
+        # Auxiliary scope moves into the requested native disclosure; it remains
+        # in the document before navigation, and is never removed or rewritten.
+        self.assertGreater(entry.index('data-c2-range='), entry.index('<details class="entry-help">'))
+        self.assertLess(entry.index('data-c2-range='), entry.index('id="global-map"'))
+        self.assertIn('<details class="entry-help"><summary>方法原文、收录范围与使用边界</summary>', entry)
         self.assertGreater(entry.index('data-c2-range='), entry.index('</header>'))
         self.assertEqual([urlsplit(p).path for p in htmls['index.html'].scripts], [
             'data/catalog.js', 'data/literature.js', 'data/challenge.js', 'model.js', 'app.js',
@@ -325,7 +329,7 @@ class RadarC2ContractTests(unittest.TestCase):
             run = subprocess.run(['node', str(site / 'tests/integration.test.cjs')], check=True,
                                  capture_output=True, text=True, timeout=30)
             self.assertEqual(len(re.findall(r'^PASS ', run.stdout, re.M)), 2, run.stdout)
-            for script in ('analysis/tests/global-first.test.cjs', 'tests/global-dual.test.cjs'):
+            for script in ('analysis/tests/global-first.test.cjs', 'tests/global-dual.test.cjs', 'tests/three-entry.test.cjs', 'tests/analysis-independent.test.cjs'):
                 subprocess.run(['node', str(site / script)], check=True, capture_output=True,
                                text=True, timeout=60)
             before_bundle = (site / 'analysis/data/bundle.js').read_bytes()
