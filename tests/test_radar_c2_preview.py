@@ -287,6 +287,14 @@ class RadarC2ContractTests(unittest.TestCase):
                 if tag in ('script', 'link') and url.path.endswith(('.js', '.css')):
                     self.assertEqual(parse_qs(url.query).get('v'), [digest(target)[:12]], raw)
         entry = (source / 'index.html').read_text()
+        # Deployment-neutral wording preserves the isolated route without claiming acceptance.
+        self.assertIn('<title>双树逐层导航 · 隔离预览</title>', entry)
+        self.assertIn('<span class="local-badge">隔离预览</span>', entry)
+        analysis = (source / 'analysis/c2.js').read_text()
+        self.assertIn("<span>隔离预览 · '+esc(paper.version)+'</span>", analysis)
+        for rendered_source in (entry, analysis):
+            for transient_status in ('本地候选', '本地交互候选', '未发布', '未上线'):
+                self.assertNotIn(transient_status, rendered_source)
         self.assertLess(entry.index('data-c2-range='), entry.index('<main>'))
         self.assertGreater(entry.index('data-c2-range='), entry.index('</header>'))
         self.assertEqual([urlsplit(p).path for p in htmls['index.html'].scripts], [
