@@ -1,0 +1,508 @@
+{
+  "schemaVersion": 1,
+  "title": "原图示例：逆渲染文献树与问题洞察树",
+  "sourceImage": "dual",
+  "source": {
+    "filename": "image(20261007-162126).png",
+    "sha256": "c69e3c4cbd47a74b7a98b7b26c02e0b4ff8df49584fffafb26c0c2f6a8791e64",
+    "width": 2048,
+    "height": 1421,
+    "verification": "2026-10-07 reuploaded PNG actually viewed; original 60-node topology retained; ambiguous and truncated text not guessed"
+  },
+  "transcriptionNotes": [
+    "这是原逆渲染例子，独立 ex: 命名空间，不计入导航论文。",
+    "原图灰色小号论文注释保存在 annotations，不建立新节点。",
+    "首个工作或技术改进说明与论文标题在同一连线节点内时，保留为一个多行节点。",
+    "JPEG 小字不能确保逐字准确的地方保留 uncertainty；原图截断不补全，??? 原样保留。",
+    "室内 subtask 的多行说明与示意图属于同一节点；示意图须结合原图查看。"
+  ],
+  "nodes": [
+    {
+      "id": "ex:root",
+      "parent": null,
+      "label": "Literature_tree",
+      "type": "root",
+      "sourceImage": "dual"
+    },
+    {
+      "id": "ex:goal",
+      "parent": "ex:root",
+      "label": "General goal：拍摄 multi-view images，采集物体/场景的材质",
+      "type": "goal",
+      "sourceImage": "dual",
+      "uncertainty": "“物体/场景”之间的连接符较模糊，保留待核。"
+    },
+    {
+      "id": "ex:l",
+      "parent": "ex:goal",
+      "label": "Literature tree",
+      "type": "tree",
+      "sourceImage": "dual"
+    },
+    {
+      "id": "ex:l-known-point",
+      "parent": "ex:l",
+      "label": "milestone task：在已知的点光源的条件下从图片中采集物体的材质",
+      "type": "milestone",
+      "sourceImage": "dual",
+      "uncertainty": "原图中文小字受 JPEG 压缩影响；标点、连接词及个别字以随附原图为准，不据此扩写科学结论。"
+    },
+    {
+      "id": "ex:l-simple",
+      "parent": "ex:l",
+      "label": "milestone task：在未知的简单光源的条件下从图片中采集物体的材质",
+      "type": "milestone",
+      "sourceImage": "dual",
+      "uncertainty": "原图中文小字受 JPEG 压缩影响；标点、连接词及个别字以随附原图为准，不据此扩写科学结论。"
+    },
+    {
+      "id": "ex:l-simple-pipeline",
+      "parent": "ex:l-simple",
+      "label": "pipeline：定义物体 geometry and material，用 physically-based rendering 优化",
+      "type": "pipeline",
+      "sourceImage": "dual",
+      "uncertainty": "原图中文小字受 JPEG 压缩影响；标点、连接词及个别字以随附原图为准，不据此扩写科学结论。"
+    },
+    {
+      "id": "ex:l-sunstage",
+      "parent": "ex:l-simple-pipeline",
+      "label": "SunStage: Portrait Reconstruction and Relighting using the Sun as a Light Stage",
+      "type": "paper",
+      "sourceImage": "dual"
+    },
+    {
+      "id": "ex:l-wildlight",
+      "parent": "ex:l-simple-pipeline",
+      "label": "WildLight: In-the-wild Inverse Rendering with a Flashlight",
+      "type": "paper",
+      "sourceImage": "dual"
+    },
+    {
+      "id": "ex:l-outdoor",
+      "parent": "ex:l-simple",
+      "label": "subtask：采集室外场景的材质（主要为了做 relighting）",
+      "type": "subtask",
+      "sourceImage": "dual",
+      "uncertainty": "原图中文小字受 JPEG 压缩影响；标点、连接词及个别字以随附原图为准，不据此扩写科学结论。"
+    },
+    {
+      "id": "ex:l-outdoor-pipeline",
+      "parent": "ex:l-outdoor",
+      "label": "pipeline：用 MLP 表示 geometry and material，用 physically-based rendering 优化",
+      "type": "pipeline",
+      "sourceImage": "dual",
+      "uncertainty": "原图中文小字受 JPEG 压缩影响；标点、连接词及个别字以随附原图为准，不据此扩写科学结论。"
+    },
+    {
+      "id": "ex:l-nerf-osr",
+      "parent": "ex:l-outdoor-pipeline",
+      "label": "NeRF-OSR: Neural Radiance Fields for Outdoor Scene Relighting",
+      "type": "paper",
+      "sourceImage": "dual"
+    },
+    {
+      "id": "ex:l-urban-fields",
+      "parent": "ex:l-outdoor-pipeline",
+      "label": "Neural Fields meet Explicit Geometric Representations for Inverse Rendering of Urban Scenes",
+      "type": "paper",
+      "sourceImage": "dual"
+    },
+    {
+      "id": "ex:l-complex",
+      "parent": "ex:l",
+      "label": "milestone task：在未知的复杂光照的条件下从图片中采集物体的材质",
+      "type": "milestone",
+      "sourceImage": "dual",
+      "uncertainty": "原图此处“光照/光源”小字不够清楚；正文转写保留待核，不把领域解释当成逐字转录。"
+    },
+    {
+      "id": "ex:l-well-defined",
+      "parent": "ex:l-complex",
+      "label": "subtask：采集单个物体，该物体具有 well-defined surfaces",
+      "type": "subtask",
+      "sourceImage": "dual",
+      "uncertainty": "原图中文小字受 JPEG 压缩影响；标点、连接词及个别字以随附原图为准，不据此扩写科学结论。"
+    },
+    {
+      "id": "ex:l-well-pipeline",
+      "parent": "ex:l-well-defined",
+      "label": "pipeline：用 MLP 表示 geometry and material，用 physically-based rendering 优化",
+      "type": "pipeline",
+      "sourceImage": "dual",
+      "uncertainty": "原图中文小字受 JPEG 压缩影响；标点、连接词及个别字以随附原图为准，不据此扩写科学结论。"
+    },
+    {
+      "id": "ex:l-nerv",
+      "parent": "ex:l-well-pipeline",
+      "label": "第一个工作\nNeRV: Neural Reflectance and Visibility Fields for Relighting and View Synthesis",
+      "type": "paper",
+      "sourceImage": "dual"
+    },
+    {
+      "id": "ex:l-multi-stage",
+      "parent": "ex:l-well-pipeline",
+      "label": "技术上的提升思路：多阶段优化",
+      "type": "improvement",
+      "sourceImage": "dual"
+    },
+    {
+      "id": "ex:l-nerfactor",
+      "parent": "ex:l-multi-stage",
+      "label": "NeRFactor: Neural Factorization of Shape and Reflectance Under an Unknown Illumination",
+      "type": "paper",
+      "sourceImage": "dual"
+    },
+    {
+      "id": "ex:l-light-model",
+      "parent": "ex:l-well-pipeline",
+      "label": "技术上的提升思路：改进光照模型",
+      "type": "improvement",
+      "sourceImage": "dual",
+      "uncertainty": "“光照模型/光源模型”原图小字待核。"
+    },
+    {
+      "id": "ex:l-physg",
+      "parent": "ex:l-light-model",
+      "label": "将光照建模为 SG\nPhySG: Inverse Rendering with Spherical Gaussians for Physics-based Material Editing and Relighting",
+      "type": "paper",
+      "sourceImage": "dual",
+      "uncertainty": "第一行的“光照/光源”细字待核；第一行与论文标题属于同一连线节点。"
+    },
+    {
+      "id": "ex:l-indirect",
+      "parent": "ex:l-light-model",
+      "label": "间接光\nModeling Indirect Illumination for Inverse Rendering",
+      "type": "paper",
+      "sourceImage": "dual"
+    },
+    {
+      "id": "ex:l-nvdiffrec",
+      "parent": "ex:l-light-model",
+      "label": "将光照建模为 Split-sum\nNvdiffrec: Extracting Triangular 3D Models, Materials, and Lighting From Images",
+      "type": "paper",
+      "sourceImage": "dual",
+      "uncertainty": "第一行的“光照/光源”细字待核；第一行与论文标题属于同一连线节点。"
+    },
+    {
+      "id": "ex:l-nvdiffrecmc",
+      "parent": "ex:l-light-model",
+      "label": "将光照建模为 256×256 environment map，用 Monte Carlo 采样\nNvdiffrecmc: Shape, Light, and Material Decomposition from Images using Monte Carlo Rendering and Denoising",
+      "type": "paper",
+      "sourceImage": "dual",
+      "uncertainty": "第一行的“光照/光源”细字与英文单词空格以原图为准。"
+    },
+    {
+      "id": "ex:l-neilf",
+      "parent": "ex:l-light-model",
+      "label": "将 incident light 建模为一个 MLP\nNeILF: Neural Incident Light Field for Physically-based Material Estimation",
+      "type": "paper",
+      "sourceImage": "dual"
+    },
+    {
+      "id": "ex:l-neilf-plus",
+      "parent": "ex:l-neilf",
+      "label": "额外建模了一个 outgoing radiance field\nNeILF++: Inter-reflectable Light Fields for Geometry and Material Estimation",
+      "type": "paper",
+      "sourceImage": "dual"
+    },
+    {
+      "id": "ex:l-eclipse",
+      "parent": "ex:l-well-pipeline",
+      "label": "Eclipse: Disentangling Illumination and Materials using Unintended Shadows",
+      "type": "paper",
+      "sourceImage": "dual"
+    },
+    {
+      "id": "ex:l-recursive-control",
+      "parent": "ex:l-well-pipeline",
+      "label": "Recursive Control Variates for Inverse Rendering",
+      "type": "paper",
+      "sourceImage": "dual",
+      "annotations": [
+        "〔原图下方灰色注释模糊，无法完整可靠转写；保留为本节点注释，不建立子节点〕"
+      ],
+      "uncertainty": "灰色注释不可完整辨读；论文标题与它的 pipeline 父子连线可辨。"
+    },
+    {
+      "id": "ex:l-no-well-defined",
+      "parent": "ex:l-complex",
+      "label": "subtask：采集无 well-defined surfaces 物体的材质",
+      "type": "subtask",
+      "sourceImage": "dual",
+      "uncertainty": "原图中文小字受 JPEG 压缩影响；标点、连接词及个别字以随附原图为准，不据此扩写科学结论。"
+    },
+    {
+      "id": "ex:l-unknown-pipeline",
+      "parent": "ex:l-no-well-defined",
+      "label": "pipeline：???",
+      "type": "pipeline",
+      "sourceImage": "dual"
+    },
+    {
+      "id": "ex:l-nemf",
+      "parent": "ex:l-unknown-pipeline",
+      "label": "NeMF: Inverse Volume Rendering with Neural Microflake Field",
+      "type": "paper",
+      "sourceImage": "dual"
+    },
+    {
+      "id": "ex:l-indoor",
+      "parent": "ex:l-complex",
+      "label": "subtask：采集室内场景的材质。\n如果拍摄了整个场景的图片，就算是已知了场景的复杂光照。\n这时候是在已知的复杂光照的条件下从图片中采集物体的材质。",
+      "type": "subtask",
+      "sourceImage": "dual",
+      "annotations": [
+        "同节点附示意图：Input / Output / Applications；Material Editing / Exhibit Novel View / Relighting。示意图本身不是新节点，请查看原图。"
+      ],
+      "uncertainty": "同节点中文多行说明中，标点、个别字及“复杂光照/复杂光源”仍待高清原图核字。附图内部部分英文小字也待核；不拆成独立科学节点。"
+    },
+    {
+      "id": "ex:l-indoor-pipeline",
+      "parent": "ex:l-indoor",
+      "label": "pipeline：用 MLP 表示 geometry and material，用 physically-based rendering 优化",
+      "type": "pipeline",
+      "sourceImage": "dual",
+      "uncertainty": "原图中文小字受 JPEG 压缩影响；标点、连接词及个别字以随附原图为准，不据此扩写科学结论。"
+    },
+    {
+      "id": "ex:l-i2-sdf",
+      "parent": "ex:l-indoor-pipeline",
+      "label": "第一个工作\nI2-SDF: Intrinsic Indoor Scene Reconstruction and Editing via Raytracing in Neural SDFs",
+      "type": "paper",
+      "sourceImage": "dual"
+    },
+    {
+      "id": "ex:l-indoor-light-model",
+      "parent": "ex:l-indoor-pipeline",
+      "label": "技术上的提升：改进光照模型",
+      "type": "improvement",
+      "sourceImage": "dual",
+      "uncertainty": "“光照模型/光源模型”原图小字待核。"
+    },
+    {
+      "id": "ex:l-factorized-path",
+      "parent": "ex:l-indoor-light-model",
+      "label": "技术上的提升：用 voxel grid 储存光照\nFactorized Inverse Path Tracing for Efficient and Accurate Material-Lighting Estimation",
+      "type": "paper",
+      "sourceImage": "dual",
+      "uncertainty": "第一行中文小字待核，技术提升说明与论文标题为同一节点。"
+    },
+    {
+      "id": "ex:l-ibl-nerf",
+      "parent": "ex:l-indoor-light-model",
+      "label": "技术上的提升：用类似 light transport map 的方式表示光照\nIBL-NeRF: Image-Based Lighting Formulation of Neural Radiance Fields",
+      "type": "paper",
+      "sourceImage": "dual",
+      "uncertainty": "第一行中文小字待核，技术提升说明与论文标题为同一节点。"
+    },
+    {
+      "id": "ex:l-multi-view-indoor",
+      "parent": "ex:l-indoor-light-model",
+      "label": "技术上的提升：用 Texture 表示光照模型\nMulti-view Inverse Rendering for Large-scale Real-world Indoor Scene",
+      "type": "paper",
+      "sourceImage": "dual",
+      "uncertainty": "第一行“光照模型/光源模型”原图小字待核；说明与论文标题为同一节点。"
+    },
+    {
+      "id": "ex:l-uncategorized",
+      "parent": "ex:l-indoor",
+      "label": "未归类",
+      "type": "uncategorized",
+      "sourceImage": "dual"
+    },
+    {
+      "id": "ex:l-inverse-path",
+      "parent": "ex:l-uncategorized",
+      "label": "Inverse Path Tracing for Joint Material and Lighting Estimation",
+      "type": "paper",
+      "sourceImage": "dual"
+    },
+    {
+      "id": "ex:l-intrinsic-nerf",
+      "parent": "ex:l-uncategorized",
+      "label": "IntrinsicNeRF: Learning Intrinsic Neural Radiance Fields for Editable Novel View Synthesis",
+      "type": "paper",
+      "sourceImage": "dual"
+    },
+    {
+      "id": "ex:l-future",
+      "parent": "ex:l",
+      "label": "milestone task：???",
+      "type": "milestone",
+      "sourceImage": "dual",
+      "annotations": [
+        "what is important in the next step"
+      ]
+    },
+    {
+      "id": "ex:c",
+      "parent": "ex:goal",
+      "label": "Challenge-insight tree",
+      "type": "tree",
+      "sourceImage": "dual"
+    },
+    {
+      "id": "ex:c-indirect",
+      "parent": "ex:c",
+      "label": "challenge：需要处理间接光，但 path tracing 间接光很慢",
+      "type": "challenge",
+      "sourceImage": "dual",
+      "uncertainty": "原图中文小字受 JPEG 压缩影响；标点、连接词及个别字以随附原图为准，不据此扩写科学结论。"
+    },
+    {
+      "id": "ex:c-indirect-predict",
+      "parent": "ex:c-indirect",
+      "label": "insight：用一个 MLP 直接预测光追中间需计算量较大的值",
+      "type": "insight",
+      "sourceImage": "dual",
+      "annotations": [
+        "1. NeRV: Neural Reflectance and Visibility Fields for Relighting and…"
+      ],
+      "uncertainty": "中文细字需高清原图逐字复核；灰色论文注释在原图已截断，不补全。"
+    },
+    {
+      "id": "ex:c-indirect-record",
+      "parent": "ex:c-indirect",
+      "label": "insight：用一个 MLP 记录间接光",
+      "type": "insight",
+      "sourceImage": "dual",
+      "annotations": [
+        "1. Modeling Indirect Illumination for Inverse Rendering"
+      ],
+      "uncertainty": "原图中文小字受 JPEG 压缩影响；标点、连接词及个别字以随附原图为准，不据此扩写科学结论。"
+    },
+    {
+      "id": "ex:c-light-model",
+      "parent": "ex:c",
+      "label": "challenge：光照模型不够准确",
+      "type": "challenge",
+      "sourceImage": "dual",
+      "uncertainty": "“光照模型/光源模型”原图小字待核。"
+    },
+    {
+      "id": "ex:c-high-frequency",
+      "parent": "ex:c-light-model",
+      "label": "challenge：之前的光照模型无法建模 high-frequency environment lighting",
+      "type": "challenge",
+      "sourceImage": "dual",
+      "uncertainty": "中文小字以及“光照/光源”以原图为准。"
+    },
+    {
+      "id": "ex:c-precompute",
+      "parent": "ex:c-high-frequency",
+      "label": "insight：用预计算的方式建模光照，能建模更高分辨率",
+      "type": "insight",
+      "sourceImage": "dual",
+      "annotations": [
+        "1. 使用 split sum 表示光照；Extracting Triangular 3D Models, Materi…"
+      ],
+      "uncertainty": "中文细字待核；灰色论文注释在原图已截断，不补全。"
+    },
+    {
+      "id": "ex:c-monte-carlo",
+      "parent": "ex:c-high-frequency",
+      "label": "insight：用 Monte Carlo integration 可以有更好的 light simulation，用 256×256 的 environment map 存储 light probes 以表示光照",
+      "type": "insight",
+      "sourceImage": "dual",
+      "annotations": [
+        "Shape, Light, and Material Decomposition from Images using Monte Carlo…"
+      ],
+      "uncertainty": "中文细字及空格以原图为准；灰色论文注释在原图已截断，不补全。"
+    },
+    {
+      "id": "ex:c-environment-map",
+      "parent": "ex:c-light-model",
+      "label": "challenge：2D environment map 太过简化了 lighting model，导致〔末尾原图文字待核〕",
+      "type": "challenge",
+      "sourceImage": "dual",
+      "uncertainty": "最后一行小字不够清楚，未猜写；方括号说明为转写标记，并非原文。"
+    },
+    {
+      "id": "ex:c-spatial-light",
+      "parent": "ex:c-environment-map",
+      "label": "insight：用 MLP 表示 spatially varying light，也就是 neural incident light field",
+      "type": "insight",
+      "sourceImage": "dual",
+      "uncertainty": "原图中文小字受 JPEG 压缩影响；标点、连接词及个别字以随附原图为准，不据此扩写科学结论。"
+    },
+    {
+      "id": "ex:c-ambiguity",
+      "parent": "ex:c",
+      "label": "challenge：the material-lighting ambiguity",
+      "type": "challenge",
+      "sourceImage": "dual"
+    },
+    {
+      "id": "ex:c-smoothness",
+      "parent": "ex:c-ambiguity",
+      "label": "insight：a smoothness regularization",
+      "type": "insight",
+      "sourceImage": "dual"
+    },
+    {
+      "id": "ex:c-multi-stage",
+      "parent": "ex:c-ambiguity",
+      "label": "insight：multi-stage optimization",
+      "type": "insight",
+      "sourceImage": "dual",
+      "annotations": [
+        "NeRFactor: Neural Factorization of Shape and Reflectance Under…"
+      ],
+      "uncertainty": "灰色论文注释在原图已截断，不补全。"
+    },
+    {
+      "id": "ex:c-material-prior",
+      "parent": "ex:c-ambiguity",
+      "label": "insight：material prior",
+      "type": "insight",
+      "sourceImage": "dual",
+      "annotations": [
+        "1. NeRFactor: Neural Factorization of Shape and Reflectance Und…"
+      ],
+      "uncertainty": "灰色论文注释在原图已截断，不补全。"
+    },
+    {
+      "id": "ex:c-roughness",
+      "parent": "ex:c-ambiguity",
+      "label": "insight：分割出同样的 roughness 的表面",
+      "type": "insight",
+      "sourceImage": "dual",
+      "annotations": [
+        "1. Materialistic: Selecting Similar Materials in Images"
+      ],
+      "uncertainty": "原图中文小字受 JPEG 压缩影响；标点、连接词及个别字以随附原图为准，不据此扩写科学结论。"
+    },
+    {
+      "id": "ex:c-geometry",
+      "parent": "ex:c",
+      "label": "challenge：依赖于 reconstructed geometry",
+      "type": "challenge",
+      "sourceImage": "dual"
+    },
+    {
+      "id": "ex:c-geometry-unknown",
+      "parent": "ex:c-geometry",
+      "label": "insight：???",
+      "type": "insight",
+      "sourceImage": "dual"
+    },
+    {
+      "id": "ex:c-training-time",
+      "parent": "ex:c",
+      "label": "challenge：训练时间太长",
+      "type": "challenge",
+      "sourceImage": "dual"
+    },
+    {
+      "id": "ex:c-instant-ngp",
+      "parent": "ex:c-training-time",
+      "label": "insight：利用 Instant-NGP、TensoRF 这些技术",
+      "type": "insight",
+      "sourceImage": "dual",
+      "annotations": [
+        "TensoIR"
+      ],
+      "uncertainty": "灰色 TensoIR 注释较小；按可读像素转写，不建立论文子节点。"
+    }
+  ]
+}
