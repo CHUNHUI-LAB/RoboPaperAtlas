@@ -94,14 +94,15 @@ window.LITERATURE_TREE = {
       "label": "IVLN：同场景跨指令tour",
       "parent_ids": [],
       "evidence_ids": [
-        "root-source-ivln2023"
+        "root-source-ivln2023",
+        "correction-20261007-ivln-main-server-split"
       ],
       "attribution": "curator_organization",
       "status": "primary_targeted_verified",
       "goal_spec": "多条路线指令",
       "action_regime": "IR2R图导航；IR2R-CE连续执行",
       "memory_regime": "tour内跨episode",
-      "success_contract": "逐episode与tour指标；oracle纠偏和转场观察须标明",
+      "success_contract": "逐 episode 与 tour 指标；主文 oracle 先纠偏到当前目标再往下一起点、tip-to-tail；v3 Appendix B 服务器只往下一起点、tip-to-tip",
       "domain": "navigation",
       "origin_key": "ivln",
       "origin": {
@@ -154,7 +155,73 @@ window.LITERATURE_TREE = {
           "ivln2023"
         ],
         "global_priority_status": "not_established"
-      }
+      },
+      "protocol_variants": [
+        {
+          "id": "ivln-main-paper",
+          "title": "IVLN：主文实验协议",
+          "paper_ids": [
+            "krantz2023ivln"
+          ],
+          "source_url": "https://arxiv.org/html/2210.03087v3",
+          "version": "arXiv:2210.03087v3 (2023-12-24)",
+          "locator": "§3 iterative paradigm/tour construction; v3 Appendix B Evaluation Server Details",
+          "attribution": "primary_source_protocol_summary",
+          "evidence_ids": [
+            "correction-20261007-ivln-main-server-split"
+          ],
+          "goal_spec": "同一 scene 的多条自然语言路线指令组成 tour",
+          "goal_delivery": "每个 agent-navigation phase 给一条路线指令",
+          "ordering": "ordered_tour",
+          "action_regime": "IR2R：可导航视点图；IR2R-CE：连续环境低层导航；tour 持久性不是第三种动作空间",
+          "memory_regime": "tour 内跨 episode 保留环境信息；不推断任意方法实现都采用相同记忆",
+          "success_contract": "逐 episode 及 tour 指标分别计算；oracle 转场及 tour 生成版本必须注明",
+          "benchmark_variants": [
+            "IR2R",
+            "IR2R-CE"
+          ],
+          "scope_note": "仅说明 IVLN 原论文协议及其 v3 服务器变体；不自动赋给 NavHarness/Memoir 等后续论文",
+          "environment_prior": "主文含 oracle 纠偏与转场；agent 在 oracle 阶段被动观察",
+          "oracle_goal_correction": true,
+          "oracle_phase": "必要时先引导到当前目标，再引导到下一 episode 起点（§3；纠偏使用 0.5 m 条件）",
+          "tour_ordering": "tip-to-tail",
+          "protocol_scope": "main_paper_experiments",
+          "boundary": "这里 0.5 m 是 oracle 纠偏条件，不替换导航成功阈值；主文设置不等同无外部帮助的长期部署"
+        },
+        {
+          "id": "ivln-v3-appendix-b-server",
+          "title": "IVLN：v3 Appendix B 公开评测服务器协议",
+          "paper_ids": [
+            "krantz2023ivln"
+          ],
+          "source_url": "https://arxiv.org/html/2210.03087v3",
+          "version": "arXiv:2210.03087v3 (2023-12-24)",
+          "locator": "§3 iterative paradigm/tour construction; v3 Appendix B Evaluation Server Details",
+          "attribution": "primary_source_protocol_summary",
+          "evidence_ids": [
+            "correction-20261007-ivln-main-server-split"
+          ],
+          "goal_spec": "同一 scene 的多条自然语言路线指令组成 tour",
+          "goal_delivery": "每个 agent-navigation phase 给一条路线指令",
+          "ordering": "ordered_tour",
+          "action_regime": "IR2R：可导航视点图；IR2R-CE：连续环境低层导航；tour 持久性不是第三种动作空间",
+          "memory_regime": "tour 内跨 episode 保留环境信息；不推断任意方法实现都采用相同记忆",
+          "success_contract": "逐 episode 及 tour 指标分别计算；oracle 转场及 tour 生成版本必须注明",
+          "benchmark_variants": [
+            "IR2R",
+            "IR2R-CE"
+          ],
+          "scope_note": "仅说明 IVLN 原论文协议及其 v3 服务器变体；不自动赋给 NavHarness/Memoir 等后续论文",
+          "environment_prior": "仍有 oracle 带往下一起点；移除先带到当前目标的步骤，以保护 Test 目标路径",
+          "oracle_goal_correction": false,
+          "oracle_phase": "oracle 只引导至下一 episode 起点，不先引导至当前目标",
+          "tour_ordering": "tip-to-tip",
+          "protocol_scope": "v3_appendix_b_leaderboard_protocol",
+          "evaluation_scope": "Appendix B 同时说明再生 IR2R-CE Train/validation splits，并在再生 Val-Unseen 上复测 Map-CMA；不将该变更反写为主表实验设置",
+          "boundary": "本文附录描述的服务器协议，不声称当前线上服务器状态已核验；后续方法使用哪个版本需各自证据"
+        }
+      ],
+      "protocol_correction_note": "Distinguish main-paper experimental protocol from v3 Appendix B evaluation-server protocol"
     },
     {
       "node_id": "task-object-category",
@@ -192,14 +259,15 @@ window.LITERATURE_TREE = {
       "label": "开放词汇ObjectNav",
       "parent_ids": [],
       "evidence_ids": [
-        "origin-ovon"
+        "origin-ovon",
+        "correction-20261007-sap-nav-benchmark-split"
       ],
       "attribution": "curator_organization",
       "status": "primary_targeted_verified",
-      "goal_spec": "自由文本类别/目标描述",
+      "goal_spec": "开放词汇类别/目标语言；SAP-Nav 的 LangMap 单目标含场景、房间、区域、实例约束，另评 HM3D-OVON 场景级目标",
       "action_regime": "探索、定位、接近、停止",
       "memory_regime": "通常episode内",
-      "success_contract": "开放类别不等于实例指代；HM3D-OVON单列",
+      "success_contract": "按 benchmark 分别判定；开放类别不等于实例指代。SAP-Nav 的 LangMap 与 HM3D-OVON Val Unseen 见独立协议卡",
       "domain": "navigation",
       "origin_key": "ovon",
       "origin": {
@@ -214,7 +282,108 @@ window.LITERATURE_TREE = {
         "first_claim_scope": "不授予所有开放词汇导航首创",
         "global_priority_status": "benchmark_introduction_supported_global_priority_pending",
         "caveat": "正式出版元数据本轮未完成；单目标类别与细粒度实例描述不可互换"
-      }
+      },
+      "protocol_variants": [
+        {
+          "id": "sap-nav-langmap-single-goal",
+          "title": "SAP-Nav：LangMap 四粒度单目标",
+          "paper_ids": [
+            "sap-nav"
+          ],
+          "source_url": "https://arxiv.org/html/2608.12707v1",
+          "version": "arXiv:2608.12707v1 (2026-08-13)",
+          "locator": "Introduction online/no-precomputed-map scope; Method / Problem Formulation; Experiments / Experimental Setup / Datasets, Metrics, Implementation Details; Tables 1–2; Conclusion / Limitations and Future Work",
+          "attribution": "primary_source_protocol_summary",
+          "evidence_ids": [
+            "correction-20261007-sap-nav-benchmark-split"
+          ],
+          "goal_count": 1,
+          "goal_modality": "language_goal",
+          "ordering": "single_goal",
+          "action_regime": "Habitat 连续环境；MOVE_FORWARD 0.25 m、TURN_LEFT/RIGHT 30°、STOP",
+          "environment_prior": "未知环境中的 RGB-D 与里程计；SAP-Nav 在线构建 QSSR，无预计算场景地图（方法设置）",
+          "memory_regime": "单目标任务内累积空间语义证据；Limitations 明确 QSSR 不跨连续任务保留",
+          "memory_persistence_across_tasks": false,
+          "success_contract": "停止并满足目标条件；实验按距数据集标注目标视点 1 m 内、最多 500 步计成功；报告 SR/SPL",
+          "metrics": [
+            "SR",
+            "SPL"
+          ],
+          "scope_note": "以下为 SAP-Nav 本文采用的评测设置，不传播到同根下其他论文",
+          "benchmark": "LangMap",
+          "goal_spec": "Scene：类别任一实例；Room：指定房间类型；Region：进一步指定具体房间实例；Instance：属性区分唯一对象实例",
+          "goal_delivery": "每个 episode 给一个相应粒度的语言目标；四粒度不是四个顺序子目标",
+          "granularity_levels": [
+            {
+              "id": "scene",
+              "target": "any_instance_of_category"
+            },
+            {
+              "id": "room",
+              "target": "category_instance_in_room_type"
+            },
+            {
+              "id": "region",
+              "target": "category_instance_in_specific_room_instance"
+            },
+            {
+              "id": "instance",
+              "target": "unique_instance_with_discriminative_attributes"
+            }
+          ],
+          "evaluation_scope": "LangMap single-goal protocol；约 15K tasks；Table 1 分列四粒度与 Single-Goal 汇总",
+          "boundary": "LangMap 是 benchmark 名，不是先验地图输入；本挂载不推出 REVERIE 或 GOAT 评测。LangMap v3 的五目标序列不能反填为 SAP-Nav 评测；SAP-Nav 的 1 m 到标注视点与 LangMap v3 的 1 m 到合法目标，不认证数值等价或直接可比",
+          "supporting_sources": [
+            {
+              "source_url": "https://arxiv.org/html/2602.02220v3",
+              "version": "arXiv:2602.02220v3 (2026-10-01)",
+              "locator": "§3.1 success geometry; §3.5 five-goal episodes; Table 2 reference-only viewpoint-based scores",
+              "attribution": "primary_source_version_boundary_only"
+            }
+          ],
+          "numeric_comparability_to_langmap_v3": "not_certified"
+        },
+        {
+          "id": "sap-nav-hm3d-ovon-val-unseen",
+          "title": "SAP-Nav：HM3D-OVON Val Unseen",
+          "paper_ids": [
+            "sap-nav"
+          ],
+          "source_url": "https://arxiv.org/html/2608.12707v1",
+          "version": "arXiv:2608.12707v1 (2026-08-13)",
+          "locator": "Introduction online/no-precomputed-map scope; Method / Problem Formulation; Experiments / Experimental Setup / Datasets, Metrics, Implementation Details; Tables 1–2; Conclusion / Limitations and Future Work",
+          "attribution": "primary_source_protocol_summary",
+          "evidence_ids": [
+            "correction-20261007-sap-nav-benchmark-split"
+          ],
+          "goal_count": 1,
+          "goal_modality": "language_goal",
+          "ordering": "single_goal",
+          "action_regime": "Habitat 连续环境；MOVE_FORWARD 0.25 m、TURN_LEFT/RIGHT 30°、STOP",
+          "environment_prior": "未知环境中的 RGB-D 与里程计；SAP-Nav 在线构建 QSSR，无预计算场景地图（方法设置）",
+          "memory_regime": "单目标任务内累积空间语义证据；Limitations 明确 QSSR 不跨连续任务保留",
+          "memory_persistence_across_tasks": false,
+          "success_contract": "停止并满足目标条件；实验按距数据集标注目标视点 1 m 内、最多 500 步计成功；报告 SR/SPL",
+          "metrics": [
+            "SR",
+            "SPL"
+          ],
+          "scope_note": "以下为 SAP-Nav 本文采用的评测设置，不传播到同根下其他论文",
+          "benchmark": "HM3D-OVON",
+          "split": "Val Unseen",
+          "goal_spec": "场景级开放词汇物体类别目标；匹配类别实例",
+          "goal_delivery": "每个 episode 一个场景级目标",
+          "granularity_levels": [
+            {
+              "id": "scene",
+              "target": "any_instance_of_category"
+            }
+          ],
+          "evaluation_scope": "Table 2 单独报告 HM3D-OVON Val Unseen；不要与 LangMap 四粒度结果合并为同一协议",
+          "boundary": "这是与 LangMap 分开的常规场景级 OVON 评测；不附加 LangMap 房间/区域/实例条件"
+        }
+      ],
+      "protocol_correction_note": "Split SAP-Nav LangMap hierarchical single-goal evaluation from its HM3D-OVON Val Unseen evaluation"
     },
     {
       "node_id": "task-goat-sequence",
@@ -332,17 +501,18 @@ window.LITERATURE_TREE = {
     {
       "node_id": "task-multigoal-object",
       "type": "task_contract",
-      "label": "SayNav三物体目标导航协议（ProcTHOR）",
+      "label": "SayNav：三类别联合搜索（ProcTHOR 自定顺序协议）",
       "parent_ids": [],
       "evidence_ids": [
-        "prior-rajvanshi2024saynav"
+        "prior-rajvanshi2024saynav",
+        "correction-20261007-saynav-procthor-contract"
       ],
       "attribution": "curator_organization",
-      "status": "inherited_review",
-      "goal_spec": "有序或逐次给定类别目标",
-      "action_regime": "MultiON/SayNav等协议各异",
-      "memory_regime": "一段多目标任务内",
-      "success_contract": "顺序、发放目标方式、完成动作依论文；不能混为GOAT",
+      "status": "primary_targeted_verified",
+      "goal_spec": "起始一次给定三个目标类别，各寻找一个实例；搜索顺序由 agent 决定并可重规划",
+      "action_regime": "AI2-THOR/ProcTHOR：左右转90°、前进0.25m、stop、look-around",
+      "memory_regime": "单个三目标 episode 内累积观察与计划状态（编辑依据方法流程归纳，不是跨运行记忆声明）",
+      "success_contract": "预算内找到全部三类目标；§3.1使用检测表述。SR为三者全找到；SPL参照路径遍历目标排列取最短；Kendall Tau仅统计成功episode",
       "domain": "navigation",
       "origin_key": "pending-saynav-protocol",
       "origin": {
@@ -350,26 +520,130 @@ window.LITERATURE_TREE = {
         "related_milestone": "milestone-multion",
         "global_priority_status": "pending",
         "caveat": "MultiON是相邻有序多目标benchmark来源，不是SayNav此协议首创或所用benchmark"
-      }
+      },
+      "protocol_variants": [
+        {
+          "id": "saynav-procthor-three-class",
+          "title": "SayNav：ProcTHOR 三类别联合搜索",
+          "paper_ids": [
+            "rajvanshi2024saynav"
+          ],
+          "source_url": "https://arxiv.org/html/2309.04077v4",
+          "version": "arXiv:2309.04077v4 (2024-04-03)",
+          "locator": "§3.1 task definition; §3.2 episode scene-graph accumulation; §4.1 dataset; §4.2 metrics",
+          "attribution": "primary_source_protocol_summary",
+          "evidence_ids": [
+            "correction-20261007-saynav-procthor-contract"
+          ],
+          "benchmark": "SayNav ProcTHOR 132-house evaluation",
+          "goal_count": 3,
+          "goal_modality": "object_category",
+          "goal_spec": "三个预定义类别，各寻找一个实例",
+          "goal_delivery": "episode 起始一次给定全部三个类别",
+          "ordering": "agent_chosen_replannable",
+          "action_regime": "AI2-THOR/ProcTHOR；左右转 90°、前进 0.25 m、stop、look-around",
+          "environment_prior": "未知房屋；输入 RGB-D、语义分割和位姿；主结果还区分 GT/VO 场景图与 OrNav/PNav 执行条件",
+          "memory_regime": "单个三目标 episode 内累积观察和计划状态；这是从方法流程归纳的范围，不是跨运行持久记忆声明",
+          "success_contract": "时间预算内检测找到三类目标；SR 要求三者全找到；SPL 参照所有排列的最短路径；Kendall Tau 仅统计成功 episode",
+          "success_mode": "detection_all_goal_categories",
+          "metrics": [
+            "SR",
+            "SPL",
+            "Kendall Tau (successful episodes only)"
+          ],
+          "boundary": "保留作者的 MultiON 命名，但不等同经典 MultiON 的给定顺序/逐次目标发放；不补写未核的到达距离或可见性阈值",
+          "field_attributions": {
+            "memory_regime": "curator_inference_from_§3.2_episode_state",
+            "goal_spec": "explicit_§3.1",
+            "goal_delivery": "explicit_§3.1",
+            "ordering": "explicit_§3.1",
+            "success_contract": "explicit_§3.1_and_§4.2"
+          }
+        }
+      ],
+      "protocol_correction_note": "Correct ordered/incremental category assignment to upfront three-class agent-chosen search"
     },
     {
       "node_id": "task-imagegoal-multigoal",
       "type": "task_contract",
-      "label": "多目标ImageNav",
+      "label": "ImageNav：单目标与有序多目标（MemoNav 评测）",
       "parent_ids": [],
-      "evidence_ids": [],
+      "evidence_ids": [
+        "correction-20261007-memonav-image-protocols"
+      ],
       "attribution": "curator_organization",
-      "status": "inherited_review",
-      "goal_spec": "目标视图图像",
-      "action_regime": "学习的视觉图记忆策略",
-      "memory_regime": "多目标任务内",
-      "success_contract": "到目标视图对应位置；不能改称类别ObjectNav",
+      "status": "primary_targeted_verified",
+      "goal_spec": "目标视图图像；MemoNav 同时评测单目标与有序多目标",
+      "action_regime": "Habitat / Gibson、Matterport3D 导航动作；沿用 VGM 动作设置，视觉图记忆是方法而非动作空间",
+      "memory_regime": "单目标 episode 内；多目标 episode 内跨目标复用视觉记忆",
+      "success_contract": "单目标用 SR/SPL；有序多目标用 PR/PPL；目标是图像对应位置，不能改称类别 ObjectNav",
       "domain": "navigation",
       "origin_key": "pending-imagegoal",
       "origin": {
         "status": "separate_primary_audit_or_pending",
         "global_priority_status": "pending"
-      }
+      },
+      "protocol_variants": [
+        {
+          "id": "memonav-single-image",
+          "title": "MemoNav：单目标 ImageNav",
+          "paper_ids": [
+            "li2024memonav"
+          ],
+          "source_url": "https://arxiv.org/html/2402.19161v2",
+          "version": "arXiv:2402.19161v2 (2024-03-28)",
+          "locator": "§3.1 task definition; §3.2 VGM; §5.1 datasets/metrics; Table 1; §4.1 target-change restoration; §9.1 implementation",
+          "attribution": "primary_source_protocol_summary",
+          "evidence_ids": [
+            "correction-20261007-memonav-image-protocols"
+          ],
+          "goal_modality": "goal_view_image",
+          "action_regime": "Habitat / Gibson 与 Matterport3D 的导航动作；§5.1沿用 VGM 动作设置，本文此次核查不补写未核动作尺度",
+          "environment_prior": "RGB 目标图像与当前 RGB-D 全景观测；§3.1不提供 GPS/IMU 等额外传感数据；在线构建视觉拓扑记忆",
+          "goal_count": 1,
+          "goal_spec": "一个目标位置的 RGB 视图图像",
+          "goal_delivery": "开始导航时给定一个目标图像",
+          "ordering": "single_goal",
+          "memory_regime": "单目标 episode 内在线视觉记忆",
+          "success_contract": "到达目标视图对应位置；报告 SR/SPL；本次不增补未定点核查的成功距离阈值",
+          "metrics": [
+            "SR",
+            "SPL"
+          ],
+          "evaluation_scope": "Table 1 含 Gibson 与 Matterport3D 单目标结果；Gibson 主比较采用既有测试集的 1007 个 hard episodes，消融采用完整 1400 个",
+          "boundary": "仅补足既有 ImageNav 评测覆盖；不授予 ImageNav/图记忆起源或首创地位"
+        },
+        {
+          "id": "memonav-ordered-multi-image",
+          "title": "MemoNav：有序多目标 ImageNav",
+          "paper_ids": [
+            "li2024memonav"
+          ],
+          "source_url": "https://arxiv.org/html/2402.19161v2",
+          "version": "arXiv:2402.19161v2 (2024-03-28)",
+          "locator": "§3.1 task definition; §3.2 VGM; §5.1 datasets/metrics; Table 1; §4.1 target-change restoration; §9.1 implementation",
+          "attribution": "primary_source_protocol_summary",
+          "evidence_ids": [
+            "correction-20261007-memonav-image-protocols"
+          ],
+          "goal_modality": "goal_view_image",
+          "action_regime": "Habitat / Gibson 与 Matterport3D 的导航动作；§5.1沿用 VGM 动作设置，本文此次核查不补写未核动作尺度",
+          "environment_prior": "RGB 目标图像与当前 RGB-D 全景观测；§3.1不提供 GPS/IMU 等额外传感数据；在线构建视觉拓扑记忆",
+          "goal_count": "Gibson: 2/3/4; Matterport3D: 2/3 in Table 1",
+          "goal_spec": "有序序列中的目标视图图像",
+          "goal_delivery": "按给定顺序执行当前图像目标；此次原文核查不将其扩写为预先可见全部目标或经典 MultiON 的 FOUND 接口",
+          "ordering": "prescribed_sequence",
+          "memory_regime": "同一多目标 episode 内跨目标复用视觉记忆；换目标时恢复被遗忘节点（§4.1）",
+          "success_contract": "按既定目标顺序到达；PR 为已到达目标比例，PPL 按经中间目标的最短路径加权",
+          "metrics": [
+            "PR",
+            "PPL"
+          ],
+          "evaluation_scope": "Gibson 多目标测试由作者编制；Matterport3D 每难度从 MultiON 测试数据采样 1008 episodes；Table 1 的单/多目标结果分列",
+          "boundary": "图像目标协议；借用 MultiON 的数据构造/度量不将输入改为物体类别；不证明跨独立运行记忆"
+        }
+      ],
+      "protocol_correction_note": "Separate action regime from method architecture and expose existing single/ordered multi image evaluations"
     },
     {
       "node_id": "task-reverie-nav-only",
@@ -969,7 +1243,11 @@ window.LITERATURE_TREE = {
       "title": "Iterative Vision-and-Language Navigation",
       "source_url": "https://arxiv.org/html/2210.03087v3",
       "version": "arXiv v3, 2023-12-24",
-      "role": "benchmark_and_method"
+      "role": "benchmark_and_method",
+      "protocol_variant_refs": [
+        "ivln-main-paper",
+        "ivln-v3-appendix-b-server"
+      ]
     },
     {
       "node_id": "paper-goat",
@@ -1463,7 +1741,10 @@ window.LITERATURE_TREE = {
       "title": "SayNav: Grounding Large Language Models for Dynamic Planning to Navigation in New Environments",
       "source_url": "https://arxiv.org/html/2309.04077v4",
       "version": "正文arXiv:2309.04077v4 (2024-04-03)；正式摘要/元数据核对，未认定逐字同版",
-      "role": "method"
+      "role": "method",
+      "protocol_variant_refs": [
+        "saynav-procthor-three-class"
+      ]
     },
     {
       "node_id": "paper-li2024memonav",
@@ -1490,7 +1771,11 @@ window.LITERATURE_TREE = {
       "title": "MemoNav: Working Memory Model for Visual Navigation",
       "source_url": "https://openaccess.thecvf.com/content/CVPR2024/papers/Li_MemoNav_Working_Memory_Model_for_Visual_Navigation_CVPR_2024_paper.pdf",
       "version": "CVF accepted PDF；补充限制核arXiv:2402.19161v2 (2024-03-28)",
-      "role": "method"
+      "role": "method",
+      "protocol_variant_refs": [
+        "memonav-single-image",
+        "memonav-ordered-multi-image"
+      ]
     },
     {
       "node_id": "paper-werby2024hovsg",
@@ -1641,7 +1926,11 @@ window.LITERATURE_TREE = {
       "title": "SAP-Nav: Spatial Semantic Representation Meets Active Perception for Hierarchical Open-Vocabulary Object Navigation",
       "source_url": "https://arxiv.org/html/2608.12707v1",
       "version": "arXiv 2608.12707v1 (2026-08-13)",
-      "role": "method"
+      "role": "method",
+      "protocol_variant_refs": [
+        "sap-nav-langmap-single-goal",
+        "sap-nav-hm3d-ovon-val-unseen"
+      ]
     },
     {
       "node_id": "paper-hypothesis-graph-refinement",
@@ -27840,6 +28129,74 @@ window.LITERATURE_TREE = {
       "claim": "HMSG含floor/room/view/object四层、containment及connectivity/visibility边；作者明说复用FSR-VLN层次作空间检索索引",
       "scope": "primary_targeted_verified",
       "newly_checked": true
+    },
+    {
+      "evidence_id": "correction-20261007-saynav-procthor-contract",
+      "source_url": "https://arxiv.org/html/2309.04077v4",
+      "version": "arXiv:2309.04077v4 (2024-04-03)",
+      "locator": "§3.1 task definition; §3.2 episode scene-graph accumulation; §4.1 dataset; §4.2 metrics",
+      "claim": "Correct ordered/incremental category assignment to upfront three-class agent-chosen search",
+      "scope": "primary_targeted_protocol_recheck",
+      "newly_checked": true,
+      "checked_at": "2026-10-07",
+      "not_read": [
+        "No full-paper reread",
+        "No code execution or experimental reproduction",
+        "No new task-origin or method-lineage claim"
+      ]
+    },
+    {
+      "evidence_id": "correction-20261007-memonav-image-protocols",
+      "source_url": "https://arxiv.org/html/2402.19161v2",
+      "version": "arXiv:2402.19161v2 (2024-03-28)",
+      "locator": "§3.1 task definition; §3.2 VGM; §5.1 datasets/metrics; Table 1; §4.1 target-change restoration; §9.1 implementation",
+      "claim": "Separate action regime from method architecture and expose existing single/ordered multi image evaluations",
+      "scope": "primary_targeted_protocol_recheck",
+      "newly_checked": true,
+      "checked_at": "2026-10-07",
+      "not_read": [
+        "No full-paper reread",
+        "No code execution or experimental reproduction",
+        "No new task-origin or method-lineage claim"
+      ]
+    },
+    {
+      "evidence_id": "correction-20261007-sap-nav-benchmark-split",
+      "source_url": "https://arxiv.org/html/2608.12707v1",
+      "version": "arXiv:2608.12707v1 (2026-08-13)",
+      "locator": "Introduction online/no-precomputed-map scope; Method / Problem Formulation; Experiments / Experimental Setup / Datasets, Metrics, Implementation Details; Tables 1–2; Conclusion / Limitations and Future Work",
+      "claim": "Split SAP-Nav LangMap hierarchical single-goal evaluation from its HM3D-OVON Val Unseen evaluation",
+      "scope": "primary_targeted_protocol_recheck",
+      "newly_checked": true,
+      "checked_at": "2026-10-07",
+      "not_read": [
+        "No full-paper reread",
+        "No code execution or experimental reproduction",
+        "No new task-origin or method-lineage claim"
+      ],
+      "supporting_sources": [
+        {
+          "source_url": "https://arxiv.org/html/2602.02220v3",
+          "version": "arXiv:2602.02220v3 (2026-10-01)",
+          "locator": "§3.1 success geometry; §3.5 five-goal episodes; Table 2 reference-only viewpoint-based scores",
+          "attribution": "primary_source_version_boundary_only"
+        }
+      ]
+    },
+    {
+      "evidence_id": "correction-20261007-ivln-main-server-split",
+      "source_url": "https://arxiv.org/html/2210.03087v3",
+      "version": "arXiv:2210.03087v3 (2023-12-24)",
+      "locator": "§3 iterative paradigm/tour construction; v3 Appendix B Evaluation Server Details",
+      "claim": "Distinguish main-paper experimental protocol from v3 Appendix B evaluation-server protocol",
+      "scope": "primary_targeted_protocol_recheck",
+      "newly_checked": true,
+      "checked_at": "2026-10-07",
+      "not_read": [
+        "No full-paper reread",
+        "No code execution or experimental reproduction",
+        "No new task-origin or method-lineage claim"
+      ]
     }
   ],
   "paper_refs": [
@@ -28490,6 +28847,16 @@ window.LITERATURE_TREE = {
       "paper": "OpenEQA",
       "issue": "作者站PDF与CVPR版不是同一排版，指标/附录号也有差别",
       "action": "报告以CVPR正式稿任务定义为准；作者站PDF仅作辅助，不声称逐项一致。"
+    },
+    {
+      "paper": "IVLN",
+      "issue": "主文实验与 arXiv v3 Appendix B 服务器协议不同",
+      "action": "主文：先纠偏到当前目标、再转往下一起点，tip-to-tail；服务器：仅下一起点，tip-to-tip。不得混用或自动传播到后续论文。",
+      "source_url": "https://arxiv.org/html/2210.03087v3",
+      "locator": "§3 iterative paradigm/tour construction; v3 Appendix B Evaluation Server Details",
+      "evidence_ids": [
+        "correction-20261007-ivln-main-server-split"
+      ]
     }
   ],
   "schema_notes": {
@@ -30612,7 +30979,7 @@ window.LITERATURE_TREE = {
       "evidence_ids": [
         "prior-krantz2023ivln"
       ],
-      "scope_note": "IR2R与IR2R-CE分别归属图/连续执行；tour含oracle纠偏和转场观察",
+      "scope_note": "IR2R与IR2R-CE分别归属图/连续执行；tour含oracle纠偏和转场观察；上述 oracle 纠偏是主文实验协议，v3 Appendix B 服务器仅转往下一起点且以 tip-to-tip 排 tour",
       "pipeline_concept_ids": [
         "pipeline-learned-recurrent"
       ],
@@ -30626,7 +30993,11 @@ window.LITERATURE_TREE = {
         "module-learned-action"
       ],
       "source_url": "https://arxiv.org/html/2210.03087v3",
-      "version": "arXiv v3, 2023-12-24"
+      "version": "arXiv v3, 2023-12-24",
+      "protocol_variant_refs": [
+        "ivln-main-paper",
+        "ivln-v3-appendix-b-server"
+      ]
     },
     "goat": {
       "variant_id": "goat",
@@ -31152,7 +31523,7 @@ window.LITERATURE_TREE = {
       "evidence_ids": [
         "prior-rajvanshi2024saynav"
       ],
-      "scope_note": "132个ProcTHOR房屋每次3目标；非GOAT；计划验证仍为未来工作",
+      "scope_note": "132个ProcTHOR房屋每次3目标；非GOAT；计划验证仍为未来工作；起始一次给三个类别，自定并可重规划顺序，检测三者为成功",
       "pipeline_concept_ids": [
         "pipeline-scenegraph-plan"
       ],
@@ -31165,7 +31536,10 @@ window.LITERATURE_TREE = {
         "module-failure-backtrack"
       ],
       "source_url": "https://arxiv.org/html/2309.04077v4",
-      "version": "正文arXiv:2309.04077v4 (2024-04-03)；正式摘要/元数据核对，未认定逐字同版"
+      "version": "正文arXiv:2309.04077v4 (2024-04-03)；正式摘要/元数据核对，未认定逐字同版",
+      "protocol_variant_refs": [
+        "saynav-procthor-three-class"
+      ]
     },
     "li2024memonav": {
       "variant_id": "li2024memonav",
@@ -31179,7 +31553,7 @@ window.LITERATURE_TREE = {
       "evidence_ids": [
         "prior-li2024memonav"
       ],
-      "scope_note": "图像目标而非类别标签；节点仍用于定位，不节省实际存储",
+      "scope_note": "图像目标而非类别标签；节点仍用于定位，不节省实际存储；已有单目标 SR/SPL 与有序多目标 PR/PPL 评测分列",
       "pipeline_concept_ids": [
         "pipeline-learned-graph"
       ],
@@ -31194,7 +31568,11 @@ window.LITERATURE_TREE = {
         "module-learned-action"
       ],
       "source_url": "https://openaccess.thecvf.com/content/CVPR2024/papers/Li_MemoNav_Working_Memory_Model_for_Visual_Navigation_CVPR_2024_paper.pdf",
-      "version": "CVF accepted PDF；补充限制核arXiv:2402.19161v2 (2024-03-28)"
+      "version": "CVF accepted PDF；补充限制核arXiv:2402.19161v2 (2024-03-28)",
+      "protocol_variant_refs": [
+        "memonav-single-image",
+        "memonav-ordered-multi-image"
+      ]
     },
     "werby2024hovsg": {
       "variant_id": "werby2024hovsg",
@@ -31346,7 +31724,7 @@ window.LITERATURE_TREE = {
         "prior-sap-nav",
         "check-sap-nav"
       ],
-      "scope_note": "HM3D-OVON和LangMap单目标分层指代；instance与category层次分开",
+      "scope_note": "HM3D-OVON和LangMap单目标分层指代；instance与category层次分开；LangMap 场景/房间/区域/实例四粒度单目标，与 HM3D-OVON Val Unseen 独立列示；无预计算场景地图；Limitations 明确 QSSR 不跨任务保留；不将 LangMap v3 五目标序列或成功几何反填为本文评测",
       "pipeline_concept_ids": [
         "pipeline-active-verify"
       ],
@@ -31359,7 +31737,11 @@ window.LITERATURE_TREE = {
         "module-detection-blacklist"
       ],
       "source_url": "https://arxiv.org/html/2608.12707v1",
-      "version": "arXiv 2608.12707v1 (2026-08-13)"
+      "version": "arXiv 2608.12707v1 (2026-08-13)",
+      "protocol_variant_refs": [
+        "sap-nav-langmap-single-goal",
+        "sap-nav-hm3d-ovon-val-unseen"
+      ]
     },
     "hypothesis-graph-refinement": {
       "variant_id": "hypothesis-graph-refinement",
@@ -32622,5 +33004,764 @@ window.LITERATURE_TREE = {
         }
       ]
     }
+  },
+  "correction_history": [
+    {
+      "correction_id": "protocol-correction-20261007-01",
+      "date": "2026-10-07",
+      "collection": "nodes",
+      "selector": {
+        "node_id": "task-multigoal-object"
+      },
+      "reason": "Correct ordered/incremental category assignment to upfront three-class agent-chosen search",
+      "fields": [
+        {
+          "field": "label",
+          "before_present": true,
+          "before": "SayNav三物体目标导航协议（ProcTHOR）",
+          "after": "SayNav：三类别联合搜索（ProcTHOR 自定顺序协议）"
+        },
+        {
+          "field": "goal_spec",
+          "before_present": true,
+          "before": "有序或逐次给定类别目标",
+          "after": "起始一次给定三个目标类别，各寻找一个实例；搜索顺序由 agent 决定并可重规划"
+        },
+        {
+          "field": "action_regime",
+          "before_present": true,
+          "before": "MultiON/SayNav等协议各异",
+          "after": "AI2-THOR/ProcTHOR：左右转90°、前进0.25m、stop、look-around"
+        },
+        {
+          "field": "memory_regime",
+          "before_present": true,
+          "before": "一段多目标任务内",
+          "after": "单个三目标 episode 内累积观察与计划状态（编辑依据方法流程归纳，不是跨运行记忆声明）"
+        },
+        {
+          "field": "success_contract",
+          "before_present": true,
+          "before": "顺序、发放目标方式、完成动作依论文；不能混为GOAT",
+          "after": "预算内找到全部三类目标；§3.1使用检测表述。SR为三者全找到；SPL参照路径遍历目标排列取最短；Kendall Tau仅统计成功episode"
+        },
+        {
+          "field": "protocol_variants",
+          "before_present": false,
+          "before": null,
+          "after": [
+            {
+              "id": "saynav-procthor-three-class",
+              "title": "SayNav：ProcTHOR 三类别联合搜索",
+              "paper_ids": [
+                "rajvanshi2024saynav"
+              ],
+              "source_url": "https://arxiv.org/html/2309.04077v4",
+              "version": "arXiv:2309.04077v4 (2024-04-03)",
+              "locator": "§3.1 task definition; §3.2 episode scene-graph accumulation; §4.1 dataset; §4.2 metrics",
+              "attribution": "primary_source_protocol_summary",
+              "evidence_ids": [
+                "correction-20261007-saynav-procthor-contract"
+              ],
+              "benchmark": "SayNav ProcTHOR 132-house evaluation",
+              "goal_count": 3,
+              "goal_modality": "object_category",
+              "goal_spec": "三个预定义类别，各寻找一个实例",
+              "goal_delivery": "episode 起始一次给定全部三个类别",
+              "ordering": "agent_chosen_replannable",
+              "action_regime": "AI2-THOR/ProcTHOR；左右转 90°、前进 0.25 m、stop、look-around",
+              "environment_prior": "未知房屋；输入 RGB-D、语义分割和位姿；主结果还区分 GT/VO 场景图与 OrNav/PNav 执行条件",
+              "memory_regime": "单个三目标 episode 内累积观察和计划状态；这是从方法流程归纳的范围，不是跨运行持久记忆声明",
+              "success_contract": "时间预算内检测找到三类目标；SR 要求三者全找到；SPL 参照所有排列的最短路径；Kendall Tau 仅统计成功 episode",
+              "success_mode": "detection_all_goal_categories",
+              "metrics": [
+                "SR",
+                "SPL",
+                "Kendall Tau (successful episodes only)"
+              ],
+              "boundary": "保留作者的 MultiON 命名，但不等同经典 MultiON 的给定顺序/逐次目标发放；不补写未核的到达距离或可见性阈值",
+              "field_attributions": {
+                "memory_regime": "curator_inference_from_§3.2_episode_state",
+                "goal_spec": "explicit_§3.1",
+                "goal_delivery": "explicit_§3.1",
+                "ordering": "explicit_§3.1",
+                "success_contract": "explicit_§3.1_and_§4.2"
+              }
+            }
+          ]
+        },
+        {
+          "field": "protocol_correction_note",
+          "before_present": false,
+          "before": null,
+          "after": "Correct ordered/incremental category assignment to upfront three-class agent-chosen search"
+        },
+        {
+          "field": "evidence_ids",
+          "before_present": true,
+          "before": [
+            "prior-rajvanshi2024saynav"
+          ],
+          "after": [
+            "prior-rajvanshi2024saynav",
+            "correction-20261007-saynav-procthor-contract"
+          ]
+        },
+        {
+          "field": "status",
+          "before_present": true,
+          "before": "inherited_review",
+          "after": "primary_targeted_verified"
+        }
+      ],
+      "source_url": "https://arxiv.org/html/2309.04077v4",
+      "version": "arXiv:2309.04077v4 (2024-04-03)",
+      "locator": "§3.1 task definition; §3.2 episode scene-graph accumulation; §4.1 dataset; §4.2 metrics",
+      "evidence_ids": [
+        "correction-20261007-saynav-procthor-contract"
+      ]
+    },
+    {
+      "correction_id": "protocol-correction-20261007-02",
+      "date": "2026-10-07",
+      "collection": "nodes",
+      "selector": {
+        "node_id": "paper-rajvanshi2024saynav"
+      },
+      "reason": "Add explicit, paper-scoped links to verified protocol variants without changing method reading status",
+      "fields": [
+        {
+          "field": "protocol_variant_refs",
+          "before_present": false,
+          "before": null,
+          "after": [
+            "saynav-procthor-three-class"
+          ]
+        }
+      ],
+      "source_url": "https://arxiv.org/html/2309.04077v4",
+      "version": "arXiv:2309.04077v4 (2024-04-03)",
+      "locator": "§3.1 task definition; §3.2 episode scene-graph accumulation; §4.1 dataset; §4.2 metrics",
+      "evidence_ids": [
+        "correction-20261007-saynav-procthor-contract"
+      ]
+    },
+    {
+      "correction_id": "protocol-correction-20261007-03",
+      "date": "2026-10-07",
+      "collection": "implementation_variants",
+      "selector": {
+        "variant_id": "rajvanshi2024saynav"
+      },
+      "reason": "Expose the protocol distinction alongside the implementation while preserving the original note in correction history",
+      "fields": [
+        {
+          "field": "scope_note",
+          "before_present": true,
+          "before": "132个ProcTHOR房屋每次3目标；非GOAT；计划验证仍为未来工作",
+          "after": "132个ProcTHOR房屋每次3目标；非GOAT；计划验证仍为未来工作；起始一次给三个类别，自定并可重规划顺序，检测三者为成功"
+        },
+        {
+          "field": "protocol_variant_refs",
+          "before_present": false,
+          "before": null,
+          "after": [
+            "saynav-procthor-three-class"
+          ]
+        }
+      ],
+      "source_url": "https://arxiv.org/html/2309.04077v4",
+      "version": "arXiv:2309.04077v4 (2024-04-03)",
+      "locator": "§3.1 task definition; §3.2 episode scene-graph accumulation; §4.1 dataset; §4.2 metrics",
+      "evidence_ids": [
+        "correction-20261007-saynav-procthor-contract"
+      ]
+    },
+    {
+      "correction_id": "protocol-correction-20261007-04",
+      "date": "2026-10-07",
+      "collection": "nodes",
+      "selector": {
+        "node_id": "task-imagegoal-multigoal"
+      },
+      "reason": "Separate action regime from method architecture and expose existing single/ordered multi image evaluations",
+      "fields": [
+        {
+          "field": "label",
+          "before_present": true,
+          "before": "多目标ImageNav",
+          "after": "ImageNav：单目标与有序多目标（MemoNav 评测）"
+        },
+        {
+          "field": "goal_spec",
+          "before_present": true,
+          "before": "目标视图图像",
+          "after": "目标视图图像；MemoNav 同时评测单目标与有序多目标"
+        },
+        {
+          "field": "action_regime",
+          "before_present": true,
+          "before": "学习的视觉图记忆策略",
+          "after": "Habitat / Gibson、Matterport3D 导航动作；沿用 VGM 动作设置，视觉图记忆是方法而非动作空间"
+        },
+        {
+          "field": "memory_regime",
+          "before_present": true,
+          "before": "多目标任务内",
+          "after": "单目标 episode 内；多目标 episode 内跨目标复用视觉记忆"
+        },
+        {
+          "field": "success_contract",
+          "before_present": true,
+          "before": "到目标视图对应位置；不能改称类别ObjectNav",
+          "after": "单目标用 SR/SPL；有序多目标用 PR/PPL；目标是图像对应位置，不能改称类别 ObjectNav"
+        },
+        {
+          "field": "protocol_variants",
+          "before_present": false,
+          "before": null,
+          "after": [
+            {
+              "id": "memonav-single-image",
+              "title": "MemoNav：单目标 ImageNav",
+              "paper_ids": [
+                "li2024memonav"
+              ],
+              "source_url": "https://arxiv.org/html/2402.19161v2",
+              "version": "arXiv:2402.19161v2 (2024-03-28)",
+              "locator": "§3.1 task definition; §3.2 VGM; §5.1 datasets/metrics; Table 1; §4.1 target-change restoration; §9.1 implementation",
+              "attribution": "primary_source_protocol_summary",
+              "evidence_ids": [
+                "correction-20261007-memonav-image-protocols"
+              ],
+              "goal_modality": "goal_view_image",
+              "action_regime": "Habitat / Gibson 与 Matterport3D 的导航动作；§5.1沿用 VGM 动作设置，本文此次核查不补写未核动作尺度",
+              "environment_prior": "RGB 目标图像与当前 RGB-D 全景观测；§3.1不提供 GPS/IMU 等额外传感数据；在线构建视觉拓扑记忆",
+              "goal_count": 1,
+              "goal_spec": "一个目标位置的 RGB 视图图像",
+              "goal_delivery": "开始导航时给定一个目标图像",
+              "ordering": "single_goal",
+              "memory_regime": "单目标 episode 内在线视觉记忆",
+              "success_contract": "到达目标视图对应位置；报告 SR/SPL；本次不增补未定点核查的成功距离阈值",
+              "metrics": [
+                "SR",
+                "SPL"
+              ],
+              "evaluation_scope": "Table 1 含 Gibson 与 Matterport3D 单目标结果；Gibson 主比较采用既有测试集的 1007 个 hard episodes，消融采用完整 1400 个",
+              "boundary": "仅补足既有 ImageNav 评测覆盖；不授予 ImageNav/图记忆起源或首创地位"
+            },
+            {
+              "id": "memonav-ordered-multi-image",
+              "title": "MemoNav：有序多目标 ImageNav",
+              "paper_ids": [
+                "li2024memonav"
+              ],
+              "source_url": "https://arxiv.org/html/2402.19161v2",
+              "version": "arXiv:2402.19161v2 (2024-03-28)",
+              "locator": "§3.1 task definition; §3.2 VGM; §5.1 datasets/metrics; Table 1; §4.1 target-change restoration; §9.1 implementation",
+              "attribution": "primary_source_protocol_summary",
+              "evidence_ids": [
+                "correction-20261007-memonav-image-protocols"
+              ],
+              "goal_modality": "goal_view_image",
+              "action_regime": "Habitat / Gibson 与 Matterport3D 的导航动作；§5.1沿用 VGM 动作设置，本文此次核查不补写未核动作尺度",
+              "environment_prior": "RGB 目标图像与当前 RGB-D 全景观测；§3.1不提供 GPS/IMU 等额外传感数据；在线构建视觉拓扑记忆",
+              "goal_count": "Gibson: 2/3/4; Matterport3D: 2/3 in Table 1",
+              "goal_spec": "有序序列中的目标视图图像",
+              "goal_delivery": "按给定顺序执行当前图像目标；此次原文核查不将其扩写为预先可见全部目标或经典 MultiON 的 FOUND 接口",
+              "ordering": "prescribed_sequence",
+              "memory_regime": "同一多目标 episode 内跨目标复用视觉记忆；换目标时恢复被遗忘节点（§4.1）",
+              "success_contract": "按既定目标顺序到达；PR 为已到达目标比例，PPL 按经中间目标的最短路径加权",
+              "metrics": [
+                "PR",
+                "PPL"
+              ],
+              "evaluation_scope": "Gibson 多目标测试由作者编制；Matterport3D 每难度从 MultiON 测试数据采样 1008 episodes；Table 1 的单/多目标结果分列",
+              "boundary": "图像目标协议；借用 MultiON 的数据构造/度量不将输入改为物体类别；不证明跨独立运行记忆"
+            }
+          ]
+        },
+        {
+          "field": "protocol_correction_note",
+          "before_present": false,
+          "before": null,
+          "after": "Separate action regime from method architecture and expose existing single/ordered multi image evaluations"
+        },
+        {
+          "field": "evidence_ids",
+          "before_present": true,
+          "before": [],
+          "after": [
+            "correction-20261007-memonav-image-protocols"
+          ]
+        },
+        {
+          "field": "status",
+          "before_present": true,
+          "before": "inherited_review",
+          "after": "primary_targeted_verified"
+        }
+      ],
+      "source_url": "https://arxiv.org/html/2402.19161v2",
+      "version": "arXiv:2402.19161v2 (2024-03-28)",
+      "locator": "§3.1 task definition; §3.2 VGM; §5.1 datasets/metrics; Table 1; §4.1 target-change restoration; §9.1 implementation",
+      "evidence_ids": [
+        "correction-20261007-memonav-image-protocols"
+      ]
+    },
+    {
+      "correction_id": "protocol-correction-20261007-05",
+      "date": "2026-10-07",
+      "collection": "nodes",
+      "selector": {
+        "node_id": "paper-li2024memonav"
+      },
+      "reason": "Add explicit, paper-scoped links to verified protocol variants without changing method reading status",
+      "fields": [
+        {
+          "field": "protocol_variant_refs",
+          "before_present": false,
+          "before": null,
+          "after": [
+            "memonav-single-image",
+            "memonav-ordered-multi-image"
+          ]
+        }
+      ],
+      "source_url": "https://arxiv.org/html/2402.19161v2",
+      "version": "arXiv:2402.19161v2 (2024-03-28)",
+      "locator": "§3.1 task definition; §3.2 VGM; §5.1 datasets/metrics; Table 1; §4.1 target-change restoration; §9.1 implementation",
+      "evidence_ids": [
+        "correction-20261007-memonav-image-protocols"
+      ]
+    },
+    {
+      "correction_id": "protocol-correction-20261007-06",
+      "date": "2026-10-07",
+      "collection": "implementation_variants",
+      "selector": {
+        "variant_id": "li2024memonav"
+      },
+      "reason": "Expose the protocol distinction alongside the implementation while preserving the original note in correction history",
+      "fields": [
+        {
+          "field": "scope_note",
+          "before_present": true,
+          "before": "图像目标而非类别标签；节点仍用于定位，不节省实际存储",
+          "after": "图像目标而非类别标签；节点仍用于定位，不节省实际存储；已有单目标 SR/SPL 与有序多目标 PR/PPL 评测分列"
+        },
+        {
+          "field": "protocol_variant_refs",
+          "before_present": false,
+          "before": null,
+          "after": [
+            "memonav-single-image",
+            "memonav-ordered-multi-image"
+          ]
+        }
+      ],
+      "source_url": "https://arxiv.org/html/2402.19161v2",
+      "version": "arXiv:2402.19161v2 (2024-03-28)",
+      "locator": "§3.1 task definition; §3.2 VGM; §5.1 datasets/metrics; Table 1; §4.1 target-change restoration; §9.1 implementation",
+      "evidence_ids": [
+        "correction-20261007-memonav-image-protocols"
+      ]
+    },
+    {
+      "correction_id": "protocol-correction-20261007-07",
+      "date": "2026-10-07",
+      "collection": "nodes",
+      "selector": {
+        "node_id": "task-object-open"
+      },
+      "reason": "Split SAP-Nav LangMap hierarchical single-goal evaluation from its HM3D-OVON Val Unseen evaluation",
+      "fields": [
+        {
+          "field": "goal_spec",
+          "before_present": true,
+          "before": "自由文本类别/目标描述",
+          "after": "开放词汇类别/目标语言；SAP-Nav 的 LangMap 单目标含场景、房间、区域、实例约束，另评 HM3D-OVON 场景级目标"
+        },
+        {
+          "field": "success_contract",
+          "before_present": true,
+          "before": "开放类别不等于实例指代；HM3D-OVON单列",
+          "after": "按 benchmark 分别判定；开放类别不等于实例指代。SAP-Nav 的 LangMap 与 HM3D-OVON Val Unseen 见独立协议卡"
+        },
+        {
+          "field": "protocol_variants",
+          "before_present": false,
+          "before": null,
+          "after": [
+            {
+              "id": "sap-nav-langmap-single-goal",
+              "title": "SAP-Nav：LangMap 四粒度单目标",
+              "paper_ids": [
+                "sap-nav"
+              ],
+              "source_url": "https://arxiv.org/html/2608.12707v1",
+              "version": "arXiv:2608.12707v1 (2026-08-13)",
+              "locator": "Introduction online/no-precomputed-map scope; Method / Problem Formulation; Experiments / Experimental Setup / Datasets, Metrics, Implementation Details; Tables 1–2; Conclusion / Limitations and Future Work",
+              "attribution": "primary_source_protocol_summary",
+              "evidence_ids": [
+                "correction-20261007-sap-nav-benchmark-split"
+              ],
+              "goal_count": 1,
+              "goal_modality": "language_goal",
+              "ordering": "single_goal",
+              "action_regime": "Habitat 连续环境；MOVE_FORWARD 0.25 m、TURN_LEFT/RIGHT 30°、STOP",
+              "environment_prior": "未知环境中的 RGB-D 与里程计；SAP-Nav 在线构建 QSSR，无预计算场景地图（方法设置）",
+              "memory_regime": "单目标任务内累积空间语义证据；Limitations 明确 QSSR 不跨连续任务保留",
+              "memory_persistence_across_tasks": false,
+              "success_contract": "停止并满足目标条件；实验按距数据集标注目标视点 1 m 内、最多 500 步计成功；报告 SR/SPL",
+              "metrics": [
+                "SR",
+                "SPL"
+              ],
+              "scope_note": "以下为 SAP-Nav 本文采用的评测设置，不传播到同根下其他论文",
+              "benchmark": "LangMap",
+              "goal_spec": "Scene：类别任一实例；Room：指定房间类型；Region：进一步指定具体房间实例；Instance：属性区分唯一对象实例",
+              "goal_delivery": "每个 episode 给一个相应粒度的语言目标；四粒度不是四个顺序子目标",
+              "granularity_levels": [
+                {
+                  "id": "scene",
+                  "target": "any_instance_of_category"
+                },
+                {
+                  "id": "room",
+                  "target": "category_instance_in_room_type"
+                },
+                {
+                  "id": "region",
+                  "target": "category_instance_in_specific_room_instance"
+                },
+                {
+                  "id": "instance",
+                  "target": "unique_instance_with_discriminative_attributes"
+                }
+              ],
+              "evaluation_scope": "LangMap single-goal protocol；约 15K tasks；Table 1 分列四粒度与 Single-Goal 汇总",
+              "boundary": "LangMap 是 benchmark 名，不是先验地图输入；本挂载不推出 REVERIE 或 GOAT 评测。LangMap v3 的五目标序列不能反填为 SAP-Nav 评测；SAP-Nav 的 1 m 到标注视点与 LangMap v3 的 1 m 到合法目标，不认证数值等价或直接可比",
+              "supporting_sources": [
+                {
+                  "source_url": "https://arxiv.org/html/2602.02220v3",
+                  "version": "arXiv:2602.02220v3 (2026-10-01)",
+                  "locator": "§3.1 success geometry; §3.5 five-goal episodes; Table 2 reference-only viewpoint-based scores",
+                  "attribution": "primary_source_version_boundary_only"
+                }
+              ],
+              "numeric_comparability_to_langmap_v3": "not_certified"
+            },
+            {
+              "id": "sap-nav-hm3d-ovon-val-unseen",
+              "title": "SAP-Nav：HM3D-OVON Val Unseen",
+              "paper_ids": [
+                "sap-nav"
+              ],
+              "source_url": "https://arxiv.org/html/2608.12707v1",
+              "version": "arXiv:2608.12707v1 (2026-08-13)",
+              "locator": "Introduction online/no-precomputed-map scope; Method / Problem Formulation; Experiments / Experimental Setup / Datasets, Metrics, Implementation Details; Tables 1–2; Conclusion / Limitations and Future Work",
+              "attribution": "primary_source_protocol_summary",
+              "evidence_ids": [
+                "correction-20261007-sap-nav-benchmark-split"
+              ],
+              "goal_count": 1,
+              "goal_modality": "language_goal",
+              "ordering": "single_goal",
+              "action_regime": "Habitat 连续环境；MOVE_FORWARD 0.25 m、TURN_LEFT/RIGHT 30°、STOP",
+              "environment_prior": "未知环境中的 RGB-D 与里程计；SAP-Nav 在线构建 QSSR，无预计算场景地图（方法设置）",
+              "memory_regime": "单目标任务内累积空间语义证据；Limitations 明确 QSSR 不跨连续任务保留",
+              "memory_persistence_across_tasks": false,
+              "success_contract": "停止并满足目标条件；实验按距数据集标注目标视点 1 m 内、最多 500 步计成功；报告 SR/SPL",
+              "metrics": [
+                "SR",
+                "SPL"
+              ],
+              "scope_note": "以下为 SAP-Nav 本文采用的评测设置，不传播到同根下其他论文",
+              "benchmark": "HM3D-OVON",
+              "split": "Val Unseen",
+              "goal_spec": "场景级开放词汇物体类别目标；匹配类别实例",
+              "goal_delivery": "每个 episode 一个场景级目标",
+              "granularity_levels": [
+                {
+                  "id": "scene",
+                  "target": "any_instance_of_category"
+                }
+              ],
+              "evaluation_scope": "Table 2 单独报告 HM3D-OVON Val Unseen；不要与 LangMap 四粒度结果合并为同一协议",
+              "boundary": "这是与 LangMap 分开的常规场景级 OVON 评测；不附加 LangMap 房间/区域/实例条件"
+            }
+          ]
+        },
+        {
+          "field": "protocol_correction_note",
+          "before_present": false,
+          "before": null,
+          "after": "Split SAP-Nav LangMap hierarchical single-goal evaluation from its HM3D-OVON Val Unseen evaluation"
+        },
+        {
+          "field": "evidence_ids",
+          "before_present": true,
+          "before": [
+            "origin-ovon"
+          ],
+          "after": [
+            "origin-ovon",
+            "correction-20261007-sap-nav-benchmark-split"
+          ]
+        }
+      ],
+      "source_url": "https://arxiv.org/html/2608.12707v1",
+      "version": "arXiv:2608.12707v1 (2026-08-13)",
+      "locator": "Introduction online/no-precomputed-map scope; Method / Problem Formulation; Experiments / Experimental Setup / Datasets, Metrics, Implementation Details; Tables 1–2; Conclusion / Limitations and Future Work",
+      "evidence_ids": [
+        "correction-20261007-sap-nav-benchmark-split"
+      ]
+    },
+    {
+      "correction_id": "protocol-correction-20261007-08",
+      "date": "2026-10-07",
+      "collection": "nodes",
+      "selector": {
+        "node_id": "paper-sap-nav"
+      },
+      "reason": "Add explicit, paper-scoped links to verified protocol variants without changing method reading status",
+      "fields": [
+        {
+          "field": "protocol_variant_refs",
+          "before_present": false,
+          "before": null,
+          "after": [
+            "sap-nav-langmap-single-goal",
+            "sap-nav-hm3d-ovon-val-unseen"
+          ]
+        }
+      ],
+      "source_url": "https://arxiv.org/html/2608.12707v1",
+      "version": "arXiv:2608.12707v1 (2026-08-13)",
+      "locator": "Introduction online/no-precomputed-map scope; Method / Problem Formulation; Experiments / Experimental Setup / Datasets, Metrics, Implementation Details; Tables 1–2; Conclusion / Limitations and Future Work",
+      "evidence_ids": [
+        "correction-20261007-sap-nav-benchmark-split"
+      ]
+    },
+    {
+      "correction_id": "protocol-correction-20261007-09",
+      "date": "2026-10-07",
+      "collection": "implementation_variants",
+      "selector": {
+        "variant_id": "sap-nav"
+      },
+      "reason": "Expose the protocol distinction alongside the implementation while preserving the original note in correction history",
+      "fields": [
+        {
+          "field": "scope_note",
+          "before_present": true,
+          "before": "HM3D-OVON和LangMap单目标分层指代；instance与category层次分开",
+          "after": "HM3D-OVON和LangMap单目标分层指代；instance与category层次分开；LangMap 场景/房间/区域/实例四粒度单目标，与 HM3D-OVON Val Unseen 独立列示；无预计算场景地图；Limitations 明确 QSSR 不跨任务保留；不将 LangMap v3 五目标序列或成功几何反填为本文评测"
+        },
+        {
+          "field": "protocol_variant_refs",
+          "before_present": false,
+          "before": null,
+          "after": [
+            "sap-nav-langmap-single-goal",
+            "sap-nav-hm3d-ovon-val-unseen"
+          ]
+        }
+      ],
+      "source_url": "https://arxiv.org/html/2608.12707v1",
+      "version": "arXiv:2608.12707v1 (2026-08-13)",
+      "locator": "Introduction online/no-precomputed-map scope; Method / Problem Formulation; Experiments / Experimental Setup / Datasets, Metrics, Implementation Details; Tables 1–2; Conclusion / Limitations and Future Work",
+      "evidence_ids": [
+        "correction-20261007-sap-nav-benchmark-split"
+      ]
+    },
+    {
+      "correction_id": "protocol-correction-20261007-10",
+      "date": "2026-10-07",
+      "collection": "nodes",
+      "selector": {
+        "node_id": "task-vln-iterative"
+      },
+      "reason": "Distinguish main-paper experimental protocol from v3 Appendix B evaluation-server protocol",
+      "fields": [
+        {
+          "field": "success_contract",
+          "before_present": true,
+          "before": "逐episode与tour指标；oracle纠偏和转场观察须标明",
+          "after": "逐 episode 与 tour 指标；主文 oracle 先纠偏到当前目标再往下一起点、tip-to-tail；v3 Appendix B 服务器只往下一起点、tip-to-tip"
+        },
+        {
+          "field": "protocol_variants",
+          "before_present": false,
+          "before": null,
+          "after": [
+            {
+              "id": "ivln-main-paper",
+              "title": "IVLN：主文实验协议",
+              "paper_ids": [
+                "krantz2023ivln"
+              ],
+              "source_url": "https://arxiv.org/html/2210.03087v3",
+              "version": "arXiv:2210.03087v3 (2023-12-24)",
+              "locator": "§3 iterative paradigm/tour construction; v3 Appendix B Evaluation Server Details",
+              "attribution": "primary_source_protocol_summary",
+              "evidence_ids": [
+                "correction-20261007-ivln-main-server-split"
+              ],
+              "goal_spec": "同一 scene 的多条自然语言路线指令组成 tour",
+              "goal_delivery": "每个 agent-navigation phase 给一条路线指令",
+              "ordering": "ordered_tour",
+              "action_regime": "IR2R：可导航视点图；IR2R-CE：连续环境低层导航；tour 持久性不是第三种动作空间",
+              "memory_regime": "tour 内跨 episode 保留环境信息；不推断任意方法实现都采用相同记忆",
+              "success_contract": "逐 episode 及 tour 指标分别计算；oracle 转场及 tour 生成版本必须注明",
+              "benchmark_variants": [
+                "IR2R",
+                "IR2R-CE"
+              ],
+              "scope_note": "仅说明 IVLN 原论文协议及其 v3 服务器变体；不自动赋给 NavHarness/Memoir 等后续论文",
+              "environment_prior": "主文含 oracle 纠偏与转场；agent 在 oracle 阶段被动观察",
+              "oracle_goal_correction": true,
+              "oracle_phase": "必要时先引导到当前目标，再引导到下一 episode 起点（§3；纠偏使用 0.5 m 条件）",
+              "tour_ordering": "tip-to-tail",
+              "protocol_scope": "main_paper_experiments",
+              "boundary": "这里 0.5 m 是 oracle 纠偏条件，不替换导航成功阈值；主文设置不等同无外部帮助的长期部署"
+            },
+            {
+              "id": "ivln-v3-appendix-b-server",
+              "title": "IVLN：v3 Appendix B 公开评测服务器协议",
+              "paper_ids": [
+                "krantz2023ivln"
+              ],
+              "source_url": "https://arxiv.org/html/2210.03087v3",
+              "version": "arXiv:2210.03087v3 (2023-12-24)",
+              "locator": "§3 iterative paradigm/tour construction; v3 Appendix B Evaluation Server Details",
+              "attribution": "primary_source_protocol_summary",
+              "evidence_ids": [
+                "correction-20261007-ivln-main-server-split"
+              ],
+              "goal_spec": "同一 scene 的多条自然语言路线指令组成 tour",
+              "goal_delivery": "每个 agent-navigation phase 给一条路线指令",
+              "ordering": "ordered_tour",
+              "action_regime": "IR2R：可导航视点图；IR2R-CE：连续环境低层导航；tour 持久性不是第三种动作空间",
+              "memory_regime": "tour 内跨 episode 保留环境信息；不推断任意方法实现都采用相同记忆",
+              "success_contract": "逐 episode 及 tour 指标分别计算；oracle 转场及 tour 生成版本必须注明",
+              "benchmark_variants": [
+                "IR2R",
+                "IR2R-CE"
+              ],
+              "scope_note": "仅说明 IVLN 原论文协议及其 v3 服务器变体；不自动赋给 NavHarness/Memoir 等后续论文",
+              "environment_prior": "仍有 oracle 带往下一起点；移除先带到当前目标的步骤，以保护 Test 目标路径",
+              "oracle_goal_correction": false,
+              "oracle_phase": "oracle 只引导至下一 episode 起点，不先引导至当前目标",
+              "tour_ordering": "tip-to-tip",
+              "protocol_scope": "v3_appendix_b_leaderboard_protocol",
+              "evaluation_scope": "Appendix B 同时说明再生 IR2R-CE Train/validation splits，并在再生 Val-Unseen 上复测 Map-CMA；不将该变更反写为主表实验设置",
+              "boundary": "本文附录描述的服务器协议，不声称当前线上服务器状态已核验；后续方法使用哪个版本需各自证据"
+            }
+          ]
+        },
+        {
+          "field": "protocol_correction_note",
+          "before_present": false,
+          "before": null,
+          "after": "Distinguish main-paper experimental protocol from v3 Appendix B evaluation-server protocol"
+        },
+        {
+          "field": "evidence_ids",
+          "before_present": true,
+          "before": [
+            "root-source-ivln2023"
+          ],
+          "after": [
+            "root-source-ivln2023",
+            "correction-20261007-ivln-main-server-split"
+          ]
+        }
+      ],
+      "source_url": "https://arxiv.org/html/2210.03087v3",
+      "version": "arXiv:2210.03087v3 (2023-12-24)",
+      "locator": "§3 iterative paradigm/tour construction; v3 Appendix B Evaluation Server Details",
+      "evidence_ids": [
+        "correction-20261007-ivln-main-server-split"
+      ]
+    },
+    {
+      "correction_id": "protocol-correction-20261007-11",
+      "date": "2026-10-07",
+      "collection": "nodes",
+      "selector": {
+        "node_id": "paper-krantz2023ivln"
+      },
+      "reason": "Add explicit, paper-scoped links to verified protocol variants without changing method reading status",
+      "fields": [
+        {
+          "field": "protocol_variant_refs",
+          "before_present": false,
+          "before": null,
+          "after": [
+            "ivln-main-paper",
+            "ivln-v3-appendix-b-server"
+          ]
+        }
+      ],
+      "source_url": "https://arxiv.org/html/2210.03087v3",
+      "version": "arXiv:2210.03087v3 (2023-12-24)",
+      "locator": "§3 iterative paradigm/tour construction; v3 Appendix B Evaluation Server Details",
+      "evidence_ids": [
+        "correction-20261007-ivln-main-server-split"
+      ]
+    },
+    {
+      "correction_id": "protocol-correction-20261007-12",
+      "date": "2026-10-07",
+      "collection": "implementation_variants",
+      "selector": {
+        "variant_id": "krantz2023ivln"
+      },
+      "reason": "Expose the protocol distinction alongside the implementation while preserving the original note in correction history",
+      "fields": [
+        {
+          "field": "scope_note",
+          "before_present": true,
+          "before": "IR2R与IR2R-CE分别归属图/连续执行；tour含oracle纠偏和转场观察",
+          "after": "IR2R与IR2R-CE分别归属图/连续执行；tour含oracle纠偏和转场观察；上述 oracle 纠偏是主文实验协议，v3 Appendix B 服务器仅转往下一起点且以 tip-to-tip 排 tour"
+        },
+        {
+          "field": "protocol_variant_refs",
+          "before_present": false,
+          "before": null,
+          "after": [
+            "ivln-main-paper",
+            "ivln-v3-appendix-b-server"
+          ]
+        }
+      ],
+      "source_url": "https://arxiv.org/html/2210.03087v3",
+      "version": "arXiv:2210.03087v3 (2023-12-24)",
+      "locator": "§3 iterative paradigm/tour construction; v3 Appendix B Evaluation Server Details",
+      "evidence_ids": [
+        "correction-20261007-ivln-main-server-split"
+      ]
+    }
+  ],
+  "protocol_correction_manifest": {
+    "id": "protocol-corrections-20261007",
+    "status": "local_candidate_not_published",
+    "checked_at": "2026-10-07",
+    "baseline_sha256": "3e7891c1797fe58627787b583d29e1bc8c1467793db49a6207b2f6b1f6576de3",
+    "original_checked_at_preserved": "2026-10-06",
+    "original_schema_preserved": "navigation-literature-tree-audit/2",
+    "changed_records": 12,
+    "added_protocol_variants": 7,
+    "added_evidence_ids": [
+      "correction-20261007-saynav-procthor-contract",
+      "correction-20261007-memonav-image-protocols",
+      "correction-20261007-sap-nav-benchmark-split",
+      "correction-20261007-ivln-main-server-split"
+    ],
+    "scope": "Four targeted corpus-paper protocol checks plus one LangMap v3 boundary check; no full-corpus revalidation",
+    "no_new_origin_or_lineage": true,
+    "path_identity_note": "The baseline has no path_id fields. All 362 path records, their order, composite identities and existing node IDs are unchanged."
   }
 };
