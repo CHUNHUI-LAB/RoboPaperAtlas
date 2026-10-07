@@ -118,19 +118,20 @@ class WeeklyTests(unittest.TestCase):
   parser=Structure();parser.feed(render(self.check(),self.index,'../../'));themes=[x for x in parser.targets if x['tag']=='details' and x['attrs'].get('class')=='radar-theme'];self.assertEqual(len(themes),4)
   for theme in themes:
    summary=theme['children'][0];self.assertEqual(summary['tag'],'summary');self.assertEqual([x['tag'] for x in summary['children']],['span','span','i']);self.assertEqual(summary['children'][1]['attrs']['class'],'radar-theme-copy')
-  window=next(x for x in parser.targets if x['tag']=='details' and x['attrs'].get('class')=='radar-window-list');ul=next(x for x in window['children'] if x['tag']=='ul');self.assertEqual(len(ul['children']),238)
+  window=next(x for x in parser.targets if x['tag']=='details' and x['attrs'].get('class')=='radar-window-list');content=next(x for x in window['children'] if x['tag']=='div');ul=next(x for x in content['children'] if x['tag']=='ul');self.assertEqual(len(ul['children']),238)
   for row in ul['children']:self.assertEqual([x['tag'] for x in row['children']],['span','a','small'])
- def test_home_prefers_weekly_and_compacts_empty_day(self):
+ def test_home_prefers_available_daily_and_compacts_empty_day(self):
   from briefs import load_archive as load_daily
   di,dr=load_daily(ROOT);di=copy.deepcopy(di);di['latest']='2026-10-04';page=home_overview(self.index,self.records,di,dr)
-  self.assertIn('七天研究主线',page);self.assertIn('最近24小时没有新增候选',page);self.assertNotIn('本窗口没有需要新增的研究主题，不重复上期总结',page);self.assertIn('frontier/briefs/2026-10-04/index.html',page);self.assertIn('2026-09-27T12:41:03Z',page);self.assertIn('2026-10-04T12:41:03Z',page);self.assertIn('frontier/daily/index.html',page)
+  self.assertIn('历史日报',page);self.assertIn('最近24小时没有新增候选',page);self.assertNotIn('本窗口没有需要新增的研究主题，不重复上期总结',page);self.assertIn('frontier/briefs/2026-10-04/index.html',page);self.assertIn('2026-10-01 / Research Radar',page);self.assertNotIn('data-radar-period="weekly"',page);self.assertIn('frontier/weekly/index.html',page)
+
  def test_home_ready_daily_still_has_explicit_route(self):
   from briefs import load_archive as load_daily
-  di,dr=load_daily(ROOT);di=copy.deepcopy(di);di['latest']='2026-09-30';page=home_overview(self.index,self.records,di,dr);self.assertIn('当天摘要已更新',page);self.assertIn('frontier/briefs/2026-09-30/index.html',page);self.assertIn('七天研究主线',page)
+  di,dr=load_daily(ROOT);di=copy.deepcopy(di);di['latest']='2026-09-30';page=home_overview(self.index,self.records,di,dr);self.assertIn('2026-09-30 / Research Radar',page);self.assertIn('frontier/briefs/2026-09-30/index.html',page);self.assertIn('data-radar-period="daily"',page);self.assertNotIn('data-radar-period="weekly"',page)
  def test_home_missing_or_failed_weekly_keeps_historical_window(self):
   from briefs import load_archive as load_daily
-  di,dr=load_daily(ROOT);page=home_overview(None,{},di,dr);self.assertIn('历史日报',page);self.assertIn('不是当天新发现',page)
-  wi=copy.deepcopy(self.index);wi['latest']='2026-10-11';wr=copy.deepcopy(self.records);failed=copy.deepcopy(wr['2026-10-04']);failed['date']='2026-10-11';failed['status']='error';failed['research_overview']['themes']=[];wr['2026-10-11']=failed;page=home_overview(wi,wr,di,dr);self.assertIn('最近周报更新未完成',page);self.assertIn('2026-09-27T12:41:03Z',page);self.assertIn('七天研究主线',page)
+  di,dr=load_daily(ROOT);page=home_overview(None,{},di,dr);self.assertIn(dr[di['latest']]['research_overview']['headline'],page);self.assertNotIn('data-radar-period="weekly"',page)
+  wi=copy.deepcopy(self.index);wi['latest']='2026-10-11';wr=copy.deepcopy(self.records);failed=copy.deepcopy(wr['2026-10-04']);failed['date']='2026-10-11';failed['status']='error';failed['research_overview']['themes']=[];wr['2026-10-11']=failed;page=home_overview(wi,wr,di,dr);self.assertIn(dr[di['latest']]['research_overview']['headline'],page);self.assertNotIn('data-radar-period="weekly"',page);self.assertIn('frontier/weekly/index.html',page)
  def test_home_daily_failed_or_stale_is_not_zero_claim(self):
   from briefs import load_archive as load_daily
   di,dr=load_daily(ROOT);di=copy.deepcopy(di);di['latest']='2026-10-04'
