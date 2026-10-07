@@ -148,3 +148,49 @@ After separate publication/preview authorization, use the normal isolated HTTPS 
 - Open the old weekly archive from new entrypoints and confirm all six records remain available
 
 Publication, remote CI, actual-browser rendering, font measurement, touch and screenshots remain separate gates. None is implied by model or deterministic geometry success.
+
+## 2026-10-06 independent local tree candidate
+
+This bounded UI revision is local only. No remote write, PR, upload, or deployment
+is part of its verification. Actual browser, touch, font metrics and visual
+acceptance remain NOT_RUN. SVG/PNG structural exports come from the real layout
+and data and are explicitly not browser screenshots.
+
+All three views share the complete source-topology adapter, semantic tree
+controller, and horizontal readable-branch geometry in `TreeModel.atlas`.
+The default semantic view retains every original top-level root and shows a
+selected source path with actual siblings. Fold labels count the actual direct
+child types; the secondary legend gives visible/total occurrence counts.
+“完整展开” exposes every occurrence and real parent edge at readable label size in
+an internally scrollable diagram. Reset restores the semantic overview. This is
+not a claim that every original label is simultaneously visible without scroll.
+
+The literature topology retains all 490 source nodes and 362 source paths as
+814 display occurrences including one explicitly labelled UI root. The Challenge
+topology retains all 100 source nodes and 70 source paths as 132 occurrences
+including its UI root. Each represents the same 39 canonical papers; occurrences
+and path counts are never paper counts. The UI roots only connect original roots
+and are not new academic categories. The analysis sample remains 59 original
+nodes plus 13 explicitly marked instances, 47 answers and six unresolved items;
+other 38 papers have only pending templates and no copied answers.
+
+Complete labels wrap in the horizontal focus tree. Only the focus path controls
+expansion; selection controls highlighting. Source ancestors, siblings, page
+boundaries, deep links, canonical evidence, unknowns and Stage state are retained.
+A diagram has one roving Tab entry; arrow keys traverse source parents, children
+and siblings, including initially folded children. Enter locates the readable
+branch and Escape resets. Repeated collapse/reopen and Back/Forward remain
+separately tested. Local diagram/focus scrolling replaces selection-driven
+whole-document jumps; canonical evidence is opened only on demand.
+
+The one existing Task → Protocol → Paper path retains its three-node source
+path and direct parent edge. Its paper reference is placed in the Paper display
+column, skipping the Module column; no intermediate source node is invented.
+A dedicated regression checks source depth 3, display column 4, IDs, parent edge,
+canonical identity, and unchanged topology/path/paper counts in both modes.
+
+Neutral task/UI roots and protocol-only paths preserve the chosen literature
+facet. A global location changes Pipeline/Representation only when its actual
+source path contains that explicit node type. Both starting facets are checked
+against all 814 occurrences. Zero-mapping task roots retain their original source
+records and explain the absence of current mappings in the existing focus hint.

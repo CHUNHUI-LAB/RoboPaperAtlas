@@ -313,6 +313,21 @@ class RadarC2ContractTests(unittest.TestCase):
                 self.assertNotIn(forbidden, text, name)
             if name.endswith('.css'):
                 self.assertNotRegex(text, r'@import\b|url\(\s*[\'"]?https?://')
+    def test_complete_tree_topology_and_horizontal_geometry(self):
+        run = subprocess.run(['node', str(ROOT / 'tests/test_complete_tree_atlas.cjs')],
+                             check=True, capture_output=True, text=True, timeout=60)
+        self.assertEqual(len(re.findall(r'^PASS ', run.stdout, re.M)), 15, run.stdout)
+
+    def test_precise_tree_root_labels_and_bounds(self):
+        run = subprocess.run(['node', str(ROOT / 'tests/test_tree_root_labels.cjs')],
+                             check=True, capture_output=True, text=True, timeout=60)
+        self.assertEqual(len(re.findall(r'^PASS ', run.stdout, re.M)), 7, run.stdout)
+
+    def test_tree_label_bounds_and_complete_text(self):
+        run = subprocess.run(['node', str(ROOT / 'tests/test_tree_label_bounds.cjs')],
+                             check=True, capture_output=True, text=True, timeout=60)
+        self.assertEqual(len(re.findall(r'^PASS ', run.stdout, re.M)), 7, run.stdout)
+
     def test_portable_31_plus_38_regressions_run_on_temporary_copy(self):
         before = {str(p): digest(p) for base in (c2.SOURCE, c2.INPUT_SOURCE)
                   for p in (ROOT / base).rglob('*') if p.is_file()}

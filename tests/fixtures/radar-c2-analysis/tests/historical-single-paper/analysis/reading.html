@@ -1,0 +1,394 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>HarnessVLN · C2论文解析完整文字替代</title><style>body{max-width:950px;margin:28px auto;padding:0 22px;background:#fbf9f4;color:#24251e;font:16px/1.85 system-ui,sans-serif}h1,h2{font-family:Georgia,serif}a{color:#a4482c;text-underline-offset:3px}article{border-top:1px solid #d9cbb8;padding:22px 0;scroll-margin-top:15px}.notice{background:#f7ebd9;border:1px solid #dbc3a3;padding:12px;border-radius:6px}.answer,.original{white-space:pre-wrap;overflow-wrap:anywhere}.meta{font-size:13px;color:#866747}nav ol{columns:2;column-gap:35px}li{margin:7px 0}@media(max-width:650px){nav ol{columns:1}}</style><body><p class="notice" data-c2-range="baseline-weekly">新树重构 39 篇 baseline；<a href="../../radar-trees-c/weekly-2026-10-04.html">旧周窗 6 篇及完整归档</a>，跨范围去重 43 篇。4 篇 weekly 独有候选未进入本次重构双树或论文解析，继续保留旧记录；未补造映射。</p><a href="../index.html">← 返回双树</a><h1 id="paper-harnessvln">HarnessVLN · 原方法解析</h1><p class="notice">59个原模板节点与13个论文实例；47项证据回答、6项未答问题。原文定位不等于独立验证作者实验。原有Stage未变，代码未读、实验未复现；图中文字边界及完整核读范围见末尾。</p><nav aria-label="全部原节点与实例"><h2>全部72个节点目录</h2><ol>
+<li><a href="#node-paper-analysis-tree">论文解析树</a></li>
+<li><a href="#node-abstract">Abstract</a></li>
+<li><a href="#node-abstract.task">Task</a></li>
+<li><a href="#node-abstract.challenge">Technical challenge for previous methods (围绕我们解决了的technical challenge展开讨论)</a></li>
+<li><a href="#node-abstract.insight">一句话介绍解决challenge的key insight/motivation
+(insight和technical contribution不一样，insight是比较通用的high-level的思想)</a></li>
+<li><a href="#node-abstract.insight.description">一句话介绍insight/motivation</a></li>
+<li><a href="#node-abstract.insight.benefit">一句话介绍insight的好处（不一定要在这里说，因为如果后面要提technical contribution的话，还会再说technical advantage）</a></li>
+<li><a href="#node-abstract.contributions">介绍technical contributions</a></li>
+<li><a href="#node-abstract.contributions.1">technical contribution 1</a></li>
+<li><a href="#node-abstract.contributions.1.description">一句话介绍technical contribution1</a></li>
+<li><a href="#node-abstract.contributions.1.benefit">一句话介绍technical contribution的好处</a></li>
+<li><a href="#node-abstract.contributions.2">technical contribution 2</a></li>
+<li><a href="#node-abstract.contributions.2.description">一句话介绍technical contribution2</a></li>
+<li><a href="#node-abstract.contributions.2.benefit">一句话介绍technical contribution的好处</a></li>
+<li><a href="#node-abstract.contributions.more">...</a></li>
+<li><a href="#node-abstract.experiment">Experiment</a></li>
+<li><a href="#node-introduction">Introduction</a></li>
+<li><a href="#node-introduction.task">Task and application</a></li>
+<li><a href="#node-introduction.challenges">Technical challenge for previous methods (围绕我们解决了的technical challenge展开讨论)</a></li>
+<li><a href="#node-introduction.challenges.1">Technical challenge 1</a></li>
+<li><a href="#node-introduction.challenges.1.previous">Previous method</a></li>
+<li><a href="#node-introduction.challenges.1.failure">Failure cases (Limitation)</a></li>
+<li><a href="#node-introduction.challenges.1.reason">Technical reason</a></li>
+<li><a href="#node-introduction.challenges.2">Technical challenge 2</a></li>
+<li><a href="#node-introduction.challenges.2.previous">Previous method</a></li>
+<li><a href="#node-introduction.challenges.2.failure">Failure cases (Limitation)</a></li>
+<li><a href="#node-introduction.challenges.2.reason">Technical reason</a></li>
+<li><a href="#node-introduction.pipeline">介绍解决challenge的our pipeline</a></li>
+<li><a href="#node-introduction.pipeline.key">一句话介绍key innovation/insight/contribution</a></li>
+<li><a href="#node-introduction.pipeline.contribution1">contribution 1</a></li>
+<li><a href="#node-introduction.pipeline.contribution1.how">具体怎么做的</a></li>
+<li><a href="#node-introduction.pipeline.contribution1.advantage">讨论advantage/insight</a></li>
+<li><a href="#node-introduction.pipeline.contribution2">contribution 2</a></li>
+<li><a href="#node-introduction.pipeline.contribution2.problem">为了解决什么问题</a></li>
+<li><a href="#node-introduction.pipeline.contribution2.how">具体怎么做的</a></li>
+<li><a href="#node-introduction.pipeline.contribution2.advantage">讨论advantage/insight</a></li>
+<li><a href="#node-introduction.pipeline.more">...</a></li>
+<li><a href="#node-introduction.demos">酷的demos/applications</a></li>
+<li><a href="#node-method">Method</a></li>
+<li><a href="#node-method.overview">Overview</a></li>
+<li><a href="#node-method.overview.task">具体的任务
+输入：...
+输出：...</a></li>
+<li><a href="#node-method.overview.steps">方法
+第一步：...
+第二步：...
+第三步：...</a></li>
+<li><a href="#node-method.module1">Pipeline module 1</a></li>
+<li><a href="#node-method.module1.motivation">Motivation</a></li>
+<li><a href="#node-method.module1.how">做法</a></li>
+<li><a href="#node-method.module1.why">为什么能work</a></li>
+<li><a href="#node-method.module1.advantage">technical advantage</a></li>
+<li><a href="#node-method.module2">Pipeline module 2</a></li>
+<li><a href="#node-method.module2.motivation">Motivation</a></li>
+<li><a href="#node-method.module2.how">做法</a></li>
+<li><a href="#node-method.module2.why">为什么能work</a></li>
+<li><a href="#node-method.module2.advantage">technical advantage</a></li>
+<li><a href="#node-method.more">...</a></li>
+<li><a href="#node-experiments">Experiments</a></li>
+<li><a href="#node-experiments.comparison">Comparison experiments</a></li>
+<li><a href="#node-experiments.ablation">Ablation studies</a></li>
+<li><a href="#node-experiments.ablation.components">论文的core contributions以及一些重要的components对论文方法performance的影响</a></li>
+<li><a href="#node-experiments.ablation.design-choices">列出每一个pipeline module中design choices对论文方法performance的影响</a></li>
+<li><a href="#node-limitation">Limitation</a></li>
+<li><a href="#node-abstract.contributions.3">technical contribution 3</a>（论文实例）</li>
+<li><a href="#node-abstract.contributions.3.description">一句话介绍technical contribution3</a>（论文实例）</li>
+<li><a href="#node-abstract.contributions.3.benefit">一句话介绍technical contribution的好处</a>（论文实例）</li>
+<li><a href="#node-method.module3">Pipeline module 3</a>（论文实例）</li>
+<li><a href="#node-method.module3.motivation">Motivation</a>（论文实例）</li>
+<li><a href="#node-method.module3.how">做法</a>（论文实例）</li>
+<li><a href="#node-method.module3.why">为什么能work</a>（论文实例）</li>
+<li><a href="#node-method.module3.advantage">technical advantage</a>（论文实例）</li>
+<li><a href="#node-method.module4">Pipeline module 4</a>（论文实例）</li>
+<li><a href="#node-method.module4.motivation">Motivation</a>（论文实例）</li>
+<li><a href="#node-method.module4.how">做法</a>（论文实例）</li>
+<li><a href="#node-method.module4.why">为什么能work</a>（论文实例）</li>
+<li><a href="#node-method.module4.advantage">technical advantage</a>（论文实例）</li>
+</ol></nav>
+<article id="node-paper-analysis-tree"><h2 class="original">论文解析树</h2><p class="meta">paper-analysis-tree · 原模板节点</p>
+<p>这是原结构或省略占位；没有为它编写实质回答。下层原问题保持可达。</p>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22paper-analysis-tree%22%2C%22selected%22%3A%22paper-analysis-tree%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-abstract"><h2 class="original">Abstract</h2><p class="meta">abstract · 原模板节点</p>
+<p>这是原结构或省略占位；没有为它编写实质回答。下层原问题保持可达。</p>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22paper-analysis-tree%22%2C%22selected%22%3A%22abstract%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-abstract.task"><h2 class="original">Task</h2><p class="meta">abstract.task · 原模板节点</p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">在没有任务特定导航微调的条件下，用共享Agent Harness同时支持路线指令跟随与目标物体导航。</div><ul><li>Abstract; §1; §4.2; Appendix 1.2 · 印刷页 1–2, 8, 13 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>Submission history / metadata · v3 2026-09-29; no verified journal-reference field · 2609.15195v3<br><a href="https://arxiv.org/abs/2609.15195v3">阅读原文定位 ↗</a></li></ul>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22abstract%22%2C%22selected%22%3A%22abstract.task%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-abstract.challenge"><h2 class="original">Technical challenge for previous methods (围绕我们解决了的technical challenge展开讨论)</h2><p class="meta">abstract.challenge · 原模板节点</p>
+<p class="notice">作者主张；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">作者认为，MLLM语义推理增强仍不能保证拟执行动作持续符合空间证据、子目标进度与执行结果。</div><ul><li>Abstract; §1 · 印刷页 1–2 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li></ul><p class="notice">缺口是作者的领域判断；本文没有逐篇前作的受控失效验证。</p>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22abstract%22%2C%22selected%22%3A%22abstract.challenge%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-abstract.insight"><h2 class="original">一句话介绍解决challenge的key insight/motivation
+(insight和technical contribution不一样，insight是比较通用的high-level的思想)</h2><p class="meta">abstract.insight · 原模板节点</p>
+<p>这是原结构或省略占位；没有为它编写实质回答。下层原问题保持可达。</p>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22abstract%22%2C%22selected%22%3A%22abstract.insight%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-abstract.insight.description"><h2 class="original">一句话介绍insight/motivation</h2><p class="meta">abstract.insight.description · 原模板节点</p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">把语言模型提议当作需要具身证据核验的操作，用持续更新的统一运行时连接记忆、空间状态、执行和停止。</div><ul><li>§1 contribution list; §3.1.1 · 印刷页 2–3 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>Figure 2 · 印刷页 4 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S2.F2">阅读原文定位 ↗</a></li><li>§3.1.1 · 印刷页 3 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.E1">阅读原文定位 ↗</a></li><li>Algorithm 1; §3.3 · 印刷页 6 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#alg1">阅读原文定位 ↗</a></li></ul>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22abstract.insight%22%2C%22selected%22%3A%22abstract.insight.description%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-abstract.insight.benefit"><h2 class="original">一句话介绍insight的好处（不一定要在这里说，因为如果后面要提technical contribution的话，还会再说technical advantage）</h2><p class="meta">abstract.insight.benefit · 原模板节点</p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">读者解释：预期好处是让新观测和失败及时改变进度、检索与下一步动作，同时复用两类任务的交互协议。
+原文结果：实验报告整个组合在若干设置中的增益。
+证据边界：不能把所有收益归于这一句话。</div><ul><li>§1 contribution list; §3.1.1 · 印刷页 2–3 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>Figure 2 · 印刷页 4 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S2.F2">阅读原文定位 ↗</a></li><li>§4.4; Table 4 · 印刷页 8 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S4.T4">阅读原文定位 ↗</a></li></ul>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22abstract.insight%22%2C%22selected%22%3A%22abstract.insight.benefit%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-abstract.contributions"><h2 class="original">介绍technical contributions</h2><p class="meta">abstract.contributions · 原模板节点</p>
+<p>这是原结构或省略占位；没有为它编写实质回答。下层原问题保持可达。</p>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22abstract%22%2C%22selected%22%3A%22abstract.contributions%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-abstract.contributions.1"><h2 class="original">technical contribution 1</h2><p class="meta">abstract.contributions.1 · 原模板节点</p>
+<p>这是原结构或省略占位；没有为它编写实质回答。下层原问题保持可达。</p>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22abstract.contributions%22%2C%22selected%22%3A%22abstract.contributions.1%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-abstract.contributions.1.description"><h2 class="original">一句话介绍technical contribution1</h2><p class="meta">abstract.contributions.1.description · 原模板节点</p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">贡献一：为指令跟随和ObjectNav设计共享Harness与八类核心工具的统一接口。</div><ul><li>§1 contribution list; §3.1.1 · 印刷页 2–3 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>Figure 2 · 印刷页 4 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S2.F2">阅读原文定位 ↗</a></li><li>§3.1.2; Table 1 · 印刷页 4–5 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.T1">阅读原文定位 ↗</a></li></ul>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22abstract.contributions.1%22%2C%22selected%22%3A%22abstract.contributions.1.description%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-abstract.contributions.1.benefit"><h2 class="original">一句话介绍technical contribution的好处</h2><p class="meta">abstract.contributions.1.benefit · 原模板节点</p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">作者主张：工具可以替换，任务特定进度与完成条件可以变化而共享协议。
+原文结果：论文给出两任务族及一个实机平台的应用。
+证据边界：没有逐工具替换消融。</div><ul><li>§1 contribution list; §3.1.1 · 印刷页 2–3 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>Figure 2 · 印刷页 4 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S2.F2">阅读原文定位 ↗</a></li><li>§3.1.2; Table 1 · 印刷页 4–5 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.T1">阅读原文定位 ↗</a></li><li>§5.1–5.2; Figure 3 · 印刷页 8–9 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S5.F3">阅读原文定位 ↗</a></li></ul>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22abstract.contributions.1%22%2C%22selected%22%3A%22abstract.contributions.1.benefit%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-abstract.contributions.2"><h2 class="original">technical contribution 2</h2><p class="meta">abstract.contributions.2 · 原模板节点</p>
+<p>这是原结构或省略占位；没有为它编写实质回答。下层原问题保持可达。</p>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22abstract.contributions%22%2C%22selected%22%3A%22abstract.contributions.2%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-abstract.contributions.2.description"><h2 class="original">一句话介绍technical contribution2</h2><p class="meta">abstract.contributions.2.description · 原模板节点</p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">贡献二：层级事件记忆与持久ST Graph结合，并以提议验证和结构化反馈更新任务状态、空间证据和失败记录。</div><ul><li>§1 contribution list; §3.1.1 · 印刷页 2–3 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>Figure 2 · 印刷页 4 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S2.F2">阅读原文定位 ↗</a></li><li>§3.1.3 · 印刷页 4–5 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>§4.4; Table 4 · 印刷页 8 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S4.T4">阅读原文定位 ↗</a></li><li>Appendix 2.1 · 印刷页 15 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>§3.2 Persistent representation · 印刷页 5 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.E2">阅读原文定位 ↗</a></li><li>§3.2 Task-conditioned retrieval; failure-aware updates · 印刷页 5 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.E3">阅读原文定位 ↗</a></li><li>Appendix 1.3; Table 5 · 印刷页 13 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#A1.T5">阅读原文定位 ↗</a></li></ul>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22abstract.contributions.2%22%2C%22selected%22%3A%22abstract.contributions.2.description%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-abstract.contributions.2.benefit"><h2 class="original">一句话介绍technical contribution的好处</h2><p class="meta">abstract.contributions.2.benefit · 原模板节点</p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">作者主张：支持带证据的行动、跨子目标检索、失败恢复和停止验证。
+原文结果：论文报告指定顺序的累计消融增量。
+读者解释与证据边界：这些是条件增量，尚不能拆分每项机制的独立效应。</div><ul><li>§3.1.3 · 印刷页 4–5 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>§4.4; Table 4 · 印刷页 8 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S4.T4">阅读原文定位 ↗</a></li><li>Appendix 2.1 · 印刷页 15 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>§3.2 Task-conditioned retrieval; failure-aware updates · 印刷页 5 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.E3">阅读原文定位 ↗</a></li><li>Appendix 1.3; Table 5 · 印刷页 13 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#A1.T5">阅读原文定位 ↗</a></li><li>§3.3 Evidence-based termination · 印刷页 6 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.E4">阅读原文定位 ↗</a></li><li>Appendix 1.3; Table 5 · 印刷页 13 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li></ul>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22abstract.contributions.2%22%2C%22selected%22%3A%22abstract.contributions.2.benefit%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-abstract.contributions.more"><h2 class="original">...</h2><p class="meta">abstract.contributions.more · 原模板节点</p>
+<p>这是原结构或省略占位；没有为它编写实质回答。下层原问题保持可达。</p>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22abstract.contributions%22%2C%22selected%22%3A%22abstract.contributions.more%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-abstract.experiment"><h2 class="original">Experiment</h2><p class="meta">abstract.experiment · 原模板节点</p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">主表SR依次为R2R59.6%、RxR51.4%、HM3D-v2 76.0%、OVON59.3%。同模型Rand100相对AgenticNav SR+3点但SPL−12.6点；实机只是三组任务展示。</div><ul><li>§4.3; Table 2 · 印刷页 7–8 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.T2">阅读原文定位 ↗</a></li><li>§4.3; Table 3 · 印刷页 7–8 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.T3">阅读原文定位 ↗</a></li><li>§5.1–5.2; Figure 3 · 印刷页 8–9 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S5.F3">阅读原文定位 ↗</a></li></ul>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22abstract%22%2C%22selected%22%3A%22abstract.experiment%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-introduction"><h2 class="original">Introduction</h2><p class="meta">introduction · 原模板节点</p>
+<p>这是原结构或省略占位；没有为它编写实质回答。下层原问题保持可达。</p>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22paper-analysis-tree%22%2C%22selected%22%3A%22introduction%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-introduction.task"><h2 class="original">Task and application</h2><p class="meta">introduction.task · 原模板节点</p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">两类任务都要求在部分可观测环境里把语言与空间观测对应起来，累计环境知识并到达目的地。应用展示包括室内按路标行走、寻找目标物和两者串联。</div><ul><li>Abstract; §1; §4.2; Appendix 1.2 · 印刷页 1–2, 8, 13 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>Submission history / metadata · v3 2026-09-29; no verified journal-reference field · 2609.15195v3<br><a href="https://arxiv.org/abs/2609.15195v3">阅读原文定位 ↗</a></li><li>§5.1–5.2; Figure 3 · 印刷页 8–9 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S5.F3">阅读原文定位 ↗</a></li></ul>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22introduction%22%2C%22selected%22%3A%22introduction.task%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-introduction.challenges"><h2 class="original">Technical challenge for previous methods (围绕我们解决了的technical challenge展开讨论)</h2><p class="meta">introduction.challenges · 原模板节点</p>
+<p>这是原结构或省略占位；没有为它编写实质回答。下层原问题保持可达。</p>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22introduction%22%2C%22selected%22%3A%22introduction.challenges%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-introduction.challenges.1"><h2 class="original">Technical challenge 1</h2><p class="meta">introduction.challenges.1 · 原模板节点</p>
+<p>这是原结构或省略占位；没有为它编写实质回答。下层原问题保持可达。</p>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22introduction.challenges%22%2C%22selected%22%3A%22introduction.challenges.1%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-introduction.challenges.1.previous"><h2 class="original">Previous method</h2><p class="meta">introduction.challenges.1.previous · 原模板节点</p>
+<p class="notice">作者主张；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">作者陈述：旧组织方式是感知模块供观测、MLLM提出子目标、下游模块grounding和执行。§2同时介绍了前作已有的工具调用、几何检查、TODO和回退能力。
+证据边界：不能省略这些已有能力，将旧方法概括为完全没有工具、验证或记忆。</div><ul><li>§1; §2 · 印刷页 2–3 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li></ul>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22introduction.challenges.1%22%2C%22selected%22%3A%22introduction.challenges.1.previous%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-introduction.challenges.1.failure"><h2 class="original">Failure cases (Limitation)</h2><p class="meta">introduction.challenges.1.failure · 原模板节点</p>
+<p class="notice">作者主张；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">作者的概念性失效说明：执行失败后计划进度与真实状态脱节，发出动作被误当成完成。
+证据边界：本文没有给出某个指定前作的原始轨迹来量化这一失效。</div><ul><li>Abstract; §1 · 印刷页 1–2 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>§1; §2 · 印刷页 2–3 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li></ul><p class="notice">待独立核前作或作者对照轨迹，才能填成具名旧方法实证failure case。</p>
+<section class="notice"><h3>未答问题：具名旧方法的受控执行状态漂移failure case在哪里？</h3><p>已核范围未报告</p><p>本文全文§1–6、Appendix1–3及所有图表；未独立核读前作全文。</p><ul><li>Abstract; §1 · 印刷页 1–2 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>§1; §2 · 印刷页 2–3 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li></ul><p>这些定位限定已检查的论文范围；not_reported是该范围内的缺口判断，不是引用不存在的否定句。</p></section>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22introduction.challenges.1%22%2C%22selected%22%3A%22introduction.challenges.1.failure%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-introduction.challenges.1.reason"><h2 class="original">Technical reason</h2><p class="meta">introduction.challenges.1.reason · 原模板节点</p>
+<p class="notice">作者主张；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">作者归因：证据保留、提议验证与失败处理缺少统一运行时协调。
+证据边界：这是作者动机陈述，并未通过将所有其它条件固定的旧方法诊断得到。</div><ul><li>Abstract; §1 · 印刷页 1–2 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>§1; §2 · 印刷页 2–3 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li></ul>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22introduction.challenges.1%22%2C%22selected%22%3A%22introduction.challenges.1.reason%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-introduction.challenges.2"><h2 class="original">Technical challenge 2</h2><p class="meta">introduction.challenges.2 · 原模板节点</p>
+<p>这是原结构或省略占位；没有为它编写实质回答。下层原问题保持可达。</p>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22introduction.challenges%22%2C%22selected%22%3A%22introduction.challenges.2%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-introduction.challenges.2.previous"><h2 class="original">Previous method</h2><p class="meta">introduction.challenges.2.previous · 原模板节点</p>
+<p class="notice">作者主张；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">在目标确认与停止问题上，前作并非完全没有几何检查：§2明确说AgenticNav提供几何安全检查；Uni-LaViRA提供TODO和Second Chance Backtrack。HarnessVLN强调统一空间证据、进度和停止请求的运行时。</div><ul><li>§1; §2 · 印刷页 2–3 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>§3.3 Evidence-based termination · 印刷页 6 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.E4">阅读原文定位 ↗</a></li><li>Appendix 1.3; Table 5 · 印刷页 13 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li></ul>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22introduction.challenges.2%22%2C%22selected%22%3A%22introduction.challenges.2.previous%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-introduction.challenges.2.failure"><h2 class="original">Failure cases (Limitation)</h2><p class="meta">introduction.challenges.2.failure · 原模板节点</p>
+<p class="notice">作者主张；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">作者陈述：“识别到目标”不等于“已到达目标”。
+原文结果：Figure10–11实际展示HarnessVLN自己的失败。
+证据边界：前一句是旧方法挑战的概念说明，后两图不能移作前作失败证据。</div><ul><li>Abstract; §1 · 印刷页 1–2 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>Appendix 3.3; Figure 10 · 印刷页 18 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#A3.F10">阅读原文定位 ↗</a></li><li>Appendix 1.3; Appendix 3.3; Figure 11 · 印刷页 13, 18 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#A3.F11">阅读原文定位 ↗</a></li></ul><p class="notice">缺少某一旧方法在等条件下的目标误判/过早停止轨迹。</p>
+<section class="notice"><h3>未答问题：某一旧方法过早停止的匹配对照轨迹在哪里？</h3><p>已核范围未报告</p><p>本文全文及六个可视化；Figures10–11是本方法失败，不是旧方法对照。</p><ul><li>Abstract; §1 · 印刷页 1–2 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>Appendix 3.3; Figure 10 · 印刷页 18 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#A3.F10">阅读原文定位 ↗</a></li><li>Appendix 1.3; Appendix 3.3; Figure 11 · 印刷页 13, 18 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#A3.F11">阅读原文定位 ↗</a></li></ul><p>这些定位限定已检查的论文范围；not_reported是该范围内的缺口判断，不是引用不存在的否定句。</p></section>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22introduction.challenges.2%22%2C%22selected%22%3A%22introduction.challenges.2.failure%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-introduction.challenges.2.reason"><h2 class="original">Technical reason</h2><p class="meta">introduction.challenges.2.reason · 原模板节点</p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">原文做法：作者把停止写成语义、几何、任务进度三项核验的合取。
+读者解释：语义识别、内部几何邻近与真实任务完成是不同条件。
+证据边界：三项估计仍可能出错，合取本身不构成成功保证。</div><ul><li>Abstract; §1 · 印刷页 1–2 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>§3.3 Evidence-based termination · 印刷页 6 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.E4">阅读原文定位 ↗</a></li><li>Appendix 1.3; Table 5 · 印刷页 13 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>Appendix 3.3; Figure 10 · 印刷页 18 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#A3.F10">阅读原文定位 ↗</a></li><li>Appendix 1.3; Appendix 3.3; Figure 11 · 印刷页 13, 18 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#A3.F11">阅读原文定位 ↗</a></li></ul>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22introduction.challenges.2%22%2C%22selected%22%3A%22introduction.challenges.2.reason%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-introduction.pipeline"><h2 class="original">介绍解决challenge的our pipeline</h2><p class="meta">introduction.pipeline · 原模板节点</p>
+<p>这是原结构或省略占位；没有为它编写实质回答。下层原问题保持可达。</p>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22introduction%22%2C%22selected%22%3A%22introduction.pipeline%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-introduction.pipeline.key"><h2 class="original">一句话介绍key innovation/insight/contribution</h2><p class="meta">introduction.pipeline.key · 原模板节点</p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">以共享Harness管理“组装证据上下文→提出操作→验证→执行→反馈更新”的循环，并将任务事件记忆和空间图分工。</div><ul><li>§1 contribution list; §3.1.1 · 印刷页 2–3 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>Figure 2 · 印刷页 4 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S2.F2">阅读原文定位 ↗</a></li><li>§3.1.1 · 印刷页 3 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.E1">阅读原文定位 ↗</a></li><li>Algorithm 1; §3.3 · 印刷页 6 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#alg1">阅读原文定位 ↗</a></li></ul>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22introduction.pipeline%22%2C%22selected%22%3A%22introduction.pipeline.key%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-introduction.pipeline.contribution1"><h2 class="original">contribution 1</h2><p class="meta">introduction.pipeline.contribution1 · 原模板节点</p>
+<p>这是原结构或省略占位；没有为它编写实质回答。下层原问题保持可达。</p>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22introduction.pipeline%22%2C%22selected%22%3A%22introduction.pipeline.contribution1%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-introduction.pipeline.contribution1.how"><h2 class="original">具体怎么做的</h2><p class="meta">introduction.pipeline.contribution1.how · 原模板节点</p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">维护任务、观测、位姿、进度、事件记忆和图的统一状态；对八类工具采用统一契约，派发前核验参数、证据时效、几何和子目标一致性。</div><ul><li>§3.1.1 · 印刷页 3 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.E1">阅读原文定位 ↗</a></li><li>Algorithm 1; §3.3 · 印刷页 6 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#alg1">阅读原文定位 ↗</a></li><li>§3.1.2; Table 1 · 印刷页 4–5 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.T1">阅读原文定位 ↗</a></li></ul>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22introduction.pipeline.contribution1%22%2C%22selected%22%3A%22introduction.pipeline.contribution1.how%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-introduction.pipeline.contribution1.advantage"><h2 class="original">讨论advantage/insight</h2><p class="meta">introduction.pipeline.contribution1.advantage · 原模板节点</p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">读者解释：该组织方式明确区分语义提议与实际执行，允许结构反馈影响下一轮。
+作者主张：跨任务复用是其架构优势。
+证据边界：任意工具或机器人替换的泛化证据尚缺。</div><ul><li>§3.1.2; Table 1 · 印刷页 4–5 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.T1">阅读原文定位 ↗</a></li><li>§3.3; §4.2 · 印刷页 6, 8 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>Table 1 · 印刷页 5 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.T1">阅读原文定位 ↗</a></li></ul>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22introduction.pipeline.contribution1%22%2C%22selected%22%3A%22introduction.pipeline.contribution1.advantage%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-introduction.pipeline.contribution2"><h2 class="original">contribution 2</h2><p class="meta">introduction.pipeline.contribution2 · 原模板节点</p>
+<p>这是原结构或省略占位；没有为它编写实质回答。下层原问题保持可达。</p>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22introduction.pipeline%22%2C%22selected%22%3A%22introduction.pipeline.contribution2%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-introduction.pipeline.contribution2.problem"><h2 class="original">为了解决什么问题</h2><p class="meta">introduction.pipeline.contribution2.problem · 原模板节点</p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">解决长过程中的任务进度与失败上下文保留，以及跨子目标空间证据检索问题。</div><ul><li>§3.1.3 · 印刷页 4–5 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>§4.4; Table 4 · 印刷页 8 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S4.T4">阅读原文定位 ↗</a></li><li>Appendix 2.1 · 印刷页 15 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>§3.2 Persistent representation · 印刷页 5 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.E2">阅读原文定位 ↗</a></li><li>§3.2 Task-conditioned retrieval; failure-aware updates · 印刷页 5 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.E3">阅读原文定位 ↗</a></li><li>Appendix 1.3; Table 5 · 印刷页 13 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#A1.T5">阅读原文定位 ↗</a></li></ul>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22introduction.pipeline.contribution2%22%2C%22selected%22%3A%22introduction.pipeline.contribution2.problem%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-introduction.pipeline.contribution2.how"><h2 class="original">具体怎么做的</h2><p class="meta">introduction.pipeline.contribution2.how · 原模板节点</p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">working/progress/reflection三层事件记忆保留任务历史；ST Graph保存地点、实体、关系、观察来源及轻量失败引用，按子目标进行受限检索。</div><ul><li>§3.1.3 · 印刷页 4–5 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>§4.4; Table 4 · 印刷页 8 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S4.T4">阅读原文定位 ↗</a></li><li>Appendix 2.1 · 印刷页 15 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>§3.2 Persistent representation · 印刷页 5 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.E2">阅读原文定位 ↗</a></li><li>§3.2 Task-conditioned retrieval; failure-aware updates · 印刷页 5 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.E3">阅读原文定位 ↗</a></li><li>Appendix 1.3; Table 5 · 印刷页 13 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#A1.T5">阅读原文定位 ↗</a></li></ul>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22introduction.pipeline.contribution2%22%2C%22selected%22%3A%22introduction.pipeline.contribution2.how%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-introduction.pipeline.contribution2.advantage"><h2 class="original">讨论advantage/insight</h2><p class="meta">introduction.pipeline.contribution2.advantage · 原模板节点</p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">原文做法：事件记忆保留完整失败，图作为空间索引；检索最多5处而图可继续增长。
+原文结果：累计加图后R2R SR+6点、OVON+1点。
+读者解释与证据边界：这仅支持在已启用memory条件下的增量。</div><ul><li>§3.2 Persistent representation · 印刷页 5 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.E2">阅读原文定位 ↗</a></li><li>§3.2 Task-conditioned retrieval; failure-aware updates · 印刷页 5 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.E3">阅读原文定位 ↗</a></li><li>Appendix 1.3; Table 5 · 印刷页 13 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#A1.T5">阅读原文定位 ↗</a></li><li>§4.4; Table 4 · 印刷页 8 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S4.T4">阅读原文定位 ↗</a></li></ul>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22introduction.pipeline.contribution2%22%2C%22selected%22%3A%22introduction.pipeline.contribution2.advantage%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-introduction.pipeline.more"><h2 class="original">...</h2><p class="meta">introduction.pipeline.more · 原模板节点</p>
+<p>这是原结构或省略占位；没有为它编写实质回答。下层原问题保持可达。</p>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22introduction.pipeline%22%2C%22selected%22%3A%22introduction.pipeline.more%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-introduction.demos"><h2 class="original">酷的demos/applications</h2><p class="meta">introduction.demos · 原模板节点</p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">原文结果：三组实机应用为经过806外路口后依次到垃圾桶和冰箱、找打印机、先停入口标牌再找售货机。
+读者解释：它们展示行为可行性。
+证据边界：没有提供总体实机成功率。</div><ul><li>§5.1–5.2; Figure 3 · 印刷页 8–9 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S5.F3">阅读原文定位 ↗</a></li></ul>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22introduction%22%2C%22selected%22%3A%22introduction.demos%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-method"><h2 class="original">Method</h2><p class="meta">method · 原模板节点</p>
+<p>这是原结构或省略占位；没有为它编写实质回答。下层原问题保持可达。</p>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22paper-analysis-tree%22%2C%22selected%22%3A%22method%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-method.overview"><h2 class="original">Overview</h2><p class="meta">method.overview · 原模板节点</p>
+<p>这是原结构或省略占位；没有为它编写实质回答。下层原问题保持可达。</p>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22method%22%2C%22selected%22%3A%22method.overview%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-method.overview.task"><h2 class="original">具体的任务
+输入：...
+输出：...</h2><p class="meta">method.overview.task · 原模板节点</p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">输入：路线指令或目标类别，以及初始和后续位姿对齐RGB-D观测、局部几何地图、执行反馈。输出：经验证工具操作形成的导航轨迹和终止状态；成功与否仍由独立benchmark判定。</div><ul><li>§3.1.1 · 印刷页 3 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.E1">阅读原文定位 ↗</a></li><li>Algorithm 1; §3.3 · 印刷页 6 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#alg1">阅读原文定位 ↗</a></li><li>§3.3; §4.2 · 印刷页 6, 8 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>Table 1 · 印刷页 5 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.T1">阅读原文定位 ↗</a></li><li>§3.3 Evidence-based termination · 印刷页 6 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.E4">阅读原文定位 ↗</a></li><li>Appendix 1.3; Table 5 · 印刷页 13 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li></ul>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22method.overview%22%2C%22selected%22%3A%22method.overview.task%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-method.overview.steps"><h2 class="original">方法
+第一步：...
+第二步：...
+第三步：...</h2><p class="meta">method.overview.steps · 原模板节点</p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">第一步：更新观测、事件记忆与ST Graph。第二步：按当前子目标检索证据并组装上下文，MLLM产生语义操作。第三步：Harness验证、派发工具并回写反馈；循环直到终止。此三步是对Algorithm1的编辑性分组，不是原算法只有三行。</div><ul><li>§3.1.1 · 印刷页 3 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.E1">阅读原文定位 ↗</a></li><li>Algorithm 1; §3.3 · 印刷页 6 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#alg1">阅读原文定位 ↗</a></li></ul>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22method.overview%22%2C%22selected%22%3A%22method.overview.steps%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-method.module1"><h2 class="original">Pipeline module 1</h2><p class="meta">method.module1 · 原模板节点</p>
+<p>这是原结构或省略占位；没有为它编写实质回答。下层原问题保持可达。</p>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22method%22%2C%22selected%22%3A%22method.module1%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-method.module1.motivation"><h2 class="original">Motivation</h2><p class="meta">method.module1.motivation · 原模板节点</p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">模块1（Harness与工具接口）：让语义规划与当前证据、真实进度和执行结果持续一致。</div><ul><li>Abstract; §1 · 印刷页 1–2 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>§3.1.2; Table 1 · 印刷页 4–5 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.T1">阅读原文定位 ↗</a></li></ul>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22method.module1%22%2C%22selected%22%3A%22method.module1.motivation%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-method.module1.how"><h2 class="original">做法</h2><p class="meta">method.module1.how · 原模板节点</p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">用公式(1)统一状态及Algorithm1循环；工具调用先核参数、证据来源/时效、几何可行性与活动子目标，再用结构反馈更新状态。</div><ul><li>§3.1.1 · 印刷页 3 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.E1">阅读原文定位 ↗</a></li><li>Algorithm 1; §3.3 · 印刷页 6 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#alg1">阅读原文定位 ↗</a></li><li>§3.1.2; Table 1 · 印刷页 4–5 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.T1">阅读原文定位 ↗</a></li></ul>
+<section class="notice"><h3>未答问题：论文描述与实际源码是否逐项一致？</h3><p>来源未读 / 缺失</p><p>本次只读论文正文、附录及图表，未读源码，也未运行实验；源码一致性不在此次证据结论范围。</p><p class="notice">来源定位为空：相关源码尚未阅读，不能补造源码证据。</p><p>源码未读，未获得可核的源码定位；保留空数组，不用论文定位冒充源码证据。</p></section>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22method.module1%22%2C%22selected%22%3A%22method.module1.how%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-method.module1.why"><h2 class="original">为什么能work</h2><p class="meta">method.module1.why · 原模板节点</p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">读者解释：校验层的设计意图是阻止未获证据支持的提议直接成为动作，让反馈减少计划状态长期脱离执行的风险。
+原文证据：论文提供此设计和整套对照。
+证据边界：没有将proposal validation每个检查项单独隔离，不能据此认定该机制保证不会出错。</div><ul><li>§3.1.2; Table 1 · 印刷页 4–5 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.T1">阅读原文定位 ↗</a></li><li>§4.4; Appendix 1.2–1.4; Appendix 2 · 印刷页 8, 13–15 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li></ul><p class="notice">缺少proposal validation独立消融和形式化正确性保证。</p>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22method.module1%22%2C%22selected%22%3A%22method.module1.why%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-method.module1.advantage"><h2 class="original">technical advantage</h2><p class="meta">method.module1.advantage · 原模板节点</p>
+<p class="notice">作者主张；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">作者主张：语义Planner与执行工具解耦，可共享两类任务协议。
+证据边界：这不是任意工具替换均可靠的实验证明。</div><ul><li>§1 contribution list; §3.1.1 · 印刷页 2–3 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>Figure 2 · 印刷页 4 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S2.F2">阅读原文定位 ↗</a></li><li>§3.1.2; Table 1 · 印刷页 4–5 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.T1">阅读原文定位 ↗</a></li><li>§3.3; §4.2 · 印刷页 6, 8 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>Table 1 · 印刷页 5 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.T1">阅读原文定位 ↗</a></li></ul>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22method.module1%22%2C%22selected%22%3A%22method.module1.advantage%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-method.module2"><h2 class="original">Pipeline module 2</h2><p class="meta">method.module2 · 原模板节点</p>
+<p>这是原结构或省略占位；没有为它编写实质回答。下层原问题保持可达。</p>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22method%22%2C%22selected%22%3A%22method.module2%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-method.module2.motivation"><h2 class="original">Motivation</h2><p class="meta">method.module2.motivation · 原模板节点</p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">模块2（层级事件记忆）：保留下一步判断所需上下文、可核实的子目标进度及完整失败事件。</div><ul><li>§3.1.3 · 印刷页 4–5 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>§4.4; Table 4 · 印刷页 8 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S4.T4">阅读原文定位 ↗</a></li><li>Appendix 2.1 · 印刷页 15 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li></ul>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22method.module2%22%2C%22selected%22%3A%22method.module2.motivation%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-method.module2.how"><h2 class="original">做法</h2><p class="meta">method.module2.how · 原模板节点</p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">working保留有限近期观测/反馈；progress按稳定ID维护四态且最多一个active；reflection存位置、时间、任务、反馈与观测，图里只放轻量引用。</div><ul><li>§3.1.3 · 印刷页 4–5 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>§4.4; Table 4 · 印刷页 8 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S4.T4">阅读原文定位 ↗</a></li><li>Appendix 2.1 · 印刷页 15 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>Appendix 2.1–2.2 · 印刷页 15 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#A2.SS1">阅读原文定位 ↗</a></li></ul>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22method.module2%22%2C%22selected%22%3A%22method.module2.how%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-method.module2.why"><h2 class="original">为什么能work</h2><p class="meta">method.module2.why · 原模板节点</p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">读者解释：稳定ID和完成证据可以减轻进度错配，完整失败上下文可以支撑恢复。
+原文结果：累加消融首步SR在两任务各+7点。
+证据边界：三层记忆的独立贡献未知。</div><ul><li>§3.1.3 · 印刷页 4–5 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>§4.4; Table 4 · 印刷页 8 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S4.T4">阅读原文定位 ↗</a></li><li>Appendix 2.1 · 印刷页 15 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>§4.4; Appendix 1.2–1.4; Appendix 2 · 印刷页 8, 13–15 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li></ul><p class="notice">没有working/progress/reflection分别关闭的对照。</p>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22method.module2%22%2C%22selected%22%3A%22method.module2.why%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-method.module2.advantage"><h2 class="original">technical advantage</h2><p class="meta">method.module2.advantage · 原模板节点</p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">原文做法：任务事件与空间索引不重复保存完整历史，近期工作上下文有界。
+证据边界：文中未给出总体token或延迟随轨迹长度的实测曲线。</div><ul><li>§3.1.3 · 印刷页 4–5 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>§4.4; Table 4 · 印刷页 8 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S4.T4">阅读原文定位 ↗</a></li><li>Appendix 2.1 · 印刷页 15 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>§3.2 Task-conditioned retrieval; failure-aware updates · 印刷页 5 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.E3">阅读原文定位 ↗</a></li><li>Appendix 1.3; Table 5 · 印刷页 13 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#A1.T5">阅读原文定位 ↗</a></li><li>§6 · 印刷页 9 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>Appendix 1.2–1.4 · 印刷页 13–14 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>全文与Appendix 1–3核读范围 · 印刷页 1–18 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li></ul>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22method.module2%22%2C%22selected%22%3A%22method.module2.advantage%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-method.more"><h2 class="original">...</h2><p class="meta">method.more · 原模板节点</p>
+<p>这是原结构或省略占位；没有为它编写实质回答。下层原问题保持可达。</p>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22method%22%2C%22selected%22%3A%22method.more%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-experiments"><h2 class="original">Experiments</h2><p class="meta">experiments · 原模板节点</p>
+<p>这是原结构或省略占位；没有为它编写实质回答。下层原问题保持可达。</p>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22paper-analysis-tree%22%2C%22selected%22%3A%22experiments%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-experiments.comparison"><h2 class="original">Comparison experiments</h2><p class="meta">experiments.comparison · 原模板节点</p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">原文结果：主表2–3报告四基准的任务完成表现；Rand100同GPT-5.5下AgenticNav SPL48.4高于Harness35.8；HM3D-v2上DRIVE-Nav SPL41.3高于Harness37.9。Table6同Luna的100子集报告SR/SPL提升，但OVON OSR−SR gap由9增至19。
+读者解释与证据边界：这些比较需区分full split和100子集，不能归纳为全指标领先或停止gap普遍缩小。</div><ul><li>§4.1; Appendix 1.1; Table 5 · 印刷页 6–8, 13 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>§4.3; Table 2 · 印刷页 7–8 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.T2">阅读原文定位 ↗</a></li><li>§4.3; Table 3 · 印刷页 7–8 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.T3">阅读原文定位 ↗</a></li><li>Appendix 1.4; Table 6 · 印刷页 14 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#A1.T6">阅读原文定位 ↗</a></li></ul>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22experiments%22%2C%22selected%22%3A%22experiments.comparison%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-experiments.ablation"><h2 class="original">Ablation studies</h2><p class="meta">experiments.ablation · 原模板节点</p>
+<p>这是原结构或省略占位；没有为它编写实质回答。下层原问题保持可达。</p>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22experiments%22%2C%22selected%22%3A%22experiments.ablation%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-experiments.ablation.components"><h2 class="original">论文的core contributions以及一些重要的components对论文方法performance的影响</h2><p class="meta">experiments.ablation.components · 原模板节点</p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">原文结果：Table4按Mem→Graph→Stop累加，R2R SR43→50→56→58，OVON45→52→53→55；OVON加Graph时OSR72→71，加Stop时SPL34.2→33.0。
+读者解释：它测的是给定前序组件的增量。
+证据边界：没有全因子或leave-one-out，不能声称独立主效应。</div><ul><li>§4.4; Table 4 · 印刷页 8 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S4.T4">阅读原文定位 ↗</a></li></ul>
+<section class="notice"><h3>未答问题：memory、graph、stop各自独立主效应和交互是多少？</h3><p>已核范围未报告</p><p>§4.4/Table4与全文附录；只有指定顺序累加。</p><ul><li>§4.4; Table 4 · 印刷页 8 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S4.T4">阅读原文定位 ↗</a></li></ul><p>这些定位限定已检查的论文范围；not_reported是该范围内的缺口判断，不是引用不存在的否定句。</p></section>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22experiments.ablation%22%2C%22selected%22%3A%22experiments.ablation.components%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-experiments.ablation.design-choices"><h2 class="original">列出每一个pipeline module中design choices对论文方法performance的影响</h2><p class="meta">experiments.ablation.design-choices · 原模板节点</p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">原文结果：Table6报告换模型后的结果；Figure4对同批1000步轨迹截至500步进行离线重评分。
+证据边界：未报告每个模块内部设计的系统消融，例如检索项/权重、半径、图片预算、三种记忆、stop阈值及各门槛条件；这些问题保持未答。</div><ul><li>§4.4; Appendix 1.2–1.4; Appendix 2 · 印刷页 8, 13–15 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>Appendix 1.3 Step budget and observation overhead; Figure 4 · 印刷页 14 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#A1.F4">阅读原文定位 ↗</a></li><li>Appendix 1.4; Table 6 · 印刷页 14 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#A1.T6">阅读原文定位 ↗</a></li></ul><p class="notice">所问“每一个module的design choices如何影响performance”只获部分回答；固定配置并不证明最优，预算诊断也不是两预算独立运行。</p>
+<section class="notice"><h3>未答问题：各module内部超参数、关系类型、各停止条件的独立效果？</h3><p>已核范围未报告</p><p>§3–4、Appendix1–3、Tables1–6、Figures1–11。</p><ul><li>§4.4; Appendix 1.2–1.4; Appendix 2 · 印刷页 8, 13–15 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li></ul><p>这些定位限定已检查的论文范围；not_reported是该范围内的缺口判断，不是引用不存在的否定句。</p></section>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22experiments.ablation%22%2C%22selected%22%3A%22experiments.ablation.design-choices%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-limitation"><h2 class="original">Limitation</h2><p class="meta">limitation · 原模板节点</p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">作者明确局限：当前依赖预定义编排与验证，尚未实现交互中自演化。
+原文结果：错误语义终点可通过内部stop gate；传感器邻近可在benchmark成功区之外；SPL并非所有设置提高；所测模型间结果差异较大。
+证据边界：未报多次运行方差、token或时延成本、总体实机成功率；没有统计显著性检验支持“模型影响显著”的表述。
+读者核读疑点：Fig2箭头方向与正文可能不一致；Rand100 SPL有35.8/35.9/35.85报告精度差，待核，不据此认定实现错误或不同实验。</div><ul><li>§4.3; Table 2 · 印刷页 7–8 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.T2">阅读原文定位 ↗</a></li><li>§4.4; Table 4 · 印刷页 8 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S4.T4">阅读原文定位 ↗</a></li><li>Appendix 1.3 Step budget and observation overhead; Figure 4 · 印刷页 14 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#A1.F4">阅读原文定位 ↗</a></li><li>Appendix 1.4; Table 6 · 印刷页 14 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#A1.T6">阅读原文定位 ↗</a></li><li>§5.1–5.2; Figure 3 · 印刷页 8–9 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S5.F3">阅读原文定位 ↗</a></li><li>Appendix 3.3; Figure 10 · 印刷页 18 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#A3.F10">阅读原文定位 ↗</a></li><li>Appendix 1.3; Appendix 3.3; Figure 11 · 印刷页 13, 18 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#A3.F11">阅读原文定位 ↗</a></li><li>§6 · 印刷页 9 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>Appendix 1.2–1.4 · 印刷页 13–14 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>全文与Appendix 1–3核读范围 · 印刷页 1–18 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>Figure 2; §3.1.2; Algorithm 1 · 印刷页 4, 6 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S2.F2">阅读原文定位 ↗</a></li><li>Table 2; Table 4; Appendix 1.3 · 印刷页 7, 8, 14 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li></ul>
+<section class="notice"><h3>未答问题：方差/显著性、墙钟时延/费用、总体实机成功及安全指标？</h3><p>已核范围未报告</p><p>正文与全部附录、全部表格和图注。</p><ul><li>§5.1–5.2; Figure 3 · 印刷页 8–9 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S5.F3">阅读原文定位 ↗</a></li><li>§6 · 印刷页 9 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>Appendix 1.2–1.4 · 印刷页 13–14 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>全文与Appendix 1–3核读范围 · 印刷页 1–18 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li></ul><p>这些定位限定已检查的论文范围；not_reported是该范围内的缺口判断，不是引用不存在的否定句。</p></section>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22paper-analysis-tree%22%2C%22selected%22%3A%22limitation%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-abstract.contributions.3"><h2 class="original">technical contribution 3</h2><p class="meta">abstract.contributions.3 · 论文特定实例，复用 <a href="#node-abstract.contributions.1">abstract.contributions.1</a></p>
+<p>这是原结构或省略占位；没有为它编写实质回答。下层原问题保持可达。</p>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22abstract.contributions%22%2C%22selected%22%3A%22abstract.contributions.3%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-abstract.contributions.3.description"><h2 class="original">一句话介绍technical contribution3</h2><p class="meta">abstract.contributions.3.description · 论文特定实例，复用 <a href="#node-abstract.contributions.1.description">abstract.contributions.1.description</a></p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">作者主张：第三项贡献是经验性验证，即四个仿真基准与人形机器人部署。
+读者解释：它是论文贡献清单中的实验贡献，不应虚构成第三个独立算法创新。</div><ul><li>§1 contribution list; §3.1.1 · 印刷页 2–3 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>Figure 2 · 印刷页 4 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S2.F2">阅读原文定位 ↗</a></li><li>§4.3; Table 2 · 印刷页 7–8 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.T2">阅读原文定位 ↗</a></li><li>§4.3; Table 3 · 印刷页 7–8 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.T3">阅读原文定位 ↗</a></li><li>§5.1–5.2; Figure 3 · 印刷页 8–9 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S5.F3">阅读原文定位 ↗</a></li></ul>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22abstract.contributions.3%22%2C%22selected%22%3A%22abstract.contributions.3.description%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-abstract.contributions.3.benefit"><h2 class="original">一句话介绍technical contribution的好处</h2><p class="meta">abstract.contributions.3.benefit · 论文特定实例，复用 <a href="#node-abstract.contributions.1.benefit">abstract.contributions.1.benefit</a></p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">读者解释：这些结果支持共享框架在所测两类任务和指定实机平台的可行性与部分性能增益。
+证据边界：不支持全部指标领先或总体实机可靠性保证。</div><ul><li>§1 contribution list; §3.1.1 · 印刷页 2–3 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>Figure 2 · 印刷页 4 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S2.F2">阅读原文定位 ↗</a></li><li>§4.3; Table 2 · 印刷页 7–8 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.T2">阅读原文定位 ↗</a></li><li>§4.3; Table 3 · 印刷页 7–8 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.T3">阅读原文定位 ↗</a></li><li>§5.1–5.2; Figure 3 · 印刷页 8–9 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S5.F3">阅读原文定位 ↗</a></li></ul>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22abstract.contributions.3%22%2C%22selected%22%3A%22abstract.contributions.3.benefit%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-method.module3"><h2 class="original">Pipeline module 3</h2><p class="meta">method.module3 · 论文特定实例，复用 <a href="#node-method.module1">method.module1</a></p>
+<p>这是原结构或省略占位；没有为它编写实质回答。下层原问题保持可达。</p>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22method%22%2C%22selected%22%3A%22method.module3%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-method.module3.motivation"><h2 class="original">Motivation</h2><p class="meta">method.module3.motivation · 论文特定实例，复用 <a href="#node-method.module1.motivation">method.module1.motivation</a></p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">模块3（持久ST Graph）：跨子目标保留可复用空间结构、观察来源和失败适用性，而不把全部轨迹塞进每轮模型上下文。</div><ul><li>§3.2 Persistent representation · 印刷页 5 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.E2">阅读原文定位 ↗</a></li><li>§3.2 Task-conditioned retrieval; failure-aware updates · 印刷页 5 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.E3">阅读原文定位 ↗</a></li><li>Appendix 1.3; Table 5 · 印刷页 13 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#A1.T5">阅读原文定位 ↗</a></li></ul>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22method.module3%22%2C%22selected%22%3A%22method.module3.motivation%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-method.module3.how"><h2 class="original">做法</h2><p class="meta">method.module3.how · 论文特定实例，复用 <a href="#node-method.module1.how">method.module1.how</a></p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">维护place/entity、NavigableTo/ObservedFrom/Contains关系及时间；按公式(3)排地点，top3种子扩一跳、最多5地点，关联完整事件引用，失败惩罚cap1。</div><ul><li>§3.2 Persistent representation · 印刷页 5 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.E2">阅读原文定位 ↗</a></li><li>§3.2 Task-conditioned retrieval; failure-aware updates · 印刷页 5 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.E3">阅读原文定位 ↗</a></li><li>Appendix 1.3; Table 5 · 印刷页 13 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#A1.T5">阅读原文定位 ↗</a></li></ul>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22method.module3%22%2C%22selected%22%3A%22method.module3.how%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-method.module3.why"><h2 class="original">为什么能work</h2><p class="meta">method.module3.why · 论文特定实例，复用 <a href="#node-method.module1.why">method.module1.why</a></p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">读者解释：空间与时序来源有助于区分当前或旧证据，带条件的失败惩罚可以减少重试已知坏分支。
+原文结果：加图条件增量为R2R SR+6点、OVON+1点。
+证据边界：各打分项或关系类型的作用仍未隔离。</div><ul><li>§3.2 Persistent representation · 印刷页 5 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.E2">阅读原文定位 ↗</a></li><li>§3.2 Task-conditioned retrieval; failure-aware updates · 印刷页 5 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.E3">阅读原文定位 ↗</a></li><li>Appendix 1.3; Table 5 · 印刷页 13 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#A1.T5">阅读原文定位 ↗</a></li><li>§4.4; Table 4 · 印刷页 8 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S4.T4">阅读原文定位 ↗</a></li><li>§4.4; Appendix 1.2–1.4; Appendix 2 · 印刷页 8, 13–15 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li></ul><p class="notice">没有图关系、时间、显著性、failure penalty逐项消融；不能把graph收益归因到某一项。</p>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22method.module3%22%2C%22selected%22%3A%22method.module3.why%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-method.module3.advantage"><h2 class="original">technical advantage</h2><p class="meta">method.module3.advantage · 论文特定实例，复用 <a href="#node-method.module1.advantage">method.module1.advantage</a></p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">原文做法：图允许累积历史而每轮检索集合受限，也能把失败与地点、实体或关系关联供恢复使用。
+证据边界：论文没有给出无限长度正确性或计算复杂度保证。</div><ul><li>§3.2 Persistent representation · 印刷页 5 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.E2">阅读原文定位 ↗</a></li><li>§3.2 Task-conditioned retrieval; failure-aware updates · 印刷页 5 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.E3">阅读原文定位 ↗</a></li><li>Appendix 1.3; Table 5 · 印刷页 13 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#A1.T5">阅读原文定位 ↗</a></li></ul>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22method.module3%22%2C%22selected%22%3A%22method.module3.advantage%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-method.module4"><h2 class="original">Pipeline module 4</h2><p class="meta">method.module4 · 论文特定实例，复用 <a href="#node-method.module1">method.module1</a></p>
+<p>这是原结构或省略占位；没有为它编写实质回答。下层原问题保持可达。</p>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22method%22%2C%22selected%22%3A%22method.module4%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-method.module4.motivation"><h2 class="original">Motivation</h2><p class="meta">method.module4.motivation · 论文特定实例，复用 <a href="#node-method.module1.motivation">method.module1.motivation</a></p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">模块4（落地执行与终止核验）：识别和计划不能代替到达，选对视觉目标也不代表完成路线；导航和回退需要真实执行反馈。</div><ul><li>§3.3; §4.2 · 印刷页 6, 8 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>Table 1 · 印刷页 5 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.T1">阅读原文定位 ↗</a></li><li>§3.3 Evidence-based termination · 印刷页 6 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.E4">阅读原文定位 ↗</a></li><li>Appendix 1.3; Table 5 · 印刷页 13 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li></ul>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22method.module4%22%2C%22selected%22%3A%22method.module4.motivation%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-method.module4.how"><h2 class="original">做法</h2><p class="meta">method.module4.how · 论文特定实例，复用 <a href="#node-method.module1.how">method.module1.how</a></p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">原文做法：GroundingDINO/SAM、深度和ST Graph落地目标；平面使用FMM，需要时调用NavDP处理楼梯；停止需满足语义、几何和进度三项合取。几何检查优先使用可靠的新鲜深度，以2.5m为门槛；仅当深度缺失或不可靠时，才回退到投影导航目标距离1.0m门槛。可靠深度超出门槛时，不能因投影目标较近而改走回退分支放行。
+证据边界：原文称2.5m/1.0m为threshold，没有明确等号边界使用&lt;还是≤；本次未读源码，不补造比较运算符。新鲜深度可靠性标准明确为5×5 patch标准差至多0.5m。这些内部门槛区别于benchmark的指令3.0m/ObjectNav1.0m测地成功判据。</div><ul><li>§3.3; §4.2 · 印刷页 6, 8 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>Table 1 · 印刷页 5 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.T1">阅读原文定位 ↗</a></li><li>§3.3 Evidence-based termination · 印刷页 6 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.E4">阅读原文定位 ↗</a></li><li>Appendix 1.3; Table 5 · 印刷页 13 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>Appendix 2.1–2.2 · 印刷页 15 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#A2.SS1">阅读原文定位 ↗</a></li></ul>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22method.module4%22%2C%22selected%22%3A%22method.module4.how%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-method.module4.why"><h2 class="original">为什么能work</h2><p class="meta">method.module4.why · 论文特定实例，复用 <a href="#node-method.module1.why">method.module1.why</a></p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">原文结果：Fig9展示拒绝一次过早stop后成功；Table4在Mem+Graph上加Stop，两任务SR各+2点；Fig10–11展示gate通过仍失败。
+读者解释：这些证据与降低部分停止错误的机制相符。
+证据边界：不能从选择性案例及累加消融推出独立因果效应或停止正确性保证。</div><ul><li>§3.3 Evidence-based termination · 印刷页 6 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.E4">阅读原文定位 ↗</a></li><li>Appendix 1.3; Table 5 · 印刷页 13 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>§4.4; Table 4 · 印刷页 8 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S4.T4">阅读原文定位 ↗</a></li><li>Appendix 3.3; Figure 10 · 印刷页 18 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#A3.F10">阅读原文定位 ↗</a></li><li>Appendix 1.3; Appendix 3.3; Figure 11 · 印刷页 13, 18 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#A3.F11">阅读原文定位 ↗</a></li><li>Appendix 3.1; Appendix 3.3; Figure 9 · 印刷页 16, 18 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#A3.F9">阅读原文定位 ↗</a></li></ul><p class="notice">未分别消融semantic/geometric/progress、fresh-depth/fallback；个例不是反事实因果试验。</p>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22method.module4%22%2C%22selected%22%3A%22method.module4.why%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<article id="node-method.module4.advantage"><h2 class="original">technical advantage</h2><p class="meta">method.module4.advantage · 论文特定实例，复用 <a href="#node-method.module1.advantage">method.module1.advantage</a></p>
+<p class="notice">有原文定位；混合陈述按句内“作者／原文结果／读者解释／证据边界”区分</p><div class="answer">原文做法：把停止与普通动作都纳入可记录、可拒绝、可恢复的协议。
+原文结果：OVON加Stop的SPL从34.2降到33.0。
+证据边界：不能概括为全指标改善。</div><ul><li>§3.3 Evidence-based termination · 印刷页 6 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S3.E4">阅读原文定位 ↗</a></li><li>Appendix 1.3; Table 5 · 印刷页 13 · 2609.15195v3<br><a href="https://arxiv.org/pdf/2609.15195v3">阅读原文定位 ↗</a></li><li>§4.4; Table 4 · 印刷页 8 · 2609.15195v3<br><a href="https://arxiv.org/html/2609.15195v3#S4.T4">阅读原文定位 ↗</a></li></ul>
+<a href="../index.html#analysis=%7B%22paperId%22%3A%22harnessvln%22%2C%22focus%22%3A%22method.module4%22%2C%22selected%22%3A%22method.module4.advantage%22%2C%22drawer%22%3A%22evidence%22%7D">在C2树中打开此节点 →</a></article>
+<section id="source-coverage"><h2>实际核读范围</h2>
+<h3>2609.15195v3</h3><a href="https://arxiv.org/html/2609.15195v3">原文来源</a><p>已核范围</p><ul><li>Abstract; §1–6</li><li>References entries (not cited papers&#x27; full texts)</li><li>Appendix 1.1–1.4</li><li>Appendix 2.1–2.2 including two prompt boxes</li><li>Appendix 3.1–3.3</li><li>Figures 1–11 (pixels and captions)</li><li>Tables 1–6 (pixels and text)</li><li>Equations (1)–(4) and Algorithm 1</li></ul><p>边界</p><ul><li>Figure 1: tiny radar labels not independently transcribed; values checked against Tables 2–3</li><li>Figure 3: small ST Graph labels partly illegible</li><li>Figure 5: smallest event-log text not transcribed character by character</li></ul>
+<h3>2609.15195v3</h3><a href="https://arxiv.org/pdf/2609.15195v3">原文来源</a><p>已核范围</p><ul><li>PDF text for printed pages 1–18 and section/figure/table page locators</li></ul><p>边界</p><ul><li>No complete set of 18 PDF page-pixel renders; actual visual checks used original HTML/assets</li></ul>
+<h3>2609.15195v3</h3><a href="https://arxiv.org/abs/2609.15195v3">原文来源</a><p>已核范围</p><ul><li>Version metadata and submission history</li></ul><p>边界</p><ul><li>Formal publication not verified; no v1/v2/v3 difference audit</li></ul>
+</section><section><h2>其余38篇的解析状态</h2>
+<article id="paper-navharness"><h3>NavHarness</h3><p>解析树尚未建立。原有目录、已读证据及Stage状态未改；没有复用HarnessVLN答案。</p><a href="../all-papers.html#paper-navharness">查看原记录证据</a></article>
+<article id="paper-agenticnav-tool-harness"><h3>AgenticNav</h3><p>解析树尚未建立。原有目录、已读证据及Stage状态未改；没有复用HarnessVLN答案。</p><a href="../all-papers.html#paper-agenticnav-tool-harness">查看原记录证据</a></article>
+<article id="paper-qwen-robotnav"><h3>Qwen-RobotNav</h3><p>解析树尚未建立。原有目录、已读证据及Stage状态未改；没有复用HarnessVLN答案。</p><a href="../all-papers.html#paper-qwen-robotnav">查看原记录证据</a></article>
+<article id="paper-holoagent-0"><h3>HoloAgent-0</h3><p>解析树尚未建立。原有目录、已读证据及Stage状态未改；没有复用HarnessVLN答案。</p><a href="../all-papers.html#paper-holoagent-0">查看原记录证据</a></article>
+<article id="paper-krantz2023ivln"><h3>IVLN</h3><p>解析树尚未建立。原有目录、已读证据及Stage状态未改；没有复用HarnessVLN答案。</p><a href="../all-papers.html#paper-krantz2023ivln">查看原记录证据</a></article>
+<article id="paper-goat"><h3>GOAT</h3><p>解析树尚未建立。原有目录、已读证据及Stage状态未改；没有复用HarnessVLN答案。</p><a href="../all-papers.html#paper-goat">查看原记录证据</a></article>
+<article id="paper-goat-bench"><h3>GOAT-Bench</h3><p>解析树尚未建立。原有目录、已读证据及Stage状态未改；没有复用HarnessVLN答案。</p><a href="../all-papers.html#paper-goat-bench">查看原记录证据</a></article>
+<article id="paper-krantz2020vlnce"><h3>VLN-CE</h3><p>解析树尚未建立。原有目录、已读证据及Stage状态未改；没有复用HarnessVLN答案。</p><a href="../all-papers.html#paper-krantz2020vlnce">查看原记录证据</a></article>
+<article id="paper-batra2020objectnav"><h3>ObjectNav Revisited</h3><p>解析树尚未建立。原有目录、已读证据及Stage状态未改；没有复用HarnessVLN答案。</p><a href="../all-papers.html#paper-batra2020objectnav">查看原记录证据</a></article>
+<article id="paper-navgpt"><h3>NavGPT</h3><p>解析树尚未建立。原有目录、已读证据及Stage状态未改；没有复用HarnessVLN答案。</p><a href="../all-papers.html#paper-navgpt">查看原记录证据</a></article>
+<article id="paper-mapgpt"><h3>MapGPT</h3><p>解析树尚未建立。原有目录、已读证据及Stage状态未改；没有复用HarnessVLN答案。</p><a href="../all-papers.html#paper-mapgpt">查看原记录证据</a></article>
+<article id="paper-discussnav"><h3>DiscussNav</h3><p>解析树尚未建立。原有目录、已读证据及Stage状态未改；没有复用HarnessVLN答案。</p><a href="../all-papers.html#paper-discussnav">查看原记录证据</a></article>
+<article id="paper-instructnav"><h3>InstructNav</h3><p>解析树尚未建立。原有目录、已读证据及Stage状态未改；没有复用HarnessVLN答案。</p><a href="../all-papers.html#paper-instructnav">查看原记录证据</a></article>
+<article id="paper-esc"><h3>ESC</h3><p>解析树尚未建立。原有目录、已读证据及Stage状态未改；没有复用HarnessVLN答案。</p><a href="../all-papers.html#paper-esc">查看原记录证据</a></article>
+<article id="paper-l3mvn"><h3>L3MVN</h3><p>解析树尚未建立。原有目录、已读证据及Stage状态未改；没有复用HarnessVLN答案。</p><a href="../all-papers.html#paper-l3mvn">查看原记录证据</a></article>
+<article id="paper-lfg"><h3>LFG</h3><p>解析树尚未建立。原有目录、已读证据及Stage状态未改；没有复用HarnessVLN答案。</p><a href="../all-papers.html#paper-lfg">查看原记录证据</a></article>
+<article id="paper-voronav"><h3>VoroNav</h3><p>解析树尚未建立。原有目录、已读证据及Stage状态未改；没有复用HarnessVLN答案。</p><a href="../all-papers.html#paper-voronav">查看原记录证据</a></article>
+<article id="paper-trihelper"><h3>TriHelper</h3><p>解析树尚未建立。原有目录、已读证据及Stage状态未改；没有复用HarnessVLN答案。</p><a href="../all-papers.html#paper-trihelper">查看原记录证据</a></article>
+<article id="paper-imaginenav"><h3>ImagineNav</h3><p>解析树尚未建立。原有目录、已读证据及Stage状态未改；没有复用HarnessVLN答案。</p><a href="../all-papers.html#paper-imaginenav">查看原记录证据</a></article>
+<article id="paper-vlmnav"><h3>VLMnav</h3><p>解析树尚未建立。原有目录、已读证据及Stage状态未改；没有复用HarnessVLN答案。</p><a href="../all-papers.html#paper-vlmnav">查看原记录证据</a></article>
+<article id="paper-navgpt2"><h3>NavGPT-2</h3><p>解析树尚未建立。原有目录、已读证据及Stage状态未改；没有复用HarnessVLN答案。</p><a href="../all-papers.html#paper-navgpt2">查看原记录证据</a></article>
+<article id="paper-engineering-outruns-intelligence"><h3>Engineering Outruns Intelligence</h3><p>解析树尚未建立。原有目录、已读证据及Stage状态未改；没有复用HarnessVLN答案。</p><a href="../all-papers.html#paper-engineering-outruns-intelligence">查看原记录证据</a></article>
+<article id="paper-ma2019regretful"><h3>Regretful Agent</h3><p>解析树尚未建立。原有目录、已读证据及Stage状态未改；没有复用HarnessVLN答案。</p><a href="../all-papers.html#paper-ma2019regretful">查看原记录证据</a></article>
+<article id="paper-rana2023sayplan"><h3>SayPlan</h3><p>解析树尚未建立。原有目录、已读证据及Stage状态未改；没有复用HarnessVLN答案。</p><a href="../all-papers.html#paper-rana2023sayplan">查看原记录证据</a></article>
+<article id="paper-rajvanshi2024saynav"><h3>SayNav</h3><p>解析树尚未建立。原有目录、已读证据及Stage状态未改；没有复用HarnessVLN答案。</p><a href="../all-papers.html#paper-rajvanshi2024saynav">查看原记录证据</a></article>
+<article id="paper-li2024memonav"><h3>MemoNav</h3><p>解析树尚未建立。原有目录、已读证据及Stage状态未改；没有复用HarnessVLN答案。</p><a href="../all-papers.html#paper-li2024memonav">查看原记录证据</a></article>
+<article id="paper-werby2024hovsg"><h3>HOV-SG</h3><p>解析树尚未建立。原有目录、已读证据及Stage状态未改；没有复用HarnessVLN答案。</p><a href="../all-papers.html#paper-werby2024hovsg">查看原记录证据</a></article>
+<article id="paper-anwar2025remembr"><h3>ReMEmbR</h3><p>解析树尚未建立。原有目录、已读证据及Stage状态未改；没有复用HarnessVLN答案。</p><a href="../all-papers.html#paper-anwar2025remembr">查看原记录证据</a></article>
+<article id="paper-xu2026memoir"><h3>Memoir</h3><p>解析树尚未建立。原有目录、已读证据及Stage状态未改；没有复用HarnessVLN答案。</p><a href="../all-papers.html#paper-xu2026memoir">查看原记录证据</a></article>
+<article id="paper-wang2026lmee"><h3>LMEE / MemoryExplorer</h3><p>解析树尚未建立。原有目录、已读证据及Stage状态未改；没有复用HarnessVLN答案。</p><a href="../all-papers.html#paper-wang2026lmee">查看原记录证据</a></article>
+<article id="paper-navmcp"><h3>NavMCP</h3><p>解析树尚未建立。原有目录、已读证据及Stage状态未改；没有复用HarnessVLN答案。</p><a href="../all-papers.html#paper-navmcp">查看原记录证据</a></article>
+<article id="paper-sap-nav"><h3>SAP-Nav</h3><p>解析树尚未建立。原有目录、已读证据及Stage状态未改；没有复用HarnessVLN答案。</p><a href="../all-papers.html#paper-sap-nav">查看原记录证据</a></article>
+<article id="paper-hypothesis-graph-refinement"><h3>HGR</h3><p>解析树尚未建立。原有目录、已读证据及Stage状态未改；没有复用HarnessVLN答案。</p><a href="../all-papers.html#paper-hypothesis-graph-refinement">查看原记录证据</a></article>
+<article id="paper-safevantage"><h3>SafeVantage</h3><p>解析树尚未建立。原有目录、已读证据及Stage状态未改；没有复用HarnessVLN答案。</p><a href="../all-papers.html#paper-safevantage">查看原记录证据</a></article>
+<article id="paper-profocus"><h3>ProFocus</h3><p>解析树尚未建立。原有目录、已读证据及Stage状态未改；没有复用HarnessVLN答案。</p><a href="../all-papers.html#paper-profocus">查看原记录证据</a></article>
+<article id="paper-arxiv:2609.39915"><h3>NavHarness · Adaptive Goals</h3><p>解析树尚未建立。原有目录、已读证据及Stage状态未改；没有复用HarnessVLN答案。</p><a href="../all-papers.html#paper-arxiv:2609.39915">查看原记录证据</a></article>
+<article id="paper-3d-mem"><h3>3D-Mem</h3><p>解析树尚未建立。原有目录、已读证据及Stage状态未改；没有复用HarnessVLN答案。</p><a href="../all-papers.html#paper-3d-mem">查看原记录证据</a></article>
+<article id="paper-ham-vln"><h3>HAM-VLN</h3><p>解析树尚未建立。原有目录、已读证据及Stage状态未改；没有复用HarnessVLN答案。</p><a href="../all-papers.html#paper-ham-vln">查看原记录证据</a></article>
+</section><p>方法来源：<a href="https://pengsida.notion.site/d192db870bc64436ae4a4a590b36772a">彭思达公开论文解析树</a>。转录机器ID与证据字段属于实现层，原图没有这些ID；原标签、父子层级及顺序未改。可编辑钉钉模板未获权限，公开原图已核读。</p></body></html>
