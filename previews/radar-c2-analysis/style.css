@@ -79,3 +79,16 @@ main{max-width:1760px}.masthead{padding:11px 24px}.brand{font-size:22px}body>.no
 .goal-siblings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;list-style:none;padding:8px 0 0;margin:8px 0 0;border-top:1px solid #d8cbb8;font-size:12px;color:#805439}
 .goal-siblings li{min-width:0;overflow-wrap:anywhere}
 @media(max-width:600px){.global-tabs,.is-focused .global-tabs{grid-template-columns:minmax(0,1fr)}.goal-tab-group{grid-column:1;gap:6px}.single-paper-tab-group{gap:6px}.shared-goal,.single-paper-context{padding:9px 10px}.shared-goal h2,.single-paper-context h2{font-size:15px}.shared-goal p,.single-paper-context p{font-size:12px}.goal-siblings{gap:6px;font-size:11px}.single-paper-tab-group button{min-height:64px}}
+/* Give the actual tree more of the first screen while retaining goal/boundary text. */
+.masthead{padding:10px 18px}.entry-intro{margin:10px 0 8px}.entry-intro h1{font-size:22px}.entry-intro p:last-child{font-size:13px}
+main>p.notice{padding:7px 12px;margin:8px 0}.entry-help{margin:7px 0}.global-tabs,.is-focused .global-tabs{gap:8px;margin-top:6px}
+.goal-tab-group,.single-paper-tab-group{gap:6px;padding-top:5px}.shared-goal,.single-paper-context{padding:6px 10px}
+.shared-goal h2,.single-paper-context h2{font-size:16px;margin-bottom:3px}.shared-goal p,.single-paper-context p{line-height:1.4}.shared-goal .goal-boundary{margin-top:2px}
+.goal-siblings{padding-top:4px;margin-top:4px}.global-tabs button{min-height:64px;padding:8px 12px}.global-tabs button span{margin-top:2px}.global-tabs button small{margin-top:2px}
+@media(min-width:1001px){.tree-workspace,.tree-workspace.is-focused{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)}}
+.atlas-legend{color:#76634f}.atlas-full .atlas-legend{font-size:12px}
+
+/* At the field root, use the empty detail column for readable global labels. */
+.tree-workspace.is-root-overview .global-columns{grid-column:1/-1}
+.tree-workspace.is-root-overview .workspace{display:none}
+.tree-workspace.is-root-overview .atlas-semantic .atlas-svg{max-width:1000px;margin:0 auto}
