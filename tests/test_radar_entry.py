@@ -17,7 +17,7 @@ class RadarEntryTests(unittest.TestCase):
  def test_empty_daily_shows_actual_recent_themes_before_archive(self):
   before=copy.deepcopy((self.wi,self.wr,self.di,self.dr))
   page=daily_landing(self.wi,self.wr,self.di,self.dr)
-  weekly=self.wr['2026-10-04'];daily=self.dr[self.di['latest']]
+  weekly=self.dr['2026-10-01'];daily=self.dr[self.di['latest']]
   self.assertIn('不是本期新增',page)
   self.assertIn(weekly['research_overview']['headline'],page)
   self.assertEqual(page.count('class="radar-theme"'),len(weekly['research_overview']['themes']))
@@ -29,8 +29,8 @@ class RadarEntryTests(unittest.TestCase):
  def test_empty_daily_does_not_claim_weekly_counts_are_daily(self):
   page=daily_landing(self.wi,self.wr,self.di,self.dr)
   self.assertIn('最近24小时没有新增候选',page)
-  self.assertIn('2026-10-04 / WEEKLY RESEARCH RADAR',page)
-  self.assertIn('238 条候选',page)
+  self.assertIn('2026-10-01 / Research Radar',page);self.assertNotIn('data-radar-period="weekly"',page)
+  self.assertIn('35 条窗口候选',page)
   self.assertNotIn('2026-10-05 / WEEKLY RESEARCH RADAR',page)
  def test_daily_current_navigation_and_home_link(self):
   page=daily_landing(self.wi,self.wr,self.di,self.dr)
@@ -41,11 +41,11 @@ class RadarEntryTests(unittest.TestCase):
   self.assertIn('frontier/index.html" aria-current="page"',page)
  def test_ready_daily_unchanged(self):
   di=copy.deepcopy(self.di);di['latest']='2026-09-30'
-  self.assertEqual(daily_landing(self.wi,self.wr,di,self.dr),navigation('../../','daily')+section(self.dr[di['latest']],di,'../../',archive=True))
+  self.assertEqual(daily_landing(self.wi,self.wr,di,self.dr),navigation('../../','daily')+section(self.dr[di['latest']],di,'../../'))
  def test_failed_daily_not_hidden_as_zero(self):
   for status in ('error','stale'):
    dr=copy.deepcopy(self.dr);dr[self.di['latest']]['status']=status
-   self.assertEqual(daily_landing(self.wi,self.wr,self.di,dr),navigation('../../','daily')+section(dr[self.di['latest']],self.di,'../../',archive=True))
+   page=daily_landing(self.wi,self.wr,self.di,dr);self.assertIn('当天更新失败' if status=='error' else '当天更新未完成',page);self.assertIn('历史日报',page);self.assertNotIn('data-radar-period="weekly"',page)
  def test_missing_weekly_falls_back_with_original_daily_date(self):
   page=daily_landing(None,{},self.di,self.dr)
   self.assertIn('历史日报',page);self.assertIn('不是当天新发现',page)
