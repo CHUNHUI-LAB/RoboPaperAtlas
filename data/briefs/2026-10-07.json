@@ -1,0 +1,1380 @@
+{
+  "schema_version": "1.1",
+  "id": "arxiv-daily-2026-10-07",
+  "date": "2026-10-07",
+  "title": "arXiv 研究总览 · 2026-10-07",
+  "status": "ready",
+  "generated_at": "2026-10-07T08:48:26Z",
+  "language": "zh-CN",
+  "window": {
+    "start": "2026-10-06T08:00:00Z",
+    "end": "2026-10-07T08:00:00Z",
+    "timezone": "UTC",
+    "date_field": "updated_at",
+    "inclusive": true,
+    "duration_hours": 24
+  },
+  "source_snapshot": {
+    "name": "frontier.json",
+    "sha256": "bc30a91450a4241bb8de95a9bbcc82d1314de7129d60f28a357fee019d0290cb",
+    "generated_at": "2026-10-07T08:44:03Z",
+    "fetched_at": "2026-10-07T08:44:03Z",
+    "last_successful_fetch_at": "2026-10-07T08:44:03Z",
+    "status": "ok",
+    "coverage": {
+      "window_start": "2026-09-30T08:00:00Z",
+      "window_end": "2026-10-07T08:00:00Z",
+      "window_inclusive": true,
+      "date_field": "updated_at",
+      "complete": true,
+      "truncated": false,
+      "api_total_results": 14472,
+      "fetched_entries": 400,
+      "pages_fetched": 4,
+      "window_entries": 382,
+      "matched_entries": 236,
+      "displayed_entries": 236,
+      "stopped_at": "reached_window_start",
+      "source": "arxiv_api",
+      "limitations": [
+        "Candidates are heuristic title-and-abstract matches, not reviewed or deep-read recommendations.",
+        "Coverage is limited to the declared arXiv query and categories; indexing delay and terminology can omit relevant work.",
+        "This feed discovers preprints. Curated reading should prefer an available formally published version.",
+        "New/revision describes the retrieved arXiv version, not novelty, publication acceptance, or first appearance on this site."
+      ]
+    },
+    "query": "(cat:cs.RO OR cat:cs.CV OR cat:cs.AI OR cat:cs.LG OR cat:cs.CL) AND (all:\"vision-language navigation\" OR all:\"vision language navigation\" OR all:VLN OR all:ObjectNav OR all:\"object-goal\" OR all:\"object goal\" OR ((ti:navigation OR abs:navigation) AND (all:agent OR all:memory OR all:feedback OR all:harness OR all:reflection)) OR all:\"spatial memory\" OR all:\"episodic memory\" OR all:\"mobile manipulation\" OR all:\"mobile manipulator\" OR all:quadruped OR all:\"whole-body\" OR all:\"whole body\" OR all:\"end-effector\" OR all:\"end effector\" OR all:\"vision-language-action\" OR all:\"vision language action\" OR all:\"world-action model\" OR all:\"world action model\" OR ((all:VLA OR all:MoE OR all:\"mixture of experts\" OR all:\"mixture-of-experts\" OR all:\"world model\" OR all:\"world models\") AND (all:robot OR all:robotic OR all:robotics OR all:manipulation OR all:navigation OR all:embodied)))",
+    "rule_version": "2026-09-30.3"
+  },
+  "counts": {
+    "source_seven_day_candidates": 236,
+    "window_candidates": 24,
+    "new": 18,
+    "revisions": 6,
+    "selected_new": 4,
+    "selected_revisions": 1,
+    "complete_abstracts_checked_for_selection": 5
+  },
+  "coverage_note": "官方 API 串行扫描4页400条；七天窗口内382条，既有九类规则保留236条，查询窗口扫描完整且未截断。API全时段总结果14472不是七天数量。24小时窗口内24条均核对元数据、摘要片段和固定版本完整官方摘要；九类计数多标签重叠。",
+  "overview": "本窗口可并读的问题是：机器人用什么信号约束动作，以及预测、训练和部署评价是否真的对准执行。样本分别把语言意图、几何、视觉动态与接触反馈接入策略，也讨论全身任务的阶段衔接、物理扰动和算力预算。世界模型组尤其提醒：看起来合理的视频、准确的偏好判断和可执行动作是不同证据。以下按问题组织24篇摘要，保留任务、形态与评价条件的差异；这些是窗口内方法对照，不能拼成统一排名或跨期趋势。",
+  "new_papers": [
+    {
+      "versioned_id": "2610.08780v1",
+      "title": "DepthWorld: 3D World Model for Robot Manipulation",
+      "authors": [
+        "Jai Bardhan",
+        "Josef Sivic",
+        "Vladimir Petrik"
+      ],
+      "first_submitted_at": "2026-10-06T17:59:00Z",
+      "updated_at": "2026-10-06T17:59:00Z",
+      "change_type": "new",
+      "source_url": "https://arxiv.org/abs/2610.08780",
+      "version_url": "https://arxiv.org/abs/2610.08780v1",
+      "arxiv_id": "2610.08780",
+      "arxiv_version": 1,
+      "short_title": "DepthWorld：把深度几何接入视频预测",
+      "problem": "逐帧看似正确的视频未必形成一致的三维世界。",
+      "author_proposal": "联合校准运动学与外参构造 DROID-3D，再以空间潜变量拼接联合预测 RGB 与深度。",
+      "relevance": "适合核对几何监督如何改善预测，以及这种改善是否在后续控制中成立。",
+      "evidence_limit": "仅核对该固定版本完整官方摘要；未阅读全文、代码或实验，作者结果未经独立验证。",
+      "focus_tags": [
+        "robot_world_models"
+      ],
+      "evidence_level": "abstract_only",
+      "author_proposal_attribution": "author_claim",
+      "relevance_attribution": "curator_inference",
+      "evidence": {
+        "level": "primary_complete_abstract",
+        "label": "官方 API 完整摘要",
+        "source_type": "arxiv_api_atom",
+        "source_url": "https://arxiv.org/abs/2610.08780v1",
+        "retrieved_at": "2026-10-07T08:43:25Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "abstract_chars": 1435,
+        "abstract_sha256": "6ed54ab38c4123b4e77bf474f44e5f5288d680c954768c27c54d0c002b850497"
+      },
+      "curated_catalog_overlap": {
+        "already_present": false,
+        "catalog_id": null
+      }
+    },
+    {
+      "versioned_id": "2610.08220v1",
+      "title": "VOMMI: Collecting and Leveraging Portable Demonstrations for Mobile Manipulation",
+      "authors": [
+        "Yutian Zhang",
+        "Xingrui Xiong",
+        "Siyuan Ma",
+        "Yang Li",
+        "Jiawen Wen",
+        "Jiaqi Zhai",
+        "Liwen Yang",
+        "Ce Hao",
+        "Haozhen Chi",
+        "Yangkun Zhu",
+        "Yifan Zhu",
+        "Xiaowen Chu",
+        "Dong Wei",
+        "Qiaojun Yu",
+        "Dibo Hou"
+      ],
+      "first_submitted_at": "2026-10-06T12:10:48Z",
+      "updated_at": "2026-10-06T12:10:48Z",
+      "change_type": "new",
+      "source_url": "https://arxiv.org/abs/2610.08220",
+      "version_url": "https://arxiv.org/abs/2610.08220v1",
+      "arxiv_id": "2610.08220",
+      "arxiv_version": 1,
+      "short_title": "VOMMI：从便携 RGB 示范到移动底盘条件",
+      "problem": "廉价视觉示范受里程计漂移和运动监督不一致影响。",
+      "author_proposal": "以稀疏锚点离线重建示范轨迹，并以因果局部运动 token 只调节底盘动作分支。",
+      "relevance": "可进一步检查示范设备、锚点来源及底盘/末端误差的分工，不能省略数据条件。",
+      "evidence_limit": "仅核对该固定版本完整官方摘要；未阅读全文、代码或实验，作者结果未经独立验证。",
+      "focus_tags": [
+        "mobile_manipulation",
+        "end_effector_trajectories",
+        "robot_vla"
+      ],
+      "evidence_level": "abstract_only",
+      "author_proposal_attribution": "author_claim",
+      "relevance_attribution": "curator_inference",
+      "evidence": {
+        "level": "primary_complete_abstract",
+        "label": "官方 API 完整摘要",
+        "source_type": "arxiv_api_atom",
+        "source_url": "https://arxiv.org/abs/2610.08220v1",
+        "retrieved_at": "2026-10-07T08:43:25Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "abstract_chars": 1895,
+        "abstract_sha256": "51ca8ad62dd6142308598f97462bc032650d9884691d0ce5a4999e71d10eddcf"
+      },
+      "curated_catalog_overlap": {
+        "already_present": false,
+        "catalog_id": null
+      }
+    },
+    {
+      "versioned_id": "2610.08320v1",
+      "title": "Humanoid Horizon: Extending Task Horizon in Whole-Body Loco-Manipulation via Parallel Training, Dynamic Starting, and Reward Gating",
+      "authors": [
+        "Haozhuo Zhang",
+        "Qiang Zhang",
+        "Jian Tang",
+        "Mingzhe Ni",
+        "Michele Caprio",
+        "Angelo Cangelosi",
+        "Wei Pan"
+      ],
+      "first_submitted_at": "2026-10-06T13:22:30Z",
+      "updated_at": "2026-10-06T13:22:30Z",
+      "change_type": "new",
+      "source_url": "https://arxiv.org/abs/2610.08320",
+      "version_url": "https://arxiv.org/abs/2610.08320v1",
+      "arxiv_id": "2610.08320",
+      "arxiv_version": 1,
+      "short_title": "Humanoid Horizon：让后续阶段持续获得训练",
+      "problem": "顺序搬运训练可能偏向早期奖励，聚焦后期又会遗忘早期技能。",
+      "author_proposal": "并行阶段流共享策略，以动态初态扩展衔接，并在已放物体被扰动后关闭后续奖励。",
+      "relevance": "适合区分逐阶段成功与整段任务成功，核对任务长度增加时的失败来源。",
+      "evidence_limit": "仅核对该固定版本完整官方摘要；未阅读全文、代码或实验，作者结果未经独立验证。",
+      "focus_tags": [
+        "mobile_manipulation"
+      ],
+      "evidence_level": "abstract_only",
+      "author_proposal_attribution": "author_claim",
+      "relevance_attribution": "curator_inference",
+      "evidence": {
+        "level": "primary_complete_abstract",
+        "label": "官方 API 完整摘要",
+        "source_type": "arxiv_api_atom",
+        "source_url": "https://arxiv.org/abs/2610.08320v1",
+        "retrieved_at": "2026-10-07T08:43:25Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "abstract_chars": 1858,
+        "abstract_sha256": "467dee047c350c1388c363908dae5b34bbad3b510da5712312e1760086fdb4b7"
+      },
+      "curated_catalog_overlap": {
+        "already_present": false,
+        "catalog_id": null
+      }
+    },
+    {
+      "versioned_id": "2610.07946v1",
+      "title": "Adapting Vision-Language-Action Models to Unknown Visual Disruptions During Execution",
+      "authors": [
+        "Ahin Lee",
+        "Jinwoo Seo",
+        "Youngsoo Jang",
+        "Taesik Gong"
+      ],
+      "first_submitted_at": "2026-10-06T08:21:19Z",
+      "updated_at": "2026-10-06T08:21:19Z",
+      "change_type": "new",
+      "source_url": "https://arxiv.org/abs/2610.07946",
+      "version_url": "https://arxiv.org/abs/2610.07946v1",
+      "arxiv_id": "2610.07946",
+      "arxiv_version": 1,
+      "short_title": "SALT：用尚未执行的动作片段适配视觉变化",
+      "problem": "机器人执行中出现未知视觉变化时缺少即时专家监督。",
+      "author_proposal": "把上一动作块剩余后缀作为对齐目标进行测试时适配，再重生成动作并逐次传播纠正。",
+      "relevance": "适合研究不确定观测下的更新门与恢复边界，尤其要检查旧计划本身错误时的表现。",
+      "evidence_limit": "仅核对该固定版本完整官方摘要；未阅读全文、代码或实验，作者结果未经独立验证。",
+      "focus_tags": [
+        "robot_vla"
+      ],
+      "evidence_level": "abstract_only",
+      "author_proposal_attribution": "author_claim",
+      "relevance_attribution": "curator_inference",
+      "evidence": {
+        "level": "primary_complete_abstract",
+        "label": "官方 API 完整摘要",
+        "source_type": "arxiv_api_atom",
+        "source_url": "https://arxiv.org/abs/2610.07946v1",
+        "retrieved_at": "2026-10-07T08:43:25Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "abstract_chars": 1507,
+        "abstract_sha256": "74c2332e7a4700e0f6a56c9e3824f1af1e3baaf6312d5f959c0c6f8d3120f9c1"
+      },
+      "curated_catalog_overlap": {
+        "already_present": false,
+        "catalog_id": null
+      }
+    }
+  ],
+  "revised_papers": [
+    {
+      "versioned_id": "2607.02092v4",
+      "title": "Guided Action Flow: Value-Guided Sampling for Frozen Vision-Language-Action Policies",
+      "authors": [
+        "Liuhaichen Yang",
+        "Zhuang Jiang",
+        "Chenchao Sheng",
+        "Ningwei Bai",
+        "Qichen Yin",
+        "Hanbo Ma",
+        "Junkai Liu",
+        "Junkai Sun",
+        "Dongcheng Lyu",
+        "Yi Dong",
+        "Zezhi Tang"
+      ],
+      "first_submitted_at": "2026-07-02T12:30:50Z",
+      "updated_at": "2026-10-06T13:43:17Z",
+      "change_type": "revision",
+      "source_url": "https://arxiv.org/abs/2607.02092",
+      "version_url": "https://arxiv.org/abs/2607.02092v4",
+      "arxiv_id": "2607.02092",
+      "arxiv_version": 4,
+      "short_title": "Guided Action Flow：冻结策略上的价值引导采样",
+      "problem": "进一步改善 VLA 行为常需更新大策略，而流式动作生成仍有推理期引导空间。",
+      "author_proposal": "从机器人 rollout 学习紧凑动作价值 critic，用其梯度引导采样并保持 VLA 冻结。",
+      "relevance": "可核对交互数据成本、引导梯度和推理预算；当前是v4摘要，未确认机制或结果是否此次新增。",
+      "evidence_limit": "仅核对该固定版本完整官方摘要；未阅读全文、代码或实验，作者结果未经独立验证。未做逐版比较，不能据此判断本次修订新增内容。",
+      "focus_tags": [
+        "robot_vla"
+      ],
+      "evidence_level": "abstract_only",
+      "author_proposal_attribution": "author_claim",
+      "relevance_attribution": "curator_inference",
+      "evidence": {
+        "level": "primary_complete_abstract",
+        "label": "官方 API 完整摘要",
+        "source_type": "arxiv_api_atom",
+        "source_url": "https://arxiv.org/abs/2607.02092v4",
+        "retrieved_at": "2026-10-07T08:43:25Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "abstract_chars": 1205,
+        "abstract_sha256": "0d9095ffc208580d8638eba7ca542bd2c847e5eeb899737a025c735cbb322a68"
+      },
+      "curated_catalog_overlap": {
+        "already_present": false,
+        "catalog_id": null
+      },
+      "revision_comparison": {
+        "performed": false,
+        "changes_verified": []
+      }
+    }
+  ],
+  "reading_priority": [
+    {
+      "audience": "动作与闭环适配",
+      "arxiv_ids": [
+        "2610.08780",
+        "2610.07946",
+        "2607.02092"
+      ],
+      "text": "分别核对几何预测、自生成监督与价值引导怎样进入执行，以及它们各自需要的数据和计算条件。"
+    },
+    {
+      "audience": "移动操作与全身任务",
+      "arxiv_ids": [
+        "2610.08220",
+        "2610.08320"
+      ],
+      "text": "区分底盘动作适配、末端评价和多阶段任务成功，避免把一种改善外推到整个系统。"
+    }
+  ],
+  "evidence_note": "研究总览完整摘要覆盖24篇，补充速览具体展开其中5篇（4首版、1修订）；两个计数分别对应总览和选择。未阅读全文、代码、实验或逐版差异，未作跨期比较。24个固定版本均未出现在既有日报候选清单中；TAPDreamer的v1曾在前一期出现，不将v2自动解释为新贡献。",
+  "limitations": [
+    "仅覆盖声明的五个 arXiv 类别、检索式及 UTC 更新时间窗口；索引延迟、术语差异和本地规则可能漏检，查询扫描完整不代表全领域搜全。",
+    "24条窗口候选均核对元数据、摘要片段及完整官方摘要；未阅读全文、代码或实验，作者报告的效果未经独立验证。",
+    "首版与修订只表示 arXiv 版本状态，不表示创新性、录用或同行评审；正式精读应优先核验会议或期刊版本。",
+    "本期没有可比跨期窗口，也没有逐版差异检查；不作增长、热度、领先性或方法排名判断，不把修订摘要中的机制称为本次新增。",
+    "九类分布按保留的原始 matched_topics 重算，多标签计数重叠；关键词会误分或漏分，零命中不表示该方向没有研究。"
+  ],
+  "candidate_ids": [
+    "2610.08780v1",
+    "2610.06814v2",
+    "2610.08726v1",
+    "2610.08653v1",
+    "2610.08526v1",
+    "2610.08444v1",
+    "2610.08441v1",
+    "2610.08425v1",
+    "2607.02092v4",
+    "2610.08320v1",
+    "2610.08220v1",
+    "2609.15012v3",
+    "2610.08150v1",
+    "2610.08133v1",
+    "2610.08120v1",
+    "2509.04094v3",
+    "2610.08119v1",
+    "2610.08110v1",
+    "2610.08003v1",
+    "2606.03240v2",
+    "2610.07969v1",
+    "2610.07946v1",
+    "2610.03797v2",
+    "2610.07922v1"
+  ],
+  "research_overview": {
+    "headline": "把动作、预测与评价对齐：先问证据约束了哪里",
+    "executive_summary": "本窗口可并读的问题是：机器人用什么信号约束动作，以及预测、训练和部署评价是否真的对准执行。样本分别把语言意图、几何、视觉动态与接触反馈接入策略，也讨论全身任务的阶段衔接、物理扰动和算力预算。世界模型组尤其提醒：看起来合理的视频、准确的偏好判断和可执行动作是不同证据。以下按问题组织24篇摘要，保留任务、形态与评价条件的差异；这些是窗口内方法对照，不能拼成统一排名或跨期趋势。",
+    "coverage": {
+      "candidate_metadata_screened": 24,
+      "complete_abstracts_checked": 24,
+      "full_papers_read": 0,
+      "revision_diffs_checked": 0,
+      "comparison_window_available": false,
+      "topic_count_method": "existing_title_abstract_keyword_heuristic_multilabel",
+      "count_denominator": 24
+    },
+    "topic_distribution": [
+      {
+        "topic": "vln_objectnav",
+        "label": "VLN / ObjectNav",
+        "count": 0,
+        "new": 0,
+        "revisions": 0,
+        "candidate_ids": []
+      },
+      {
+        "topic": "navigation_agents",
+        "label": "Navigation agents / harnesses",
+        "count": 1,
+        "new": 1,
+        "revisions": 0,
+        "candidate_ids": [
+          "2610.08110v1"
+        ]
+      },
+      {
+        "topic": "spatial_episodic_memory",
+        "label": "Spatial / episodic memory and feedback",
+        "count": 0,
+        "new": 0,
+        "revisions": 0,
+        "candidate_ids": []
+      },
+      {
+        "topic": "mobile_manipulation",
+        "label": "Quadruped-arm / mobile manipulation",
+        "count": 6,
+        "new": 5,
+        "revisions": 1,
+        "candidate_ids": [
+          "2610.08441v1",
+          "2610.08320v1",
+          "2610.08220v1",
+          "2509.04094v3",
+          "2610.08003v1",
+          "2610.07969v1"
+        ]
+      },
+      {
+        "topic": "whole_body_control",
+        "label": "Whole-body control",
+        "count": 3,
+        "new": 2,
+        "revisions": 1,
+        "candidate_ids": [
+          "2610.08653v1",
+          "2610.08120v1",
+          "2509.04094v3"
+        ]
+      },
+      {
+        "topic": "end_effector_trajectories",
+        "label": "End-effector trajectories",
+        "count": 1,
+        "new": 1,
+        "revisions": 0,
+        "candidate_ids": [
+          "2610.08220v1"
+        ]
+      },
+      {
+        "topic": "robot_vla",
+        "label": "Robot VLA",
+        "count": 11,
+        "new": 8,
+        "revisions": 3,
+        "candidate_ids": [
+          "2610.08726v1",
+          "2610.08526v1",
+          "2610.08444v1",
+          "2610.08425v1",
+          "2607.02092v4",
+          "2610.08220v1",
+          "2609.15012v3",
+          "2610.08150v1",
+          "2610.08133v1",
+          "2606.03240v2",
+          "2610.07946v1"
+        ]
+      },
+      {
+        "topic": "robot_moe",
+        "label": "Robot mixture-of-experts",
+        "count": 0,
+        "new": 0,
+        "revisions": 0,
+        "candidate_ids": []
+      },
+      {
+        "topic": "robot_world_models",
+        "label": "Robot world models",
+        "count": 5,
+        "new": 3,
+        "revisions": 2,
+        "candidate_ids": [
+          "2610.08780v1",
+          "2610.06814v2",
+          "2610.08119v1",
+          "2610.03797v2",
+          "2610.07922v1"
+        ]
+      }
+    ],
+    "themes": [
+      {
+        "id": "action-representations",
+        "title": "动作表征：语言、几何与视觉动态怎样接上控制",
+        "summary": "五条路线分别约束运动意图、移动底盘、动作潜变量、几何特征与语言可控坐标；它们使用的监督和部署输入不同。",
+        "shared_problem": "把人类示范或视觉语义变成动作时，需要保留任务意图和空间关系，还要明确这些信息究竟进入哪个控制分支。",
+        "method_routes": [
+          {
+            "text": "EgoLAP 作者以结构化、时间抽象的语言动作表达运动意图，并配合几何、物理与可供性层面的推理，联合预训练人类和机器人轨迹；语言动作是跨形态中间表征。",
+            "evidence_ids": [
+              "2610.08726v1"
+            ]
+          },
+          {
+            "text": "VOMMI 作者同步身体与手部 RGB 视角，以稀疏几何锚点离线修正视觉里程计，再将因果局部运动 token 只注入底盘动作分支；不能把该机制描述为同时适配所有关节。",
+            "evidence_ids": [
+              "2610.08220v1"
+            ]
+          },
+          {
+            "text": "ViDAL 作者训练动作 VAE，在重建动作块的同时把潜变量与未来视觉动态对齐，形成可接入不同 VLA 的动作接口；未来视频预测是可选能力。",
+            "evidence_ids": [
+              "2610.08150v1"
+            ]
+          },
+          {
+            "text": "GeoAlign 作者用离线 RGB-D 监督后训练几何分支，再以机器人状态生成查询压缩为几何 token；深度头随后丢弃，策略训练和执行使用 RGB、语言及本体状态。",
+            "evidence_ids": [
+              "2606.03240v2"
+            ]
+          },
+          {
+            "text": "Atomic Motion Coordinate 作者用文本与正运动学、在不输入视觉的条件下建立每臂十三种有符号运动原子，将坐标注入动作专家；接触历史用有界残差只重生成尚未执行的预测后缀。",
+            "evidence_ids": [
+              "2609.15012v3"
+            ]
+          }
+        ],
+        "open_question": "精读需分别核对跨形态意图是否保持、离线锚点来源、未来动态监督的泄漏边界、几何特征对传感器变化的依赖，以及语言干预是否真正改变动作。不同任务的成功率或轨迹误差不能直接比较。",
+        "evidence_ids": [
+          "2610.08726v1",
+          "2610.08220v1",
+          "2610.08150v1",
+          "2606.03240v2",
+          "2609.15012v3"
+        ],
+        "related_topics": [
+          "robot_vla",
+          "mobile_manipulation",
+          "end_effector_trajectories"
+        ],
+        "attribution": "curator_synthesis",
+        "comparison_scope": "within_window_no_temporal_trend"
+      },
+      {
+        "id": "prediction-to-execution",
+        "title": "世界模型与数据：预测合理，是否就能执行",
+        "summary": "3D监督、视频到动作自蒸馏、可组合模型和仿真生成分别处理不同接口；共同关注训练证据怎样支撑可执行行为。",
+        "shared_problem": "逼真的视频、更多的训练场景或较高的代理指标，都不足以单独证明动作与环境后果一致。",
+        "method_routes": [
+          {
+            "text": "DepthWorld 作者先联合校准机器人运动学和场景外参，构造 DROID-3D，再通过空间潜变量拼接联合预测多视角 RGB 与深度，并保持预训练 VAE 不变；摘要支持几何与预测层面的主张，未建立下游控制收益。",
+            "evidence_ids": [
+              "2610.08780v1"
+            ]
+          },
+          {
+            "text": "AutodidactWAM 作者从生成视频估计手姿并经逆运动学恢复动作，用于只微调动作相关层。摘要中纯 Flow-DPO 的验证偏好准确率为1.000，但任务成功为0；需把训练目标、动作恢复门和最终闭环成功分开看。",
+            "evidence_ids": [
+              "2610.08119v1"
+            ]
+          },
+          {
+            "text": "OpenWAM 作者在共同的因果机器人视频基座上配置视频—动作交互顺序，并用反事实转移研究独立正向/逆向动力学；这提供条件可控的比较框架，不能据此认定所有组合等价。",
+            "evidence_ids": [
+              "2610.07922v1"
+            ]
+          },
+          {
+            "text": "EmbodiedSmith 作者让场景生成预期任务需要、任务生成反过来修正场景，把资产、场景和任务生成连成迭代流程；其移动操作、人形及柔性对象支持属于数据/仿真范围，不能当作某种控制器的实机结果。",
+            "evidence_ids": [
+              "2610.07969v1"
+            ]
+          }
+        ],
+        "open_question": "下一步需要核对3D误差与控制失败的联系、自蒸馏后的完整任务和未见对象表现、反事实数据的生成条件，以及仿真多样性是否覆盖真实失效。视频质量或偏好准确率不应替代闭环任务评价。",
+        "evidence_ids": [
+          "2610.08780v1",
+          "2610.08119v1",
+          "2610.07922v1",
+          "2610.07969v1"
+        ],
+        "related_topics": [
+          "robot_world_models",
+          "mobile_manipulation"
+        ],
+        "attribution": "curator_synthesis",
+        "comparison_scope": "within_window_no_temporal_trend"
+      },
+      {
+        "id": "feedback-and-disruptions",
+        "title": "闭环反馈：接触、自身预测与价值信号怎样使用",
+        "summary": "接触 token、自生成轨迹适配与价值引导是三种不同反馈入口；视觉扰动工作则检验其中观测基础是否可靠。",
+        "shared_problem": "动作生成可以利用执行历史或候选价值，但反馈自身可能失真，需要明确信号来源、更新位置和失败条件。",
+        "method_routes": [
+          {
+            "text": "MIM-VLA 作者把夹爪电流、位置、速度和有效性编码为交互 token，用人工复核的接触/阶段标签预训练模块，仅调节夹爪动作通路；另用于候选交互选择。无需附加触觉阵列并不等于无需标签或无需本体信号。",
+            "evidence_ids": [
+              "2610.08425v1"
+            ]
+          },
+          {
+            "text": "SALT 作者将上一动作块尚未执行的部分作为时间对齐的自监督目标，在视觉变化后适配并重生成当前动作块；更新门只用正常轨迹校准，监督来自策略自身预测。",
+            "evidence_ids": [
+              "2610.07946v1"
+            ]
+          },
+          {
+            "text": "Guided Action Flow 作者从机器人任务 rollout 学习小型动作价值 critic，用其梯度引导反向流采样，保持 VLA 冻结；这里仍需要任务交互数据，不能描述为零训练改进。",
+            "evidence_ids": [
+              "2607.02092v4"
+            ]
+          },
+          {
+            "text": "TAPDreamer 当前修订摘要报告可迁移局部视觉扰动导致多种 WAM 闭环失败，说明视觉编码器是需要独立评测的脆弱环节；本期只作稳健性证据归纳，未执行攻击、复现实验或比较版本。",
+            "evidence_ids": [
+              "2610.06814v2"
+            ]
+          }
+        ],
+        "open_question": "需核查电机反馈跨夹爪迁移、正常轨迹校准的覆盖、旧动作计划失效时自监督是否累积错误、critic的数据与推理成本，以及视觉扰动评测是否对应实际部署条件；当前摘要无法给出统一可靠性保证。",
+        "evidence_ids": [
+          "2610.08425v1",
+          "2610.07946v1",
+          "2607.02092v4",
+          "2610.06814v2"
+        ],
+        "related_topics": [
+          "robot_vla",
+          "robot_world_models"
+        ],
+        "attribution": "curator_synthesis",
+        "comparison_scope": "within_window_no_temporal_trend"
+      },
+      {
+        "id": "whole-body-constraints",
+        "title": "全身执行：阶段、视线、接触与外力如何同时约束",
+        "summary": "本组覆盖长时程搬运、交互先验、多机推物、主动观测、磁场补偿和人机交接；这些任务不能按同一种成功率汇总。",
+        "shared_problem": "全身任务的可执行性由阶段衔接、接触、可见性和外界扰动共同决定，单个末端目标不足以描述这些约束。",
+        "method_routes": [
+          {
+            "text": "Humanoid Horizon 作者以共享策略并行训练任务阶段，动态用上游终态扩展下游初态，并在前一物体被明显移动后关闭后续阶段流的奖励；作者仍报告物体数量增加时成功下降。",
+            "evidence_ids": [
+              "2610.08320v1"
+            ]
+          },
+          {
+            "text": "iGPC 作者先以可供性和特权状态训练交互专家，再将技能蒸馏到保留预训练运动先验、使用机载感知的学生；需区分专家可见信息与部署输入。",
+            "evidence_ids": [
+              "2610.08120v1"
+            ]
+          },
+          {
+            "text": "多四足密度控制工作用集中式物体层 MPC 决定接触力，再以分布式机器人层全身 MPC 跟随移动接触位置；摘要评价限于 MuJoCo 中两到三台 Go2 推物，并有共享信息假设。",
+            "evidence_ids": [
+              "2610.08441v1"
+            ]
+          },
+          {
+            "text": "重建感知全身控制工作把信息焦点保持在相机视野内，以可见性约束替代额外路径规划；另一篇冗余机械臂探索工作选择目标体素并用虚拟模型控制进行顺应和反应避障。二者处理主动观测与运动耦合，均不能直接归为语言导航代理。",
+            "evidence_ids": [
+              "2509.04094v3",
+              "2610.08110v1"
+            ]
+          },
+          {
+            "text": "Magnet-Aware Control 作者结合磁力仿真、场估计以及磁场感知 MPC/WBC，预测并补偿随姿态与位置变化的磁扰动力和力矩；实验环境是强磁场，不等同于雨雾等视觉退化。",
+            "evidence_ids": [
+              "2610.08653v1"
+            ]
+          },
+          {
+            "text": "GENESIS-Handover 作者生成任务条件的人手—物体交互假设，实时匹配观察到的人手姿态来选交接构型；摘要的用户感知“任务理解”结果不能替代客观安全保证。",
+            "evidence_ids": [
+              "2610.08003v1"
+            ]
+          }
+        ],
+        "open_question": "进一步阅读应分开核对整段任务成功与逐阶段成功、特权状态蒸馏、推物接触/通信假设、视线约束的失效、磁场模型误差以及交接安全指标。保留不同机器人形态和仿真/实机边界。",
+        "evidence_ids": [
+          "2610.08320v1",
+          "2610.08120v1",
+          "2610.08441v1",
+          "2509.04094v3",
+          "2610.08110v1",
+          "2610.08653v1",
+          "2610.08003v1"
+        ],
+        "related_topics": [
+          "mobile_manipulation",
+          "whole_body_control",
+          "navigation_agents"
+        ],
+        "attribution": "curator_synthesis",
+        "comparison_scope": "within_window_no_temporal_trend"
+      },
+      {
+        "id": "deployment-evaluation",
+        "title": "部署评价：把算力、能耗与新形态泛化分开测",
+        "summary": "三个效率入口分别是数值精度/运行点、视觉 token 与推理代码；无人机基准补充了另一类形态和任务协议边界。",
+        "shared_problem": "单次推理更快或更省电，不自动意味着成功任务更高效；换形态后的执行表现也不能由地面操作基准代替。",
+        "method_routes": [
+          {
+            "text": "ActTune 作者以成功任务的 GPU 能耗为目标，联动动作相关精度选择与GPU频率—功率运行点，控制推理延迟增幅；它评价的GPU能耗不等于整台机器人的总能耗。",
+            "evidence_ids": [
+              "2610.08444v1"
+            ]
+          },
+          {
+            "text": "VLA-ACL 作者用动作一致性监督训练轻量视觉 token 选择器，完整上下文输出为教师、真实动作为辅助监督，同时冻结基座 VLA；视觉剪枝依然需要训练数据和选择器训练。",
+            "evidence_ids": [
+              "2610.08133v1"
+            ]
+          },
+          {
+            "text": "WAMJET 当前修订摘要将 profiling、定向代码修改和效果验证交给编码代理，迭代组合加速手段；这是面向模型工程的加速 harness，不是机器人执行时的导航 harness。",
+            "evidence_ids": [
+              "2610.03797v2"
+            ]
+          },
+          {
+            "text": "WareFly-VLA 作者提供 Isaac Sim 仓库中的人类遥操作飞行片段，评价语言指定目标人员的接近与跟随，并区分控制频率和严格泛化设置；照片级仿真数据不应写成真实仓库飞行实测。",
+            "evidence_ids": [
+              "2610.08526v1"
+            ]
+          }
+        ],
+        "open_question": "需核对同硬件端到端延迟、成功任务计费、近似和无损加速的分别口径、基座/教师训练成本，以及无人机数据的episode划分与闭环评价协议。各摘要的最佳加速数不能跨系统直接排序。",
+        "evidence_ids": [
+          "2610.08444v1",
+          "2610.08133v1",
+          "2610.03797v2",
+          "2610.08526v1"
+        ],
+        "related_topics": [
+          "robot_vla",
+          "robot_world_models"
+        ],
+        "attribution": "curator_synthesis",
+        "comparison_scope": "within_window_no_temporal_trend"
+      }
+    ],
+    "evidence_sources": [
+      {
+        "versioned_id": "2610.08780v1",
+        "version_url": "https://arxiv.org/abs/2610.08780v1",
+        "source_url": "https://arxiv.org/abs/2610.08780",
+        "title": "DepthWorld: 3D World Model for Robot Manipulation",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-07T08:44:11Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1435,
+        "abstract_sha256": "6ed54ab38c4123b4e77bf474f44e5f5288d680c954768c27c54d0c002b850497"
+      },
+      {
+        "versioned_id": "2610.06814v2",
+        "version_url": "https://arxiv.org/abs/2610.06814v2",
+        "source_url": "https://arxiv.org/abs/2610.06814",
+        "title": "TAPDreamer: Transferable Adversarial Patches for World Action Models",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-07T08:44:11Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1665,
+        "abstract_sha256": "1949c9295578ba7694b472bb2c9771cd0577cc9dc23e658378c34e5638a8db6d"
+      },
+      {
+        "versioned_id": "2610.08726v1",
+        "version_url": "https://arxiv.org/abs/2610.08726v1",
+        "source_url": "https://arxiv.org/abs/2610.08726",
+        "title": "EgoLAP: Learning from Egocentric Human Data through Language-Action Reasoning",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-07T08:44:11Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1131,
+        "abstract_sha256": "565d0071d1388c2b4200597dcb61fc52fb86dcf10aae30352c8cc41979a9d00e"
+      },
+      {
+        "versioned_id": "2610.08653v1",
+        "version_url": "https://arxiv.org/abs/2610.08653v1",
+        "source_url": "https://arxiv.org/abs/2610.08653",
+        "title": "Magnet-Aware Control of Legged Robots",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-07T08:44:11Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1537,
+        "abstract_sha256": "79a2f48408af581de291903d0926ba52028cf37d2ee73c95e45c99bebc6c91e2"
+      },
+      {
+        "versioned_id": "2610.08526v1",
+        "version_url": "https://arxiv.org/abs/2610.08526v1",
+        "source_url": "https://arxiv.org/abs/2610.08526",
+        "title": "WareFly-VLA: A Vision-Language-Action Framework for UAV Navigation and Human Tracking in Smart Warehouses",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-07T08:44:11Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1833,
+        "abstract_sha256": "a48d57a6e113bb029cd7d91db39701a2ae63c663e19d9fcf36f867b6f6872c36"
+      },
+      {
+        "versioned_id": "2610.08444v1",
+        "version_url": "https://arxiv.org/abs/2610.08444v1",
+        "source_url": "https://arxiv.org/abs/2610.08444",
+        "title": "ActTune: Action-Aware Precision and GPU Operating-Point Adaptation for Energy-Efficient Vision-Language-Action Inference",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-07T08:44:11Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1674,
+        "abstract_sha256": "b6b648f0148f072ac10c7f6e70ce7af45d5dab6874a1f36c1a16dddd24526b96"
+      },
+      {
+        "versioned_id": "2610.08441v1",
+        "version_url": "https://arxiv.org/abs/2610.08441v1",
+        "source_url": "https://arxiv.org/abs/2610.08441",
+        "title": "Safe Multi-Robot Collaborative Transport Using Density Functions",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-07T08:44:11Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1197,
+        "abstract_sha256": "9d05af68170dbd81dbed69341d3496c4eb4a72a9b17de6c84e677b4f193d799b"
+      },
+      {
+        "versioned_id": "2610.08425v1",
+        "version_url": "https://arxiv.org/abs/2610.08425v1",
+        "source_url": "https://arxiv.org/abs/2610.08425",
+        "title": "MIM-VLA: Learning Physical Interaction Representations from Gripper Motor Feedback",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-07T08:44:11Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1368,
+        "abstract_sha256": "464622cc9b77b632a98b79c6d9ffc38b59255b3d3811373dfbd9c94542c4b6f5"
+      },
+      {
+        "versioned_id": "2607.02092v4",
+        "version_url": "https://arxiv.org/abs/2607.02092v4",
+        "source_url": "https://arxiv.org/abs/2607.02092",
+        "title": "Guided Action Flow: Value-Guided Sampling for Frozen Vision-Language-Action Policies",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-07T08:44:11Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1205,
+        "abstract_sha256": "0d9095ffc208580d8638eba7ca542bd2c847e5eeb899737a025c735cbb322a68"
+      },
+      {
+        "versioned_id": "2610.08320v1",
+        "version_url": "https://arxiv.org/abs/2610.08320v1",
+        "source_url": "https://arxiv.org/abs/2610.08320",
+        "title": "Humanoid Horizon: Extending Task Horizon in Whole-Body Loco-Manipulation via Parallel Training, Dynamic Starting, and Reward Gating",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-07T08:44:11Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1858,
+        "abstract_sha256": "467dee047c350c1388c363908dae5b34bbad3b510da5712312e1760086fdb4b7"
+      },
+      {
+        "versioned_id": "2610.08220v1",
+        "version_url": "https://arxiv.org/abs/2610.08220v1",
+        "source_url": "https://arxiv.org/abs/2610.08220",
+        "title": "VOMMI: Collecting and Leveraging Portable Demonstrations for Mobile Manipulation",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-07T08:44:11Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1895,
+        "abstract_sha256": "51ca8ad62dd6142308598f97462bc032650d9884691d0ce5a4999e71d10eddcf"
+      },
+      {
+        "versioned_id": "2609.15012v3",
+        "version_url": "https://arxiv.org/abs/2609.15012v3",
+        "source_url": "https://arxiv.org/abs/2609.15012",
+        "title": "Atomic Motion Coordinate for Language-Steerable and Force-Responsive Manipulation",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-07T08:44:11Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 947,
+        "abstract_sha256": "f6e2af13b6fd522b73d2e522a9ed6d0dcc41b36049a5980e846399677283d2cb"
+      },
+      {
+        "versioned_id": "2610.08150v1",
+        "version_url": "https://arxiv.org/abs/2610.08150v1",
+        "source_url": "https://arxiv.org/abs/2610.08150",
+        "title": "ViDAL: A Visual Dynamics-Grounded Action Latent Space for Vision-Language-Action Models",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-07T08:44:11Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1289,
+        "abstract_sha256": "33677c1a325ed2516ab0366ce43921739451ba7820f896b75a6340e3c6ea0643"
+      },
+      {
+        "versioned_id": "2610.08133v1",
+        "version_url": "https://arxiv.org/abs/2610.08133v1",
+        "source_url": "https://arxiv.org/abs/2610.08133",
+        "title": "VLA-ACL: Action-Consistent Visual Token Pruning for Efficient Vision-Language-Action Models",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-07T08:44:11Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1448,
+        "abstract_sha256": "b2a6291b756d6b3696cce79b5ebc5aabd6f37206b3db891f07b021109b33f276"
+      },
+      {
+        "versioned_id": "2610.08120v1",
+        "version_url": "https://arxiv.org/abs/2610.08120v1",
+        "source_url": "https://arxiv.org/abs/2610.08120",
+        "title": "iGPC: Generative Motion Priors for Object-Aware Humanoid Interaction",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-07T08:44:11Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1555,
+        "abstract_sha256": "565952964cdec1e7f85b7278952a9abcb87981867e37916d9179508bd4bea581"
+      },
+      {
+        "versioned_id": "2509.04094v3",
+        "version_url": "https://arxiv.org/abs/2509.04094v3",
+        "source_url": "https://arxiv.org/abs/2509.04094",
+        "title": "Object-Reconstruction-Aware Whole-body Control of Mobile Manipulators",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-07T08:44:11Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1850,
+        "abstract_sha256": "e7d900c9ee3a4a7caa9f5c7b3fbd96a4edf4adae7e46d412d81588ca23132122"
+      },
+      {
+        "versioned_id": "2610.08119v1",
+        "version_url": "https://arxiv.org/abs/2610.08119v1",
+        "source_url": "https://arxiv.org/abs/2610.08119",
+        "title": "AutodidactWAM: Cross-Modal Self-Distillation from Generated Video to Robot Actions",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-07T08:44:11Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1848,
+        "abstract_sha256": "f40fa549a369a2a386788c6d416791c2da511742bf0f1f5930839372f30a8f2e"
+      },
+      {
+        "versioned_id": "2610.08110v1",
+        "version_url": "https://arxiv.org/abs/2610.08110v1",
+        "source_url": "https://arxiv.org/abs/2610.08110",
+        "title": "Reactive Exploration of Unknown Environments for Redundant Robots using Virtual Model Control",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-07T08:44:11Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1073,
+        "abstract_sha256": "ecb86b85b8fbc167131b8d8a806ab0cbd859e1ab5e03f1a10e1fc665b4a32588"
+      },
+      {
+        "versioned_id": "2610.08003v1",
+        "version_url": "https://arxiv.org/abs/2610.08003v1",
+        "source_url": "https://arxiv.org/abs/2610.08003",
+        "title": "Reactive Task-Oriented Robot-Human Handovers via Generative Hypothesis Selection",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-07T08:44:11Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1473,
+        "abstract_sha256": "7717a0d0a7dd3f3311704869db01cae5697a1befa200c62d6618ebf5047d78e3"
+      },
+      {
+        "versioned_id": "2606.03240v2",
+        "version_url": "https://arxiv.org/abs/2606.03240v2",
+        "source_url": "https://arxiv.org/abs/2606.03240",
+        "title": "GeoAlign: Beyond Semantics with State-Guided Spatial Alignment in VLA Models",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-07T08:44:11Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 924,
+        "abstract_sha256": "75dc4b3d7d2dfe0025c97ca14f0c74100f78091575dbaaf2f56b2fd366803819"
+      },
+      {
+        "versioned_id": "2610.07969v1",
+        "version_url": "https://arxiv.org/abs/2610.07969v1",
+        "source_url": "https://arxiv.org/abs/2610.07969",
+        "title": "EmbodiedSmith: Scaling Embodied Data through Recursive Self-Improvement Flywheel in Simulation",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-07T08:44:11Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1457,
+        "abstract_sha256": "5f43f1e6eeb77649aa052f3c281d71f561a125a8221a37bb36dcf9ce150a244c"
+      },
+      {
+        "versioned_id": "2610.07946v1",
+        "version_url": "https://arxiv.org/abs/2610.07946v1",
+        "source_url": "https://arxiv.org/abs/2610.07946",
+        "title": "Adapting Vision-Language-Action Models to Unknown Visual Disruptions During Execution",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-07T08:44:11Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1507,
+        "abstract_sha256": "74c2332e7a4700e0f6a56c9e3824f1af1e3baaf6312d5f959c0c6f8d3120f9c1"
+      },
+      {
+        "versioned_id": "2610.03797v2",
+        "version_url": "https://arxiv.org/abs/2610.03797v2",
+        "source_url": "https://arxiv.org/abs/2610.03797",
+        "title": "WAMJET: A Harness for World Action Model Acceleration",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-07T08:44:11Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1123,
+        "abstract_sha256": "5642d4ebd7e55f8e072a057a803c46fade9c03c97292a22f5f89a13a8b103e07"
+      },
+      {
+        "versioned_id": "2610.07922v1",
+        "version_url": "https://arxiv.org/abs/2610.07922v1",
+        "source_url": "https://arxiv.org/abs/2610.07922",
+        "title": "OpenWAM: An Open Framework for Composable World-Action Models",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-07T08:44:11Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1745,
+        "abstract_sha256": "7a6f606d5a6d4deaa422f9e78988c0bcf6d2c42ee2402571fc9d9bd0cfae6bb8"
+      }
+    ],
+    "revision_note": "本窗口18篇首版、6篇修订。修订为TAPDreamer v2、Guided Action Flow v4、Atomic Motion Coordinate v3、Object-Reconstruction-Aware Whole-body Control v3、GeoAlign v2、WAMJET v2。只核对当前固定版本完整摘要，未比较旧版；即使旧版本此前已出现，也不能把当前摘要中的机制或结果称为本次新增。",
+    "limitations": [
+      "仅覆盖声明的五个 arXiv 类别、检索式及 UTC 更新时间窗口；索引延迟、术语差异和本地规则可能漏检，查询扫描完整不代表全领域搜全。",
+      "24条窗口候选均核对元数据、摘要片段及完整官方摘要；未阅读全文、代码或实验，作者报告的效果未经独立验证。",
+      "首版与修订只表示 arXiv 版本状态，不表示创新性、录用或同行评审；正式精读应优先核验会议或期刊版本。",
+      "本期没有可比跨期窗口，也没有逐版差异检查；不作增长、热度、领先性或方法排名判断，不把修订摘要中的机制称为本次新增。",
+      "九类分布按保留的原始 matched_topics 重算，多标签计数重叠；关键词会误分或漏分，零命中不表示该方向没有研究。"
+    ],
+    "candidate_records": [
+      {
+        "versioned_id": "2610.08780v1",
+        "title": "DepthWorld: 3D World Model for Robot Manipulation",
+        "first_submitted_at": "2026-10-06T17:59:00Z",
+        "updated_at": "2026-10-06T17:59:00Z",
+        "change_type": "new",
+        "matched_topics": [
+          "robot_world_models"
+        ]
+      },
+      {
+        "versioned_id": "2610.06814v2",
+        "title": "TAPDreamer: Transferable Adversarial Patches for World Action Models",
+        "first_submitted_at": "2026-10-05T17:55:21Z",
+        "updated_at": "2026-10-06T17:50:08Z",
+        "change_type": "revision",
+        "matched_topics": [
+          "robot_world_models"
+        ]
+      },
+      {
+        "versioned_id": "2610.08726v1",
+        "title": "EgoLAP: Learning from Egocentric Human Data through Language-Action Reasoning",
+        "first_submitted_at": "2026-10-06T17:30:33Z",
+        "updated_at": "2026-10-06T17:30:33Z",
+        "change_type": "new",
+        "matched_topics": [
+          "robot_vla"
+        ]
+      },
+      {
+        "versioned_id": "2610.08653v1",
+        "title": "Magnet-Aware Control of Legged Robots",
+        "first_submitted_at": "2026-10-06T16:38:19Z",
+        "updated_at": "2026-10-06T16:38:19Z",
+        "change_type": "new",
+        "matched_topics": [
+          "whole_body_control"
+        ]
+      },
+      {
+        "versioned_id": "2610.08526v1",
+        "title": "WareFly-VLA: A Vision-Language-Action Framework for UAV Navigation and Human Tracking in Smart Warehouses",
+        "first_submitted_at": "2026-10-06T15:21:14Z",
+        "updated_at": "2026-10-06T15:21:14Z",
+        "change_type": "new",
+        "matched_topics": [
+          "robot_vla"
+        ]
+      },
+      {
+        "versioned_id": "2610.08444v1",
+        "title": "ActTune: Action-Aware Precision and GPU Operating-Point Adaptation for Energy-Efficient Vision-Language-Action Inference",
+        "first_submitted_at": "2026-10-06T14:35:22Z",
+        "updated_at": "2026-10-06T14:35:22Z",
+        "change_type": "new",
+        "matched_topics": [
+          "robot_vla"
+        ]
+      },
+      {
+        "versioned_id": "2610.08441v1",
+        "title": "Safe Multi-Robot Collaborative Transport Using Density Functions",
+        "first_submitted_at": "2026-10-06T14:34:36Z",
+        "updated_at": "2026-10-06T14:34:36Z",
+        "change_type": "new",
+        "matched_topics": [
+          "mobile_manipulation"
+        ]
+      },
+      {
+        "versioned_id": "2610.08425v1",
+        "title": "MIM-VLA: Learning Physical Interaction Representations from Gripper Motor Feedback",
+        "first_submitted_at": "2026-10-06T14:28:07Z",
+        "updated_at": "2026-10-06T14:28:07Z",
+        "change_type": "new",
+        "matched_topics": [
+          "robot_vla"
+        ]
+      },
+      {
+        "versioned_id": "2607.02092v4",
+        "title": "Guided Action Flow: Value-Guided Sampling for Frozen Vision-Language-Action Policies",
+        "first_submitted_at": "2026-07-02T12:30:50Z",
+        "updated_at": "2026-10-06T13:43:17Z",
+        "change_type": "revision",
+        "matched_topics": [
+          "robot_vla"
+        ]
+      },
+      {
+        "versioned_id": "2610.08320v1",
+        "title": "Humanoid Horizon: Extending Task Horizon in Whole-Body Loco-Manipulation via Parallel Training, Dynamic Starting, and Reward Gating",
+        "first_submitted_at": "2026-10-06T13:22:30Z",
+        "updated_at": "2026-10-06T13:22:30Z",
+        "change_type": "new",
+        "matched_topics": [
+          "mobile_manipulation"
+        ]
+      },
+      {
+        "versioned_id": "2610.08220v1",
+        "title": "VOMMI: Collecting and Leveraging Portable Demonstrations for Mobile Manipulation",
+        "first_submitted_at": "2026-10-06T12:10:48Z",
+        "updated_at": "2026-10-06T12:10:48Z",
+        "change_type": "new",
+        "matched_topics": [
+          "mobile_manipulation",
+          "end_effector_trajectories",
+          "robot_vla"
+        ]
+      },
+      {
+        "versioned_id": "2609.15012v3",
+        "title": "Atomic Motion Coordinate for Language-Steerable and Force-Responsive Manipulation",
+        "first_submitted_at": "2026-09-14T04:19:59Z",
+        "updated_at": "2026-10-06T11:59:31Z",
+        "change_type": "revision",
+        "matched_topics": [
+          "robot_vla"
+        ]
+      },
+      {
+        "versioned_id": "2610.08150v1",
+        "title": "ViDAL: A Visual Dynamics-Grounded Action Latent Space for Vision-Language-Action Models",
+        "first_submitted_at": "2026-10-06T11:02:27Z",
+        "updated_at": "2026-10-06T11:02:27Z",
+        "change_type": "new",
+        "matched_topics": [
+          "robot_vla"
+        ]
+      },
+      {
+        "versioned_id": "2610.08133v1",
+        "title": "VLA-ACL: Action-Consistent Visual Token Pruning for Efficient Vision-Language-Action Models",
+        "first_submitted_at": "2026-10-06T10:47:43Z",
+        "updated_at": "2026-10-06T10:47:43Z",
+        "change_type": "new",
+        "matched_topics": [
+          "robot_vla"
+        ]
+      },
+      {
+        "versioned_id": "2610.08120v1",
+        "title": "iGPC: Generative Motion Priors for Object-Aware Humanoid Interaction",
+        "first_submitted_at": "2026-10-06T10:41:31Z",
+        "updated_at": "2026-10-06T10:41:31Z",
+        "change_type": "new",
+        "matched_topics": [
+          "whole_body_control"
+        ]
+      },
+      {
+        "versioned_id": "2509.04094v3",
+        "title": "Object-Reconstruction-Aware Whole-body Control of Mobile Manipulators",
+        "first_submitted_at": "2025-09-04T10:52:27Z",
+        "updated_at": "2026-10-06T10:40:32Z",
+        "change_type": "revision",
+        "matched_topics": [
+          "mobile_manipulation",
+          "whole_body_control"
+        ]
+      },
+      {
+        "versioned_id": "2610.08119v1",
+        "title": "AutodidactWAM: Cross-Modal Self-Distillation from Generated Video to Robot Actions",
+        "first_submitted_at": "2026-10-06T10:39:42Z",
+        "updated_at": "2026-10-06T10:39:42Z",
+        "change_type": "new",
+        "matched_topics": [
+          "robot_world_models"
+        ]
+      },
+      {
+        "versioned_id": "2610.08110v1",
+        "title": "Reactive Exploration of Unknown Environments for Redundant Robots using Virtual Model Control",
+        "first_submitted_at": "2026-10-06T10:33:02Z",
+        "updated_at": "2026-10-06T10:33:02Z",
+        "change_type": "new",
+        "matched_topics": [
+          "navigation_agents"
+        ]
+      },
+      {
+        "versioned_id": "2610.08003v1",
+        "title": "Reactive Task-Oriented Robot-Human Handovers via Generative Hypothesis Selection",
+        "first_submitted_at": "2026-10-06T09:01:10Z",
+        "updated_at": "2026-10-06T09:01:10Z",
+        "change_type": "new",
+        "matched_topics": [
+          "mobile_manipulation"
+        ]
+      },
+      {
+        "versioned_id": "2606.03240v2",
+        "title": "GeoAlign: Beyond Semantics with State-Guided Spatial Alignment in VLA Models",
+        "first_submitted_at": "2026-06-02T07:01:18Z",
+        "updated_at": "2026-10-06T08:58:24Z",
+        "change_type": "revision",
+        "matched_topics": [
+          "robot_vla"
+        ]
+      },
+      {
+        "versioned_id": "2610.07969v1",
+        "title": "EmbodiedSmith: Scaling Embodied Data through Recursive Self-Improvement Flywheel in Simulation",
+        "first_submitted_at": "2026-10-06T08:34:28Z",
+        "updated_at": "2026-10-06T08:34:28Z",
+        "change_type": "new",
+        "matched_topics": [
+          "mobile_manipulation"
+        ]
+      },
+      {
+        "versioned_id": "2610.07946v1",
+        "title": "Adapting Vision-Language-Action Models to Unknown Visual Disruptions During Execution",
+        "first_submitted_at": "2026-10-06T08:21:19Z",
+        "updated_at": "2026-10-06T08:21:19Z",
+        "change_type": "new",
+        "matched_topics": [
+          "robot_vla"
+        ]
+      },
+      {
+        "versioned_id": "2610.03797v2",
+        "title": "WAMJET: A Harness for World Action Model Acceleration",
+        "first_submitted_at": "2026-10-01T04:26:18Z",
+        "updated_at": "2026-10-06T08:03:34Z",
+        "change_type": "revision",
+        "matched_topics": [
+          "robot_world_models"
+        ]
+      },
+      {
+        "versioned_id": "2610.07922v1",
+        "title": "OpenWAM: An Open Framework for Composable World-Action Models",
+        "first_submitted_at": "2026-10-06T08:02:12Z",
+        "updated_at": "2026-10-06T08:02:12Z",
+        "change_type": "new",
+        "matched_topics": [
+          "robot_world_models"
+        ]
+      }
+    ],
+    "keyword_caveats": [
+      {
+        "versioned_id": "2610.08110v1",
+        "topic": "navigation_agents",
+        "issue": "false_positive",
+        "explanation": "本窗口唯一 navigation_agents 命中来自冗余机械臂主动探索和避障，摘要含“不需路径重规划”；未描述语言导航代理或其 harness，不能把该关键词计数当作该子领域数量。",
+        "evidence_basis": "complete_abstract"
+      },
+      {
+        "versioned_id": "2610.08220v1",
+        "topic": "end_effector_trajectories",
+        "issue": "false_positive",
+        "explanation": "末端平移精度在摘要中是评价项；作者的运动条件残差适配只进入底盘分支，因此不能把该命中直接解释为专门提出末端轨迹规划/控制方法。",
+        "evidence_basis": "complete_abstract"
+      },
+      {
+        "versioned_id": "2610.08441v1",
+        "topic": "whole_body_control",
+        "issue": "missed_match",
+        "explanation": "完整摘要明确包含机器人层 whole-body MPC，但原始全身控制规则未赋此标签；保留关键词结果，不把计数当作人工分类。",
+        "evidence_basis": "complete_abstract"
+      },
+      {
+        "versioned_id": "2610.08320v1",
+        "topic": "whole_body_control",
+        "issue": "missed_match",
+        "explanation": "本文讨论人形全身长时程移动操作及共享策略训练，但未命中既有全身控制短语规则；全身任务相关性与原始标签计数需分开理解。",
+        "evidence_basis": "complete_abstract"
+      }
+    ]
+  }
+}
