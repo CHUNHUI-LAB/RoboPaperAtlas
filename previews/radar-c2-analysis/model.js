@@ -63,18 +63,19 @@ function reduce(model,state,action){
  const next=clone(state);
  switch(action.type){
  case 'overview':return initialState();
- case 'global':next.view='trees';break;
+ case 'global':next.view='trees';if(['l','c'].includes(next.globalTree)){rememberPage(next,next.globalTree);next[next.globalTree]=[];next.pages[next.globalTree]=0;}next.paper=null;next.origin=null;break;
  case 'analysisPaper':if(!model.papers.has(action.id))return state;next.analysisPaper=action.id;break;
  case 'globalTree':if(!['l','c','a'].includes(action.key))return state;next.globalTree=action.key;next.view='trees';break;
- case 'root':{const key=action.key;if(!['l','c'].includes(key)||!rootOverview(model,key,key==='l'?next.lFacet:undefined).some(x=>x.node.id===action.id))return state;rememberPage(next,key);next[key]=[action.id];restorePage(next,key);next.view='trees';next.globalTree=key;break;}
+ case 'locate':{const key=action.key,t=atlas.paths(model,key),n=t.by.get(action.id);if(!n)return state;if(n.id===t.root){next[key]=[];next.paper=null;next.origin=null;break;}if(key==='l'){const facetNode=n.path.map(id=>model.trees.l.nodes.get(id)).find(node=>node.type==='pipeline'||node.type==='representation');if(facetNode)next.lFacet=facetNode.type;}rememberPage(next,key);next[key]=n.type==='paper_ref'?n.path.slice(0,-1):n.path;next.globalTree=key;next.view='trees';next.paper=n.type==='paper_ref'?n.paperId:null;next.origin=next.paper?{key,path:n.path}:null;for(let depth=0;depth<n.path.length;depth++){const prefix=n.path.slice(0,depth),index=children(model.trees[key],prefix,key==='l'?next.lFacet:undefined).findIndex(item=>item.node.id===n.path[depth]);next.branchPages[pageKey(key,prefix)]=Math.max(0,Math.floor(index/PAGE_SIZE));}restorePage(next,key);break;}
+ case 'root':{const key=action.key;if(!['l','c'].includes(key)||!rootOverview(model,key,key==='l'?next.lFacet:undefined).some(x=>x.node.id===action.id))return state;rememberPage(next,key);next[key]=[action.id];restorePage(next,key);next.view='trees';next.globalTree=key;next.paper=null;next.origin=null;break;}
  case 'view':next.view=action.view;break;
- case 'facet':rememberPage(next,'l');next.lFacet=action.facet;next.l=next.l.slice(0,1);restorePage(next,'l');break;
+ case 'facet':rememberPage(next,'l');next.lFacet=action.facet;next.l=next.l.slice(0,1);next.paper=null;next.origin=null;restorePage(next,'l');break;
  case 'search':next.query=action.query;next.view='catalog';next.pages.catalog=0;if(next.paper&&!catalogResults(model,next.query).some(p=>p.canonical_id===next.paper)){next.paper=null;next.origin=null;}break;
  case 'clearSearch':next.query='';next.pages.catalog=0;break;
- case 'page':next.pages[action.key]=Math.max(0,action.page);if(action.key!=='catalog')rememberPage(next,action.key);break;
- case 'enter':{const k=action.key,n=model.trees[k].nodes.get(action.id);if(!children(model.trees[k],next[k],k==='l'?next.lFacet:undefined).some(x=>x.node.id===action.id))return state;if(n.type==='paper_ref'){next.paper=n.paper_id;next.tab='evidence';next.origin={key:k,path:[...next[k],action.id]};}else{rememberPage(next,k);next[k].push(action.id);restorePage(next,k);}break;}
- case 'back':{const k=action.key;rememberPage(next,k);next[k].pop();restorePage(next,k);break;}
- case 'crumb':rememberPage(next,action.key);next[action.key]=next[action.key].slice(0,action.depth);restorePage(next,action.key);break;
+ case 'page':{const key=action.key,page=Math.max(0,action.page);if(key!=='catalog'&&Number.isInteger(action.depth)&&action.depth>=1&&action.depth<next[key].length){next.branchPages[pageKey(key,next[key].slice(0,action.depth))]=page;}else{next.pages[key]=page;if(key!=='catalog')rememberPage(next,key);}break;}
+ case 'enter':{const k=action.key,n=model.trees[k].nodes.get(action.id),prefix=Number.isInteger(action.depth)&&action.depth>=1&&action.depth<=next[k].length?next[k].slice(0,action.depth):next[k];if(!children(model.trees[k],prefix,k==='l'?next.lFacet:undefined).some(x=>x.node.id===action.id))return state;rememberPage(next,k);next[k]=prefix;if(n.type==='paper_ref'){next.paper=n.paper_id;next.tab='evidence';next.origin={key:k,path:[...next[k],action.id]};}else{next[k].push(action.id);next.paper=null;next.origin=null;restorePage(next,k);}break;}
+ case 'back':{const k=action.key;rememberPage(next,k);next[k].pop();next.paper=null;next.origin=null;restorePage(next,k);break;}
+ case 'crumb':rememberPage(next,action.key);next[action.key]=next[action.key].slice(0,action.depth);next.paper=null;next.origin=null;restorePage(next,action.key);break;
  case 'paper':if(!model.papers.has(action.id))return state;next.paper=action.id;next.tab=next.paper===state.paper?state.tab:'evidence';next.origin=action.origin||null;break;
  case 'closePaper':next.paper=null;next.origin=null;break;
  case 'tab':next.tab=action.tab;break;
@@ -96,5 +97,86 @@ function validate(model){
  }
  return errors;
 }
-return {PAGE_SIZE,CATALOG_PAGE_SIZE,pageKey,initialState,normalizeLiterature,normalizeChallenge,buildModel,startsWith,matchingPaths,children,branch,rootOverview,pathsForPaper,catalogResults,coverage,sanitizeState,reduce,serialize,deserialize,validate};
+
+// Shared, display-only complete-tree topology and layout. Occurrence IDs are
+// navigation addresses, not new scientific nodes or canonical paper records.
+const atlas=(function(){
+ const UI_ROOT='ui-root',escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ function finish(nodes,root,kind){const by=new Map(nodes.map(n=>[n.id,n]));for(const n of nodes){n.children=[];}for(const n of nodes)if(n.parent)by.get(n.parent).children.push(n.id);return {nodes,by,root,kind};}
+ function paths(model,key){const tree=model.trees[key],nodes=[{id:UI_ROOT,sourceId:null,label:'UI 根 · '+(key==='l'?'文献脉络':'难点与解法'),type:'ui_root',parent:null,path:[]}],seen=new Map([[UI_ROOT,nodes[0]]]);
+  function add(route,path){let parent=UI_ROOT;for(let depth=0;depth<route.length;depth++){const prefix=route.slice(0,depth+1),id=stableId([key,...prefix]);let n=seen.get(id);if(!n){const source=tree.nodes.get(route[depth]);n={id,sourceId:source.id,label:source.label,type:source.type,parent,path:prefix,facet:path?.viewKind||'pipeline',pathId:path?.id||null,paperId:source.paper_id||null};seen.set(id,n);nodes.push(n);}parent=id;}}
+  for(const item of rootOverview(model,key))add([item.node.id]);for(const p of tree.paths)add(p.nodeIds,p);const out=finish(nodes,UI_ROOT,key);out.pathCount=tree.paths.length;out.paperCount=new Set(tree.paths.map(p=>p.paperId)).size;out.sourceCount=new Set(nodes.map(n=>n.sourceId).filter(Boolean)).size;return out;
+ }
+ function analysis(m){const nodes=[...m.nodes.values()].map(n=>({id:n.id,sourceId:n.id,label:n.label,contentTitle:n.contentTitle,type:n.isInstance?'instance':n.parent?'question':'analysis_root',parent:n.parent,path:[],paperId:m.paperId}));const root=nodes.find(n=>!n.parent).id,out=finish(nodes,root,'a');for(const n of out.nodes){let at=n;while(at){n.path.unshift(at.id);at=out.by.get(at.parent);}}return out;}
+ // Display names do not rename any source node, path, or stable occurrence ID.
+ function displayLabel(t,n){return n.id===t.root?({l:'文献脉络',c:'挑战与思路',a:'论文解析'}[t.kind]||n.label):n.label;}
+ function route(t,id){const out=[];while(t.by.has(id)){out.unshift(id);id=t.by.get(id).parent;}return out;}
+
+ const modes=new Map();
+ function descendantsOf(t,id){return t.by.get(id).children.flatMap(child=>[child,...descendantsOf(t,child)]);}
+ function compactText(text,units=20){let out='',used=0;for(const c of String(text).replace(/\s+/g,' ')){used+=/[\u0020-\u007e]/.test(c)?.52:1;if(used>units-1.1)return out+'…';out+=c;}return out;}
+ // Conservative proportional advances keep wide Latin scientific names inside
+ // their label boxes without changing fonts or truncating source text. These
+ // bounds leave room for sans-serif fallback differences; local glyph checks
+ // cover the exported labels, but do not claim arbitrary-font browser acceptance.
+ function labelUnits(text){return [...String(text)].reduce((n,c)=>n+(/[MWmw@%&]/.test(c)?1.05:/[ilI.,:;!'| ]/.test(c)?.4:/[A-Z]/.test(c)?.85:/[a-z0-9]/.test(c)?.65:/[\u0020-\u007e]/.test(c)?.75:1),0);}
+ function lines(text,width,font=13){
+  const max=Math.max(1,(width-16)/font),result=[];
+  for(const paragraph of String(text).split('\n')){
+   let line='',used=0;
+   const tokens=paragraph.match(/[A-Za-z0-9][A-Za-z0-9_:/+.-]*|[^\n]/g)||[''];
+   for(const token of tokens){
+    // Prefer scientific-name boundaries in an overlong slash/colon chain;
+    // only split characters when a single component cannot fit by itself.
+    const parts=labelUnits(token)<=max?[token]:token.match(/[^/:]+[/:]?|[/:]/g)||[token];
+    for(const part of parts){const units=labelUnits(part);
+     if(units<=max){if(used+units>max&&line){result.push(line);line='';used=0;}line+=part;used+=units;}
+     else for(const c of part){const u=labelUnits(c);if(used+u>max&&line){result.push(line);line='';used=0;}line+=c;used+=u;}
+    }
+   }
+   result.push(line);
+  }
+  return result;
+ }
+ function visibleIds(t,selected,mode){if(mode==='full')return new Set(t.nodes.map(n=>n.id));const shown=new Set([t.root,...t.by.get(t.root).children]),routeIds=route(t,selected);let expansion=routeIds.slice(1);if(!expansion.length){let n=t.by.get(t.root).children.find(id=>t.by.get(id).children.length);while(n){expansion.push(n);n=t.by.get(n).children[0];}}
+  for(const id of expansion){shown.add(id);const n=t.by.get(id),next=expansion.find(c=>t.by.get(c).parent===id),children=n.children.slice(0,2);if(next&&!children.includes(next))children.push(next);for(const child of children)shown.add(child);}return shown;
+ }
+ function layout(t,{width=720,selected=t.root,mode='semantic'}={}){
+  const sourceDepth=n=>route(t,n.id).length-1,columnOf=n=>t.kind==='l'&&n.type==='paper_ref'?4:sourceDepth(n),allDepth=Math.max(...t.nodes.map(columnOf)),visible=visibleIds(t,selected,mode),full=mode==='full',safe=full?Math.max(1180,width):Math.max(560,width),pad=12,rootWidth=90,left=pad+rootWidth+20,colWidth=full?230:Math.min(155,(safe-left-30)/Math.max(1,allDepth)),step=(safe-left-colWidth-pad)/Math.max(1,allDepth-1),nodes=[],edges=[],measures=new Map();
+  for(const n of t.nodes){if(!visible.has(n.id))continue;const depth=sourceDepth(n),column=columnOf(n),children=n.children.filter(id=>visible.has(id)),hidden=n.children.length-children.length,ls=lines(displayLabel(t,n),depth===0?rootWidth:colWidth,full?14:13),labelLines=ls,hiddenIds=n.children.filter(id=>!visible.has(id)),types=new Map(),units={pipeline:'条流程',representation:'种表示',module:'个模块',paper_ref:'条论文路径',protocol:'个协议来源',challenge:'个难点',insight:'种解法',question:'个问题',instance:'个模板实例'};for(const id of hiddenIds){const type=t.by.get(id).type;types.set(type,(types.get(type)||0)+1);}const foldedLabel='还有'+[...types].map(([type,count])=>count+(units[type]||'个原节点')).join('、'),foldLines=hidden?lines(foldedLabel,colWidth,10):[],h=Math.max(32,labelLines.length*(full?19:18)+foldLines.length*12+14);measures.set(n.id,{id:n.id,sourceId:n.sourceId,depth,column,w:depth===0?rootWidth:colWidth,h,labelLines,foldLines,foldedLabel,children,hidden,foldedDescendants:descendantsOf(t,n.id).filter(id=>!visible.has(id)).length});}
+  function span(id){const n=measures.get(id);n.span=Math.max(n.h+(full?9:4),n.children.reduce((sum,child)=>sum+span(child),0));return n.span;}const total=span(t.root);
+  function place(id,top){const n=measures.get(id),source=t.by.get(id),pos={...n,x:n.depth===0?pad:left+(n.column-1)*step,y:top+(n.span-n.h)/2,type:source.type,label:displayLabel(t,source),root:n.depth===1};nodes.push(pos);if(source.parent)edges.push({source:source.parent,target:id});let y=top+(n.span-n.children.reduce((sum,c)=>sum+measures.get(c).span,0))/2;for(const child of n.children){place(child,y);y+=measures.get(child).span;}}
+  place(t.root,42);return {width:safe,height:Math.max(360,total+54),nodes,edges,columnPositions:Array.from({length:allDepth},(_,i)=>left+i*step),maxDepth:allDepth,mode,visibleCount:nodes.length,totalCount:t.nodes.length,foldedCount:t.nodes.length-nodes.length};
+ }
+ function edge(a,b){const x=a.x+a.w,y=a.y+a.h/2,mid=(x+b.x)/2;return 'M'+x+','+y+' H'+mid+' V'+(b.y+b.h/2)+' H'+b.x;}
+ function svg(t,selected=t.root,view=t.kind,options={}){const mode=options.mode||modes.get(view)||'semantic',scene=layout(t,{selected,mode}),by=new Map(scene.nodes.map(n=>[n.id,n])),active=new Set(route(t,selected)),current=by.has(selected)?selected:t.root;
+  const labels=t.kind==='l'?['任务','流程 / 表示 / 协议','模块','论文']:t.kind==='c'?['Challenge','Insight','论文']:['五个主枝','研究问题','子问题','细项'];
+  let html='<svg class="atlas-svg" viewBox="0 0 '+scene.width+' '+scene.height+'"'+(mode==='full'?' style="width:'+scene.width+'px;height:'+scene.height+'px"':'')+' role="group" aria-label="'+escape(displayLabel(t,t.by.get(t.root)))+'完整来源树的'+(mode==='full'?'全部展开':'语义主骨架')+'，方向键沿父子兄弟浏览，回车定位" data-atlas-view="'+view+'" data-mode="'+mode+'" data-node-count="'+scene.nodes.length+'" data-total-count="'+t.nodes.length+'" data-edge-count="'+scene.edges.length+'"><g class="atlas-column-labels" aria-hidden="true">';
+  for(let i=1;i<=scene.maxDepth;i++){const x=scene.columnPositions[i-1];html+='<text data-column="'+i+'" x="'+x+'" y="22">'+escape(labels[i-1]||'细项')+'</text>';}
+  html+='</g><g class="atlas-edges" aria-hidden="true">';for(const e of scene.edges)html+='<path data-source="'+escape(e.source)+'" data-target="'+escape(e.target)+'" class="'+(active.has(e.source)&&active.has(e.target)?'active':'')+'" d="'+edge(by.get(e.source),by.get(e.target))+'"/>';
+  html+='</g><g class="atlas-vertices">';for(const pos of scene.nodes){const n=t.by.get(pos.id),isCurrent=pos.id===current,classes=(pos.depth===1?'atlas-root ':'')+(isCurrent?'current ':active.has(pos.id)?'ancestor ':'')+(n.type==='paper_ref'?'paper ':'')+(n.type==='instance'?'instance':'');
+   html+='<g class="atlas-vertex '+classes+'" role="button" tabindex="'+(isCurrent?'0':'-1')+'" data-atlas-view="'+view+'" data-atlas-id="'+escape(n.id)+'" data-source-id="'+escape(n.sourceId||'')+'" aria-label="'+escape(displayLabel(t,n).replace(/\s+/g,' ')+(pos.depth===0?'，全树起点':'')+'，'+n.children.length+' 个直接子节点，'+pos.foldedDescendants+' 个下层节点折叠')+'"'+(isCurrent?' aria-current="true"':'')+'><title>'+escape(displayLabel(t,n))+'</title>';
+   {html+='<rect class="atlas-label-bg" x="'+pos.x+'" y="'+pos.y+'" width="'+pos.w+'" height="'+pos.h+'" rx="3"/>';pos.labelLines.forEach((line,i)=>{html+='<text class="atlas-node-label" x="'+(pos.x+7)+'" y="'+(pos.y+18+i*(mode==='full'?19:18))+'">'+escape(line)+'</text>';});if(pos.hidden)pos.foldLines.forEach((line,i)=>{html+='<text class="atlas-fold-label" x="'+(pos.x+7)+'" y="'+(pos.y+18+pos.labelLines.length*(mode==='full'?19:18)+i*12)+'">'+escape(line)+'</text>';});}
+   html+='</g>';
+  }return html+'</g></svg>';
+ }
+ function html(t,{selected=t.root,view=t.kind}={}){const chosen=t.by.get(selected)||t.by.get(t.root),roots=t.by.get(t.root).children,mode=modes.get(view)||'semantic',scene=layout(t,{selected,mode});return '<div class="complete-atlas '+(mode==='full'?'atlas-full':'atlas-semantic')+'" data-atlas-container="'+view+'"><div class="atlas-tools"><label>主枝 <select data-atlas-root="'+view+'" aria-label="选择完整树的主枝"><option value="'+escape(t.root)+'">全树 · '+roots.length+' 个主枝</option>'+roots.map(id=>'<option value="'+escape(id)+'" '+(route(t,selected).includes(id)?'selected':'')+'>'+escape(t.by.get(id).label.replace(/\s+/g,' '))+'</option>').join('')+'</select></label><button type="button" data-atlas-mode="'+view+'" data-mode="'+(mode==='full'?'semantic':'full')+'">'+(mode==='full'?'主骨架':'完整展开')+'</button><button type="button" data-atlas-reset="'+view+'">回全局</button></div><div class="atlas-fit">'+svg(t,selected,view,{mode})+'</div><div class="atlas-caption"><span class="atlas-current-dot" aria-hidden="true"></span><span data-atlas-caption="'+view+'">'+escape(chosen.id===t.root?'全局 · '+roots.length+(t.kind==='l'?' 个任务':t.kind==='c'?' 个共同难点':' 个主枝')+(t.paperCount?' · '+t.paperCount+' 篇唯一论文':''):chosen.label.replace(/\s+/g,' '))+'</span></div><div class="atlas-legend">'+(mode==='full'?'全部 '+t.nodes.length+' 位置已展开，可横纵滚动':'主骨架 '+scene.visibleCount+' / '+t.nodes.length+' 位置 · '+scene.foldedCount+' 位置折叠')+' · 朱红为当前路径'+(t.kind==='a'?'':' · 总览起点仅连接原始根')+'</div></div>';}
+ function readableLayout(items,root,{width=820}={}){
+  const by=new Map(items.map(n=>[n.id,{...n,children:[...n.children]}])),pad=14,gap=34,maxDepth=Math.max(...items.map(n=>n.depth)),columns=maxDepth+1,safe=Math.max(580,Math.floor(width)),colWidth=Math.max(160,Math.min(270,(safe-pad*2-gap*maxDepth)/columns)),canvasWidth=Math.max(safe,pad*2+colWidth*columns+gap*maxDepth),nodes=[],edges=[];
+  for(const n of by.values()){const labelLines=lines(n.label,colWidth-18,15),subLines=n.contentTitle?lines(n.contentTitle,colWidth-18,12):[];Object.assign(n,{w:colWidth,h:n.continuation?34:Math.max(40,16+labelLines.length*21+subLines.length*17+(n.isInstance?14:0)),labelLines,subLines});}
+  function measure(id){const n=by.get(id);n.span=Math.max(n.h+14,n.children.reduce((sum,c)=>sum+measure(c),0));return n.span;}const span=measure(root);
+  function place(id,top,parent){const v=by.get(id),n={...v,x:pad+v.depth*(colWidth+gap),y:top+(v.span-v.h)/2};nodes.push(n);if(parent)edges.push({source:parent,target:id});let y=top+(v.span-v.children.reduce((sum,c)=>sum+by.get(c).span,0))/2;for(const child of v.children){place(child,y,id);y+=by.get(child).span;}}place(root,pad,null);return {width:canvasWidth,height:span+pad*2,nodes,edges,wide:true,vertical:false};
+ }
+ function setMode(view,mode){modes.set(view,mode==='full'?'full':'semantic');}
+ function bind(doc,getTree,onSelect,onMode){if(doc.__completeAtlasBound)return;doc.__completeAtlasBound=true;
+  function reveal(view,id){const t=getTree(view),container=doc.querySelector('[data-atlas-container="'+view+'"]'),region=container?.querySelector('.atlas-fit'),svg=container?.querySelector('.atlas-svg');if(!t||!region||!svg)return;const mode=svg.getAttribute('data-mode'),scene=layout(t,{selected:id,mode}),n=scene.nodes.find(n=>n.id===id);if(!n)return;const scale=mode==='full'?1:(svg.clientWidth||scene.width)/scene.width,top=n.y*scale,left=n.x*scale;if(top<region.scrollTop||top+n.h*scale>region.scrollTop+(region.clientHeight||620))region.scrollTop=Math.max(0,top-60);if(mode==='full'&&(left<region.scrollLeft||left+n.w>region.scrollLeft+(region.clientWidth||680)))region.scrollLeft=Math.max(0,left-30);}
+  function choose(view,id){const t=getTree(view);if(t?.by.has(id)){onSelect(view,t.by.get(id));reveal(view,id);}}
+  doc.addEventListener('click',event=>{const mode=event.target.closest('[data-atlas-mode]');if(mode){setMode(mode.dataset.atlasMode,mode.dataset.mode);onMode?.(mode.dataset.atlasMode);const button=doc.querySelector('[data-atlas-mode="'+mode.dataset.atlasMode+'"]');button?.focus({preventScroll:true});const current=doc.querySelector('[data-atlas-view="'+mode.dataset.atlasMode+'"][aria-current="true"]');if(current)reveal(mode.dataset.atlasMode,current.dataset.atlasId);return;}const reset=event.target.closest('[data-atlas-reset]');if(reset){const t=getTree(reset.dataset.atlasReset);if(t){setMode(reset.dataset.atlasReset,'semantic');choose(reset.dataset.atlasReset,t.root);onMode?.(reset.dataset.atlasReset);doc.querySelector('[data-atlas-view="'+reset.dataset.atlasReset+'"][data-atlas-id="'+t.root+'"]')?.focus({preventScroll:true});}return;}const target=event.target.closest('[data-atlas-id]');if(target)choose(target.dataset.atlasView,target.dataset.atlasId);});
+  doc.addEventListener('change',event=>{if(event.target.matches('[data-atlas-root]'))choose(event.target.dataset.atlasRoot,event.target.value);});
+  doc.addEventListener('keydown',event=>{const el=event.target.closest('[data-atlas-id]');if(!el)return;const t=getTree(el.dataset.atlasView),n=t?.by.get(el.dataset.atlasId);if(!n)return;if(['Enter',' '].includes(event.key)){event.preventDefault();choose(el.dataset.atlasView,n.id);return;}if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','Escape'].includes(event.key))return;event.preventDefault();const siblings=t.by.get(n.parent)?.children||[t.root],index=siblings.indexOf(n.id),id=event.key==='ArrowLeft'?n.parent||n.id:event.key==='ArrowRight'?n.children[0]||n.id:event.key==='ArrowUp'?siblings[Math.max(0,index-1)]:event.key==='ArrowDown'?siblings[Math.min(siblings.length-1,index+1)]:t.root;let target=[...doc.querySelectorAll('[data-atlas-id]')].find(x=>x.dataset.atlasView===el.dataset.atlasView&&x.dataset.atlasId===id);if(!target){choose(el.dataset.atlasView,id);target=[...doc.querySelectorAll('[data-atlas-id]')].find(x=>x.dataset.atlasView===el.dataset.atlasView&&x.dataset.atlasId===id);}if(target){el.setAttribute('tabindex','-1');target.setAttribute('tabindex','0');target.focus({preventScroll:true});const caption=doc.querySelector('[data-atlas-caption="'+el.dataset.atlasView+'"]');if(caption)caption.textContent=displayLabel(t,t.by.get(id)).replace(/\s+/g,' ');}if(event.key==='Escape')choose(el.dataset.atlasView,t.root);});
+  doc.addEventListener('mouseover',event=>{const el=event.target.closest('[data-atlas-id]'),t=el&&getTree(el.dataset.atlasView);if(t?.by.has(el.dataset.atlasId)){const caption=doc.querySelector('[data-atlas-caption="'+el.dataset.atlasView+'"]');if(caption)caption.textContent=displayLabel(t,t.by.get(el.dataset.atlasId)).replace(/\s+/g,' ');}});
+ }
+ return {UI_ROOT,paths,analysis,displayLabel,route,descendantsOf,labelUnits,lines,visibleIds,readableLayout,layout,edge,svg,html,bind,setMode};
+})();
+return {atlas,PAGE_SIZE,CATALOG_PAGE_SIZE,pageKey,initialState,normalizeLiterature,normalizeChallenge,buildModel,startsWith,matchingPaths,children,branch,rootOverview,pathsForPaper,catalogResults,coverage,sanitizeState,reduce,serialize,deserialize,validate};
 });

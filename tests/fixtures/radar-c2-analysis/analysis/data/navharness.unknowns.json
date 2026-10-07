@@ -1,0 +1,126 @@
+[
+  {
+    "id": "U01",
+    "status": "not_verified",
+    "topic": "正式出版版本",
+    "detail": "arXiv固定v1和作者主页核为preprint；本次没有核到正式出版版本。不是断言永远未发表。",
+    "sourceUrls": [
+      "https://arxiv.org/abs/2609.34276v1",
+      "https://billzhao1030.github.io/"
+    ]
+  },
+  {
+    "id": "U02",
+    "status": "not_available_for_source_review",
+    "topic": "公开执行源码及可复现配置",
+    "detail": "已实际读作者GitHub目录/README与项目页；README称code coming soon，目录只见README/assets。未读执行源码、未固定实现commit、未运行或独立复现。",
+    "sourceUrls": [
+      "https://github.com/billzhao1030/NavHarness",
+      "https://billzhao1030.github.io/NavHarness/"
+    ]
+  },
+  {
+    "id": "U03",
+    "status": "not_reported",
+    "topic": "全部模块设计选项消融",
+    "detail": "未报告定位器替换、0.1m格/高度阈值、恢复字段逐项、触发阈值/范围、巩固频率/四文件组织等各自的独立性能效果。",
+    "evidenceRecordIds": [
+      "E11",
+      "E16",
+      "E18",
+      "E19",
+      "E24",
+      "E27"
+    ]
+  },
+  {
+    "id": "U04",
+    "status": "not_established",
+    "topic": "结构化交接的独立因果来源",
+    "detail": "等长摘要对照改变信息选择与组织，不能声称JSON格式、每个字段或更多token本身造成8.3点收益。",
+    "evidenceRecordIds": [
+      "E16"
+    ]
+  },
+  {
+    "id": "U05",
+    "status": "not_evaluated",
+    "topic": "动态环境、实机及更长期可靠性",
+    "detail": "静态扫描与有限模拟序列不覆盖物体移动、人、布局变化、实机全天运行与跨house自主识别。",
+    "evidenceRecordIds": [
+      "E22"
+    ]
+  },
+  {
+    "id": "U06",
+    "status": "not_established",
+    "topic": "记忆事实整体正确性与judge独立性",
+    "detail": "goal认证不验证空间/路线所有陈述；actor与judge同模型不保证错误独立，互换judge的近似导航分数也不等于判定准确率相同。",
+    "evidenceRecordIds": [
+      "E09",
+      "E19",
+      "E28",
+      "E30"
+    ]
+  },
+  {
+    "id": "U07",
+    "status": "not_measured",
+    "topic": "成本图与长期档案可访问性",
+    "detail": "PDF Fig6使用价格/输入量假设，仅计导航输入；不是总API账单。单次read上限20k字符且无offset，不保证任意长ledger都可访问。",
+    "evidenceRecordIds": [
+      "E25",
+      "E26"
+    ]
+  },
+  {
+    "id": "U08",
+    "status": "not_established",
+    "topic": "案例频率/单模块因果归因",
+    "detail": "48人工分析案例选14展示；关键词命中不等于真实读取或修订；轨迹分岔会导致起点不同，案例步数差不能直接归给单句记忆。",
+    "evidenceRecordIds": [
+      "E29",
+      "E30"
+    ]
+  },
+  {
+    "id": "U09",
+    "status": "not_independently_audited",
+    "topic": "外部基线协议和原始运行记录",
+    "detail": "本次读了本篇关于基线的说明和公开论文中的日志节选，未另行逐篇核前作全文或作者完整原始运行数据。",
+    "evidenceRecordIds": [
+      "E03",
+      "E12",
+      "E13",
+      "E29"
+    ]
+  },
+  {
+    "id": "U10",
+    "status": "not_compared",
+    "topic": "版本差异",
+    "detail": "本候选固定2609.34276v1；未做其他版本diff。PDF与HTML有图号偏移，所有图号以PDF为准。",
+    "sourceUrls": [
+      "https://arxiv.org/pdf/2609.34276v1",
+      "https://arxiv.org/html/2609.34276v1"
+    ]
+  },
+  {
+    "id": "U11",
+    "status": "source_inconsistency",
+    "topic": "house notes文件粒度",
+    "detail": "§3.1/A.4/A.5称四个固定文件；D.2 Case11称七个skill notes，并列skills/find-dresser.md等独立路径。原文未解释映射或部署变体；不改写成四种文件来强行一致。",
+    "evidenceRecordIds": [
+      "E31"
+    ]
+  },
+  {
+    "id": "U12",
+    "status": "figure_text_inconsistency",
+    "topic": "Case2 task34的步数方向",
+    "detail": "PDF Figure18(p39)的task34 full蓝柱略低于no-consolidation橙柱，同页正文却称full多11步。保留未决，不用该task支撑精确步数节省或增加。",
+    "sourceUrls": [
+      "https://arxiv.org/pdf/2609.34276v1#page=39"
+    ]
+  }
+]
