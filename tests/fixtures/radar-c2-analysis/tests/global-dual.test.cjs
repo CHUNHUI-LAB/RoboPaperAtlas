@@ -10,12 +10,12 @@ el('c2-app').hidden=true;assert.deepEqual(errors,[]);const M=window.TreeModel,na
 assert.equal(m.papers.size,39);assert.equal(M.validate(m).length,0);
 const dataBefore=JSON.stringify([window.PAPER_CATALOG,window.LITERATURE_TREE,window.CHALLENGE_TREE]);
 assert.equal(M.rootOverview(m,'l','pipeline').length,19);assert.equal(M.rootOverview(m,'c').length,12);
-assert.equal((el('global-map').innerHTML.match(/class="atlas-vertex atlas-root /g)||[]).length,31);
+assert.equal((el('global-map').innerHTML.match(/class="atlas-vertex atlas-root /g)||[]).length,12);assert.equal((el('global-map').innerHTML.match(/class="task-family /g)||[]).length,3);
 assert(!el('tree-l').hidden&&el('tree-c').hidden&&el('paper-panel').hidden);assert(el('tree-l').innerHTML.includes('focus-empty'));
 assert.equal(nav.getState().globalTree,'l');
 const panelTag=key=>el('global-map').innerHTML.match(new RegExp('<section id="global-panel-'+key+'"[^>]*>'))[0];
 assert(!panelTag('l').includes('hidden'));assert(panelTag('c').includes('hidden'));
-assert(el('global-map').innerHTML.includes('19 个任务'));
+assert(el('global-map').innerHTML.includes('19 个原协议 ID'));assert.deepEqual(new Set(M.taskMap.groups.flatMap(g=>g.sections.flatMap(s=>s.ids))),new Set(M.rootOverview(m,'l').map(x=>x.node.id)));
 nav.dispatch({type:'globalTree',key:'c'});assert.equal(nav.getState().globalTree,'c');assert(panelTag('l').includes('hidden'));assert(!panelTag('c').includes('hidden'));
 assert.equal(M.deserialize(m,M.serialize(nav.getState())).globalTree,'c');
 nav.dispatch({type:'globalTree',key:'l'});assert.equal(nav.getState().globalTree,'l');
@@ -25,7 +25,7 @@ for(const key of ['l','c']){
  for(const root of M.rootOverview(m,key,key==='l'?'pipeline':undefined)){
   nav.dispatch({type:'root',key,id:root.node.id});assert.equal(nav.getState()[key][0],root.node.id);assert(!el('tree-'+key).hidden);
   assert(!el('global-map').hidden);assert(el('branch-rail').hidden);
-  assert.equal((el('global-map').innerHTML.match(/class="atlas-vertex atlas-root /g)||[]).length,31);
+  assert.equal((el('global-map').innerHTML.match(/class="atlas-vertex atlas-root /g)||[]).length,12);assert.equal((el('global-map').innerHTML.match(/class="task-family /g)||[]).length,3);
   const actual=new Set(M.matchingPaths(m.trees[key],[root.node.id],key==='l'?'pipeline':undefined).map(p=>p.paperId));assert.equal(actual.size,root.paperIds.length);
  }
 }
@@ -45,7 +45,7 @@ nav.dispatch({type:'root',key:'l',id:'fake-root'});assert.equal(nav.getState().l
 nav.dispatch({type:'root',key:'l',id:'task-vln-ce'});nav.dispatch({type:'facet',facet:'representation'});assert.equal(nav.getState().l[0],'task-vln-ce');
 nav.dispatch({type:'search',query:'harnessvln'});assert(!el('catalog-panel').hidden);assert(el('global-map').hidden);assert(M.catalogResults(m,'harnessvln').some(p=>p.canonical_id==='harnessvln'));
 nav.dispatch({type:'global'});assert(!el('global-map').hidden);assert(el('branch-rail').hidden);assert.equal(JSON.stringify([window.PAPER_CATALOG,window.LITERATURE_TREE,window.CHALLENGE_TREE]),dataBefore);
-nav.dispatch({type:'root',key:'l',id:'task-object-open'});assert(el('tree-l').innerHTML.includes('有任务 / 协议来源记录 · 首创未核实'));assert(!el('tree-l').innerHTML.includes('作者限定的首创声明'));assert(el('tree-l').innerHTML.includes('不授予所有开放词汇导航首创'));
+nav.dispatch({type:'root',key:'l',id:'task-object-open'});assert(el('tree-l').innerHTML.includes('任务 / 协议来源记录'));assert(el('tree-l').innerHTML.includes('全领域优先权：</b>尚未核实'));assert(!el('tree-l').innerHTML.includes('作者限定的首创声明'));assert(el('tree-l').innerHTML.includes('不授予所有开放词汇导航首创'));
 for(const [id,name] of [['task-vln-iterative','IVLN'],['task-goat-sequence','GOAT-Bench'],['task-open-eqa-active','OpenEQA'],['task-open-eqa-memory','OpenEQA']]){nav.dispatch({type:'root',key:'l',id});assert(el('tree-l').innerHTML.includes(name));assert(el('tree-l').innerHTML.includes('任务 / 协议来源记录'));assert(!el('tree-l').innerHTML.includes('原始定义来源待核'));}
 nav.dispatch({type:'back',key:'l'});assert(!el('tree-l').hidden);assert(el('tree-l').innerHTML.includes('focus-empty'));assert(!el('global-map').hidden);
 // Purpose switching preserves both paths; returning to overview clears only the active path and evidence.

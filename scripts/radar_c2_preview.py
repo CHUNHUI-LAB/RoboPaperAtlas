@@ -4,6 +4,7 @@ Only PUBLIC_FILES can be published. Inputs and tests remain outside the route.
 No retrieval, scientific inference, source regeneration or browser claim occurs.
 """
 from collections import Counter
+from copy import deepcopy
 import hashlib
 import json
 import os
@@ -24,6 +25,7 @@ PUBLIC_FILES = frozenset((
     'analysis/reading.html', 'analysis/data/bundle.js',
 ))
 REVIEW_INPUTS = frozenset((
+    'data/task-contract-corrections-20261007.json',
     'data/catalog.json', 'data/catalog-SHA256.txt', 'data/literature-seed.json',
     'data/challenge-seed.json', 'analysis/data/method.json',
     'analysis/data/mapping.json', 'analysis/data/analysis.compat.json',
@@ -279,6 +281,39 @@ def validate_analysis_bundle(bundle, inputs):
             'Figure18 conflict remains a whole-paper unresolved issue without invented answer backlinks')
 
 
+# A separately reviewed additive correction record, not a replacement history seed.
+PROTOCOL_DELTA_SHA256 = 'dd9f1990f1f68b04b37183231b9a362938ee4596543d0957eed5e86529163748'
+CORRECTED_LITERATURE_SHA256 = '44a1645269740d0f1bda0cbaddc6097d915f43171b6c4739fde7a745b80efc66'
+
+
+def expected_corrected_literature(inputs):
+    raw = inputs['data/task-contract-corrections-20261007.json']
+    require(sha256(raw) == PROTOCOL_DELTA_SHA256, 'Protocol correction delta changed')
+    delta = json.loads(raw)
+    original = json.loads(inputs['data/literature-seed.json'])
+    require(sha256(inputs['data/literature-seed.json']) == SCIENTIFIC_SOURCE_SHA256['data/literature-seed.json'], 'Original literature seed changed')
+    result = deepcopy(original)
+    by = {n['node_id']: n for n in result['nodes']}
+    for record in delta['nodes']:
+        node = by[record['node_id']]
+        for field in record['fields']:
+            name = field['field']
+            require((name in node) == field['before_present'] and node.get(name) == field['before'], 'Protocol correction before-value mismatch')
+            node[name] = deepcopy(field['after'])
+    for record in delta['implementation_variants']:
+        node = result['implementation_variants'][record['selector']['variant_id']]
+        for field in record['fields']:
+            name = field['field']
+            require((name in node) == field['before_present'] and node.get(name) == field['before'], 'Implementation correction before-value mismatch')
+            node[name] = deepcopy(field['after'])
+    for key, extra in delta['append_only_additions'].items():
+        result.setdefault(key, []).extend(deepcopy(extra))
+    result.update(deepcopy(delta['top_level_additions']))
+    require(result['paths'] == original['paths'] and result['edges'] == original['edges'], 'Protocol correction cannot migrate paths or edges')
+    require([n['node_id'] for n in result['nodes']] == [n['node_id'] for n in original['nodes']], 'Protocol correction cannot replace node IDs')
+    return result
+
+
 def validate_semantics(root, public, inputs, manifest):
     load = lambda name: json.loads(inputs[name])
     graph_bytes = read_regular(root, root / 'previews/radar-trees-c/data/graph-data.json')
@@ -294,8 +329,11 @@ def validate_semantics(root, public, inputs, manifest):
         ('data/catalog.js', 'data/catalog.json', 'PAPER_CATALOG'),
         ('data/literature.js', 'data/literature-seed.json', 'LITERATURE_TREE'),
         ('data/challenge.js', 'data/challenge-seed.json', 'CHALLENGE_TREE')):
-        require(assigned_json(public[script], global_name) == load(source),
+        expected_source = expected_corrected_literature(inputs) if script == 'data/literature.js' else load(source)
+        require(assigned_json(public[script], global_name) == expected_source,
                 'Runtime and reviewed input disagree: ' + script)
+        if script == 'data/literature.js':
+            require(sha256(public[script]) == CORRECTED_LITERATURE_SHA256, 'Corrected literature source changed')
     bundle = assigned_json(public['analysis/data/bundle.js'], 'C2_DATA')
     validate_analysis_bundle(bundle, inputs)
     require(manifest['scientific_state'] == scientific_state(bundle, catalog),
