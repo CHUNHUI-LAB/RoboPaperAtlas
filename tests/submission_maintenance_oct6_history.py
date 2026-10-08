@@ -15,7 +15,8 @@ def canonical_sha256(value):
 
 
 def project_before_oct6_maintenance(data):
-    restored = copy.deepcopy(data)
+    from submission_maintenance_oct8_history import project_before_oct8_maintenance
+    restored = project_before_oct8_maintenance(data)
     assert restored['checked_at'] == '2026-10-06'
     update = restored['maintenance_history'].pop()
     assert canonical_sha256(update) == HISTORY_SHA256
