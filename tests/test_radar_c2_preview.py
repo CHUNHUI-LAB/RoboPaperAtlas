@@ -357,7 +357,7 @@ class RadarC2ContractTests(unittest.TestCase):
             self.assertEqual((site / 'analysis/data/bundle.js').read_bytes(), before_bundle)
         self.assertEqual(before, {str(p): digest(p) for base in (c2.SOURCE, c2.INPUT_SOURCE)
                                 for p in (ROOT / base).rglob('*') if p.is_file()})
-    def test_wrapper_output_delta_is_only_new_route(self):
+    def test_wrapper_output_delta_is_only_reviewed_routes(self):
         # Compare the same current source through the original build+preview steps
         # against the CI wrapper; generated data must already be prepared as in CI.
         with tempfile.TemporaryDirectory(prefix='.c2-baseline-', dir=ROOT) as baseline, \
@@ -375,7 +375,9 @@ class RadarC2ContractTests(unittest.TestCase):
                                      for p in Path(folder).rglob('*') if p.is_file()}
             old, new = hashes(baseline), hashes(integrated)
             added = {n for n in new if n not in old}
-            self.assertEqual(added, {c2.ROUTE + '/' + n for n in c2.PUBLIC_FILES})
+            expected = {c2.ROUTE + '/' + n for n in c2.PUBLIC_FILES}
+            expected |= {'review/objectnav-reading-v1/' + n for n in ('index.html', 'style.css', 'reader.js')}
+            self.assertEqual(added, expected)
             self.assertEqual(old, {n: h for n, h in new.items() if n not in added})
             c2.validate_output(ROOT, Path(integrated))
 

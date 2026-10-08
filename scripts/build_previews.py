@@ -83,6 +83,8 @@ def main(argv=None):
     validate_source(ROOT)
     validate_submit_source(ROOT, target)
     validate_c2_preview(ROOT, target)
+    from objectnav_reading_preview import validate_preview as validate_objectnav_preview, write_preview as write_objectnav_preview
+    validate_objectnav_preview(ROOT, target)
     subprocess.run(
         [sys.executable, str(ROOT / 'scripts/build.py'), '--output', args.output],
         check=True,
@@ -90,6 +92,7 @@ def main(argv=None):
     write_preview(ROOT, target)
     write_submit_preview(ROOT, target)
     write_c2_preview(ROOT, target)
+    write_objectnav_preview(ROOT, target)
 
 
 if __name__ == '__main__':

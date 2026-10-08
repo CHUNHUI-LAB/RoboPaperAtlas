@@ -1,0 +1,1593 @@
+{
+  "version": "objectnav-reading/1",
+  "status": "isolated_reading_candidate",
+  "task": {
+    "id": "category-objectnav",
+    "canonical_entity_id": "task:category-objectnav",
+    "node_role": "milestone_task",
+    "label": "ObjectNav（类别目标导航）",
+    "milestone_selection": "editorial condition-based milestone, not historical first",
+    "contract": {
+      "input_goal": "object category label",
+      "goal_location": "not supplied; discovered by exploration",
+      "valid_target_identity": "any qualifying instance of target category",
+      "environment": "unexplored/unseen at episode start as specified by each protocol",
+      "termination": "agent intentionally calls stop near qualifying goal",
+      "success_distance_m_and_budget": "variant-specific; both cited papers state 1m/500 steps; do not infer every ObjectNav benchmark shares the identical full evaluator"
+    },
+    "source_ids": [
+      "obj20",
+      "semexp2020",
+      "poni2022"
+    ],
+    "boundaries": [
+      "No unique image instance requirement",
+      "No claim of globally first semantic navigation",
+      "Do not conflate no prior map with absent agent pose input",
+      "Do not transfer a paper headline success definition into an unverified shared benchmark evaluator"
+    ],
+    "definition_zh": "未知环境中按类别搜索并到达任一合格目标实例"
+  },
+  "sources": {
+    "semexp2020": {
+      "url": "https://proceedings.neurips.cc/paper/2020/file/2c75cf2681788adaca63aa95ae028b22-Paper.pdf",
+      "version": "NeurIPS 2020 proceedings",
+      "read_scope": "§2–5 selected primary text; not code execution",
+      "canonical_paper_id": "semexp"
+    },
+    "poni2022": {
+      "url": "https://openaccess.thecvf.com/content/CVPR2022/papers/Ramakrishnan_PONI_Potential_Functions_for_ObjectGoal_Navigation_With_Interaction-Free_Learning_CVPR_2022_paper.pdf",
+      "version": "CVPR 2022 proceedings",
+      "read_scope": "§1–3.6; §5 Table3; supplementary S1 checked separately",
+      "canonical_paper_id": "poni"
+    },
+    "obj20": {
+      "title": "ObjectNav Revisited: On Evaluation of Embodied Agents Navigating to Objects",
+      "year": 2020,
+      "version": "arXiv:2006.13171v2, 2020-08-30",
+      "url": "https://arxiv.org/pdf/2006.13171v2",
+      "sections": "§1; §2 ObjectNav recommendations; §3 Habitat 2020 Challenge",
+      "reading_depth": "全文获取；核读实例可互换、oracle visibility、成功区域与SPL",
+      "kind": "benchmark_standardization",
+      "canonical_paper_id": "batra2020objectnav",
+      "identity_basis": "explicit source ID and original title/URL, never label matching"
+    }
+  },
+  "variants": {
+    "semexp2020": {
+      "goal": "category",
+      "observations": "RGB-D and sensor pose",
+      "actions": [
+        "move_forward",
+        "turn_left",
+        "turn_right",
+        "stop"
+      ],
+      "headline_success": "stop within 1m of goal object",
+      "step_budget": 500,
+      "locator": "§3"
+    },
+    "poni2022": {
+      "goal": "category",
+      "observations": "RGB-D and odometer readings aggregated to relative pose",
+      "actions": [
+        "move_forward",
+        "turn_left",
+        "turn_right",
+        "stop"
+      ],
+      "headline_success": "stop within 1m of object",
+      "step_budget": 500,
+      "locator": "§3.1"
+    }
+  },
+  "method_nodes": [
+    {
+      "id": "m-objectnav",
+      "kind": "milestone",
+      "label": "ObjectNav（类别目标导航）",
+      "evidence": [
+        {
+          "source_id": "semexp2020",
+          "locator": "§3 Task setup"
+        }
+      ],
+      "read_status": "selected_primary_sections_checked",
+      "uncertainty": "方法具体传感器和成功判据见各paper variant，不添加到共享task identity",
+      "canonical_entity_id": "task:category-objectnav",
+      "definition_zh": "未知环境中按类别搜索并到达任一合格目标实例",
+      "contract_import": "task-freeze:category-objectnav"
+    },
+    {
+      "id": "p-semmap",
+      "kind": "pipeline",
+      "label": "类别语义制图→长程选点→解析局部执行→在线更新",
+      "evidence": [
+        {
+          "source_id": "semexp2020",
+          "locator": "§3 Fig.2"
+        }
+      ],
+      "read_status": "selected_primary_sections_checked",
+      "uncertainty": "family是接口层概括，不表示每篇权重/模块实现相同",
+      "canonical_entity_id": "pipeline:semantic-map-search"
+    },
+    {
+      "id": "w-semexp",
+      "kind": "work",
+      "label": "SemExp",
+      "evidence": [
+        {
+          "source_id": "semexp2020",
+          "locator": "§3"
+        }
+      ],
+      "read_status": "selected_primary_sections_checked",
+      "uncertainty": "",
+      "seminal_annotation": {
+        "label": "本语义地图搜索分支的奠基工作",
+        "scope": "SemExp式类别语义图、目标条件探索、确定性解析执行的明确后继谱系",
+        "support": [
+          "SemExp §3 recipe",
+          "PONI §2 integration statement and §3.4 reuse"
+        ],
+        "not_claimed": "ObjectNav、地图导航或模块导航全球首创",
+        "priority_status": "scoped_lineage_origin_supported"
+      },
+      "canonical_entity_id": "method:semexp",
+      "canonical_paper_id": "semexp"
+    },
+    {
+      "id": "i-offline",
+      "kind": "improvement",
+      "label": "长程搜索从交互RL改为离线监督双潜力",
+      "evidence": [
+        {
+          "source_id": "poni2022",
+          "locator": "§2; §3.2–3.6"
+        }
+      ],
+      "read_status": "selected_primary_sections_checked",
+      "uncertainty": "数据仍来自标注3D场景，非零训练",
+      "canonical_entity_id": "improvement:offline-dual-potentials"
+    },
+    {
+      "id": "w-poni",
+      "kind": "work",
+      "label": "PONI",
+      "evidence": [
+        {
+          "source_id": "poni2022",
+          "locator": "§3.3; §3.6"
+        }
+      ],
+      "read_status": "selected_primary_sections_checked",
+      "uncertainty": "",
+      "seminal_annotation": {
+        "label": "本双潜力ObjectNav设计的提出作",
+        "scope": "area/object frontier-potential配对及离线地图监督",
+        "not_claimed": "势函数、frontier预测、离线导航最早工作",
+        "priority_status": "specific_method_introduction"
+      },
+      "canonical_entity_id": "method:poni",
+      "canonical_paper_id": "poni"
+    },
+    {
+      "id": "s-where",
+      "kind": "subtask",
+      "label": "地图式路线的局部问题：根据部分语义图决定下一处去哪找",
+      "evidence": [
+        {
+          "source_id": "poni2022",
+          "locator": "§1; §3.2–3.3"
+        }
+      ],
+      "read_status": "selected_primary_sections_checked",
+      "uncertainty": "仅适用于此地图式搜索路线的功能分解；不要求所有ObjectNav方法使用地图",
+      "applies_to_pipeline_ids": [
+        "p-semmap",
+        "p-potentials"
+      ],
+      "canonical_entity_id": "subtask:map-conditioned-search-goal"
+    },
+    {
+      "id": "p-potentials",
+      "kind": "pipeline",
+      "label": "部分语义图→双潜力估计→组合筛选→长程点",
+      "evidence": [
+        {
+          "source_id": "poni2022",
+          "locator": "§3.3 Fig.2 Eq.1–2"
+        }
+      ],
+      "read_status": "selected_primary_sections_checked",
+      "uncertainty": "子问题pipeline，不冒充完整机器人闭环",
+      "canonical_entity_id": "pipeline:poni-search"
+    },
+    {
+      "id": "ref-poni",
+      "kind": "work_reference",
+      "label": "PONI：同一论文在局部问题下的阅读引用",
+      "evidence": [
+        {
+          "source_id": "poni2022",
+          "locator": "§3.3"
+        }
+      ],
+      "read_status": "selected_primary_sections_checked",
+      "uncertainty": "不新建论文身份",
+      "canonical_work": "w-poni",
+      "canonical_entity_id": "method:poni",
+      "canonical_paper_id": "poni"
+    },
+    {
+      "id": "r-semmap",
+      "kind": "representation",
+      "label": "障碍、已探索区域、类别通道的allocentric map",
+      "evidence": [
+        {
+          "source_id": "poni2022",
+          "locator": "§3.4"
+        }
+      ],
+      "read_status": "selected_primary_sections_checked",
+      "uncertainty": "非实例身份记忆，也非目标存在的校准概率",
+      "canonical_entity_id": "poni:r-semmap"
+    },
+    {
+      "id": "s-map",
+      "kind": "subtask",
+      "label": "把连续观测积累成可供搜索的空间状态",
+      "evidence": [
+        {
+          "source_id": "poni2022",
+          "locator": "§3.4"
+        }
+      ],
+      "read_status": "selected_primary_sections_checked",
+      "uncertainty": "论文内功能分解；不自动当文献树的任务父类",
+      "canonical_entity_id": "poni:s-map"
+    },
+    {
+      "id": "s-local",
+      "kind": "subtask",
+      "label": "把长程点转为避障到达动作",
+      "evidence": [
+        {
+          "source_id": "poni2022",
+          "locator": "§3.5"
+        }
+      ],
+      "read_status": "selected_primary_sections_checked",
+      "uncertainty": "到达点不自动解决目标实例识别",
+      "canonical_entity_id": "poni:s-local"
+    },
+    {
+      "id": "u-mapper",
+      "kind": "module",
+      "label": "继承SemExp式语义mapper",
+      "evidence": [
+        {
+          "source_id": "poni2022",
+          "locator": "§3.4"
+        }
+      ],
+      "read_status": "selected_primary_sections_checked",
+      "uncertainty": "过程继承，不是所有代码逐行相同",
+      "canonical_entity_id": "poni:u-mapper"
+    },
+    {
+      "id": "u-network",
+      "kind": "module",
+      "label": "UNet encoder＋area/object decoders",
+      "evidence": [
+        {
+          "source_id": "poni2022",
+          "locator": "§3.3"
+        }
+      ],
+      "read_status": "selected_primary_sections_checked",
+      "uncertainty": "类别通道选择与面积潜力混合",
+      "canonical_entity_id": "poni:u-network"
+    },
+    {
+      "id": "u-local",
+      "kind": "module",
+      "label": "FMM规划＋确定性动作",
+      "evidence": [
+        {
+          "source_id": "poni2022",
+          "locator": "§3.5"
+        }
+      ],
+      "read_status": "selected_primary_sections_checked",
+      "uncertainty": "ANS采用learned local policy，二者不同",
+      "canonical_entity_id": "poni:u-local"
+    },
+    {
+      "id": "i-mask",
+      "kind": "implementation_detail",
+      "label": "推理保留未探索区域预测，不严格只选frontier像素",
+      "evidence": [
+        {
+          "source_id": "poni2022",
+          "locator": "§3.3 Long-term goal sampling"
+        }
+      ],
+      "read_status": "selected_primary_sections_checked",
+      "uncertainty": "训练势函数定义和运行时候选mask必须区分",
+      "canonical_entity_id": "poni:i-mask"
+    }
+  ],
+  "poni": {
+    "schema_version": "paper-analysis-scoped-answers/1",
+    "paper_id": "poni",
+    "canonical_paper_id": "cvpr:2022:ramakrishnan-poni",
+    "title": "PONI: Potential Functions for ObjectGoal Navigation with Interaction-Free Learning",
+    "source_version": "CVPR 2022 accepted proceedings main paper, pp.18890–18899",
+    "source_url": "https://openaccess.thecvf.com/content/CVPR2022/papers/Ramakrishnan_PONI_Potential_Functions_for_ObjectGoal_Navigation_With_Interaction-Free_Learning_CVPR_2022_paper.pdf",
+    "status": "partial_selected_section_analysis",
+    "status_label_zh": "原论文选定章节核读，解析部分填写",
+    "template_contract": {
+      "original_node_count": 59,
+      "chapter_ids": [
+        "abstract",
+        "introduction",
+        "method",
+        "experiments",
+        "limitation"
+      ],
+      "change_template": false,
+      "add_or_reorder_nodes": false,
+      "preserve_asymmetric_contribution_slots": true,
+      "preserve_multiline_overview_nodes": true,
+      "preserve_ellipsis_and_original_limitation_annotation": true
+    },
+    "reading_record": {
+      "checked": "本轮独立获取CVPR原版文本；核读Abstract、§1–5中的任务、方法、训练、实验及选定表格；读取图注。",
+      "not_completed": [
+        "逐句写作逻辑精读",
+        "PDF图像像素/全部图表视觉核对",
+        "完整附录/补充材料",
+        "源码阅读与运行",
+        "独立实验复现",
+        "所有59节点回答",
+        "Stage1/2/3完整交付"
+      ],
+      "extraction_limit": "全文抽取末尾references在50k字符预算处截断；主体已获取，不能据此标整篇含补充完整阅读。"
+    },
+    "answers": [
+      {
+        "template_node_id": "abstract-task",
+        "text": "给定类别，在未探索场景中找到合格物体并停靠。",
+        "attribution": "原文概括",
+        "evidence_refs": [
+          {
+            "source_id": "poni-cvpr2022",
+            "source_url": "https://openaccess.thecvf.com/content/CVPR2022/papers/Ramakrishnan_PONI_Potential_Functions_for_ObjectGoal_Navigation_With_Interaction-Free_Learning_CVPR_2022_paper.pdf",
+            "locator": "Abstract; §3.1"
+          }
+        ],
+        "read_level": "selected_primary_text_sections",
+        "status": "answered_scoped",
+        "scope_note": null
+      },
+      {
+        "template_node_id": "abstract-challenge",
+        "text": "既有ObjectNav交互RL训练需要较多算力与时间。",
+        "attribution": "原文概括",
+        "evidence_refs": [
+          {
+            "source_id": "poni-cvpr2022",
+            "source_url": "https://openaccess.thecvf.com/content/CVPR2022/papers/Ramakrishnan_PONI_Potential_Functions_for_ObjectGoal_Navigation_With_Interaction-Free_Learning_CVPR_2022_paper.pdf",
+            "locator": "Abstract"
+          }
+        ],
+        "read_level": "selected_primary_text_sections",
+        "status": "answered_scoped",
+        "scope_note": null
+      },
+      {
+        "template_node_id": "abstract-insight-one",
+        "text": "“去哪找”可作为从部分地图预测搜索价值的监督学习问题。",
+        "attribution": "原文概括",
+        "evidence_refs": [
+          {
+            "source_id": "poni-cvpr2022",
+            "source_url": "https://openaccess.thecvf.com/content/CVPR2022/papers/Ramakrishnan_PONI_Potential_Functions_for_ObjectGoal_Navigation_With_Interaction-Free_Learning_CVPR_2022_paper.pdf",
+            "locator": "Abstract; §1"
+          }
+        ],
+        "read_level": "selected_primary_text_sections",
+        "status": "answered_scoped",
+        "scope_note": null
+      },
+      {
+        "template_node_id": "abstract-contribution-1-description",
+        "text": "网络共同预测探索面积潜力与目标距离潜力。",
+        "attribution": "原文概括",
+        "evidence_refs": [
+          {
+            "source_id": "poni-cvpr2022",
+            "source_url": "https://openaccess.thecvf.com/content/CVPR2022/papers/Ramakrishnan_PONI_Potential_Functions_for_ObjectGoal_Navigation_With_Interaction-Free_Learning_CVPR_2022_paper.pdf",
+            "locator": "Abstract; §3.3"
+          }
+        ],
+        "read_level": "selected_primary_text_sections",
+        "status": "answered_scoped",
+        "scope_note": null
+      },
+      {
+        "template_node_id": "abstract-contribution-2-description",
+        "text": "从完整语义地图构造部分地图与监督标签，无需训练期导航交互。",
+        "attribution": "原文概括",
+        "evidence_refs": [
+          {
+            "source_id": "poni-cvpr2022",
+            "source_url": "https://openaccess.thecvf.com/content/CVPR2022/papers/Ramakrishnan_PONI_Potential_Functions_for_ObjectGoal_Navigation_With_Interaction-Free_Learning_CVPR_2022_paper.pdf",
+            "locator": "Abstract; §3.6"
+          }
+        ],
+        "read_level": "selected_primary_text_sections",
+        "status": "answered_scoped",
+        "scope_note": null
+      },
+      {
+        "template_node_id": "abstract-experiment",
+        "text": "在Gibson与MP3D比较导航质量和训练计算成本。",
+        "attribution": "原文概括",
+        "evidence_refs": [
+          {
+            "source_id": "poni-cvpr2022",
+            "source_url": "https://openaccess.thecvf.com/content/CVPR2022/papers/Ramakrishnan_PONI_Potential_Functions_for_ObjectGoal_Navigation_With_Interaction-Free_Learning_CVPR_2022_paper.pdf",
+            "locator": "Abstract; §4–5"
+          }
+        ],
+        "read_level": "selected_primary_text_sections",
+        "status": "answered_scoped",
+        "scope_note": null
+      },
+      {
+        "template_node_id": "intro-previous-1",
+        "text": "以SemExp为代表的模块化ObjectNav。",
+        "attribution": "原文概括",
+        "evidence_refs": [
+          {
+            "source_id": "poni-cvpr2022",
+            "source_url": "https://openaccess.thecvf.com/content/CVPR2022/papers/Ramakrishnan_PONI_Potential_Functions_for_ObjectGoal_Navigation_With_Interaction-Free_Learning_CVPR_2022_paper.pdf",
+            "locator": "§1–2; references [13]"
+          }
+        ],
+        "read_level": "selected_primary_text_sections",
+        "status": "answered_scoped",
+        "scope_note": null
+      },
+      {
+        "template_node_id": "intro-failure-1",
+        "text": "作者指出：拆分搜索与移动后，搜索策略仍依赖交互RL训练。",
+        "attribution": "作者对前作的局限表述",
+        "evidence_refs": [
+          {
+            "source_id": "poni-cvpr2022",
+            "source_url": "https://openaccess.thecvf.com/content/CVPR2022/papers/Ramakrishnan_PONI_Potential_Functions_for_ObjectGoal_Navigation_With_Interaction-Free_Learning_CVPR_2022_paper.pdf",
+            "locator": "§1"
+          }
+        ],
+        "read_level": "selected_primary_text_sections",
+        "status": "answered_scoped",
+        "scope_note": null
+      },
+      {
+        "template_node_id": "intro-reason-1",
+        "text": "搜索仍由奖励驱动的rollout学习，训练计算负担尚在。",
+        "attribution": "作者解释",
+        "evidence_refs": [
+          {
+            "source_id": "poni-cvpr2022",
+            "source_url": "https://openaccess.thecvf.com/content/CVPR2022/papers/Ramakrishnan_PONI_Potential_Functions_for_ObjectGoal_Navigation_With_Interaction-Free_Learning_CVPR_2022_paper.pdf",
+            "locator": "§1"
+          }
+        ],
+        "read_level": "selected_primary_text_sections",
+        "status": "answered_scoped",
+        "scope_note": null
+      },
+      {
+        "template_node_id": "intro-how-1",
+        "text": "把两种潜力融合，用高值位置作为长程探索目标。",
+        "attribution": "原文概括",
+        "evidence_refs": [
+          {
+            "source_id": "poni-cvpr2022",
+            "source_url": "https://openaccess.thecvf.com/content/CVPR2022/papers/Ramakrishnan_PONI_Potential_Functions_for_ObjectGoal_Navigation_With_Interaction-Free_Learning_CVPR_2022_paper.pdf",
+            "locator": "§1; §3.3"
+          }
+        ],
+        "read_level": "selected_primary_text_sections",
+        "status": "answered_scoped",
+        "scope_note": null
+      },
+      {
+        "template_node_id": "intro-how-2",
+        "text": "离线构造地图训练样本，监督预测潜力而非训练交互策略。",
+        "attribution": "原文概括",
+        "evidence_refs": [
+          {
+            "source_id": "poni-cvpr2022",
+            "source_url": "https://openaccess.thecvf.com/content/CVPR2022/papers/Ramakrishnan_PONI_Potential_Functions_for_ObjectGoal_Navigation_With_Interaction-Free_Learning_CVPR_2022_paper.pdf",
+            "locator": "§1; §3.6"
+          }
+        ],
+        "read_level": "selected_primary_text_sections",
+        "status": "answered_scoped",
+        "scope_note": null
+      },
+      {
+        "template_node_id": "overview-task",
+        "text": "输入RGB-D、相对位姿、目标类别；输出移动、转向、停止。该实验采用无噪深度/里程计。",
+        "attribution": "原文概括",
+        "evidence_refs": [
+          {
+            "source_id": "poni-cvpr2022",
+            "source_url": "https://openaccess.thecvf.com/content/CVPR2022/papers/Ramakrishnan_PONI_Potential_Functions_for_ObjectGoal_Navigation_With_Interaction-Free_Learning_CVPR_2022_paper.pdf",
+            "locator": "§3.1; §4"
+          }
+        ],
+        "read_level": "selected_primary_text_sections",
+        "status": "answered_scoped",
+        "scope_note": null
+      },
+      {
+        "template_node_id": "overview-method",
+        "text": "观测建语义图→预测长程目标→FMM局部执行→更新地图。500步内在目标1m范围停止。",
+        "attribution": "原文概括",
+        "evidence_refs": [
+          {
+            "source_id": "poni-cvpr2022",
+            "source_url": "https://openaccess.thecvf.com/content/CVPR2022/papers/Ramakrishnan_PONI_Potential_Functions_for_ObjectGoal_Navigation_With_Interaction-Free_Learning_CVPR_2022_paper.pdf",
+            "locator": "§3.1–3.5"
+          }
+        ],
+        "read_level": "selected_primary_text_sections",
+        "status": "answered_scoped",
+        "scope_note": null
+      },
+      {
+        "template_node_id": "module-1-motivation",
+        "text": "将连续局部观测积累成可用于搜索的空间记录。",
+        "attribution": "原文概括",
+        "evidence_refs": [
+          {
+            "source_id": "poni-cvpr2022",
+            "source_url": "https://openaccess.thecvf.com/content/CVPR2022/papers/Ramakrishnan_PONI_Potential_Functions_for_ObjectGoal_Navigation_With_Interaction-Free_Learning_CVPR_2022_paper.pdf",
+            "locator": "§3.2, §3.4"
+          }
+        ],
+        "read_level": "selected_primary_text_sections",
+        "status": "answered_scoped",
+        "scope_note": null,
+        "slot_binding": "Semantic Mapper (§3.4; pipeline component 1)"
+      },
+      {
+        "template_node_id": "module-1-how",
+        "text": "复用SemExp：分割RGB、结合深度和位姿投影，累积语义地图。",
+        "attribution": "原文概括",
+        "evidence_refs": [
+          {
+            "source_id": "poni-cvpr2022",
+            "source_url": "https://openaccess.thecvf.com/content/CVPR2022/papers/Ramakrishnan_PONI_Potential_Functions_for_ObjectGoal_Navigation_With_Interaction-Free_Learning_CVPR_2022_paper.pdf",
+            "locator": "§3.4"
+          }
+        ],
+        "read_level": "selected_primary_text_sections",
+        "status": "answered_scoped",
+        "scope_note": null,
+        "slot_binding": "Semantic Mapper (§3.4; pipeline component 1)"
+      },
+      {
+        "template_node_id": "module-2-motivation",
+        "text": "观察不足时需探索；线索充分时应更有针对性地找目标。",
+        "attribution": "原文概括",
+        "evidence_refs": [
+          {
+            "source_id": "poni-cvpr2022",
+            "source_url": "https://openaccess.thecvf.com/content/CVPR2022/papers/Ramakrishnan_PONI_Potential_Functions_for_ObjectGoal_Navigation_With_Interaction-Free_Learning_CVPR_2022_paper.pdf",
+            "locator": "§3.3"
+          }
+        ],
+        "read_level": "selected_primary_text_sections",
+        "status": "answered_scoped",
+        "scope_note": null,
+        "slot_binding": "Potential Function Network (§3.3; pipeline component 2)"
+      },
+      {
+        "template_node_id": "module-2-how",
+        "text": "UNet两解码器预测潜力，按验证集选定权重融合后选长程点。",
+        "attribution": "原文概括",
+        "evidence_refs": [
+          {
+            "source_id": "poni-cvpr2022",
+            "source_url": "https://openaccess.thecvf.com/content/CVPR2022/papers/Ramakrishnan_PONI_Potential_Functions_for_ObjectGoal_Navigation_With_Interaction-Free_Learning_CVPR_2022_paper.pdf",
+            "locator": "§3.3"
+          }
+        ],
+        "read_level": "selected_primary_text_sections",
+        "status": "answered_scoped",
+        "scope_note": null,
+        "slot_binding": "Potential Function Network (§3.3; pipeline component 2)"
+      },
+      {
+        "template_node_id": "module-2-work",
+        "text": "面积潜力提供探索偏好，目标潜力提供目标相关引导；消融检验其互补性。",
+        "attribution": "作者机制解释与论文内检验",
+        "evidence_refs": [
+          {
+            "source_id": "poni-cvpr2022",
+            "source_url": "https://openaccess.thecvf.com/content/CVPR2022/papers/Ramakrishnan_PONI_Potential_Functions_for_ObjectGoal_Navigation_With_Interaction-Free_Learning_CVPR_2022_paper.pdf",
+            "locator": "§3.3; §5 Table3"
+          }
+        ],
+        "read_level": "selected_primary_text_sections",
+        "status": "answered_scoped",
+        "scope_note": null,
+        "slot_binding": "Potential Function Network (§3.3; pipeline component 2)"
+      },
+      {
+        "template_node_id": "module-2-advantage",
+        "text": "潜力网络可用离线标注地图训练，不需交互导航rollout。",
+        "attribution": "原文概括",
+        "evidence_refs": [
+          {
+            "source_id": "poni-cvpr2022",
+            "source_url": "https://openaccess.thecvf.com/content/CVPR2022/papers/Ramakrishnan_PONI_Potential_Functions_for_ObjectGoal_Navigation_With_Interaction-Free_Learning_CVPR_2022_paper.pdf",
+            "locator": "§3.6"
+          }
+        ],
+        "read_level": "selected_primary_text_sections",
+        "status": "answered_scoped",
+        "scope_note": null,
+        "slot_binding": "Potential Function Network (§3.3; pipeline component 2)"
+      },
+      {
+        "template_node_id": "comparison",
+        "text": "同文Gibson-val：PONI SR/SPL=73.6/41.0，SemExp=71.7/39.6；不可混接SemExp原文另一组分数。",
+        "attribution": "论文报告数值",
+        "evidence_refs": [
+          {
+            "source_id": "poni-cvpr2022",
+            "source_url": "https://openaccess.thecvf.com/content/CVPR2022/papers/Ramakrishnan_PONI_Potential_Functions_for_ObjectGoal_Navigation_With_Interaction-Free_Learning_CVPR_2022_paper.pdf",
+            "locator": "§4.1; §5 Table1"
+          }
+        ],
+        "read_level": "selected_primary_text_sections",
+        "status": "answered_scoped",
+        "scope_note": null
+      },
+      {
+        "template_node_id": "ablation-core",
+        "text": "Gibson-val SR：完整73.6，去面积潜力65.1，去目标潜力72.7；GT分割86.5为特权设置。",
+        "attribution": "论文报告数值",
+        "evidence_refs": [
+          {
+            "source_id": "poni-cvpr2022",
+            "source_url": "https://openaccess.thecvf.com/content/CVPR2022/papers/Ramakrishnan_PONI_Potential_Functions_for_ObjectGoal_Navigation_With_Interaction-Free_Learning_CVPR_2022_paper.pdf",
+            "locator": "§5 Table3"
+          }
+        ],
+        "read_level": "selected_primary_text_sections",
+        "status": "answered_scoped",
+        "scope_note": null
+      },
+      {
+        "template_node_id": "limitation",
+        "text": "分割影响地图和停止，GT差距提示感知误差仍明显。训练需语义标注；本轮实验不证明真实噪声下鲁棒性。",
+        "attribution": "原文限制与直接观察",
+        "evidence_refs": [
+          {
+            "source_id": "poni-cvpr2022",
+            "source_url": "https://openaccess.thecvf.com/content/CVPR2022/papers/Ramakrishnan_PONI_Potential_Functions_for_ObjectGoal_Navigation_With_Interaction-Free_Learning_CVPR_2022_paper.pdf",
+            "locator": "§3.6; §4; §5 Table3"
+          }
+        ],
+        "read_level": "selected_primary_text_sections",
+        "status": "answered_scoped",
+        "scope_note": null
+      }
+    ],
+    "coverage": {
+      "answered_nodes": 22,
+      "template_nodes": 59,
+      "unanswered_template_node_ids": [
+        "paper-analysis",
+        "abstract",
+        "abstract-insight",
+        "abstract-insight-benefit",
+        "abstract-contributions",
+        "abstract-contribution-1",
+        "abstract-contribution-1-benefit",
+        "abstract-contribution-2",
+        "abstract-contribution-2-benefit",
+        "abstract-contribution-more",
+        "introduction",
+        "intro-task",
+        "intro-previous-challenge",
+        "intro-challenge-1",
+        "intro-challenge-2",
+        "intro-previous-2",
+        "intro-failure-2",
+        "intro-reason-2",
+        "intro-pipeline",
+        "intro-key",
+        "intro-contribution-1",
+        "intro-advantage-1",
+        "intro-contribution-2",
+        "intro-problem-2",
+        "intro-advantage-2",
+        "intro-contribution-more",
+        "intro-demos",
+        "method",
+        "overview",
+        "module-1",
+        "module-1-work",
+        "module-1-advantage",
+        "module-2",
+        "module-more",
+        "experiments",
+        "ablation",
+        "ablation-design"
+      ],
+      "interpretation": "分母包含容器、扩展槽等；不是阅读完成百分比。按五章显示已有回答和仍未填写项更清楚。"
+    },
+    "unfilled_reason": "未填写表示此处尚未形成可交付回答，不代表论文没有相应内容。第二组Introduction challenge不为对称性虚构。",
+    "module_attribution_notes": {
+      "module-1": "Semantic mapper复用SemExp，不是本篇主要新贡献；这属于来源归属，不能替代technical advantage回答。"
+    },
+    "module_coverage_note": "论文有三个运行时组件。原模板两个module槽绑定Semantic Mapper与Potential Function Network；解析局部策略已在Overview说明，保留原module-more扩展槽，不伪称只含两个模块。",
+    "quantitative_guards": [
+      "所有数值为作者报告；无复现。",
+      "Table1与Table3均限Gibson-val对应行，不与外文不同设置直接排名。",
+      "训练成本的7×对应SemExp/Gibson；1600×对应THDA/MP3D，不能交换。此简版不展示倍率。",
+      "同文消融不等于跨任务普适因果结论；GT分割属于特权输入。"
+    ],
+    "approved_source_versions": [
+      "CVPR 2022 accepted proceedings main paper, pp.18890–18899",
+      "CVPR 2022 accepted proceedings",
+      "CVPR 2022 proceedings"
+    ]
+  },
+  "template": [
+    {
+      "id": "paper-analysis-tree",
+      "label": "论文解析树",
+      "kind": "generic paper-analysis template",
+      "parent_source": null,
+      "source_id": "paper-analysis",
+      "parent": null
+    },
+    {
+      "id": "abstract",
+      "label": "Abstract",
+      "source": {
+        "figure": 4,
+        "bbox_px": [
+          49,
+          77,
+          610,
+          550
+        ],
+        "coordinate_note": "Approximate visually located bounding region in original pixels; not OCR box"
+      },
+      "mindmap_source": {
+        "figure": 2,
+        "bbox_px": [
+          147,
+          31,
+          1190,
+          502
+        ],
+        "coordinate_note": "Approximate visually located bounding region in original pixels; not OCR box"
+      },
+      "parent_source": "paper-analysis",
+      "source_id": "abstract",
+      "parent": "paper-analysis-tree"
+    },
+    {
+      "id": "abstract.task",
+      "label": "Task",
+      "parent_source": "abstract",
+      "source_id": "abstract-task",
+      "parent": "abstract"
+    },
+    {
+      "id": "abstract.challenge",
+      "label": "Technical challenge for previous methods (围绕我们解决了的technical challenge展开讨论)",
+      "parent_source": "abstract",
+      "source_id": "abstract-challenge",
+      "parent": "abstract"
+    },
+    {
+      "id": "abstract.insight",
+      "label": "一句话介绍解决challenge的key insight/motivation\n(insight和technical contribution不一样，insight是比较通用的high-level的思想)",
+      "parent_source": "abstract",
+      "source_id": "abstract-insight",
+      "parent": "abstract"
+    },
+    {
+      "id": "abstract.insight.description",
+      "label": "一句话介绍insight/motivation",
+      "parent_source": "abstract-insight",
+      "source_id": "abstract-insight-one",
+      "parent": "abstract.insight"
+    },
+    {
+      "id": "abstract.insight.benefit",
+      "label": "一句话介绍insight的好处 (不一定要在这里说，因为如果后面要提technical contribution的话，还会再说technical advantage)",
+      "parent_source": "abstract-insight",
+      "source_id": "abstract-insight-benefit",
+      "parent": "abstract.insight"
+    },
+    {
+      "id": "abstract.contributions",
+      "label": "介绍technical contributions",
+      "parent_source": "abstract",
+      "source_id": "abstract-contributions",
+      "parent": "abstract"
+    },
+    {
+      "id": "abstract.contributions.1",
+      "label": "technical contribution 1",
+      "parent_source": "abstract-contributions",
+      "source_id": "abstract-contribution-1",
+      "parent": "abstract.contributions"
+    },
+    {
+      "id": "abstract.contributions.1.description",
+      "label": "一句话介绍technical contribution1",
+      "parent_source": "abstract-contribution-1",
+      "source_id": "abstract-contribution-1-description",
+      "parent": "abstract.contributions.1"
+    },
+    {
+      "id": "abstract.contributions.1.benefit",
+      "label": "一句话介绍technical contribution的好处",
+      "parent_source": "abstract-contribution-1",
+      "source_id": "abstract-contribution-1-benefit",
+      "parent": "abstract.contributions.1"
+    },
+    {
+      "id": "abstract.contributions.2",
+      "label": "technical contribution 2",
+      "parent_source": "abstract-contributions",
+      "source_id": "abstract-contribution-2",
+      "parent": "abstract.contributions"
+    },
+    {
+      "id": "abstract.contributions.2.description",
+      "label": "一句话介绍technical contribution2",
+      "parent_source": "abstract-contribution-2",
+      "source_id": "abstract-contribution-2-description",
+      "parent": "abstract.contributions.2"
+    },
+    {
+      "id": "abstract.contributions.2.benefit",
+      "label": "一句话介绍technical contribution的好处",
+      "parent_source": "abstract-contribution-2",
+      "source_id": "abstract-contribution-2-benefit",
+      "parent": "abstract.contributions.2"
+    },
+    {
+      "id": "abstract.contributions.more",
+      "label": "...",
+      "parent_source": "abstract-contributions",
+      "source_id": "abstract-contribution-more",
+      "parent": "abstract.contributions"
+    },
+    {
+      "id": "abstract.experiment",
+      "label": "Experiment",
+      "parent_source": "abstract",
+      "source_id": "abstract-experiment",
+      "parent": "abstract"
+    },
+    {
+      "id": "introduction",
+      "label": "Introduction",
+      "source": {
+        "figure": 4,
+        "bbox_px": [
+          49,
+          553,
+          610,
+          1182
+        ],
+        "coordinate_note": "Approximate visually located bounding region in original pixels; not OCR box"
+      },
+      "mindmap_source": {
+        "figure": 2,
+        "bbox_px": [
+          146,
+          519,
+          1168,
+          1174
+        ],
+        "coordinate_note": "Approximate visually located bounding region in original pixels; not OCR box"
+      },
+      "parent_source": "paper-analysis",
+      "source_id": "introduction",
+      "parent": "paper-analysis-tree"
+    },
+    {
+      "id": "introduction.task",
+      "label": "Task and application",
+      "parent_source": "introduction",
+      "source_id": "intro-task",
+      "parent": "introduction"
+    },
+    {
+      "id": "introduction.challenges",
+      "label": "Technical challenge for previous methods (围绕我们解决了的technical challenge展开讨论)",
+      "parent_source": "introduction",
+      "source_id": "intro-previous-challenge",
+      "parent": "introduction"
+    },
+    {
+      "id": "introduction.challenges.1",
+      "label": "Technical challenge 1",
+      "parent_source": "intro-previous-challenge",
+      "source_id": "intro-challenge-1",
+      "parent": "introduction.challenges"
+    },
+    {
+      "id": "introduction.challenges.1.previous",
+      "label": "Previous method",
+      "parent_source": "intro-challenge-1",
+      "source_id": "intro-previous-1",
+      "parent": "introduction.challenges.1"
+    },
+    {
+      "id": "introduction.challenges.1.failure",
+      "label": "Failure cases (Limitation)",
+      "parent_source": "intro-challenge-1",
+      "source_id": "intro-failure-1",
+      "parent": "introduction.challenges.1"
+    },
+    {
+      "id": "introduction.challenges.1.reason",
+      "label": "Technical reason",
+      "parent_source": "intro-challenge-1",
+      "source_id": "intro-reason-1",
+      "parent": "introduction.challenges.1"
+    },
+    {
+      "id": "introduction.challenges.2",
+      "label": "Technical challenge 2",
+      "parent_source": "intro-previous-challenge",
+      "source_id": "intro-challenge-2",
+      "parent": "introduction.challenges"
+    },
+    {
+      "id": "introduction.challenges.2.previous",
+      "label": "Previous method",
+      "parent_source": "intro-challenge-2",
+      "source_id": "intro-previous-2",
+      "parent": "introduction.challenges.2"
+    },
+    {
+      "id": "introduction.challenges.2.failure",
+      "label": "Failure cases (Limitation)",
+      "parent_source": "intro-challenge-2",
+      "source_id": "intro-failure-2",
+      "parent": "introduction.challenges.2"
+    },
+    {
+      "id": "introduction.challenges.2.reason",
+      "label": "Technical reason",
+      "parent_source": "intro-challenge-2",
+      "source_id": "intro-reason-2",
+      "parent": "introduction.challenges.2"
+    },
+    {
+      "id": "introduction.pipeline",
+      "label": "介绍解决challenge的our pipeline",
+      "parent_source": "introduction",
+      "source_id": "intro-pipeline",
+      "parent": "introduction"
+    },
+    {
+      "id": "introduction.pipeline.key",
+      "label": "一句话介绍key innovation/insight/contribution",
+      "parent_source": "intro-pipeline",
+      "source_id": "intro-key",
+      "parent": "introduction.pipeline"
+    },
+    {
+      "id": "introduction.pipeline.contribution1",
+      "label": "contribution 1",
+      "parent_source": "intro-pipeline",
+      "source_id": "intro-contribution-1",
+      "parent": "introduction.pipeline"
+    },
+    {
+      "id": "introduction.pipeline.contribution1.how",
+      "label": "具体怎么做的",
+      "parent_source": "intro-contribution-1",
+      "source_id": "intro-how-1",
+      "parent": "introduction.pipeline.contribution1"
+    },
+    {
+      "id": "introduction.pipeline.contribution1.advantage",
+      "label": "讨论advantage/insight",
+      "parent_source": "intro-contribution-1",
+      "source_id": "intro-advantage-1",
+      "parent": "introduction.pipeline.contribution1"
+    },
+    {
+      "id": "introduction.pipeline.contribution2",
+      "label": "contribution 2",
+      "parent_source": "intro-pipeline",
+      "source_id": "intro-contribution-2",
+      "parent": "introduction.pipeline"
+    },
+    {
+      "id": "introduction.pipeline.contribution2.problem",
+      "label": "为了解决什么问题",
+      "parent_source": "intro-contribution-2",
+      "source_id": "intro-problem-2",
+      "parent": "introduction.pipeline.contribution2"
+    },
+    {
+      "id": "introduction.pipeline.contribution2.how",
+      "label": "具体怎么做的",
+      "parent_source": "intro-contribution-2",
+      "source_id": "intro-how-2",
+      "parent": "introduction.pipeline.contribution2"
+    },
+    {
+      "id": "introduction.pipeline.contribution2.advantage",
+      "label": "讨论advantage/insight",
+      "parent_source": "intro-contribution-2",
+      "source_id": "intro-advantage-2",
+      "parent": "introduction.pipeline.contribution2"
+    },
+    {
+      "id": "introduction.pipeline.more",
+      "label": "...",
+      "parent_source": "intro-pipeline",
+      "source_id": "intro-contribution-more",
+      "parent": "introduction.pipeline"
+    },
+    {
+      "id": "introduction.demos",
+      "label": "酷的demos/applications",
+      "parent_source": "introduction",
+      "source_id": "intro-demos",
+      "parent": "introduction"
+    },
+    {
+      "id": "method",
+      "label": "Method",
+      "source": {
+        "figure": 4,
+        "bbox_px": [
+          49,
+          1186,
+          610,
+          1705
+        ],
+        "coordinate_note": "Approximate visually located bounding region in original pixels; not OCR box"
+      },
+      "mindmap_source": {
+        "figure": 2,
+        "bbox_px": [
+          147,
+          1186,
+          608,
+          1779
+        ],
+        "coordinate_note": "Approximate visually located bounding region in original pixels; not OCR box"
+      },
+      "parent_source": "paper-analysis",
+      "source_id": "method",
+      "parent": "paper-analysis-tree"
+    },
+    {
+      "id": "method.overview",
+      "label": "Overview",
+      "structural_note": "Two multiline child nodes, not six fixed-depth field nodes; both figures corroborate this.",
+      "parent_source": "method",
+      "source_id": "overview",
+      "parent": "method"
+    },
+    {
+      "id": "method.overview.task",
+      "label": "具体的任务\n输入：...\n输出：...",
+      "parent_source": "overview",
+      "source_id": "overview-task",
+      "parent": "method.overview"
+    },
+    {
+      "id": "method.overview.steps",
+      "label": "方法\n第一步：...\n第二步：...\n第三步：...",
+      "parent_source": "overview",
+      "source_id": "overview-method",
+      "parent": "method.overview"
+    },
+    {
+      "id": "method.module1",
+      "label": "Pipeline module 1",
+      "parent_source": "method",
+      "source_id": "module-1",
+      "parent": "method"
+    },
+    {
+      "id": "method.module1.motivation",
+      "label": "Motivation",
+      "parent_source": "module-1",
+      "source_id": "module-1-motivation",
+      "parent": "method.module1"
+    },
+    {
+      "id": "method.module1.how",
+      "label": "做法",
+      "parent_source": "module-1",
+      "source_id": "module-1-how",
+      "parent": "method.module1"
+    },
+    {
+      "id": "method.module1.why",
+      "label": "为什么能work",
+      "parent_source": "module-1",
+      "source_id": "module-1-work",
+      "parent": "method.module1"
+    },
+    {
+      "id": "method.module1.advantage",
+      "label": "technical advantage",
+      "parent_source": "module-1",
+      "source_id": "module-1-advantage",
+      "parent": "method.module1"
+    },
+    {
+      "id": "method.module2",
+      "label": "Pipeline module 2",
+      "parent_source": "method",
+      "source_id": "module-2",
+      "parent": "method"
+    },
+    {
+      "id": "method.module2.motivation",
+      "label": "Motivation",
+      "parent_source": "module-2",
+      "source_id": "module-2-motivation",
+      "parent": "method.module2"
+    },
+    {
+      "id": "method.module2.how",
+      "label": "做法",
+      "parent_source": "module-2",
+      "source_id": "module-2-how",
+      "parent": "method.module2"
+    },
+    {
+      "id": "method.module2.why",
+      "label": "为什么能work",
+      "parent_source": "module-2",
+      "source_id": "module-2-work",
+      "parent": "method.module2"
+    },
+    {
+      "id": "method.module2.advantage",
+      "label": "technical advantage",
+      "parent_source": "module-2",
+      "source_id": "module-2-advantage",
+      "parent": "method.module2"
+    },
+    {
+      "id": "method.more",
+      "label": "...",
+      "parent_source": "method",
+      "source_id": "module-more",
+      "parent": "method"
+    },
+    {
+      "id": "experiments",
+      "label": "Experiments",
+      "source": {
+        "figure": 4,
+        "bbox_px": [
+          49,
+          1703,
+          610,
+          1860
+        ],
+        "coordinate_note": "Approximate visually located bounding region in original pixels; not OCR box"
+      },
+      "mindmap_source": {
+        "figure": 2,
+        "bbox_px": [
+          148,
+          1792,
+          911,
+          1957
+        ],
+        "coordinate_note": "Approximate visually located bounding region in original pixels; not OCR box"
+      },
+      "parent_source": "paper-analysis",
+      "source_id": "experiments",
+      "parent": "paper-analysis-tree"
+    },
+    {
+      "id": "experiments.comparison",
+      "label": "Comparison experiments",
+      "parent_source": "experiments",
+      "source_id": "comparison",
+      "parent": "experiments"
+    },
+    {
+      "id": "experiments.ablation",
+      "label": "Ablation studies",
+      "parent_source": "experiments",
+      "source_id": "ablation",
+      "parent": "experiments"
+    },
+    {
+      "id": "experiments.ablation.components",
+      "label": "论文的core contributions以及一些重要的components对论文方法performance的影响",
+      "parent_source": "ablation",
+      "source_id": "ablation-core",
+      "parent": "experiments.ablation"
+    },
+    {
+      "id": "experiments.ablation.design-choices",
+      "label": "列出每一个pipeline module中design choices对论文方法performance的影响",
+      "parent_source": "ablation",
+      "source_id": "ablation-design",
+      "parent": "experiments.ablation"
+    },
+    {
+      "id": "limitation",
+      "label": "Limitation",
+      "note": "需要给limitation做出合理的解释：为什么我们方法有这样的limitation。让reviewer觉得不是因为我们方法有technical flaw才出现的limitation，而是因为our goal不在于此、task setting等原因，所以出现的limitation。\n\n最好不要暴露出是因为我们方法本身的问题导致的limitation，这样reviewer可以直接攻击我们方法的technical soundness。\n如果方法确实有这样的技术缺陷，那么投稿前就应该改方法。",
+      "source": {
+        "figure": 4,
+        "bbox_px": [
+          49,
+          1861,
+          610,
+          2021
+        ],
+        "coordinate_note": "Approximate visually located bounding region in original pixels; not OCR box"
+      },
+      "mindmap_source": {
+        "figure": 2,
+        "bbox_px": [
+          148,
+          1960,
+          560,
+          2026
+        ],
+        "coordinate_note": "Approximate visually located bounding region in original pixels; not OCR box"
+      },
+      "interpretation_note": "Verbatim source guidance retained for fidelity; not a directive to conceal genuine limitations.",
+      "parent_source": "paper-analysis",
+      "source_id": "limitation",
+      "parent": "paper-analysis-tree"
+    }
+  ],
+  "vlfm": {
+    "id": "method:work:vlfm@visual-value-frontier-pointnav",
+    "semantic_role": "concrete_work",
+    "label": "VLFM: Vision-Language Frontier Maps for Zero-Shot Semantic Navigation",
+    "plain_language_question": "先把画面压成物体标签，会不会漏掉房间整体线索？",
+    "definition": "representative_work",
+    "epistemic_status": "primary_method_checked",
+    "provenance": {
+      "basis": "主来源与逐条原文定位；研究组织和作者主张分开标注。"
+    },
+    "evidence_refs": [
+      "claim:m:010",
+      "claim:m:011",
+      "claim:m:012",
+      "claim:m:013"
+    ],
+    "canonical_paper_id": "vlfm",
+    "fixed_version": "2023-12 preprint / ICRA 2024; arXiv unversioned full-text snapshot",
+    "method_variant_id": "pipeline-vlfm",
+    "role_in_this_branch": "representative_work",
+    "supported_claim_refs": [
+      "claim:m:010",
+      "claim:m:011",
+      "claim:m:012",
+      "claim:m:013"
+    ],
+    "pipeline_contract": {
+      "input": "RGB-D、odom、目标文本",
+      "representation": "occupancy/frontier map+目标特定BLIP-2 value/confidence map",
+      "decision": "选高value frontier；检测目标后切换goal navigation",
+      "execution": "simulation: VER训练PointNav；真实Spot:BD API",
+      "feedback": "视野置信度加权融合value、更新frontiers/detections"
+    },
+    "source_paper_id": "vlfm",
+    "namespace": "research_navigation",
+    "reading_scope": "primary_full_text_methods_and_selected_experiments_read"
+  },
+  "claims": [
+    {
+      "id": "claim:m:010",
+      "paper_id": "vlfm",
+      "fixed_version": "2023-12 preprint / ICRA 2024; arXiv unversioned full-text snapshot",
+      "statement": "原文直接对比CoW最近frontier和ESC/LGX/SemUtil对象标签→语言评分路线。",
+      "source_url": "https://arxiv.org/html/2312.03275",
+      "locator": "§II, §IV-B",
+      "attribution": "author_method_or_experiment_paraphrase",
+      "read_level": "primary_full_text_methods_and_selected_experiments_read",
+      "scope": "只支持所指论文、版本与任务条件；不产生全球优先权结论",
+      "source_paper_id": "vlfm"
+    },
+    {
+      "id": "claim:m:011",
+      "paper_id": "vlfm",
+      "fixed_version": "2023-12 preprint / ICRA 2024; arXiv unversioned full-text snapshot",
+      "statement": "simulation waypoint使用VER训练的PointNav策略；不能统一写成FMM。",
+      "source_url": "https://arxiv.org/html/2312.03275",
+      "locator": "§IV-D",
+      "attribution": "author_method_or_experiment_paraphrase",
+      "read_level": "primary_full_text_methods_and_selected_experiments_read",
+      "scope": "只支持所指论文、版本与任务条件；不产生全球优先权结论",
+      "source_paper_id": "vlfm"
+    },
+    {
+      "id": "claim:m:012",
+      "paper_id": "vlfm",
+      "fixed_version": "2023-12 preprint / ICRA 2024; arXiv unversioned full-text snapshot",
+      "statement": "验证replacement、unweighted-average、confidence-weighted-average地图融合；加权方式更好。",
+      "source_url": "https://arxiv.org/html/2312.03275",
+      "locator": "§VI-B",
+      "attribution": "author_method_or_experiment_paraphrase",
+      "read_level": "primary_full_text_methods_and_selected_experiments_read",
+      "scope": "只支持所指论文、版本与任务条件；不产生全球优先权结论",
+      "source_paper_id": "vlfm"
+    },
+    {
+      "id": "claim:m:013",
+      "paper_id": "vlfm",
+      "fixed_version": "2023-12 preprint / ICRA 2024; arXiv unversioned full-text snapshot",
+      "statement": "value map只保存当前目标相关语义，原文明确不能直接用于不同目标连续任务。",
+      "source_url": "https://arxiv.org/html/2312.03275",
+      "locator": "§VII",
+      "attribution": "author_method_or_experiment_paraphrase",
+      "read_level": "primary_full_text_methods_and_selected_experiments_read",
+      "scope": "只支持所指论文、版本与任务条件；不产生全球优先权结论",
+      "source_paper_id": "vlfm"
+    },
+    {
+      "id": "claim:c:search_unknown_target:poni2022:insight",
+      "paper_id": "poni",
+      "source_paper_id": "poni2022",
+      "fixed_version": "CVPR 2022 proceedings",
+      "statement": "“去哪找”可被监督为从部分语义地图预测搜索潜力的问题，不必通过昂贵交互RL才学会；未知区域面积和目标测地距离应提供互补信号。",
+      "source_url": "https://openaccess.thecvf.com/content/CVPR2022/papers/Ramakrishnan_PONI_Potential_Functions_for_ObjectGoal_Navigation_With_Interaction-Free_Learning_CVPR_2022_paper.pdf",
+      "locator": "§1; §3.3; §3.6; §5; Fig.2–5 captions; Table3 discussion",
+      "attribution": "author_rationale_paraphrase",
+      "read_level": "Primary full-text extraction; potentials, training rationale and ablations read; PDF table extraction fragmented",
+      "scope": "需要完整语义地图监督；非零数据、非开放词汇普适搜索。 Interaction-free does not mean supervision-free: training requires annotated full semantic maps; potentials use category channels. 不把父challenge的适用条件自动视作本篇实验协议，不作通用性能或优先权断言。",
+      "paper_scope": "Interaction-free does not mean supervision-free: training requires annotated full semantic maps; potentials use category channels.",
+      "route_scope": "需要完整语义地图监督；非零数据、非开放词汇普适搜索。",
+      "parent_challenge_condition": {
+        "condition": "初始位置未知目标位置；只能从局部RGB-D观测增量建图，存在有限路径/时间预算。",
+        "attribution": "editorial_applicability_context_not_the_cited_paper_protocol"
+      },
+      "quote_policy": "中文为来源约束概括，不是逐字引语。"
+    },
+    {
+      "id": "claim:c:search_unknown_target:poni2022:technical_approach",
+      "paper_id": "poni",
+      "source_paper_id": "poni2022",
+      "fixed_version": "CVPR 2022 proceedings",
+      "statement": "完整标注地图产生area/object potential标签，部分地图输入UNet，在frontier融合两种potential。",
+      "source_url": "https://openaccess.thecvf.com/content/CVPR2022/papers/Ramakrishnan_PONI_Potential_Functions_for_ObjectGoal_Navigation_With_Interaction-Free_Learning_CVPR_2022_paper.pdf",
+      "locator": "§1; §3.3; §3.6; §5; Fig.2–5 captions; Table3 discussion",
+      "attribution": "author_method_paraphrase",
+      "read_level": "Primary full-text extraction; potentials, training rationale and ablations read; PDF table extraction fragmented",
+      "scope": "需要完整语义地图监督；非零数据、非开放词汇普适搜索。 Interaction-free does not mean supervision-free: training requires annotated full semantic maps; potentials use category channels. 不把父challenge的适用条件自动视作本篇实验协议，不作通用性能或优先权断言。",
+      "paper_scope": "Interaction-free does not mean supervision-free: training requires annotated full semantic maps; potentials use category channels.",
+      "route_scope": "需要完整语义地图监督；非零数据、非开放词汇普适搜索。",
+      "parent_challenge_condition": {
+        "condition": "初始位置未知目标位置；只能从局部RGB-D观测增量建图，存在有限路径/时间预算。",
+        "attribution": "editorial_applicability_context_not_the_cited_paper_protocol"
+      },
+      "quote_policy": "中文为来源约束概括，不是逐字引语。"
+    },
+    {
+      "id": "claim:c:search_unknown_target:poni2022:evidence",
+      "paper_id": "poni",
+      "source_paper_id": "poni2022",
+      "fixed_version": "CVPR 2022 proceedings",
+      "statement": "§3.3、Fig.2–3；§5同mapper/local policy对照SemExp；消融去掉area或object potential均降。",
+      "source_url": "https://openaccess.thecvf.com/content/CVPR2022/papers/Ramakrishnan_PONI_Potential_Functions_for_ObjectGoal_Navigation_With_Interaction-Free_Learning_CVPR_2022_paper.pdf",
+      "locator": "§3.3、Fig.2–3；§5同mapper/local policy对照SemExp；消融去掉area或object potential均降。",
+      "attribution": "author_reported_evidence_not_independent_replication",
+      "read_level": "Primary full-text extraction; potentials, training rationale and ablations read; PDF table extraction fragmented",
+      "scope": "需要完整语义地图监督；非零数据、非开放词汇普适搜索。 Interaction-free does not mean supervision-free: training requires annotated full semantic maps; potentials use category channels. 不把父challenge的适用条件自动视作本篇实验协议，不作通用性能或优先权断言。",
+      "paper_scope": "Interaction-free does not mean supervision-free: training requires annotated full semantic maps; potentials use category channels.",
+      "route_scope": "需要完整语义地图监督；非零数据、非开放词汇普适搜索。",
+      "parent_challenge_condition": {
+        "condition": "初始位置未知目标位置；只能从局部RGB-D观测增量建图，存在有限路径/时间预算。",
+        "attribution": "editorial_applicability_context_not_the_cited_paper_protocol"
+      },
+      "quote_policy": "中文为来源约束概括，不是逐字引语。"
+    },
+    {
+      "id": "claim:c:search_unknown_target:poni2022:boundary",
+      "paper_id": "poni",
+      "source_paper_id": "poni2022",
+      "fixed_version": "CVPR 2022 proceedings",
+      "statement": "需要完整语义地图监督；非零数据、非开放词汇普适搜索。",
+      "source_url": "https://openaccess.thecvf.com/content/CVPR2022/papers/Ramakrishnan_PONI_Potential_Functions_for_ObjectGoal_Navigation_With_Interaction-Free_Learning_CVPR_2022_paper.pdf",
+      "locator": "§1; §3.3; §3.6; §5; Fig.2–5 captions; Table3 discussion",
+      "attribution": "editorial_scope_assessment_grounded_in_source_protocol_and_limits",
+      "read_level": "Primary full-text extraction; potentials, training rationale and ablations read; PDF table extraction fragmented",
+      "scope": "需要完整语义地图监督；非零数据、非开放词汇普适搜索。 Interaction-free does not mean supervision-free: training requires annotated full semantic maps; potentials use category channels. 不把父challenge的适用条件自动视作本篇实验协议，不作通用性能或优先权断言。",
+      "paper_scope": "Interaction-free does not mean supervision-free: training requires annotated full semantic maps; potentials use category channels.",
+      "route_scope": "需要完整语义地图监督；非零数据、非开放词汇普适搜索。",
+      "parent_challenge_condition": {
+        "condition": "初始位置未知目标位置；只能从局部RGB-D观测增量建图，存在有限路径/时间预算。",
+        "attribution": "editorial_applicability_context_not_the_cited_paper_protocol"
+      },
+      "quote_policy": "中文为来源约束概括，不是逐字引语。"
+    },
+    {
+      "id": "claim:c:search_unknown_target:poni2022:why",
+      "paper_id": "poni",
+      "source_paper_id": "poni2022",
+      "fixed_version": "CVPR 2022 proceedings",
+      "statement": "训练时，完整语义地图可提供frontier之外的面积与到目标的测地距离标签，部分地图则模拟导航中已有的观察，因此能不经环境交互学习潜力预测。推理时，语义地图尚不充分时area potential引导获取信息，语义证据足够时object potential引导朝目标搜索；两者以互补信息回应“覆盖空间不等于高效找目标”的矛盾。",
+      "source_url": "https://openaccess.thecvf.com/content/CVPR2022/papers/Ramakrishnan_PONI_Potential_Functions_for_ObjectGoal_Navigation_With_Interaction-Free_Learning_CVPR_2022_paper.pdf",
+      "locator": "§3.3 Potential Function Network; §3.6 Training for Potential Function Network",
+      "attribution": "author_rationale_paraphrase",
+      "read_level": "Primary full-text extraction; potentials, training rationale and ablations read; PDF table extraction fragmented",
+      "scope": "需要完整语义地图监督；非零数据、非开放词汇普适搜索。 Interaction-free does not mean supervision-free: training requires annotated full semantic maps; potentials use category channels. 不把父challenge的适用条件自动视作本篇实验协议，不作通用性能或优先权断言。",
+      "paper_scope": "Interaction-free does not mean supervision-free: training requires annotated full semantic maps; potentials use category channels.",
+      "route_scope": "需要完整语义地图监督；非零数据、非开放词汇普适搜索。",
+      "parent_challenge_condition": {
+        "condition": "初始位置未知目标位置；只能从局部RGB-D观测增量建图，存在有限路径/时间预算。",
+        "attribution": "editorial_applicability_context_not_the_cited_paper_protocol"
+      },
+      "quote_policy": "中文为来源约束概括，不是逐字引语。"
+    }
+  ],
+  "provenance": {
+    "task_sha256": "9de490edcc03a8ebc7e3dfe5f1dcec64f1edeecb2b928c882aeb8b46b409f1ba",
+    "method_sha256": "1ce8f9d0725b5006c8017979590c1490d47684a19d84f605124878d07aafd77a",
+    "baseline_commit": "62706c96071980f727c1526eb555ac97e51875e6",
+    "review_scope": "Selected primary sections; no complete reading or reproduction promotion"
+  },
+  "vlfm_fixed_review": {
+    "schema_version": "fixed-source-claim-review/1",
+    "paper_id": "vlfm",
+    "reviewed_at": "2026-10-08",
+    "read_scope": "指定机制与边界的选段核查；未作全文精读、代码核对或复现",
+    "source": {
+      "title": "VLFM: Vision-Language Frontier Maps for Zero-Shot Semantic Navigation",
+      "fixed_version": "arXiv:2312.03275v1",
+      "version_date": "2023-12-06",
+      "version_type": "fixed_arxiv_preprint",
+      "url": "https://arxiv.org/html/2312.03275v1",
+      "pdf_url": "https://arxiv.org/pdf/2312.03275v1",
+      "metadata_url": "https://arxiv.org/abs/2312.03275v1",
+      "version_status": "HTML 标头与 arXiv submission history 已核；不将此快照称为 ICRA camera-ready",
+      "page_number_convention": "PDF 从第一页起按 1 计数"
+    },
+    "claims": [
+      {
+        "id": "vlfm-inputs",
+        "verdict": "supported",
+        "locator": "§III；§IV-B 第2段",
+        "pdf_pages": [
+          2,
+          3
+        ],
+        "evidence": "RGB-D、相对起点里程计；目标类别进入文本提示。",
+        "boundary": "整体输入勿等同底层 PointNav 输入。",
+        "attribution": "paper_paraphrase"
+      },
+      {
+        "id": "vlfm-value-frontier",
+        "verdict": "supported",
+        "locator": "§IV-B；Fig. 3–4",
+        "pdf_pages": [
+          3,
+          4
+        ],
+        "evidence": "BLIP-2 对当前整图与目标提示评分，投影进双通道 value/confidence map，选高价值 frontier。",
+        "boundary": "投影避开深度遮挡；不是逐像素目标识别。",
+        "attribution": "paper_paraphrase"
+      },
+      {
+        "id": "vlfm-confidence",
+        "verdict": "supported",
+        "locator": "§IV-B confidence 定义与更新公式",
+        "pdf_pages": [
+          3,
+          4
+        ],
+        "evidence": "confidence 依像素相对光轴角度，参与新旧 value 加权。",
+        "boundary": "不是目标存在或提示语不确定性的置信度。",
+        "attribution": "paper_paraphrase_with_definition_boundary"
+      },
+      {
+        "id": "vlfm-detector",
+        "verdict": "supported",
+        "locator": "§IV-C",
+        "pdf_pages": [
+          4
+        ],
+        "evidence": "检测框→MobileSAM 轮廓→深度定位目标 waypoint。",
+        "boundary": "value 排序与可见目标确认是不同模块。",
+        "attribution": "paper_paraphrase"
+      },
+      {
+        "id": "vlfm-simulation-executor",
+        "verdict": "supported",
+        "locator": "§IV-D；Fig. 2",
+        "pdf_pages": [
+          3,
+          4,
+          5
+        ],
+        "evidence": "VER 训练 PointNav；HM3D train，2.5B steps；输入深度与目标相对距离/朝向。",
+        "boundary": "仿真执行器不能写成 FMM。",
+        "attribution": "paper_paraphrase"
+      },
+      {
+        "id": "vlfm-real-executor",
+        "verdict": "supported",
+        "locator": "§VI-C 第一段",
+        "pdf_pages": [
+          6
+        ],
+        "evidence": "Spot 使用 BD API 替代 PointNav。",
+        "boundary": "作者限定路径相对无障碍。",
+        "attribution": "paper_paraphrase"
+      },
+      {
+        "id": "vlfm-zero-shot-scope",
+        "verdict": "supported_scope_correction",
+        "locator": "§I；§IV-B–D；§VII",
+        "pdf_pages": [
+          1,
+          3,
+          4,
+          5,
+          6
+        ],
+        "evidence": "ObjectNav 无专项训练，仍使用预训练模型和训练过的 PointNav。",
+        "boundary": "zero-shot 不等于全系统无训练。",
+        "attribution": "source_grounded_scope_assessment"
+      },
+      {
+        "id": "vlfm-value-not-calibrated-probability",
+        "verdict": "supported_as_boundary_not_explicit_author_quote",
+        "locator": "§IV-B 的 cosine similarity 定义、投影与融合",
+        "pdf_pages": [
+          3,
+          4
+        ],
+        "evidence": "value 定义为图文相关评分，未定义校准概率。",
+        "boundary": "不能据此宣称某格目标存在的概率；这是定义边界判断。",
+        "attribution": "source_grounded_inference"
+      },
+      {
+        "id": "vlfm-map-reuse",
+        "verdict": "supported_explicit_limitation",
+        "locator": "§VII 第二段后半",
+        "pdf_pages": [
+          6
+        ],
+        "evidence": "作者明确指出语义 map 仅针对当前任务。",
+        "boundary": "不能默认直接复用于不同目标的连续任务。",
+        "attribution": "paper_explicit_limitation_paraphrase"
+      }
+    ]
+  }
+}
