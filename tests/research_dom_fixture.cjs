@@ -4,9 +4,10 @@ const fs=require('node:fs'),path=require('node:path'),Module=require('node:modul
 module.exports=function actualFixture(root,options={}){
  const base=path.join(root,'previews/radar-c2-analysis'),file=path.join(root,'tests/fixtures/radar-c2-analysis/analysis/tests/dom_fixture.cjs');
  let text=fs.readFileSync(file,'utf8');
- const scripts=[...fs.readFileSync(base+'/index.html','utf8').matchAll(/<script[^>]*src="([^\"]+)"/g)].map(x=>x[1].split('?')[0]);
+ const scripts=[...fs.readFileSync(base+'/index.html','utf8').matchAll(/<script[^>]*src="([^\"]+)"/g)].map(x=>x[1].split('?')[0]).filter(file=>!(options.skipScripts||[]).includes(file));
  text=text.replace("const root=path.resolve(__dirname,'../..');",'const root='+JSON.stringify(base)+';');
  text=text.replace(/for\(const file of \['data\/catalog.js'[^\n]*?\]\)/,'for(const file of '+JSON.stringify(scripts)+')');
+ if(options.corruptResearch)text=text.replace("vm.runInNewContext(fs.readFileSync(path.join(root,file),'utf8'),context,{filename:file});","vm.runInNewContext((file==='analysis/c2.js'?\"if(window.RESEARCH_NAVIGATION)window.RESEARCH_NAVIGATION.schema_version='invalid-test-schema';\":'')+fs.readFileSync(path.join(root,file),'utf8'),context,{filename:file});");
  const m=new Module(file,module);m.filename=file;m.paths=module.paths;m._compile(text,file);return m.exports.fixture(options);
 };
 module.exports.visibleText=function visibleText(el){if(!el||el.hidden)return '';if(el.tagName==='DETAILS'&&!('open' in el.attributes))return visibleText(el.children.find(c=>c.tagName==='SUMMARY'));return (el._text||'')+' '+el.children.map(visibleText).join(' ');};

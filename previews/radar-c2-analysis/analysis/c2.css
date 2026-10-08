@@ -281,3 +281,18 @@ body.faithful-active > main,body.faithful-active > .masthead,body.faithful-activ
 #faithful-map button.rg-primary-start { background:#edf4ec; border-color:#9eb697; font-weight:650; }
 .rg-other-starts summary { cursor:pointer; color:#6a7866; font-size:12px; }
 .ft-edges path.ft-development-edge { stroke-dasharray:7 5; stroke:#a47d36; }
+
+/* Orientation gets viewport space; optional camera/source tools remain explicit menus. */
+#faithful-map .ft-menu { position:relative; flex:none; }
+#faithful-map .ft-menu > summary { list-style:none; cursor:pointer; border:1px solid #ced4d8; border-radius:7px; background:#fffefb; padding:7px 10px; min-height:36px; white-space:nowrap; }
+#faithful-map .ft-menu > summary::-webkit-details-marker { display:none; }
+#faithful-map .ft-menu > summary::after { content:' ▾'; }
+#faithful-map .ft-menu > div { position:absolute; right:0; top:100%; z-index:50; display:flex; flex-wrap:wrap; gap:6px; width:min(350px,calc(100vw - 24px)); padding:10px; border:1px solid #b8c3c9; border-radius:8px; background:#fffefb; box-shadow:0 5px 20px #26344726; }
+#faithful-map .ft-menu:not([open]) > div { display:none; }
+#faithful-map .ft-mode { margin-left:auto; display:block; }
+#faithful-map .ft-command label { width:auto; flex:1; min-width:0; }
+#faithful-map .ft-command select { min-width:0; }
+#faithful-map .ft-tree-tabs { flex-wrap:nowrap; }
+#faithful-map .ft-view-tools { margin-left:auto; }
+#faithful-map .rg-primary-start { margin-top:4px; }
+@media(max-width:620px) { #faithful-map .ft-tree-tabs { flex-wrap:wrap; } #faithful-map .ft-menu > summary { font-size:11px; min-height:30px; padding:5px 7px; } #faithful-map .ft-command label { flex:none; } }
