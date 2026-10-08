@@ -132,7 +132,7 @@ class RadarC2SafetyTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
-        for name in (c2.SOURCE, c2.INPUT_SOURCE):
+        for name in (c2.SOURCE, c2.INPUT_SOURCE, c2.RESEARCH_INPUT_SOURCE):
             shutil.copytree(ROOT / name, self.root / name)
         for name in (c2.MANIFEST, 'previews/radar-trees-c/data/graph-data.json'):
             dest = self.root / name
@@ -148,7 +148,7 @@ class RadarC2SafetyTests(unittest.TestCase):
         for _ in range(2):
             self.assertEqual(set(c2.write_preview(self.root, self.root / 'dist')), c2.PUBLIC_FILES)
             self.assertEqual(c2.validate_output(self.root, self.root / 'dist'), sorted(before))
-        self.assertEqual(len(before), 14)
+        self.assertEqual(len(before), 22)
     def test_missing_public_source(self):
         (self.root / c2.SOURCE / 'index.html').unlink()
         with self.assertRaises(ValueError): c2.payloads(self.root)
@@ -264,7 +264,7 @@ class RadarC2ContractTests(unittest.TestCase):
         catalog = json.loads((ROOT / c2.INPUT_SOURCE / 'data/catalog.json').read_text())
         self.assertEqual(catalog['papers'], graph['papers'])
         self.assertTrue(set(stats['weekly_only_ids']).isdisjoint(p['canonical_id'] for p in catalog['papers']))
-        self.assertEqual(len(c2.payloads(ROOT)), 14)
+        self.assertEqual(len(c2.payloads(ROOT)), 22)
     def test_local_resources_anchors_cache_and_script_order(self):
         source = ROOT / c2.SOURCE
         htmls = {n: HTML((source / n).read_text()) for n in c2.PUBLIC_FILES if n.endswith('.html')}
@@ -288,7 +288,7 @@ class RadarC2ContractTests(unittest.TestCase):
                     self.assertEqual(parse_qs(url.query).get('v'), [digest(target)[:12]], raw)
         entry = (source / 'index.html').read_text()
         # Deployment-neutral wording preserves the isolated route without claiming acceptance.
-        self.assertIn('<title>三树导航 · 隔离预览</title>', entry)
+        self.assertIn('<title>具身导航研究三树 · RoboPaperAtlas</title>', entry)
         self.assertIn('<span class="local-badge">隔离预览</span>', entry)
         self.assertIn('class="skip" href="#global-map"', entry)
         self.assertIn('id="global-map" tabindex="-1"', entry)
@@ -305,8 +305,12 @@ class RadarC2ContractTests(unittest.TestCase):
         self.assertGreater(entry.index('data-c2-range='), entry.index('</header>'))
         self.assertEqual([urlsplit(p).path for p in htmls['index.html'].scripts], [
             'data/catalog.js', 'data/literature.js', 'data/challenge.js', 'model.js', 'app.js',
-            'analysis/data/bundle.js', 'analysis/model.js', 'analysis/c2.js'])
+            'analysis/data/bundle.js', 'analysis/model.js', 'data/reference-complete.js', 'research.js',
+            'data/research-graph.js', 'data/scoped-analysis.js', 'analysis/c2.js'])
         for name in c2.PUBLIC_FILES:
+            if name.endswith('.jpg'):
+                self.assertTrue((source / name).read_bytes().startswith(b'\xff\xd8'))
+                continue
             text = (source / name).read_text()
             for forbidden in ('/workspace/', '/agent_notes/', 'dream_notes', 'localhost',
                               '127.0.0.1', 'tests/fixtures/', 'file://'):

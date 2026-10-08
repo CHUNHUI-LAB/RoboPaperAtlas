@@ -17,12 +17,15 @@ from build_topic_preview import require, safe_path, safe_target
 ROUTE = 'review/radar-c2-analysis'
 SOURCE = 'previews/radar-c2-analysis'
 INPUT_SOURCE = 'tests/fixtures/radar-c2-analysis'
+RESEARCH_INPUT_SOURCE = 'tests/fixtures/research-navigation'
 MANIFEST = 'scripts/radar_c2_preview_manifest.json'
 PUBLIC_FILES = frozenset((
     'index.html', 'harnessvln.html', 'all-papers.html', 'model.js', 'app.js',
     'style.css', 'data/catalog.js', 'data/literature.js', 'data/challenge.js',
     'analysis/model.js', 'analysis/c2.js', 'analysis/c2.css',
     'analysis/reading.html', 'analysis/data/bundle.js',
+    'research.js', 'data/research-graph.js', 'data/reference-complete.js', 'data/scoped-analysis.js',
+    'reference/figure-1.jpg', 'reference/figure-2.jpg', 'reference/figure-3.jpg', 'reference/figure-4.jpg',
 ))
 REVIEW_INPUTS = frozenset((
     'data/task-contract-corrections-20261007.json',
@@ -314,7 +317,36 @@ def expected_corrected_literature(inputs):
     return result
 
 
+# New research content has independent pins. Historical scientific seals above are untouched.
+RESEARCH_GRAPH_SHA256 = "c8ecb785113a921af21c63fd649e695cd6f9150525242b8ad359917ba822c5d7"
+RESEARCH_REVIEWED_SHA256 = "e58b93113b8f8112b2680c01856ae6966d287393d8e4ab945106001894cb9d84"
+RESEARCH_RECEIPT_SHA256 = "808b02bd1193636c536a10cbe8e718248d215aa1ab19f38818c3ff4cc7a6ea8f"
+SCOPED_ANALYSIS_SHA256 = "229012daa98d77d2ac07295a72c10b200c4d8e7234e8e945102132372b4b3f5e"
+
+
+def validate_research_semantics(root, public):
+    reviewed = read_regular(root, root / 'tests/fixtures/research-navigation/reviewed-graph.json')
+    receipt = read_regular(root, root / 'tests/fixtures/research-navigation/review-receipt.json')
+    require(sha256(reviewed) == RESEARCH_REVIEWED_SHA256, 'Separate reviewed research content changed')
+    require(sha256(receipt) == RESEARCH_RECEIPT_SHA256, 'Separate scientific review receipt changed')
+    require(sha256(public['data/research-graph.js']) == RESEARCH_GRAPH_SHA256, 'Reviewed research graph changed')
+    require(assigned_json(public['data/research-graph.js'], 'RESEARCH_NAVIGATION') == json.loads(reviewed),
+            'Runtime research graph differs from reviewed content')
+    require(sha256(public['data/scoped-analysis.js']) == SCOPED_ANALYSIS_SHA256, 'Scoped paper analysis changed')
+    graph = json.loads(reviewed)
+    require(graph['schema_version'] == 'research-navigation/1', 'Unknown research graph version')
+    require(graph['root_id'] == 'nav:root' and graph['goal_id'] == 'nav:goal'
+            and graph['tree_roots'] == {'l': 'nav:l', 'c': 'nav:c'}, 'Original sibling-root grammar changed')
+    require(len(graph['overview']['sentences']) in range(3, 6), 'Research overview must explain the field before expansion')
+    scoped = assigned_json(public['data/scoped-analysis.js'], 'SCOPED_RESEARCH_ANALYSES')
+    require(set(scoped) == {'poni'} and len(scoped['poni']['answers']) == 22,
+            'PONI selected-section answer scope changed')
+    require(scoped['poni']['status'] == 'partial_selected_section_analysis', 'Partial analysis cannot become complete')
+    return graph
+
+
 def validate_semantics(root, public, inputs, manifest):
+    validate_research_semantics(root, public)
     load = lambda name: json.loads(inputs[name])
     graph_bytes = read_regular(root, root / 'previews/radar-trees-c/data/graph-data.json')
     graph = json.loads(graph_bytes)

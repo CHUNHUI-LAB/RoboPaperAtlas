@@ -196,9 +196,12 @@ class RadarC2MultiPaperContractTests(unittest.TestCase):
         self.assertEqual(hashlib.sha256(old).hexdigest(),
                          'bf846ca9b440ebde6333dff6104ca6a1d7ff60a246bb6634be969fc60f518589')
 
-    def test_public_allowlist_stays_fourteen_with_only_embedded_derivatives(self):
-        self.assertEqual(len(c2.PUBLIC_FILES), 14)
-        self.assertFalse(any(name.endswith(('.json', '.pdf', '.png', '.jpg', '.svg')) for name in c2.PUBLIC_FILES))
+    def test_public_allowlist_preserves_legacy_fourteen_and_adds_only_reviewed_research_files(self):
+        additions = {'research.js', 'data/research-graph.js', 'data/reference-complete.js', 'data/scoped-analysis.js',
+                     'reference/figure-1.jpg', 'reference/figure-2.jpg', 'reference/figure-3.jpg', 'reference/figure-4.jpg'}
+        self.assertEqual(len(c2.PUBLIC_FILES - additions), 14)
+        self.assertTrue(additions.issubset(c2.PUBLIC_FILES))
+        self.assertFalse(any(name.endswith(('.json', '.pdf', '.png', '.svg')) for name in c2.PUBLIC_FILES))
         self.assertIn('analysis/data/bundle.js', c2.PUBLIC_FILES)
         self.assertTrue(all(name not in c2.PUBLIC_FILES for name in (
             'analysis/data/navharness.mapping.json', 'analysis/data/navharness.ledger.json',
@@ -370,7 +373,7 @@ class RadarC2HistoricalPreservationControls(unittest.TestCase):
 
     def test_unchanged_fixed_public_validator_rejects_unexpected_output(self):
         root = Path(self.temp.name) / 'guarded'
-        for name in (c2.SOURCE, c2.INPUT_SOURCE):
+        for name in (c2.SOURCE, c2.INPUT_SOURCE, c2.RESEARCH_INPUT_SOURCE):
             shutil.copytree(ROOT / name, root / name)
         for name in (c2.MANIFEST, 'previews/radar-trees-c/data/graph-data.json'):
             dest = root / name
