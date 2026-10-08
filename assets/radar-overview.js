@@ -3,7 +3,17 @@
  const root=document.querySelector('[data-radar-period]');if(!root)return;
  const themes=[...root.querySelectorAll('[data-radar-theme]')],papers=[...root.querySelectorAll('[data-radar-paper]')],views=[...root.querySelectorAll('[data-radar-view]')],choices=[...root.querySelectorAll('.radar-theme-choice')];
  const input=root.querySelector('#radar-candidate-search'),rows=[...root.querySelectorAll('[data-radar-candidate]')],count=root.querySelector('#radar-candidate-count'),empty=root.querySelector('#radar-candidate-empty');
- let state={view:'overview',theme:'',paper:'',q:'',origin:''};
+ let state={view:'overview',theme:'',paper:'',q:'',origin:''},restoredURL='';
+ // Only these existing same-document landmarks carry reading context. Cross-window,
+ // external, download and new-target links keep their original navigation.
+ const landmarkIds=new Set(['main','radar-archives','frontier-grid']);
+ const documentPath=path=>path.replace(/\/index\.html$/,'/');
+ const nativeTarget=a=>a.getAttribute('download')!==null||(a.getAttribute('target')||'_self').toLowerCase()!=='_self';
+ const localLandmarks=[...document.querySelectorAll('a[href]')].flatMap(a=>{
+  try{const url=new URL(a.getAttribute('href'),location.href),id=url.hash.slice(1);
+   return !nativeTarget(a)&&landmarkIds.has(id)&&document.getElementById(id)&&url.origin===location.origin&&documentPath(url.pathname)===documentPath(location.pathname)&&url.search===location.search?[{a,id}]:[];
+  }catch(_){return [];}
+ });
  // UI position only, scoped to this exact dated window; never a read/completed flag.
  const positionKey='radar-position:'+root.dataset.radarPeriod+':'+root.dataset.radarDate;
  function remember(){try{window.sessionStorage?.setItem(positionKey,hash(state));}catch(_){/* Storage may be disabled. */}}
@@ -53,9 +63,10 @@
    else next={...state,view:action,paper:'',...(action==='overview'?{theme:''}:{})};
    a.setAttribute('href',hash(clean(next)));
   }
+  for(const {a,id} of localLandmarks)a.setAttribute('href',hash(state)+'&landmark='+id);
   if(moveFocus)focus(returnTarget(previous,state)||target(state));
  }
- function navigate(next,replace=false){next=clean(next);if(hash(next)===hash(state))return;const previous=state;state=next;history[replace?'replaceState':'pushState'](null,'',hash(state));render(!replace,previous);remember();}
+ function navigate(next,replace=false){next=clean(next);if(hash(next)===hash(state)&&!landmarkElement())return;const previous=state;state=next;history[replace?'replaceState':'pushState'](null,'',hash(state));render(!replace,previous);restoredURL=location.href;remember();}
  root.addEventListener('click',event=>{
   const a=event.target.closest('[data-radar-action]');if(!a||event.button>0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
   const action=a.dataset.radarAction;event.preventDefault();let next={...state};
@@ -69,11 +80,30 @@
  root.addEventListener('keydown',event=>{if(event.defaultPrevented)return;if(event.key==='Escape'&&state.view!=='overview'){event.preventDefault();navigate({...state,view:state.view==='paper'?state.origin:'overview',paper:'',...(state.view==='paper'?{}:{theme:''})});return;}const a=event.target.closest('.radar-theme-choice');if(a&&event.key===' '){event.preventDefault();navigate({...state,view:'theme',theme:a.dataset.theme,paper:'',origin:'theme'});}});
  input.addEventListener('input',()=>navigate({...state,view:'candidates',q:input.value},true));
  input.addEventListener('keydown',event=>{if(event.key==='Escape'&&input.value){event.preventDefault();navigate({...state,view:'candidates',q:''},true);}});
- const restore=()=>{if(landmark())return;const next=read();if(hash(next)===hash(state)){revealDiscovery();return;}const previous=state;state=next;render(true,previous);remember();revealDiscovery();};
- function landmarkElement(){const id=location.hash.slice(1);if(!id||id.includes('=')||id.startsWith('theme-')||id.startsWith('paper-')||['radar-overview','radar-candidates','radar-evidence'].includes(id))return null;return document.getElementById(id);}
- function landmark(){const el=landmarkElement();if(!el)return false;revealDiscovery();el.setAttribute('tabindex','-1');focus(el);return true;}
- function revealDiscovery(){if(location.hash==='#frontier-grid'){const feed=document.getElementById('radar-discovery');if(feed)feed.setAttribute('open','');}}
- window.addEventListener('popstate',restore);window.addEventListener('hashchange',restore);window.addEventListener('pageshow',()=>{state=read();render();revealDiscovery();});
+ function landmarkElement(){
+  const raw=location.hash.slice(1),params=new URLSearchParams(raw),id=params.has('view')?params.get('landmark'):raw;
+  return landmarkIds.has(id)?document.getElementById(id):null;
+ }
+ function landmark(moveFocus=true){const el=landmarkElement();if(!el)return false;revealDiscovery();el.setAttribute('tabindex','-1');if(moveFocus)focus(el);return true;}
+ function revealDiscovery(){if(landmarkElement()?.id==='frontier-grid'){const feed=document.getElementById('radar-discovery');if(feed)feed.setAttribute('open','');}}
+ const restore=(moveFocus=true)=>{
+  const el=landmarkElement(),previous=state;
+  // Legacy bare fragment navigation stays in its current layer; enhanced URLs
+  // include the exact layer/query and can restore independently after a reload.
+  const next=el&&!new URLSearchParams(location.hash.slice(1)).has('view')?state:read(),changed=hash(next)!==hash(state);
+  if(changed){state=next;render(moveFocus&&!el,previous);}
+  else if(moveFocus&&!el&&restoredURL!==location.href)focus(target(state));
+  if(el){if(!new URLSearchParams(location.hash.slice(1)).has('view'))history.replaceState(null,'',hash(state)+'&landmark='+el.id);landmark(moveFocus);}
+  restoredURL=location.href;remember();
+ };
+ document.addEventListener('click',event=>{
+  const a=event.target.closest('a'),entry=localLandmarks.find(item=>item.a===a);
+  if(!entry||event.defaultPrevented||event.button>0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||nativeTarget(a))return;
+  event.preventDefault();const next=hash(state)+'&landmark='+entry.id;
+  if(location.hash!==next)history.pushState(null,'',next);
+  restore();
+ });
+ window.addEventListener('popstate',()=>restore());window.addEventListener('hashchange',()=>restore());window.addEventListener('pageshow',()=>restore(false));
  if(!location.hash){try{const saved=window.sessionStorage?.getItem(positionKey);if(saved&&saved.startsWith('#view='))history.replaceState(null,'',saved);}catch(_){/* Fresh overview remains usable without storage. */}}
- state=read();render(!!location.hash&&!landmarkElement());landmark();revealDiscovery();remember();
+ state=read();render(!!location.hash&&!landmarkElement());landmark();restoredURL=location.href;remember();
 })();

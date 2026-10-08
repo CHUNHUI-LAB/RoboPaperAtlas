@@ -64,3 +64,40 @@ These model/DOM tests do not establish actual font layout, mobile/touch usabilit
 native browser fullscreen behavior or browser history. Those remain separate
 acceptance gates for the final source identity. The mandatory image-byte gate is independent of the defensive unavailable-state
 regression and must pass before completion is claimed.
+
+
+## Viewport obstruction correction (local candidate, 2026-10-07)
+
+This candidate starts at deployed main `70daf7e68bcf13ad1000dc44e31872a874d7f3f2`
+and fixes the subsequently observed 1180 × 757 browser defects. It is not a
+claim that the changed bytes have passed deployed-browser acceptance.
+
+- The minimap reserves space in an independently collapsible sidebar. The hint
+  reserves its own row. Neither overlays selectable canvas nodes, including
+  the root and General goal after fit. The narrow-screen detail rail also
+  reserves layout space instead of covering the canvas.
+- The independent analysis root and five unchanged original main branches use
+  tighter card spacing at normal 14 px label size. No branches are omitted.
+- A shallow high-fanout branch uses screen-dependent sibling columns with
+  direct original-parent connectors routed through card gutters. These are
+  geometric columns, not new research groups. All 19 protocol positioning
+  controls remain available in a separate sibling strip. The full source
+  graph, minimap identities, and scientific parent relationships are unchanged.
+- Focus mode compacts the header and initially hides details and minimap. It
+  is labelled “页内专注” unless the browser actually enters native fullscreen.
+  The mode never invokes fit automatically. Exiting an unchanged branch
+  restores its exact pre-entry camera; deliberate in-focus selection and
+  expansion remain intact. Both panels can be opened in focus mode.
+- Explicit fit remains an overview, with a visible small-text explanation and
+  a “放大阅读” action. Ordinary selected-node navigation stays at least 1×.
+
+Run `tests/test_tree_viewport_obstructions.cjs` as well as the existing faithful
+canvas/image-byte suites and complete official workflow. The new regression
+uses the observed viewport dimensions and asserts the absence of overlay nodes,
+complete five-branch geometry, 19-sibling visibility, connector/card separation,
+page-focus/native-fullscreen distinctions, preserved/restored cameras, side
+panels, image scale, history, and Escape. DOM geometry models cannot establish
+CSS font layout or actual native fullscreen behavior. The exact two PNG hashes,
+39 papers, 19 protocols, 2 filled and 37 pending analyses remain protected by
+the original independent gates. Only reviewed UI release hashes are resealed;
+scientific, image and historical baseline hashes are not changed.

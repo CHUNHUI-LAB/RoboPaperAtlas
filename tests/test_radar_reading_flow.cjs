@@ -19,10 +19,10 @@ di,dr=load_archive(root);wi,wr=load_weekly(root)
 di={**di,'latest':'2026-10-07'};wi={**wi,'latest':'2026-10-04'}
 (target/'dist/frontier/weekly').mkdir(parents=True)
 (target/'dist/frontier/index.html').write_text(frontier(json.loads((root/'data/frontier.json').read_text()),json.loads((root/'data/catalog.json').read_text()),shell,link,home_overview(wi,wr,di,dr),overview=True))
-(target/'dist/frontier/weekly/index.html').write_text(shell('Radar',render(wr[wi['latest']],wi,'../../'),prefix='../../',page='frontier'))
+(target/'dist/frontier/weekly/index.html').write_text(shell('Radar','<main id="main">'+render(wr[wi['latest']],wi,'../../')+'</main>',prefix='../../',page='frontier'))
 `,root,temp],{encoding:'utf8'});assert.equal(generated.status,0,generated.stdout+generated.stderr);
 const {fixture}=require(path.join(temp,'tests/map_dom_fixture.cjs'));
-const make=(suffix='',weekly=false,storage=null)=>{const f=fixture({htmlFile:weekly?'dist/frontier/weekly/index.html':'dist/frontier/index.html',url:'https://example.org/RoboPaperAtlas/frontier/'+suffix});/* The shared fixture's CSS-ID parser does not support dots in native IDs. */f.document.getElementById=id=>f.document.querySelector('[id="'+id+'"]');if(storage)f.window.sessionStorage=storage;f.runAsset('radar-overview.js');return f;};
+const make=(suffix='',weekly=false,storage=null,date=null)=>{const f=fixture({htmlFile:weekly?'dist/frontier/weekly/index.html':'dist/frontier/index.html',url:'https://example.org/RoboPaperAtlas/frontier/'+suffix});/* The shared fixture's CSS-ID parser does not support dots in native IDs. */f.document.getElementById=id=>f.document.querySelector('[id="'+id+'"]');if(storage)f.window.sessionStorage=storage;if(date)f.$('[data-radar-date]').dataset.radarDate=date;f.runAsset('radar-overview.js');f.window.emit('pageshow');return f;};
 let passed=0;function test(name,fn){fn();passed++;console.log('PASS '+name);}
 const selected=f=>f.$$('[data-radar-theme]').filter(x=>!x.hidden),papers=f=>f.$$('[data-radar-paper]').filter(x=>!x.hidden);
 test('first load exposes all actual choices with no long theme, paper or candidate panel',()=>{for(const weekly of [false,true]){const f=make('',weekly);assert.equal(f.$$('.radar-theme-choice').length,weekly?4:5);assert.equal(selected(f).length,0);assert.equal(papers(f).length,0);assert(f.$$('[data-radar-view]').every(v=>v.hidden));}});
@@ -40,4 +40,61 @@ test('native Back popstate plus hashchange cannot override the restored source-l
 test('Escape unwinds paper and theme; candidate search Escape clears before leaving its layer',()=>{const f=make();f.click('#choose-feedback-and-disruptions');selected(f)[0].querySelector('[data-radar-action="paper"]').emit('click');papers(f)[0].querySelector('h2').emit('keydown',{key:'Escape'});assert.equal(selected(f).length,1);selected(f)[0].querySelector('h2').emit('keydown',{key:'Escape'});assert.equal(selected(f).length,0);f.click('[data-radar-action="candidates"]');const input=f.$('#radar-candidate-search');input.value='missing';input.emit('input');input.emit('keydown',{key:'Escape'});assert.equal(input.value,'');assert.equal(f.$('[data-radar-view="candidates"]').hidden,false);input.emit('keydown',{key:'Escape'});assert.equal(f.$('[data-radar-view="candidates"]').hidden,true);});
 test('history and discovery native landmarks keep the current layer and focus the actual destination',()=>{const f=make();f.click('#choose-feedback-and-disruptions');f.setURL('#radar-archives');assert.equal(selected(f)[0].dataset.radarTheme,'feedback-and-disruptions');assert.equal(f.document.activeElement.id,'radar-archives');f.setURL('#main');assert.equal(f.document.activeElement.id,'main');assert.equal(selected(f)[0].dataset.radarTheme,'feedback-and-disruptions');f.setURL('#radar-archives');f.window.emit('hashchange');assert.equal(f.document.activeElement.id,'radar-archives');f.setURL('#frontier-grid');assert.equal(f.document.activeElement.id,'frontier-grid');assert.equal(f.$('#radar-discovery').getAttribute('open'),'');const fresh=make('#radar-archives');assert.equal(fresh.document.activeElement.id,'radar-archives');});
 test('period-tab revisits restore only the same dated-window UI position, with explicit hashes winning',()=>{const items=new Map(),storage={setItem:(k,v)=>items.set(k,v),getItem:k=>items.get(k)};const daily=make('',false,storage);daily.click('#choose-feedback-and-disruptions');const weekly=make('',true,storage);assert.equal(selected(weekly).length,0);weekly.$('.radar-theme-choice').emit('click');const returned=make('',false,storage);assert.equal(selected(returned)[0].dataset.radarTheme,'feedback-and-disruptions');const explicit=make('#view=overview',false,storage);assert.equal(selected(explicit).length,0);assert.equal(selected(make('',false,storage)).length,0);assert(items.has('radar-position:daily:2026-10-07'));assert(items.has('radar-position:weekly:2026-10-04'));const denied=make('',false,{getItem(){throw Error('denied')},setItem(){throw Error('denied')}});assert.equal(selected(denied).length,0);denied.click('#choose-feedback-and-disruptions');assert.equal(selected(denied).length,1);});
+// Follow an actual rendered href, including the browser's default hash navigation.
+// Different pathnames are deliberately rejected: this caught the live / -> /index.html reload.
+function follow(f,a,options={}){
+ const before=f.location.href,event=a.emit('click',{button:0,...options});
+ if(!event.defaultPrevented&&!options.ctrlKey&&!options.metaKey&&!options.shiftKey&&!options.altKey&&!options.button){
+  const next=new URL(a.getAttribute('href'),before),current=new URL(before);
+  assert.equal(next.origin,current.origin);assert.equal(next.pathname,current.pathname,'local landmark must not cause a document navigation');assert.equal(next.search,current.search);
+  if(next.href!==before){f.window.history.pushState(null,'',next.href);f.window.emit('hashchange');}
+ }
+ return event;
+}
+const archives=f=>f.$('.radar-view-links').querySelectorAll('a').find(a=>a.textContent==='历史窗口');
+const discovery=f=>f.$('.radar-footer').querySelectorAll('a').find(a=>a.textContent.includes('七日发现队列'));
+test('actual directory and index landmark hrefs retain theme across one-step Back, Forward, pageshow and reload',()=>{
+ for(const suffix of ['', 'index.html']){
+  const f=make(suffix);f.click('#choose-feedback-and-disruptions');
+  follow(f,archives(f));assert.equal(selected(f)[0]?.dataset.radarTheme,'feedback-and-disruptions');assert.equal(f.document.activeElement.id,'radar-archives');
+  const historyURL=f.location.href;follow(f,discovery(f));
+  assert.equal(selected(f)[0]?.dataset.radarTheme,'feedback-and-disruptions');assert.equal(f.document.activeElement.id,'frontier-grid');assert.equal(f.$('#radar-discovery').getAttribute('open'),'');
+  const queueURL=f.location.href,entries=f.historyStack.length;follow(f,discovery(f));assert.equal(f.historyStack.length,entries);
+  f.window.emit('pageshow',{persisted:true});assert.equal(selected(f)[0]?.dataset.radarTheme,'feedback-and-disruptions');
+  f.goBack();f.window.emit('hashchange');assert.equal(f.location.href,historyURL);assert.equal(selected(f)[0]?.dataset.radarTheme,'feedback-and-disruptions');assert.equal(f.document.activeElement.id,'radar-archives');
+  f.goBack();f.window.emit('hashchange');assert.equal(f.document.activeElement.id,'heading-feedback-and-disruptions');
+  f.goForward();assert.equal(f.document.activeElement.id,'radar-archives');f.goForward();assert.equal(f.location.href,queueURL);assert.equal(f.document.activeElement.id,'frontier-grid');
+  const reload=make(new URL(queueURL).hash);assert.equal(selected(reload)[0]?.dataset.radarTheme,'feedback-and-disruptions');assert.equal(reload.document.activeElement.id,'frontier-grid');
+ }
+});
+test('candidate search and paper origin survive landmark links and their copied or modified-click URLs',()=>{
+ const f=make();f.click('[data-radar-action="candidates"]');const input=f.$('#radar-candidate-search');input.value='ＶＯＭＭＩ';input.emit('input');
+ follow(f,archives(f));follow(f,discovery(f));assert.equal(input.value,'ＶＯＭＭＩ');assert.equal(f.$$('[data-radar-candidate]').filter(r=>!r.hidden).length,1);assert.equal(f.$('[data-radar-view="candidates"]').hidden,false);
+ const copied=make(new URL(discovery(f).getAttribute('href'),f.location.href).hash);assert.equal(copied.$('#radar-candidate-search').value,'ＶＯＭＭＩ');assert.equal(copied.$$('[data-radar-candidate]').filter(r=>!r.hidden).length,1);
+ f.goBack();assert.equal(input.value,'ＶＯＭＭＩ');assert.equal(f.document.activeElement.id,'radar-archives');f.goBack();assert.equal(f.document.activeElement.id,'radar-candidates-heading');
+ const row=f.$$('[data-radar-candidate]').find(r=>!r.hidden);row.querySelector('a').emit('click');const vid=papers(f)[0].dataset.radarPaper;follow(f,archives(f));follow(f,discovery(f));assert.equal(papers(f)[0].dataset.radarPaper,vid);
+ const linked=make(new URL(discovery(f).getAttribute('href'),f.location.href).hash);assert.equal(papers(linked)[0].dataset.radarPaper,vid);papers(linked)[0].querySelector('[data-radar-action="return"]').emit('click');assert.equal(linked.$('#radar-candidate-search').value,'ＶＯＭＭＩ');assert.equal(linked.$('[data-radar-view="candidates"]').hidden,false);
+});
+test('only verified local landmarks are enhanced; modifier, target, download, archive and cross-period links stay native',()=>{
+ const f=make();f.click('#choose-feedback-and-disruptions');const a=discovery(f),before=f.location.href,n=f.historyStack.length;
+ for(const options of [{ctrlKey:true},{metaKey:true},{shiftKey:true},{altKey:true},{button:1},{defaultPrevented:true}])assert.equal(!!a.emit('click',{button:0,...options}).defaultPrevented,!!options.defaultPrevented);
+ a.setAttribute('target','_blank');assert(!a.emit('click',{button:0}).defaultPrevented);a.removeAttribute('target');a.setAttribute('download','');assert(!a.emit('click',{button:0}).defaultPrevented);a.removeAttribute('download');assert.equal(f.location.href,before);assert.equal(f.historyStack.length,n);
+ const archive=f.$('.radar-archive').querySelector('a');assert(!archive.getAttribute('href').includes('landmark='));assert(!archive.emit('click',{button:0}).defaultPrevented);
+ const weekly=make('weekly/index.html',true);weekly.$('.radar-theme-choice').emit('click');const weeklyTheme=selected(weekly)[0].dataset.radarTheme;follow(weekly,weekly.$('.skip-link'));assert.equal(selected(weekly)[0].dataset.radarTheme,weeklyTheme);assert.equal(weekly.document.activeElement.id,'main');const cross=discovery(weekly);assert.equal(cross.getAttribute('href'),'../../frontier/index.html#frontier-grid');assert(!cross.emit('click',{button:0}).defaultPrevented);
+ const dated=make('briefs/2026-10-07/index.html');assert(!discovery(dated).getAttribute('href').includes('landmark='));
+ const external=f.$('a[href="https://arxiv.org/abs/2609.26351v1"]')||f.$('.radar-paper').querySelectorAll('a').find(a=>(a.getAttribute('href')||'').startsWith('https://arxiv.org/'));assert(external);assert(!external.emit('click',{button:0}).defaultPrevented);
+});
+test('native bare landmarks and date-scoped revisits cannot erase search or leak another reporting window',()=>{
+ const saved=new Map(),storage={getItem:k=>saved.get(k),setItem:(k,v)=>saved.set(k,v)},f=make('',false,storage);f.click('[data-radar-action="candidates"]');f.$('#radar-candidate-search').value='VOMMI';f.$('#radar-candidate-search').emit('input');
+ f.setURL('#main');f.window.emit('pageshow',{persisted:true});assert.equal(f.$('#radar-candidate-search').value,'VOMMI');assert.equal(f.document.activeElement.id,'main');
+ const otherDate=make('',false,storage,'2026-10-08');assert.equal(otherDate.$('#radar-candidate-search').value,'');assert.equal(selected(otherDate).length,0);
+ const sameDate=make('',false,storage);assert.equal(sameDate.$('#radar-candidate-search').value,'VOMMI');
+ const explicit=make('#frontier-grid',false,storage);assert.equal(explicit.$('#radar-candidate-search').value,'');assert.equal(explicit.document.activeElement.id,'frontier-grid');
+});
+test('the currently selected view can be re-entered from a landmark and context parameter order is immaterial',()=>{
+ const f=make();f.click('#choose-feedback-and-disruptions');follow(f,discovery(f));f.click('#choose-feedback-and-disruptions');assert(!f.location.hash.includes('landmark='));assert.equal(f.document.activeElement.id,'heading-feedback-and-disruptions');
+ const count=f.historyStack.length;f.click('#choose-feedback-and-disruptions');assert.equal(f.historyStack.length,count);
+ f.click('[data-radar-action="candidates"]');follow(f,archives(f));f.click('[data-radar-action="candidates"]');assert(!f.location.hash.includes('landmark='));assert.equal(f.document.activeElement.id,'radar-candidates-heading');
+ const reordered=make('#landmark=frontier-grid&theme=feedback-and-disruptions&view=theme&origin=theme');assert.equal(selected(reordered)[0].dataset.radarTheme,'feedback-and-disruptions');assert.equal(reordered.document.activeElement.id,'frontier-grid');assert.equal(reordered.$('#radar-discovery').getAttribute('open'),'');
+});
 console.log(JSON.stringify({passed,realBrowser:'NOT_RUN'}));
