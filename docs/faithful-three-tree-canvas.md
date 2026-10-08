@@ -101,3 +101,16 @@ CSS font layout or actual native fullscreen behavior. The exact two PNG hashes,
 39 papers, 19 protocols, 2 filled and 37 pending analyses remain protected by
 the original independent gates. Only reviewed UI release hashes are resealed;
 scientific, image and historical baseline hashes are not changed.
+
+
+## Complete labels and clear ancestry (separate local candidate, 2026-10-08)
+
+This follow-on begins from deployed main `79de91d6bb736468258c0d8d5344a8894981f110`. The preceding repair release and its bounded browser evidence remain separate.
+
+- Full node labels are no longer limited to two lines. The mounted view measures unscaled wrapped label and footer heights at the final card width; a conservative deterministic fallback supports model tests and first paint. Typography remains 14 px / 1.3.
+- Row and subtree spacing follows the tallest measured content. The compact five-branch analysis skeleton remains unchanged when its labels are short. No source labels, original parent edges, node IDs, sibling order or scientific metadata are rewritten.
+- Wide high-fanout siblings share one explicitly geometric top bus and per-column gutters. Every SVG edge keeps its original source/target identity; the active ancestry is painted last. No visual column is a new semantic parent.
+- Narrow expanded trees use true-depth gutters and cumulative heights, fixing crossings that the previous four-node narrow smoke check did not exercise.
+- The existing role footers and expansion counts remain. Shared source/mapping caveats, detail panels, all 19 peer controls, image bytes, reading boundaries, camera, history and fullscreen restoration are retained.
+
+New `test_tree_readability.cjs` checks complete-label bounds, injected measurements, tall parents, all19 ordering, actual serialized paths, expanded deep narrow cases and negative controls. Python discovery runs the new suite. Existing geometry assertions now inspect actual emitted paths rather than reconstructing the previous router. Real-font and screenshot acceptance must still be run after publication of the exact final candidate; these deterministic checks alone do not establish browser visual acceptance.
