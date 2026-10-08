@@ -163,8 +163,10 @@ body.faithful-active > main,body.faithful-active > .masthead,body.faithful-activ
 .ft-edges path { fill:none; stroke:#8faabd; stroke-width:2; }
 .ft-edges path.ft-active-edge { stroke:#bd4936; stroke-width:3; }
 #faithful-map button.ft-node { position:absolute; padding:10px 12px; display:flex; flex-direction:column; justify-content:center; text-align:left; white-space:normal; border-radius:10px; box-shadow:0 2px 6px #2838480d; }
-.ft-node > span { font-size:14px; font-weight:620; line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; overflow-wrap:anywhere; }
-.ft-node small { font-size:10px; line-height:1.3; color:#6a7784; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ft-node > span { font-size:14px; font-weight:620; line-height:1.3; display:block; flex-shrink:0; overflow:visible; overflow-wrap:anywhere; }
+.ft-node small { flex-shrink:0; display:flex; gap:6px; align-items:baseline; font-size:10px; line-height:1.3; color:#6a7784; margin-top:5px; white-space:nowrap; overflow:hidden; }
+.ft-node-role { min-width:0; overflow:hidden; text-overflow:ellipsis; }
+.ft-node-count { flex:none; margin-left:auto; font:inherit; font-weight:650; }
 #faithful-map button.ft-node.is-selected { border:2px solid var(--ft-red); background:#fff1e9; }
 .ft-mini { position:absolute; bottom:34px; left:14px; width:190px; padding:4px; background:#fffefbe8; border:1px solid #ccd4db; border-radius:8px; pointer-events:auto; }
 .ft-mini svg { display:block; width:180px; height:104px; }
