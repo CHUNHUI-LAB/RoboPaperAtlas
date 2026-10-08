@@ -42,7 +42,7 @@ class October6MaintenanceTests(unittest.TestCase):
             lambda d: d['experiences']['records'].pop(),
             lambda d: d['publications'].pop(),
             lambda d: next(e for e in d['editions'] if e['id'] == 'neurips-2026')['notes'].pop(),
-            lambda d: d['maintenance_history'][-1]['prior_records']['neurips-2026'].update(status='open'),
+            lambda d: next(h for h in d['maintenance_history'] if h['checked_at'] == '2026-10-06')['prior_records']['neurips-2026'].update(status='open'),
         ]
         for mutate in mutations:
             with self.subTest(mutation=mutate):

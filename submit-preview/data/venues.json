@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "status": "independent_public_candidate_not_integrated",
-  "checked_at": "2026-10-06",
+  "checked_at": "2026-10-08",
   "venues": [
     {
       "id": "icra",
@@ -1441,7 +1441,8 @@
       "status": "current_snapshot",
       "source_ids": [
         "tro-authors",
-        "maintenance-tro-template-hub"
+        "maintenance-tro-template-hub",
+        "maintenance-tro-presentation-20261008"
       ],
       "checked_at": "2026-10-02",
       "channels": [
@@ -1465,7 +1466,8 @@
       "notes": [
         "Policy snapshot is not an annual conference edition. Special issues require their own channel, scoped deadline and evidence.",
         "10 月 2 日已从正确 T-RO 作者页确认 IEEEtran 的 journal 模式，常规/综述稿默认 10 pt；并非采用 T-RL 规则。旧 Manuscript Preparation 交叉链接仍跳往 T-RL，这条访问历史保留。",
-        "IEEE 官方模板说明页已读，具体 selector 返回 HTTP 418；未下载或编译 T-RO 专用模板。初稿匿名与文章类别要求仍以 T-RO 正确作者页为准。"
+        "IEEE 官方模板说明页已读，具体 selector 返回 HTTP 418；未下载或编译 T-RO 专用模板。初稿匿名与文章类别要求仍以 T-RO 正确作者页为准。",
+        "2026-10-08 核读 T-RO 官方首页展示段：已录用常规论文（不含综述或 communication items）的 ICRA 2027 转报窗口为 2026-03-01 至 2026-12-31，IROS 2027 为 2026-08-01 至 2027-04-30。须在录用后 270 天内转报，且只能在一个会议展示；不得据此要求加速或延迟审稿。页面未给窗口具体时刻或时区。这是期刊论文会议展示资格，不是常规投稿截止或会议首轮投稿截止。 同页另一展示段另要求论文大部分关键想法未在带正式论文集的会议出现，并写有录用通知后一个月选择接受展示的窗口；这与上方 270 天转报条件的衔接未解释，须结合实际邀请确认，不能把 270 天当作全部手续的唯一时限。"
       ],
       "submission_mode": "regular_journal_no_fixed_deadline_confirmed"
     },
@@ -4758,6 +4760,16 @@
       "claim_supported": "核读 Paper Formatting、Author Responses、Publication of Accepted Submissions、Author Registration and Presentation；终稿时间未具体列明。",
       "access_status": "source_text_observed",
       "authority": "official"
+    },
+    {
+      "id": "maintenance-tro-presentation-20261008",
+      "url": "https://www.ieee-ras.org/publications/t-ro/",
+      "title": "T-RO — Presenting your T-RO Paper at IEEE RAS Conferences",
+      "authority": "official",
+      "checked_at": "2026-10-08",
+      "access_status": "source_text_observed",
+      "content_hash": null,
+      "claim_supported": "核读首页两个会议展示段：常规论文排除综述及 communication items，ICRA/IROS 2027 转报窗口、270天转报与单会议限制；另一段的关键想法此前未在正式会议论文集出现及一个月选择窗口一并保留，时限衔接待核。不重验全部作者指南、模板或专题。"
     }
   ],
   "pending_adjacent_journals": [
@@ -6444,6 +6456,53 @@
           "notes": [
             "This CFP is main track. Evaluations/datasets and position papers need distinct channels and policies, not workshop labels. No NeurIPS2027 dates inferred."
           ]
+        }
+      }
+    },
+    {
+      "checked_at": "2026-10-08",
+      "previous_snapshot": "2026-10-06",
+      "scope": "只补 T-RO 常规论文转报会议展示资格与日期精度；核验日不是政策发布日期。",
+      "preserved_boundaries": [
+        "全部旧字段、原来源及历史保留；原整条核验日期不刷新。",
+        "不新增论文截止，不改模板、经验、发表身份或阅读状态。"
+      ],
+      "prior_records": {
+        "tro-policy-20261001": {
+          "id": "tro-policy-20261001",
+          "venue_id": "tro",
+          "edition_year": null,
+          "kind": "journal_policy_snapshot",
+          "status": "current_snapshot",
+          "source_ids": [
+            "tro-authors",
+            "maintenance-tro-template-hub"
+          ],
+          "checked_at": "2026-10-02",
+          "channels": [
+            {
+              "id": "tro-policy-20261001-regular",
+              "forum_level": "journal",
+              "track_kind": "regular",
+              "archival_status": "archival",
+              "parent_edition_id": "tro-policy-20261001"
+            }
+          ],
+          "deadlines": [],
+          "templates": [
+            {
+              "label": "IEEE 期刊模板官方说明（选择器未成功读取）",
+              "url": "https://journals.ieeeauthorcenter.ieee.org/create-your-ieee-journal-article/authoring-tools-and-templates/tools-for-ieee-authors/ieee-article-templates/",
+              "status": "source_text_observed",
+              "checked_at": "2026-10-02"
+            }
+          ],
+          "notes": [
+            "Policy snapshot is not an annual conference edition. Special issues require their own channel, scoped deadline and evidence.",
+            "10 月 2 日已从正确 T-RO 作者页确认 IEEEtran 的 journal 模式，常规/综述稿默认 10 pt；并非采用 T-RL 规则。旧 Manuscript Preparation 交叉链接仍跳往 T-RL，这条访问历史保留。",
+            "IEEE 官方模板说明页已读，具体 selector 返回 HTTP 418；未下载或编译 T-RO 专用模板。初稿匿名与文章类别要求仍以 T-RO 正确作者页为准。"
+          ],
+          "submission_mode": "regular_journal_no_fixed_deadline_confirmed"
         }
       }
     }
