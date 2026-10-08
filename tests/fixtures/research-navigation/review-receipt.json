@@ -1,0 +1,55 @@
+{
+  "schema": "selective-research-review/1",
+  "scientific_approval": "selective_content_and_containment_only",
+  "scope": "No full39 reread or global-first claim. PONI22 scoped answers remain separate from old39 Stage states.",
+  "upstream_inputs": [
+    {
+      "artifact": "task-lineage/containment-projection.json",
+      "sha256": "b59810cead1a29528be7675e877fd52fc3d0e45b2a5230e861b0a8c91a648936"
+    },
+    {
+      "artifact": "method-lineage/renderer-projection.json",
+      "sha256": "0fb14894391f46bd2a6cbcf1ac08ed4874e898ee3e867b2a869728425dd74da8"
+    },
+    {
+      "artifact": "independent-review/poni-partial-analysis.json",
+      "sha256": "9f467f185d25b932917e5fda77a7c37f551977d6c6963ed3ed522e47b9942229"
+    },
+    {
+      "artifact": "independent-review/approved-overview.json",
+      "sha256": "dcc2ed02ffd2cc5511caa46103c3af7605a0fe6d7627c90355f6da7b4edd3227"
+    },
+    {
+      "artifact": "independent-review/canonical-paper-crosswalk.json",
+      "sha256": "cc6cfdd06efd1d89988018c4d4f915683d442e2d8d0e31765bd2afbd44d0cfe5"
+    },
+    {
+      "artifact": "independent-review/mapped-detail-card-placement.json",
+      "sha256": "69fdd4d842cc1546b444bb0d37baed05393b0017eb878982f49b618f41594893"
+    },
+    {
+      "artifact": "challenge-insights/renderer-projection.json",
+      "sha256": "42b5bf42ab361c0f96058964f22a91758dbd39227f4baa5c62613fdf77f6fb23"
+    }
+  ],
+  "task_adapter_sha256": "ebf41a58f610bb021d988c274ba3fd883af2611520cd7b0319c168c1d3462851",
+  "public_graph_sha256": "c8ecb785113a921af21c63fd649e695cd6f9150525242b8ad359917ba822c5d7",
+  "public_boundary": "Only curated reader fields; no raw paper texts, extraction snapshots, internal provenance paths or unverified side-task mappings.",
+  "identity_addendum": [
+    {
+      "source_alias": "task-lineage:yamauchi97",
+      "canonical_id": "frontier1997",
+      "basis": "same exact title and CMU primary PDF"
+    },
+    {
+      "source_alias": "task-lineage:zhu16",
+      "canonical_id": "zhu",
+      "basis": "same exact title and arXiv1609.05143"
+    },
+    {
+      "source_alias": "task-lineage:modiin23",
+      "canonical_id": "modiin",
+      "basis": "same exact title and ICCV2023 primary PDF"
+    }
+  ]
+}
