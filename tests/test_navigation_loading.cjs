@@ -1,6 +1,6 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),cp=require('node:child_process'),zlib=require('node:zlib'),crypto=require('node:crypto');
-const {JSDOM,ResourceLoader,VirtualConsole}=require('jsdom'),root=path.resolve(__dirname,'..'),raw=zlib.gunzipSync(fs.readFileSync(path.join(root,'data/navigation-product/model.json.gz')));
+const {JSDOM,ResourceLoader,VirtualConsole}=require('jsdom'),root=path.resolve(__dirname,'..'),raw=zlib.gunzipSync(fs.readFileSync(path.join(root,'tests/fixtures/navigation-product-pr52-1229.json.gz')));
 // Historical PR52 external-loader fixture. Current inline/sharded production is tested separately.
 const html=zlib.gunzipSync(fs.readFileSync(path.join(root,'tests/fixtures/navigation-pr52-startup.html.gz'))).toString('utf8');
 const wait=ms=>new Promise(r=>setTimeout(r,ms));

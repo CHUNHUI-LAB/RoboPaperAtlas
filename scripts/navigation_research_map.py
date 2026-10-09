@@ -9,7 +9,7 @@ import tempfile
 from pathlib import Path
 from urllib.parse import urlencode
 
-SOURCE_SHA = '1229372f697316dc5c0627995fce7de18496160d85f4a1acb4ffc2a6faf1d708'
+SOURCE_SHA = '9069c6a11ae9a867671522d04e6a24b4edcada660d03feb2f41340bfc395825c'
 GOAL = 'legacy:nav:goal'
 DOC = 'legacy:nav:root'
 LITERATURE = 'legacy:nav:l'

@@ -1,0 +1,5074 @@
+{
+  "schemaVersion": "navigation-reviewed-science-delta/1",
+  "baseSha256": "1229372f697316dc5c0627995fce7de18496160d85f4a1acb4ffc2a6faf1d708",
+  "groups": [
+    {
+      "name": "HieraNav限定SAP方法",
+      "operations": [
+        {
+          "op": "add",
+          "path": "/claims/method-claim:sapnav:langmap-single-v1",
+          "value": {
+            "id": "method-claim:sapnav:langmap-single-v1",
+            "paperId": "sap-nav",
+            "versionId": "arxiv:2608.12707v1",
+            "statement": "SAP-Nav面向层次化开放词汇物体导航，在LangMap的四粒度单目标设定上评测；本条不覆盖混合粒度多目标序列。",
+            "label": "SAP-Nav面向层次化开放词汇物体导航，在LangMap的四粒度单目标设定上评测；本条不覆盖混合粒度多目标序列。",
+            "sourceRefs": [
+              {
+                "sourceId": "challenge-insights:sapnav2026",
+                "versionId": "arxiv:2608.12707v1",
+                "paperId": "sap-nav",
+                "url": "https://arxiv.org/html/2608.12707v1",
+                "sourceURL": "https://arxiv.org/html/2608.12707v1",
+                "descriptor": "arXiv:2608.12707v1",
+                "versionStatus": "fixed_arxiv_version_url",
+                "locator": "Abstract; Experiments / Experimental Setup / Datasets; Table 1"
+              }
+            ],
+            "locator": "Abstract; Experiments / Experimental Setup / Datasets; Table 1",
+            "attribution": "author_method_or_evaluation_paraphrase",
+            "status": "source_grounded_selected_reading",
+            "detail": {
+              "canonicalPaperId": "sap-nav",
+              "sourceId": "challenge-insights:sapnav2026",
+              "sourceURL": "https://arxiv.org/html/2608.12707v1",
+              "fixed_version": "arxiv:2608.12707v1",
+              "checked_at": "2026-10-09",
+              "locator": "Abstract; Experiments / Experimental Setup / Datasets; Table 1",
+              "scope": "SAP v1作者所用LangMap单目标协议；不等同后来LangMap v3全部协议。",
+              "verification": "selected_primary_sections_checked",
+              "runtimeValidation": false
+            }
+          }
+        },
+        {
+          "op": "add",
+          "path": "/claims/method-claim:sapnav:qssr-avv-v1",
+          "value": {
+            "id": "method-claim:sapnav:qssr-avv-v1",
+            "paperId": "sap-nav",
+            "versionId": "arxiv:2608.12707v1",
+            "statement": "SAP-Nav在线积累房间空间语义与主动采集的房间整体视图，先检查候选是否满足目标中的房间或区域约束，再由AVV评估视点充分性，必要时更换可行视点，并核验类别及适用的属性约束；被AVV拒绝的候选加入黑名单后继续探索。",
+            "label": "SAP-Nav在线积累房间空间语义与主动采集的房间整体视图，先检查候选是否满足目标中的房间或区域约束，再由AVV评估视点充分性，必要时更换可行视点，并核验类别及适用的属性约束；被AVV拒绝的候选加入黑名单后继续探索。",
+            "sourceRefs": [
+              {
+                "sourceId": "challenge-insights:sapnav2026",
+                "versionId": "arxiv:2608.12707v1",
+                "paperId": "sap-nav",
+                "url": "https://arxiv.org/html/2608.12707v1",
+                "sourceURL": "https://arxiv.org/html/2608.12707v1",
+                "descriptor": "arXiv:2608.12707v1",
+                "versionStatus": "fixed_arxiv_version_url",
+                "locator": "Method / Method Overview; Queryable Spatial Semantic Representation / Active Room Perception / Spatial Semantic Query; Active Viewpoint Verification / Sufficiency Evaluation / Target Verification"
+              }
+            ],
+            "locator": "Method / Method Overview; Queryable Spatial Semantic Representation / Active Room Perception / Spatial Semantic Query; Active Viewpoint Verification / Sufficiency Evaluation / Target Verification",
+            "attribution": "author_method_or_evaluation_paraphrase",
+            "status": "source_grounded_selected_reading",
+            "detail": {
+              "canonicalPaperId": "sap-nav",
+              "sourceId": "challenge-insights:sapnav2026",
+              "sourceURL": "https://arxiv.org/html/2608.12707v1",
+              "fixed_version": "arxiv:2608.12707v1",
+              "checked_at": "2026-10-09",
+              "locator": "Method / Method Overview; Queryable Spatial Semantic Representation / Active Room Perception / Spatial Semantic Query; Active Viewpoint Verification / Sufficiency Evaluation / Target Verification",
+              "scope": "方法流程选段；不含独立复现或全算法细节；AVV的限定与既有boundary证据同时显示。",
+              "verification": "selected_primary_sections_checked",
+              "runtimeValidation": false
+            }
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:hieranav/ciCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:hieranav/condition/challengeCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/coverage/task:hieranav/condition/challengeNodeIds/0",
+          "value": "ci_candidate_verification"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:hieranav/condition/insightCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/coverage/task:hieranav/condition/insightNodeIds/0",
+          "value": "insight:ci_candidate_verification:sap-nav"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:hieranav/condition/methodCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/coverage/task:hieranav/condition/methodNodeIds/0",
+          "value": "pipeline-sapnav"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:hieranav/condition/paperCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/coverage/task:hieranav/condition/paperIds/0",
+          "value": "sap-nav"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:hieranav/condition/recipeCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:hieranav/condition/status",
+          "old": "coverage_gap",
+          "value": "selected_evidence_available"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:hieranav/methodCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:hieranav/originalTaskProjectionCoverage/scope",
+          "old": "条件映射仅提供阅读关联；不声称相关方法已在全部关联任务benchmark运行，也不以广义条件覆盖填满精读缺口。",
+          "value": "条件映射仅提供阅读关联；不声称相关方法已在全部关联任务benchmark运行，也不以广义条件覆盖填满精读缺口。 此字段保留早期任务目录投影快照；当前方法和挑战覆盖以同条 direct/condition/total 派生统计为准。"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:hieranav/total/challengeCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:hieranav/total/challengeNodeIds/0",
+          "old": "goal-ci:planavid",
+          "value": "ci_candidate_verification"
+        },
+        {
+          "op": "add",
+          "path": "/coverage/task:hieranav/total/challengeNodeIds/1",
+          "value": "goal-ci:planavid"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:hieranav/total/insightCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/coverage/task:hieranav/total/insightNodeIds/1",
+          "value": "insight:ci_candidate_verification:sap-nav"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:hieranav/total/methodCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/coverage/task:hieranav/total/methodNodeIds/1",
+          "value": "pipeline-sapnav"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:hieranav/total/paperCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/coverage/task:hieranav/total/paperIds/1",
+          "value": "sap-nav"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:hieranav/total/recipeCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/entities/design:insight:ci_candidate_verification:sap-nav/positionIds/3",
+          "value": "pos:c:4890a181993768ceed8441"
+        },
+        {
+          "op": "add",
+          "path": "/entities/evidence:claim:c:candidate_verification:sapnav2026:boundary/positionIds/0",
+          "value": "pos:c:1f1d9bcd1a11121729db04"
+        },
+        {
+          "op": "add",
+          "path": "/entities/evidence:claim:c:candidate_verification:sapnav2026:boundary/positionIds/1",
+          "value": "pos:c:6259b76fe3d2c1f043ebe0"
+        },
+        {
+          "op": "add",
+          "path": "/entities/evidence:claim:c:candidate_verification:sapnav2026:technical_approach/positionIds/0",
+          "value": "pos:c:911a04e79b0ce84e6dde43"
+        },
+        {
+          "op": "add",
+          "path": "/entities/evidence:claim:c:candidate_verification:sapnav2026:technical_approach/positionIds/1",
+          "value": "pos:c:79e87079058981075a047d"
+        },
+        {
+          "op": "add",
+          "path": "/entities/evidence:method-claim:sapnav:langmap-single-v1",
+          "value": {
+            "id": "evidence:method-claim:sapnav:langmap-single-v1",
+            "kind": "evidence",
+            "label": "SAP-Nav面向层次化开放词汇物体导航，在LangMap的四粒度单目标设定上评测；本条不覆盖混合粒度多目标序列。",
+            "paperId": "sap-nav",
+            "versionIds": [
+              "arxiv:2608.12707v1"
+            ],
+            "taskRefs": [
+              "task:hieranav"
+            ],
+            "claimIds": [
+              "method-claim:sapnav:langmap-single-v1"
+            ],
+            "status": "source_grounded_selected_reading",
+            "detail": {
+              "canonicalPaperId": "sap-nav",
+              "sourceId": "challenge-insights:sapnav2026",
+              "sourceURL": "https://arxiv.org/html/2608.12707v1",
+              "fixed_version": "arxiv:2608.12707v1",
+              "checked_at": "2026-10-09",
+              "locator": "Abstract; Experiments / Experimental Setup / Datasets; Table 1",
+              "scope": "SAP v1作者所用LangMap单目标协议；不等同后来LangMap v3全部协议。",
+              "verification": "selected_primary_sections_checked",
+              "runtimeValidation": false,
+              "statement": "SAP-Nav面向层次化开放词汇物体导航，在LangMap的四粒度单目标设定上评测；本条不覆盖混合粒度多目标序列。"
+            },
+            "sourceRefs": [
+              {
+                "sourceId": "challenge-insights:sapnav2026",
+                "versionId": "arxiv:2608.12707v1",
+                "paperId": "sap-nav",
+                "url": "https://arxiv.org/html/2608.12707v1",
+                "sourceURL": "https://arxiv.org/html/2608.12707v1",
+                "descriptor": "arXiv:2608.12707v1",
+                "versionStatus": "fixed_arxiv_version_url",
+                "locator": "Abstract; Experiments / Experimental Setup / Datasets; Table 1"
+              }
+            ],
+            "positionIds": [
+              "pos:c:31bff9bbb233fb04df8bac",
+              "pos:c:9415857a32301a8df07940"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/entities/evidence:method-claim:sapnav:qssr-avv-v1",
+          "value": {
+            "id": "evidence:method-claim:sapnav:qssr-avv-v1",
+            "kind": "evidence",
+            "label": "SAP-Nav在线积累房间空间语义与主动采集的房间整体视图，先检查候选是否满足目标中的房间或区域约束，再由AVV评估视点充分性，必要时更换可行视点，并核验类别及适用的属性约束；被AVV拒绝的候选加入黑名单后继续探索。",
+            "paperId": "sap-nav",
+            "versionIds": [
+              "arxiv:2608.12707v1"
+            ],
+            "taskRefs": [
+              "task:hieranav"
+            ],
+            "claimIds": [
+              "method-claim:sapnav:qssr-avv-v1"
+            ],
+            "status": "source_grounded_selected_reading",
+            "detail": {
+              "canonicalPaperId": "sap-nav",
+              "sourceId": "challenge-insights:sapnav2026",
+              "sourceURL": "https://arxiv.org/html/2608.12707v1",
+              "fixed_version": "arxiv:2608.12707v1",
+              "checked_at": "2026-10-09",
+              "locator": "Method / Method Overview; Queryable Spatial Semantic Representation / Active Room Perception / Spatial Semantic Query; Active Viewpoint Verification / Sufficiency Evaluation / Target Verification",
+              "scope": "方法流程选段；不含独立复现或全算法细节；AVV的限定与既有boundary证据同时显示。",
+              "verification": "selected_primary_sections_checked",
+              "runtimeValidation": false,
+              "statement": "SAP-Nav在线积累房间空间语义与主动采集的房间整体视图，先检查候选是否满足目标中的房间或区域约束，再由AVV评估视点充分性，必要时更换可行视点，并核验类别及适用的属性约束；被AVV拒绝的候选加入黑名单后继续探索。"
+            },
+            "sourceRefs": [
+              {
+                "sourceId": "challenge-insights:sapnav2026",
+                "versionId": "arxiv:2608.12707v1",
+                "paperId": "sap-nav",
+                "url": "https://arxiv.org/html/2608.12707v1",
+                "sourceURL": "https://arxiv.org/html/2608.12707v1",
+                "descriptor": "arXiv:2608.12707v1",
+                "versionStatus": "fixed_arxiv_version_url",
+                "locator": "Method / Method Overview; Queryable Spatial Semantic Representation / Active Room Perception / Spatial Semantic Query; Active Viewpoint Verification / Sufficiency Evaluation / Target Verification"
+              }
+            ],
+            "positionIds": [
+              "pos:c:e0e58eeab0f4e2a0fde32c",
+              "pos:c:73f95b7477e63e6d468928"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/entities/methods:ci_candidate_verification/positionIds/5",
+          "value": "pos:c:e34e78f746a22d812908c5"
+        },
+        {
+          "op": "add",
+          "path": "/entities/methods:insight:ci_candidate_verification:sap-nav/positionIds/3",
+          "value": "pos:c:b85d76af736fd11a08cbe2"
+        },
+        {
+          "op": "add",
+          "path": "/entities/methods:paper:sap-nav/claimIds/0",
+          "value": "method-claim:sapnav:langmap-single-v1"
+        },
+        {
+          "op": "add",
+          "path": "/entities/methods:paper:sap-nav/claimIds/1",
+          "value": "method-claim:sapnav:qssr-avv-v1"
+        },
+        {
+          "op": "add",
+          "path": "/entities/methods:paper:sap-nav/detail/claimIds/0",
+          "value": "method-claim:sapnav:langmap-single-v1"
+        },
+        {
+          "op": "add",
+          "path": "/entities/methods:paper:sap-nav/detail/claimIds/1",
+          "value": "method-claim:sapnav:qssr-avv-v1"
+        },
+        {
+          "op": "add",
+          "path": "/entities/methods:paper:sap-nav/positionIds/0",
+          "value": "pos:l:5cdf7617734f85214d7b71"
+        },
+        {
+          "op": "add",
+          "path": "/entities/methods:paper:sap-nav/positionIds/1",
+          "value": "pos:l:0f864508502653005444f6"
+        },
+        {
+          "op": "add",
+          "path": "/entities/methods:pipeline-sapnav",
+          "value": {
+            "id": "methods:pipeline-sapnav",
+            "kind": "pipeline_recipe",
+            "label": "SAP-Nav：在线空间语义查询与主动视点核验",
+            "paperId": "sap-nav",
+            "versionIds": [
+              "arxiv:2608.12707v1"
+            ],
+            "taskRefs": [
+              "task:hieranav"
+            ],
+            "claimIds": [
+              "method-claim:sapnav:langmap-single-v1",
+              "method-claim:sapnav:qssr-avv-v1",
+              "claim:c:candidate_verification:sapnav2026:technical_approach",
+              "claim:c:candidate_verification:sapnav2026:boundary"
+            ],
+            "status": "selected_primary_sections",
+            "detail": {
+              "canonicalPaperId": "sap-nav",
+              "sourceVersionId": "challenge-insights:sapnav2026",
+              "taskIds": [
+                "task:hieranav"
+              ],
+              "claimIds": [
+                "method-claim:sapnav:langmap-single-v1",
+                "method-claim:sapnav:qssr-avv-v1"
+              ],
+              "verification": "selected_primary_sections",
+              "analysisStatus": "partial",
+              "entityKind": "pipeline_recipe",
+              "label": "SAP-Nav：在线空间语义查询与主动视点核验",
+              "pipeline": {
+                "input": "目标语言、RGB-D、里程计位姿",
+                "representation": "在线房间划分、房间语义BEV地图与主动采集的房间整体视图",
+                "decision": "查询候选是否满足房间/区域约束；视点证据不足时选择可行新视角",
+                "execution": "前沿探索；到可行视点重新观察；核验类别与属性并接近被接受候选",
+                "feedback": "被AVV拒绝的候选加入黑名单并继续探索；视点核验次数有限"
+              },
+              "limits": "此处挂接LangMap四粒度单目标条件，不宣称混合多目标成绩。SAP v1 Problem Formulation写在目标附近STOP，Metrics写到annotated target viewpoint的距离；两处及与LangMap v3目标STOP定义的一致性尚未核定。",
+              "condition": "LangMap four-level single-goal evaluation in SAP-Nav v1",
+              "checked_at": "2026-10-09",
+              "id": "pipeline-sapnav"
+            },
+            "sourceRefs": [
+              {
+                "sourceId": "challenge-insights:sapnav2026",
+                "versionId": "arxiv:2608.12707v1",
+                "paperId": "sap-nav",
+                "url": "https://arxiv.org/html/2608.12707v1",
+                "sourceURL": "https://arxiv.org/html/2608.12707v1",
+                "descriptor": "arXiv:2608.12707v1",
+                "versionStatus": "fixed_arxiv_version_url",
+                "locator": "Method / Method Overview; Queryable Spatial Semantic Representation / Active Room Perception / Spatial Semantic Query; Active Viewpoint Verification / Sufficiency Evaluation / Target Verification"
+              }
+            ],
+            "originalId": "pipeline-sapnav",
+            "positionIds": [
+              "pos:l:4f2906ffefe73cc220f93c",
+              "pos:c:9666448d316a9cdfce7694",
+              "pos:l:52dbf6064830261ee1a9c6",
+              "pos:c:cc29ea944991808a010b7e"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/entities/paper:sap-nav/claimIds/6",
+          "value": "method-claim:sapnav:langmap-single-v1"
+        },
+        {
+          "op": "add",
+          "path": "/entities/paper:sap-nav/claimIds/7",
+          "value": "method-claim:sapnav:qssr-avv-v1"
+        },
+        {
+          "op": "replace",
+          "path": "/entities/task:hieranav/detail/example",
+          "old": "先找椅子，再找卧室里的椅子，再找这间卧室的特定椅子。",
+          "value": "四种目标表述示例（不是执行顺序）：场景级“找一把扶手椅”；房间级“找卧室里的扶手椅”；区域级“找铺有几何图案地毯的那间卧室里的扶手椅”；实例级“找床和阳台旁的那把扶手椅”。单目标可取任一层级；多目标协议另组合多个目标。"
+        },
+        {
+          "op": "add",
+          "path": "/papers/sap-nav/claimIds/6",
+          "value": "method-claim:sapnav:langmap-single-v1"
+        },
+        {
+          "op": "add",
+          "path": "/papers/sap-nav/claimIds/7",
+          "value": "method-claim:sapnav:qssr-avv-v1"
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:c:1f1d9bcd1a11121729db04",
+          "value": {
+            "id": "pos:c:1f1d9bcd1a11121729db04",
+            "entityId": "evidence:claim:c:candidate_verification:sapnav2026:boundary",
+            "tree": "c",
+            "scopeId": "task:hieranav",
+            "paperId": "sap-nav",
+            "versionId": "arxiv:2608.12707v1",
+            "parentId": "pos:c:4890a181993768ceed8441",
+            "childIds": [],
+            "relationType": "supported_by_claim",
+            "order": 4,
+            "depth": 4,
+            "label": "最多三次换视角后仍可能用最好已有图核验；instance层面仍难，实机为定性示例。",
+            "kind": "evidence",
+            "status": "source_bound",
+            "claimIds": [
+              "claim:c:candidate_verification:sapnav2026:boundary"
+            ],
+            "association": "condition",
+            "condition": "LangMap四粒度单目标；SAP-Nav v1协议，不外推多目标。",
+            "versionIds": [
+              "arxiv:2608.12707v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:c:31bff9bbb233fb04df8bac",
+          "value": {
+            "id": "pos:c:31bff9bbb233fb04df8bac",
+            "entityId": "evidence:method-claim:sapnav:langmap-single-v1",
+            "tree": "c",
+            "scopeId": "task:hieranav",
+            "paperId": "sap-nav",
+            "versionId": "arxiv:2608.12707v1",
+            "parentId": "pos:c:4890a181993768ceed8441",
+            "childIds": [],
+            "relationType": "supported_by_claim",
+            "order": 1,
+            "depth": 4,
+            "label": "SAP-Nav面向层次化开放词汇物体导航，在LangMap的四粒度单目标设定上评测；本条不覆盖混合粒度多目标序列。",
+            "kind": "evidence",
+            "status": "source_grounded_selected_reading",
+            "claimIds": [
+              "method-claim:sapnav:langmap-single-v1"
+            ],
+            "association": "condition",
+            "condition": "LangMap四粒度单目标；SAP-Nav v1协议，不外推多目标。",
+            "versionIds": [
+              "arxiv:2608.12707v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:c:4890a181993768ceed8441",
+          "value": {
+            "id": "pos:c:4890a181993768ceed8441",
+            "entityId": "design:insight:ci_candidate_verification:sap-nav",
+            "tree": "c",
+            "scopeId": "task:hieranav",
+            "paperId": "sap-nav",
+            "versionId": "arxiv:2608.12707v1",
+            "parentId": "pos:c:b85d76af736fd11a08cbe2",
+            "childIds": [
+              "pos:c:9666448d316a9cdfce7694",
+              "pos:c:31bff9bbb233fb04df8bac",
+              "pos:c:e0e58eeab0f4e2a0fde32c",
+              "pos:c:911a04e79b0ce84e6dde43",
+              "pos:c:1f1d9bcd1a11121729db04"
+            ],
+            "relationType": "implemented_by",
+            "order": 0,
+            "depth": 3,
+            "label": "visibility/perspective sufficiency→采样候选环视点、可达性与2.5D遮挡过滤→重新观测→类别/属性核验。",
+            "kind": "design",
+            "status": "selected_source_grounded",
+            "claimIds": [
+              "challenge-claim:ci_candidate_verification:sap-nav"
+            ],
+            "association": "condition",
+            "condition": "LangMap四粒度单目标；SAP-Nav v1协议，不外推多目标。",
+            "versionIds": [
+              "arxiv:2608.12707v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:c:6259b76fe3d2c1f043ebe0",
+          "value": {
+            "id": "pos:c:6259b76fe3d2c1f043ebe0",
+            "entityId": "evidence:claim:c:candidate_verification:sapnav2026:boundary",
+            "tree": "c",
+            "scopeId": "scope:all",
+            "paperId": "sap-nav",
+            "versionId": "arxiv:2608.12707v1",
+            "parentId": "pos:c:870d5965e7ec08991306d8",
+            "childIds": [],
+            "relationType": "supported_by_claim",
+            "order": 5,
+            "depth": 4,
+            "label": "最多三次换视角后仍可能用最好已有图核验；instance层面仍难，实机为定性示例。",
+            "kind": "evidence",
+            "status": "source_bound",
+            "claimIds": [
+              "claim:c:candidate_verification:sapnav2026:boundary"
+            ],
+            "association": "context",
+            "condition": "LangMap四粒度单目标；SAP-Nav v1协议，不外推多目标。",
+            "versionIds": [
+              "arxiv:2608.12707v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:c:73f95b7477e63e6d468928",
+          "value": {
+            "id": "pos:c:73f95b7477e63e6d468928",
+            "entityId": "evidence:method-claim:sapnav:qssr-avv-v1",
+            "tree": "c",
+            "scopeId": "scope:all",
+            "paperId": "sap-nav",
+            "versionId": "arxiv:2608.12707v1",
+            "parentId": "pos:c:870d5965e7ec08991306d8",
+            "childIds": [],
+            "relationType": "supported_by_claim",
+            "order": 3,
+            "depth": 4,
+            "label": "SAP-Nav在线积累房间空间语义与主动采集的房间整体视图，先检查候选是否满足目标中的房间或区域约束，再由AVV评估视点充分性，必要时更换可行视点，并核验类别及适用的属性约束；被AVV拒绝的候选加入黑名单后继续探索。",
+            "kind": "evidence",
+            "status": "source_grounded_selected_reading",
+            "claimIds": [
+              "method-claim:sapnav:qssr-avv-v1"
+            ],
+            "association": "context",
+            "condition": "LangMap四粒度单目标；SAP-Nav v1协议，不外推多目标。",
+            "versionIds": [
+              "arxiv:2608.12707v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:c:75cc0dcdb06275cbb858c5/childIds/1",
+          "value": "pos:c:e34e78f746a22d812908c5"
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:c:79e87079058981075a047d",
+          "value": {
+            "id": "pos:c:79e87079058981075a047d",
+            "entityId": "evidence:claim:c:candidate_verification:sapnav2026:technical_approach",
+            "tree": "c",
+            "scopeId": "scope:all",
+            "paperId": "sap-nav",
+            "versionId": "arxiv:2608.12707v1",
+            "parentId": "pos:c:870d5965e7ec08991306d8",
+            "childIds": [],
+            "relationType": "supported_by_claim",
+            "order": 4,
+            "depth": 4,
+            "label": "visibility/perspective sufficiency→采样候选环视点、可达性与2.5D遮挡过滤→重新观测→类别/属性核验。",
+            "kind": "evidence",
+            "status": "source_bound",
+            "claimIds": [
+              "claim:c:candidate_verification:sapnav2026:technical_approach"
+            ],
+            "association": "context",
+            "condition": "LangMap四粒度单目标；SAP-Nav v1协议，不外推多目标。",
+            "versionIds": [
+              "arxiv:2608.12707v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:c:870d5965e7ec08991306d8/childIds/1",
+          "value": "pos:c:cc29ea944991808a010b7e"
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:c:870d5965e7ec08991306d8/childIds/2",
+          "value": "pos:c:9415857a32301a8df07940"
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:c:870d5965e7ec08991306d8/childIds/3",
+          "value": "pos:c:73f95b7477e63e6d468928"
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:c:870d5965e7ec08991306d8/childIds/4",
+          "value": "pos:c:79e87079058981075a047d"
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:c:870d5965e7ec08991306d8/childIds/5",
+          "value": "pos:c:6259b76fe3d2c1f043ebe0"
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:c:911a04e79b0ce84e6dde43",
+          "value": {
+            "id": "pos:c:911a04e79b0ce84e6dde43",
+            "entityId": "evidence:claim:c:candidate_verification:sapnav2026:technical_approach",
+            "tree": "c",
+            "scopeId": "task:hieranav",
+            "paperId": "sap-nav",
+            "versionId": "arxiv:2608.12707v1",
+            "parentId": "pos:c:4890a181993768ceed8441",
+            "childIds": [],
+            "relationType": "supported_by_claim",
+            "order": 3,
+            "depth": 4,
+            "label": "visibility/perspective sufficiency→采样候选环视点、可达性与2.5D遮挡过滤→重新观测→类别/属性核验。",
+            "kind": "evidence",
+            "status": "source_bound",
+            "claimIds": [
+              "claim:c:candidate_verification:sapnav2026:technical_approach"
+            ],
+            "association": "condition",
+            "condition": "LangMap四粒度单目标；SAP-Nav v1协议，不外推多目标。",
+            "versionIds": [
+              "arxiv:2608.12707v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:c:9415857a32301a8df07940",
+          "value": {
+            "id": "pos:c:9415857a32301a8df07940",
+            "entityId": "evidence:method-claim:sapnav:langmap-single-v1",
+            "tree": "c",
+            "scopeId": "scope:all",
+            "paperId": "sap-nav",
+            "versionId": "arxiv:2608.12707v1",
+            "parentId": "pos:c:870d5965e7ec08991306d8",
+            "childIds": [],
+            "relationType": "supported_by_claim",
+            "order": 2,
+            "depth": 4,
+            "label": "SAP-Nav面向层次化开放词汇物体导航，在LangMap的四粒度单目标设定上评测；本条不覆盖混合粒度多目标序列。",
+            "kind": "evidence",
+            "status": "source_grounded_selected_reading",
+            "claimIds": [
+              "method-claim:sapnav:langmap-single-v1"
+            ],
+            "association": "context",
+            "condition": "LangMap四粒度单目标；SAP-Nav v1协议，不外推多目标。",
+            "versionIds": [
+              "arxiv:2608.12707v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:c:9666448d316a9cdfce7694",
+          "value": {
+            "id": "pos:c:9666448d316a9cdfce7694",
+            "entityId": "methods:pipeline-sapnav",
+            "tree": "c",
+            "scopeId": "task:hieranav",
+            "paperId": "sap-nav",
+            "versionId": "arxiv:2608.12707v1",
+            "parentId": "pos:c:4890a181993768ceed8441",
+            "childIds": [],
+            "relationType": "design_in_pipeline",
+            "order": 0,
+            "depth": 4,
+            "label": "SAP-Nav：在线空间语义查询与主动视点核验",
+            "kind": "pipeline_recipe",
+            "status": "selected_primary_sections",
+            "claimIds": [
+              "method-claim:sapnav:langmap-single-v1",
+              "method-claim:sapnav:qssr-avv-v1",
+              "claim:c:candidate_verification:sapnav2026:technical_approach",
+              "claim:c:candidate_verification:sapnav2026:boundary"
+            ],
+            "association": "condition",
+            "condition": "LangMap四粒度单目标；SAP-Nav v1协议，不外推多目标。",
+            "versionIds": [
+              "arxiv:2608.12707v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:c:b85d76af736fd11a08cbe2",
+          "value": {
+            "id": "pos:c:b85d76af736fd11a08cbe2",
+            "entityId": "methods:insight:ci_candidate_verification:sap-nav",
+            "tree": "c",
+            "scopeId": "task:hieranav",
+            "paperId": "sap-nav",
+            "versionId": "arxiv:2608.12707v1",
+            "parentId": "pos:c:e34e78f746a22d812908c5",
+            "childIds": [
+              "pos:c:4890a181993768ceed8441"
+            ],
+            "relationType": "proposed_insight",
+            "order": 0,
+            "depth": 2,
+            "label": "先问“当前视角够不够判断”，再判断“是不是目标”；证据不足时改变可行视角，比对同一差图反复推理更可能解决歧义。",
+            "kind": "insight",
+            "status": "selected_source_grounded",
+            "claimIds": [
+              "challenge-claim:ci_candidate_verification:sap-nav"
+            ],
+            "association": "condition",
+            "condition": "LangMap四粒度单目标；SAP-Nav v1协议，不外推多目标。",
+            "versionIds": [
+              "arxiv:2608.12707v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:c:cc29ea944991808a010b7e",
+          "value": {
+            "id": "pos:c:cc29ea944991808a010b7e",
+            "entityId": "methods:pipeline-sapnav",
+            "tree": "c",
+            "scopeId": "scope:all",
+            "paperId": "sap-nav",
+            "versionId": "arxiv:2608.12707v1",
+            "parentId": "pos:c:870d5965e7ec08991306d8",
+            "childIds": [],
+            "relationType": "design_in_pipeline",
+            "order": 1,
+            "depth": 4,
+            "label": "SAP-Nav：在线空间语义查询与主动视点核验",
+            "kind": "pipeline_recipe",
+            "status": "selected_primary_sections",
+            "claimIds": [
+              "method-claim:sapnav:langmap-single-v1",
+              "method-claim:sapnav:qssr-avv-v1",
+              "claim:c:candidate_verification:sapnav2026:technical_approach",
+              "claim:c:candidate_verification:sapnav2026:boundary"
+            ],
+            "association": "context",
+            "condition": "LangMap四粒度单目标；SAP-Nav v1协议，不外推多目标。",
+            "versionIds": [
+              "arxiv:2608.12707v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:c:e0e58eeab0f4e2a0fde32c",
+          "value": {
+            "id": "pos:c:e0e58eeab0f4e2a0fde32c",
+            "entityId": "evidence:method-claim:sapnav:qssr-avv-v1",
+            "tree": "c",
+            "scopeId": "task:hieranav",
+            "paperId": "sap-nav",
+            "versionId": "arxiv:2608.12707v1",
+            "parentId": "pos:c:4890a181993768ceed8441",
+            "childIds": [],
+            "relationType": "supported_by_claim",
+            "order": 2,
+            "depth": 4,
+            "label": "SAP-Nav在线积累房间空间语义与主动采集的房间整体视图，先检查候选是否满足目标中的房间或区域约束，再由AVV评估视点充分性，必要时更换可行视点，并核验类别及适用的属性约束；被AVV拒绝的候选加入黑名单后继续探索。",
+            "kind": "evidence",
+            "status": "source_grounded_selected_reading",
+            "claimIds": [
+              "method-claim:sapnav:qssr-avv-v1"
+            ],
+            "association": "condition",
+            "condition": "LangMap四粒度单目标；SAP-Nav v1协议，不外推多目标。",
+            "versionIds": [
+              "arxiv:2608.12707v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:c:e34e78f746a22d812908c5",
+          "value": {
+            "id": "pos:c:e34e78f746a22d812908c5",
+            "entityId": "methods:ci_candidate_verification",
+            "tree": "c",
+            "scopeId": "task:hieranav",
+            "paperId": null,
+            "versionId": null,
+            "parentId": "pos:c:75cc0dcdb06275cbb858c5",
+            "childIds": [
+              "pos:c:b85d76af736fd11a08cbe2"
+            ],
+            "relationType": "problem_projection",
+            "order": 1,
+            "depth": 1,
+            "label": "看见像目标的候选，为什么还不能停？",
+            "kind": "challenge",
+            "status": "curator_synthesis",
+            "claimIds": [
+              "method-claim:sapnav:langmap-single-v1"
+            ],
+            "association": "condition",
+            "condition": "LangMap四粒度单目标；SAP-Nav v1协议，不外推多目标。"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:l:0f864508502653005444f6",
+          "value": {
+            "id": "pos:l:0f864508502653005444f6",
+            "entityId": "methods:paper:sap-nav",
+            "tree": "l",
+            "scopeId": "scope:all",
+            "paperId": "sap-nav",
+            "versionId": "arxiv:2608.12707v1",
+            "parentId": "pos:l:52dbf6064830261ee1a9c6",
+            "childIds": [],
+            "relationType": "described_in",
+            "order": 0,
+            "depth": 3,
+            "label": "SAP-Nav: Spatial Semantic Representation Meets Active Perception for Hierarchical Open-Vocabulary Object Navigation",
+            "kind": "paper",
+            "status": "identity_only_read_scope_per_claim",
+            "claimIds": [
+              "method-claim:sapnav:langmap-single-v1",
+              "method-claim:sapnav:qssr-avv-v1"
+            ],
+            "association": "context",
+            "condition": "LangMap四粒度单目标；SAP-Nav v1协议，不外推多目标。",
+            "versionIds": [
+              "arxiv:2608.12707v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:l:2b4f59d3a567d9b24ac1c2/childIds/1",
+          "value": "pos:l:52dbf6064830261ee1a9c6"
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:l:4f2906ffefe73cc220f93c",
+          "value": {
+            "id": "pos:l:4f2906ffefe73cc220f93c",
+            "entityId": "methods:pipeline-sapnav",
+            "tree": "l",
+            "scopeId": "task:hieranav",
+            "paperId": "sap-nav",
+            "versionId": "arxiv:2608.12707v1",
+            "parentId": "pos:l:65f95270bf6d5227f227d0",
+            "childIds": [
+              "pos:l:5cdf7617734f85214d7b71"
+            ],
+            "relationType": "addresses_task",
+            "order": 1,
+            "depth": 1,
+            "label": "SAP-Nav：在线空间语义查询与主动视点核验",
+            "kind": "pipeline_recipe",
+            "status": "selected_primary_sections",
+            "claimIds": [
+              "method-claim:sapnav:langmap-single-v1",
+              "method-claim:sapnav:qssr-avv-v1",
+              "claim:c:candidate_verification:sapnav2026:technical_approach",
+              "claim:c:candidate_verification:sapnav2026:boundary"
+            ],
+            "association": "condition",
+            "condition": "LangMap四粒度单目标；SAP-Nav v1协议，不外推多目标。",
+            "versionIds": [
+              "arxiv:2608.12707v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:l:52dbf6064830261ee1a9c6",
+          "value": {
+            "id": "pos:l:52dbf6064830261ee1a9c6",
+            "entityId": "methods:pipeline-sapnav",
+            "tree": "l",
+            "scopeId": "scope:all",
+            "paperId": "sap-nav",
+            "versionId": "arxiv:2608.12707v1",
+            "parentId": "pos:l:2b4f59d3a567d9b24ac1c2",
+            "childIds": [
+              "pos:l:0f864508502653005444f6"
+            ],
+            "relationType": "addresses_task",
+            "order": 1,
+            "depth": 2,
+            "label": "SAP-Nav：在线空间语义查询与主动视点核验",
+            "kind": "pipeline_recipe",
+            "status": "selected_primary_sections",
+            "claimIds": [
+              "method-claim:sapnav:langmap-single-v1",
+              "method-claim:sapnav:qssr-avv-v1",
+              "claim:c:candidate_verification:sapnav2026:technical_approach",
+              "claim:c:candidate_verification:sapnav2026:boundary"
+            ],
+            "association": "context",
+            "condition": "LangMap四粒度单目标；SAP-Nav v1协议，不外推多目标。",
+            "versionIds": [
+              "arxiv:2608.12707v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:l:5cdf7617734f85214d7b71",
+          "value": {
+            "id": "pos:l:5cdf7617734f85214d7b71",
+            "entityId": "methods:paper:sap-nav",
+            "tree": "l",
+            "scopeId": "task:hieranav",
+            "paperId": "sap-nav",
+            "versionId": "arxiv:2608.12707v1",
+            "parentId": "pos:l:4f2906ffefe73cc220f93c",
+            "childIds": [],
+            "relationType": "described_in",
+            "order": 0,
+            "depth": 2,
+            "label": "SAP-Nav: Spatial Semantic Representation Meets Active Perception for Hierarchical Open-Vocabulary Object Navigation",
+            "kind": "paper",
+            "status": "identity_only_read_scope_per_claim",
+            "claimIds": [
+              "method-claim:sapnav:langmap-single-v1",
+              "method-claim:sapnav:qssr-avv-v1"
+            ],
+            "association": "condition",
+            "condition": "LangMap四粒度单目标；SAP-Nav v1协议，不外推多目标。",
+            "versionIds": [
+              "arxiv:2608.12707v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:l:65f95270bf6d5227f227d0/childIds/1",
+          "value": "pos:l:4f2906ffefe73cc220f93c"
+        },
+        {
+          "op": "add",
+          "path": "/relatedRelations/310",
+          "value": {
+            "id": "hieranav-selected:method",
+            "from": "task:hieranav",
+            "to": "methods:pipeline-sapnav",
+            "relationType": "addresses_task",
+            "renderAsTree": false,
+            "claimIds": [
+              "method-claim:sapnav:langmap-single-v1",
+              "method-claim:sapnav:qssr-avv-v1"
+            ],
+            "detail": {
+              "claimIds": [
+                "method-claim:sapnav:langmap-single-v1",
+                "method-claim:sapnav:qssr-avv-v1"
+              ],
+              "condition": "LangMap四粒度单目标；SAP-Nav v1协议，不外推多目标。",
+              "attribution": "source_grounded_selected_reading",
+              "sourceURL": "https://arxiv.org/html/2608.12707v1",
+              "paperId": "sap-nav",
+              "versionId": "arxiv:2608.12707v1"
+            }
+          }
+        },
+        {
+          "op": "add",
+          "path": "/relatedRelations/311",
+          "value": {
+            "id": "hieranav-selected:benchmark",
+            "from": "methods:pipeline-sapnav",
+            "to": "benchmark:langmap",
+            "relationType": "evaluated_on",
+            "renderAsTree": false,
+            "claimIds": [
+              "method-claim:sapnav:langmap-single-v1"
+            ],
+            "detail": {
+              "claimIds": [
+                "method-claim:sapnav:langmap-single-v1"
+              ],
+              "condition": "LangMap四粒度单目标；SAP-Nav v1协议，不外推多目标。",
+              "attribution": "source_grounded_selected_reading",
+              "sourceURL": "https://arxiv.org/html/2608.12707v1",
+              "paperId": "sap-nav",
+              "versionId": "arxiv:2608.12707v1"
+            }
+          }
+        },
+        {
+          "op": "add",
+          "path": "/relatedRelations/312",
+          "value": {
+            "id": "hieranav-selected:design",
+            "from": "design:insight:ci_candidate_verification:sap-nav",
+            "to": "methods:pipeline-sapnav",
+            "relationType": "design_in_pipeline",
+            "renderAsTree": false,
+            "claimIds": [
+              "method-claim:sapnav:qssr-avv-v1"
+            ],
+            "detail": {
+              "claimIds": [
+                "method-claim:sapnav:qssr-avv-v1"
+              ],
+              "condition": "LangMap四粒度单目标；SAP-Nav v1协议，不外推多目标。",
+              "attribution": "source_grounded_selected_reading",
+              "sourceURL": "https://arxiv.org/html/2608.12707v1",
+              "paperId": "sap-nav",
+              "versionId": "arxiv:2608.12707v1"
+            }
+          }
+        },
+        {
+          "op": "add",
+          "path": "/relations/hieranav-selected:benchmark",
+          "value": {
+            "id": "hieranav-selected:benchmark",
+            "from": "methods:pipeline-sapnav",
+            "to": "benchmark:langmap",
+            "relationType": "evaluated_on",
+            "renderAsTree": false,
+            "claimIds": [
+              "method-claim:sapnav:langmap-single-v1"
+            ],
+            "detail": {
+              "claimIds": [
+                "method-claim:sapnav:langmap-single-v1"
+              ],
+              "condition": "LangMap四粒度单目标；SAP-Nav v1协议，不外推多目标。",
+              "attribution": "source_grounded_selected_reading",
+              "sourceURL": "https://arxiv.org/html/2608.12707v1",
+              "paperId": "sap-nav",
+              "versionId": "arxiv:2608.12707v1"
+            }
+          }
+        },
+        {
+          "op": "add",
+          "path": "/relations/hieranav-selected:design",
+          "value": {
+            "id": "hieranav-selected:design",
+            "from": "design:insight:ci_candidate_verification:sap-nav",
+            "to": "methods:pipeline-sapnav",
+            "relationType": "design_in_pipeline",
+            "renderAsTree": false,
+            "claimIds": [
+              "method-claim:sapnav:qssr-avv-v1"
+            ],
+            "detail": {
+              "claimIds": [
+                "method-claim:sapnav:qssr-avv-v1"
+              ],
+              "condition": "LangMap四粒度单目标；SAP-Nav v1协议，不外推多目标。",
+              "attribution": "source_grounded_selected_reading",
+              "sourceURL": "https://arxiv.org/html/2608.12707v1",
+              "paperId": "sap-nav",
+              "versionId": "arxiv:2608.12707v1"
+            }
+          }
+        },
+        {
+          "op": "add",
+          "path": "/relations/hieranav-selected:method",
+          "value": {
+            "id": "hieranav-selected:method",
+            "from": "task:hieranav",
+            "to": "methods:pipeline-sapnav",
+            "relationType": "addresses_task",
+            "renderAsTree": false,
+            "claimIds": [
+              "method-claim:sapnav:langmap-single-v1",
+              "method-claim:sapnav:qssr-avv-v1"
+            ],
+            "detail": {
+              "claimIds": [
+                "method-claim:sapnav:langmap-single-v1",
+                "method-claim:sapnav:qssr-avv-v1"
+              ],
+              "condition": "LangMap四粒度单目标；SAP-Nav v1协议，不外推多目标。",
+              "attribution": "source_grounded_selected_reading",
+              "sourceURL": "https://arxiv.org/html/2608.12707v1",
+              "paperId": "sap-nav",
+              "versionId": "arxiv:2608.12707v1"
+            }
+          }
+        },
+        {
+          "op": "add",
+          "path": "/scopes/9/bindings/3",
+          "value": {
+            "scopeId": "task:hieranav",
+            "association": "condition",
+            "methodNodeIds": [
+              "pipeline-sapnav"
+            ],
+            "relationType": "addresses_task",
+            "claimIds": [
+              "claim:t:sapnav26:application",
+              "method-claim:sapnav:langmap-single-v1",
+              "method-claim:sapnav:qssr-avv-v1"
+            ],
+            "condition": "LangMap四粒度单目标；SAP-Nav v1协议，不外推多目标。"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/scopes/9/bindings/4",
+          "value": {
+            "scopeId": "task:hieranav",
+            "association": "condition",
+            "challengeNodeIds": [
+              "ci_candidate_verification"
+            ],
+            "relationType": "problem_projection",
+            "claimIds": [
+              "method-claim:sapnav:langmap-single-v1",
+              "challenge-claim:ci_candidate_verification:sap-nav"
+            ],
+            "condition": "只投影SAP-Nav的候选核验insight与design，不带入同challenge的其他论文。"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/scopes/9/conditionPaperIds/0",
+          "value": "sap-nav"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/9/coverage/ciCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/9/coverage/condition/challengeCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/scopes/9/coverage/condition/challengeNodeIds/0",
+          "value": "ci_candidate_verification"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/9/coverage/condition/insightCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/scopes/9/coverage/condition/insightNodeIds/0",
+          "value": "insight:ci_candidate_verification:sap-nav"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/9/coverage/condition/methodCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/scopes/9/coverage/condition/methodNodeIds/0",
+          "value": "pipeline-sapnav"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/9/coverage/condition/paperCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/scopes/9/coverage/condition/paperIds/0",
+          "value": "sap-nav"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/9/coverage/condition/recipeCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/9/coverage/condition/status",
+          "old": "coverage_gap",
+          "value": "selected_evidence_available"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/9/coverage/methodCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/9/coverage/originalTaskProjectionCoverage/scope",
+          "old": "条件映射仅提供阅读关联；不声称相关方法已在全部关联任务benchmark运行，也不以广义条件覆盖填满精读缺口。",
+          "value": "条件映射仅提供阅读关联；不声称相关方法已在全部关联任务benchmark运行，也不以广义条件覆盖填满精读缺口。 此字段保留早期任务目录投影快照；当前方法和挑战覆盖以同条 direct/condition/total 派生统计为准。"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/9/coverage/total/challengeCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/9/coverage/total/challengeNodeIds/0",
+          "old": "goal-ci:planavid",
+          "value": "ci_candidate_verification"
+        },
+        {
+          "op": "add",
+          "path": "/scopes/9/coverage/total/challengeNodeIds/1",
+          "value": "goal-ci:planavid"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/9/coverage/total/insightCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/scopes/9/coverage/total/insightNodeIds/1",
+          "value": "insight:ci_candidate_verification:sap-nav"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/9/coverage/total/methodCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/scopes/9/coverage/total/methodNodeIds/1",
+          "value": "pipeline-sapnav"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/9/coverage/total/paperCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/scopes/9/coverage/total/paperIds/1",
+          "value": "sap-nav"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/9/coverage/total/recipeCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/scopes/9/paperIds/1",
+          "value": "sap-nav"
+        },
+        {
+          "op": "replace",
+          "path": "/summary/claims",
+          "old": 436,
+          "value": 438
+        },
+        {
+          "op": "replace",
+          "path": "/summary/entities",
+          "old": 1465,
+          "value": 1468
+        },
+        {
+          "op": "replace",
+          "path": "/summary/positions",
+          "old": 1641,
+          "value": 1658
+        }
+      ],
+      "expectedSha256": "6905bc9ef71f6888bdd919034de7ebd5e55db8687f3877d8eca52bb212b1bc9e",
+      "expectedSemanticSha256": "a240b2966b054752450d18b1f7a1b1871c5fc3e35ef8b1bc674ab84dda6e9d9b"
+    },
+    {
+      "name": "三组七字段更正",
+      "operations": [
+        {
+          "op": "replace",
+          "path": "/versions/arxiv:2602.02220v3/label",
+          "old": "arXiv 2602.02220v3, 2026-10-01",
+          "value": "arXiv 2602.02220v3, 2026-10-01 — LangMap: A Human-Verified Benchmark for Hierarchical Open-Vocabulary Goal Navigation"
+        },
+        {
+          "op": "replace",
+          "path": "/entities/method:planavid/detail/definition",
+          "old": "scene-level=场景任一类别物体；room-level=指定房型中的该类物体；region-level=指定房间实例内物体；instance-level=唯一物体。四层均终点是object，不是四种区域导航。",
+          "value": "据 LangMap v3 的方法描述，PlaNaVid 是 RGB-only 导航基线：以有界多样记忆（Bounded Diverse Memory）和高层规划，为反应式导航策略选择每个目标的初始航点与朝向。HieraNav 是任务设定，LangMap 是评测基准。"
+        },
+        {
+          "op": "replace",
+          "path": "/claims/claim:t:ovon24:benchmark/statement",
+          "old": "HM3D-OVON扩展ObjectNav的目标词表，并分别评测训练已见类别、已见类别同义词及未见类别；它是基准扩展，不是开放目标导航历史起点。",
+          "value": "HM3D-OVON扩展ObjectNav的目标词表，分别评测训练已见类别（Val Seen）、与训练类别语义相近的未见类别（Val Seen Synonyms），以及语义差异较大的未见类别（Val Unseen）；语义相似性由SentenceBERT衡量。本条记录其基准扩展与评测划分，不据此判定开放目标导航的历史起点。"
+        },
+        {
+          "op": "replace",
+          "path": "/claims/claim:t:ovon24:benchmark/label",
+          "old": "HM3D-OVON扩展ObjectNav的目标词表，并分别评测训练已见类别、已见类别同义词及未见类别；它是基准扩展，不是开放目标导航历史起点。",
+          "value": "HM3D-OVON扩展ObjectNav的目标词表，分别评测训练已见类别（Val Seen）、与训练类别语义相近的未见类别（Val Seen Synonyms），以及语义差异较大的未见类别（Val Unseen）；语义相似性由SentenceBERT衡量。本条记录其基准扩展与评测划分，不据此判定开放目标导航的历史起点。"
+        },
+        {
+          "op": "replace",
+          "path": "/claims/claim:t:ovon24:benchmark/detail/statement",
+          "old": "HM3D-OVON扩展ObjectNav的目标词表，并分别评测训练已见类别、已见类别同义词及未见类别；它是基准扩展，不是开放目标导航历史起点。",
+          "value": "HM3D-OVON扩展ObjectNav的目标词表，分别评测训练已见类别（Val Seen）、与训练类别语义相近的未见类别（Val Seen Synonyms），以及语义差异较大的未见类别（Val Unseen）；语义相似性由SentenceBERT衡量。本条记录其基准扩展与评测划分，不据此判定开放目标导航的历史起点。"
+        },
+        {
+          "op": "replace",
+          "path": "/entities/evidence:claim:t:ovon24:benchmark/label",
+          "old": "HM3D-OVON扩展ObjectNav的目标词表，并分别评测训练已见类别、已见类别同义词及未见类别；它是基准扩展，不是开放目标导航历史起点。",
+          "value": "HM3D-OVON扩展ObjectNav的目标词表，分别评测训练已见类别（Val Seen）、与训练类别语义相近的未见类别（Val Seen Synonyms），以及语义差异较大的未见类别（Val Unseen）；语义相似性由SentenceBERT衡量。本条记录其基准扩展与评测划分，不据此判定开放目标导航的历史起点。"
+        },
+        {
+          "op": "replace",
+          "path": "/entities/evidence:claim:t:ovon24:benchmark/detail/statement",
+          "old": "HM3D-OVON扩展ObjectNav的目标词表，并分别评测训练已见类别、已见类别同义词及未见类别；它是基准扩展，不是开放目标导航历史起点。",
+          "value": "HM3D-OVON扩展ObjectNav的目标词表，分别评测训练已见类别（Val Seen）、与训练类别语义相近的未见类别（Val Seen Synonyms），以及语义差异较大的未见类别（Val Unseen）；语义相似性由SentenceBERT衡量。本条记录其基准扩展与评测划分，不据此判定开放目标导航的历史起点。"
+        }
+      ],
+      "expectedSha256": "dd7dcc5c318f6c0d8797774690cd56da96b074841e6edc16970e05f1f16665fa",
+      "expectedSemanticSha256": "c5cf740e6616419061af799a9f08cab3fd198fcc0a31ae566245e6164a2496b9"
+    },
+    {
+      "name": "NavHarness基准运行条件",
+      "operations": [
+        {
+          "op": "add",
+          "path": "/claims/method-claim:navharness:v1:extended-tours",
+          "value": {
+            "id": "method-claim:navharness:v1:extended-tours",
+            "paperId": "navharness",
+            "versionId": "arxiv:2609.34276v1",
+            "statement": "跨run巩固在另设的同屋十tour扩展中评测：tour间预设重新放置，地图和任务记录持续保留，完整配置另写house notes；该证据不属于GOAT-Bench或IR2R-CE主表的跨run记忆。",
+            "label": "跨run巩固在另设的同屋十tour扩展中评测：tour间预设重新放置，地图和任务记录持续保留，完整配置另写house notes；该证据不属于GOAT-Bench或IR2R-CE主表的跨run记忆。",
+            "sourceRefs": [
+              {
+                "url": "https://arxiv.org/html/2609.34276v1",
+                "sourceURL": "https://arxiv.org/html/2609.34276v1",
+                "versionId": "arxiv:2609.34276v1",
+                "locator": "§3.5; §4.4; Appendix D.2; Appendix E scope/E.6",
+                "paperId": "navharness",
+                "sourceId": "analysis:navharness:2609.34276v1",
+                "sourceVersionId": "analysis:navharness:2609.34276v1",
+                "descriptor": "arXiv 2609.34276v1",
+                "versionStatus": "fixed_arxiv_version_url"
+              }
+            ],
+            "locator": "§3.5; §4.4; Appendix D.2; Appendix E scope/E.6",
+            "attribution": "author_protocol_or_method_paraphrase",
+            "status": "source_grounded_selected_reading",
+            "detail": {
+              "checked_at": "2026-10-09",
+              "fixed_version": "arxiv:2609.34276v1",
+              "locator": "§3.5; §4.4; Appendix D.2; Appendix E scope/E.6",
+              "scope": "有限静态仿真与模拟日期，不证明动态布局、移动物体或真实全天运行。",
+              "runtimeValidation": false,
+              "readScope": "本轮仅核指定方法与协议选段，不增加全文或三阶段阅读完成。"
+            }
+          }
+        },
+        {
+          "op": "add",
+          "path": "/claims/method-claim:navharness:v1:goat-run",
+          "value": {
+            "id": "method-claim:navharness:v1:goat-run",
+            "paperId": "navharness",
+            "versionId": "arxiv:2609.34276v1",
+            "statement": "NavHarness在GOAT-Bench Val-Unseen中按episode评测连续多目标导航；episode内不复位并保留地图和任务记录，每个新episode从空记忆开始，不能继承上个episode的house notes。",
+            "label": "NavHarness在GOAT-Bench Val-Unseen中按episode评测连续多目标导航；episode内不复位并保留地图和任务记录，每个新episode从空记忆开始，不能继承上个episode的house notes。",
+            "sourceRefs": [
+              {
+                "url": "https://arxiv.org/html/2609.34276v1",
+                "sourceURL": "https://arxiv.org/html/2609.34276v1",
+                "versionId": "arxiv:2609.34276v1",
+                "locator": "§4.1; Appendix B.1; Table 8",
+                "paperId": "navharness",
+                "sourceId": "analysis:navharness:2609.34276v1",
+                "sourceVersionId": "analysis:navharness:2609.34276v1",
+                "descriptor": "arXiv 2609.34276v1",
+                "versionStatus": "fixed_arxiv_version_url"
+              }
+            ],
+            "locator": "§4.1; Appendix B.1; Table 8",
+            "attribution": "author_protocol_or_method_paraphrase",
+            "status": "source_grounded_selected_reading",
+            "detail": {
+              "checked_at": "2026-10-09",
+              "fixed_version": "arxiv:2609.34276v1",
+              "locator": "§4.1; Appendix B.1; Table 8",
+              "scope": "360 episodes/36 scenes/2669 subtasks；每episode 5–10目标；标准基准运行，不含跨tour巩固。",
+              "runtimeValidation": false,
+              "readScope": "本轮仅核指定方法与协议选段，不增加全文或三阶段阅读完成。"
+            }
+          }
+        },
+        {
+          "op": "add",
+          "path": "/claims/method-claim:navharness:v1:ir2r-tour",
+          "value": {
+            "id": "method-claim:navharness:v1:ir2r-tour",
+            "paperId": "navharness",
+            "versionId": "arxiv:2609.34276v1",
+            "statement": "NavHarness在IR2R-CE Val-Unseen中按tour评测多段路线指令；同tour内保留经验，包括转移到下一episode起点的边界；每个新tour从空地图、任务记录和house notes开始。",
+            "label": "NavHarness在IR2R-CE Val-Unseen中按tour评测多段路线指令；同tour内保留经验，包括转移到下一episode起点的边界；每个新tour从空地图、任务记录和house notes开始。",
+            "sourceRefs": [
+              {
+                "url": "https://arxiv.org/html/2609.34276v1",
+                "sourceURL": "https://arxiv.org/html/2609.34276v1",
+                "versionId": "arxiv:2609.34276v1",
+                "locator": "§4.1; Appendix B.1–B.2; Table 8",
+                "paperId": "navharness",
+                "sourceId": "analysis:navharness:2609.34276v1",
+                "sourceVersionId": "analysis:navharness:2609.34276v1",
+                "descriptor": "arXiv 2609.34276v1",
+                "versionStatus": "fixed_arxiv_version_url"
+              }
+            ],
+            "locator": "§4.1; Appendix B.1–B.2; Table 8",
+            "attribution": "author_protocol_or_method_paraphrase",
+            "status": "source_grounded_selected_reading",
+            "detail": {
+              "checked_at": "2026-10-09",
+              "fixed_version": "arxiv:2609.34276v1",
+              "locator": "§4.1; Appendix B.1–B.2; Table 8",
+              "scope": "36 tours/11 scenes/1824 tasks；每tour 3–100任务。不可解释为所有任务起点均为上段自然行走终点。",
+              "runtimeValidation": false,
+              "readScope": "本轮仅核指定方法与协议选段，不增加全文或三阶段阅读完成。"
+            }
+          }
+        },
+        {
+          "op": "add",
+          "path": "/claims/method-claim:navharness:v1:session-memory",
+          "value": {
+            "id": "method-claim:navharness:v1:session-memory",
+            "paperId": "navharness",
+            "versionId": "arxiv:2609.34276v1",
+            "statement": "NavHarness为新任务和恢复尝试开启新会话，同时在当前run内保留地图、地点标记及任务记录；恢复交接区分已搜索与有证据排除的位置，并保留当前目标、位置和剩余预算。",
+            "label": "NavHarness为新任务和恢复尝试开启新会话，同时在当前run内保留地图、地点标记及任务记录；恢复交接区分已搜索与有证据排除的位置，并保留当前目标、位置和剩余预算。",
+            "sourceRefs": [
+              {
+                "url": "https://arxiv.org/html/2609.34276v1",
+                "sourceURL": "https://arxiv.org/html/2609.34276v1",
+                "versionId": "arxiv:2609.34276v1",
+                "locator": "§3.1–3.3; Appendix A.3; Appendix A.5 Attempt boundary",
+                "paperId": "navharness",
+                "sourceId": "analysis:navharness:2609.34276v1",
+                "sourceVersionId": "analysis:navharness:2609.34276v1",
+                "descriptor": "arXiv 2609.34276v1",
+                "versionStatus": "fixed_arxiv_version_url"
+              }
+            ],
+            "locator": "§3.1–3.3; Appendix A.3; Appendix A.5 Attempt boundary",
+            "attribution": "author_protocol_or_method_paraphrase",
+            "status": "source_grounded_selected_reading",
+            "detail": {
+              "checked_at": "2026-10-09",
+              "fixed_version": "arxiv:2609.34276v1",
+              "locator": "§3.1–3.3; Appendix A.3; Appendix A.5 Attempt boundary",
+              "scope": "作者机制归纳；恢复是会话与信念重审，不是身体复位或新预算。",
+              "runtimeValidation": false,
+              "readScope": "本轮仅核指定方法与协议选段，不增加全文或三阶段阅读完成。"
+            }
+          }
+        },
+        {
+          "op": "add",
+          "path": "/claims/method-claim:navharness:v1:verification-pose",
+          "value": {
+            "id": "method-claim:navharness:v1:verification-pose",
+            "paperId": "navharness",
+            "versionId": "arxiv:2609.34276v1",
+            "statement": "NavHarness以RGB-D视觉SLAM估计位置，并在已知自由空间上查询路径；导航不读取模拟器真值位姿。停止前核验可返回反证，停止后认证保存判断但不改变任务得分。",
+            "label": "NavHarness以RGB-D视觉SLAM估计位置，并在已知自由空间上查询路径；导航不读取模拟器真值位姿。停止前核验可返回反证，停止后认证保存判断但不改变任务得分。",
+            "sourceRefs": [
+              {
+                "url": "https://arxiv.org/html/2609.34276v1",
+                "sourceURL": "https://arxiv.org/html/2609.34276v1",
+                "versionId": "arxiv:2609.34276v1",
+                "locator": "§3.2, §3.4; Appendix A.2 Localisation/Mapping and routes; Appendix B.3",
+                "paperId": "navharness",
+                "sourceId": "analysis:navharness:2609.34276v1",
+                "sourceVersionId": "analysis:navharness:2609.34276v1",
+                "descriptor": "arXiv 2609.34276v1",
+                "versionStatus": "fixed_arxiv_version_url"
+              }
+            ],
+            "locator": "§3.2, §3.4; Appendix A.2 Localisation/Mapping and routes; Appendix B.3",
+            "attribution": "author_protocol_or_method_paraphrase",
+            "status": "source_grounded_selected_reading",
+            "detail": {
+              "checked_at": "2026-10-09",
+              "fixed_version": "arxiv:2609.34276v1",
+              "locator": "§3.2, §3.4; Appendix A.2 Localisation/Mapping and routes; Appendix B.3",
+              "scope": "作者运行接口主张，未独立复现。模拟器仍定义环境/预设转移并用于评分；不宣称无任何环境特权。",
+              "runtimeValidation": false,
+              "readScope": "本轮仅核指定方法与协议选段，不增加全文或三阶段阅读完成。"
+            }
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:goat/analysisCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:goat/analysisStatus",
+          "old": "no_answered_paper_analysis",
+          "value": "selected_papers_only"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:goat/ciCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:goat/condition/analysisCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/coverage/task:goat/condition/analysisPaperIds/0",
+          "value": "navharness"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:goat/condition/analysisVersionCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/coverage/task:goat/condition/analysisVersionIds/0",
+          "value": "arxiv:2609.34276v1"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:goat/condition/availableAnalysisPaperCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:goat/condition/challengeCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/coverage/task:goat/condition/challengeNodeIds/0",
+          "value": "ci-navharness-session-boundary"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:goat/condition/insightCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/coverage/task:goat/condition/insightNodeIds/0",
+          "value": "insight-navharness-session-boundary"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:goat/condition/methodCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/coverage/task:goat/condition/methodNodeIds/0",
+          "value": "pipeline-navharness-benchmark-v1"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:goat/condition/paperCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/coverage/task:goat/condition/paperIds/0",
+          "value": "navharness"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:goat/condition/recipeCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:goat/condition/sameVersionAnalysisCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:goat/condition/status",
+          "old": "coverage_gap",
+          "value": "selected_evidence_available"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:goat/methodCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:goat/total/analysisCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/coverage/task:goat/total/analysisPaperIds/0",
+          "value": "navharness"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:goat/total/analysisVersionCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/coverage/task:goat/total/analysisVersionIds/0",
+          "value": "arxiv:2609.34276v1"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:goat/total/availableAnalysisPaperCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:goat/total/challengeCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:goat/total/challengeNodeIds/0",
+          "old": "ci_cross_goal_instance_memory",
+          "value": "ci-navharness-session-boundary"
+        },
+        {
+          "op": "add",
+          "path": "/coverage/task:goat/total/challengeNodeIds/1",
+          "value": "ci_cross_goal_instance_memory"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:goat/total/insightCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:goat/total/insightNodeIds/0",
+          "old": "insight:cross_goal_instance_memory:goat",
+          "value": "insight-navharness-session-boundary"
+        },
+        {
+          "op": "add",
+          "path": "/coverage/task:goat/total/insightNodeIds/1",
+          "value": "insight:cross_goal_instance_memory:goat"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:goat/total/methodCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/coverage/task:goat/total/methodNodeIds/1",
+          "value": "pipeline-navharness-benchmark-v1"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:goat/total/paperCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/coverage/task:goat/total/paperIds/1",
+          "value": "navharness"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:goat/total/recipeCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:goat/total/sameVersionAnalysisCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:ivln/analysisCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:ivln/analysisStatus",
+          "old": "no_answered_paper_analysis",
+          "value": "selected_papers_only"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:ivln/ciCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:ivln/condition/analysisCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/coverage/task:ivln/condition/analysisPaperIds/0",
+          "value": "navharness"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:ivln/condition/analysisVersionCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/coverage/task:ivln/condition/analysisVersionIds/0",
+          "value": "arxiv:2609.34276v1"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:ivln/condition/availableAnalysisPaperCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:ivln/condition/challengeCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/coverage/task:ivln/condition/challengeNodeIds/0",
+          "value": "ci-navharness-session-boundary"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:ivln/condition/insightCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/coverage/task:ivln/condition/insightNodeIds/0",
+          "value": "insight-navharness-session-boundary"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:ivln/condition/methodCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/coverage/task:ivln/condition/methodNodeIds/0",
+          "value": "pipeline-navharness-benchmark-v1"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:ivln/condition/paperCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/coverage/task:ivln/condition/paperIds/0",
+          "value": "navharness"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:ivln/condition/recipeCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:ivln/condition/sameVersionAnalysisCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:ivln/condition/status",
+          "old": "coverage_gap",
+          "value": "selected_evidence_available"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:ivln/methodCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:ivln/total/analysisCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/coverage/task:ivln/total/analysisPaperIds/0",
+          "value": "navharness"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:ivln/total/analysisVersionCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/coverage/task:ivln/total/analysisVersionIds/0",
+          "value": "arxiv:2609.34276v1"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:ivln/total/availableAnalysisPaperCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:ivln/total/challengeCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:ivln/total/challengeNodeIds/0",
+          "old": "ci_language_ivln-map-cma",
+          "value": "ci-navharness-session-boundary"
+        },
+        {
+          "op": "add",
+          "path": "/coverage/task:ivln/total/challengeNodeIds/1",
+          "value": "ci_language_ivln-map-cma"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:ivln/total/insightCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:ivln/total/insightNodeIds/0",
+          "old": "insight:language:ivln-map-cma",
+          "value": "insight-navharness-session-boundary"
+        },
+        {
+          "op": "add",
+          "path": "/coverage/task:ivln/total/insightNodeIds/1",
+          "value": "insight:language:ivln-map-cma"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:ivln/total/methodCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/coverage/task:ivln/total/methodNodeIds/1",
+          "value": "pipeline-navharness-benchmark-v1"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:ivln/total/paperCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/coverage/task:ivln/total/paperIds/1",
+          "value": "navharness"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:ivln/total/recipeCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:ivln/total/sameVersionAnalysisCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/entities/evidence:method-claim:navharness:v1:extended-tours",
+          "value": {
+            "id": "evidence:method-claim:navharness:v1:extended-tours",
+            "kind": "evidence",
+            "label": "跨run巩固在另设的同屋十tour扩展中评测：tour间预设重新放置，地图和任务记录持续保留，完整配置另写house notes；该证据不属于GOAT-Bench或IR2R-CE主表的跨run记忆。",
+            "paperId": "navharness",
+            "versionIds": [
+              "arxiv:2609.34276v1"
+            ],
+            "taskRefs": [],
+            "claimIds": [
+              "method-claim:navharness:v1:extended-tours"
+            ],
+            "status": "source_grounded_selected_reading",
+            "detail": {
+              "checked_at": "2026-10-09",
+              "fixed_version": "arxiv:2609.34276v1",
+              "locator": "§3.5; §4.4; Appendix D.2; Appendix E scope/E.6",
+              "scope": "有限静态仿真与模拟日期，不证明动态布局、移动物体或真实全天运行。",
+              "runtimeValidation": false,
+              "readScope": "本轮仅核指定方法与协议选段，不增加全文或三阶段阅读完成。",
+              "statement": "跨run巩固在另设的同屋十tour扩展中评测：tour间预设重新放置，地图和任务记录持续保留，完整配置另写house notes；该证据不属于GOAT-Bench或IR2R-CE主表的跨run记忆。"
+            },
+            "sourceRefs": [
+              {
+                "url": "https://arxiv.org/html/2609.34276v1",
+                "sourceURL": "https://arxiv.org/html/2609.34276v1",
+                "versionId": "arxiv:2609.34276v1",
+                "locator": "§3.5; §4.4; Appendix D.2; Appendix E scope/E.6",
+                "paperId": "navharness",
+                "sourceId": "analysis:navharness:2609.34276v1",
+                "sourceVersionId": "analysis:navharness:2609.34276v1",
+                "descriptor": "arXiv 2609.34276v1",
+                "versionStatus": "fixed_arxiv_version_url"
+              }
+            ],
+            "positionIds": [
+              "pos:l:6bf8badde9c999668a31a5"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/entities/evidence:method-claim:navharness:v1:goat-run",
+          "value": {
+            "id": "evidence:method-claim:navharness:v1:goat-run",
+            "kind": "evidence",
+            "label": "NavHarness在GOAT-Bench Val-Unseen中按episode评测连续多目标导航；episode内不复位并保留地图和任务记录，每个新episode从空记忆开始，不能继承上个episode的house notes。",
+            "paperId": "navharness",
+            "versionIds": [
+              "arxiv:2609.34276v1"
+            ],
+            "taskRefs": [
+              "task:goat"
+            ],
+            "claimIds": [
+              "method-claim:navharness:v1:goat-run"
+            ],
+            "status": "source_grounded_selected_reading",
+            "detail": {
+              "checked_at": "2026-10-09",
+              "fixed_version": "arxiv:2609.34276v1",
+              "locator": "§4.1; Appendix B.1; Table 8",
+              "scope": "360 episodes/36 scenes/2669 subtasks；每episode 5–10目标；标准基准运行，不含跨tour巩固。",
+              "runtimeValidation": false,
+              "readScope": "本轮仅核指定方法与协议选段，不增加全文或三阶段阅读完成。",
+              "statement": "NavHarness在GOAT-Bench Val-Unseen中按episode评测连续多目标导航；episode内不复位并保留地图和任务记录，每个新episode从空记忆开始，不能继承上个episode的house notes。"
+            },
+            "sourceRefs": [
+              {
+                "url": "https://arxiv.org/html/2609.34276v1",
+                "sourceURL": "https://arxiv.org/html/2609.34276v1",
+                "versionId": "arxiv:2609.34276v1",
+                "locator": "§4.1; Appendix B.1; Table 8",
+                "paperId": "navharness",
+                "sourceId": "analysis:navharness:2609.34276v1",
+                "sourceVersionId": "analysis:navharness:2609.34276v1",
+                "descriptor": "arXiv 2609.34276v1",
+                "versionStatus": "fixed_arxiv_version_url"
+              }
+            ],
+            "positionIds": [
+              "pos:c:ae3f0740e4711b2286faea",
+              "pos:l:b337b117901232a9821cbd"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/entities/evidence:method-claim:navharness:v1:ir2r-tour",
+          "value": {
+            "id": "evidence:method-claim:navharness:v1:ir2r-tour",
+            "kind": "evidence",
+            "label": "NavHarness在IR2R-CE Val-Unseen中按tour评测多段路线指令；同tour内保留经验，包括转移到下一episode起点的边界；每个新tour从空地图、任务记录和house notes开始。",
+            "paperId": "navharness",
+            "versionIds": [
+              "arxiv:2609.34276v1"
+            ],
+            "taskRefs": [
+              "task:ivln"
+            ],
+            "claimIds": [
+              "method-claim:navharness:v1:ir2r-tour"
+            ],
+            "status": "source_grounded_selected_reading",
+            "detail": {
+              "checked_at": "2026-10-09",
+              "fixed_version": "arxiv:2609.34276v1",
+              "locator": "§4.1; Appendix B.1–B.2; Table 8",
+              "scope": "36 tours/11 scenes/1824 tasks；每tour 3–100任务。不可解释为所有任务起点均为上段自然行走终点。",
+              "runtimeValidation": false,
+              "readScope": "本轮仅核指定方法与协议选段，不增加全文或三阶段阅读完成。",
+              "statement": "NavHarness在IR2R-CE Val-Unseen中按tour评测多段路线指令；同tour内保留经验，包括转移到下一episode起点的边界；每个新tour从空地图、任务记录和house notes开始。"
+            },
+            "sourceRefs": [
+              {
+                "url": "https://arxiv.org/html/2609.34276v1",
+                "sourceURL": "https://arxiv.org/html/2609.34276v1",
+                "versionId": "arxiv:2609.34276v1",
+                "locator": "§4.1; Appendix B.1–B.2; Table 8",
+                "paperId": "navharness",
+                "sourceId": "analysis:navharness:2609.34276v1",
+                "sourceVersionId": "analysis:navharness:2609.34276v1",
+                "descriptor": "arXiv 2609.34276v1",
+                "versionStatus": "fixed_arxiv_version_url"
+              }
+            ],
+            "positionIds": [
+              "pos:c:5c0b974951247ba58e2945",
+              "pos:l:6839457030563fda065022"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/entities/evidence:method-claim:navharness:v1:session-memory",
+          "value": {
+            "id": "evidence:method-claim:navharness:v1:session-memory",
+            "kind": "evidence",
+            "label": "NavHarness为新任务和恢复尝试开启新会话，同时在当前run内保留地图、地点标记及任务记录；恢复交接区分已搜索与有证据排除的位置，并保留当前目标、位置和剩余预算。",
+            "paperId": "navharness",
+            "versionIds": [
+              "arxiv:2609.34276v1"
+            ],
+            "taskRefs": [
+              "task:goat",
+              "task:ivln"
+            ],
+            "claimIds": [
+              "method-claim:navharness:v1:session-memory"
+            ],
+            "status": "source_grounded_selected_reading",
+            "detail": {
+              "checked_at": "2026-10-09",
+              "fixed_version": "arxiv:2609.34276v1",
+              "locator": "§3.1–3.3; Appendix A.3; Appendix A.5 Attempt boundary",
+              "scope": "作者机制归纳；恢复是会话与信念重审，不是身体复位或新预算。",
+              "runtimeValidation": false,
+              "readScope": "本轮仅核指定方法与协议选段，不增加全文或三阶段阅读完成。",
+              "statement": "NavHarness为新任务和恢复尝试开启新会话，同时在当前run内保留地图、地点标记及任务记录；恢复交接区分已搜索与有证据排除的位置，并保留当前目标、位置和剩余预算。"
+            },
+            "sourceRefs": [
+              {
+                "url": "https://arxiv.org/html/2609.34276v1",
+                "sourceURL": "https://arxiv.org/html/2609.34276v1",
+                "versionId": "arxiv:2609.34276v1",
+                "locator": "§3.1–3.3; Appendix A.3; Appendix A.5 Attempt boundary",
+                "paperId": "navharness",
+                "sourceId": "analysis:navharness:2609.34276v1",
+                "sourceVersionId": "analysis:navharness:2609.34276v1",
+                "descriptor": "arXiv 2609.34276v1",
+                "versionStatus": "fixed_arxiv_version_url"
+              }
+            ],
+            "positionIds": [
+              "pos:c:f1e3a6f4db6549420a57b7",
+              "pos:c:803b655097896ee87c6257",
+              "pos:l:2af7f7fefd0c4b8333e88d"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/entities/evidence:method-claim:navharness:v1:verification-pose",
+          "value": {
+            "id": "evidence:method-claim:navharness:v1:verification-pose",
+            "kind": "evidence",
+            "label": "NavHarness以RGB-D视觉SLAM估计位置，并在已知自由空间上查询路径；导航不读取模拟器真值位姿。停止前核验可返回反证，停止后认证保存判断但不改变任务得分。",
+            "paperId": "navharness",
+            "versionIds": [
+              "arxiv:2609.34276v1"
+            ],
+            "taskRefs": [
+              "task:goat",
+              "task:ivln"
+            ],
+            "claimIds": [
+              "method-claim:navharness:v1:verification-pose"
+            ],
+            "status": "source_grounded_selected_reading",
+            "detail": {
+              "checked_at": "2026-10-09",
+              "fixed_version": "arxiv:2609.34276v1",
+              "locator": "§3.2, §3.4; Appendix A.2 Localisation/Mapping and routes; Appendix B.3",
+              "scope": "作者运行接口主张，未独立复现。模拟器仍定义环境/预设转移并用于评分；不宣称无任何环境特权。",
+              "runtimeValidation": false,
+              "readScope": "本轮仅核指定方法与协议选段，不增加全文或三阶段阅读完成。",
+              "statement": "NavHarness以RGB-D视觉SLAM估计位置，并在已知自由空间上查询路径；导航不读取模拟器真值位姿。停止前核验可返回反证，停止后认证保存判断但不改变任务得分。"
+            },
+            "sourceRefs": [
+              {
+                "url": "https://arxiv.org/html/2609.34276v1",
+                "sourceURL": "https://arxiv.org/html/2609.34276v1",
+                "versionId": "arxiv:2609.34276v1",
+                "locator": "§3.2, §3.4; Appendix A.2 Localisation/Mapping and routes; Appendix B.3",
+                "paperId": "navharness",
+                "sourceId": "analysis:navharness:2609.34276v1",
+                "sourceVersionId": "analysis:navharness:2609.34276v1",
+                "descriptor": "arXiv 2609.34276v1",
+                "versionStatus": "fixed_arxiv_version_url"
+              }
+            ],
+            "positionIds": [
+              "pos:c:c32f036b1f1ec4afa41bb1",
+              "pos:c:8cb4437b3e1f17a9ff7070",
+              "pos:l:fdf1df73e6b51db24289f4"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/entities/methods:ci-navharness-session-boundary",
+          "value": {
+            "id": "methods:ci-navharness-session-boundary",
+            "kind": "challenge",
+            "label": "新会话如何继承先前搜索证据，而不把未搜完当作已排除？",
+            "paperId": "navharness",
+            "versionIds": [
+              "arxiv:2609.34276v1"
+            ],
+            "taskRefs": [
+              "task:goat",
+              "task:ivln"
+            ],
+            "claimIds": [
+              "method-claim:navharness:v1:session-memory"
+            ],
+            "status": "selected_primary_sections",
+            "detail": {
+              "attribution": "editorial_question_grounded_in_author_problem",
+              "checked_at": "2026-10-09",
+              "limits": "机制适用关系分别受GOAT episode与IR2R-CE tour约束；本轮不把GOAT消融效果外推IR2R-CE。",
+              "sourceVersionId": "analysis:navharness:2609.34276v1",
+              "canonicalPaperId": "navharness"
+            },
+            "originalId": "ci-navharness-session-boundary",
+            "positionIds": [
+              "pos:c:3ca63b00ad82d0661153fc",
+              "pos:c:32cc0654d0bcee46e52e77"
+            ],
+            "sourceRefs": [
+              {
+                "url": "https://arxiv.org/html/2609.34276v1",
+                "sourceURL": "https://arxiv.org/html/2609.34276v1",
+                "versionId": "arxiv:2609.34276v1",
+                "locator": "§3.1–3.3; Appendix A.3; Appendix A.5 Attempt boundary",
+                "paperId": "navharness",
+                "sourceId": "analysis:navharness:2609.34276v1",
+                "sourceVersionId": "analysis:navharness:2609.34276v1",
+                "descriptor": "arXiv 2609.34276v1",
+                "versionStatus": "fixed_arxiv_version_url"
+              }
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/entities/methods:insight-navharness-session-boundary",
+          "value": {
+            "id": "methods:insight-navharness-session-boundary",
+            "kind": "insight",
+            "label": "把地图和任务记录保留在会话之外，通过有证据区分的交接与按需检索供新会话复用。",
+            "paperId": "navharness",
+            "versionIds": [
+              "arxiv:2609.34276v1"
+            ],
+            "taskRefs": [
+              "task:goat",
+              "task:ivln"
+            ],
+            "claimIds": [
+              "method-claim:navharness:v1:session-memory"
+            ],
+            "status": "selected_primary_sections",
+            "detail": {
+              "attribution": "author_mechanism_paraphrase",
+              "checked_at": "2026-10-09",
+              "sourceVersionId": "analysis:navharness:2609.34276v1",
+              "canonicalPaperId": "navharness"
+            },
+            "originalId": "insight-navharness-session-boundary",
+            "positionIds": [
+              "pos:c:1870acb8e807fd9f121e85",
+              "pos:c:23af0192f5df6e17a7e996"
+            ],
+            "sourceRefs": [
+              {
+                "url": "https://arxiv.org/html/2609.34276v1",
+                "sourceURL": "https://arxiv.org/html/2609.34276v1",
+                "versionId": "arxiv:2609.34276v1",
+                "locator": "§3.1–3.3; Appendix A.3; Appendix A.5 Attempt boundary",
+                "paperId": "navharness",
+                "sourceId": "analysis:navharness:2609.34276v1",
+                "sourceVersionId": "analysis:navharness:2609.34276v1",
+                "descriptor": "arXiv 2609.34276v1",
+                "versionStatus": "fixed_arxiv_version_url"
+              }
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/entities/methods:pipeline-navharness-benchmark-v1",
+          "value": {
+            "id": "methods:pipeline-navharness-benchmark-v1",
+            "kind": "pipeline_recipe",
+            "label": "NavHarness：基准run内的跨任务与恢复记忆",
+            "paperId": "navharness",
+            "versionIds": [
+              "arxiv:2609.34276v1"
+            ],
+            "taskRefs": [
+              "task:goat",
+              "task:ivln"
+            ],
+            "claimIds": [
+              "method-claim:navharness:v1:session-memory",
+              "method-claim:navharness:v1:verification-pose"
+            ],
+            "status": "selected_primary_sections",
+            "detail": {
+              "id": "pipeline-navharness-benchmark-v1",
+              "entityKind": "pipeline_recipe",
+              "canonicalPaperId": "navharness",
+              "sameMethodAs": "methods:pipeline-navharness",
+              "versionProjectionNote": "同一NavHarness方法的固定v1基准运行投影，不是另一篇论文或新算法。保留旧project-only投影而不改写其原有阅读来源。",
+              "checked_at": "2026-10-09",
+              "pipeline": {
+                "input": "当前目标与观测；同run内已积累的地图和任务记录",
+                "representation": "估计位姿下的地图、地点标记、ledger、task/recovery记录；新run的house notes为空",
+                "decision": "新会话按需读取记录、对照当前观察并调用地图/行动工具；受控恢复交接",
+                "execution": "模型经离散move/turn接口执行；路径预览只查询已知自由空间；停止由编排层核验后发出",
+                "feedback": "任务结束记录结果；run内跨任务保留；主表下一run重新清空"
+              },
+              "limits": "基准运行不使用跨run巩固收益；IR2R-CE含预设任务起点转移；SLAM和judge均可出错。",
+              "analysisStatus": "partial",
+              "sourceVersionId": "analysis:navharness:2609.34276v1"
+            },
+            "sourceRefs": [
+              {
+                "url": "https://arxiv.org/html/2609.34276v1",
+                "sourceURL": "https://arxiv.org/html/2609.34276v1",
+                "versionId": "arxiv:2609.34276v1",
+                "locator": "§3.1–3.3; Appendix A.3; Appendix A.5 Attempt boundary",
+                "paperId": "navharness",
+                "sourceId": "analysis:navharness:2609.34276v1",
+                "sourceVersionId": "analysis:navharness:2609.34276v1",
+                "descriptor": "arXiv 2609.34276v1",
+                "versionStatus": "fixed_arxiv_version_url"
+              },
+              {
+                "url": "https://arxiv.org/html/2609.34276v1",
+                "sourceURL": "https://arxiv.org/html/2609.34276v1",
+                "versionId": "arxiv:2609.34276v1",
+                "locator": "§3.2, §3.4; Appendix A.2 Localisation/Mapping and routes; Appendix B.3",
+                "paperId": "navharness",
+                "sourceId": "analysis:navharness:2609.34276v1",
+                "sourceVersionId": "analysis:navharness:2609.34276v1",
+                "descriptor": "arXiv 2609.34276v1",
+                "versionStatus": "fixed_arxiv_version_url"
+              }
+            ],
+            "originalId": "pipeline-navharness-benchmark-v1",
+            "positionIds": [
+              "pos:l:500b8feacac1333217aa04",
+              "pos:c:cccbdc95fee4e53a2f862c",
+              "pos:l:2b23aec1b6c1e1cf173e3f",
+              "pos:c:9452d7848c9ae0077c0c0e"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/entities/paper-projection:navharness-v1-selected",
+          "value": {
+            "id": "paper-projection:navharness-v1-selected",
+            "kind": "paper",
+            "label": "NavHarness: Towards Lifelong Embodied Navigation",
+            "paperId": "navharness",
+            "versionIds": [
+              "arxiv:2609.34276v1"
+            ],
+            "taskRefs": [],
+            "claimIds": [
+              "method-claim:navharness:v1:session-memory",
+              "method-claim:navharness:v1:verification-pose"
+            ],
+            "status": "selected_primary_sections",
+            "detail": {
+              "canonicalPaperId": "navharness",
+              "sourceVersionId": "arxiv:2609.34276v1",
+              "claimIds": [
+                "method-claim:navharness:v1:session-memory",
+                "method-claim:navharness:v1:verification-pose"
+              ],
+              "sourceScope": "固定版本选段证据；不增加全文阅读完成。"
+            },
+            "sourceRefs": [
+              {
+                "url": "https://arxiv.org/html/2609.34276v1",
+                "sourceURL": "https://arxiv.org/html/2609.34276v1",
+                "versionId": "arxiv:2609.34276v1",
+                "locator": "§3.1–3.3; Appendix A.3; Appendix A.5 Attempt boundary",
+                "paperId": "navharness",
+                "sourceId": "analysis:navharness:2609.34276v1",
+                "sourceVersionId": "analysis:navharness:2609.34276v1",
+                "descriptor": "arXiv 2609.34276v1",
+                "versionStatus": "fixed_arxiv_version_url"
+              },
+              {
+                "url": "https://arxiv.org/html/2609.34276v1",
+                "sourceURL": "https://arxiv.org/html/2609.34276v1",
+                "versionId": "arxiv:2609.34276v1",
+                "locator": "§3.2, §3.4; Appendix A.2 Localisation/Mapping and routes; Appendix B.3",
+                "paperId": "navharness",
+                "sourceId": "analysis:navharness:2609.34276v1",
+                "sourceVersionId": "analysis:navharness:2609.34276v1",
+                "descriptor": "arXiv 2609.34276v1",
+                "versionStatus": "fixed_arxiv_version_url"
+              }
+            ],
+            "positionIds": [
+              "pos:l:74462a31879e7696c32875",
+              "pos:l:d3145007cf7ef9db20cef2"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/entities/paper:navharness/claimIds/6",
+          "value": "method-claim:navharness:v1:goat-run"
+        },
+        {
+          "op": "add",
+          "path": "/entities/paper:navharness/claimIds/7",
+          "value": "method-claim:navharness:v1:ir2r-tour"
+        },
+        {
+          "op": "add",
+          "path": "/entities/paper:navharness/claimIds/8",
+          "value": "method-claim:navharness:v1:session-memory"
+        },
+        {
+          "op": "add",
+          "path": "/entities/paper:navharness/claimIds/9",
+          "value": "method-claim:navharness:v1:verification-pose"
+        },
+        {
+          "op": "add",
+          "path": "/entities/paper:navharness/claimIds/10",
+          "value": "method-claim:navharness:v1:extended-tours"
+        },
+        {
+          "op": "add",
+          "path": "/papers/navharness/claimIds/6",
+          "value": "method-claim:navharness:v1:goat-run"
+        },
+        {
+          "op": "add",
+          "path": "/papers/navharness/claimIds/7",
+          "value": "method-claim:navharness:v1:ir2r-tour"
+        },
+        {
+          "op": "add",
+          "path": "/papers/navharness/claimIds/8",
+          "value": "method-claim:navharness:v1:session-memory"
+        },
+        {
+          "op": "add",
+          "path": "/papers/navharness/claimIds/9",
+          "value": "method-claim:navharness:v1:verification-pose"
+        },
+        {
+          "op": "add",
+          "path": "/papers/navharness/claimIds/10",
+          "value": "method-claim:navharness:v1:extended-tours"
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:c:1870acb8e807fd9f121e85",
+          "value": {
+            "id": "pos:c:1870acb8e807fd9f121e85",
+            "entityId": "methods:insight-navharness-session-boundary",
+            "tree": "c",
+            "scopeId": "task:goat",
+            "paperId": "navharness",
+            "versionId": "arxiv:2609.34276v1",
+            "parentId": "pos:c:3ca63b00ad82d0661153fc",
+            "childIds": [
+              "pos:c:cccbdc95fee4e53a2f862c"
+            ],
+            "relationType": "proposed_insight",
+            "order": 0,
+            "depth": 2,
+            "label": "把地图和任务记录保留在会话之外，通过有证据区分的交接与按需检索供新会话复用。",
+            "kind": "insight",
+            "status": "selected_primary_sections",
+            "claimIds": [
+              "method-claim:navharness:v1:session-memory"
+            ],
+            "association": "condition",
+            "condition": "360 episodes/36 scenes/2669 subtasks；每episode 5–10目标；标准基准运行，不含跨tour巩固。",
+            "versionIds": [
+              "arxiv:2609.34276v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:c:23af0192f5df6e17a7e996",
+          "value": {
+            "id": "pos:c:23af0192f5df6e17a7e996",
+            "entityId": "methods:insight-navharness-session-boundary",
+            "tree": "c",
+            "scopeId": "task:ivln",
+            "paperId": "navharness",
+            "versionId": "arxiv:2609.34276v1",
+            "parentId": "pos:c:32cc0654d0bcee46e52e77",
+            "childIds": [
+              "pos:c:9452d7848c9ae0077c0c0e"
+            ],
+            "relationType": "proposed_insight",
+            "order": 0,
+            "depth": 2,
+            "label": "把地图和任务记录保留在会话之外，通过有证据区分的交接与按需检索供新会话复用。",
+            "kind": "insight",
+            "status": "selected_primary_sections",
+            "claimIds": [
+              "method-claim:navharness:v1:session-memory"
+            ],
+            "association": "condition",
+            "condition": "36 tours/11 scenes/1824 tasks；每tour 3–100任务。不可解释为所有任务起点均为上段自然行走终点。",
+            "versionIds": [
+              "arxiv:2609.34276v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:c:32cc0654d0bcee46e52e77",
+          "value": {
+            "id": "pos:c:32cc0654d0bcee46e52e77",
+            "entityId": "methods:ci-navharness-session-boundary",
+            "tree": "c",
+            "scopeId": "task:ivln",
+            "paperId": "navharness",
+            "versionId": "arxiv:2609.34276v1",
+            "parentId": "pos:c:ec1dc51ed6787297cf0ff0",
+            "childIds": [
+              "pos:c:23af0192f5df6e17a7e996"
+            ],
+            "relationType": "problem_projection",
+            "order": 1,
+            "depth": 1,
+            "label": "新会话如何继承先前搜索证据，而不把未搜完当作已排除？",
+            "kind": "challenge",
+            "status": "selected_primary_sections",
+            "claimIds": [
+              "method-claim:navharness:v1:ir2r-tour",
+              "method-claim:navharness:v1:session-memory"
+            ],
+            "association": "condition",
+            "condition": "36 tours/11 scenes/1824 tasks；每tour 3–100任务。不可解释为所有任务起点均为上段自然行走终点。",
+            "versionIds": [
+              "arxiv:2609.34276v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:c:3ca63b00ad82d0661153fc",
+          "value": {
+            "id": "pos:c:3ca63b00ad82d0661153fc",
+            "entityId": "methods:ci-navharness-session-boundary",
+            "tree": "c",
+            "scopeId": "task:goat",
+            "paperId": "navharness",
+            "versionId": "arxiv:2609.34276v1",
+            "parentId": "pos:c:8afbebffbf36e8cf364096",
+            "childIds": [
+              "pos:c:1870acb8e807fd9f121e85"
+            ],
+            "relationType": "problem_projection",
+            "order": 1,
+            "depth": 1,
+            "label": "新会话如何继承先前搜索证据，而不把未搜完当作已排除？",
+            "kind": "challenge",
+            "status": "selected_primary_sections",
+            "claimIds": [
+              "method-claim:navharness:v1:goat-run",
+              "method-claim:navharness:v1:session-memory"
+            ],
+            "association": "condition",
+            "condition": "360 episodes/36 scenes/2669 subtasks；每episode 5–10目标；标准基准运行，不含跨tour巩固。",
+            "versionIds": [
+              "arxiv:2609.34276v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:c:5c0b974951247ba58e2945",
+          "value": {
+            "id": "pos:c:5c0b974951247ba58e2945",
+            "entityId": "evidence:method-claim:navharness:v1:ir2r-tour",
+            "tree": "c",
+            "scopeId": "task:ivln",
+            "paperId": "navharness",
+            "versionId": "arxiv:2609.34276v1",
+            "parentId": "pos:c:9452d7848c9ae0077c0c0e",
+            "childIds": [],
+            "relationType": "supported_by_claim",
+            "order": 0,
+            "depth": 4,
+            "label": "NavHarness在IR2R-CE Val-Unseen中按tour评测多段路线指令；同tour内保留经验，包括转移到下一episode起点的边界；每个新tour从空地图、任务记录和house notes开始。",
+            "kind": "evidence",
+            "status": "source_grounded_selected_reading",
+            "claimIds": [
+              "method-claim:navharness:v1:ir2r-tour"
+            ],
+            "association": "condition",
+            "condition": "36 tours/11 scenes/1824 tasks；每tour 3–100任务。不可解释为所有任务起点均为上段自然行走终点。",
+            "versionIds": [
+              "arxiv:2609.34276v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:c:803b655097896ee87c6257",
+          "value": {
+            "id": "pos:c:803b655097896ee87c6257",
+            "entityId": "evidence:method-claim:navharness:v1:session-memory",
+            "tree": "c",
+            "scopeId": "task:ivln",
+            "paperId": "navharness",
+            "versionId": "arxiv:2609.34276v1",
+            "parentId": "pos:c:9452d7848c9ae0077c0c0e",
+            "childIds": [],
+            "relationType": "supported_by_claim",
+            "order": 1,
+            "depth": 4,
+            "label": "NavHarness为新任务和恢复尝试开启新会话，同时在当前run内保留地图、地点标记及任务记录；恢复交接区分已搜索与有证据排除的位置，并保留当前目标、位置和剩余预算。",
+            "kind": "evidence",
+            "status": "source_grounded_selected_reading",
+            "claimIds": [
+              "method-claim:navharness:v1:session-memory"
+            ],
+            "association": "condition",
+            "condition": "36 tours/11 scenes/1824 tasks；每tour 3–100任务。不可解释为所有任务起点均为上段自然行走终点。",
+            "versionIds": [
+              "arxiv:2609.34276v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:c:8afbebffbf36e8cf364096/childIds/1",
+          "value": "pos:c:3ca63b00ad82d0661153fc"
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:c:8cb4437b3e1f17a9ff7070",
+          "value": {
+            "id": "pos:c:8cb4437b3e1f17a9ff7070",
+            "entityId": "evidence:method-claim:navharness:v1:verification-pose",
+            "tree": "c",
+            "scopeId": "task:ivln",
+            "paperId": "navharness",
+            "versionId": "arxiv:2609.34276v1",
+            "parentId": "pos:c:9452d7848c9ae0077c0c0e",
+            "childIds": [],
+            "relationType": "supported_by_claim",
+            "order": 2,
+            "depth": 4,
+            "label": "NavHarness以RGB-D视觉SLAM估计位置，并在已知自由空间上查询路径；导航不读取模拟器真值位姿。停止前核验可返回反证，停止后认证保存判断但不改变任务得分。",
+            "kind": "evidence",
+            "status": "source_grounded_selected_reading",
+            "claimIds": [
+              "method-claim:navharness:v1:verification-pose"
+            ],
+            "association": "condition",
+            "condition": "36 tours/11 scenes/1824 tasks；每tour 3–100任务。不可解释为所有任务起点均为上段自然行走终点。",
+            "versionIds": [
+              "arxiv:2609.34276v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:c:9452d7848c9ae0077c0c0e",
+          "value": {
+            "id": "pos:c:9452d7848c9ae0077c0c0e",
+            "entityId": "methods:pipeline-navharness-benchmark-v1",
+            "tree": "c",
+            "scopeId": "task:ivln",
+            "paperId": "navharness",
+            "versionId": "arxiv:2609.34276v1",
+            "parentId": "pos:c:23af0192f5df6e17a7e996",
+            "childIds": [
+              "pos:c:5c0b974951247ba58e2945",
+              "pos:c:803b655097896ee87c6257",
+              "pos:c:8cb4437b3e1f17a9ff7070"
+            ],
+            "relationType": "design_in_pipeline",
+            "order": 0,
+            "depth": 3,
+            "label": "NavHarness：基准run内的跨任务与恢复记忆",
+            "kind": "pipeline_recipe",
+            "status": "selected_primary_sections",
+            "claimIds": [
+              "method-claim:navharness:v1:ir2r-tour",
+              "method-claim:navharness:v1:session-memory",
+              "method-claim:navharness:v1:verification-pose"
+            ],
+            "association": "condition",
+            "condition": "36 tours/11 scenes/1824 tasks；每tour 3–100任务。不可解释为所有任务起点均为上段自然行走终点。",
+            "versionIds": [
+              "arxiv:2609.34276v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:c:ae3f0740e4711b2286faea",
+          "value": {
+            "id": "pos:c:ae3f0740e4711b2286faea",
+            "entityId": "evidence:method-claim:navharness:v1:goat-run",
+            "tree": "c",
+            "scopeId": "task:goat",
+            "paperId": "navharness",
+            "versionId": "arxiv:2609.34276v1",
+            "parentId": "pos:c:cccbdc95fee4e53a2f862c",
+            "childIds": [],
+            "relationType": "supported_by_claim",
+            "order": 0,
+            "depth": 4,
+            "label": "NavHarness在GOAT-Bench Val-Unseen中按episode评测连续多目标导航；episode内不复位并保留地图和任务记录，每个新episode从空记忆开始，不能继承上个episode的house notes。",
+            "kind": "evidence",
+            "status": "source_grounded_selected_reading",
+            "claimIds": [
+              "method-claim:navharness:v1:goat-run"
+            ],
+            "association": "condition",
+            "condition": "360 episodes/36 scenes/2669 subtasks；每episode 5–10目标；标准基准运行，不含跨tour巩固。",
+            "versionIds": [
+              "arxiv:2609.34276v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:c:c32f036b1f1ec4afa41bb1",
+          "value": {
+            "id": "pos:c:c32f036b1f1ec4afa41bb1",
+            "entityId": "evidence:method-claim:navharness:v1:verification-pose",
+            "tree": "c",
+            "scopeId": "task:goat",
+            "paperId": "navharness",
+            "versionId": "arxiv:2609.34276v1",
+            "parentId": "pos:c:cccbdc95fee4e53a2f862c",
+            "childIds": [],
+            "relationType": "supported_by_claim",
+            "order": 2,
+            "depth": 4,
+            "label": "NavHarness以RGB-D视觉SLAM估计位置，并在已知自由空间上查询路径；导航不读取模拟器真值位姿。停止前核验可返回反证，停止后认证保存判断但不改变任务得分。",
+            "kind": "evidence",
+            "status": "source_grounded_selected_reading",
+            "claimIds": [
+              "method-claim:navharness:v1:verification-pose"
+            ],
+            "association": "condition",
+            "condition": "360 episodes/36 scenes/2669 subtasks；每episode 5–10目标；标准基准运行，不含跨tour巩固。",
+            "versionIds": [
+              "arxiv:2609.34276v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:c:cccbdc95fee4e53a2f862c",
+          "value": {
+            "id": "pos:c:cccbdc95fee4e53a2f862c",
+            "entityId": "methods:pipeline-navharness-benchmark-v1",
+            "tree": "c",
+            "scopeId": "task:goat",
+            "paperId": "navharness",
+            "versionId": "arxiv:2609.34276v1",
+            "parentId": "pos:c:1870acb8e807fd9f121e85",
+            "childIds": [
+              "pos:c:ae3f0740e4711b2286faea",
+              "pos:c:f1e3a6f4db6549420a57b7",
+              "pos:c:c32f036b1f1ec4afa41bb1"
+            ],
+            "relationType": "design_in_pipeline",
+            "order": 0,
+            "depth": 3,
+            "label": "NavHarness：基准run内的跨任务与恢复记忆",
+            "kind": "pipeline_recipe",
+            "status": "selected_primary_sections",
+            "claimIds": [
+              "method-claim:navharness:v1:goat-run",
+              "method-claim:navharness:v1:session-memory",
+              "method-claim:navharness:v1:verification-pose"
+            ],
+            "association": "condition",
+            "condition": "360 episodes/36 scenes/2669 subtasks；每episode 5–10目标；标准基准运行，不含跨tour巩固。",
+            "versionIds": [
+              "arxiv:2609.34276v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:c:ec1dc51ed6787297cf0ff0/childIds/1",
+          "value": "pos:c:32cc0654d0bcee46e52e77"
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:c:f1e3a6f4db6549420a57b7",
+          "value": {
+            "id": "pos:c:f1e3a6f4db6549420a57b7",
+            "entityId": "evidence:method-claim:navharness:v1:session-memory",
+            "tree": "c",
+            "scopeId": "task:goat",
+            "paperId": "navharness",
+            "versionId": "arxiv:2609.34276v1",
+            "parentId": "pos:c:cccbdc95fee4e53a2f862c",
+            "childIds": [],
+            "relationType": "supported_by_claim",
+            "order": 1,
+            "depth": 4,
+            "label": "NavHarness为新任务和恢复尝试开启新会话，同时在当前run内保留地图、地点标记及任务记录；恢复交接区分已搜索与有证据排除的位置，并保留当前目标、位置和剩余预算。",
+            "kind": "evidence",
+            "status": "source_grounded_selected_reading",
+            "claimIds": [
+              "method-claim:navharness:v1:session-memory"
+            ],
+            "association": "condition",
+            "condition": "360 episodes/36 scenes/2669 subtasks；每episode 5–10目标；标准基准运行，不含跨tour巩固。",
+            "versionIds": [
+              "arxiv:2609.34276v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:l:2af7f7fefd0c4b8333e88d",
+          "value": {
+            "id": "pos:l:2af7f7fefd0c4b8333e88d",
+            "entityId": "evidence:method-claim:navharness:v1:session-memory",
+            "tree": "l",
+            "scopeId": "scope:all",
+            "paperId": "navharness",
+            "versionId": "arxiv:2609.34276v1",
+            "parentId": "pos:l:a53f91a05b5acf4abbd786",
+            "childIds": [],
+            "relationType": "supported_by_claim",
+            "order": 2,
+            "depth": 2,
+            "label": "NavHarness为新任务和恢复尝试开启新会话，同时在当前run内保留地图、地点标记及任务记录；恢复交接区分已搜索与有证据排除的位置，并保留当前目标、位置和剩余预算。",
+            "kind": "evidence",
+            "status": "source_grounded_selected_reading",
+            "claimIds": [
+              "method-claim:navharness:v1:session-memory"
+            ],
+            "association": "context",
+            "condition": "固定v1选段；具体运行协议按每条claim区分。",
+            "versionIds": [
+              "arxiv:2609.34276v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:l:2b23aec1b6c1e1cf173e3f",
+          "value": {
+            "id": "pos:l:2b23aec1b6c1e1cf173e3f",
+            "entityId": "methods:pipeline-navharness-benchmark-v1",
+            "tree": "l",
+            "scopeId": "task:ivln",
+            "paperId": "navharness",
+            "versionId": "arxiv:2609.34276v1",
+            "parentId": "pos:l:5f45ada5895f8114ce4098",
+            "childIds": [
+              "pos:l:d3145007cf7ef9db20cef2"
+            ],
+            "relationType": "addresses_task",
+            "order": 1,
+            "depth": 1,
+            "label": "NavHarness：基准run内的跨任务与恢复记忆",
+            "kind": "pipeline_recipe",
+            "status": "selected_primary_sections",
+            "claimIds": [
+              "method-claim:navharness:v1:ir2r-tour",
+              "method-claim:navharness:v1:session-memory",
+              "method-claim:navharness:v1:verification-pose"
+            ],
+            "association": "condition",
+            "condition": "36 tours/11 scenes/1824 tasks；每tour 3–100任务。不可解释为所有任务起点均为上段自然行走终点。",
+            "versionIds": [
+              "arxiv:2609.34276v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:l:500b8feacac1333217aa04",
+          "value": {
+            "id": "pos:l:500b8feacac1333217aa04",
+            "entityId": "methods:pipeline-navharness-benchmark-v1",
+            "tree": "l",
+            "scopeId": "task:goat",
+            "paperId": "navharness",
+            "versionId": "arxiv:2609.34276v1",
+            "parentId": "pos:l:e6c2da964323ef3eae5a97",
+            "childIds": [
+              "pos:l:74462a31879e7696c32875"
+            ],
+            "relationType": "addresses_task",
+            "order": 1,
+            "depth": 1,
+            "label": "NavHarness：基准run内的跨任务与恢复记忆",
+            "kind": "pipeline_recipe",
+            "status": "selected_primary_sections",
+            "claimIds": [
+              "method-claim:navharness:v1:goat-run",
+              "method-claim:navharness:v1:session-memory",
+              "method-claim:navharness:v1:verification-pose"
+            ],
+            "association": "condition",
+            "condition": "360 episodes/36 scenes/2669 subtasks；每episode 5–10目标；标准基准运行，不含跨tour巩固。",
+            "versionIds": [
+              "arxiv:2609.34276v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:l:5f45ada5895f8114ce4098/childIds/1",
+          "value": "pos:l:2b23aec1b6c1e1cf173e3f"
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:l:6839457030563fda065022",
+          "value": {
+            "id": "pos:l:6839457030563fda065022",
+            "entityId": "evidence:method-claim:navharness:v1:ir2r-tour",
+            "tree": "l",
+            "scopeId": "scope:all",
+            "paperId": "navharness",
+            "versionId": "arxiv:2609.34276v1",
+            "parentId": "pos:l:a53f91a05b5acf4abbd786",
+            "childIds": [],
+            "relationType": "supported_by_claim",
+            "order": 1,
+            "depth": 2,
+            "label": "NavHarness在IR2R-CE Val-Unseen中按tour评测多段路线指令；同tour内保留经验，包括转移到下一episode起点的边界；每个新tour从空地图、任务记录和house notes开始。",
+            "kind": "evidence",
+            "status": "source_grounded_selected_reading",
+            "claimIds": [
+              "method-claim:navharness:v1:ir2r-tour"
+            ],
+            "association": "context",
+            "condition": "固定v1选段；具体运行协议按每条claim区分。",
+            "versionIds": [
+              "arxiv:2609.34276v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:l:6bf8badde9c999668a31a5",
+          "value": {
+            "id": "pos:l:6bf8badde9c999668a31a5",
+            "entityId": "evidence:method-claim:navharness:v1:extended-tours",
+            "tree": "l",
+            "scopeId": "scope:all",
+            "paperId": "navharness",
+            "versionId": "arxiv:2609.34276v1",
+            "parentId": "pos:l:a53f91a05b5acf4abbd786",
+            "childIds": [],
+            "relationType": "supported_by_claim",
+            "order": 4,
+            "depth": 2,
+            "label": "跨run巩固在另设的同屋十tour扩展中评测：tour间预设重新放置，地图和任务记录持续保留，完整配置另写house notes；该证据不属于GOAT-Bench或IR2R-CE主表的跨run记忆。",
+            "kind": "evidence",
+            "status": "source_grounded_selected_reading",
+            "claimIds": [
+              "method-claim:navharness:v1:extended-tours"
+            ],
+            "association": "context",
+            "condition": "固定v1选段；具体运行协议按每条claim区分。",
+            "versionIds": [
+              "arxiv:2609.34276v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:l:74462a31879e7696c32875",
+          "value": {
+            "id": "pos:l:74462a31879e7696c32875",
+            "entityId": "paper-projection:navharness-v1-selected",
+            "tree": "l",
+            "scopeId": "task:goat",
+            "paperId": "navharness",
+            "versionId": "arxiv:2609.34276v1",
+            "parentId": "pos:l:500b8feacac1333217aa04",
+            "childIds": [],
+            "relationType": "described_in",
+            "order": 0,
+            "depth": 2,
+            "label": "NavHarness: Towards Lifelong Embodied Navigation",
+            "kind": "paper",
+            "status": "selected_primary_sections",
+            "claimIds": [
+              "method-claim:navharness:v1:goat-run",
+              "method-claim:navharness:v1:session-memory",
+              "method-claim:navharness:v1:verification-pose"
+            ],
+            "association": "condition",
+            "condition": "360 episodes/36 scenes/2669 subtasks；每episode 5–10目标；标准基准运行，不含跨tour巩固。",
+            "versionIds": [
+              "arxiv:2609.34276v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:l:a53f91a05b5acf4abbd786/childIds/0",
+          "value": "pos:l:b337b117901232a9821cbd"
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:l:a53f91a05b5acf4abbd786/childIds/1",
+          "value": "pos:l:6839457030563fda065022"
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:l:a53f91a05b5acf4abbd786/childIds/2",
+          "value": "pos:l:2af7f7fefd0c4b8333e88d"
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:l:a53f91a05b5acf4abbd786/childIds/3",
+          "value": "pos:l:fdf1df73e6b51db24289f4"
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:l:a53f91a05b5acf4abbd786/childIds/4",
+          "value": "pos:l:6bf8badde9c999668a31a5"
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:l:b337b117901232a9821cbd",
+          "value": {
+            "id": "pos:l:b337b117901232a9821cbd",
+            "entityId": "evidence:method-claim:navharness:v1:goat-run",
+            "tree": "l",
+            "scopeId": "scope:all",
+            "paperId": "navharness",
+            "versionId": "arxiv:2609.34276v1",
+            "parentId": "pos:l:a53f91a05b5acf4abbd786",
+            "childIds": [],
+            "relationType": "supported_by_claim",
+            "order": 0,
+            "depth": 2,
+            "label": "NavHarness在GOAT-Bench Val-Unseen中按episode评测连续多目标导航；episode内不复位并保留地图和任务记录，每个新episode从空记忆开始，不能继承上个episode的house notes。",
+            "kind": "evidence",
+            "status": "source_grounded_selected_reading",
+            "claimIds": [
+              "method-claim:navharness:v1:goat-run"
+            ],
+            "association": "context",
+            "condition": "固定v1选段；具体运行协议按每条claim区分。",
+            "versionIds": [
+              "arxiv:2609.34276v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:l:d3145007cf7ef9db20cef2",
+          "value": {
+            "id": "pos:l:d3145007cf7ef9db20cef2",
+            "entityId": "paper-projection:navharness-v1-selected",
+            "tree": "l",
+            "scopeId": "task:ivln",
+            "paperId": "navharness",
+            "versionId": "arxiv:2609.34276v1",
+            "parentId": "pos:l:2b23aec1b6c1e1cf173e3f",
+            "childIds": [],
+            "relationType": "described_in",
+            "order": 0,
+            "depth": 2,
+            "label": "NavHarness: Towards Lifelong Embodied Navigation",
+            "kind": "paper",
+            "status": "selected_primary_sections",
+            "claimIds": [
+              "method-claim:navharness:v1:ir2r-tour",
+              "method-claim:navharness:v1:session-memory",
+              "method-claim:navharness:v1:verification-pose"
+            ],
+            "association": "condition",
+            "condition": "36 tours/11 scenes/1824 tasks；每tour 3–100任务。不可解释为所有任务起点均为上段自然行走终点。",
+            "versionIds": [
+              "arxiv:2609.34276v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:l:e6c2da964323ef3eae5a97/childIds/1",
+          "value": "pos:l:500b8feacac1333217aa04"
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:l:fdf1df73e6b51db24289f4",
+          "value": {
+            "id": "pos:l:fdf1df73e6b51db24289f4",
+            "entityId": "evidence:method-claim:navharness:v1:verification-pose",
+            "tree": "l",
+            "scopeId": "scope:all",
+            "paperId": "navharness",
+            "versionId": "arxiv:2609.34276v1",
+            "parentId": "pos:l:a53f91a05b5acf4abbd786",
+            "childIds": [],
+            "relationType": "supported_by_claim",
+            "order": 3,
+            "depth": 2,
+            "label": "NavHarness以RGB-D视觉SLAM估计位置，并在已知自由空间上查询路径；导航不读取模拟器真值位姿。停止前核验可返回反证，停止后认证保存判断但不改变任务得分。",
+            "kind": "evidence",
+            "status": "source_grounded_selected_reading",
+            "claimIds": [
+              "method-claim:navharness:v1:verification-pose"
+            ],
+            "association": "context",
+            "condition": "固定v1选段；具体运行协议按每条claim区分。",
+            "versionIds": [
+              "arxiv:2609.34276v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/relatedRelations/313",
+          "value": {
+            "id": "navharness-v1:task:goat:method",
+            "from": "task:goat",
+            "to": "methods:pipeline-navharness-benchmark-v1",
+            "relationType": "addresses_task",
+            "renderAsTree": false,
+            "claimIds": [
+              "method-claim:navharness:v1:goat-run",
+              "method-claim:navharness:v1:session-memory",
+              "method-claim:navharness:v1:verification-pose"
+            ],
+            "detail": {
+              "claimIds": [
+                "method-claim:navharness:v1:goat-run",
+                "method-claim:navharness:v1:session-memory",
+                "method-claim:navharness:v1:verification-pose"
+              ],
+              "condition": "360 episodes/36 scenes/2669 subtasks；每episode 5–10目标；标准基准运行，不含跨tour巩固。",
+              "attribution": "source_grounded_selected_reading"
+            }
+          }
+        },
+        {
+          "op": "add",
+          "path": "/relatedRelations/314",
+          "value": {
+            "id": "navharness-v1:task:goat:benchmark",
+            "from": "methods:pipeline-navharness-benchmark-v1",
+            "to": "benchmark:goat-bench",
+            "relationType": "evaluated_on",
+            "renderAsTree": false,
+            "claimIds": [
+              "method-claim:navharness:v1:goat-run"
+            ],
+            "detail": {
+              "claimIds": [
+                "method-claim:navharness:v1:goat-run"
+              ],
+              "condition": "360 episodes/36 scenes/2669 subtasks；每episode 5–10目标；标准基准运行，不含跨tour巩固。",
+              "attribution": "source_grounded_selected_reading"
+            }
+          }
+        },
+        {
+          "op": "add",
+          "path": "/relatedRelations/315",
+          "value": {
+            "id": "navharness-v1:task:goat:extension-boundary",
+            "from": "methods:pipeline-navharness-benchmark-v1",
+            "to": "evidence:method-claim:navharness:v1:extended-tours",
+            "relationType": "editorial_context_comparison",
+            "renderAsTree": false,
+            "claimIds": [
+              "method-claim:navharness:v1:extended-tours"
+            ],
+            "detail": {
+              "claimIds": [
+                "method-claim:navharness:v1:extended-tours"
+              ],
+              "condition": "十tour扩展另行记录；不属于此处主表run内启用机制。",
+              "attribution": "source_grounded_selected_reading"
+            }
+          }
+        },
+        {
+          "op": "add",
+          "path": "/relatedRelations/316",
+          "value": {
+            "id": "navharness-v1:task:ivln:method",
+            "from": "task:ivln",
+            "to": "methods:pipeline-navharness-benchmark-v1",
+            "relationType": "addresses_task",
+            "renderAsTree": false,
+            "claimIds": [
+              "method-claim:navharness:v1:ir2r-tour",
+              "method-claim:navharness:v1:session-memory",
+              "method-claim:navharness:v1:verification-pose"
+            ],
+            "detail": {
+              "claimIds": [
+                "method-claim:navharness:v1:ir2r-tour",
+                "method-claim:navharness:v1:session-memory",
+                "method-claim:navharness:v1:verification-pose"
+              ],
+              "condition": "36 tours/11 scenes/1824 tasks；每tour 3–100任务。不可解释为所有任务起点均为上段自然行走终点。",
+              "attribution": "source_grounded_selected_reading"
+            }
+          }
+        },
+        {
+          "op": "add",
+          "path": "/relatedRelations/317",
+          "value": {
+            "id": "navharness-v1:task:ivln:benchmark",
+            "from": "methods:pipeline-navharness-benchmark-v1",
+            "to": "benchmark:ir2r-ce",
+            "relationType": "evaluated_on",
+            "renderAsTree": false,
+            "claimIds": [
+              "method-claim:navharness:v1:ir2r-tour"
+            ],
+            "detail": {
+              "claimIds": [
+                "method-claim:navharness:v1:ir2r-tour"
+              ],
+              "condition": "36 tours/11 scenes/1824 tasks；每tour 3–100任务。不可解释为所有任务起点均为上段自然行走终点。",
+              "attribution": "source_grounded_selected_reading"
+            }
+          }
+        },
+        {
+          "op": "add",
+          "path": "/relatedRelations/318",
+          "value": {
+            "id": "navharness-v1:task:ivln:extension-boundary",
+            "from": "methods:pipeline-navharness-benchmark-v1",
+            "to": "evidence:method-claim:navharness:v1:extended-tours",
+            "relationType": "editorial_context_comparison",
+            "renderAsTree": false,
+            "claimIds": [
+              "method-claim:navharness:v1:extended-tours"
+            ],
+            "detail": {
+              "claimIds": [
+                "method-claim:navharness:v1:extended-tours"
+              ],
+              "condition": "十tour扩展另行记录；不属于此处主表run内启用机制。",
+              "attribution": "source_grounded_selected_reading"
+            }
+          }
+        },
+        {
+          "op": "add",
+          "path": "/relations/navharness-v1:task:goat:benchmark",
+          "value": {
+            "id": "navharness-v1:task:goat:benchmark",
+            "from": "methods:pipeline-navharness-benchmark-v1",
+            "to": "benchmark:goat-bench",
+            "relationType": "evaluated_on",
+            "renderAsTree": false,
+            "claimIds": [
+              "method-claim:navharness:v1:goat-run"
+            ],
+            "detail": {
+              "claimIds": [
+                "method-claim:navharness:v1:goat-run"
+              ],
+              "condition": "360 episodes/36 scenes/2669 subtasks；每episode 5–10目标；标准基准运行，不含跨tour巩固。",
+              "attribution": "source_grounded_selected_reading"
+            }
+          }
+        },
+        {
+          "op": "add",
+          "path": "/relations/navharness-v1:task:goat:extension-boundary",
+          "value": {
+            "id": "navharness-v1:task:goat:extension-boundary",
+            "from": "methods:pipeline-navharness-benchmark-v1",
+            "to": "evidence:method-claim:navharness:v1:extended-tours",
+            "relationType": "editorial_context_comparison",
+            "renderAsTree": false,
+            "claimIds": [
+              "method-claim:navharness:v1:extended-tours"
+            ],
+            "detail": {
+              "claimIds": [
+                "method-claim:navharness:v1:extended-tours"
+              ],
+              "condition": "十tour扩展另行记录；不属于此处主表run内启用机制。",
+              "attribution": "source_grounded_selected_reading"
+            }
+          }
+        },
+        {
+          "op": "add",
+          "path": "/relations/navharness-v1:task:goat:method",
+          "value": {
+            "id": "navharness-v1:task:goat:method",
+            "from": "task:goat",
+            "to": "methods:pipeline-navharness-benchmark-v1",
+            "relationType": "addresses_task",
+            "renderAsTree": false,
+            "claimIds": [
+              "method-claim:navharness:v1:goat-run",
+              "method-claim:navharness:v1:session-memory",
+              "method-claim:navharness:v1:verification-pose"
+            ],
+            "detail": {
+              "claimIds": [
+                "method-claim:navharness:v1:goat-run",
+                "method-claim:navharness:v1:session-memory",
+                "method-claim:navharness:v1:verification-pose"
+              ],
+              "condition": "360 episodes/36 scenes/2669 subtasks；每episode 5–10目标；标准基准运行，不含跨tour巩固。",
+              "attribution": "source_grounded_selected_reading"
+            }
+          }
+        },
+        {
+          "op": "add",
+          "path": "/relations/navharness-v1:task:ivln:benchmark",
+          "value": {
+            "id": "navharness-v1:task:ivln:benchmark",
+            "from": "methods:pipeline-navharness-benchmark-v1",
+            "to": "benchmark:ir2r-ce",
+            "relationType": "evaluated_on",
+            "renderAsTree": false,
+            "claimIds": [
+              "method-claim:navharness:v1:ir2r-tour"
+            ],
+            "detail": {
+              "claimIds": [
+                "method-claim:navharness:v1:ir2r-tour"
+              ],
+              "condition": "36 tours/11 scenes/1824 tasks；每tour 3–100任务。不可解释为所有任务起点均为上段自然行走终点。",
+              "attribution": "source_grounded_selected_reading"
+            }
+          }
+        },
+        {
+          "op": "add",
+          "path": "/relations/navharness-v1:task:ivln:extension-boundary",
+          "value": {
+            "id": "navharness-v1:task:ivln:extension-boundary",
+            "from": "methods:pipeline-navharness-benchmark-v1",
+            "to": "evidence:method-claim:navharness:v1:extended-tours",
+            "relationType": "editorial_context_comparison",
+            "renderAsTree": false,
+            "claimIds": [
+              "method-claim:navharness:v1:extended-tours"
+            ],
+            "detail": {
+              "claimIds": [
+                "method-claim:navharness:v1:extended-tours"
+              ],
+              "condition": "十tour扩展另行记录；不属于此处主表run内启用机制。",
+              "attribution": "source_grounded_selected_reading"
+            }
+          }
+        },
+        {
+          "op": "add",
+          "path": "/relations/navharness-v1:task:ivln:method",
+          "value": {
+            "id": "navharness-v1:task:ivln:method",
+            "from": "task:ivln",
+            "to": "methods:pipeline-navharness-benchmark-v1",
+            "relationType": "addresses_task",
+            "renderAsTree": false,
+            "claimIds": [
+              "method-claim:navharness:v1:ir2r-tour",
+              "method-claim:navharness:v1:session-memory",
+              "method-claim:navharness:v1:verification-pose"
+            ],
+            "detail": {
+              "claimIds": [
+                "method-claim:navharness:v1:ir2r-tour",
+                "method-claim:navharness:v1:session-memory",
+                "method-claim:navharness:v1:verification-pose"
+              ],
+              "condition": "36 tours/11 scenes/1824 tasks；每tour 3–100任务。不可解释为所有任务起点均为上段自然行走终点。",
+              "attribution": "source_grounded_selected_reading"
+            }
+          }
+        },
+        {
+          "op": "add",
+          "path": "/scopes/6/bindings/4",
+          "value": {
+            "scopeId": "task:goat",
+            "association": "condition",
+            "methodNodeIds": [
+              "pipeline-navharness-benchmark-v1"
+            ],
+            "relationType": "addresses_task",
+            "claimIds": [
+              "method-claim:navharness:v1:goat-run",
+              "method-claim:navharness:v1:session-memory",
+              "method-claim:navharness:v1:verification-pose"
+            ],
+            "condition": "360 episodes/36 scenes/2669 subtasks；每episode 5–10目标；标准基准运行，不含跨tour巩固。"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/scopes/6/bindings/5",
+          "value": {
+            "scopeId": "task:goat",
+            "association": "condition",
+            "challengeNodeIds": [
+              "ci-navharness-session-boundary"
+            ],
+            "relationType": "problem_projection",
+            "claimIds": [
+              "method-claim:navharness:v1:goat-run",
+              "method-claim:navharness:v1:session-memory"
+            ],
+            "condition": "只连接NavHarness此固定v1机制；不是将lifelong所有方法装入本task。"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/scopes/6/conditionPaperIds/0",
+          "value": "navharness"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/6/coverage/analysisCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/6/coverage/analysisStatus",
+          "old": "no_answered_paper_analysis",
+          "value": "selected_papers_only"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/6/coverage/ciCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/6/coverage/condition/analysisCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/scopes/6/coverage/condition/analysisPaperIds/0",
+          "value": "navharness"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/6/coverage/condition/analysisVersionCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/scopes/6/coverage/condition/analysisVersionIds/0",
+          "value": "arxiv:2609.34276v1"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/6/coverage/condition/availableAnalysisPaperCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/6/coverage/condition/challengeCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/scopes/6/coverage/condition/challengeNodeIds/0",
+          "value": "ci-navharness-session-boundary"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/6/coverage/condition/insightCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/scopes/6/coverage/condition/insightNodeIds/0",
+          "value": "insight-navharness-session-boundary"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/6/coverage/condition/methodCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/scopes/6/coverage/condition/methodNodeIds/0",
+          "value": "pipeline-navharness-benchmark-v1"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/6/coverage/condition/paperCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/scopes/6/coverage/condition/paperIds/0",
+          "value": "navharness"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/6/coverage/condition/recipeCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/6/coverage/condition/sameVersionAnalysisCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/6/coverage/condition/status",
+          "old": "coverage_gap",
+          "value": "selected_evidence_available"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/6/coverage/methodCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/6/coverage/total/analysisCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/scopes/6/coverage/total/analysisPaperIds/0",
+          "value": "navharness"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/6/coverage/total/analysisVersionCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/scopes/6/coverage/total/analysisVersionIds/0",
+          "value": "arxiv:2609.34276v1"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/6/coverage/total/availableAnalysisPaperCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/6/coverage/total/challengeCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/6/coverage/total/challengeNodeIds/0",
+          "old": "ci_cross_goal_instance_memory",
+          "value": "ci-navharness-session-boundary"
+        },
+        {
+          "op": "add",
+          "path": "/scopes/6/coverage/total/challengeNodeIds/1",
+          "value": "ci_cross_goal_instance_memory"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/6/coverage/total/insightCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/6/coverage/total/insightNodeIds/0",
+          "old": "insight:cross_goal_instance_memory:goat",
+          "value": "insight-navharness-session-boundary"
+        },
+        {
+          "op": "add",
+          "path": "/scopes/6/coverage/total/insightNodeIds/1",
+          "value": "insight:cross_goal_instance_memory:goat"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/6/coverage/total/methodCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/scopes/6/coverage/total/methodNodeIds/1",
+          "value": "pipeline-navharness-benchmark-v1"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/6/coverage/total/paperCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/scopes/6/coverage/total/paperIds/1",
+          "value": "navharness"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/6/coverage/total/recipeCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/6/coverage/total/sameVersionAnalysisCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/scopes/7/bindings/4",
+          "value": {
+            "scopeId": "task:ivln",
+            "association": "condition",
+            "methodNodeIds": [
+              "pipeline-navharness-benchmark-v1"
+            ],
+            "relationType": "addresses_task",
+            "claimIds": [
+              "method-claim:navharness:v1:ir2r-tour",
+              "method-claim:navharness:v1:session-memory",
+              "method-claim:navharness:v1:verification-pose"
+            ],
+            "condition": "36 tours/11 scenes/1824 tasks；每tour 3–100任务。不可解释为所有任务起点均为上段自然行走终点。"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/scopes/7/bindings/5",
+          "value": {
+            "scopeId": "task:ivln",
+            "association": "condition",
+            "challengeNodeIds": [
+              "ci-navharness-session-boundary"
+            ],
+            "relationType": "problem_projection",
+            "claimIds": [
+              "method-claim:navharness:v1:ir2r-tour",
+              "method-claim:navharness:v1:session-memory"
+            ],
+            "condition": "只连接NavHarness此固定v1机制；不是将lifelong所有方法装入本task。"
+          }
+        },
+        {
+          "op": "add",
+          "path": "/scopes/7/conditionPaperIds/0",
+          "value": "navharness"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/7/coverage/analysisCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/7/coverage/analysisStatus",
+          "old": "no_answered_paper_analysis",
+          "value": "selected_papers_only"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/7/coverage/ciCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/7/coverage/condition/analysisCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/scopes/7/coverage/condition/analysisPaperIds/0",
+          "value": "navharness"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/7/coverage/condition/analysisVersionCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/scopes/7/coverage/condition/analysisVersionIds/0",
+          "value": "arxiv:2609.34276v1"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/7/coverage/condition/availableAnalysisPaperCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/7/coverage/condition/challengeCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/scopes/7/coverage/condition/challengeNodeIds/0",
+          "value": "ci-navharness-session-boundary"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/7/coverage/condition/insightCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/scopes/7/coverage/condition/insightNodeIds/0",
+          "value": "insight-navharness-session-boundary"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/7/coverage/condition/methodCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/scopes/7/coverage/condition/methodNodeIds/0",
+          "value": "pipeline-navharness-benchmark-v1"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/7/coverage/condition/paperCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/scopes/7/coverage/condition/paperIds/0",
+          "value": "navharness"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/7/coverage/condition/recipeCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/7/coverage/condition/sameVersionAnalysisCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/7/coverage/condition/status",
+          "old": "coverage_gap",
+          "value": "selected_evidence_available"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/7/coverage/methodCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/7/coverage/total/analysisCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/scopes/7/coverage/total/analysisPaperIds/0",
+          "value": "navharness"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/7/coverage/total/analysisVersionCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/scopes/7/coverage/total/analysisVersionIds/0",
+          "value": "arxiv:2609.34276v1"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/7/coverage/total/availableAnalysisPaperCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/7/coverage/total/challengeCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/7/coverage/total/challengeNodeIds/0",
+          "old": "ci_language_ivln-map-cma",
+          "value": "ci-navharness-session-boundary"
+        },
+        {
+          "op": "add",
+          "path": "/scopes/7/coverage/total/challengeNodeIds/1",
+          "value": "ci_language_ivln-map-cma"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/7/coverage/total/insightCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/7/coverage/total/insightNodeIds/0",
+          "old": "insight:language:ivln-map-cma",
+          "value": "insight-navharness-session-boundary"
+        },
+        {
+          "op": "add",
+          "path": "/scopes/7/coverage/total/insightNodeIds/1",
+          "value": "insight:language:ivln-map-cma"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/7/coverage/total/methodCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/scopes/7/coverage/total/methodNodeIds/1",
+          "value": "pipeline-navharness-benchmark-v1"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/7/coverage/total/paperCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/scopes/7/coverage/total/paperIds/1",
+          "value": "navharness"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/7/coverage/total/recipeCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/7/coverage/total/sameVersionAnalysisCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "replace",
+          "path": "/summary/analysisScopes",
+          "old": 1,
+          "value": 3
+        },
+        {
+          "op": "replace",
+          "path": "/summary/claims",
+          "old": 438,
+          "value": 443
+        },
+        {
+          "op": "replace",
+          "path": "/summary/entities",
+          "old": 1468,
+          "value": 1477
+        },
+        {
+          "op": "replace",
+          "path": "/summary/positions",
+          "old": 1658,
+          "value": 1679
+        }
+      ],
+      "expectedSha256": "28040f81fec7192b85bb191455ed3f34fc0bd0d742a6e4f7025fe462fe51cfcf",
+      "expectedSemanticSha256": "7cea38051b8c69d48c319add3732f6f4a4fb0a166ed8cce950b60489d42a8027"
+    },
+    {
+      "name": "NavMCP固定v1方法",
+      "operations": [
+        {
+          "op": "replace",
+          "path": "/coverage/task:active-eqa/direct/methodCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/coverage/task:active-eqa/direct/methodNodeIds/1",
+          "value": "pipeline-navmcp-fixed-v1"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:active-eqa/direct/paperCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/coverage/task:active-eqa/direct/paperIds/1",
+          "value": "navmcp"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:active-eqa/direct/recipeCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:active-eqa/methodCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:active-eqa/total/methodCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/coverage/task:active-eqa/total/methodNodeIds/1",
+          "value": "pipeline-navmcp-fixed-v1"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:active-eqa/total/paperCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/coverage/task:active-eqa/total/paperIds/1",
+          "value": "navmcp"
+        },
+        {
+          "op": "replace",
+          "path": "/coverage/task:active-eqa/total/recipeCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/entities/methods:pipeline-navmcp-fixed-v1",
+          "value": {
+            "id": "methods:pipeline-navmcp-fixed-v1",
+            "kind": "pipeline_recipe",
+            "label": "NavMCP：意图、观察与记忆接口",
+            "paperId": "navmcp",
+            "versionIds": [
+              "arxiv:2608.30396v1"
+            ],
+            "taskRefs": [
+              "task:active-eqa"
+            ],
+            "claimIds": [
+              "claim:t:navmcp26:application",
+              "new-method:navmcp"
+            ],
+            "status": "selected_source_grounded",
+            "detail": {
+              "id": "pipeline-navmcp-fixed-v1",
+              "entityKind": "pipeline_recipe",
+              "label": "NavMCP：意图、观察与记忆接口",
+              "canonicalPaperId": "navmcp",
+              "sourceVersionId": "primary:navmcp",
+              "taskIds": [
+                "task:active-eqa"
+              ],
+              "pipelineIds": [
+                "pipeline-navmcp"
+              ],
+              "claimIds": [
+                "claim:t:navmcp26:application",
+                "new-method:navmcp"
+              ],
+              "readingParents": [],
+              "verification": "selected_source_grounded",
+              "pipeline": {
+                "input": "EQA问题、观察、未完成证据需求",
+                "representation": "来源keyframe的ledger与未决目标",
+                "decision": "intent含mode、budget、constraints",
+                "execution": "navigation foundation model短程执行",
+                "feedback": "整段trajectory变journey artifact；入ledger后压缩"
+              },
+              "sameMethodAs": "methods:pipeline-navmcp",
+              "versionProjectionNote": "同一NavMCP方法的固定v1选段投影；原snapshot记录保留，不是新算法或新论文。",
+              "limits": "主动导航取证EQA；记忆限同episode内跨调用；此处不继承该任务目录的全部benchmark评测关系。"
+            },
+            "sourceRefs": [
+              {
+                "sourceId": "primary:navmcp",
+                "sourceVersionId": "primary:navmcp",
+                "versionId": "arxiv:2608.30396v1",
+                "paperId": "navmcp",
+                "url": "https://arxiv.org/html/2608.30396v1",
+                "sourceURL": "https://arxiv.org/html/2608.30396v1",
+                "descriptor": "arXiv 2608.30396v1",
+                "versionStatus": "fixed_arxiv_version_url",
+                "detail": {
+                  "id": "primary:navmcp",
+                  "canonicalPaperId": "navmcp",
+                  "url": "https://arxiv.org/html/2608.30396v1",
+                  "version": "arXiv 2608.30396v1",
+                  "versionStatus": "fixed_publication_or_revision",
+                  "readLevel": "selected_primary_method_sections_checked",
+                  "locator": [
+                    "§3.2–3.4; Fig.2–3"
+                  ]
+                },
+                "locator": "§3.2–3.4; Fig.2–3"
+              }
+            ],
+            "originalId": "pipeline-navmcp-fixed-v1",
+            "positionIds": [
+              "pos:l:fce0311e555e8124da8891",
+              "pos:l:f24ad3f060c78ecc93d8f8"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/entities/paper-projection:navmcp-fixed-v1",
+          "value": {
+            "id": "paper-projection:navmcp-fixed-v1",
+            "kind": "paper",
+            "label": "Scaffolding Foundation Models into Physical-World Agents Pushes the Frontier of Long-Horizon Navigation",
+            "paperId": "navmcp",
+            "versionIds": [
+              "arxiv:2608.30396v1"
+            ],
+            "taskRefs": [],
+            "claimIds": [
+              "claim:t:navmcp26:application",
+              "new-method:navmcp"
+            ],
+            "status": "selected_primary_sections",
+            "detail": {
+              "canonicalPaperId": "navmcp",
+              "sourceVersionId": "primary:navmcp",
+              "claimIds": [
+                "claim:t:navmcp26:application",
+                "new-method:navmcp"
+              ],
+              "sourceScope": "固定版本选段证据；不增加全文阅读完成。"
+            },
+            "sourceRefs": [
+              {
+                "sourceId": "primary:navmcp",
+                "sourceVersionId": "primary:navmcp",
+                "versionId": "arxiv:2608.30396v1",
+                "paperId": "navmcp",
+                "url": "https://arxiv.org/html/2608.30396v1",
+                "sourceURL": "https://arxiv.org/html/2608.30396v1",
+                "descriptor": "arXiv 2608.30396v1",
+                "versionStatus": "fixed_arxiv_version_url",
+                "detail": {
+                  "id": "primary:navmcp",
+                  "canonicalPaperId": "navmcp",
+                  "url": "https://arxiv.org/html/2608.30396v1",
+                  "version": "arXiv 2608.30396v1",
+                  "versionStatus": "fixed_publication_or_revision",
+                  "readLevel": "selected_primary_method_sections_checked",
+                  "locator": [
+                    "§3.2–3.4; Fig.2–3"
+                  ]
+                },
+                "locator": "§3.2–3.4; Fig.2–3"
+              }
+            ],
+            "positionIds": [
+              "pos:l:fde2c9f21cf26613bb25e7",
+              "pos:l:77e3386c37e70c8b6d9379"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:l:77e3386c37e70c8b6d9379",
+          "value": {
+            "id": "pos:l:77e3386c37e70c8b6d9379",
+            "entityId": "paper-projection:navmcp-fixed-v1",
+            "tree": "l",
+            "scopeId": "scope:all",
+            "paperId": "navmcp",
+            "versionId": "arxiv:2608.30396v1",
+            "parentId": "pos:l:f24ad3f060c78ecc93d8f8",
+            "childIds": [],
+            "relationType": "described_in",
+            "order": 0,
+            "depth": 3,
+            "label": "Scaffolding Foundation Models into Physical-World Agents Pushes the Frontier of Long-Horizon Navigation",
+            "kind": "paper",
+            "status": "selected_primary_sections",
+            "claimIds": [
+              "claim:t:navmcp26:application",
+              "new-method:navmcp"
+            ],
+            "association": "context",
+            "condition": "NavMCP v1主动导航取证EQA；具体评测协议逐benchmark记录；记忆限episode内跨调用。",
+            "versionIds": [
+              "arxiv:2608.30396v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:l:b7767a029666dc227dd9aa/childIds/1",
+          "value": "pos:l:f24ad3f060c78ecc93d8f8"
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:l:f24ad3f060c78ecc93d8f8",
+          "value": {
+            "id": "pos:l:f24ad3f060c78ecc93d8f8",
+            "entityId": "methods:pipeline-navmcp-fixed-v1",
+            "tree": "l",
+            "scopeId": "scope:all",
+            "paperId": "navmcp",
+            "versionId": "arxiv:2608.30396v1",
+            "parentId": "pos:l:b7767a029666dc227dd9aa",
+            "childIds": [
+              "pos:l:77e3386c37e70c8b6d9379"
+            ],
+            "relationType": "addresses_task",
+            "order": 1,
+            "depth": 2,
+            "label": "NavMCP：意图、观察与记忆接口",
+            "kind": "pipeline_recipe",
+            "status": "selected_source_grounded",
+            "claimIds": [
+              "claim:t:navmcp26:application",
+              "new-method:navmcp"
+            ],
+            "association": "context",
+            "condition": "NavMCP v1主动导航取证EQA；具体评测协议逐benchmark记录；记忆限episode内跨调用。",
+            "versionIds": [
+              "arxiv:2608.30396v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:l:fce0311e555e8124da8891",
+          "value": {
+            "id": "pos:l:fce0311e555e8124da8891",
+            "entityId": "methods:pipeline-navmcp-fixed-v1",
+            "tree": "l",
+            "scopeId": "task:active-eqa",
+            "paperId": "navmcp",
+            "versionId": "arxiv:2608.30396v1",
+            "parentId": "pos:l:fe2d34304d42af1ea8ed56",
+            "childIds": [
+              "pos:l:fde2c9f21cf26613bb25e7"
+            ],
+            "relationType": "addresses_task",
+            "order": 1,
+            "depth": 1,
+            "label": "NavMCP：意图、观察与记忆接口",
+            "kind": "pipeline_recipe",
+            "status": "selected_source_grounded",
+            "claimIds": [
+              "claim:t:navmcp26:application",
+              "new-method:navmcp"
+            ],
+            "association": "direct",
+            "condition": "NavMCP v1主动导航取证EQA；具体评测协议逐benchmark记录；记忆限episode内跨调用。",
+            "versionIds": [
+              "arxiv:2608.30396v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:l:fde2c9f21cf26613bb25e7",
+          "value": {
+            "id": "pos:l:fde2c9f21cf26613bb25e7",
+            "entityId": "paper-projection:navmcp-fixed-v1",
+            "tree": "l",
+            "scopeId": "task:active-eqa",
+            "paperId": "navmcp",
+            "versionId": "arxiv:2608.30396v1",
+            "parentId": "pos:l:fce0311e555e8124da8891",
+            "childIds": [],
+            "relationType": "described_in",
+            "order": 0,
+            "depth": 2,
+            "label": "Scaffolding Foundation Models into Physical-World Agents Pushes the Frontier of Long-Horizon Navigation",
+            "kind": "paper",
+            "status": "selected_primary_sections",
+            "claimIds": [
+              "claim:t:navmcp26:application",
+              "new-method:navmcp"
+            ],
+            "association": "direct",
+            "condition": "NavMCP v1主动导航取证EQA；具体评测协议逐benchmark记录；记忆限episode内跨调用。",
+            "versionIds": [
+              "arxiv:2608.30396v1"
+            ]
+          }
+        },
+        {
+          "op": "add",
+          "path": "/positions/pos:l:fe2d34304d42af1ea8ed56/childIds/1",
+          "value": "pos:l:fce0311e555e8124da8891"
+        },
+        {
+          "op": "add",
+          "path": "/relatedRelations/319",
+          "value": {
+            "id": "navmcp-v1:active-eqa-method",
+            "from": "task:active-eqa",
+            "to": "methods:pipeline-navmcp-fixed-v1",
+            "relationType": "addresses_task",
+            "renderAsTree": false,
+            "claimIds": [
+              "claim:t:navmcp26:application",
+              "new-method:navmcp"
+            ],
+            "detail": {
+              "claimIds": [
+                "claim:t:navmcp26:application",
+                "new-method:navmcp"
+              ],
+              "condition": "NavMCP v1主动导航取证EQA；具体评测协议逐benchmark记录；记忆限episode内跨调用。",
+              "attribution": "source_grounded_selected_reading"
+            }
+          }
+        },
+        {
+          "op": "add",
+          "path": "/relations/navmcp-v1:active-eqa-method",
+          "value": {
+            "id": "navmcp-v1:active-eqa-method",
+            "from": "task:active-eqa",
+            "to": "methods:pipeline-navmcp-fixed-v1",
+            "relationType": "addresses_task",
+            "renderAsTree": false,
+            "claimIds": [
+              "claim:t:navmcp26:application",
+              "new-method:navmcp"
+            ],
+            "detail": {
+              "claimIds": [
+                "claim:t:navmcp26:application",
+                "new-method:navmcp"
+              ],
+              "condition": "NavMCP v1主动导航取证EQA；具体评测协议逐benchmark记录；记忆限episode内跨调用。",
+              "attribution": "source_grounded_selected_reading"
+            }
+          }
+        },
+        {
+          "op": "add",
+          "path": "/scopes/32/bindings/3",
+          "value": {
+            "scopeId": "task:active-eqa",
+            "association": "direct",
+            "methodNodeIds": [
+              "pipeline-navmcp-fixed-v1"
+            ],
+            "relationType": "addresses_task",
+            "claimIds": [
+              "claim:t:navmcp26:application",
+              "new-method:navmcp"
+            ],
+            "condition": "NavMCP v1主动导航取证EQA；具体评测协议逐benchmark记录；记忆限episode内跨调用。"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/32/coverage/direct/methodCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/scopes/32/coverage/direct/methodNodeIds/1",
+          "value": "pipeline-navmcp-fixed-v1"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/32/coverage/direct/paperCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/scopes/32/coverage/direct/paperIds/1",
+          "value": "navmcp"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/32/coverage/direct/recipeCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/32/coverage/methodCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/32/coverage/total/methodCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/scopes/32/coverage/total/methodNodeIds/1",
+          "value": "pipeline-navmcp-fixed-v1"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/32/coverage/total/paperCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/scopes/32/coverage/total/paperIds/1",
+          "value": "navmcp"
+        },
+        {
+          "op": "replace",
+          "path": "/scopes/32/coverage/total/recipeCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/scopes/32/directPaperIds/1",
+          "value": "navmcp"
+        },
+        {
+          "op": "add",
+          "path": "/scopes/32/paperIds/2",
+          "value": "navmcp"
+        },
+        {
+          "op": "replace",
+          "path": "/summary/entities",
+          "old": 1477,
+          "value": 1479
+        },
+        {
+          "op": "replace",
+          "path": "/summary/positions",
+          "old": 1679,
+          "value": 1683
+        }
+      ],
+      "expectedSha256": "dcb56d0d95e250251bb7b9666c3f13dff5c7b31f67dcb03dbc5d6f370ba71220",
+      "expectedSemanticSha256": "92f4c311a74d685ee98af9f4b02d829dbf0f5d761bf472c4d5742091d0af7657"
+    },
+    {
+      "name": "当前目录派生同步",
+      "operations": [
+        {
+          "op": "replace",
+          "path": "/directory/6/coverage/analysisCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "replace",
+          "path": "/directory/6/coverage/analysisStatus",
+          "old": "no_answered_paper_analysis",
+          "value": "selected_papers_only"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/6/coverage/ciCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/directory/6/coverage/condition/analysisCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/directory/6/coverage/condition/analysisPaperIds/0",
+          "value": "navharness"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/6/coverage/condition/analysisVersionCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/directory/6/coverage/condition/analysisVersionIds/0",
+          "value": "arxiv:2609.34276v1"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/6/coverage/condition/availableAnalysisPaperCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "replace",
+          "path": "/directory/6/coverage/condition/challengeCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/directory/6/coverage/condition/challengeNodeIds/0",
+          "value": "ci-navharness-session-boundary"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/6/coverage/condition/insightCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/directory/6/coverage/condition/insightNodeIds/0",
+          "value": "insight-navharness-session-boundary"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/6/coverage/condition/methodCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/directory/6/coverage/condition/methodNodeIds/0",
+          "value": "pipeline-navharness-benchmark-v1"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/6/coverage/condition/paperCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/directory/6/coverage/condition/paperIds/0",
+          "value": "navharness"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/6/coverage/condition/recipeCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "replace",
+          "path": "/directory/6/coverage/condition/sameVersionAnalysisCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "replace",
+          "path": "/directory/6/coverage/condition/status",
+          "old": "coverage_gap",
+          "value": "selected_evidence_available"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/6/coverage/methodCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/directory/6/coverage/total/analysisCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/directory/6/coverage/total/analysisPaperIds/0",
+          "value": "navharness"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/6/coverage/total/analysisVersionCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/directory/6/coverage/total/analysisVersionIds/0",
+          "value": "arxiv:2609.34276v1"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/6/coverage/total/availableAnalysisPaperCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "replace",
+          "path": "/directory/6/coverage/total/challengeCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/directory/6/coverage/total/challengeNodeIds/0",
+          "old": "ci_cross_goal_instance_memory",
+          "value": "ci-navharness-session-boundary"
+        },
+        {
+          "op": "add",
+          "path": "/directory/6/coverage/total/challengeNodeIds/1",
+          "value": "ci_cross_goal_instance_memory"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/6/coverage/total/insightCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/directory/6/coverage/total/insightNodeIds/0",
+          "old": "insight:cross_goal_instance_memory:goat",
+          "value": "insight-navharness-session-boundary"
+        },
+        {
+          "op": "add",
+          "path": "/directory/6/coverage/total/insightNodeIds/1",
+          "value": "insight:cross_goal_instance_memory:goat"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/6/coverage/total/methodCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/directory/6/coverage/total/methodNodeIds/1",
+          "value": "pipeline-navharness-benchmark-v1"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/6/coverage/total/paperCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/directory/6/coverage/total/paperIds/1",
+          "value": "navharness"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/6/coverage/total/recipeCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/directory/6/coverage/total/sameVersionAnalysisCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "replace",
+          "path": "/directory/7/coverage/analysisCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "replace",
+          "path": "/directory/7/coverage/analysisStatus",
+          "old": "no_answered_paper_analysis",
+          "value": "selected_papers_only"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/7/coverage/ciCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/directory/7/coverage/condition/analysisCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/directory/7/coverage/condition/analysisPaperIds/0",
+          "value": "navharness"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/7/coverage/condition/analysisVersionCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/directory/7/coverage/condition/analysisVersionIds/0",
+          "value": "arxiv:2609.34276v1"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/7/coverage/condition/availableAnalysisPaperCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "replace",
+          "path": "/directory/7/coverage/condition/challengeCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/directory/7/coverage/condition/challengeNodeIds/0",
+          "value": "ci-navharness-session-boundary"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/7/coverage/condition/insightCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/directory/7/coverage/condition/insightNodeIds/0",
+          "value": "insight-navharness-session-boundary"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/7/coverage/condition/methodCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/directory/7/coverage/condition/methodNodeIds/0",
+          "value": "pipeline-navharness-benchmark-v1"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/7/coverage/condition/paperCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/directory/7/coverage/condition/paperIds/0",
+          "value": "navharness"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/7/coverage/condition/recipeCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "replace",
+          "path": "/directory/7/coverage/condition/sameVersionAnalysisCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "replace",
+          "path": "/directory/7/coverage/condition/status",
+          "old": "coverage_gap",
+          "value": "selected_evidence_available"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/7/coverage/methodCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/directory/7/coverage/total/analysisCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/directory/7/coverage/total/analysisPaperIds/0",
+          "value": "navharness"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/7/coverage/total/analysisVersionCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/directory/7/coverage/total/analysisVersionIds/0",
+          "value": "arxiv:2609.34276v1"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/7/coverage/total/availableAnalysisPaperCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "replace",
+          "path": "/directory/7/coverage/total/challengeCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/directory/7/coverage/total/challengeNodeIds/0",
+          "old": "ci_language_ivln-map-cma",
+          "value": "ci-navharness-session-boundary"
+        },
+        {
+          "op": "add",
+          "path": "/directory/7/coverage/total/challengeNodeIds/1",
+          "value": "ci_language_ivln-map-cma"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/7/coverage/total/insightCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/directory/7/coverage/total/insightNodeIds/0",
+          "old": "insight:language:ivln-map-cma",
+          "value": "insight-navharness-session-boundary"
+        },
+        {
+          "op": "add",
+          "path": "/directory/7/coverage/total/insightNodeIds/1",
+          "value": "insight:language:ivln-map-cma"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/7/coverage/total/methodCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/directory/7/coverage/total/methodNodeIds/1",
+          "value": "pipeline-navharness-benchmark-v1"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/7/coverage/total/paperCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/directory/7/coverage/total/paperIds/1",
+          "value": "navharness"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/7/coverage/total/recipeCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/directory/7/coverage/total/sameVersionAnalysisCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "replace",
+          "path": "/directory/9/coverage/ciCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/directory/9/coverage/condition/challengeCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/directory/9/coverage/condition/challengeNodeIds/0",
+          "value": "ci_candidate_verification"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/9/coverage/condition/insightCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/directory/9/coverage/condition/insightNodeIds/0",
+          "value": "insight:ci_candidate_verification:sap-nav"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/9/coverage/condition/methodCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/directory/9/coverage/condition/methodNodeIds/0",
+          "value": "pipeline-sapnav"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/9/coverage/condition/paperCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/directory/9/coverage/condition/paperIds/0",
+          "value": "sap-nav"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/9/coverage/condition/recipeCount",
+          "old": 0,
+          "value": 1
+        },
+        {
+          "op": "replace",
+          "path": "/directory/9/coverage/condition/status",
+          "old": "coverage_gap",
+          "value": "selected_evidence_available"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/9/coverage/methodCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/directory/9/coverage/originalTaskProjectionCoverage/scope",
+          "old": "条件映射仅提供阅读关联；不声称相关方法已在全部关联任务benchmark运行，也不以广义条件覆盖填满精读缺口。",
+          "value": "条件映射仅提供阅读关联；不声称相关方法已在全部关联任务benchmark运行，也不以广义条件覆盖填满精读缺口。 此字段保留早期任务目录投影快照；当前方法和挑战覆盖以同条 direct/condition/total 派生统计为准。"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/9/coverage/total/challengeCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/directory/9/coverage/total/challengeNodeIds/0",
+          "old": "goal-ci:planavid",
+          "value": "ci_candidate_verification"
+        },
+        {
+          "op": "add",
+          "path": "/directory/9/coverage/total/challengeNodeIds/1",
+          "value": "goal-ci:planavid"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/9/coverage/total/insightCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/directory/9/coverage/total/insightNodeIds/1",
+          "value": "insight:ci_candidate_verification:sap-nav"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/9/coverage/total/methodCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/directory/9/coverage/total/methodNodeIds/1",
+          "value": "pipeline-sapnav"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/9/coverage/total/paperCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/directory/9/coverage/total/paperIds/1",
+          "value": "sap-nav"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/9/coverage/total/recipeCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/directory/9/paperIds/1",
+          "value": "sap-nav"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/32/coverage/direct/methodCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/directory/32/coverage/direct/methodNodeIds/1",
+          "value": "pipeline-navmcp-fixed-v1"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/32/coverage/direct/paperCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/directory/32/coverage/direct/paperIds/1",
+          "value": "navmcp"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/32/coverage/direct/recipeCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/directory/32/coverage/methodCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/directory/32/coverage/total/methodCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/directory/32/coverage/total/methodNodeIds/1",
+          "value": "pipeline-navmcp-fixed-v1"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/32/coverage/total/paperCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/directory/32/coverage/total/paperIds/1",
+          "value": "navmcp"
+        },
+        {
+          "op": "replace",
+          "path": "/directory/32/coverage/total/recipeCount",
+          "old": 1,
+          "value": 2
+        },
+        {
+          "op": "add",
+          "path": "/directory/32/paperIds/2",
+          "value": "navmcp"
+        }
+      ],
+      "expectedSha256": "9069c6a11ae9a867671522d04e6a24b4edcada660d03feb2f41340bfc395825c",
+      "expectedSemanticSha256": "39e77efe32b5d779ffa44f807af4ec40f0d552e180861af2ee8d9715414cb489"
+    }
+  ],
+  "readingScope": "限定来源选段与精确更正；原解析内容与阅读完成数不变。"
+}

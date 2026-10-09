@@ -5,9 +5,22 @@ function own(o,k){return !!o&&Object.prototype.hasOwnProperty.call(o,k);}
 function need(value,message){if(!value)throw new Error(message);}
 function equal(a,b){if(a===b)return true;if(!a||!b||typeof a!=='object'||typeof b!=='object')return false;var x=Object.keys(a).sort(),y=Object.keys(b).sort();return x.length===y.length&&x.every(function(k,i){return k===y[i]&&equal(a[k],b[k]);});}
 function hash(bytes){need(root.crypto&&root.crypto.subtle,'浏览器不支持完整性校验');return root.crypto.subtle.digest('SHA-256',bytes).then(function(v){return Array.from(new Uint8Array(v)).map(function(n){return n.toString(16).padStart(2,'0');}).join('');});}
+function restoreScopeCoverage(bundle){
+ var d=bundle.delivery||{},encoding=d.scopeCoverageEncoding,refs=d.scopeCoverageIds,directoryRefs=d.directoryCoverageIds,scopes=Object.create(null),coverage=bundle.coverage||{},directory=Object.create(null);
+ bundle.scopes.forEach(function(s){need(!own(scopes,s.id),'阅读范围身份重复');scopes[s.id]=s;});
+ bundle.directory.forEach(function(row){need(!own(directory,row.id),'目录身份重复');directory[row.id]=row;});
+ if(encoding===undefined){need(refs===undefined&&directoryRefs===undefined,'覆盖引用缺少编码');Object.keys(coverage).forEach(function(id){need(own(scopes,id)&&own(scopes[id],'coverage')&&own(scopes[id],'coveragePolicy'),'未编码的阅读覆盖缺失');});Object.keys(directory).forEach(function(id){need(own(directory[id],'coverage'),'未编码的目录覆盖缺失');});return;}
+ need(encoding==='coverage-and-policy-by-scope-id-v1','未知阅读覆盖编码');
+ need(Array.isArray(refs)&&refs.every(function(id){return typeof id==='string';})&&new Set(refs).size===refs.length&&equal(refs.slice().sort(),Object.keys(coverage).sort()),'阅读覆盖引用清单不符');
+ Object.keys(scopes).forEach(function(id){if(refs.indexOf(id)<0)need(own(scopes[id],'coverage')&&(scopes[id].isVirtual||own(scopes[id],'coveragePolicy')),'阅读范围同时缺少内联与引用覆盖');});
+ var prepared=[];refs.forEach(function(id){need(own(scopes,id)&&!own(scopes[id],'coverage')&&!own(scopes[id],'coveragePolicy'),'阅读覆盖引用未知或冲突');var c=coverage[id];need(c&&c.scopeId===id&&c.coveragePolicy&&typeof c.coveragePolicy==='object'&&!Array.isArray(c.coveragePolicy),'阅读覆盖身份不符');prepared.push({scope:scopes[id],coverage:JSON.parse(JSON.stringify(c)),policy:JSON.parse(JSON.stringify(c.coveragePolicy))});});
+ var directoryPrepared=[];if(directoryRefs===undefined){Object.keys(directory).forEach(function(id){need(own(directory[id],'coverage'),'未编码的目录覆盖缺失');});}else{need(Array.isArray(directoryRefs)&&directoryRefs.every(function(id){return typeof id==='string';})&&new Set(directoryRefs).size===directoryRefs.length&&equal(directoryRefs.slice().sort(),Object.keys(directory).sort()),'目录覆盖引用清单不符');directoryRefs.forEach(function(id){need(own(coverage,id)&&!own(directory[id],'coverage'),'目录覆盖引用未知或冲突');directoryPrepared.push({entry:directory[id],coverage:JSON.parse(JSON.stringify(coverage[id]))});});}
+ prepared.forEach(function(row){row.scope.coverage=row.coverage;row.scope.coveragePolicy=row.policy;});directoryPrepared.forEach(function(row){row.entry.coverage=row.coverage;});delete d.scopeCoverageEncoding;delete d.scopeCoverageIds;delete d.directoryCoverageIds;
+}
 function create(bundle){
  var delivery=bundle.delivery;if(!delivery)return null;
  need(delivery.schemaVersion==='navigation-delivery/1'&&/^[a-f0-9]{64}$/.test(delivery.sourceModelSha256),'分片清单版本不符');
+ restoreScopeCoverage(bundle);
  var cache=Object.create(null),jobs=Object.create(null),attempts=Object.create(null),errors=Object.create(null),progress=Object.create(null),listeners=[],timeout=20000;
  // Preserve the validated index metadata, even after a full record is installed.
  var metadata={entities:JSON.parse(JSON.stringify(bundle.entities)),claims:JSON.parse(JSON.stringify(bundle.claims))};

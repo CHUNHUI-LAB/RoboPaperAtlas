@@ -58,6 +58,63 @@ def restore_research_map(model, compact):
         else: raise ValueError('Unknown or mismatched global title reference')
     return result
 
+def compact_scope_coverage(index):
+    refs=[]
+    for scope in index['scopes']:
+        sid=scope['id']
+        if sid not in index['coverage']:continue
+        canonical=index['coverage'][sid]
+        if scope.get('coverage')!=canonical or scope.get('coveragePolicy')!=canonical.get('coveragePolicy'):
+            raise ValueError('Scope coverage is not an exact duplicate: '+sid)
+        del scope['coverage'];del scope['coveragePolicy'];refs.append(sid)
+    if set(refs)!=set(index['coverage']):raise ValueError('Coverage references must match the scope inventory')
+    index['delivery']['scopeCoverageEncoding']='coverage-and-policy-by-scope-id-v1'
+    index['delivery']['scopeCoverageIds']=refs
+    directory_refs=[]
+    for entry in index['directory']:
+        sid=entry['id']
+        if sid not in index['coverage'] or entry.get('coverage')!=index['coverage'][sid]:
+            raise ValueError('Directory coverage is not an exact duplicate: '+sid)
+        del entry['coverage'];directory_refs.append(sid)
+    index['delivery']['directoryCoverageIds']=directory_refs
+
+def restore_scope_coverage(index):
+    result=copy.deepcopy(index);delivery=result.get('delivery',{})
+    encoding=delivery.get('scopeCoverageEncoding');refs=delivery.get('scopeCoverageIds')
+    directory_refs=delivery.get('directoryCoverageIds')
+    scopes={s['id']:s for s in result['scopes']}
+    if encoding is None:
+        if refs is not None or directory_refs is not None:raise ValueError('Coverage references have no encoding')
+        if any('coverage' not in scopes[sid] or 'coveragePolicy' not in scopes[sid] for sid in result['coverage']):
+            raise ValueError('Missing unencoded scope coverage')
+        if any('coverage' not in entry for entry in result['directory']):raise ValueError('Missing unencoded directory coverage')
+        return result
+    if encoding!='coverage-and-policy-by-scope-id-v1':raise ValueError('Unknown scope coverage encoding')
+    if not isinstance(refs,list) or any(not isinstance(x,str) for x in refs) or len(set(refs))!=len(refs) or set(refs)!=set(result['coverage']):
+        raise ValueError('Invalid scope coverage reference inventory')
+    for sid,scope in scopes.items():
+        if sid not in refs and ('coverage' not in scope or not scope.get('isVirtual') and 'coveragePolicy' not in scope):
+            raise ValueError('Scope coverage is missing from both inline and referenced records')
+    for sid in refs:
+        if sid not in scopes or 'coverage' in scopes[sid] or 'coveragePolicy' in scopes[sid]:
+            raise ValueError('Unknown or conflicting scope coverage reference')
+        coverage=result['coverage'][sid]
+        if coverage.get('scopeId')!=sid or not isinstance(coverage.get('coveragePolicy'),dict):raise ValueError('Coverage identity mismatch')
+        scopes[sid]['coverage']=copy.deepcopy(coverage)
+        scopes[sid]['coveragePolicy']=copy.deepcopy(coverage['coveragePolicy'])
+    directory={row['id']:row for row in result['directory']}
+    if len(directory)!=len(result['directory']):raise ValueError('Duplicate directory identity')
+    if directory_refs is None:
+        if any('coverage' not in row for row in directory.values()):raise ValueError('Missing unencoded directory coverage')
+    else:
+        if not isinstance(directory_refs,list) or any(not isinstance(x,str) for x in directory_refs) or len(set(directory_refs))!=len(directory_refs) or set(directory_refs)!=set(directory):raise ValueError('Invalid directory coverage references')
+        for sid in directory_refs:
+            if sid not in result['coverage'] or 'coverage' in directory[sid]:raise ValueError('Unknown or conflicting directory coverage')
+            directory[sid]['coverage']=copy.deepcopy(result['coverage'][sid])
+        del delivery['directoryCoverageIds']
+    del delivery['scopeCoverageEncoding'];del delivery['scopeCoverageIds']
+    return result
+
 def project(model, model_sha):
     index = copy.deepcopy(model)
     for table in OMIT:
@@ -133,6 +190,9 @@ def project(model, model_sha):
                          'referenceIds':{key:sorted(ids) for key,ids in sorted(detail_ids.items())},
                          'packets':manifest, 'initialPackets':{eid:packets[eid] for eid in sorted(seed_ids)},
                          'archive':{'sha256':archive_sha,'bytes':len(archive_raw)}}
+    before_coverage_compaction=copy.deepcopy(index)
+    compact_scope_coverage(index)
+    if restore_scope_coverage(index)!=before_coverage_compaction:raise ValueError('Scope coverage projection lost information')
     embedded = inline_json(index).encode()
     return {'index':index, 'inline':embedded, 'indexSha256':digest(embedded), 'files':files,
             'reconstructed':reconstructed, 'researchMap':research_map}
