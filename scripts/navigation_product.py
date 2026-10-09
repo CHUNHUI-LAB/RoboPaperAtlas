@@ -12,7 +12,7 @@ from radar_c2_preview import read_regular, SOURCE_DIRS
 
 ROUTE = 'research/navigation'
 SOURCE = 'data/navigation-product'
-MODEL_SHA256 = 'a3d5b3cc579222c079701a84440bc2ee09621a682ff4603774fdfa2c41db7a7c'
+MODEL_SHA256 = '1229372f697316dc5c0627995fce7de18496160d85f4a1acb4ffc2a6faf1d708'
 PUBLIC_FILES = frozenset(('index.html','product-data.json'))
 ASSETS = ('navigation-product-model.js','navigation-product.js','navigation-product.css')
 
@@ -33,8 +33,8 @@ def payloads(root):
     require(manifest['encoding']=='gzip','Unknown product encoding')
     require({p.name for p in folder.iterdir()}=={'manifest.json','model.json.gz'},'Unexpected product input file')
     compressed=read_regular(root,folder/'model.json.gz')
-    require(len(compressed)==manifest['compressedBytes'] and hashlib.sha256(compressed).hexdigest()==manifest['compressedSha256']=='75c02de2cb5e1a33db611598ed7c2b2253b14ea05e3edcb54862ab21cc290763','Frozen compressed model mismatch')
-    raw=gzip.decompress(compressed);require(len(raw)==manifest['bytes']==9223857,'Product model length mismatch')
+    require(len(compressed)==manifest['compressedBytes'] and hashlib.sha256(compressed).hexdigest()==manifest['compressedSha256']=='e3d725c3dbf36a38ea1ff930a946c13691d69e3f39a959f2b4d622addc1fe127','Frozen compressed model mismatch')
+    raw=gzip.decompress(compressed);require(len(raw)==manifest['bytes']==12523463,'Product model length mismatch')
     require(hashlib.sha256(raw).hexdigest()==manifest['sha256']==MODEL_SHA256,'Reviewed product science mismatch')
     model=exact_json(raw);require(model['schemaVersion']=='navigation-product/1','Unknown product schema')
     require(len(model['papers'])==manifest['expected']['papers'] and len(model['claims'])==manifest['expected']['claims'] and len(model['positions'])==manifest['expected']['positions'],'Product coverage count mismatch')
