@@ -28,6 +28,7 @@ jobs:
           python3 scripts/assemble_frontier.py
           python3 scripts/reports.py
           python3 -m unittest discover -s tests -v
+          node --test tests/test_navigation_product.cjs
           node tests/test_hero_atlas.cjs
           node tests/test_brief_reader.cjs
           node tests/test_reader_controls.cjs

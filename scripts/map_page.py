@@ -101,6 +101,7 @@ def map_html(catalog, base='../', css='../assets/paper-map.css', js='../assets/p
   <section class="paper-map" id="paper-map" aria-label="论文主题地图" data-view="list">
     <div class="map-workspace">
       <div class="map-explore">
+  <p class="map-research-entry"><a class="primary-link" href="{base}research/navigation/index.html">导航研究地图：文献 / 挑战–思路 / 论文解析三棵联动树 →</a></p>
   <section class="map-heading map-star-heading"><div><p class="eyebrow">RoboPaperAtlas / EXPLORE</p><h1>研究星图</h1></div><p>{len(data['papers'])} 个星点，{len(data['papers'])} 篇真实论文。<br>选择研究方向，右侧立即显示对应论文。</p></section>
         <div class="map-canvas-wrap" hidden>
           <svg id="map-canvas" role="group" aria-label="论文主题地图。方向键切换论文，Enter 查看，加减键缩放，Home 显示全部。" aria-describedby="map-help map-legend" tabindex="0"><defs><radialGradient id="map-nebula"><stop offset="0" stop-color="#b5cae0" stop-opacity=".16"/><stop offset=".4" stop-color="#7995b3" stop-opacity=".07"/><stop offset="1" stop-color="#597086" stop-opacity="0"/></radialGradient><radialGradient id="map-star-glow"><stop offset="0" stop-color="#f1f8ff" stop-opacity=".8"/><stop offset=".24" stop-color="#d8e8ff" stop-opacity=".22"/><stop offset="1" stop-color="#acc8f0" stop-opacity="0"/></radialGradient></defs><g class="map-world"><g class="map-regions" aria-hidden="true"></g><g class="map-edges" aria-hidden="true"></g><g class="map-nodes"></g><g class="atlas-systems"></g><g class="atlas-problems"></g></g></svg>

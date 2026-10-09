@@ -85,6 +85,8 @@ def main(argv=None):
     validate_c2_preview(ROOT, target)
     from objectnav_reading_preview import validate_preview as validate_objectnav_preview, write_preview as write_objectnav_preview
     validate_objectnav_preview(ROOT, target)
+    from navigation_product import validate_preview as validate_navigation_product
+    validate_navigation_product(ROOT, target)
     subprocess.run(
         [sys.executable, str(ROOT / 'scripts/build.py'), '--output', args.output],
         check=True,
