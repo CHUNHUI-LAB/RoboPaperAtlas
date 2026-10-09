@@ -1,6 +1,6 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),zlib=require('node:zlib'),cp=require('node:child_process'),{JSDOM}=require('jsdom');
 const root=path.resolve(__dirname,'..'),M=require('../assets/navigation-product-model.js'),b=JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(root,'data/navigation-product/model.json.gz'))));
-const html=cp.execFileSync('python3',['-c',"import sys;from pathlib import Path;sys.path.insert(0,'scripts');import navigation_product as p;r=Path('.').resolve();print(p.render(r,p.payloads(r)[1]))"],{cwd:root,encoding:'utf8',maxBuffer:2e6});
+const html=cp.execFileSync('python3',['-c',"import sys;from pathlib import Path;sys.path.insert(0,'scripts');import navigation_product as p;r=Path('.').resolve();print(p.render(r,p.payloads(r)[1]))"],{cwd:root,encoding:'utf8',maxBuffer:12e6});
 const expected=[
   {
     "scopeId": "task:language-objectnav",

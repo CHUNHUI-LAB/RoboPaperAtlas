@@ -22,7 +22,14 @@ class NavigationProductBuildTests(unittest.TestCase):
         self.assertEqual({x.name for x in dest.iterdir()},product.PUBLIC_FILES)
         for name in product.ASSETS:self.assertIn('../../assets/'+name+'?v=',page)
         self.assertEqual(hashlib.sha256((dest/'product-data.json').read_bytes()).hexdigest(),product.MODEL_SHA256)
-        self.assertEqual(page.count('data-tree-tab='),3)
+        from html.parser import HTMLParser
+        class Tabs(HTMLParser):
+            values=[]
+            def handle_starttag(self,tag,attrs):
+                a=dict(attrs)
+                if tag=='button' and a.get('role')=='tab':self.values.append(a.get('data-tree-tab'))
+        tabs=Tabs();tabs.feed(page)
+        self.assertEqual(tabs.values,['l','c','a'])
         self.assertIn('原59节点模板',page)
     def test_missing_source_rejected(self):
         r=self.fixture();(r/'data/navigation-product/model.json.gz').unlink()

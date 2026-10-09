@@ -1,7 +1,7 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),cp=require('node:child_process'),{JSDOM}=require('jsdom');
 const root=path.resolve(__dirname,'..');
-const html=cp.execFileSync('python3',['-c',"import sys;from pathlib import Path;sys.path.insert(0,'scripts');import navigation_product as p;r=Path('.').resolve();print(p.render(r,p.payloads(r)[1]))"],{cwd:root,encoding:'utf8',maxBuffer:2e6});
+const html=cp.execFileSync('python3',['-c',"import sys;from pathlib import Path;sys.path.insert(0,'scripts');import navigation_product as p;r=Path('.').resolve();print(p.render(r,p.payloads(r)[1]))"],{cwd:root,encoding:'utf8',maxBuffer:12e6});
 test('tree-first document keeps current scope and all research entries before actual workspace',()=>{
  const d=new JSDOM(html),doc=d.window.document;tCleanup(d,()=>{
  const before=(a,b)=>!!(a.compareDocumentPosition(b)&4),workspace=doc.querySelector('#np-workspace'),conditions=doc.querySelector('#np-task-conditions');
@@ -44,7 +44,7 @@ test('first scope expands bounded routes; revisiting deliberate collapse and Bac
  const zlib=require('node:zlib'),b=JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(root,'data/navigation-product/model.json.gz'))));
  const d=new JSDOM(html,{url:'https://example.org/RoboPaperAtlas/research/navigation/',runScripts:'outside-only',pretendToBeVisual:true});t.after(()=>d.window.close());const w=d.window,doc=w.document;w.scrollTo=()=>{};w.HTMLElement.prototype.scrollIntoView=function(){};w.NAVIGATION_PRODUCT=b;
  for(const name of ['navigation-product-model.js','navigation-product.js'])w.eval(fs.readFileSync(path.join(root,'assets',name),'utf8'));
- const settle=()=>new Promise(r=>setTimeout(r,45));await settle();
+ const settle=async()=>{await new Promise(r=>setTimeout(r,20));await new Promise(r=>w.requestAnimationFrame(()=>w.requestAnimationFrame(r)));};await settle();
  const choose=name=>{doc.querySelector('#np-common').open=true;[...doc.querySelectorAll('#np-recommended button')].find(x=>x.textContent.startsWith(name)).click();};
  choose('GOAT');await settle();const M=w.NavigationProductModel,goatState=w.NavigationProductApp.getState(),rootId=M.roots(b,goatState.route)[0];
  assert.ok(M.visible(b,goatState).length>1);assert.ok(M.getBucket(goatState).expandedByTree.l.length<=3,'only bounded initial expansion');
@@ -61,7 +61,7 @@ test('conditions button opens retained evidence without replacing canonical rout
  const zlib=require('node:zlib'),b=JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(root,'data/navigation-product/model.json.gz'))));
  const d=new JSDOM(html,{url:'https://example.org/RoboPaperAtlas/research/navigation/',runScripts:'outside-only',pretendToBeVisual:true});t.after(()=>d.window.close());const w=d.window,doc=w.document;w.scrollTo=()=>{};w.HTMLElement.prototype.scrollIntoView=function(){};w.NAVIGATION_PRODUCT=b;
  for(const name of ['navigation-product-model.js','navigation-product.js'])w.eval(fs.readFileSync(path.join(root,'assets',name),'utf8'));
- const settle=()=>new Promise(r=>setTimeout(r,45));await settle();
+ const settle=async()=>{await new Promise(r=>setTimeout(r,20));await new Promise(r=>w.requestAnimationFrame(()=>w.requestAnimationFrame(r)));};await settle();
  const choose=name=>[...doc.querySelectorAll('#np-recommended button')].find(x=>x.textContent.startsWith(name)).click();
  choose('GOAT');await settle();const hash=w.location.hash,length=w.history.length;
  doc.querySelector('#np-open-conditions').click();await settle();assert.equal(doc.querySelector('#np-task-conditions').open,true);assert.equal(w.location.hash,hash);assert.equal(w.history.length,length);assert.equal(doc.activeElement,doc.querySelector('#np-task-conditions>summary'));
