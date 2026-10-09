@@ -87,3 +87,7 @@ main{padding-top:8px}
  .np-tree ul ul ul .np-node-level{display:block;position:absolute;right:6px;top:2px;font-size:.66rem;line-height:12px}
  .np-tree ul ul ul .np-node-label{padding-top:15px}
 }
+/* Native hierarchy remains usable while enhanced content is unavailable. */
+.np-native-reading{max-width:1100px;margin:auto}.np-native-reading h2{font-size:1.25rem}.np-native-reading h3{font-size:1.1rem}.np-native-forest{margin:1rem 0}.np-native-node{margin:.4rem 0;border-left:2px solid #b8d5cf;padding:.35rem .55rem;overflow-wrap:anywhere}.np-native-node>summary{font-weight:650;cursor:pointer;padding:.25rem 0}.np-native-node ul{list-style:none;margin:.3rem 0;padding-left:10px}.np-native-node ul ul ul{padding-left:0}.np-native-node li{padding:0}.np-native-content,.np-native-analysis-choice{margin:.65rem 0}.np-native-content>summary,.np-native-analysis-choice>summary{cursor:pointer}.np-native-reading a{overflow-wrap:anywhere}.np-content-pending{padding:.8rem;background:#f2f7f6;border:1px solid #c4d8d3;border-radius:.5rem}.np-load-diagnostics{flex-basis:100%;max-width:100%;overflow-wrap:anywhere}.np-load-diagnostics pre,.np-content-pending pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:.78rem}.np-static-reading .np-native-reading>p{margin:.5rem 0}@media(max-width:600px){.np-static-reading{padding:.6rem}.np-native-node{padding:.25rem .35rem}.np-native-node ul{padding-left:7px}.np-native-node ul ul ul{padding-left:0}}
+
+@media(max-width:600px){.np-native-node .np-native-node .np-native-node{padding-left:0;padding-right:0;border-left:0}}
