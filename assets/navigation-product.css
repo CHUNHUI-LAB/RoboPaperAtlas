@@ -18,3 +18,72 @@
 #navigation-product:not([data-load-state="ready"]) .np-overview, #navigation-product:not([data-load-state="ready"]) .np-supporting { display:none; }
 
 #navigation-product:not([data-load-state="ready"]) .np-start-tools { display:none; }
+
+/* Tree-first reading: long explanations remain available without starving the tree. */
+header.np-header{padding:8px 20px;gap:12px;align-items:center}
+.np-header h1{font-size:1.1rem;margin:0;flex:1}
+.np-header-links{position:relative;font-size:.8rem}
+.np-header-links summary{cursor:pointer;white-space:nowrap}
+.np-header-links[open] nav{position:absolute;right:0;top:100%;z-index:5;background:#fff;border:1px solid var(--np-line);padding:12px;width:240px}
+main{padding-top:8px}
+.np-start{padding:0;border:0;background:none;margin:0 0 5px}
+.np-start-tools{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0}
+.np-start-tools summary{min-height:30px;line-height:30px;font-weight:700;font-size:.86rem}
+.np-start-tools details{min-width:0}
+.np-recommended{grid-template-columns:repeat(2,minmax(0,1fr));margin:4px 0 8px}
+.np-scope-choice{padding:6px 9px;min-height:36px}
+.np-directory-list{grid-template-columns:1fr;max-height:50vh;overflow:auto}
+.np-loading-jump{margin:6px 0}
+#navigation-product[data-load-state="ready"] .np-loading-jump{display:none}
+.np-current-scope{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:3px 0}
+.np-current-scope .np-kicker{margin:0!important;white-space:nowrap}
+.np-current-scope h2{font-size:1rem;margin:0;line-height:1.45}
+.np-current-scope>#np-open-conditions{font-size:.75rem;white-space:nowrap}
+#navigation-product:not([data-load-state="ready"]) .np-current-scope{display:none}
+.np-status{margin:0;font-size:.72rem;min-height:0;padding:0}
+.np-status:empty{display:none}
+.np-workspace{margin-top:5px}
+.np-workspace-bar{padding-top:6px;display:flex;gap:6px 14px;flex-wrap:wrap;align-items:center}
+.np-tabs{gap:5px;flex-wrap:nowrap}
+.np-tabs button{font-size:.88rem;padding:4px 10px;min-height:34px;white-space:nowrap}
+.np-identity-controls{font-size:.76rem;min-width:0}
+.np-identity-controls summary,.np-tree-options summary{cursor:pointer;min-height:26px;line-height:26px}
+.np-identity-controls[open]{width:100%}
+.np-context-controls{margin:4px 0;gap:8px}
+.np-context-controls select{padding:4px;min-height:34px}
+.np-origin-trail{width:100%;margin:0;gap:4px}
+.np-origin-trail p{margin:0;font-size:.72rem}
+.np-origin-trail:has(>p:only-child){display:none}
+.np-version-note{margin:3px 0}
+.np-panels{margin-top:5px;gap:12px}
+.np-pane-top{padding:5px 10px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.np-pane-top h2{font-size:.92rem;margin:0}
+.np-tree-options{font-size:.75rem;flex:1;min-width:0}
+.np-tree-options[open]{flex-basis:100%}
+.np-tree-tools{margin-bottom:6px}
+.np-tree-scroll{padding:7px 10px;min-height:300px;height:61vh}
+.np-tree li{margin:5px 0}
+.np-node-row{padding:5px 7px}
+.np-tree li[aria-selected=true]>.np-node-row{padding:4px 6px}
+.np-node-label{font-size:.9rem;line-height:1.45}
+.np-edge-label{margin-top:2px}
+@media(max-width:600px){
+ header.np-header{padding:5px 8px;gap:6px}.np-brand{display:none}.np-header h1{font-size:1rem}
+ main{padding:5px 8px 30px}.np-start-tools{gap:5px}.np-start-tools summary{font-size:.8rem}
+ .np-current-scope{gap:3px 6px}.np-current-scope h2{font-size:.86rem}.np-current-scope .np-kicker{font-size:.66rem!important}.np-current-scope>#np-open-conditions{font-size:.67rem}
+ .np-workspace{margin-top:3px}.np-workspace-bar{padding-top:4px;gap:2px 8px}.np-tabs{width:100%;gap:4px}.np-tabs button{padding:3px 5px;min-height:30px;font-size:.78rem}
+ .np-identity-controls summary{min-height:23px;line-height:23px}.np-pane-top{padding:2px 7px;gap:8px}.np-pane-top h2{font-size:.82rem}
+ .np-tree-scroll{padding:4px 6px;min-height:260px;height:58vh}.np-node-row{display:flex;gap:4px;padding:4px}.np-node-label{font-size:.82rem;line-height:1.4;padding:2px 0}.np-node-level{display:block;font-size:.66rem;white-space:nowrap;flex-shrink:0}.np-node-toggle{width:22px;min-width:22px;min-height:26px;height:26px}.np-tree li[aria-selected=true]>.np-node-row{padding:3px}.np-tree ul ul{margin-top:5px;margin-bottom:7px}
+ .np-context-controls{grid-template-columns:1fr}.np-recommended{grid-template-columns:1fr}
+}
+/* Scope and active tab already provide the visual status; keep announcements for AT. */
+.np-status{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+
+#np-open-conditions{border:0;background:none;color:var(--np-accent);text-decoration:underline;min-height:26px;padding:0}
+/* Beyond the capped indentation, explicit levels preserve the real hierarchy
+   without consuming the narrow node's reading width. Root/first branch retain lines. */
+@media(max-width:600px){
+ .np-tree .np-node-level{display:none}
+ .np-tree ul ul ul .np-node-level{display:block;position:absolute;right:6px;top:2px;font-size:.66rem;line-height:12px}
+ .np-tree ul ul ul .np-node-label{padding-top:15px}
+}

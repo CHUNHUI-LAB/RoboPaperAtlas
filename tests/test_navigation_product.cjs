@@ -44,3 +44,5 @@ test('invalid explicit URL never falls back to a valid saved paper snapshot',asy
 require('./test_navigation_evidence_followup.cjs');
 
 require("./test_navigation_loading.cjs");
+
+require('./test_navigation_tree_first.cjs');
