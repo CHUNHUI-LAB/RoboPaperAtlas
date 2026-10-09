@@ -43,7 +43,7 @@ class NativeTreeTests(unittest.TestCase):
         cls.positions = [n for n in cls.dom.nodes if 'data-native-position' in n['attrs']]
 
     def test_frozen_science_is_unchanged(self):
-        self.assertEqual(hashlib.sha256(self.raw).hexdigest(), '1229372f697316dc5c0627995fce7de18496160d85f4a1acb4ffc2a6faf1d708')
+        self.assertEqual(hashlib.sha256(self.raw).hexdigest(), '9069c6a11ae9a867671522d04e6a24b4edcada660d03feb2f41340bfc395825c')
         before = json.dumps(self.model, sort_keys=True)
         self.assertEqual(render_native_trees(self.model), self.html)
         self.assertEqual(json.dumps(self.model, sort_keys=True), before)

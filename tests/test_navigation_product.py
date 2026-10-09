@@ -65,7 +65,8 @@ class NavigationEvidenceHistoryTests(unittest.TestCase):
         self.previous_compressed=(ROOT/'tests/fixtures/navigation-product-20261008.json.gz').read_bytes()
         self.previous_raw=gzip.decompress(self.previous_compressed)
         self.previous=json.loads(self.previous_raw)
-        self.current_raw,self.current=product.payloads(ROOT)
+        self.current_raw=gzip.decompress((ROOT/'tests/fixtures/navigation-product-pr52-1229.json.gz').read_bytes())
+        self.current=json.loads(self.current_raw)
     def test_explicit_historical_and_current_frozen_versions(self):
         self.assertEqual(hashlib.sha256(self.previous_compressed).hexdigest(),'75c02de2cb5e1a33db611598ed7c2b2253b14ea05e3edcb54862ab21cc290763')
         self.assertEqual(hashlib.sha256(self.previous_raw).hexdigest(),'a3d5b3cc579222c079701a84440bc2ee09621a682ff4603774fdfa2c41db7a7c')

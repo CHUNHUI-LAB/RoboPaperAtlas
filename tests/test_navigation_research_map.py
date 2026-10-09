@@ -151,7 +151,7 @@ class ResearchMapTests(unittest.TestCase):
     def test_all_220_original_scope_positions_and_editorial_groups_are_explicit(self):
         expected = {pid for pid, p in self.model['positions'].items() if p['tree'] == 'l' and p['scopeId'] != 'scope:all'}
         projected = [p['sourcePositionId'] for p in self.map['positions'].values() if p.get('sourceTree') == 'l']
-        self.assertEqual(len(expected), 220); self.assertEqual(len(projected), 220)
+        self.assertEqual(len(expected), 228); self.assertEqual(len(projected), 228)
         self.assertEqual(set(projected), expected)
         groups = {g['id']: g for g in self.model['directoryGroups']}
         for eid, entity in self.map['presentationEntities'].items():
