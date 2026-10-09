@@ -14,7 +14,7 @@ class NavigationProductBuildTests(unittest.TestCase):
     def test_frozen_exact_science_bytes(self):
         raw,m=product.payloads(ROOT)
         self.assertEqual(hashlib.sha256(raw).hexdigest(),product.MODEL_SHA256)
-        self.assertEqual(len(m['papers']),87)
+        self.assertEqual(len(m['papers']),89)
         self.assertEqual(len(m['template']['nodes']),59)
     def test_build_route_and_assets(self):
         r=self.fixture();dest=product.write_preview(r,r/'dist')
@@ -49,3 +49,37 @@ class NavigationProductBuildTests(unittest.TestCase):
             if name=='build.py':self.assertLess(s.index('validate_navigation_product(ROOT,'),s.index('shutil.rmtree(target)'))
     def test_duplicate_json_keys_rejected(self):
         with self.assertRaises(Exception):product.exact_json('{"a":1,"a":2}')
+
+
+class NavigationEvidenceHistoryTests(unittest.TestCase):
+    def setUp(self):
+        self.previous_compressed=(ROOT/'tests/fixtures/navigation-product-20261008.json.gz').read_bytes()
+        self.previous_raw=gzip.decompress(self.previous_compressed)
+        self.previous=json.loads(self.previous_raw)
+        self.current_raw,self.current=product.payloads(ROOT)
+    def test_explicit_historical_and_current_frozen_versions(self):
+        self.assertEqual(hashlib.sha256(self.previous_compressed).hexdigest(),'75c02de2cb5e1a33db611598ed7c2b2253b14ea05e3edcb54862ab21cc290763')
+        self.assertEqual(hashlib.sha256(self.previous_raw).hexdigest(),'a3d5b3cc579222c079701a84440bc2ee09621a682ff4603774fdfa2c41db7a7c')
+        self.assertEqual(hashlib.sha256(self.current_raw).hexdigest(),'1229372f697316dc5c0627995fce7de18496160d85f4a1acb4ffc2a6faf1d708')
+        self.assertEqual((len(self.previous['papers']),len(self.previous['claims']),len(self.previous['positions'])),(87,413,1557))
+        self.assertEqual((len(self.current['papers']),len(self.current['claims']),len(self.current['positions'])),(89,436,1641))
+    def test_every_historical_claim_and_position_identity_survives(self):
+        for key,value in self.previous['claims'].items():self.assertEqual(self.current['claims'][key],value)
+        for table in ('papers','entities','positions','relations'):
+            self.assertTrue(set(self.previous[table])<=set(self.current[table]))
+        for key,old in self.previous['positions'].items():
+            for field in ('entityId','tree','scopeId','paperId','versionId','parentId','association'):
+                self.assertEqual(self.current['positions'][key].get(field),old.get(field),(key,field))
+        for old in self.previous['versions']:
+            self.assertIn(self.current['versionAliases'].get(old,old),self.current['versions'])
+        for name in ('template','analyses'):self.assertEqual(self.previous[name],self.current[name])
+        changed={k for k in self.previous['coverage'] if self.previous['coverage'][k]!=self.current['coverage'][k]}
+        self.assertEqual(changed,{'task:language-objectnav','setting:portable-objectnav','task:multistage-language-navigation'})
+    def test_historical_input_cannot_impersonate_current_freeze(self):
+        with tempfile.TemporaryDirectory(dir=ROOT) as td:
+            r=Path(td);shutil.copytree(ROOT/'data/navigation-product',r/'data/navigation-product');(r/'assets').mkdir()
+            for name in product.ASSETS:shutil.copyfile(ROOT/'assets'/name,r/'assets'/name)
+            p=r/'data/navigation-product/model.json.gz';p.write_bytes(self.previous_compressed)
+            mp=p.with_name('manifest.json');manifest=json.loads(mp.read_text());manifest.update(sha256=hashlib.sha256(self.previous_raw).hexdigest(),bytes=len(self.previous_raw),compressedSha256=hashlib.sha256(self.previous_compressed).hexdigest(),compressedBytes=len(self.previous_compressed),expected={'papers':87,'claims':413,'positions':1557});mp.write_text(json.dumps(manifest))
+            with self.assertRaises(Exception):product.write_preview(r,r/'dist')
+            self.assertFalse((r/'dist').exists())
