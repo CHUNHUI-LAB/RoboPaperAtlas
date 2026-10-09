@@ -2,6 +2,7 @@
 import copy
 import hashlib
 import json
+from navigation_research_map import build_research_map
 
 OMIT = {
     'entities': ('detail', 'sourceRefs', 'directoryProjection'),
@@ -26,6 +27,36 @@ def project_record(table, value):
 def relation_claims(relation):
     d = relation.get('detail') or {}
     return relation.get('claimIds') or relation.get('evidence_refs') or d.get('claimIds') or d.get('evidence_refs') or []
+
+def compact_research_map(model, descriptor):
+    compact = copy.deepcopy(descriptor)
+    compact['labelEncoding'] = 'source-reference/1'
+    entities = {**model['entities'], **descriptor.get('presentationEntities', {})}
+    for p in compact['positions'].values():
+        if p['label'] == entities[p['entityId']]['label']:
+            p['labelRef'] = 'entityId.label'
+        elif p.get('labelSourcePaperId') == p.get('paperId') and p.get('paperId') in model['papers'] and p['label'] == model['papers'][p['paperId']]['title']:
+            p['labelRef'] = 'labelSourcePaperId.title'
+        else:
+            raise ValueError('Global title has no exact source reference')
+        del p['label']
+    restored = restore_research_map(model, compact)
+    if restored != descriptor: raise ValueError('Global label reference projection is lossy')
+    return compact
+
+
+def restore_research_map(model, compact):
+    result = copy.deepcopy(compact)
+    if result.pop('labelEncoding', None) != 'source-reference/1': raise ValueError('Unknown global label encoding')
+    entities = {**model['entities'], **result.get('presentationEntities', {})}
+    for p in result['positions'].values():
+        ref = p.pop('labelRef', None)
+        if 'label' in p: raise ValueError('Conflicting inline label and reference')
+        if ref == 'entityId.label': p['label'] = entities[p['entityId']]['label']
+        elif ref == 'labelSourcePaperId.title' and p.get('labelSourcePaperId') == p.get('paperId'):
+            p['label'] = model['papers'][p['labelSourcePaperId']]['title']
+        else: raise ValueError('Unknown or mismatched global title reference')
+    return result
 
 def project(model, model_sha):
     index = copy.deepcopy(model)
@@ -91,14 +122,17 @@ def project(model, model_sha):
                           if k not in ('schemaVersion','sourceModelSha256')})
     reconstructed['entities'] = {eid:copy.deepcopy(packets[eid]['entities'][eid]) for eid in model['entities']}
     if reconstructed != model: raise ValueError('Delivery projection lost frozen model content')
+    research_map=build_research_map(model)
+    if research_map['sourceModelSha256']!=model_sha: raise ValueError('Research map source mismatch')
     default_scope = model['recommendedScopeIds'][0]
     roots = model['forests'][default_scope]['l']
     seed_ids = {model['positions'][pid]['entityId'] for pid in roots}
+    seed_ids.update(research_map['positions'][pid]['entityId'] for pid in research_map['roots'])
     index['delivery'] = {'schemaVersion':'navigation-delivery/1', 'sourceModelSha256':model_sha,
-                         'recordOmissions':{k:list(v) for k,v in OMIT.items()},
+                         'researchMap':compact_research_map(model,research_map), 'recordOmissions':{k:list(v) for k,v in OMIT.items()},
                          'referenceIds':{key:sorted(ids) for key,ids in sorted(detail_ids.items())},
                          'packets':manifest, 'initialPackets':{eid:packets[eid] for eid in sorted(seed_ids)},
                          'archive':{'sha256':archive_sha,'bytes':len(archive_raw)}}
     embedded = inline_json(index).encode()
     return {'index':index, 'inline':embedded, 'indexSha256':digest(embedded), 'files':files,
-            'reconstructed':reconstructed}
+            'reconstructed':reconstructed, 'researchMap':research_map}

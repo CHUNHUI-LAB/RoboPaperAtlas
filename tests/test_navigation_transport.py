@@ -30,4 +30,21 @@ class NavigationTransportTests(unittest.TestCase):
  def test_embedded_json_escapes_script_boundaries(self):
   text=inline_json({'example':'</script><img src=x>\u2028\u2029'});self.assertNotIn('<',text);self.assertNotIn('\u2028',text);self.assertEqual(json.loads(text)['example'],'</script><img src=x>\u2028\u2029')
  def test_real_html_has_no_external_boot_dependency(self):
-  html=product.render(ROOT,self.model,self.projected);self.assertNotIn('<script src=',html);self.assertNotIn('rel="stylesheet"',html);self.assertIn('id="np-navigation-index"',html);self.assertIn('data-inline-start="1"',html);self.assertIn('data-index-sha="'+self.projected['indexSha256']+'"',html);self.assertIn('data-native-position=',html)
+  html=product.render(ROOT,self.model,self.projected);self.assertNotIn('<script src=',html);self.assertNotIn('rel="stylesheet"',html);self.assertIn('id="np-navigation-index"',html);self.assertIn('data-inline-start="1"',html);self.assertIn('data-index-sha="'+self.projected['indexSha256']+'"',html);self.assertIn('data-native-global-position=',html)
+
+ def test_global_labels_reconstruct_exactly_from_serialized_source_references(self):
+  from navigation_transport import restore_research_map
+  p=self.projected;actual=json.loads(p['inline'])['delivery']['researchMap']
+  self.assertEqual(restore_research_map(self.model,actual),p['researchMap'])
+  self.assertEqual(len(actual['positions']),447)
+  for position in actual['positions'].values():
+   self.assertNotIn('label',position)
+   self.assertIn(position['labelRef'],('entityId.label','labelSourcePaperId.title'))
+ def test_global_title_references_reject_ambiguous_or_unknown_sources(self):
+  from navigation_transport import restore_research_map
+  import copy
+  for mutation in ('unknown','duplicate'):
+   value=copy.deepcopy(self.projected['index']['delivery']['researchMap']);node=next(iter(value['positions'].values()))
+   if mutation=='unknown':node['labelRef']='privateSource.otherField'
+   else:node['label']='conflicting title'
+   with self.assertRaises(ValueError):restore_research_map(self.model,value)
