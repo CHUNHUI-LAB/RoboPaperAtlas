@@ -31,7 +31,7 @@ class ReaderMathTests(unittest.TestCase):
   u=self.mapping['renderer_description'];current=current.replace('class="reader-equation"','class="formula"').replace(u['replacement_html'],u['original_html'])
   self.assertEqual(current,self.source)
  def test_dependencies_pinned_and_local_fonts_complete(self):
-  package=json.loads((ROOT/'package.json').read_text());lock=json.loads((ROOT/'package-lock.json').read_text());self.assertEqual(package['devDependencies'],{'katex':'0.18.9'})
+  package=json.loads((ROOT/'package.json').read_text());lock=json.loads((ROOT/'package-lock.json').read_text());self.assertEqual(package['devDependencies'],{'katex':'0.18.9','jsdom':'26.1.0'});self.assertEqual(lock['packages']['node_modules/jsdom']['version'],'26.1.0');self.assertTrue(lock['packages']['node_modules/jsdom']['integrity'].startswith('sha512-'))
   self.assertTrue(lock['packages']['node_modules/katex']['integrity'].startswith('sha512-'))
   css=(ROOT/'assets/vendor/katex/katex.min.css').read_text();refs=re.findall(r'url\(([^)]+)\)',css);self.assertTrue(refs)
   for ref in refs:self.assertTrue((ROOT/'assets/vendor/katex'/ref).is_file());self.assertTrue(ref.endswith('.woff2'))
