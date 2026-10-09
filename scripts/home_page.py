@@ -36,7 +36,7 @@ def render(data, card, categories, shell, esc):
     ordered = sorted(papers, key=lambda p: (not p['citation_verified'], -(p.get('bibliographic_year') or 0), p['title'].casefold()))
 
     body = f'''<main id="main" class="atlas-experience library-main">
-  <header class="f2-page-intro"><h1>论文库</h1><p>从研究问题出发，连接方法、证据与实现。</p></header>
+  <header class="f2-page-intro"><h1>论文库</h1><p>从研究问题出发，连接方法、证据与实现。</p><p><a href="research/navigation/index.html" data-navigation-entry="formal">导航研究地图 · 正式三树 →</a></p></header>
   <section class="catalog-section" id="catalog" aria-labelledby="catalog-title">
     <form class="library-search" role="search" aria-label="搜索当前论文目录">
       <label class="sr-only" for="search">搜索标题、作者或关键词</label><span class="library-search-icon" aria-hidden="true">⌕</span>
