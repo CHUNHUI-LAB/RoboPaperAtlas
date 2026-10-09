@@ -29,7 +29,9 @@ class NavigationProductBuildTests(unittest.TestCase):
                 a=dict(attrs)
                 if tag=='button' and a.get('role')=='tab':self.values.append(a.get('data-tree-tab'))
         tabs=Tabs();tabs.feed(page)
-        self.assertEqual(tabs.values,['l','c','a'])
+        self.assertEqual(tabs.values,['g','l','c'])
+        self.assertIn('data-tree-tab="a"',page)
+        self.assertIn('打开这篇论文的版本证据解析',page)
         self.assertIn('原59节点模板',page)
     def test_missing_source_rejected(self):
         r=self.fixture();(r/'data/navigation-product/model.json.gz').unlink()
