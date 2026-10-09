@@ -399,6 +399,23 @@ def payloads(root):
         result.append(data)
     public, inputs = result
     validate_semantics(root, public, inputs, manifest)
+    # Add navigation only after the sealed historical inputs have been verified.
+    # Keep source bytes and science intact; only generated entry UI is extended.
+    anchor = ('<a href="../../research/navigation/index.html" '
+              'data-navigation-entry="formal" title="导航研究地图 · 正式三树">正式三树 →</a>')
+    script = public['analysis/c2.js'].decode('utf8')
+    marker = '<header class="ft-top"><a href="index.html">RoboPaperAtlas</a>'
+    require(script.count(marker) == 1, 'C2 navigation needs one faithful header')
+    old_version = sha256(public['analysis/c2.js'])[:12]
+    public['analysis/c2.js'] = script.replace(marker, marker + anchor, 1).encode('utf8')
+    new_version = sha256(public['analysis/c2.js'])[:12]
+    entry = public['index.html'].decode('utf8')
+    marker = '<span class="local-badge">隔离预览</span>'
+    require(entry.count(marker) == 1, 'C2 navigation needs one legacy header')
+    script_url = 'analysis/c2.js?v=' + old_version
+    require(entry.count(script_url) == 1, 'C2 navigation needs one pinned script URL')
+    entry = entry.replace(marker, marker + anchor, 1)
+    public['index.html'] = entry.replace(script_url, 'analysis/c2.js?v=' + new_version, 1).encode('utf8')
     return public
 
 

@@ -3,3 +3,18 @@
 /* Narrow trees retain exact ARIA hierarchy while capping visual indentation. */
 .np-node-level{display:none}
 @media(max-width:600px){main{padding-left:12px;padding-right:12px}.np-tree-scroll{padding-left:8px;padding-right:8px}.np-tree ul ul{margin-left:0;padding-left:12px}.np-tree ul ul ul,.np-tree ul.np-tree-deep{margin-left:0;padding-left:0;border-left:0}.np-tree ul ul ul>li>.np-node-row:before{display:none}.np-node-row{display:grid;grid-template-columns:24px minmax(0,1fr);gap:3px 6px;padding:6px}.np-node-label{grid-column:1/-1;width:100%;padding:3px 0}.np-node-level{display:block;font-size:.72rem;color:var(--np-muted)}.np-tree li[aria-selected=true]>.np-node-row{padding:5px}.np-tree[data-mode=outline] .np-node-row{padding:6px}.np-edge-label{margin-left:3px}.np-tree[data-mode=outline] ul ul ul>li>.np-node-row:before{display:none}}
+
+/* Immediately readable, audited HTML while the enhanced trees start. */
+.np-open-trees { display:inline-block;padding:.7rem 1rem;background:#155e58;color:white;border-radius:.5rem;font-weight:700;text-decoration:none; }
+.np-static-reading { margin:1.5rem 0;padding:1.25rem;border:1px solid var(--line,#ccd9d5);border-radius:1rem;background:#fff; }
+.np-static-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,18rem),1fr));gap:1rem;margin:1rem 0; }
+.np-static-card { padding:1rem;border:1px solid #d7e1de;border-radius:.7rem;overflow-wrap:anywhere; }
+.np-static-card h3,.np-static-card h4 { margin:0 0 .6rem; }
+.np-static-card p { line-height:1.65; }
+.np-static-reading details { margin-top:1rem; }
+#np-loading button { margin-left:.8rem; }
+.np-analysis-library { margin-top:1rem; }
+
+#navigation-product:not([data-load-state="ready"]) .np-overview, #navigation-product:not([data-load-state="ready"]) .np-supporting { display:none; }
+
+#navigation-product:not([data-load-state="ready"]) .np-start-tools { display:none; }

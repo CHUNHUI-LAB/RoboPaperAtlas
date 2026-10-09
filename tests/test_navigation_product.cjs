@@ -42,3 +42,5 @@ test('invalid explicit URL never falls back to a valid saved paper snapshot',asy
 
 // Keep the bounded evidence update under the existing CI/Pages navigation test command.
 require('./test_navigation_evidence_followup.cjs');
+
+require("./test_navigation_loading.cjs");
