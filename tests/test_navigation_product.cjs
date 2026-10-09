@@ -50,4 +50,11 @@ require('./test_navigation_tree_first.cjs');
 require('./test_navigation_sharded_startup.cjs');
 
 require('./test_navigation_global_model.cjs');
-require('./test_navigation_global_dom.cjs');
+// The production-HTML group owns several large JSDOM documents. Run the complete
+// group in a fresh process so earlier closed fixtures do not share its V8 heap.
+test('all production global DOM and published-history contracts pass in an isolated process',t=>{
+ const env={...process.env};delete env.NODE_TEST_CONTEXT;
+ const result=cp.spawnSync(process.execPath,['--test',path.join(__dirname,'test_navigation_global_dom.cjs')],{cwd:root,env,encoding:'utf8',maxBuffer:8*1024*1024});
+ if(result.stdout)t.diagnostic(result.stdout);if(result.stderr)t.diagnostic(result.stderr);
+ assert.ifError(result.error);assert.equal(result.signal,null,'global DOM runner terminated by signal');assert.equal(result.status,0,'global DOM runner must pass every test');
+});
