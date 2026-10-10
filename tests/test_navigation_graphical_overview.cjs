@@ -35,7 +35,7 @@ if (!graphicalGroup) {
   for (const [group, pattern, expectedPasses] of [
     ['original22', originalPattern, 22],
     ['review8', '^review: ', 8],
-    ['nohash3', '^nohash: ', 3],
+    ['nohash4', '^nohash: ', 4],
   ]) {
     test('graphical overview isolated group: ' + group, t => {
       const env = {...process.env, NAV_GRAPHICAL_TEST_GROUP:group, PYTHONDONTWRITEBYTECODE:'1'};
@@ -55,7 +55,7 @@ if (!graphicalGroup) {
     });
   }
 } else {
-  require('node:assert/strict').ok(['original22', 'review8', 'nohash3'].includes(graphicalGroup), 'unknown graphical test group');
+  require('node:assert/strict').ok(['original22', 'review8', 'nohash4'].includes(graphicalGroup), 'unknown graphical test group');
 // S0 graphical-overview behavioral and identity regression only.
 // JSDOM does not establish real-browser 1440-pixel readability or visual acceptance.
 // The fixture renders production code unchanged and serves exact generated packets
@@ -1258,6 +1258,56 @@ test('nohash: rapid task switches after restored relation keep the newest route 
   await frames(reload.w);
   assert.deepEqual(clean(reload.a.getState().route), route);
   assert.equal(reload.d.activeElement.id, 'np-node-' + route.node);
+  healthy(x); healthy(reload);
+});
+
+
+test('nohash: unload saves the final scroll before the debounce without cancelling navigation', async t => {
+  const x = await page(); t.after(() => x.w.close());
+  relationPath(x, 'tasks:relation:90').dispatchEvent(new x.w.MouseEvent('click', {bubbles:true}));
+  await frames(x.w);
+  home(x).scrollTop = 527;
+  x.w.dispatchEvent(new x.w.Event('pagehide'));
+  x.w.history.replaceState({...clean(x.w.history.state),unrelatedOwnerField:'preserved'}, '', x.w.location.href);
+  let added=0, removed=0;
+  const add=x.w.addEventListener.bind(x.w),remove=x.w.removeEventListener.bind(x.w);
+  x.w.addEventListener=function(type,...args){if(type==='beforeunload')added++;return add(type,...args);};
+  x.w.removeEventListener=function(type,...args){if(type==='beforeunload')removed++;return remove(type,...args);};
+  home(x).scrollTop = 872;
+  x.w.scrollTo(0, 33);
+  home(x).dispatchEvent(new x.w.Event('scroll'));
+  home(x).dispatchEvent(new x.w.Event('scroll'));
+  assert.equal(added,1,'pending scroll registers one temporary listener');
+  assert.equal(x.M.getBucket(x.w.history.state[x.M.KEY]).overviewView.scrollTop, 527, 'precondition: delayed persistence has not fired');
+  const event = new x.w.Event('beforeunload', {cancelable:true});
+  assert.equal(x.w.dispatchEvent(event), true);
+  assert.equal(event.defaultPrevented, false, 'saving must not cancel navigation or request a prompt');
+  const saved = clean(x.w.history.state);
+  assert.equal(x.M.getBucket(saved[x.M.KEY]).overviewView.scrollTop, 872);
+  assert.equal(x.M.getBucket(saved[x.M.KEY]).windowScroll, 33);
+  assert.equal(saved.unrelatedOwnerField, 'preserved');
+  assert.equal(removed,1,'successful persistence removes the lifecycle listener');
+  home(x).dispatchEvent(new x.w.Event('scroll'));
+  assert.equal(added,2,'a later dirty scroll creates a new bounded pending window');
+  x.w.dispatchEvent(new x.w.Event('pagehide'));
+  assert.equal(removed,2,'existing pagehide also flushes and removes the listener');
+  x.a.render({restore:true,focus:true});
+  home(x).dispatchEvent(new x.w.Event('scroll'));
+  assert.equal(added,2,'restoration scroll does not arm an unload listener');
+  await frames(x.w);
+  home(x).scrollTop=900;
+  home(x).dispatchEvent(new x.w.Event('scroll'));
+  assert.equal(added,3);
+  await wait(160);
+  assert.equal(removed,3,'normal debounce persistence also disarms');
+  assert.equal(x.M.getBucket(x.w.history.state[x.M.KEY]).overviewView.scrollTop,900);
+
+  assert.equal(fs.readFileSync(path.join(root,'assets/navigation-product.js'),'utf8').split("addEventListener('beforeunload',saveCurrent)").length-1, 1, 'one lifecycle listener registration');
+  const reload = await page({saved}); t.after(() => reload.w.close());
+  assert.equal(reload.w.location.hash, '');
+  assert.equal(home(reload).scrollTop, 872);
+  assert.equal(reload.w.scrollY, 33);
+  assert.equal(reload.d.activeElement.id, 'np-map-relation-evidence-tasks:relation:90');
   healthy(x); healthy(reload);
 });
 
