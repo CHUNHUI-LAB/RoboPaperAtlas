@@ -287,6 +287,34 @@ class QuietHandler(http.server.SimpleHTTPRequestHandler):
         super().do_GET()
 
 
+COLD_RESTORE_SNAPSHOT_JS = r"""
+var landing=document.getElementById('np-reading-landing'),active=document.activeElement,
+    api=window.NavigationProductApp,model=window.NavigationProductModel,runtime=api.getState(),
+    persisted=window.history.state&&window.history.state[model.KEY];
+function bucketRecord(value){
+  if(!value||!value.route||!value.contexts)return null;
+  var bucket=value.contexts[model.contextKey(value.route)];if(!bucket)return null;
+  return {contextKey:model.contextKey(value.route),revision:value.revision,scope:value.route.scope,tree:value.route.tree,node:value.route.node,
+    focus:bucket.focusTarget,window:bucket.windowScroll,
+    overview:bucket.overviewView||null,originalMapOpen:bucket.originalMapOpen};
+}
+function geometry(element){if(!element)return null;var r=element.getBoundingClientRect();
+  return {x:r.x,y:r.y,width:r.width,height:r.height,scrollTop:element.scrollTop,
+    scrollHeight:element.scrollHeight,clientHeight:element.clientHeight};}
+var style=getComputedStyle(landing);
+return {view:{focus:active.id,window:scrollY,landing:landing.scrollTop,
+    open:document.getElementById('np-task-relations').open,
+    lines:document.getElementById('np-overview-map').dataset.relationsVisible},
+  diagnostic:{runtime:bucketRecord(runtime),persisted:bucketRecord(persisted),
+    landing:geometry(landing),active:geometry(active),map:geometry(document.getElementById('np-overview-map')),
+    document:geometry(document.scrollingElement),viewport:{width:innerWidth,height:innerHeight},
+    scrollRestoration:history.scrollRestoration,readyState:document.readyState,
+    fontsStatus:document.fonts.status,landingStyle:{overflowY:style.overflowY,scrollBehavior:style.scrollBehavior,
+      overflowAnchor:style.overflowAnchor,fontSize:style.fontSize,lineHeight:style.lineHeight},
+    hasHash:!!location.hash,timeOriginMs:performance.timeOrigin,relativeTimeMs:performance.now()}};
+"""
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dist', type=Path, required=True)
@@ -504,13 +532,16 @@ def main():
         driver.call('POST', '/element/' + control[ELEMENT] + '/value', {'text': '\ue007', 'value': ['\ue007']})
         driver.settle()
         evidence(expected)
-        stored = driver.js("return {focus:document.activeElement.id,window:scrollY,landing:document.getElementById('np-reading-landing').scrollTop,open:document.getElementById('np-task-relations').open,lines:document.getElementById('np-overview-map').dataset.relationsVisible};")
+        before_snapshot = driver.js(COLD_RESTORE_SNAPSHOT_JS)
+        stored = before_snapshot['view']
         driver.call('POST', '/refresh', {})
         wait_for(lambda: driver.js("return !!window.NavigationProductApp&&document.querySelector('[data-load-state]')?.dataset.loadState==='ready'"))
         driver.settle()
-        restored = driver.js("return {focus:document.activeElement.id,window:scrollY,landing:document.getElementById('np-reading-landing').scrollTop,open:document.getElementById('np-task-relations').open,lines:document.getElementById('np-overview-map').dataset.relationsVisible};")
+        after_snapshot = driver.js(COLD_RESTORE_SNAPSHOT_JS)
+        restored = after_snapshot['view']
         report.setdefault('relationColdRestoreChecks', []).append({'before':stored,'after':restored,
-            'differentFields':sorted(key for key in set(stored) | set(restored) if stored.get(key) != restored.get(key))})
+            'differentFields':sorted(key for key in set(stored) | set(restored) if stored.get(key) != restored.get(key)),
+            'beforeDiagnostic':before_snapshot['diagnostic'],'afterDiagnostic':after_snapshot['diagnostic']})
         save()
         if restored != stored:
             raise RuntimeError('Cold relationship restoration lost disclosure, line visibility, focus or scroll')
