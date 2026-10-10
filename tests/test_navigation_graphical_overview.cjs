@@ -13,7 +13,7 @@ if (!graphicalGroup) {
     "all 22 default task graph nodes show short contracts above their original task names",
     "13 default CI controls are actual original root positions and preserve complete accessible questions",
     "all 38 parent paths connect existing S0 positions using their exact preexisting g parents",
-    "each of the 22 graphical task controls enters only its own original pair of S1 forests",
+    "each of the 22 graphical task controls enters its own active S1 forest and switches between its original views",
     "each of the 13 CI controls opens its exact original g position and Back restores S0 focus",
     "seven visible typed paths keep exact original endpoints/types and cannot acquire tree-parent semantics",
     "click and Enter on every typed graph edge expose its exact source while preserving route and scientific structure",
@@ -240,9 +240,41 @@ function graphTask(x, sid) {
 }
 function node(x, id) { return x.d.getElementById('np-node-' + id); }
 function forest(x, tree) {
+  assert.equal(x.a.getState().route.tree, tree, 'only the active local view may be inspected');
+  const sections = [...x.d.querySelectorAll('#np-tree section[data-parallel-tree]')];
+  assert.deepEqual(sections.map(section => section.dataset.parallelTree), [tree], 'the inactive forest is absent, not hidden');
   const result = x.d.querySelector('#np-tree section[data-parallel-tree="' + tree + '"]');
-  assert.ok(result, 'original local ' + tree + ' forest is present');
+  assert.ok(result, 'original active local ' + tree + ' forest is present');
+  visible(x, result);
+  const items = [...x.d.querySelectorAll('#np-tree [role="treeitem"]')];
+  assert.ok(items.every(item => item.dataset.tree === tree), 'one active scientific tree in the canvas');
+  assert.equal(items.filter(item => item.tabIndex === 0).length, items.length ? 1 : 0, 'one roving keyboard domain');
   return result;
+}
+async function switchLocalTree(x, tree) {
+  const route = clean(x.a.getState().route);
+  assert.ok(['l', 'c'].includes(route.tree), 'local switching cannot silently leave a global view');
+  assert.ok(['l', 'c'].includes(tree));
+  if (route.tree !== tree) {
+    const key = x.M.contextKey(route), bucket = clean(x.M.getBucket(x.a.getState()));
+    x.d.querySelector('[data-tree-tab="' + tree + '"]').click();
+    await frames(x.w);
+    assert.equal(x.a.getState().route.tree, tree);
+    assert.equal(x.a.getState().route.scope, route.scope);
+    const retained = x.a.getState().contexts[key];
+    assert.equal(retained.selectedByTree[route.tree], bucket.selectedByTree[route.tree], 'inactive selection remains in its original context');
+    assert.deepEqual(clean(retained.expandedByTree[route.tree]), bucket.expandedByTree[route.tree], 'inactive expansion remains in its original context');
+  }
+  forest(x, tree);
+}
+async function assertBothLocalForests(x, sid) {
+  const route = clean(x.a.getState().route), other = route.tree === 'l' ? 'c' : 'l';
+  assertTrueForest(x, sid, route.tree);
+  await switchLocalTree(x, other);
+  assertTrueForest(x, sid, other);
+  await back(x);
+  assert.deepEqual(clean(x.a.getState().route), route, 'view inspection restores the original history entry');
+  assertTrueForest(x, sid, route.tree);
 }
 function revealDetails(target) {
   const chain = [];
@@ -280,6 +312,9 @@ function assertTrueForest(x, sid, tree) {
   }
 }
 async function clickPosition(x, id) {
+  const p = science.positions[id];
+  assert.ok(p, 'click target belongs to the frozen scientific inventory');
+  await switchLocalTree(x, p.tree);
   for (const parentId of ancestorIds(id).slice(0, -1)) {
     const parent = node(x, parentId);
     assert.ok(parent, 'original ancestor is reachable: ' + parentId);
@@ -294,7 +329,7 @@ async function clickPosition(x, id) {
   const button = item.querySelector(':scope > .np-node-row .np-node-label');
   button.focus(); button.click();
   await frames(x.w);
-  const p = science.positions[id], route = x.a.getState().route;
+  const route = x.a.getState().route;
   assert.equal(route.node, id);
   assert.equal(route.scope, p.scopeId);
   assert.equal(route.tree, p.tree);
@@ -435,7 +470,7 @@ test('all 38 parent paths connect existing S0 positions using their exact preexi
   healthy(x);
 });
 
-test('each of the 22 graphical task controls enters only its own original pair of S1 forests', async t => {
+test('each of the 22 graphical task controls enters its own active S1 forest and switches between its original views', async t => {
   const x = await page(); t.after(() => x.w.close());
   for (const [sid] of TASK_INDEX) {
     const control = graphTask(x, sid);
@@ -443,7 +478,7 @@ test('each of the 22 graphical task controls enters only its own original pair o
     assert.equal(x.a.getState().route.scope, sid);
     assert.equal(home(x).hidden, true);
     assert.equal(x.d.querySelector('#np-tree').dataset.parallelScope, sid);
-    for (const tree of ['l', 'c']) assertTrueForest(x, sid, tree);
+    await assertBothLocalForests(x, sid);
     await overview(x);
     assert.equal(x.d.activeElement, graphTask(x, sid), sid + ': return restores visible graph entry focus');
     visible(x, x.d.activeElement);
@@ -542,7 +577,7 @@ test('every source relation endpoint still enters its original S1 scope and Back
       assert.ok(control.textContent.includes(scopeById.get(sid).label));
       control.focus(); control.click(); await frames(x.w);
       assert.equal(x.a.getState().route.scope, sid);
-      for (const tree of ['l', 'c']) assertTrueForest(x, sid, tree);
+      await assertBothLocalForests(x, sid);
       await back(x);
       assert.equal(x.d.querySelector('#np-task-relations').open, true);
       assert.equal(x.d.activeElement.id, 'np-relation-entry-' + id + '-' + sid);
@@ -576,7 +611,7 @@ test('auxiliary comparison, all 64 source scopes and reading notes remain availa
     const control = x.d.querySelector('#np-all-scopes [data-scope-open="' + source.id + '"]');
     revealDetails(control); control.focus(); control.click(); await frames(x.w);
     assert.equal(x.a.getState().route.scope, source.id);
-    for (const tree of ['l', 'c']) assertTrueForest(x, source.id, tree);
+    await assertBothLocalForests(x, source.id);
     await back(x);
     assert.equal(x.d.activeElement.id, 'np-scope-entry-' + source.id);
     assert.equal(x.d.querySelector('#np-all-scopes').open, true);
@@ -671,7 +706,7 @@ for (const [name, fixture] of Object.entries(publishedHistory.states)) {
     assert.equal(x.d.querySelector('#np-detail-scroll').scrollTop, 570);
     assert.equal(x.w.scrollY, 1750);
     assert.equal(x.w.history.state.unrelatedOwnerField, 'preserve-me');
-    if (['l', 'c'].includes(x.a.getState().route.tree)) for (const tree of ['l', 'c']) assertTrueForest(x, x.a.getState().route.scope, tree);
+    if (['l', 'c'].includes(x.a.getState().route.tree)) await assertBothLocalForests(x, x.a.getState().route.scope);
     healthy(x);
   });
 }

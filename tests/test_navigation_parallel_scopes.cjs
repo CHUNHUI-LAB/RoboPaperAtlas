@@ -419,9 +419,45 @@ function node(x, id) {
   return x.d.getElementById('np-node-' + id);
 }
 function forest(x, tree) {
+  assert.equal(x.a.getState().route.tree, tree, 'only the active local view may be inspected');
+  const sections = [...x.d.querySelectorAll('#np-tree section[data-parallel-tree]')];
+  assert.deepEqual(sections.map(section => section.dataset.parallelTree), [tree], 'the inactive forest is absent, not hidden');
   const section = x.d.querySelector('#np-tree section[data-parallel-tree="' + tree + '"]');
-  assert.ok(section, 'parallel ' + tree + ' forest is present');
+  assert.ok(section, 'active ' + tree + ' forest is present');
+  for (let current = section; current; current = current.parentElement) {
+    assert.equal(current.hidden, false, 'active forest has no hidden ancestor');
+    assert.notEqual(x.w.getComputedStyle(current).display, 'none', 'active forest is not CSS-hidden');
+    assert.notEqual(x.w.getComputedStyle(current).visibility, 'hidden', 'active forest is visible');
+  }
+  const items = [...x.d.querySelectorAll('#np-tree [role="treeitem"]')];
+  assert.ok(items.every(item => item.dataset.tree === tree), 'one active scientific tree in the canvas');
+  assert.equal(items.filter(item => item.tabIndex === 0).length, items.length ? 1 : 0, 'one roving keyboard domain');
   return section;
+}
+async function switchLocalTree(x, tree) {
+  const route = clean(x.a.getState().route);
+  assert.ok(['l', 'c'].includes(route.tree), 'local switching cannot silently leave a global view');
+  assert.ok(['l', 'c'].includes(tree));
+  if (route.tree !== tree) {
+    const key = x.M.contextKey(route), bucket = clean(x.M.getBucket(x.a.getState()));
+    x.d.querySelector('[data-tree-tab="' + tree + '"]').click();
+    await frames(x.w);
+    assert.equal(x.a.getState().route.tree, tree);
+    assert.equal(x.a.getState().route.scope, route.scope);
+    const retained = x.a.getState().contexts[key];
+    assert.equal(retained.selectedByTree[route.tree], bucket.selectedByTree[route.tree], 'inactive selection remains in its original context');
+    assert.deepEqual(clean(retained.expandedByTree[route.tree]), bucket.expandedByTree[route.tree], 'inactive expansion remains in its original context');
+  }
+  forest(x, tree);
+}
+async function assertBothLocalForests(x, sid) {
+  const route = clean(x.a.getState().route), other = route.tree === 'l' ? 'c' : 'l';
+  assertTrueForest(x, sid, route.tree);
+  await switchLocalTree(x, other);
+  assertTrueForest(x, sid, other);
+  x.w.history.back(); await wait(30); await frames(x.w);
+  assert.deepEqual(clean(x.a.getState().route), route, 'view inspection restores the original history entry');
+  assertTrueForest(x, sid, route.tree);
 }
 function revealDetails(target) {
   const chain = [];
@@ -447,13 +483,14 @@ async function enterScope(x, sid, fromTaskIndex = false) {
   await frames(x.w);
   assert.equal(x.a.getState().route.scope, sid, 'clicked exact original scope: ' + sid);
   assert.equal(x.d.querySelector('#np-tree').dataset.parallelScope, sid);
-  for (const tree of ['l', 'c']) forest(x, tree);
+  forest(x, x.a.getState().route.tree);
   return button;
 }
 function forestItems(x, tree) {
   return [...forest(x, tree).querySelectorAll('[role="treeitem"]')];
 }
 async function expandAll(x, sid, tree) {
+  await switchLocalTree(x, tree);
   const expected = descendants(science.forests[sid][tree]);
   for (const id of expected) {
     let item = node(x, id);
@@ -467,6 +504,9 @@ async function expandAll(x, sid, tree) {
   return expected;
 }
 async function clickPosition(x, id) {
+  const p = science.positions[id];
+  assert.ok(p, 'click target belongs to the frozen scientific inventory');
+  await switchLocalTree(x, p.tree);
   const pathIds = ancestorIds(id);
   for (const parentId of pathIds.slice(0, -1)) {
     const parent = node(x, parentId);
@@ -484,7 +524,7 @@ async function clickPosition(x, id) {
   button.focus();
   button.click();
   await frames(x.w);
-  const p = science.positions[id], route = x.a.getState().route;
+  const route = x.a.getState().route;
   assert.equal(route.node, id);
   assert.equal(route.scope, p.scopeId);
   assert.equal(route.tree, p.tree);
@@ -636,7 +676,7 @@ test('cold explicit and historical g-root links keep the original map, while fre
   const scope = [...cold.d.querySelectorAll('#np-directory-list button')].find(button => button.textContent === scopeById.get('task:hieranav').label);
   assert.ok(scope); scope.focus(); scope.click(); await frames(cold.w);
   assert.equal(cold.a.getState().route.scope, 'task:hieranav');
-  for (const tree of ['l', 'c']) assertTrueForest(cold, 'task:hieranav', tree);
+  await assertBothLocalForests(cold, 'task:hieranav');
   cold.w.history.back(); await wait(30); await frames(cold.w);
   assert.deepEqual(clean(cold.a.getState().route), route);
   assert.equal(cold.d.querySelector('#np-reading-landing').hidden, true);
@@ -644,11 +684,11 @@ test('cold explicit and historical g-root links keep the original map, while fre
   healthy(fresh); healthy(cold);
 });
 
-test('each of the 22 main-task buttons enters its own real pair of local forests in one task click', async t => {
+test('each of the 22 main-task buttons enters one real local forest and switches to its exact companion view', async t => {
   const x = await page(); t.after(() => x.w.close());
   for (const [sid] of TASK_INDEX) {
     await enterScope(x, sid, true);
-    for (const tree of ['l', 'c']) assertTrueForest(x, sid, tree);
+    await assertBothLocalForests(x, sid);
     assert.ok(x.d.querySelector('#np-active-scope').textContent.includes(scopeById.get(sid).label));
   }
   healthy(x);
@@ -757,21 +797,33 @@ test('selecting a method or insight does not auto-select a same-paper node or in
   const recipe = Object.values(science.positions).find(p => p.scopeId === 'task:category-objectnav' && p.tree === 'l' && p.paperId === 'poni' && p.kind === 'pipeline_recipe');
   const insight = Object.values(science.positions).find(p => p.scopeId === 'task:category-objectnav' && p.tree === 'c' && p.paperId === 'poni' && p.kind === 'insight' && p.association === 'direct');
   await clickPosition(x, recipe.id);
-  assert.equal(forest(x, 'c').querySelectorAll('[aria-selected="true"]').length, 0);
+  const recipeRoute = clean(x.a.getState().route);
   assert.equal(forest(x, 'l').querySelectorAll('[aria-selected="true"]').length, 1);
+  assert.equal(node(x, insight.id), null, 'same-paper CI is not mounted beside the selected method');
+  await switchLocalTree(x, 'c');
+  assert.notEqual(x.a.getState().route.node, insight.id, 'switching views does not auto-select a same-paper insight');
   await clickPosition(x, insight.id);
-  assert.equal(forest(x, 'l').querySelectorAll('[aria-selected="true"]').length, 0);
+  const insightRoute = clean(x.a.getState().route);
   assert.equal(forest(x, 'c').querySelectorAll('[aria-selected="true"]').length, 1);
+  assert.equal(node(x, recipe.id), null, 'inactive method tree is absent from the canvas');
   assertLocalPath(x, insight.id);
-  for (const tree of ['l', 'c']) assertTrueForest(x, 'task:category-objectnav', tree);
-  for (const tree of ['l', 'c']) assert.equal(forest(x, tree).querySelectorAll('[role="treeitem"][tabindex="0"]').length, 1);
+  assertTrueForest(x, 'task:category-objectnav', 'c');
+  await switchLocalTree(x, 'l');
+  assert.deepEqual(clean(x.a.getState().route), recipeRoute, 'L restores its own method, paper and version');
+  assertTrueForest(x, 'task:category-objectnav', 'l');
+  assertLocalPath(x, recipe.id);
+  await switchLocalTree(x, 'c');
+  assert.deepEqual(clean(x.a.getState().route), insightRoute, 'C restores its own insight, paper and version');
+  assertTrueForest(x, 'task:category-objectnav', 'c');
   healthy(x);
 });
 
 
-test('inactive-tree keyboard expansion preserves the active scientific selection and has its own roving tab stop', async t => {
+test('active-tree keyboard expansion preserves scientific selection and keeps one roving tab stop while the other view is cached', async t => {
   const x = await page(); t.after(() => x.w.close());
   await enterScope(x, 'task:audiogoal', true);
+  const literatureRoute = clean(x.a.getState().route);
+  await switchLocalTree(x, 'c');
   const cRoot = science.forests['task:audiogoal'].c[0];
   const before = clean(x.a.getState().route);
   node(x, cRoot).focus();
@@ -791,7 +843,13 @@ test('inactive-tree keyboard expansion preserves the active scientific selection
   await frames(x.w);
   assert.equal(x.a.getState().route.node, science.positions[cRoot].childIds[0]);
   assert.equal(x.a.getState().route.tree, 'c');
-  for (const tree of ['l', 'c']) assert.equal(forest(x, tree).querySelectorAll('[role="treeitem"][tabindex="0"]').length, 1);
+  const challengeRoute = clean(x.a.getState().route);
+  assert.equal(forest(x, 'c').querySelectorAll('[role="treeitem"][tabindex="0"]').length, 1);
+  await switchLocalTree(x, 'l');
+  assert.deepEqual(clean(x.a.getState().route), literatureRoute, 'C keyboard navigation leaves the cached L selection unchanged');
+  await switchLocalTree(x, 'c');
+  assert.deepEqual(clean(x.a.getState().route), challengeRoute);
+  assert.equal(forest(x, 'c').querySelectorAll('[role="treeitem"][tabindex="0"]').length, 1);
   healthy(x);
 });
 
@@ -937,7 +995,7 @@ test('all seven audited task relations expose their exact endpoints without beco
       assert.ok(controls[index].textContent.includes(scopeById.get(sid).label));
       controls[index].focus(); controls[index].click(); await frames(x.w);
       assert.equal(x.a.getState().route.scope, sid);
-      for (const tree of ['l', 'c']) assertTrueForest(x, sid, tree);
+      await assertBothLocalForests(x, sid);
       x.w.history.back(); await wait(20); await frames(x.w);
       assert.equal(x.d.querySelector('#np-task-relations').open, true);
       const restoredControl = x.d.querySelectorAll('#np-task-relations [data-task-relation="' + expected.id + '"] button')[index];
@@ -1023,7 +1081,7 @@ for (const [name, fixture] of Object.entries(publishedHistory.states)) {
     assert.equal(x.w.scrollY, 1750);
     assert.equal(x.w.history.state.unrelatedOwnerField, 'preserve-me');
     if (['l', 'c'].includes(x.a.getState().route.tree)) {
-      for (const tree of ['l', 'c']) assertTrueForest(x, x.a.getState().route.scope, tree);
+      await assertBothLocalForests(x, x.a.getState().route.scope);
     }
     healthy(x);
   });
