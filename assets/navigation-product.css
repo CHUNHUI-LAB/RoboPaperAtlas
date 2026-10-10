@@ -377,6 +377,21 @@ body{font-size:16px;line-height:1.65;background:#f7f9fa}header.np-header{max-wid
 
 .np-route-group-condition{box-sizing:border-box;height:7rem;overflow:auto;scrollbar-gutter:stable;font-size:.85rem;border-left:2px solid var(--np-line,#dce4e8);padding-left:10px}
 
+/* Verified method excerpts and their current evidence keep readable source text. */
+#navigation-product .np-method-claims,
+#navigation-product .np-method-claims h3,
+#navigation-product .np-method-claims p,
+#navigation-product .np-method-claims span,
+#navigation-product .np-method-claims small,
+#navigation-product .np-method-claims a,
+#navigation-product .np-method-claims button,
+#np-reader-summary:has(.np-method-claims)~#np-evidence-panel .np-claim,
+#np-reader-summary:has(.np-method-claims)~#np-evidence-panel .np-claim p,
+#np-reader-summary:has(.np-method-claims)~#np-evidence-panel .np-claim span,
+#np-reader-summary:has(.np-method-claims)~#np-evidence-panel .np-claim small,
+#np-reader-summary:has(.np-method-claims)~#np-evidence-panel .np-claim a,
+#np-reader-summary:has(.np-method-claims)~#np-evidence-panel .np-claim button{font-size:15px;line-height:1.65}
+
 /* Task-root reading text keeps the 15px floor, including inherited legacy notes. */
 #navigation-product .np-task-route-overview,
 #navigation-product .np-task-route-overview p,
