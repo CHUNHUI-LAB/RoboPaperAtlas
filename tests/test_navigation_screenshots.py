@@ -14,6 +14,55 @@ SPEC.loader.exec_module(MODULE)
 
 
 class ScreenshotChecks(unittest.TestCase):
+    def test_default_overview_cannot_pass_with_hidden_tree_or_missing_contract(self):
+        import copy
+        box = {'text': 'heading', 'visible': True, 'opaque': True, 'unscaled': True, 'foreground': [26, 52, 64], 'background': [255, 255, 255], 'clipped': False, 'fontSize': 15,
+               'rect': {'x': 30, 'y': 30, 'width': 200, 'height': 22}}
+        entries = [{'id': sid, 'name': dict(box, text=name), 'contract': dict(box, text=contract)}
+                   for sid, name, contract in MODULE.TASK_INDEX]
+        data = {'home': True, 'panelsHidden': True, 'route': {'paper': None, 'version': None},
+                'windowScroll': 0, 'landingScroll': 0, 'scale': 1, 'entries': entries,
+                'headings': [copy.deepcopy(box) for _ in range(3)],
+                'viewport': {'x': 0, 'y': 0, 'width': 1440, 'height': 900},
+                'landing': {'x': 20, 'y': 20, 'width': 1400, 'height': 860}}
+        MODULE.check_reading_home(data)
+        mutations = [lambda x: x.__setitem__('home', False),
+                     lambda x: x.__setitem__('landingScroll', 200),
+                     lambda x: x.__setitem__('scale', .6),
+                     lambda x: x['entries'].pop(),
+                     lambda x: x['entries'][0]['contract'].__setitem__('text', 'wrong'),
+                     lambda x: x['entries'][-1]['contract']['rect'].__setitem__('y', 950),
+                     lambda x: x['entries'][0]['name'].__setitem__('visible', False),
+                     lambda x: x['entries'][0]['contract'].__setitem__('fontSize', 10),
+                     lambda x: x['entries'][0]['contract'].__setitem__('opaque', False),
+                     lambda x: x['entries'][0]['contract'].__setitem__('unscaled', False),
+                     lambda x: x['entries'][0]['contract'].__setitem__('foreground', [255,255,255])]
+        for mutate in mutations:
+            bad = copy.deepcopy(data)
+            mutate(bad)
+            with self.assertRaises(RuntimeError):
+                MODULE.check_reading_home(bad)
+
+    def test_parallel_scope_requires_both_original_forests(self):
+        import copy
+        data = {'scope': 'task:goat', 'expectedScope': 'task:goat', 'home': False,
+                'viewport': {'x': 0, 'y': 0, 'width': 1440, 'height': 900},
+                'panels': [{'tree': t, 'scope': 'task:goat', 'roots': [t], 'expectedRoots': [t],
+                            'headingVisible': True, 'heading': {'x': 20, 'y': 200, 'width': 350, 'height': 25},
+                            'rect': {'x': 20, 'y': 190, 'width': 500, 'height': 500}, 'expectedChildren': True, 'children': [{'visible': True, 'opaque': True, 'rect': {'x': 30, 'y': 250, 'width': 350, 'height': 30}}]} for t in ['l', 'c']]}
+        MODULE.check_parallel_scope(data)
+        mutations = [lambda x: x['panels'].pop(),
+                     lambda x: x['panels'][1].__setitem__('scope', 'task:category-objectnav'),
+                     lambda x: x['panels'][1].__setitem__('roots', ['wrong']),
+                     lambda x: x['panels'][1]['children'][0].__setitem__('visible', False),
+                     lambda x: x['panels'][1].__setitem__('headingVisible', False),
+                     lambda x: x['panels'][1]['children'][0]['rect'].__setitem__('y', 1500)]
+        for mutate in mutations:
+            bad = copy.deepcopy(data)
+            mutate(bad)
+            with self.assertRaises(RuntimeError):
+                MODULE.check_parallel_scope(bad)
+
     def test_context_paths_reject_mixed_ancestry_and_unreadable_links(self):
         import copy
         data = {'route': {'tree': 'c', 'node': 'pos:c:6dcc2ce43c02d908266f20'},

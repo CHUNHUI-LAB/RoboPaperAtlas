@@ -284,3 +284,34 @@ body{font-size:16px;line-height:1.65;background:#f7f9fa}header.np-header{max-wid
 /* The real local ancestry must remain fully readable, including long CI labels. */
 #navigation-product .np-global-context [data-path-kind=local-ancestry]{flex-wrap:wrap;overflow:visible;align-items:baseline;row-gap:4px}
 #navigation-product .np-global-context [data-path-kind=local-ancestry] .np-crumb{max-width:100%;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;line-height:1.55;flex:0 1 auto}
+
+/* Reading overview and paired local forests. Editorial navigation, not new model parents. */
+#navigation-product[data-reading-home=true] .np-panels{display:none!important}
+.np-reading-landing[hidden],#np-overview-toggle[hidden]{display:none!important}
+.np-reading-landing{background:#fff;border:1px solid #dce5e8;border-radius:12px;padding:20px 24px;color:#294550}
+.np-overview-goal{text-align:center;margin:0 0 16px}.np-overview-goal h2{font-size:23px;line-height:1.3;color:#203e49;margin:0}.np-overview-goal p{font-size:16px;margin:4px 0}
+.np-overview-branches{display:grid;grid-template-columns:1fr 1fr;gap:36px;border-top:2px solid #93b2aa;padding-top:12px;margin:0 0 20px}.np-overview-branches section{border-left:3px solid #276d5d;padding-left:14px}.np-overview-branches section:last-child{border-color:#796293}.np-overview-branches h3{font-size:18px;line-height:1.4;margin:0}.np-overview-branches p{font-size:15px;margin:3px 0;color:#526975}
+.np-overview-desk{display:grid;grid-template-columns:minmax(340px,370px) minmax(0,1fr);gap:40px}.np-task-reading-index{min-width:0;border-right:1px solid #dfe8e5;padding-right:20px}.np-task-reading-index>h3{font-size:16px;margin:0 0 2px}.np-index-boundary{font-size:15px;line-height:1.6;color:#526975;margin:5px 0 10px}
+.np-task-reading-entry{display:grid;grid-template-columns:minmax(110px,1fr) minmax(0,1.2fr);gap:8px;width:100%;border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;padding:4px 0!important;min-height:28px!important;font-size:15px!important;line-height:1.35!important;text-align:left;color:#294550}.np-task-reading-entry:hover,.np-task-reading-entry:focus-visible{background:#eaf4ee!important;color:#154f43}.np-task-reading-name{font-weight:600;overflow-wrap:anywhere}.np-task-reading-contract{color:#4e626b;white-space:normal}.np-task-reading-entry:focus-visible{outline:2px solid #9b502c;outline-offset:2px}
+.np-field-reading{min-width:0;max-width:1040px}.np-field-reading>h2{font-size:25px;line-height:1.4;margin:0 0 8px;color:#203e49}.np-overview-scope{font-size:16px;color:#526975;margin:0 0 22px}.np-overview-question{margin:18px 0 22px}.np-overview-question h3{font-size:19px;margin:0 0 5px}.np-overview-question p{font-size:16px;line-height:1.8;margin:0}.np-overview-comparison{font-size:15px;margin-top:22px}.np-overview-comparison table{width:100%;border-collapse:collapse;margin-top:14px}.np-overview-comparison td,.np-overview-comparison th{font-size:15px;text-align:left;vertical-align:top;border-bottom:1px solid #dbe6e1;padding:10px}.np-overview-coverage{font-size:15px;line-height:1.7;padding-top:18px;margin-top:22px;border-top:1px solid #dfe8e5}.np-field-reading>.np-text-button{font-size:15px;display:block;margin:12px 0}
+.np-all-reading-scopes{margin-top:14px;font-size:15px}.np-all-reading-scopes>summary{cursor:pointer;font-weight:600}.np-all-reading-scopes[open]{position:relative;z-index:2;background:#fff}.np-all-reading-scopes h4{font-size:16px;margin:18px 0 6px}.np-scope-reading-entry{display:block;width:100%;font-size:15px;text-align:left;border:0;background:#f4f8f5;padding:7px 9px;margin:3px 0;line-height:1.5}.np-all-reading-scopes [data-parent-scope]:not([data-parent-scope=""]){margin-left:16px;border-left:1px solid #b9cec7;padding-left:10px}
+#navigation-product .np-tree[data-parallel-scope]{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start}
+.np-parallel-forest{min-width:0}.np-parallel-forest>h3{font-size:17px;line-height:1.5;margin:0 0 3px;color:#20574d}.np-parallel-forest[data-parallel-tree=c]>h3{color:#594775}.np-parallel-scope-label,.np-parallel-gap{font-size:15px;line-height:1.6;color:#526975;margin:5px 0 14px}
+#navigation-product[data-reading-layout=reading] .np-tree[data-parallel-scope]{grid-template-columns:minmax(0,1fr);gap:28px}
+#navigation-product .np-tree[data-parallel-scope] .np-node-kind{display:block!important;font-size:15px!important;grid-column:2/-1;color:#526975}
+#navigation-product .np-tree[data-parallel-scope] .np-node-row{grid-template-rows:auto auto!important}
+/* One compact root/branch header leaves room for the complete named task index. */
+@media(min-width:1200px){
+ .np-reading-landing{display:grid;grid-template-columns:310px minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);gap:14px 28px;flex:1 1 auto;min-height:0;padding:14px 20px;overflow:auto}
+ .np-overview-goal{margin:0;padding:9px 12px;background:#203e49;color:#fff;border-radius:8px;align-self:start}
+ .np-overview-goal h2{font-size:21px;line-height:1.3;color:#fff}.np-overview-goal p{font-size:15px;line-height:1.45;margin:3px 0 0}
+ .np-overview-branches{margin:0;gap:22px;border-top:0;padding:6px 0;align-self:start}.np-overview-branches h3{font-size:17px}.np-overview-branches p{font-size:15px;line-height:1.45}
+ .np-overview-desk{grid-column:1/-1;gap:30px;align-items:start}.np-task-reading-index>.np-index-boundary{font-size:15px;line-height:1.4;margin:2px 0 5px}
+ .np-task-reading-entry{padding:3px 0!important;line-height:1.35!important;min-height:28px!important}
+ .np-field-reading>h2{font-size:23px}.np-overview-scope{margin-bottom:16px}.np-overview-question{margin:13px 0 18px}
+}
+#np-graph-fullscreen{font-size:14px;min-height:32px;padding:4px 10px;white-space:nowrap}
+
+/* Role, applicability and version text carry scientific meaning, not decoration. */
+#navigation-product .np-method-mechanism>.np-note,#navigation-product .np-node-source-version,#navigation-product .np-method-context,#navigation-product .np-method-scope,#navigation-product .np-reading-association,#navigation-product .np-scope-reading-role{font-size:15px;line-height:1.65}
+#np-task-relations article{border-top:1px solid #dce8e3;padding:12px 0;font-size:15px}#np-task-relations article p{margin:5px 0;overflow-wrap:anywhere}

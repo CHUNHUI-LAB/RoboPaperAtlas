@@ -40,6 +40,47 @@ def rect_inside(rect, area, tolerance=1):
             rect['y'] + rect['height'] <= area['y'] + area['height'] + tolerance)
 
 
+TASK_INDEX = [('task:audiogoal', 'AudioGoal', '声音→声源'), ('task:audiopointgoal', 'AudioPointGoal', '声音＋位置→到达'), ('task:aerial-visual-object-search', 'AVOS', '图文→飞行搜索'), ('task:comon', 'CoMON', '特权协作→多目标'), ('task:ddn', 'DDN', '需求→可用物体'), ('task:goat', 'GOAT', '类别/实例图/语言序列'), ('task:hieranav', 'HieraNav', '多级约束→物体'), ('task:imagenav', 'ImageNav', '地点图→地点'), ('task:instanceimagenav', 'InstanceImageNav', '实例图→同一物'), ('task:ivln', 'IVLN', '同环境多段指令'), ('task:lamon', 'LaMoN', '逐个描述→对象'), ('task:multion', 'MultiON', '有序目标→逐个找'), ('task:namo', 'NAMO', '移障→创造通路'), ('task:ndh', 'NDH', '对话历史→进展'), ('task:category-objectnav', 'ObjectNav', '类别→任一实例'), ('task:pointnav', 'PointNav', '坐标→位置'), ('task:remote-referent-navigation', 'REVERIE式', '描述→到达并指认'), ('task:roomnav', 'RoomNav', '区域→进入区域'), ('task:soon', 'SOON', '物体及周边描述→定位'), ('task:vln', 'VLN', '路线语句→执行'), ('task:person-finding-following', '找人并跟随', '人物→持续跟随'), ('task:language-objectnav', '语言物体目标', '描述→合格对象')]
+
+
+VISUAL_GEOMETRY = r"""
+function rect(e){var r=e.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};}
+function color(v){var m=/^rgba?\(([^)]+)\)$/.exec(v);if(!m)return null;var n=m[1].split(',').map(Number);if(![3,4].includes(n.length)||n.some(x=>!Number.isFinite(x))||n.slice(0,3).some(x=>x<0||x>255))return null;return {rgb:n.slice(0,3),alpha:n.length===4?n[3]:1};}
+function bg(e){while(e){var c=color(getComputedStyle(e).backgroundColor);if(!c)return [];if(c.alpha===1)return c.rgb;if(c.alpha!==0)return [];e=e.parentElement;}return [255,255,255];}
+function box(e){var r=rect(e),style=getComputedStyle(e),fg=color(style.color),opaque=true,unscaled=true;for(var n=e;n;n=n.parentElement){var cs=getComputedStyle(n);if(cs.display==='none'||cs.visibility!=='visible'||Number(cs.opacity)!==1)opaque=false;var transform=cs.transform;if(transform!=='none'){try{if(!new DOMMatrixReadOnly(transform).isIdentity)unscaled=false;}catch(_){unscaled=false;}}if(!['normal','1',''].includes(String(cs.zoom)))unscaled=false;}
+var visible=opaque&&[[.5,.5],[.1,.1],[.9,.1],[.1,.9],[.9,.9]].every(([x,y])=>{var hit=document.elementFromPoint(r.x+r.width*x,r.y+r.height*y);return !!hit&&(hit===e||e.contains(hit));});
+return {text:e.textContent,rect:r,visible:visible,opaque:opaque,unscaled:unscaled,fontSize:parseFloat(style.fontSize),foreground:fg&&fg.alpha===1?fg.rgb:[],background:bg(e),clipped:e.scrollWidth>e.clientWidth+1||e.scrollHeight>e.clientHeight+1};}
+"""
+
+
+def check_reading_home(data):
+    if not data['home'] or not data['panelsHidden'] or data['route']['paper'] or data['route']['version']:
+        raise RuntimeError('Default reading overview is hidden or implicitly selects paper evidence')
+    if data['windowScroll'] != 0 or data['landingScroll'] != 0 or data['scale'] != 1:
+        raise RuntimeError('Initial overview was scrolled or shrunk to pass')
+    actual = [(x['id'], x['name']['text'], x['contract']['text']) for x in data['entries']]
+    if actual != TASK_INDEX:
+        raise RuntimeError('Default overview lost or altered a reviewed task contract')
+    boxes = data['headings'] + [v for e in data['entries'] for v in (e['name'], e['contract'])]
+    if len(data['headings']) != 3 or not all(x['visible'] and x['opaque'] and x['unscaled'] and len(x['foreground']) == 3 and len(x['background']) == 3 and contrast_ratio(x['foreground'], x['background']) >= 4.5 and not x['clipped'] and x['fontSize'] >= 15 and rect_inside(x['rect'], data['viewport']) and rect_inside(x['rect'], data['landing']) for x in boxes):
+        raise RuntimeError('All22 contracts and three headings must be fully readable on the unscrolled default screen')
+
+
+def check_parallel_scope(data):
+    if data['scope'] != data['expectedScope'] or data['home']:
+        raise RuntimeError('Task did not enter its own parallel reading view')
+    if [x['tree'] for x in data['panels']] != ['l', 'c']:
+        raise RuntimeError('Task must retain both literature and challenge forests')
+    for panel in data['panels']:
+        if panel['scope'] != data['scope'] or panel['roots'] != panel['expectedRoots']:
+            raise RuntimeError('Parallel forest identity differs from original scope roots')
+        if not panel['headingVisible'] or not rect_inside(panel['heading'], data['viewport']):
+            raise RuntimeError('Both task tree headings must be visible together')
+        visible_children = [x for x in panel['children'] if x['visible'] and x['opaque'] and rect_inside(x['rect'], data['viewport']) and rect_inside(x['rect'], panel['rect'])]
+        if panel['expectedChildren'] and not visible_children:
+            raise RuntimeError('Task forest with recorded descendants shows only a folded root')
+
+
 def check_context_path(data):
     """Verify local ancestry independently from the separately labelled global navigation."""
     if data['route']['tree'] != 'c' or data['route']['node'] != 'pos:c:6dcc2ce43c02d908266f20':
@@ -202,7 +243,7 @@ def main():
               'visualAcceptance': 'pending_human_review', 'captures': [], 'status': 'starting',
               'reviewScope': 'user_requested_desktop_only_2026-10-10',
               'browserFullscreenRequested': False}
-    report['frontendSources'] = {name: sha(name) for name in ('assets/navigation-product.js', 'assets/navigation-product.css', 'scripts/navigation_product.py')}
+    report['frontendSources'] = {name: sha(name) for name in ('assets/navigation-product.js', 'assets/navigation-product-model.js', 'assets/navigation-product.css', 'scripts/navigation_product.py')}
     report['servedFiles'] = {str(p.relative_to(dist)): sha(p) for p in sorted((dist / 'research/navigation').rglob('*')) if p.is_file()}
     report['servedFiles'].update({str(p.relative_to(dist)): sha(p) for p in sorted((dist / 'assets').glob('navigation-*.js'))})
     report['servedFiles']['assets/navigation-product.css'] = sha(dist / 'assets/navigation-product.css')
@@ -214,7 +255,7 @@ def main():
     def save():
         (out / 'receipt.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n')
 
-    def capture(name, require_tree=True, require_overview=False, require_flow=False):
+    def capture(name, require_tree=True, require_overview=False, require_flow=False, require_home=False):
         driver.settle()
         data = driver.js('''return {viewport:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},
           loadState:document.querySelector('[data-load-state]')?.dataset.loadState,
@@ -224,6 +265,7 @@ def main():
           bounds:[...document.querySelectorAll('#np-workspace,#np-tree-scroll,.np-reading-pane,#np-tree .np-node-row')].map(e=>{let r=e.getBoundingClientRect();return {id:e.id,position:e.closest('[data-position]')?.dataset.position,text:e.textContent.slice(0,180),x:r.x,y:r.y,width:r.width,height:r.height};}),
           nodeCount:document.querySelectorAll('#np-tree [role=treeitem]').length,
           focus:document.activeElement?.id, bodyWidth:document.body.scrollWidth};''')
+        data['screenKind'] = 'default_reading_overview' if require_home else 'tree_or_reader'
         data['readingVisibility'] = driver.js('''function rect(e){if(!e)return null;let r=e.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};}
           let a=NavigationProductApp,b=a.getBundle(),root=b.researchMap.roots[0];
           function color(value){let m=/^rgba?\\(([^)]+)\\)$/.exec(value);if(!m)return null;let v=m[1].split(',').map(Number);if(![3,4].includes(v.length)||v.some(n=>!Number.isFinite(n))||v.slice(0,3).some(n=>n<0||n>255))return null;return {rgb:v.slice(0,3),alpha:v.length===4?v[3]:1};}
@@ -246,7 +288,7 @@ def main():
             raise RuntimeError('PNG dimensions do not match measured CSS viewport and DPR')
         (out / (name + '.png')).write_bytes(image)
         data.update(name=name, screenshotSha256=hashlib.sha256(image).hexdigest(), pixelVariation=png_has_visible_variation(image))
-        selector = driver.js("var n=[...document.querySelectorAll('#np-tree .np-node-label')].find(e=>/[\\u3400-\\u9fff]/.test(e.textContent));return n?'[id='+JSON.stringify(n.closest('[id]').id)+'] > .np-node-row .np-node-label':null")
+        selector = '#np-reading-landing .np-task-reading-contract' if require_home else driver.js("var n=[...document.querySelectorAll('#np-tree .np-node-label')].find(e=>/[\\u3400-\\u9fff]/.test(e.textContent));return n?'[id='+JSON.stringify(n.closest('[id]').id)+'] > .np-node-row .np-node-label':null")
         if not selector:
             raise RuntimeError('No Chinese label available to verify actual rendered font')
         root_node = driver.cdp('DOM.getDocument', {'depth': 1})['root']['nodeId']
@@ -266,7 +308,7 @@ def main():
                 data['networkFailures'].append({'status': response['status'], 'path': urllib.parse.urlsplit(response['url']).path})
         report['captures'].append(data)
         save()
-        if not data['ready'] or data['loadState'] != 'ready' or not data['fallbackHidden'] or not data['nodeCount'] or data['fonts'] != 'loaded':
+        if not data['ready'] or data['loadState'] != 'ready' or not data['fallbackHidden'] or (not require_home and not data['nodeCount']) or data['fonts'] != 'loaded':
             raise RuntimeError('Blank, unready, or font-pending capture')
         if not data['pixelVariation']:
             raise RuntimeError('Screenshot has insufficient nonblank pixel variation')
@@ -275,9 +317,9 @@ def main():
         if data['networkFailures']:
             raise RuntimeError('Candidate resource request failed')
         visible = [r for r in data['bounds'] if r['width'] > 0 and r['height'] > 0 and r['x'] < data['viewport']['width'] and r['y'] < data['viewport']['height'] and r['x'] + r['width'] > 0 and r['y'] + r['height'] > 0]
-        if require_tree and not any(r.get('position') for r in visible):
+        if require_tree and not require_home and not any(r.get('position') for r in visible):
             raise RuntimeError('No actual tree node visible in captured viewport')
-        if not require_tree and not any(r.get('id') == 'np-detail-scroll' for r in visible):
+        if not require_tree and not require_home and not any(r.get('id') == 'np-detail-scroll' for r in visible):
             raise RuntimeError('Reader is not visible in reader screenshot')
         viewport = {'x': 0, 'y': 0, 'width': data['viewport']['width'], 'height': data['viewport']['height']}
         if require_overview:
@@ -296,6 +338,45 @@ def main():
             visible_flow = [item for item in data['readingVisibility']['flow'] if item['text'].strip() and item['uncovered'] and rect_inside(item['rect'], viewport) and rect_inside(item['rect'], reader)]
             if not visible_flow:
                 raise RuntimeError('Method screenshot does not show any complete actual mechanism field inside the reader')
+
+    def reading_home():
+        driver.settle()
+        data = driver.js(VISUAL_GEOMETRY + """
+          var a=NavigationProductApp,state=a.getState(),landing=document.getElementById('np-reading-landing');
+          return {route:state.route,home:!landing.hidden,panelsHidden:document.querySelector('.np-panels').hidden,windowScroll:scrollY,landingScroll:landing.scrollTop,scale:NavigationProductModel.getBucket(state).graphScale,viewport:{x:0,y:0,width:innerWidth,height:innerHeight},landing:rect(landing),headings:[...landing.querySelectorAll('#np-overview-heading,[data-reading-branch] h3')].map(box),entries:[...landing.querySelectorAll('[data-task-open]')].map(e=>({id:e.dataset.taskOpen,name:box(e.querySelector('.np-task-reading-name')),contract:box(e.querySelector('.np-task-reading-contract'))}))};
+        """)
+        report.setdefault('defaultOverviewChecks', []).append(data)
+        save()
+        check_reading_home(data)
+
+    def parallel_scope(scope):
+        data = driver.js(VISUAL_GEOMETRY + """
+          var a=NavigationProductApp,b=a.getBundle(),r=a.getState().route;
+          return {scope:r.scope,expectedScope:arguments[0],home:!document.getElementById('np-reading-landing').hidden,viewport:{x:0,y:0,width:innerWidth,height:innerHeight},panels:[...document.querySelectorAll('#np-tree [data-parallel-tree]')].map(e=>{var tree=e.dataset.parallelTree,roots=b.forests[r.scope][tree],h=e.querySelector('h3'),hb=box(h),q=hb.rect;return {tree:tree,scope:e.dataset.scopeId,roots:[...e.querySelectorAll(':scope > [role=group] > [role=treeitem]')].map(n=>n.dataset.position),expectedRoots:roots,expectedChildren:roots.some(id=>b.positions[id].childIds.length>0),children:[...e.querySelectorAll('[role=treeitem]')].filter(n=>!roots.includes(n.dataset.position)).map(n=>box(n.querySelector(':scope > .np-node-row'))),rect:rect(e),heading:q,headingVisible:hb.visible&&hb.opaque&&!hb.clipped};})};
+        """, scope)
+        report.setdefault('parallelScopeChecks', []).append(data)
+        save()
+        check_parallel_scope(data)
+
+    def select_node(target):
+        for _ in range(16):
+            element = driver.js("return document.getElementById('np-node-'+arguments[0])?.querySelector('.np-node-label')||null", target)
+            if element:
+                driver.click(element)
+                wait_for(lambda: driver.js("""
+                  var a=NavigationProductApp,b=a.getBundle(),p=b.positions[arguments[0]],r=a.getState().route;
+                  if(r.node!==p.id||r.tree!==p.tree||r.scope!==p.scopeId||r.paper!==p.paperId||r.version!==p.versionId||!a.getContent().ready(p.entityId))return false;
+                  var method=document.querySelector('.np-reading-pane .np-method-mechanism'),meaning=document.querySelector('.np-reading-pane .np-node-meaning');
+                  return (method&&method.dataset.mechanismEntity===p.entityId&&method.querySelectorAll('.np-method-flow dd').length>0)||(meaning&&meaning.dataset.readingNode===p.id&&!meaning.querySelector('.np-content-pending,.np-content-failed'));
+                """, target))
+                driver.settle()
+                return
+            toggle = driver.js("var b=NavigationProductApp.getBundle(),p=b.positions[arguments[0]],ids=[];while(p){ids.unshift(p.id);p=b.positions[p.parentId]}for(var id of ids){var n=document.getElementById('np-node-'+id);if(n&&n.getAttribute('aria-expanded')==='false')return n.querySelector('.np-node-toggle')}return null", target)
+            if not toggle:
+                raise RuntimeError('Recorded node has no reachable real ancestor control')
+            driver.click(toggle)
+            driver.settle()
+        raise RuntimeError('Recorded node did not become reachable')
 
     try:
         binary = shutil.which('google-chrome') or shutil.which('google-chrome-stable')
@@ -357,6 +438,10 @@ def main():
             driver.call('POST', '/url', {'url': base})
             wait_for(lambda: driver.js("return !!window.NavigationProductApp && document.querySelector('[data-load-state]')?.dataset.loadState==='ready'"))
             prefix = f'{width}x{height}'
+            reading_home()
+            capture(prefix + '-00-default-reading-overview', require_home=True)
+            driver.click(driver.selector('#np-overview-toggle'))
+            driver.settle()
             capture(prefix + '-01-overview', require_overview=True)
             # Select and expand through actual controls. No test route or bundle is injected.
             task = driver.js("var b=NavigationProductApp.getBundle();var p=Object.values(b.researchMap.positions).find(p=>p.sourceScopeId==='task:category-objectnav'&&p.sourceRootPositionIds);return document.getElementById('np-node-'+p.id).querySelector('.np-node-toggle');")
@@ -429,6 +514,9 @@ def main():
             capture(prefix + '-06-audiogoal-ci-path')
             driver.click(driver.selector('[data-path-kind="global-entry"] [data-context-position]'))
             driver.settle()
+            if driver.js('return !document.getElementById("np-reading-landing").hidden'):
+                driver.click(driver.selector('#np-overview-toggle'))
+                driver.settle()
             capture(prefix + '-07-ci-return-overview', require_overview=True)
             if not driver.js("var a=NavigationProductApp,r=a.getState().route;return r.tree==='g'&&r.node===a.getBundle().researchMap.roots[0];"):
                 raise RuntimeError('Challenge global entry did not restore the global root route')
@@ -438,6 +526,64 @@ def main():
             if driver.js('return NavigationProductApp.getState().route') != context['route']:
                 raise RuntimeError('Back from global entry changed the challenge identity')
             report['contextPathChecks'][-1]['backRouteRestored'] = True
+            driver.call('POST', '/url', {'url': 'about:blank'})
+            driver.call('POST', '/url', {'url': base})
+            wait_for(lambda: driver.js("return !!window.NavigationProductApp&&document.querySelector('[data-load-state]')?.dataset.loadState==='ready'"))
+            named_cases = {'task:audiogoal': 'audio', 'task:goat': 'goat', 'task:language-objectnav': 'condition', 'task:aerial-visual-object-search': 'gap', 'task:category-objectnav': 'objectnav'}
+            for scope, _, _ in TASK_INDEX:
+                name = named_cases.get(scope)
+                driver.click(driver.selector('[data-task-open="' + scope + '"]'))
+                driver.settle()
+                parallel_scope(scope)
+                if name:
+                    capture(prefix + '-08-parallel-' + name)
+                if name == 'audio':
+                    select_node(ci_target)
+                    wait_for(lambda: driver.js('var a=NavigationProductApp;return a.getContent().ready(a.getBundle().positions[arguments[0]].entityId)', ci_target))
+                    capture(prefix + '-09-audio-local-insight')
+                elif name == 'goat':
+                    for target in ['pos:c:6c467a403479ac834b4f4b', 'pos:c:3ca63b00ad82d0661153fc']:
+                        select_node(target)
+                        actual = driver.js('var a=NavigationProductApp;return {route:a.getState().route,position:a.getBundle().positions[arguments[0]]}', target)
+                        expected_association = 'direct' if target == 'pos:c:6c467a403479ac834b4f4b' else 'condition'
+                        if actual['position']['association'] != expected_association or actual['route']['paper'] != actual['position']['paperId'] or actual['route']['version'] != actual['position']['versionId']:
+                            raise RuntimeError('GOAT direct and condition evidence identity was merged')
+                        if actual['route']['node'] != target or actual['route']['scope'] != scope:
+                            raise RuntimeError('GOAT local challenge identity changed')
+                        report.setdefault('goatLocalChecks', []).append(actual)
+                    capture(prefix + '-10-goat-local-condition')
+                elif name == 'objectnav':
+                    method = driver.js("var b=NavigationProductApp.getBundle();return Object.values(b.positions).find(p=>p.tree==='l'&&p.scopeId==='task:category-objectnav'&&p.paperId==='vlfm'&&p.kind==='pipeline_recipe').id;")
+                    select_node(method)
+                    wait_for(lambda: driver.js('var a=NavigationProductApp;return a.getContent().ready(a.getBundle().positions[arguments[0]].entityId)&&document.querySelectorAll(".np-method-flow dd").length===5', method))
+                    capture(prefix + '-11-parallel-method-reader', require_flow=True)
+                # Exact origin is the real overview entry, not a reconstructed route.
+                for _ in range(20):
+                    if driver.js('return !document.getElementById("np-reading-landing").hidden'):
+                        break
+                    driver.click(driver.selector('.np-return-previous'))
+                    driver.settle()
+                if not driver.js('return !document.getElementById("np-reading-landing").hidden&&document.activeElement.id===arguments[0]', 'np-task-entry-' + scope):
+                    raise RuntimeError('Task return lost exact overview entry focus')
+            driver.click(driver.selector('#np-all-scopes > summary'))
+            directory = driver.js("var b=NavigationProductApp.getBundle();return {expected:b.scopes.map(s=>({id:s.id,parent:s.parentScopeId||'',domParent:s.parentScopeId||''})).sort((a,b)=>a.id.localeCompare(b.id)),actual:[...document.querySelectorAll('#np-all-scopes [data-directory-scope]')].map(n=>({id:n.dataset.directoryScope,parent:n.dataset.parentScope,domParent:n.parentElement.closest('[data-directory-scope]')?.dataset.directoryScope||''})).sort((a,b)=>a.id.localeCompare(b.id))};")
+            if directory['actual'] != directory['expected'] or len(directory['actual']) != 64:
+                raise RuntimeError('Complete64-scope directory lost identity or original parent')
+            for scope in ['task:coin', 'task:iign', 'task:dialnav']:
+                control = driver.selector('[data-scope-open="' + scope + '"]')
+                driver.js("arguments[0].scrollIntoView({block:'center'});arguments[0].focus({preventScroll:true});", control)
+                driver.settle()
+                before = driver.js('return {window:scrollY,landing:document.getElementById("np-reading-landing").scrollTop,focus:document.activeElement.id};')
+                driver.click(control)
+                driver.settle()
+                parallel_scope(scope)
+                driver.click(driver.selector('.np-return-previous'))
+                driver.settle()
+                after = driver.js('return {window:scrollY,landing:document.getElementById("np-reading-landing").scrollTop,focus:document.activeElement.id};')
+                if before != after or not driver.js('return document.getElementById("np-all-scopes").open'):
+                    raise RuntimeError('Directory return lost open state, scroll or exact entry focus')
+                report.setdefault('directoryReturnChecks', []).append({'scope': scope, 'before': before, 'after': after})
+            capture(prefix + '-12-directory-return', require_home=True)
         report['status'] = 'captured_for_human_review'
     except Exception as exc:
         report['status'] = 'failed'
