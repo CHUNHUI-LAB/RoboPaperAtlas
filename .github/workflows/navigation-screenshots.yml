@@ -7,7 +7,7 @@ permissions:
 jobs:
   screenshots:
     if: github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
@@ -18,6 +18,21 @@ jobs:
         with:
           node-version: 24
           package-manager-cache: false
+      - name: Install pinned Ubuntu Chinese screenshot font
+        run: |
+          python3 - <<'PY'
+          import hashlib, os, urllib.request
+          from pathlib import Path
+          # Ubuntu noble package; Noto CJK font software uses SIL OFL 1.1.
+          # https://packages.ubuntu.com/noble/all/fonts-noto-cjk/download
+          url = 'https://archive.ubuntu.com/ubuntu/pool/main/f/fonts-noto-cjk/fonts-noto-cjk_20230817+repack1-3_all.deb'
+          data = urllib.request.urlopen(url, timeout=120).read()
+          if len(data) != 61229778 or hashlib.sha256(data).hexdigest() != '7d64b985f6fe128c99eae5610d5c047338e572bdcfb2bb09736be01b824a7f6c':
+              raise RuntimeError('Ubuntu font package bytes do not match the official pinned checksum')
+          (Path(os.environ['RUNNER_TEMP']) / 'fonts-noto-cjk.deb').write_bytes(data)
+          PY
+          sudo apt-get install --yes --no-install-recommends "$RUNNER_TEMP/fonts-noto-cjk.deb"
+          test "$(dpkg-query -W -f='${Version}' fonts-noto-cjk)" = '1:20230817+repack1-3'
       - name: Build the exact candidate
         env:
           EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}

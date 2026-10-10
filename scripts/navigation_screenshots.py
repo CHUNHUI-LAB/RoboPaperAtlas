@@ -245,6 +245,19 @@ def main():
         report['chineseFonts'] = sorted(set(command(font_tool, ':lang=zh', 'family').splitlines()))
         if not report['chineseFonts']:
             raise RuntimeError('No installed Chinese font; do not treat missing glyphs as visual success')
+        font_version = command('dpkg-query', '-W', '-f=${Version}', 'fonts-noto-cjk')
+        if font_version != '1:20230817+repack1-3':
+            raise RuntimeError('Chinese font package version differs from pinned visual fixture')
+        font_files = [Path(p) for p in command('dpkg-query', '-L', 'fonts-noto-cjk').splitlines()
+                      if p.startswith('/usr/share/fonts/') and Path(p).is_file()]
+        if not font_files:
+            raise RuntimeError('Pinned package has no installed font files')
+        report['fontPackage'] = {'name': 'fonts-noto-cjk', 'version': font_version,
+            'packageSha256': '7d64b985f6fe128c99eae5610d5c047338e572bdcfb2bb09736be01b824a7f6c',
+            'source': 'https://packages.ubuntu.com/noble/all/fonts-noto-cjk/download',
+            'license': 'SIL Open Font License 1.1',
+            'copyrightSha256': sha('/usr/share/doc/fonts-noto-cjk/copyright'),
+            'files': {str(p): sha(p) for p in sorted(font_files)}}
         server = http.server.ThreadingHTTPServer(('127.0.0.1', 0), functools.partial(QuietHandler, directory=str(dist)))
         threading.Thread(target=server.serve_forever, daemon=True).start()
         port = free_port()
