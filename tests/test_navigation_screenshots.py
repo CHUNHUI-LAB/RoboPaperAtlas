@@ -893,5 +893,209 @@ assert.equal(JSON.stringify(state),savedState);assert.equal(JSON.stringify(w.his
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
 
+class TaskDensityScreenshotChecks(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        import gzip
+        cls.science = json.loads(gzip.decompress((Path(__file__).parents[1] / 'data/navigation-product/model.json.gz').read_bytes()))
+        cls.cases = MODULE.task_density_expected(cls.science)
+
+    def snapshot(self, case):
+        import copy
+        expected = case['expected']
+        data = {'ready': 'ready', 'home': False, 'readerHidden': False, 'scale': 1,
+                'viewport': {'width': 1440, 'height': 900},
+                'route': {'scope': case['scope'], 'tree': 'l', 'node': expected['roots'][0], 'paper': None, 'version': None},
+                'panelScope': case['scope'], 'groups': list(expected['groups']),
+                'methods': [dict(copy.deepcopy(row), ready=True) for row in expected['methods']],
+                'readerScroll': {'top': 0, 'left': 0}, 'treeScroll': {'top': 0, 'left': 0},
+                'window': {'x': 0, 'y': 88}, 'focus': 'natural-entry-focus', 'changes': [],
+                'density': {'state': 'ready', 'selectedReady': True, 'internalScroll': [{'id': 'np-detail-scroll', 'top': 0, 'left': 0}], 'previews': [], 'readings': []}}
+        if case.get('relation'):
+            data['changes'] = [{'id': case['relation'], 'open': False, 'type': case['relationType'], 'renderAsTree': 'false', 'scope': 'current-scope'}]
+            data['density']['previews'] = [{'relation': case['relation'], 'claims': [{'id': case['claim'], 'version': case['claimVersion'], 'versionRelation': 'same-version'}]}]
+        if case.get('claims'):
+            data['density']['readings'] = [dict(copy.deepcopy(row), present=True, paragraphs=[c['text'] for c in row['claims']]) for row in case['claims']]
+        return data
+
+    def test_density_source_contract_has_four_bounded_cases_and_no_invented_pipeline(self):
+        self.assertEqual([c['scope'] for c in self.cases], ['task:category-objectnav', 'task:imagenav', 'setting:portable-objectnav', 'task:aerial-visual-object-search'])
+        texts = [p['text'] for p in self.cases[0]['proofs']]
+        self.assertIn(self.science['claims']['method-edge:89']['statement'], texts)
+        self.assertEqual(self.cases[0]['claimVersion'], 'publication:poni:e83f98bb7132')
+        image_text = '\n'.join(p['text'] for p in self.cases[1]['proofs'])
+        self.assertIn('scene-specific适应条件可见，不标成未知房屋零样本', image_text)
+        self.assertIn('条件输入：预给遍历录制、当前与goal RGB', image_text)
+        self.assertIn('表示：共享视觉embedding+scene-specific层', image_text)
+        self.assertIn('决策：retrieve当前位置/目标→Dijkstra→reachable waypoint', image_text)
+        self.assertNotIn('条件输入：目标环境已收集轨迹', image_text, 'ViNG remains covered by the original 68 scenes')
+        portable = self.cases[2]
+        self.assertEqual(len({c['position'] for c in portable['claims']}), 2)
+        self.assertNotEqual(portable['claims'][0]['claims'][0]['id'], portable['claims'][1]['claims'][0]['id'])
+        self.assertTrue(self.cases[3]['empty'])
+        self.assertEqual(self.cases[3]['expected']['methods'], [])
+
+    def test_density_rejects_scrolled_partial_wrong_relation_version_variants_and_false_empty_inventory(self):
+        import copy
+        for case in self.cases:
+            valid = self.snapshot(case)
+            MODULE.check_task_density_snapshot(valid, case)
+            mutations = [lambda d: d['readerScroll'].update(top=1), lambda d: d['readerScroll'].update(left=1),
+                         lambda d: d['treeScroll'].update(top=1), lambda d: d['density']['internalScroll'][0].update(top=1),
+                         lambda d: d['density'].update(state='partial'), lambda d: d['density'].update(selectedReady=False), lambda d: d.update(scale=.9),
+                         lambda d: d['route'].update(scope='scope:all')]
+            if case.get('relation'):
+                mutations += [lambda d: d['changes'][0].update(open=True), lambda d: d['changes'][0].update(type='inheritance'),
+                              lambda d: d['density']['previews'][0]['claims'][0].update(version='another-version'),
+                              lambda d: d['density']['previews'][0]['claims'][0].update(id='method-edge:90')]
+            if case.get('claims'):
+                mutations += [lambda d: d['density']['readings'][0].update(claims=d['density']['readings'][1]['claims']),
+                              lambda d: d['density']['readings'][0]['paragraphs'].append('表示：invented pipeline')]
+            if case.get('empty'):
+                mutations += [lambda d: d['density']['previews'].append({'relation': 'invented'}), lambda d: d['changes'].append({'id': 'invented'})]
+            for mutate in mutations:
+                bad = copy.deepcopy(valid)
+                mutate(bad)
+                with self.assertRaises(RuntimeError):
+                    MODULE.check_task_density_snapshot(bad, case)
+
+    def test_density_actual_orchestration_uses_only_natural_entry_clicks_and_saves_scroll_failures(self):
+        import copy
+        import inspect
+        source = inspect.getsource(MODULE.task_density_checks)
+        for forbidden in ('scrollIntoView', '.focus(', 'driver.cdp(', 'reveal(', 'scrollTop=', 'navigate(', "'/actions'"):
+            self.assertNotIn(forbidden, source)
+        owner = self
+        transition_error = TimeoutError('actual transition timed out')
+
+        class Driver:
+            def __init__(self, failure=None):
+                self.index = -1
+                self.current = None
+                self.failure = failure
+                self.reads = 0
+                self.proof_reads = 0
+                self.calls = []
+            def call(self, method, path, payload):
+                owner.assertEqual((method, path), ('POST', '/url'))
+                self.calls.append(('url', payload['url']))
+                self.index += 1
+                self.current = owner.cases[self.index]
+                self.reads = 0
+                self.proof_reads = 0
+            def click(self, element):
+                self.calls.append(('click', element['selector']))
+            def selector(self, selector):
+                return {'selector': selector}
+            def settle(self):
+                self.calls.append(('settle',))
+            def js(self, script, *args):
+                if script == MODULE.TASK_DENSITY_SNAPSHOT_JS:
+                    self.reads += 1
+                    if self.failure == 'wait-and-snapshot' or (self.failure == 'capture-and-snapshot' and self.reads == 2):
+                        raise RuntimeError('diagnostic snapshot failed')
+                    data = owner.snapshot(self.current)
+                    if self.failure == 'scroll':
+                        data['readerScroll']['top'] = 42
+                    if self.failure == 'late-window' and self.reads == 2:
+                        data['window']['y'] = 100
+                    return data
+                if script == MODULE.TASK_DENSITY_PROOFS_JS:
+                    self.proof_reads += 1
+                    return [{'spec': spec, 'actual': self.proof(spec)} for spec in args[0]]
+                if script.startswith('return !!window.NavigationProductApp'):
+                    return True
+                if script.startswith('var a=NavigationProductApp,r=a.getState().route'):
+                    return self.failure not in ('wait-timeout', 'wait-and-snapshot', 'wait-and-save')
+                raise AssertionError('Unexpected script ' + script)
+            def proof(self, spec):
+                rect = {'x': 920, 'y': 300, 'width': 200, 'height': 30}
+                area = {'x': 900, 'y': 200, 'width': 500, 'height': 650}
+                if self.failure == 'late-geometry' and self.proof_reads == 2:
+                    rect['y'] += 1
+                fragment = dict(rect, visible=self.failure != 'hidden' and not (self.failure == 'late-hidden' and self.proof_reads == 2))
+                return {'visible': True, 'opaque': True, 'unscaled': True, 'clipped': False, 'fontSize': 15,
+                        'foreground': [10, 20, 30], 'background': [255, 255, 255], 'rect': rect,
+                        'viewport': {'x': 0, 'y': 0, 'width': 1440, 'height': 900}, 'readerContent': area, 'clipAreas': [],
+                        'renderedText': spec['text'], 'fragments': [fragment],
+                        'textRuns': [{'fontSize': 15, 'opaque': True, 'unscaled': True, 'foreground': [10, 20, 30],
+                                      'background': [255, 255, 255], 'fragments': [fragment], 'clipAreas': []}]}
+
+        report, captured, saved = {}, [], []
+        driver = Driver()
+        with patch.object(MODULE, 'wait_for', side_effect=lambda check: self.assertTrue(check())):
+            MODULE.task_density_checks(driver, report, lambda: saved.append(copy.deepcopy(report)), lambda name, **kwargs: captured.append(name), '1440x900', 'http://localhost/research/navigation/', self.science)
+        self.assertEqual(len(captured), 4)
+        self.assertEqual(len([c for c in driver.calls if c[0] == 'click']), 5)
+        self.assertEqual(report['taskDensityChecks'][0]['documentTopClaimed'], False)
+        for scene in report['taskDensityChecks'][0]['scenes']:
+            self.assertEqual(scene['naturalEntryWindow']['y'], 88)
+            self.assertEqual(scene['status'], 'captured_for_human_review')
+            kinds = [a['kind'] for a in scene['actions']]
+            self.assertEqual(kinds.count('click-task-entry'), 1)
+            self.assertTrue(all(k.startswith(('read-', 'capture-')) for k in kinds[kinds.index('read-natural-entry'):]))
+        def bounded_wait(check):
+            if not check():
+                raise transition_error
+
+        for failure in ('scroll', 'hidden', 'late-window', 'late-hidden', 'late-geometry', 'wait-timeout', 'wait-and-snapshot', 'capture-and-snapshot', 'wait-and-save', 'capture-and-save'):
+            report, saved = {}, []
+            def capture(*args, **kwargs):
+                if failure in ('capture-and-snapshot', 'capture-and-save'):
+                    raise transition_error
+            def save():
+                saved.append(copy.deepcopy(report))
+                scene = report['taskDensityChecks'][0]['scenes'][0] if report['taskDensityChecks'][0]['scenes'] else {}
+                if (failure == 'wait-and-save' and 'initial' in scene) or (failure == 'capture-and-save' and 'afterCapture' in scene):
+                    raise RuntimeError('diagnostic save failed')
+            with patch.object(MODULE, 'wait_for', side_effect=bounded_wait):
+                with self.assertRaises((RuntimeError, TimeoutError)) as caught:
+                    MODULE.task_density_checks(Driver(failure), report, save, capture, '1440x900', 'http://localhost/research/navigation/', self.science)
+            self.assertTrue(saved)
+            scene = saved[-1]['taskDensityChecks'][0]['scenes'][0]
+            if failure in ('wait-and-snapshot', 'capture-and-snapshot'):
+                self.assertIs(caught.exception, transition_error)
+                self.assertIn('initialSnapshotError' if failure == 'wait-and-snapshot' else 'afterCaptureSnapshotError', scene)
+            elif failure in ('wait-and-save', 'capture-and-save'):
+                self.assertIs(caught.exception, transition_error)
+                self.assertIn('initialSaveError' if failure == 'wait-and-save' else 'afterCaptureSaveError', report['taskDensityChecks'][0]['scenes'][0])
+            else:
+                self.assertIn('initial', scene)
+
+    def test_density_actual_javascript_syntax(self):
+        import ast
+        import inspect
+        scripts = [MODULE.TASK_DENSITY_SNAPSHOT_JS, MODULE.TASK_DENSITY_PROOFS_JS]
+        for node in ast.walk(ast.parse(inspect.getsource(MODULE.task_density_checks))):
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == 'js' and node.args and isinstance(node.args[0], ast.Constant):
+                scripts.append(node.args[0].value)
+        result = subprocess.run(['node', '-e', "for(const s of JSON.parse(require('fs').readFileSync(0,'utf8')))new Function(s);"], input=json.dumps(scripts), text=True, capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_density_production_roots_keep_source_fields_reachable_without_disclosure(self):
+        import tempfile
+        root = Path(__file__).parents[1]
+        with tempfile.TemporaryDirectory(prefix='.density-capture-test-', dir=root) as tmp:
+            build = subprocess.run(['python3', '-c', "import sys;from pathlib import Path;sys.path.insert(0,'scripts');import navigation_product as p;p.write_preview(Path('.').resolve(),Path(sys.argv[1]))", tmp], cwd=root, capture_output=True, text=True)
+            self.assertEqual(build.returncode, 0, build.stdout + build.stderr)
+            script = r"""
+const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto'),assert=require('node:assert/strict'),{JSDOM,ResourceLoader,VirtualConsole}=require('jsdom'),input=JSON.parse(fs.readFileSync(0,'utf8')),output=path.join(input.temp,'research/navigation'),errors=[];
+class Resources extends ResourceLoader{fetch(url){throw Error('Unexpected external resource '+url);}}
+const vc=new VirtualConsole();vc.on('jsdomError',e=>errors.push(e.message));
+const dom=new JSDOM(fs.readFileSync(path.join(output,'index.html'),'utf8'),{url:'https://example.org/research/navigation/',runScripts:'dangerously',pretendToBeVisual:true,resources:new Resources(),virtualConsole:vc,beforeParse(w){w.TextEncoder=TextEncoder;w.TextDecoder=TextDecoder;w.scrollTo=(x,y)=>Object.defineProperty(w,'scrollY',{value:y,configurable:true});w.HTMLElement.prototype.scrollIntoView=function(){};Object.defineProperty(w.crypto,'subtle',{value:crypto.webcrypto.subtle});w.fetch=url=>Promise.resolve({ok:true,arrayBuffer:async()=>fs.readFileSync(path.join(output,url))});}});
+(async()=>{const w=dom.window,d=w.document,wait=ms=>new Promise(r=>setTimeout(r,ms));async function ready(check){for(let i=0;i<250&&!check();i++)await wait(10);assert.ok(check());await new Promise(r=>w.requestAnimationFrame(()=>w.requestAnimationFrame(r)));}await ready(()=>w.NavigationProductApp);const a=w.NavigationProductApp,snapshot=new w.Function(input.snapshot),states=[];
+for(const c of input.cases){assert.equal(d.getElementById('np-reading-landing').hidden,false);if(c.directory)d.querySelector('#np-all-scopes > summary').click();const selector='[data-'+(c.directory?'scope':'task')+'-open="'+c.scope+'"]';d.querySelector(selector).click();await ready(()=>d.querySelector('[data-task-route-scope]')?.dataset.taskRouteState==='ready'&&a.getContent().ready(a.getBundle().positions[a.getState().route.node].entityId));
+const reader=d.getElementById('np-detail-scroll');for(const spec of c.proofs){const found=[...d.querySelectorAll(spec.selector)].filter(n=>n.textContent===spec.text);assert.equal(found.length,1,spec.selector+' '+spec.text);assert.ok(reader.contains(found[0]));for(let p=found[0];p&&p!==reader;p=p.parentElement){if(p.tagName==='DETAILS'&&!p.open)assert.ok(p.querySelector(':scope > summary').contains(found[0]),'a requested first-screen field is behind a closed disclosure');}}
+states.push(snapshot());d.querySelector('.np-return-previous').click();await ready(()=>!d.getElementById('np-reading-landing').hidden);}
+assert.deepEqual(errors,[]);process.stdout.write(JSON.stringify(states));dom.window.close();})().catch(e=>{console.error(e);dom.window.close();process.exitCode=1;});
+"""
+            result = subprocess.run(['node', '-e', script], input=json.dumps({'temp': tmp, 'snapshot': MODULE.TASK_DENSITY_SNAPSHOT_JS, 'cases': self.cases}), cwd=root, text=True, capture_output=True, timeout=120)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            states = json.loads(result.stdout)
+            for data, case in zip(states, self.cases):
+                data['viewport'] = {'width': 1440, 'height': 900}  # JSDOM has no physical desktop viewport.
+                MODULE.check_task_density_snapshot(data, case)
+
+
 if __name__ == '__main__':
     unittest.main()

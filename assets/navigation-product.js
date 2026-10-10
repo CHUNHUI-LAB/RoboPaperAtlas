@@ -125,7 +125,7 @@ function layoutReadingOverview(){
  if(focusedEdge&&by(focusedEdge)&&by(focusedEdge).focus)by(focusedEdge).focus({preventScroll:true});
 }
 
-function capture(){var active=document.activeElement,at=active&&active.closest?active.closest('[data-position]'):null,result=M.capture(state,{treeScroll:by('np-tree-scroll').scrollTop,treeScrollLeft:by('np-tree-scroll').scrollLeft,detailScroll:by('np-detail-scroll').hidden?(M.getBucket(state).detailScrollByTree[state.route.tree]||0):by('np-detail-scroll').scrollTop,windowScroll:window.scrollY||0,focusTarget:at?at.getAttribute('data-position'):(active&&active.id)||state.route.node});if(isReadingHome()){M.getBucket(result).originalMapOpen=false;M.getBucket(result).overviewView={allScopesOpen:!!(by('np-all-scopes')&&by('np-all-scopes').open),comparisonOpen:!!(by('np-overview-comparison')&&by('np-overview-comparison').open),relationsOpen:!!(by('np-task-relations')&&by('np-task-relations').open),notesOpen:!!(by('np-overview-notes')&&by('np-overview-notes').open),linesVisible:!!(by('np-map-relations-toggle')&&by('np-map-relations-toggle').getAttribute('aria-pressed')==='true'),scrollTop:by('np-reading-landing').scrollTop};}return result;}
+function capture(){var intent=validTaskRouteFocus(),active=document.activeElement,at=active&&active.closest?active.closest('[data-position]'):null,result=M.capture(state,{treeScroll:by('np-tree-scroll').scrollTop,treeScrollLeft:by('np-tree-scroll').scrollLeft,detailScroll:intent?intent.detailScroll:by('np-detail-scroll').hidden?(M.getBucket(state).detailScrollByTree[state.route.tree]||0):by('np-detail-scroll').scrollTop,windowScroll:window.scrollY||0,focusTarget:intent?intent.id:at?at.getAttribute('data-position'):(active&&active.id)||state.route.node});if(isReadingHome()){M.getBucket(result).originalMapOpen=false;M.getBucket(result).overviewView={allScopesOpen:!!(by('np-all-scopes')&&by('np-all-scopes').open),comparisonOpen:!!(by('np-overview-comparison')&&by('np-overview-comparison').open),relationsOpen:!!(by('np-task-relations')&&by('np-task-relations').open),notesOpen:!!(by('np-overview-notes')&&by('np-overview-notes').open),linesVisible:!!(by('np-map-relations-toggle')&&by('np-map-relations-toggle').getAttribute('aria-pressed')==='true'),scrollTop:by('np-reading-landing').scrollTop};}return result;}
 // Reader visibility is a page-local presentation preference, never a route or model field.
 function readerToggleAvailable(){return window.innerWidth>=1200&&app.dataset.readingLayout==='reading';}
 function updateReaderVisibility(preserveAnchor,focusReader){
@@ -239,13 +239,13 @@ function renderMethodMechanism(host,p){if(!isMethodNode(p))return;var section=el
    scientific groups or edges; nested semantic treeitems remain the keyboard tree. */
 /* Current-scope route reading uses only stored L positions and non-tree claims. */
 function cancelTaskRouteFocus(){if(taskRouteAutomaticFocus)return;taskRouteInteractionEpoch++;pendingTaskRouteFocus=null;}
+function validTaskRouteFocus(){var intent=pendingTaskRouteFocus;if(intent&&(intent.token!==renderToken||intent.route!==M.encodeRoute(state.route)||intent.context!==M.contextKey(state.route)||intent.tree!==state.route.tree||intent.readerEpoch!==readerFocusEpoch||intent.interactionEpoch!==taskRouteInteractionEpoch||by('np-detail-scroll').hidden))pendingTaskRouteFocus=intent=null;return intent;}
 function restorePendingTaskRouteFocus(){
- var intent=pendingTaskRouteFocus;if(!intent)return;
- if(intent.token!==renderToken||intent.route!==M.encodeRoute(state.route)||intent.readerEpoch!==readerFocusEpoch||intent.interactionEpoch!==taskRouteInteractionEpoch||by('np-detail-scroll').hidden){pendingTaskRouteFocus=null;return;}
+ var intent=validTaskRouteFocus();if(!intent||!intent.armed)return;
  var target=by(intent.id);if(!target||!target.closest('.np-task-route-overview'))return;
- pendingTaskRouteFocus=null;var scroller=by('np-detail-scroll'),top=scroller.scrollTop,left=scroller.scrollLeft,y=window.scrollY||0,x=window.scrollX||0;
+ pendingTaskRouteFocus=null;var scroller=by('np-detail-scroll'),top=intent.detailScroll,left=scroller.scrollLeft,y=window.scrollY||0,x=window.scrollX||0;
  for(var ancestor=target.parentElement;ancestor;ancestor=ancestor.parentElement)if(ancestor.tagName==='DETAILS')ancestor.open=true;
- target.focus({preventScroll:true});scroller.scrollTop=top;scroller.scrollLeft=left;window.scrollTo(x,y);
+ taskRouteAutomaticFocus=true;try{target.focus({preventScroll:true});}finally{taskRouteAutomaticFocus=false;}scroller.scrollTop=top;scroller.scrollLeft=left;window.scrollTo(x,y);saveCurrent();
 }
 function taskRouteScope(p){
  if(!p||p.tree==='a')return null;
@@ -271,25 +271,41 @@ function taskRouteStamp(host,p){
  if(p.kind==='versioned_method_card')stamp.appendChild(el('span',{},' · 固定版本方法选段'));
  host.appendChild(stamp);if(p.condition)addParagraph(host,'适用条件：'+textOf(p.condition),'np-note');
 }
-function taskRouteContent(host,p,draw,changed){
- function update(){clear(host);if(contentGate(host,[p.entityId],update,true)){if(changed)changed();return;}draw(entityFor(p)||{});if(changed)changed();}
- update();
-}
 var TASK_ROUTE_CHANGE_TYPES=new Set(['explicit_method_adaptation','explicit_component_reuse_and_policy_replacement','explicit_mapping_reuse_with_alternative_search_scorer','editorial_route_comparison_only','cited_baseline_and_problem_response','explicit_design_revision','cited_architectural_lineage_with_ablated_changes','explicit_model_reuse','cited_architectural_response','cited_limitation_response_and_training_component_lineage','explicit_framework_extension','cited_modular_transfer','cited_prior_and_shared_component_family']);
 function renderTaskRouteOverview(host,p){
  var scope=taskRouteScope(p);if(!scope)return false;
- var rows=taskRouteRows(scope),section=el('section',{class:'np-task-route-overview','data-task-route-scope':scope.id}),routeKey=M.encodeRoute(state.route),token=renderToken;
+ var rows=taskRouteRows(scope),section=el('section',{class:'np-task-route-overview','data-task-route-pending-scope':scope.id,'data-task-route-state':'loading'}),routeKey=M.encodeRoute(state.route),token=renderToken;
+ var owners=Array.from(new Set(rows.groups.map(function(group){return group.position.entityId;}).concat(rows.methods.map(function(method){return method.entityId;})))),snapshot=el('div',{class:'np-task-route-snapshot'}),retryHost=el('div',{class:'np-task-route-retries'}),retryControls={};
  function active(){return token===renderToken&&routeKey===M.encodeRoute(state.route)&&section.isConnected;}
- section.appendChild(el('h2',{},'已有路线与方法'));
- addParagraph(section,'按当前文献树的真实位置阅读；机制对照，实验可比性未核。','np-note');
- if(!rows.methods.length)addParagraph(section,'当前文献树未整理可比较的方法结构；原有条件与来源仍可阅读。','np-reading-gap');
- var recipes=rows.methods.filter(function(method){return method.kind==='pipeline_recipe';}),associations=new Set(recipes.map(function(method){return method.association;}));
- if(recipes.length)addParagraph(section,associations.has('direct')?(associations.has('condition')?'当前同时有直接与条件关联；分别核对每个位置。':'当前有直接关联方法；按各自记录范围阅读。'):associations.has('condition')?'当前方法仅为条件关联，不能当作同一任务或同一评测协议。':'当前方法仅作跨任务相关阅读。','np-note');
- var changes=el('section',{class:'np-task-route-changes','aria-label':'当前方法的有据变化与对照'}),changeList=el('div',{}),changeStatus=el('p',{class:'np-note'}),shown=new Set();
- var outside=el('details',{class:'np-task-route-outside',hidden:true}),outsideList=el('div',{});
- outside.appendChild(el('summary',{id:'np-task-route-outside-'+scope.id},'范围外的方法关联'));
- addParagraph(outside,'以下关系有端点不在当前范围的方法位置中；保留相关阅读，不增加本任务解法归属。','np-note');outside.appendChild(outsideList);
- changes.appendChild(el('h3',{},'有据变化与对照'));addParagraph(changes,'关系连接论文身份；各方法位置按版本与条件核对，不表示所有变体均适用。','np-note');changes.appendChild(changeStatus);changes.appendChild(changeList);changes.appendChild(outside);
+ section.appendChild(el('h2',{},'已有路线与方法'));section.appendChild(snapshot);section.appendChild(retryHost);host.appendChild(section);
+ function ownerReady(id){return !content||content.ready(id);}
+ function field(host,label,value,seen,cls){var text=textOf(value);if(!text)return false;var prior=seen.get(text);if(prior){if(prior.labels.indexOf(label)<0)prior.labels.push(label);prior.node.textContent=prior.labels.join('／')+'：'+text;return false;}var node=el('p',{class:cls||''},label+'：'+text);host.appendChild(node);seen.set(text,{node:node,labels:[label]});return true;}
+ function ownerBody(body,pos,draw){if(ownerReady(pos.entityId)){draw(entityFor(pos)||{});return;}var pending=el('p',{class:'np-route-content-failed','data-content-state':'failed'},'本位置正文未载入；已保留身份与版本，可在下方重试。');body.appendChild(pending);}
+ function retryRow(id){
+  if(retryControls[id])return;
+  var row=el('section',{class:'np-route-retry','data-retry-owner':id}),control=button('',function(){
+   if(!active())return;
+   if(control.dataset.retryState==='ready'){
+    install(control);if(!active())return;Object.keys(retryControls).forEach(function(owner){if(ownerReady(owner))retryControls[owner].setState('applied');});saveCurrent();return;
+   }
+   if(control.dataset.retryState!=='failed'||content.attempts(id)>=3)return;
+   setRetry('loading');content.request(id,true).then(function(){if(active())setRetry('ready');},function(){if(active())setRetry('failed');});
+  },'np-button np-route-retry-control');control.id='np-task-route-retry-'+scope.id+'-'+id;
+  var labels={failed:'重试此节点正文',loading:'正在重试正文',ready:'应用已载入内容',applied:'内容已应用',exhausted:'重试次数已用完'};
+  Object.keys(labels).forEach(function(key){control.appendChild(el('span',{'data-retry-label':key,'aria-hidden':'true'},labels[key]));});
+  function setRetry(value){if(value==='failed'&&content.attempts(id)>=3)value='exhausted';control.dataset.retryState=value;control.setAttribute('aria-label',labels[value]);control.setAttribute('aria-disabled',String(value==='loading'||value==='applied'||value==='exhausted'));row.dataset.contentState=value;}
+  row.appendChild(el('p',{},(bundle.entities[id]&&bundle.entities[id].label||id)+'：首次加载未成功（'+content.error(id)+'）'));row.appendChild(control);addParagraph(row,'重试成功后，点击同一按钮应用已载入内容；应用前保持当前阅读位置。','np-note');retryHost.appendChild(row);retryControls[id]={control:control,setState:setRetry};setRetry('failed');
+ }
+ function install(anchorControl){
+  if(!active())return;
+  var scroller=by('np-detail-scroll'),top=scroller.scrollTop,focus=document.activeElement,anchor=anchorControl&&anchorControl.nodeType===1?anchorControl:focus&&scroller.contains(focus)&&!snapshot.contains(focus)?focus:null,anchorTop=anchor&&anchor.getBoundingClientRect().top;
+  clear(snapshot);section.dataset.taskRouteScope=scope.id;section.removeAttribute('data-task-route-pending-scope');section.dataset.taskRouteState=owners.some(function(id){return !ownerReady(id);})?'partial':'ready';
+  if(!rows.methods.length)addParagraph(snapshot,'当前文献树未整理可比较的方法结构；原有条件与来源仍可阅读。','np-reading-gap');
+  var changes=el('section',{class:'np-task-route-changes','aria-label':'当前方法的有据变化与对照'}),changeList=el('div',{}),changeStatus=el('p',{class:'np-note'}),shown=new Set();
+  var outside=el('details',{class:'np-task-route-outside',hidden:true}),outsideList=el('div',{});
+  outside.appendChild(el('summary',{id:'np-task-route-outside-'+scope.id},'范围外的方法关联'));
+  addParagraph(outside,'以下关系有端点不在当前范围的方法位置中；保留相关阅读，不增加本任务解法归属。','np-note');outside.appendChild(outsideList);
+  changes.appendChild(el('h3',{},'有据变化与对照'));changes.appendChild(changeList);changes.appendChild(changeStatus);changes.appendChild(outside);
  function endpointPositions(paper){
   var local=rows.methods.filter(function(method){return method.paperId===paper;});if(local.length)return local;
   var indexed=Object.values(bundle.positions).filter(function(target){return target.scopeId==='scope:all'&&target.tree==='l'&&target.paperId===paper&&(target.kind==='pipeline_recipe'||target.kind==='paper');}),recipes=indexed.filter(function(target){return target.kind==='pipeline_recipe';});return recipes.length?recipes:indexed;
@@ -315,42 +331,51 @@ function renderTaskRouteOverview(host,p){
     var control=button(label,function(){goPosition(target.id,{cross:true});},'np-text-button');control.id='np-task-change-target-'+scope.id+'-'+rel.id+'-'+target.id;control.dataset.changeTarget=target.id;targets.appendChild(control);
    });
   });box.appendChild(targets);var listHost=inScope?changeList:outsideList;if(!inScope)outside.hidden=false;
-  var next=Array.from(listHost.children).find(function(item){return item.dataset.taskChange.localeCompare(rel.id,undefined,{numeric:true})>0;});listHost.insertBefore(box,next||null);
+  var reading=el('div',{class:'np-task-change-reading'}),preview=el('div',{'data-task-change-preview':rel.id,class:'np-task-change-preview'});reading.appendChild(box);
+  list(rel.claimIds||rd.claimIds).forEach(function(cid){var claim=bundle.claims[cid];if(!claim)return;var original=box.querySelector('[data-task-change-claim="'+cid+'"]'),item=el('div',{'data-route-change-claim':cid,'data-evidence-version':M.versionOf(claim)||'','data-version-relation':original.dataset.versionRelation});
+   addParagraph(item,original.querySelector('.np-change-version').textContent,'np-change-version');addParagraph(item,claim.statement||claim.label,'np-change-claim');preview.appendChild(item);
+  });reading.appendChild(preview);listHost.appendChild(reading);
  }
- function updateChanges(){
-  if(!active())return;
-  // Wait for this scope's owner requests to settle, so packet order cannot move a
-  // relation control under the pointer. Existing controls are never rebuilt.
-  var pending=content&&rows.methods.some(function(method){return ['idle','loading'].indexOf(content.status(method.entityId))>=0;});
-  if(pending){changeStatus.textContent='正在读取当前范围方法的关系证据；路线与方法入口保持可操作。';return;}
+
   var papers=new Set(rows.methods.map(function(method){return method.paperId;})),all=content?rows.methods.reduce(function(result,method){return result.concat(content.relations(method.entityId));},[]):Object.values(bundle.relations||{}).concat(list(bundle.relatedRelations));
   all.filter(function(rel){var from=bundle.entities[rel.from||rel.fromId],to=bundle.entities[rel.to||rel.toId];return rel.renderAsTree===false&&TASK_ROUTE_CHANGE_TYPES.has(rel.relationType)&&from&&to&&from.kind==='paper'&&to.kind==='paper'&&(papers.has(from.paperId)||papers.has(to.paperId));}).sort(function(a,b){return a.id.localeCompare(b.id,undefined,{numeric:true});}).forEach(function(rel){if(!shown.has(rel.id)){shown.add(rel.id);appendChange(rel);}});
-  var failed=content&&rows.methods.some(function(method){return content.status(method.entityId)==='failed';});
-  changeStatus.textContent=failed?'部分证据未载入；可在对应方法的条件与来源中重试。':shown.size?'保留各自关系类型；展开核对原句、来源与版本，不据此新增树边。':'当前记录未整理这些方法的变化关系；不推断它们不存在。';restorePendingTaskRouteFocus();
+  changeStatus.textContent=rows.methods.some(function(method){return !ownerReady(method.entityId);})?'部分证据未载入；下方可重试，已显示内容保持不变。':shown.size?'关系连接论文身份；各方法位置按版本与条件核对，不表示所有变体均适用。':'当前记录未整理这些方法的变化关系；不推断它们不存在。';
+  if(rows.methods.length)snapshot.appendChild(changes);
+  function methodRow(parent,method){
+   var row=el('li',{class:'np-task-route-method','data-route-method':method.id,'data-route-parent':method.parentId||''}),control=button(readingLabel(method),function(){goPosition(method.id,{cross:true});},'np-text-button');
+   control.id='np-task-route-method-'+method.id;row.appendChild(control);taskRouteStamp(row,method);
+   if(method.kind==='versioned_method_card'&&bundle.positions[method.parentId]){var parentControl=button('原位置：'+readingLabel(bundle.positions[method.parentId]),function(){goPosition(method.parentId,{cross:true});},'np-text-button');parentControl.id='np-task-route-parent-'+method.id;row.appendChild(parentControl);}
+   var reading=el('div',{class:'np-route-method-reading'});row.appendChild(reading);
+   var disclosure=el('details',{class:'np-route-method-summary'});disclosure.appendChild(el('summary',{id:'np-task-route-summary-'+method.id},'适用条件与来源'));var body=el('div',{});disclosure.appendChild(body);row.appendChild(disclosure);parent.appendChild(row);
+   ownerBody(reading,method,function(entity){var d=entity.detail||{},flow=d.pipeline||d.pipeline_contract,seen=new Map(),sourceRefs=list(entity.sourceRefs);
+    if(method.association==='condition'){var input=el('div',{class:'np-route-condition-input','data-route-condition-input':method.id});field(input,'条件输入',flow&&flow.input||'未记录；按适用条件与原文核对。',seen);reading.appendChild(input);}
+    if(flow){[['representation','表示'],['decision','决策']].forEach(function(pair){if(flow[pair[0]])field(reading,pair[1],flow[pair[0]],seen);else addParagraph(reading,pair[1]+'：未记录');});}
+    else{var claims=Array.from(new Set(list(method.claimIds).concat(list(entity.claimIds)))).map(function(id){return bundle.claims[id];}).filter(function(claim){return claim&&M.paperOf(claim)===method.paperId&&M.versionOf(claim)===method.versionId;});
+     claims.forEach(function(claim){reading.appendChild(el('p',{'data-route-method-claim':claim.id},claim.statement||claim.label));if(claim.scope)field(body,'选段范围',claim.scope,seen,'np-note');sourceRefs=sourceRefs.concat(list(claim.sourceRefs));});
+     if(!claims.length)addParagraph(reading,'本版本未记录表示／决策或已核方法选段。','np-note');
+    }
+    [['requiredDisplayConditions','必要限定'],['condition','适用条件'],['scope','记录范围'],['limits','适用边界'],['boundaries','结论边界']].forEach(function(pair){field(body,pair[1],d[pair[0]],seen,'np-note');});renderSources(body,sourceRefs);
+   });
+  }
+  rows.groups.forEach(function(group){var gp=group.position,block=el('section',{class:'np-task-route-group','data-route-group':gp.id}),head=el('h3',{}),control=button(readingLabel(gp),function(){goPosition(gp.id,{cross:true});},'np-text-button');
+   control.id='np-task-route-group-'+gp.id;head.appendChild(control);block.appendChild(head);taskRouteStamp(block,gp);
+   var summary=el('div',{class:'np-route-group-summary'+(gp.association==='condition'?' np-route-group-condition':'')});if(gp.association==='condition')summary.dataset.routeGroupCondition=gp.id;block.appendChild(summary);
+   var disclosure=el('details',{class:'np-route-group-disclosure'});disclosure.appendChild(el('summary',{id:'np-task-route-group-summary-'+gp.id},'来源依据'));var sources=el('div',{});disclosure.appendChild(sources);block.appendChild(disclosure);
+   ownerBody(summary,gp,function(entity){var d=entity.detail||{},seen=new Map();[['condition','适用条件'],['scope','范围'],['evidence','依据']].forEach(function(pair){field(summary,pair[1],d[pair[0]],seen,pair[0]==='evidence'?'np-note':null);});if(!summary.childNodes.length)addParagraph(summary,'路线条件与范围未记录；请分别核对方法的条件输入与来源。');renderSources(sources,entity.sourceRefs||[]);});
+   var methods=el('ul',{});block.appendChild(methods);snapshot.appendChild(block);group.methods.forEach(function(method){methodRow(methods,method);});
+  });
+  if(rows.ungrouped.length){var ungrouped=el('section',{class:'np-task-route-ungrouped'});ungrouped.appendChild(el('h3',{},'未声明路线分组的方法与选段'));var methods=el('ul',{});ungrouped.appendChild(methods);snapshot.appendChild(ungrouped);rows.ungrouped.forEach(function(method){methodRow(methods,method);});}
+  if(rows.supplemental.length){var supplemental=el('details',{class:'np-task-route-supplemental'});supplemental.appendChild(el('summary',{id:'np-task-route-supplemental-'+scope.id},'其他原有分枝与补充证据'));rows.supplemental.forEach(function(target){var row=el('div',{'data-route-supplemental':target.id}),control=button(readingLabel(target),function(){goPosition(target.id,{cross:true});},'np-text-button');control.id='np-task-route-supplement-'+target.id;row.appendChild(control);taskRouteStamp(row,target);supplemental.appendChild(row);});snapshot.appendChild(supplemental);}
+  var boundaries=el('aside',{class:'np-task-route-boundaries'});addParagraph(boundaries,'按当前文献树的真实位置阅读；机制对照，实验可比性未核。','np-note');
+  var recipes=rows.methods.filter(function(method){return method.kind==='pipeline_recipe';}),associations=new Set(recipes.map(function(method){return method.association;}));
+  if(recipes.length)addParagraph(boundaries,associations.has('direct')?(associations.has('condition')?'当前同时有直接与条件关联；分别核对每个位置。':'当前有直接关联方法；按各自记录范围阅读。'):associations.has('condition')?'当前方法仅为条件关联，不能当作同一任务或同一评测协议。':'当前方法仅作跨任务相关阅读。','np-note');snapshot.appendChild(boundaries);
+  owners.filter(function(id){return !ownerReady(id);}).forEach(retryRow);
+  if(!scroller.hidden)scroller.scrollTop=top+(anchor&&anchor.isConnected?anchor.getBoundingClientRect().top-anchorTop:0);restorePendingTaskRouteFocus();
  }
- function methodRow(parent,method){
-  var row=el('li',{class:'np-task-route-method','data-route-method':method.id,'data-route-parent':method.parentId||''}),control=button(readingLabel(method),function(){goPosition(method.id,{cross:true});},'np-text-button');
-  control.id='np-task-route-method-'+method.id;row.appendChild(control);taskRouteStamp(row,method);if(method.kind==='versioned_method_card'&&bundle.positions[method.parentId]){var parentControl=button('原位置：'+readingLabel(bundle.positions[method.parentId]),function(){goPosition(method.parentId,{cross:true});},'np-text-button');parentControl.id='np-task-route-parent-'+method.id;row.appendChild(parentControl);}var conditionInput=null;if(method.association==='condition'){conditionInput=el('div',{class:'np-route-condition-input','data-route-condition-input':method.id});addParagraph(conditionInput,'条件输入：正在读取本位置的原有输入记录。');row.appendChild(conditionInput);}
-  var disclosure=el('details',{class:'np-route-method-summary'});disclosure.appendChild(el('summary',{id:'np-task-route-summary-'+method.id},'适用条件、来源与表示／决策'));var body=el('div',{});disclosure.appendChild(body);row.appendChild(disclosure);parent.appendChild(row);
-  taskRouteContent(body,method,function(entity){var d=entity.detail||{},flow=d.pipeline||d.pipeline_contract||{};if(conditionInput){clear(conditionInput);addParagraph(conditionInput,'条件输入：'+(textOf(flow.input)||'未记录；按下方适用条件与原文核对。'));}
-   [['requiredDisplayConditions','必要限定'],['condition','适用条件'],['scope','记录范围'],['limits','适用边界'],['boundaries','结论边界']].forEach(function(pair){var text=textOf(d[pair[0]]);if(text)addParagraph(body,pair[1]+'：'+text,'np-note');});
-   [['representation','表示'],['decision','决策']].forEach(function(pair){addParagraph(body,pair[1]+'：'+(textOf(flow[pair[0]])||'未记录'));});
-   if(!flow.representation&&!flow.decision){Array.from(new Set(list(method.claimIds).concat(list(entity.claimIds)))).map(function(id){return bundle.claims[id];}).filter(function(claim){return claim&&M.paperOf(claim)===method.paperId&&M.versionOf(claim)===method.versionId;}).forEach(function(claim){body.appendChild(el('p',{'data-route-method-claim':claim.id},claim.statement||claim.label));});}
-   renderSources(body,entity.sourceRefs||[]);
-  },function(){if(conditionInput&&content&&content.status(method.entityId)==='failed'){clear(conditionInput);addParagraph(conditionInput,'条件输入暂未载入；展开本方法的条件与来源可重试。');}updateChanges();});
- }
- host.appendChild(section);
- rows.groups.forEach(function(group){var gp=group.position,block=el('section',{class:'np-task-route-group','data-route-group':gp.id}),head=el('h3',{}),control=button(readingLabel(gp),function(){goPosition(gp.id,{cross:true});},'np-text-button');
-  control.id='np-task-route-group-'+gp.id;head.appendChild(control);block.appendChild(head);taskRouteStamp(block,gp);var required=null;if(gp.association==='condition'){required=el('div',{class:'np-route-group-condition','data-route-group-condition':gp.id});addParagraph(required,'条件范围与依据：正在读取本路线的原有记录。');block.appendChild(required);}
-  var disclosure=el('details',{class:'np-route-group-disclosure'});disclosure.appendChild(el('summary',{id:'np-task-route-group-summary-'+gp.id},'适用范围与来源依据'));var body=el('div',{class:'np-route-group-summary'});disclosure.appendChild(body);block.appendChild(disclosure);
-  var methods=el('ul',{});block.appendChild(methods);section.appendChild(block);
-  taskRouteContent(body,gp,function(entity){var d=entity.detail||{};addParagraph(body,'范围：'+(textOf(d.scope)||'未记录'));addParagraph(body,'依据：'+(textOf(d.evidence)||'未记录'),'np-note');if(d.condition)addParagraph(body,'适用条件：'+textOf(d.condition),'np-note');if(required){clear(required);[['condition','适用条件'],['scope','范围'],['evidence','依据']].forEach(function(pair){var text=textOf(d[pair[0]]);if(text)addParagraph(required,pair[1]+'：'+text);});if(!required.childNodes.length)addParagraph(required,'路线条件与范围未记录；请分别核对下方方法的条件输入与来源。');}},function(){if(required&&content&&content.status(gp.entityId)==='failed'){clear(required);addParagraph(required,'条件范围与依据暂未载入；展开本路线的来源依据可重试。');}});
-  group.methods.forEach(function(method){methodRow(methods,method);});
- });
- if(rows.ungrouped.length){var ungrouped=el('section',{class:'np-task-route-ungrouped'});ungrouped.appendChild(el('h3',{},'未声明路线分组的方法与选段'));var methods=el('ul',{});ungrouped.appendChild(methods);section.appendChild(ungrouped);rows.ungrouped.forEach(function(method){methodRow(methods,method);});}
- if(rows.supplemental.length){var supplemental=el('details',{class:'np-task-route-supplemental'});supplemental.appendChild(el('summary',{id:'np-task-route-supplemental-'+scope.id},'其他原有分枝与补充证据'));rows.supplemental.forEach(function(target){var row=el('div',{'data-route-supplemental':target.id}),control=button(readingLabel(target),function(){goPosition(target.id,{cross:true});},'np-text-button');control.id='np-task-route-supplement-'+target.id;row.appendChild(control);taskRouteStamp(row,target);supplemental.appendChild(row);});section.appendChild(supplemental);}
- // Async relations follow the stable route controls, never above them.
- if(rows.methods.length)section.appendChild(changes);updateChanges();return true;
+ var waiting=owners.filter(function(id){return content&&['idle','loading'].indexOf(content.status(id))>=0;});
+ if(!waiting.length)install();
+ else{var pending=el('p',{class:'np-content-pending','data-content-state':'loading',role:'status'},'正在读取当前范围的路线、方法与变化证据；双树仍可操作。全部请求结束后一起显示。');snapshot.appendChild(pending);Promise.allSettled(waiting.map(function(id){return content.request(id);})).then(install);}
+ return true;
 }
 
 function renderReaderIntroduction(host,p){
@@ -473,12 +498,13 @@ function renderCompare(){var host=clear(by('np-comparison-cards')),selected=stat
  items.forEach(function(p){var entity=bundle.entities[p.entityId],d=entity.detail||{},card=el('article',{class:'np-method-card'});card.appendChild(el('h3',{},shortPaper(p.paperId)));addParagraph(card,versionLabel(p.versionId),'np-note');addParagraph(card,p.label);if(d.pipeline){var dl=el('dl',{});[['input','输入'],['representation','表示'],['decision','决策'],['execution','执行'],['feedback','反馈']].forEach(function(pair){if(d.pipeline[pair[0]]){dl.appendChild(el('dt',{},pair[1]));dl.appendChild(el('dd',{},textOf(d.pipeline[pair[0]])));}});card.appendChild(dl);}addParagraph(card,d.limits||d.scope,'np-note');card.appendChild(button('在文献树定位',function(){goPosition(p.id,{cross:true});},'np-cross-link'));host.appendChild(card);});}
 function renderCoverageTable(){var host=clear(by('np-coverage-table'));var table=el('table',{}),head=el('tr',{});['阅读入口','角色','方法/recipe','困难/CI','本版/其他版解析','状态'].forEach(function(t){head.appendChild(el('th',{scope:'col'},t));});var thead=el('thead',{});thead.appendChild(head);table.appendChild(thead);var body=el('tbody',{});bundle.directory.forEach(function(s){var c=bundle.coverage[s.id]||{},counts=function(key){return (c.direct&&c.direct[key]||0)+(c.condition&&c.condition[key]||0);},tr=el('tr',{}),name=el('td',{});name.appendChild(button(s.label,function(){setScope(s.id);},'np-text-button'));tr.appendChild(name);[s.displayRole||KIND_NAMES[s.kind]||s.kind,String(counts('methodCount')),String(counts('challengeCount')),String(counts('analysisVersionCount'))+' / '+String(c.otherVersionAnalysisCount||c.total&&c.total.otherVersionAnalysisCount||0),s.displayMode==='cross_reference'?'交叉入口':s.coveragePolicy&&s.coveragePolicy.countsAsStandaloneScientificGap===false?'按角色显示，不作独立缺口':'选段覆盖；未填状态逐项保留'].forEach(function(v){tr.appendChild(el('td',{},v));});body.appendChild(tr);});table.appendChild(body);host.appendChild(table);}
 function render(options){options=options||{};pendingTaskRouteFocus=null;var evidence=by('np-evidence-panel');if(evidence&&(state.route.tree==='a'||state.route.claim))evidence.open=true;var token=++renderToken,focusEpoch=readerFocusEpoch,interactionEpoch=taskRouteInteractionEpoch;restoring=true;by('np-navigation-error').hidden=true;renderScopePicker();renderSummary();renderPaperControls();renderOrigins();renderGlobalContext();renderReadingContext();renderTree();updateReaderVisibility();renderReadingLanding();renderDetail();renderCompare();renderCoverageTable();app.setAttribute('data-active-tree',state.route.tree);var share=by('np-share-link');share.value=window.location.origin+window.location.pathname+M.encodeRoute(state.route);by('np-loading').hidden=true;by('np-workspace').hidden=false;
- var restoreBucket=M.getBucket(state),taskChangeRestore=!!(options.restore&&options.focus&&/^np-task-change-/.test(restoreBucket.focusTarget||''));
+ var restoreBucket=M.getBucket(state),taskChangeRestore=!!(options.restore&&options.focus&&/^np-task-(?:change-|route-)/.test(restoreBucket.focusTarget||''));
+ if(taskChangeRestore&&!by(restoreBucket.focusTarget))pendingTaskRouteFocus={id:restoreBucket.focusTarget,token:token,route:M.encodeRoute(state.route),context:M.contextKey(state.route),tree:state.route.tree,readerEpoch:focusEpoch,interactionEpoch:interactionEpoch,detailScroll:restoreBucket.detailScrollByTree[state.route.tree]||0,armed:false};
  window.requestAnimationFrame(function(){if(token!==renderToken)return;if(state.route.mode==='tree')layoutGraph(by('np-tree'));layoutReadingOverview();var bucket=M.getBucket(state),tree=by('np-tree-scroll'),detail=by('np-detail-scroll'),taskRestoreAllowed=!taskChangeRestore||(focusEpoch===readerFocusEpoch&&interactionEpoch===taskRouteInteractionEpoch);
  // Restore the disclosure geometry before assigning a saved reader offset.
  // A newer interaction cancels this task-change restore, including its scroll.
  if(taskChangeRestore&&taskRestoreAllowed&&!detail.hidden){var taskRestoreTarget=by(bucket.focusTarget);if(taskRestoreTarget&&taskRestoreTarget.closest('.np-task-route-overview'))for(var taskAncestor=taskRestoreTarget.parentElement;taskAncestor;taskAncestor=taskAncestor.parentElement)if(taskAncestor.tagName==='DETAILS')taskAncestor.open=true;}
- if(taskRestoreAllowed){tree.scrollTop=bucket.treeScrollByTree[state.route.tree]||0;tree.scrollLeft=bucket.treeScrollLeftByTree&&bucket.treeScrollLeftByTree[state.route.tree]||0;detail.scrollTop=bucket.detailScrollByTree[state.route.tree]||0;if(isReadingHome())by('np-reading-landing').scrollTop=bucket.overviewView&&bucket.overviewView.scrollTop||0;window.scrollTo(0,bucket.windowScroll||0);}if(focusEpoch===readerFocusEpoch&&taskRestoreAllowed){var deferredTaskTarget=options.restore&&options.focus&&/^np-task-change-/.test(bucket.focusTarget||'')?bucket.focusTarget:null;var restoredFocus=options.restore&&bucket.focusTarget&&(by('np-node-'+bucket.focusTarget)||by(bucket.focusTarget))?bucket.focusTarget:null;var id=options.focusId||(options.focus?(restoredFocus||state.route.node):null),target=id&&(by('np-node-'+id)||by(id));if(isReadingHome()&&target&&!by('np-reading-landing').contains(target))target=by('np-overview-heading');if(detail.hidden&&target&&detail.contains(target))target=by('np-reader-toggle');if(target){if(options.restore){for(var ancestor=target.parentElement;ancestor;ancestor=ancestor.parentElement)if(ancestor.tagName==='DETAILS')ancestor.open=true;}if(target.getAttribute('role')==='treeitem'){var focusHost=target.closest('[data-parallel-tree]')||by('np-tree');focusHost.querySelectorAll('[role=treeitem]').forEach(function(n){n.tabIndex=n===target?0:-1;});}taskRouteAutomaticFocus=true;try{target.focus({preventScroll:true});}finally{taskRouteAutomaticFocus=false;}if(!options.restore&&target.firstElementChild)target.firstElementChild.scrollIntoView({block:'nearest',inline:'nearest'});}else if(options.focus){by('np-tree-heading').focus({preventScroll:true});}if(deferredTaskTarget&&!restoredFocus&&interactionEpoch===taskRouteInteractionEpoch){pendingTaskRouteFocus={id:deferredTaskTarget,token:token,route:M.encodeRoute(state.route),readerEpoch:readerFocusEpoch,interactionEpoch:taskRouteInteractionEpoch};restorePendingTaskRouteFocus();}}window.requestAnimationFrame(function(){if(token===renderToken){restoring=false;if(pendingWorkspaceJump)jumpToWorkspace(workspaceJumpFocusEpoch);}});});
+ if(taskRestoreAllowed){tree.scrollTop=bucket.treeScrollByTree[state.route.tree]||0;tree.scrollLeft=bucket.treeScrollLeftByTree&&bucket.treeScrollLeftByTree[state.route.tree]||0;detail.scrollTop=bucket.detailScrollByTree[state.route.tree]||0;if(isReadingHome())by('np-reading-landing').scrollTop=bucket.overviewView&&bucket.overviewView.scrollTop||0;window.scrollTo(0,bucket.windowScroll||0);}if(focusEpoch===readerFocusEpoch&&taskRestoreAllowed){var deferredTaskTarget=options.restore&&options.focus&&/^np-task-(?:change-|route-)/.test(bucket.focusTarget||'')?bucket.focusTarget:null;var restoredFocus=options.restore&&bucket.focusTarget&&(by('np-node-'+bucket.focusTarget)||by(bucket.focusTarget))?bucket.focusTarget:null;var id=options.focusId||(options.focus?(restoredFocus||state.route.node):null),target=id&&(by('np-node-'+id)||by(id));if(isReadingHome()&&target&&!by('np-reading-landing').contains(target))target=by('np-overview-heading');if(detail.hidden&&target&&detail.contains(target))target=by('np-reader-toggle');if(target){if(options.restore){for(var ancestor=target.parentElement;ancestor;ancestor=ancestor.parentElement)if(ancestor.tagName==='DETAILS')ancestor.open=true;}if(target.getAttribute('role')==='treeitem'){var focusHost=target.closest('[data-parallel-tree]')||by('np-tree');focusHost.querySelectorAll('[role=treeitem]').forEach(function(n){n.tabIndex=n===target?0:-1;});}taskRouteAutomaticFocus=true;try{target.focus({preventScroll:true});}finally{taskRouteAutomaticFocus=false;}if(!options.restore&&target.firstElementChild)target.firstElementChild.scrollIntoView({block:'nearest',inline:'nearest'});}else if(options.focus){by('np-tree-heading').focus({preventScroll:true});}if(deferredTaskTarget&&!restoredFocus&&interactionEpoch===taskRouteInteractionEpoch){var intent=validTaskRouteFocus();if(intent){intent.armed=true;restorePendingTaskRouteFocus();}}else if(restoredFocus)pendingTaskRouteFocus=null;}window.requestAnimationFrame(function(){if(token===renderToken){restoring=false;if(pendingWorkspaceJump)jumpToWorkspace(workspaceJumpFocusEpoch);}});});
  announce(TREE_NAMES[state.route.tree]+' · '+scopeById[state.route.scope].label+(state.route.paper?' · '+shortPaper(state.route.paper):''));}
 function historyChanged(){
  var raw=window.history.state&&window.history.state[M.KEY];

@@ -950,6 +950,178 @@ def task_route_checks(driver, report, save, capture, prefix, base, science):
         raise RuntimeError('Task-route desktop screenshot coverage is incomplete')
 
 
+TASK_DENSITY_SNAPSHOT_JS = 'var original=(function(){' + TASK_ROUTE_SNAPSHOT_JS + r"""
+}).call(null);
+var reader=document.getElementById('np-detail-scroll'),panel=reader.querySelector('[data-task-route-scope]');
+return Object.assign(original,{density:{state:panel&&panel.dataset.taskRouteState,
+  selectedReady:NavigationProductApp.getContent().ready(NavigationProductApp.getBundle().positions[original.route.node].entityId),
+  internalScroll:[reader,...reader.querySelectorAll('*')].filter(e=>{var s=getComputedStyle(e);return e===reader||/auto|scroll|hidden|clip/.test(s.overflowX+' '+s.overflowY)||e.scrollTop||e.scrollLeft;}).map(e=>({id:e.id,className:e.className,top:e.scrollTop,left:e.scrollLeft})),
+  previews:panel?[...panel.querySelectorAll('[data-task-change-preview]')].map(e=>({relation:e.dataset.taskChangePreview,
+    claims:[...e.querySelectorAll('[data-route-change-claim]')].map(c=>({id:c.dataset.routeChangeClaim,version:c.dataset.evidenceVersion,versionRelation:c.dataset.versionRelation}))})):[],
+  readings:panel?[...panel.querySelectorAll('[data-route-method]')].map(e=>{var reading=e.querySelector(':scope > .np-route-method-reading');return {position:e.dataset.routeMethod,present:!!reading,
+    claims:reading?[...reading.querySelectorAll('[data-route-method-claim]')].map(p=>({id:p.dataset.routeMethodClaim,text:p.textContent})):[],
+    paragraphs:reading?[...reading.querySelectorAll('p')].map(p=>p.textContent):[]};}):[]}});
+"""
+
+
+# All fields in one scene are measured in the same synchronous browser task.
+TASK_DENSITY_PROOFS_JS = 'return arguments[0].map(spec=>{try{return {spec:spec,actual:(function(){' + TASK_ROUTE_PROOF_JS + r"""
+}).call(null,spec)};}catch(error){return {spec:spec,error:String(error)};}});
+"""
+
+
+def task_density_expected(science):
+    """Source-derived fields for four bounded natural task-entry screenshots."""
+    original = task_route_expected(science)
+    cases = []
+    rel, claim = original['relation'], original['claim']
+    preview = '[data-task-change-preview="' + rel['id'] + '"] [data-route-change-claim="' + claim['id'] + '"]'
+    cases.append({'scope': 'task:category-objectnav', 'name': 'objectnav-change', 'expected': original['scopes']['task:category-objectnav'],
+                  'proofs': [
+                      {'selector': '[data-task-change="' + rel['id'] + '"] > summary', 'text': 'SemExp → PONI · 复用组件并替换策略'},
+                      {'selector': preview + ' .np-change-claim', 'text': claim['statement']},
+                      {'selector': preview + ' .np-change-version', 'text': '本版变化证据：PONI · ' + science['versions'][claim['versionId']]['label']}],
+                  'relation': rel['id'], 'claim': claim['id'], 'claimVersion': claim['versionId'], 'relationType': rel['relationType']})
+    proofs = []
+    for p in original['image'][:2]:
+        row = '[data-route-method="' + p['id'] + '"]'
+        entity = science['entities'][p['entityId']]
+        group = science['entities'][science['positions'][p['parentId']]['entityId']]
+        proofs.extend([
+            {'selector': '[data-route-group-condition="' + p['parentId'] + '"] > p', 'text': '依据：' + group['detail']['evidence']},
+            {'selector': row + ' > button', 'text': entity['label'].removesuffix(' 输入到反馈')},
+            {'selector': row + ' [data-route-association] > span:first-child', 'text': '条件关联'},
+            {'selector': '[data-route-condition-input="' + p['id'] + '"] > p', 'text': '条件输入：' + entity['detail']['pipeline']['input']},
+            {'selector': row + ' > .np-route-method-reading p', 'text': '表示：' + entity['detail']['pipeline']['representation']},
+            {'selector': row + ' > .np-route-method-reading p', 'text': '决策：' + entity['detail']['pipeline']['decision']}])
+    cases.append({'scope': 'task:imagenav', 'name': 'imagenav-two-routes', 'expected': original['scopes']['task:imagenav'], 'proofs': proofs})
+    proofs, claims = [], []
+    for p in original['portable']:
+        row = '[data-route-method="' + p['id'] + '"]'
+        entity = science['entities'][p['entityId']]
+        own_claims = task_route_claims(science, p)
+        proofs.extend([
+            {'selector': row + ' > button', 'text': entity['label']},
+            {'selector': row + ' > [data-route-version] > span:nth-child(2)', 'text': ' · ' + science['versions'][p['versionId']]['label']},
+            {'selector': row + ' > .np-route-method-reading [data-route-method-claim="' + own_claims[0]['id'] + '"]', 'text': own_claims[0]['statement']}])
+        claims.append({'position': p['id'], 'claims': [{'id': c['id'], 'text': c['statement']} for c in own_claims]})
+    cases.append({'scope': 'setting:portable-objectnav', 'name': 'portable-two-variants', 'directory': True,
+                  'expected': original['scopes']['setting:portable-objectnav'], 'proofs': proofs, 'claims': claims})
+    sid = 'task:aerial-visual-object-search'
+    roots = science['forests'][sid]['l']
+    if any(science['positions'][pid]['childIds'] for pid in roots):
+        raise RuntimeError('AVOS original empty inventory changed; review the first-screen case')
+    cases.append({'scope': sid, 'name': 'avos-inventory-gap', 'expected': {'roots': roots, 'groups': [], 'methods': []},
+                  'proofs': [{'selector': '[data-task-route-scope="' + sid + '"] > .np-task-route-snapshot > .np-reading-gap',
+                              'text': '当前文献树未整理可比较的方法结构；原有条件与来源仍可阅读。'}], 'empty': True})
+    return cases
+
+
+def check_task_density_snapshot(data, case):
+    check_task_route_scope(data, case['scope'], case['expected'])
+    if (data['density']['state'] != 'ready' or not data['density']['selectedReady'] or data['readerScroll'] != {'top': 0, 'left': 0} or
+            data['treeScroll'] != {'top': 0, 'left': 0} or
+            any(p['top'] != 0 or p['left'] != 0 for p in data['density']['internalScroll'])):
+        raise RuntimeError('Initial task root is partial, scaled, or already internally scrolled')
+    if case.get('relation'):
+        changes = [r for r in data['changes'] if r['id'] == case['relation']]
+        previews = [p for p in data['density']['previews'] if p['relation'] == case['relation']]
+        if (len(changes) != 1 or changes[0]['open'] or changes[0]['type'] != case['relationType'] or
+                changes[0]['renderAsTree'] != 'false' or changes[0]['scope'] != 'current-scope' or
+                len(previews) != 1 or previews[0]['claims'] != [{'id': case['claim'], 'version': case['claimVersion'], 'versionRelation': 'same-version'}]):
+            raise RuntimeError('Initial ObjectNav preview lost exact closed relation/claim/version identity')
+    if case.get('claims'):
+        for wanted in case['claims']:
+            rows = [r for r in data['density']['readings'] if r['position'] == wanted['position']]
+            if (len(rows) != 1 or not rows[0]['present'] or rows[0]['claims'] != wanted['claims'] or
+                    any(p.startswith(('表示：', '决策：')) for p in rows[0]['paragraphs'])):
+                raise RuntimeError('Initial Portable variant lost its own claims or invented pipeline fields')
+    if case.get('empty') and (data['changes'] or data['density']['previews'] or data['density']['readings']):
+        raise RuntimeError('Initial AVOS view invents methods or changes for an empty source inventory')
+
+
+def task_density_checks(driver, report, save, capture, prefix, base, science):
+    """Four natural entry viewports; no scroll, reveal, fit, focus or disclosure setup."""
+    cases = task_density_expected(science)
+    record = {'viewport': prefix, 'capturesExpected': 4, 'scenes': [],
+              'screenKind': 'natural_initial_task_workspace', 'documentTopClaimed': False}
+    report.setdefault('taskDensityChecks', []).append(record)
+    save()
+    for case in cases:
+        item = {'scope': case['scope'], 'name': prefix + '-21-initial-' + case['name'], 'actions': [], 'proofs': []}
+        record['scenes'].append(item)
+
+        def action(kind, **details):
+            item['actions'].append(dict(kind=kind, **details))
+            save()
+
+        def snapshot_diagnostics(key, preserve_error):
+            failure = None
+            try:
+                item[key] = driver.js(TASK_DENSITY_SNAPSHOT_JS)
+                if key == 'initial':
+                    item['naturalEntryWindow'] = item[key]['window']
+            except Exception as exc:
+                item[key + 'SnapshotError'] = str(exc)[:2000]
+                failure = exc
+            try:
+                save()
+            except Exception as exc:
+                item[key + 'SaveError'] = str(exc)[:2000]
+                failure = failure or exc
+            if failure is not None and not preserve_error:
+                raise failure
+
+        action('navigate-home', url=base)
+        driver.call('POST', '/url', {'url': base})
+        wait_for(lambda: driver.js("return !!window.NavigationProductApp&&document.querySelector('[data-load-state]')?.dataset.loadState==='ready'&&!document.getElementById('np-reading-landing').hidden"))
+        if case.get('directory'):
+            action('click-directory-disclosure', selector='#np-all-scopes > summary')
+            driver.click(driver.selector('#np-all-scopes > summary'))
+        selector = '[data-' + ('scope' if case.get('directory') else 'task') + '-open="' + case['scope'] + '"]'
+        action('click-task-entry', selector=selector)
+        entry_completed = False
+        try:
+            driver.click(driver.selector(selector))
+            action('wait-root-content')
+            wait_for(lambda: driver.js("var a=NavigationProductApp,r=a.getState().route,p=document.querySelector('[data-task-route-scope]'),wanted=arguments[1];return r.scope===arguments[0]&&r.tree==='l'&&wanted.roots.includes(r.node)&&a.getContent().ready(a.getBundle().positions[r.node].entityId)&&p?.dataset.taskRouteScope===arguments[0]&&p.dataset.taskRouteState==='ready'&&p.querySelectorAll('[data-route-method]').length===wanted.methods.length&&p.querySelectorAll('[data-route-group]').length===wanted.groups.length&&[...p.querySelectorAll('[data-route-method],[data-route-group]')].every(e=>a.getContent().ready(a.getBundle().positions[e.dataset.routeMethod||e.dataset.routeGroup].entityId));", case['scope'], case['expected']))
+            driver.settle()
+            entry_completed = True
+        finally:
+            item['actions'].append({'kind': 'read-natural-entry'})
+            snapshot_diagnostics('initial', preserve_error=not entry_completed)
+        check_task_density_snapshot(item['initial'], case)
+
+        def read_proofs(key):
+            action('read-visible-proof-batch', phase=key, selectors=[s['selector'] for s in case['proofs']])
+            item[key] = driver.js(TASK_DENSITY_PROOFS_JS, case['proofs'])
+            save()
+            if [p['spec'] for p in item[key]] != case['proofs']:
+                raise RuntimeError('Natural task-entry proof set changed')
+            for row in item[key]:
+                if 'error' in row:
+                    raise RuntimeError(row['error'])
+                check_task_route_proof(row['actual'], row['spec']['text'])
+
+        read_proofs('proofs')
+        action('capture-natural-entry')
+        capture_completed = False
+        try:
+            capture(item['name'], require_tree=False)
+            capture_completed = True
+        finally:
+            snapshot_diagnostics('afterCapture', preserve_error=not capture_completed)
+        check_task_density_snapshot(item['afterCapture'], case)
+        read_proofs('afterCaptureProofs')
+        if item['proofs'] != item['afterCaptureProofs']:
+            raise RuntimeError('Natural task-entry fields changed visibility or geometry across capture')
+        for key in ('route', 'readerScroll', 'treeScroll', 'window', 'focus', 'scale'):
+            if item['initial'][key] != item['afterCapture'][key]:
+                raise RuntimeError('Natural task-entry screenshot changed its initial view: ' + key)
+        item['status'] = 'captured_for_human_review'
+        save()
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dist', type=Path, required=True)
@@ -1486,6 +1658,7 @@ def main():
                 report.setdefault('directoryReturnChecks', []).append({'scope': scope, 'before': before, 'after': after})
             capture(prefix + '-12-directory-return', require_home=True)
             task_route_checks(driver, report, save, capture, prefix, base, science)
+            task_density_checks(driver, report, save, capture, prefix, base, science)
         report['status'] = 'captured_for_human_review'
     except Exception as exc:
         report['status'] = 'failed'

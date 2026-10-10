@@ -355,13 +355,15 @@ body{font-size:16px;line-height:1.65;background:#f7f9fa}header.np-header{max-wid
 .np-task-route-overview p{margin:5px 0;line-height:1.55}
 .np-task-route-overview ul{list-style:none;margin:8px 0 0;padding:0}
 .np-task-route-method{padding:8px 0;border-top:1px dotted var(--np-line,#dce4e8)}
-.np-task-route-method>.np-text-button{font-weight:700}
+.np-task-route-method>.np-text-button{font-weight:700;display:inline;margin-right:8px}
+.np-task-route-method>.np-route-stamp{display:inline}
+.np-route-method-reading{margin-top:5px}
 .np-route-stamp{font-size:.8rem;color:var(--np-muted,#586674)}
 .np-route-stamp[data-route-association=condition],.np-route-stamp[data-route-association=context]{color:var(--np-ink,#334955);font-weight:600}
 .np-route-group-summary{font-size:.9rem}
 .np-route-group-disclosure>summary,.np-route-method-summary>summary,.np-task-route-supplemental>summary{cursor:pointer;font-size:.84rem;padding:5px 0}
 .np-route-group-disclosure>div,.np-route-method-summary>div{padding:4px 0 4px 12px;border-left:2px solid var(--np-line,#dce4e8);font-size:.88rem}
-.np-task-route-changes{margin:12px 0;padding:10px 0;border-top:1px solid var(--np-line,#dce4e8)}
+.np-task-route-changes{margin:8px 0;padding:6px 0;border-top:1px solid var(--np-line,#dce4e8)}
 .np-task-change{padding:7px 0;border-bottom:1px dotted var(--np-line,#dce4e8)}
 .np-task-change>summary{cursor:pointer;line-height:1.5;font-size:.88rem;font-weight:600}
 .np-task-change>article,.np-task-change>nav{padding:6px 0 4px 12px;font-size:.86rem}
@@ -370,12 +372,12 @@ body{font-size:16px;line-height:1.65;background:#f7f9fa}header.np-header{max-wid
 .np-task-route-supplemental>div{padding:7px 0}
 .np-task-route-outside{margin-top:8px;font-size:.84rem}
 .np-task-route-outside>summary{cursor:pointer}
-/* An opened loading disclosure has the same footprint after its packet arrives. */
-.np-route-group-disclosure>div,.np-route-method-summary>div{box-sizing:border-box;height:14rem;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
+/* A settled task snapshot uses natural text height, including opened sources. */
+.np-route-group-disclosure>div,.np-route-method-summary>div{box-sizing:border-box;height:auto;overflow:visible}
 
-.np-route-condition-input{box-sizing:border-box;height:5rem;overflow:auto;scrollbar-gutter:stable;font-size:.85rem;border-left:2px solid var(--np-line,#dce4e8);padding-left:10px}
+.np-route-condition-input{box-sizing:border-box;height:auto;overflow:visible;font-size:.85rem;border-left:2px solid var(--np-line,#dce4e8);padding-left:10px}
 
-.np-route-group-condition{box-sizing:border-box;height:7rem;overflow:auto;scrollbar-gutter:stable;font-size:.85rem;border-left:2px solid var(--np-line,#dce4e8);padding-left:10px}
+.np-route-group-condition{box-sizing:border-box;height:auto;overflow:visible;font-size:.85rem;border-left:2px solid var(--np-line,#dce4e8);padding-left:10px}
 
 /* Verified method excerpts and their current evidence keep readable source text. */
 #navigation-product .np-method-claims,
@@ -392,6 +394,15 @@ body{font-size:16px;line-height:1.65;background:#f7f9fa}header.np-header{max-wid
 #np-reader-summary:has(.np-method-claims)~#np-evidence-panel .np-claim a,
 #np-reader-summary:has(.np-method-claims)~#np-evidence-panel .np-claim button{font-size:15px;line-height:1.65}
 
+.np-task-change[open]+.np-task-change-preview{display:none}
+.np-task-change-preview{padding:0 0 6px 12px}
+.np-route-retry-control{display:inline-grid}
+.np-route-retry-control>[data-retry-label]{grid-area:1/1;visibility:hidden}
+.np-route-retry-control[data-retry-state="failed"]>[data-retry-label="failed"],
+.np-route-retry-control[data-retry-state="loading"]>[data-retry-label="loading"],
+.np-route-retry-control[data-retry-state="ready"]>[data-retry-label="ready"],
+.np-route-retry-control[data-retry-state="applied"]>[data-retry-label="applied"],
+.np-route-retry-control[data-retry-state="exhausted"]>[data-retry-label="exhausted"]{visibility:visible}
 /* Task-root reading text keeps the 15px floor, including inherited legacy notes. */
 #navigation-product .np-task-route-overview,
 #navigation-product .np-task-route-overview p,
