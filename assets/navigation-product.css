@@ -203,7 +203,10 @@ body{font-size:16px;line-height:1.65;background:#f7f9fa}header.np-header{max-wid
  #navigation-product .np-origin-trail{margin:0 0 0 auto;min-height:27px}
  #navigation-product .np-panels{flex:1 1 auto;min-height:0;align-items:stretch;grid-template-columns:minmax(330px,.7fr) minmax(560px,1fr);gap:16px}
  #navigation-product[data-reading-layout=overview] .np-panels{grid-template-columns:minmax(0,1fr)}
- #navigation-product[data-reading-layout=reading] .np-panels{grid-template-columns:320px minmax(560px,1fr)}
+ #navigation-product[data-reading-layout=reading] .np-panels{grid-template-columns:minmax(0,1fr) clamp(520px,38vw,720px)}
+ #navigation-product[data-reading-layout=reading][data-reader-collapsed=true] .np-panels{grid-template-columns:minmax(0,1fr)}
+ #navigation-product[data-reading-layout=reading] .np-reading-pane>*{max-width:42rem;margin-left:auto;margin-right:auto}
+ #np-reader-toggle{font-size:14px;min-height:32px;padding:4px 10px;white-space:nowrap}
  #navigation-product .np-tree-pane{display:flex;flex-direction:column;min-height:0;border-radius:11px}
  #navigation-product .np-pane-top{flex:0 0 auto;min-height:43px;padding:7px 13px;gap:12px}
  #navigation-product .np-pane-top h2{font-size:13px;letter-spacing:0;white-space:normal;line-height:1.5;color:#29434c}
@@ -298,6 +301,8 @@ body{font-size:16px;line-height:1.65;background:#f7f9fa}header.np-header{max-wid
 #navigation-product .np-tree[data-parallel-scope]{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start}
 .np-parallel-forest{min-width:0}.np-parallel-forest>h3{font-size:17px;line-height:1.5;margin:0 0 3px;color:#20574d}.np-parallel-forest[data-parallel-tree=c]>h3{color:#594775}.np-parallel-scope-label,.np-parallel-gap{font-size:15px;line-height:1.6;color:#526975;margin:5px 0 14px}
 #navigation-product[data-reading-layout=reading] .np-tree[data-parallel-scope]{grid-template-columns:minmax(0,1fr);gap:28px}
+@media(min-width:1200px){#navigation-product[data-reading-layout=reading] .np-tree[data-parallel-scope]{grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:24px}}
+#np-reader-toggle[hidden],#np-detail-scroll[hidden]{display:none!important}
 #navigation-product .np-tree[data-parallel-scope] .np-node-kind{display:block!important;font-size:15px!important;grid-column:2/-1;color:#526975}
 #navigation-product .np-tree[data-parallel-scope] .np-node-row{grid-template-rows:auto auto!important}
 /* One compact root/branch header leaves room for the complete named task index. */

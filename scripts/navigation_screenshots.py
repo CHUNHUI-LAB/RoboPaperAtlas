@@ -318,6 +318,225 @@ return {view:{focus:active.id,window:scrollY,landing:landing.scrollTop,
 """
 
 
+# One CSS pixel covers integer client/scroll metrics versus subpixel DOMRects.
+# It is not a percentage allowance for lost row anchors or missing panel space.
+READER_GEOMETRY_TOLERANCE = 1
+READER_TOGGLE_SELECTOR = 'button#np-reader-toggle[aria-controls="np-detail-scroll"]'
+READER_TOGGLE_SNAPSHOT_JS = VISUAL_GEOMETRY + r"""
+var a=NavigationProductApp,m=NavigationProductModel,state=a.getState(),bucket=m.getBucket(state),
+    app=document.getElementById('navigation-product'),p=a.getBundle().positions[state.route.node],
+    tree=document.getElementById('np-tree-scroll'),reader=document.getElementById('np-detail-scroll'),
+    toggle=document.getElementById('np-reader-toggle'),selected=document.getElementById('np-node-'+state.route.node),
+    row=selected&&selected.querySelector(':scope > .np-node-row'),label=row&&row.querySelector('.np-node-label'),
+    mechanism=reader.querySelector('.np-method-mechanism'),context=m.contextKey(state.route);
+function proof(e){return e?box(e):null;}
+function scrollBox(e){var r=rect(e);return {rect:r,client:{x:r.x+e.clientLeft,y:r.y+e.clientTop,width:e.clientWidth,height:e.clientHeight},
+  left:e.scrollLeft,top:e.scrollTop,scrollWidth:e.scrollWidth,scrollHeight:e.scrollHeight,
+  maxLeft:Math.max(0,e.scrollWidth-e.clientWidth),maxTop:Math.max(0,e.scrollHeight-e.clientHeight)};}
+function preserved(value){
+  if(!value||!value.route||!value.contexts)return null;
+  var result=JSON.parse(JSON.stringify(value)),b=result.contexts[m.contextKey(result.route)],t=result.route.tree;
+  // Only current view offsets and focus may be updated by saveCurrent().
+  // Keep all other buckets, origin snapshots, revision and presentation settings.
+  if(b){delete b.focusTarget;delete b.windowScroll;['treeScrollByTree','treeScrollLeftByTree','detailScrollByTree'].forEach(k=>{if(b[k])delete b[k][t];});}
+  return result;
+}
+var historyState=history.state,unrelated=historyState&&typeof historyState==='object'?Object.assign({},historyState):historyState;
+if(unrelated&&typeof unrelated==='object')delete unrelated[m.KEY];
+var ts=scrollBox(tree),rr=row&&rect(row);
+return {route:state.route,position:p?{id:p.id,scope:p.scopeId,tree:p.tree,paper:p.paperId,version:p.versionId,entity:p.entityId,kind:p.kind}:null,
+  graphScale:bucket.graphScale,expanded:bucket.expandedByTree,preservedState:preserved(state),
+  history:{length:history.length,url:location.href,modelKey:m.KEY,contextKey:context,
+    entryKey:window.navigation&&window.navigation.currentEntry?window.navigation.currentEntry.key:null,
+    timeOrigin:performance.timeOrigin,model:preserved(historyState&&historyState[m.KEY]),unrelated:unrelated},
+  viewport:{x:0,y:0,width:innerWidth,height:innerHeight},window:{x:scrollX,y:scrollY},
+  layout:app.dataset.readingLayout,collapsed:app.dataset.readerCollapsed,focus:document.activeElement.id,
+  panels:rect(document.querySelector('.np-panels')),columnGap:parseFloat(getComputedStyle(document.querySelector('.np-panels')).columnGap),
+  treePane:proof(document.querySelector('.np-tree-pane')),tree:ts,treeProof:proof(tree),title:proof(document.getElementById('np-tree-heading')),
+  selected:{count:document.querySelectorAll('#np-tree [aria-selected="true"]').length,id:selected&&selected.dataset.position,
+    tree:selected&&selected.dataset.tree,entity:selected&&selected.dataset.entity,aria:selected&&selected.getAttribute('aria-selected'),
+    scope:selected&&selected.closest('[data-parallel-tree]')?.dataset.scopeId,row:proof(row),label:proof(label),
+    content:rr?{x:rr.x-ts.client.x+ts.left,y:rr.y-ts.client.y+ts.top}:null},
+  toggle:{tag:toggle.tagName,hidden:toggle.hidden,disabled:toggle.disabled,controls:toggle.getAttribute('aria-controls'),expanded:toggle.getAttribute('aria-expanded'),proof:proof(toggle)},
+  reader:{hidden:reader.hidden,display:getComputedStyle(reader).display,tabIndex:reader.tabIndex,proof:proof(reader),scroll:scrollBox(reader),
+    heading:proof(reader.querySelector('.np-reader-heading')),entity:mechanism&&mechanism.dataset.mechanismEntity,
+    flowCount:mechanism?mechanism.querySelectorAll('.np-method-flow dd').length:0,
+    savedScroll:bucket.detailScrollByTree[state.route.tree],persistedScroll:historyState&&historyState[m.KEY]?.contexts[context]?.detailScrollByTree[state.route.tree]}};
+"""
+
+
+READER_DOM_ELEMENTS_JS = "var s=document.getElementById('np-node-'+NavigationProductApp.getState().route.node);return [document.getElementById('np-tree'),s,s&&s.querySelector(':scope > .np-node-row'),document.getElementById('np-detail-scroll'),document.querySelector('#np-detail-scroll .np-method-mechanism')];"
+READER_DOM_IDENTITY_JS = "var old=arguments[0],s=document.getElementById('np-node-'+NavigationProductApp.getState().route.node),current=[document.getElementById('np-tree'),s,s&&s.querySelector(':scope > .np-node-row'),document.getElementById('np-detail-scroll'),document.querySelector('#np-detail-scroll .np-method-mechanism')];return ['tree','selected','row','reader','method'].map((name,i)=>({name:name,same:!!old[i]&&old[i].isConnected&&old[i]===current[i]}));"
+
+
+def check_reader_dom_identity(data):
+    if [item['name'] for item in data] != ['tree', 'selected', 'row', 'reader', 'method'] or any(item['same'] is not True for item in data):
+        raise RuntimeError('Reader toggle rebuilt the original tree, selected row or reader DOM')
+
+
+def _reader_close(actual, expected):
+    return (isinstance(actual, (int, float)) and isinstance(expected, (int, float)) and
+            math.isfinite(actual) and math.isfinite(expected) and
+            abs(actual - expected) <= READER_GEOMETRY_TOLERANCE)
+
+
+def _reader_proof(proof, *areas, font_size=None):
+    if not proof or not all(proof.get(k) for k in ('visible', 'opaque', 'unscaled')):
+        return False
+    if not all(rect_inside(proof['rect'], area, READER_GEOMETRY_TOLERANCE) for area in areas):
+        return False
+    return font_size is None or (not proof['clipped'] and proof['fontSize'] >= font_size and
+                                len(proof['foreground']) == len(proof['background']) == 3 and
+                                contrast_ratio(proof['foreground'], proof['background']) >= 4.5)
+
+
+def check_reader_toggle_snapshot(data, collapsed):
+    """Measure the actual selected ObjectNav/VLFM reading UI, including occlusion."""
+    route, position, selected = data['route'], data['position'], data['selected']
+    if (not position or route['scope'] != 'task:category-objectnav' or route['tree'] != 'l' or
+            route['paper'] != 'vlfm' or position['kind'] != 'pipeline_recipe' or
+            any(route[key] != position[other] for key, other in
+                (('node', 'id'), ('scope', 'scope'), ('tree', 'tree'), ('paper', 'paper'), ('version', 'version'))) or
+            selected['count'] != 1 or selected['id'] != route['node'] or selected['aria'] != 'true' or
+            selected['scope'] != route['scope'] or selected['tree'] != route['tree'] or selected['entity'] != position['entity']):
+        raise RuntimeError('Reader toggle lost exact ObjectNav/VLFM source or selected-row identity')
+    if (data['layout'] != 'reading' or data['collapsed'] != str(collapsed).lower() or
+            data['reader']['hidden'] != collapsed or data['reader']['entity'] != position['entity'] or
+            data['reader']['flowCount'] != 5 or data['history']['model'] != data['preservedState']):
+        raise RuntimeError('Reader toggle layout, source content or persisted route is inconsistent')
+    viewport, panels, tree = data['viewport'], data['panels'], data['tree']
+    if (viewport['width'], viewport['height']) not in VIEWPORTS:
+        raise RuntimeError('Reader toggle evidence is not a required desktop viewport')
+    if (not rect_inside(panels, viewport) or
+            not _reader_proof(data['treePane'], panels, viewport) or
+            not _reader_proof(data['treeProof'], data['treePane']['rect'], viewport) or
+            # Keep a readable forest column and several full node rows on screen.
+            tree['client']['width'] < 360 or tree['client']['height'] < 240 or
+            not _reader_proof(data['title'], data['treePane']['rect'], viewport, font_size=14) or
+            not _reader_proof(selected['row'], tree['client'], viewport) or
+            not _reader_proof(selected['label'], selected['row']['rect'], tree['client'], viewport, font_size=15)):
+        raise RuntimeError('Reader toggle branch title, tree viewport or selected row is hidden, clipped or covered')
+    for axis, scroll, size, total, maximum in (('x', 'left', 'width', 'scrollWidth', 'maxLeft'), ('y', 'top', 'height', 'scrollHeight', 'maxTop')):
+        values = [tree[scroll], tree[total], tree[maximum], tree['client'][size], selected['content'][axis]]
+        if (not all(isinstance(v, (int, float)) and math.isfinite(v) for v in values) or
+                tree[maximum] != max(0, tree[total] - tree['client'][size]) or
+                tree[scroll] < 0 or tree[scroll] > tree[maximum] or
+                not _reader_close(selected['content'][axis], selected['row']['rect'][axis] - tree['client'][axis] + tree[scroll])):
+            raise RuntimeError('Reader toggle scroll metrics do not describe the measured selected row')
+    toggle = data['toggle']
+    if (toggle['tag'] != 'BUTTON' or toggle['hidden'] or toggle['disabled'] or toggle['controls'] != 'np-detail-scroll' or
+            toggle['expanded'] != str(not collapsed).lower() or
+            toggle['proof']['text'] != ('展开所选节点正文' if collapsed else '收起阅读栏') or
+            not _reader_proof(toggle['proof'], viewport, font_size=14)):
+        raise RuntimeError('Reader toggle is not the visible, enabled, correctly labelled disclosure button')
+    reader = data['reader']
+    if collapsed:
+        if reader['display'] != 'none' or reader['proof']['rect']['width'] or reader['proof']['rect']['height']:
+            raise RuntimeError('Collapsed reader still occupies visible layout space')
+        if not _reader_close(data['treePane']['rect']['width'], panels['width']):
+            raise RuntimeError('Collapsed tree does not recover the complete panel width')
+    else:
+        rr, tr = reader['proof']['rect'], data['treePane']['rect']
+        expected_reader_width = min(720, max(520, viewport['width'] * .38))
+        if (reader['display'] == 'none' or reader['tabIndex'] != -1 or
+                not _reader_close(rr['width'], expected_reader_width) or
+                not _reader_close(tr['width'], panels['width'] - data['columnGap'] - expected_reader_width) or rr['height'] < 320 or
+                not _reader_proof(reader['proof'], panels, viewport) or
+                not _reader_proof(reader['heading'], reader['scroll']['client'], viewport, font_size=11) or
+                not _reader_close(rr['x'] - (tr['x'] + tr['width']), data['columnGap']) or
+                not _reader_close(tr['width'] + data['columnGap'] + rr['width'], panels['width'])):
+            raise RuntimeError('Expanded reader, sticky heading or separate tree/reader boundaries are not visible')
+
+
+def check_reader_toggle_transition(before, after, original, collapsed):
+    check_reader_toggle_snapshot(after, collapsed)
+    for key in ('route', 'position', 'graphScale', 'expanded', 'preservedState', 'history', 'viewport', 'window'):
+        if before[key] != after[key] or original[key] != after[key]:
+            raise RuntimeError('Reader toggle changed preserved navigation state: ' + key)
+    if after['title']['text'] != original['title']['text'] or after['selected']['label']['text'] != original['selected']['label']['text']:
+        raise RuntimeError('Reader toggle substituted the selected branch title or row label')
+    if after['focus'] != ('np-reader-toggle' if collapsed else 'np-detail-scroll'):
+        raise RuntimeError('Reader toggle did not focus the visible disclosure or restored reader')
+    for axis, scroll, maximum in (('x', 'left', 'maxLeft'), ('y', 'top', 'maxTop')):
+        # Reflow may move content or reduce the scroll range. Preserve the immediately
+        # preceding pixel anchor unless that exact position is beyond a legal endpoint.
+        # Content coordinates are independently measured from the actual row and viewport.
+        wanted = after['selected']['content'][axis] + after['tree']['client'][axis] - before['selected']['row']['rect'][axis]
+        target = min(max(0, wanted), after['tree'][maximum])
+        expected_anchor = after['selected']['content'][axis] + after['tree']['client'][axis] - target
+        if (not _reader_close(after['tree'][scroll], target) or
+                not _reader_close(after['selected']['row']['rect'][axis], expected_anchor)):
+            raise RuntimeError('Reader toggle lost the selected-row anchor beyond legal scroll clamping: ' + axis)
+    if not _reader_close(after['panels']['width'], original['panels']['width']):
+        raise RuntimeError('Reader toggle changed the available panel width')
+    if collapsed:
+        recovered = after['treePane']['rect']['width'] - original['treePane']['rect']['width']
+        if not _reader_close(recovered, original['reader']['proof']['rect']['width'] + original['columnGap']):
+            raise RuntimeError('Collapsing the reader did not give its width and gap to the tree')
+    else:
+        if (not _reader_close(after['treePane']['rect']['width'], original['treePane']['rect']['width']) or
+                not _reader_close(after['reader']['proof']['rect']['width'], original['reader']['proof']['rect']['width']) or
+                after['reader']['scroll']['top'] != original['reader']['scroll']['top']):
+            raise RuntimeError('Reopening the reader did not restore its width and original nonzero scroll')
+    if (original['reader']['scroll']['top'] <= 0 or
+            after['reader']['savedScroll'] != original['reader']['scroll']['top'] or
+            after['reader']['persistedScroll'] != original['reader']['scroll']['top']):
+        raise RuntimeError('Reader toggle lost the nonzero reader scroll in current/history snapshots')
+
+
+def reader_toggle_checks(driver, report, save, capture, prefix):
+    """Append two real-control scenes; keep diagnostics even when a new gate fails."""
+    driver.settle()
+    initial = driver.js(READER_TOGGLE_SNAPSHOT_JS)
+    record = {'viewport': prefix, 'initial': initial, 'phases': []}
+    report.setdefault('readerToggleChecks', []).append(record)
+    save()
+    check_reader_toggle_snapshot(initial, False)
+    # Exercise a genuine nonzero reading offset using a WebDriver wheel action.
+    # Do not call navigate(), write model/history/DOM state, or assign scrollTop.
+    if initial['reader']['scroll']['top'] <= 0:
+        try:
+            driver.call('POST', '/actions', {'actions': [{'type': 'wheel', 'id': 'reader-scroll', 'actions': [
+                {'type': 'scroll', 'origin': driver.selector('#np-detail-scroll'), 'x': 0, 'y': 0,
+                 'deltaX': 0, 'deltaY': 160, 'duration': 100}]}]})
+            wait_for(lambda: driver.js("return document.getElementById('np-detail-scroll').scrollTop>0"), 5)
+        finally:
+            driver.settle()
+            record['afterWheel'] = driver.js(READER_TOGGLE_SNAPSHOT_JS)
+            save()
+    before = original = driver.js(READER_TOGGLE_SNAPSHOT_JS)
+    record['original'] = original
+    save()
+    check_reader_toggle_snapshot(original, False)
+    if original['reader']['scroll']['top'] <= 0 or original['window'] != initial['window']:
+        raise RuntimeError('Reader toggle setup did not obtain a nonzero internal reader scroll')
+    original_elements = driver.js(READER_DOM_ELEMENTS_JS)
+    for collapsed, scene in ((True, '-11b-reader-collapsed'), (False, '-11c-reader-reopened')):
+        phase = {'scene': prefix + scene, 'before': before}
+        record['phases'].append(phase)
+        save()
+        try:
+            driver.click(driver.selector(READER_TOGGLE_SELECTOR))
+            driver.settle()
+        finally:
+            phase['after'] = driver.js(READER_TOGGLE_SNAPSHOT_JS)
+            save()
+        after = phase['after']
+        try:
+            phase['domIdentity'] = driver.js(READER_DOM_IDENTITY_JS, original_elements)
+        except Exception as exc:
+            # A stale WebDriver reference itself proves that an original node was
+            # replaced; retain that failure beside the already saved geometry.
+            phase['domIdentityError'] = str(exc)[:2000]
+            raise
+        finally:
+            save()
+        check_reader_dom_identity(phase['domIdentity'])
+        check_reader_toggle_transition(before, after, original, collapsed)
+        capture(prefix + scene, require_tree=collapsed)
+        before = after
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dist', type=Path, required=True)
@@ -825,6 +1044,7 @@ def main():
                     select_node(method)
                     wait_for(lambda: driver.js('var a=NavigationProductApp;return a.getContent().ready(a.getBundle().positions[arguments[0]].entityId)&&document.querySelectorAll(".np-method-flow dd").length===5', method))
                     capture(prefix + '-11-parallel-method-reader', require_flow=True)
+                    reader_toggle_checks(driver, report, save, capture, prefix)
                 # Exact origin is the real overview entry, not a reconstructed route.
                 for _ in range(20):
                     if driver.js('return !document.getElementById("np-reading-landing").hidden'):
