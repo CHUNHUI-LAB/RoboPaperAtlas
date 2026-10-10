@@ -11,6 +11,7 @@ import functools
 import hashlib
 import http.server
 import json
+import math
 import os
 from pathlib import Path
 import shutil
@@ -41,6 +42,9 @@ def rect_inside(rect, area, tolerance=1):
 
 
 TASK_INDEX = [('task:audiogoal', 'AudioGoal', '声音→声源'), ('task:audiopointgoal', 'AudioPointGoal', '声音＋位置→到达'), ('task:aerial-visual-object-search', 'AVOS', '图文→飞行搜索'), ('task:comon', 'CoMON', '特权协作→多目标'), ('task:ddn', 'DDN', '需求→可用物体'), ('task:goat', 'GOAT', '类别/实例图/语言序列'), ('task:hieranav', 'HieraNav', '多级约束→物体'), ('task:imagenav', 'ImageNav', '地点图→地点'), ('task:instanceimagenav', 'InstanceImageNav', '实例图→同一物'), ('task:ivln', 'IVLN', '同环境多段指令'), ('task:lamon', 'LaMoN', '逐个描述→对象'), ('task:multion', 'MultiON', '有序目标→逐个找'), ('task:namo', 'NAMO', '移障→创造通路'), ('task:ndh', 'NDH', '对话历史→进展'), ('task:category-objectnav', 'ObjectNav', '类别→任一实例'), ('task:pointnav', 'PointNav', '坐标→位置'), ('task:remote-referent-navigation', 'REVERIE式', '描述→到达并指认'), ('task:roomnav', 'RoomNav', '区域→进入区域'), ('task:soon', 'SOON', '物体及周边描述→定位'), ('task:vln', 'VLN', '路线语句→执行'), ('task:person-finding-following', '找人并跟随', '人物→持续跟随'), ('task:language-objectnav', '语言物体目标', '描述→合格对象')]
+
+
+CHALLENGE_LABELS = {'legacy:ci_search_unknown_target': '未见目标，怎样少走冤路？', 'legacy:ci_generalize_environments': '路线更多，新屋仍难适应？', 'legacy:ci_instruction_progress': '指令哪段真正完成？', 'legacy:ci_recover_route_error': '走错后如何少代价纠正？', 'legacy:ci_candidate_verification': '看见候选，为何不能停？', 'legacy:ci_semantic_commitment': '语义有分歧，单标签丢什么？', 'legacy:ci_dynamic_revisit': '旧地图哪部分仍可信？', 'legacy:ci_negative_evidence': '未找到，何时算可信反证？', 'legacy:ci_long_horizon_evidence': '跨调用如何保留证据与待办？', 'methods:ci_ground_dynamic_plan': '未知布局为何难预先完整规划？', 'methods:ci_hierarchical_spatial_query': '扁平检索为何丢失楼层房间？', 'methods:ci_spatial_language_grounding': '仅图文匹配，怎样找两地标之间？', 'methods:ci_compact_relational_memory': '逐点语义冗余且缺少对象关系'}
 
 
 VISUAL_GEOMETRY = r"""
@@ -79,6 +83,63 @@ def check_parallel_scope(data):
         visible_children = [x for x in panel['children'] if x['visible'] and x['opaque'] and rect_inside(x['rect'], data['viewport']) and rect_inside(x['rect'], panel['rect'])]
         if panel['expectedChildren'] and not visible_children:
             raise RuntimeError('Task forest with recorded descendants shows only a folded root')
+
+
+def check_graphical_map(data):
+    """Require actual source-parent geometry, independently of hidden legacy trees."""
+    if not data['mapVisible'] or len(data['nodes']) != 39:
+        raise RuntimeError('Default overview is not the visible39-node source graph')
+    ids = [n['id'] for n in data['nodes']]
+    if len(set(ids)) != 39 or sorted(ids) != sorted(data['expectedIds']):
+        raise RuntimeError('Overview mapped identities differ from original source positions')
+    if sorted((e['parent'], e['child']) for e in data['edges']) != sorted(map(tuple, data['expectedEdges'])):
+        raise RuntimeError('Overview parent edges differ from source containment')
+    if len(data['edges']) != 38 or any(not e['visible'] or not math.isfinite(e['length']) or e['length'] <= 0 or not e['endpointsMatch'] or not e['inBounds'] or not e['uncovered'] or contrast_ratio(e['foreground'], e['background']) < 3 for e in data['edges']):
+        raise RuntimeError('Source parent lines are missing, hidden or detached from their nodes')
+    if len(data['challenges']) != 13 or sorted(n['entity'] for n in data['challenges']) != sorted(data['expectedChallengeLabels']):
+        raise RuntimeError('Default overview lost a challenge entry')
+    for n in data['nodes']:
+        if not n['visible'] or not n['opaque'] or not n['unscaled'] or not rect_inside(n['rect'], data['viewport']) or not rect_inside(n['rect'], data['map']):
+            raise RuntimeError('A source node is hidden, scaled or outside the default map')
+    d = data['directoryTitle']
+    if not d['visible'] or not d['opaque'] or d['clipped'] or d['fontSize'] < 15 or len(d['foreground']) != 3 or len(d['background']) != 3 or contrast_ratio(d['foreground'], d['background']) < 4.5:
+        raise RuntimeError('Original task directory title is not readable')
+    for n in data['challenges']:
+        b = n['label']
+        if n['entity'] not in data['expectedChallengeLabels'] or b['text'] != data['expectedChallengeLabels'][n['entity']]:
+            raise RuntimeError('Challenge short label differs from the reviewed presentation')
+        if n['position'] != n['challengeOpen'] or n['entity'] != n['expectedEntity']:
+            raise RuntimeError('Challenge button identity differs from its real source position')
+        if n['title'] != n['expectedTitle'] or not n['aria'].startswith(n['expectedTitle']):
+            raise RuntimeError('Challenge full source identity was lost')
+        if not b['visible'] or not b['opaque'] or not b['unscaled'] or b['clipped'] or b['fontSize'] < 15 or len(b['foreground']) != 3 or len(b['background']) != 3 or contrast_ratio(b['foreground'], b['background']) < 4.5 or not rect_inside(b['rect'], data['viewport']) or not rect_inside(b['rect'], data['map']):
+            raise RuntimeError('A challenge label is clipped, covered, unreadable or off screen')
+    if len(data['tasks']) != 22 or any(n['scope'] != n['expectedScope'] or n['position'] != n['expectedPosition'] for n in data['tasks']):
+        raise RuntimeError('Task control is mapped to another source position')
+    actual = sorted((e['id'], e['from'], e['to'], e['type']) for e in data['relations'])
+    expected = sorted(tuple(e) for e in data['expectedRelations'])
+    if len(actual) != 7 or actual != expected or any(not e['visible'] or not math.isfinite(e['length']) or e['length'] <= 0 or not e['endpointsMatch'] or not e['inBounds'] or not e['uncovered'] or not e['ownHits'] or contrast_ratio(e['foreground'], e['background']) < 3 for e in data['relations']):
+        raise RuntimeError('Typed relationship lines lost their exact scientific identity or geometry')
+
+
+def check_relation_evidence(data, expected):
+    if data['id'] != expected['id'] or data['type'] != expected['relationType'] or data['from'] != expected['from'] or data['to'] != expected['to']:
+        raise RuntimeError('Relationship selection opened another relationship')
+    if not data['open'] or data['focus'] != data.get('expectedFocus', 'np-map-relation-evidence-' + expected['id']) or data['route'] != data['beforeRoute']:
+        raise RuntimeError('Relationship evidence lost disclosure, focus or original route')
+    actual = [(s['id'], s['url'], s['version'], s['status']) for s in data['sources']]
+    wanted = [(s['sourceId'], s['url'], s['versionId'], s['versionStatus']) for s in expected['sourceRefs']]
+    if actual != wanted:
+        raise RuntimeError('Relationship source IDs, URLs or version status differ from the original inventory')
+    if any(loc['locator'] not in data['text'] for loc in expected['locators']):
+        raise RuntimeError('Relationship original source locator was omitted')
+    if len(data['visibleProofs']) != 1 + len(expected['locators']) + 2 * len(expected['sourceRefs']):
+        raise RuntimeError('Relationship evidence visibility checks are incomplete')
+    for proof in data['visibleProofs']:
+        if proof.get('expectedText') is not None and proof['text'] != proof['expectedText']:
+            raise RuntimeError('Visible relationship source version status contradicts the original inventory')
+        if not proof['visible'] or not proof['opaque'] or not proof['unscaled'] or proof['fontSize'] < 15 or proof['clipped'] or len(proof['foreground']) != 3 or len(proof['background']) != 3 or contrast_ratio(proof['foreground'], proof['background']) < 4.5 or not rect_inside(proof['rect'], proof['viewport']):
+            raise RuntimeError('Relationship source or locator is unreadable, hidden or off screen')
 
 
 def check_context_path(data):
@@ -247,6 +308,22 @@ def main():
     report['servedFiles'] = {str(p.relative_to(dist)): sha(p) for p in sorted((dist / 'research/navigation').rglob('*')) if p.is_file()}
     report['servedFiles'].update({str(p.relative_to(dist)): sha(p) for p in sorted((dist / 'assets').glob('navigation-*.js'))})
     report['servedFiles']['assets/navigation-product.css'] = sha(dist / 'assets/navigation-product.css')
+    if report['scienceSha256'] != '9069c6a11ae9a867671522d04e6a24b4edcada660d03feb2f41340bfc395825c':
+        raise RuntimeError('Screenshot scientific identity differs from reviewed9069 source')
+    science = json.loads((dist / 'research/navigation/product-data.json').read_text())
+    relation_expected = []
+    for number in range(88, 95):
+        rel = science['relations']['tasks:relation:' + str(number)]
+        refs = []
+        seen = set()
+        for locator in rel['detail']['locators']:
+            for sid in locator['sourceIds']:
+                if sid in seen:
+                    continue
+                seen.add(sid)
+                ref = science['sources'][sid]
+                refs.append({'sourceId': sid, 'url': ref['url'], 'versionId': ref['versionId'], 'versionStatus': ref['versionStatus']})
+        relation_expected.append({'id': rel['id'], 'from': rel['from'], 'to': rel['to'], 'relationType': rel['relationType'], 'locators': rel['detail']['locators'], 'sourceRefs': refs})
     driver = None
     process = None
     server = None
@@ -349,6 +426,157 @@ def main():
         save()
         check_reading_home(data)
 
+        graph = driver.js(VISUAL_GEOMETRY + """
+          var a=NavigationProductApp,b=a.getBundle(),m=document.getElementById('np-overview-map'),root=b.researchMap.roots[0],p=b.positions;
+          var l=p[root].childIds.find(id=>p[id].entityId==='legacy:nav:l'),c=p[root].childIds.find(id=>p[id].entityId==='legacy:nav:c'),td=p[l].childIds.find(id=>p[id].sourceDirectoryGroupId==='task');
+          var wanted=[root,l,c,td,...arguments[0].map(s=>b.researchMap.scopeEntries.find(e=>e.scopeId===s).canonicalPositionId),...p[c].childIds];
+          function opaque(e){for(var n=e;n;n=n.parentElement){var cs=getComputedStyle(n);if(cs.display==='none'||cs.visibility!=='visible'||Number(cs.opacity)!==1)return false;}return true;}
+          function endpoint(e,end){var q=e.getPointAtLength(end?e.getTotalLength():0),r=new DOMPoint(q.x,q.y).matrixTransform(e.getScreenCTM());return {x:r.x,y:r.y};}
+          function touches(q,r){return q.x>=r.x-2&&q.x<=r.x+r.width+2&&q.y>=r.y-2&&q.y<=r.y+r.height+2&&Math.min(Math.abs(q.x-r.x),Math.abs(q.x-r.x-r.width),Math.abs(q.y-r.y),Math.abs(q.y-r.y-r.height))<=3;}
+          function node(id){return [...m.querySelectorAll('[data-map-position]')].find(n=>n.dataset.mapPosition===id);}
+          function edge(e){var cs=getComputedStyle(e),stroke=color(cs.stroke),alpha=stroke?stroke.alpha*Number(cs.strokeOpacity):0,display=true;for(var n=e;n;n=n.parentElement){var st=getComputedStyle(n);alpha*=Number(st.opacity);if(st.display==='none'||st.visibility!=='visible')display=false;}var background=bg(m),foreground=stroke&&background.length===3?stroke.rgb.map((v,i)=>v*alpha+background[i]*(1-alpha)):[],len=e.getTotalLength(),matrix=e.getScreenCTM(),mr=rect(m),inBounds=true,uncovered=0,ownHits=[];for(var i=1;i<20;i++){var q=e.getPointAtLength(len*i/20),z=new DOMPoint(q.x,q.y).matrixTransform(matrix);if(z.x<mr.x-1||z.y<mr.y-1||z.x>mr.x+mr.width+1||z.y>mr.y+mr.height+1||z.x<0||z.y<0||z.x>innerWidth||z.y>innerHeight)inBounds=false;var hit=document.elementFromPoint(z.x,z.y);if(hit&&(hit===e||hit===m||hit===e.closest('svg')))uncovered++;if(hit===e)ownHits.push({x:z.x,y:z.y,fraction:i/20});}return {visible:display&&alpha>0&&foreground.length===3&&parseFloat(cs.strokeWidth)>0,length:len,foreground:foreground,background:background,inBounds:inBounds,uncovered:uncovered>=3,ownHits:ownHits};}
+          return {viewport:{x:0,y:0,width:innerWidth,height:innerHeight},map:rect(m),mapVisible:!m.hidden&&opaque(m)&&m.clientWidth>0&&m.clientHeight>0,expectedIds:wanted,expectedEdges:wanted.filter(id=>p[id].parentId&&wanted.includes(p[id].parentId)).map(id=>[p[id].parentId,id]),expectedChallengeLabels:arguments[1],expectedRelations:arguments[2],
+            directoryTitle:box(node(td)),
+            nodes:[...m.querySelectorAll('[data-map-position]')].map(n=>Object.assign({id:n.dataset.mapPosition},box(n))),
+            edges:[...m.querySelectorAll('path[data-map-parent][data-map-child]')].map(e=>Object.assign({parent:e.dataset.mapParent,child:e.dataset.mapChild,endpointsMatch:!!node(e.dataset.mapParent)&&!!node(e.dataset.mapChild)&&touches(endpoint(e,false),rect(node(e.dataset.mapParent)))&&touches(endpoint(e,true),rect(node(e.dataset.mapChild)))},edge(e))),
+            tasks:[...m.querySelectorAll('[data-task-open]')].map(n=>({scope:n.dataset.taskOpen,expectedScope:p[n.dataset.mapPosition].sourceScopeId,position:n.dataset.mapPosition,expectedPosition:b.researchMap.scopeEntries.find(e=>e.scopeId===n.dataset.taskOpen).canonicalPositionId})),
+            challenges:[...m.querySelectorAll('[data-challenge-open]')].map(n=>{var q=p[n.dataset.mapPosition];return {position:n.dataset.mapPosition,challengeOpen:n.dataset.challengeOpen,entity:q.entityId,expectedEntity:p[n.dataset.challengeOpen].entityId,title:n.title,aria:n.getAttribute('aria-label')||'',expectedTitle:arguments[3][q.entityId],label:box(n.querySelector('.np-map-challenge-label'))};}),
+            relations:[...m.querySelectorAll('path[data-map-relation]')].map(e=>Object.assign({id:e.dataset.mapRelation,from:e.dataset.fromEntity,to:e.dataset.toEntity,type:e.dataset.relationType,endpointsMatch:(()=>{var from=[...m.querySelectorAll('[data-task-open]')].find(n=>n.dataset.taskOpen===e.dataset.fromEntity),to=[...m.querySelectorAll('[data-task-open]')].find(n=>n.dataset.taskOpen===e.dataset.toEntity);return !!from&&!!to&&touches(endpoint(e,false),rect(from))&&touches(endpoint(e,true),rect(to));})()},edge(e)))};
+        """, [x[0] for x in TASK_INDEX], CHALLENGE_LABELS, [[r['id'],r['from'],r['to'],r['relationType']] for r in relation_expected], {entity:science['entities'][entity]['label'] for entity in CHALLENGE_LABELS})
+        report.setdefault('graphicalOverviewChecks', []).append(graph)
+        save()
+        check_graphical_map(graph)
+
+
+    def relationship_checks(prefix, base):
+        before_route = driver.js('return NavigationProductApp.getState().route')
+        driver.click(driver.selector('#np-map-relations-toggle'))
+        if driver.js("return document.getElementById('np-overview-map').dataset.relationsVisible") != 'false':
+            raise RuntimeError('Relationship lines visibility control failed')
+        driver.click(driver.selector('#np-task-relations > summary'))
+
+        def evidence(expected, expected_focus=None):
+            data = driver.js("""var id=arguments[0],e=[...document.querySelectorAll('[data-task-relation]')].find(n=>n.dataset.taskRelation===id);return {id:e.dataset.taskRelation,type:e.dataset.relationType,from:e.dataset.fromEntity,to:e.dataset.toEntity,open:document.getElementById('np-task-relations').open,focus:document.activeElement.id,route:NavigationProductApp.getState().route,text:e.textContent,sources:[...e.querySelectorAll('[data-task-relation-source]')].map(n=>({id:n.dataset.taskRelationSource,url:n.href,version:n.dataset.sourceVersion,status:n.dataset.sourceStatus}))};""", expected['id'])
+            data['beforeRoute'] = before_route
+            if expected_focus is not None:
+                data['expectedFocus'] = expected_focus
+            proofs = []
+            specs = [{'kind':'heading'}] + [{'kind':'locator','text':loc['locator']} for loc in expected['locators']] + [{'kind':kind,'id':ref['sourceId']} for ref in expected['sourceRefs'] for kind in ('source','status')]
+            for spec in specs:
+                element = driver.js("var e=[...document.querySelectorAll('[data-task-relation]')].find(n=>n.dataset.taskRelation===arguments[0]),s=arguments[1];if(s.kind==='heading')return e.querySelector('strong');if(s.kind==='locator')return [...e.querySelectorAll('p')].find(n=>n.textContent===s.text);var a=[...e.querySelectorAll('[data-task-relation-source]')].find(n=>n.dataset.taskRelationSource===s.id);return s.kind==='source'?a:a.parentElement.querySelector('span');",expected['id'],spec)
+                if element is None:
+                    raise RuntimeError('Exact relationship visible source element is missing')
+                driver.js("arguments[0].scrollIntoView({block:'center'});", element)
+                driver.settle()
+                proof = driver.js(VISUAL_GEOMETRY + "var e=arguments[0],b=box(e),rs=[...e.getClientRects()].filter(r=>r.width>0&&r.height>0);if(getComputedStyle(e).display==='inline'){b.visible=b.opaque&&rs.length>0&&rs.every(r=>[[.5,.5],[.1,.1],[.9,.1],[.1,.9],[.9,.9]].every(([x,y])=>{var hit=document.elementFromPoint(r.x+r.width*x,r.y+r.height*y);return hit===e||e.contains(hit);}));b.clipped=false;}b.clientRects=rs.map(r=>({x:r.x,y:r.y,width:r.width,height:r.height}));return Object.assign(b,{viewport:{x:0,y:0,width:innerWidth,height:innerHeight}});", element)
+                proof['kind'] = spec['kind']
+                if spec['kind'] == 'status':
+                    status = next(ref['versionStatus'] for ref in expected['sourceRefs'] if ref['sourceId'] == spec['id'])
+                    proof['expectedText'] = ' · ' + {'snapshot_not_version_pinned':'未固定全文快照','fixed_arxiv_version_url':'来源URL限定版本'}.get(status,status)
+                proofs.append(proof)
+            data['visibleProofs'] = proofs
+            report.setdefault('relationEvidenceChecks', []).append(data)
+            save()
+            check_relation_evidence(data, expected)
+            return data
+
+        for i, expected in enumerate(relation_expected):
+            control = driver.selector('[data-relation-select="' + expected['id'] + '"]')
+            driver.js("arguments[0].scrollIntoView({block:'center'});", control)
+            driver.settle()
+            native = driver.js(VISUAL_GEOMETRY + "return {tag:arguments[0].tagName,type:arguments[0].type,disabled:arguments[0].disabled,tabIndex:arguments[0].tabIndex,target:arguments[0].getAttribute('aria-controls'),box:box(arguments[0])};", control)
+            if native['tag'] != 'BUTTON' or native['type'] != 'button' or native['disabled'] or native['tabIndex'] != 0 or native['target'] != 'np-map-relation-evidence-' + expected['id'] or not native['box']['visible'] or native['box']['clipped']:
+                raise RuntimeError('Relationship text selection is not a usable exact native button')
+            driver.click(control)
+            driver.settle()
+            evidence(expected)
+            if i in (0, 2, 6):
+                driver.js("document.getElementById(arguments[0]).scrollIntoView({block:'start'});", 'np-map-relation-evidence-' + expected['id'])
+                driver.settle()
+                capture(prefix + '-13-relation-' + expected['id'].split(':')[-1], require_home=True)
+        # Exercise native keyboard activation, not a script-generated click event.
+        expected = relation_expected[2]
+        control = driver.selector('[data-relation-select="' + expected['id'] + '"]')
+        driver.js("arguments[0].scrollIntoView({block:'center'});arguments[0].focus({preventScroll:true});", control)
+        driver.call('POST', '/element/' + control[ELEMENT] + '/value', {'text': '\ue007', 'value': ['\ue007']})
+        driver.settle()
+        evidence(expected)
+        stored = driver.js("return {focus:document.activeElement.id,window:scrollY,landing:document.getElementById('np-reading-landing').scrollTop,open:document.getElementById('np-task-relations').open,lines:document.getElementById('np-overview-map').dataset.relationsVisible};")
+        driver.call('POST', '/refresh', {})
+        wait_for(lambda: driver.js("return !!window.NavigationProductApp&&document.querySelector('[data-load-state]')?.dataset.loadState==='ready'"))
+        driver.settle()
+        restored = driver.js("return {focus:document.activeElement.id,window:scrollY,landing:document.getElementById('np-reading-landing').scrollTop,open:document.getElementById('np-task-relations').open,lines:document.getElementById('np-overview-map').dataset.relationsVisible};")
+        if restored != stored:
+            raise RuntimeError('Cold relationship restoration lost disclosure, line visibility, focus or scroll')
+        report.setdefault('relationColdRestoreChecks', []).append({'before':stored,'after':restored})
+        evidence(expected)
+        # Visit the exact relation endpoint and restore through actual browser Back.
+        control = driver.js("return document.getElementById(arguments[0]);", 'np-relation-entry-' + expected['id'] + '-' + expected['to'])
+        driver.js("arguments[0].scrollIntoView({block:'center'});arguments[0].focus({preventScroll:true});", control)
+        driver.settle()
+        endpoint_origin = driver.js("return {focus:document.activeElement.id,window:scrollY,landing:document.getElementById('np-reading-landing').scrollTop};")
+        driver.click(control)
+        driver.settle()
+        if driver.js('return NavigationProductApp.getState().route.scope') != expected['to']:
+            raise RuntimeError('Relationship endpoint entered another scope')
+        driver.call('POST', '/back', {})
+        driver.settle()
+        if driver.js('return NavigationProductApp.getState().route') != before_route or not driver.js("return document.getElementById('np-task-relations').open"):
+            raise RuntimeError('Relationship Back lost the original route or evidence disclosure')
+        back_origin = driver.js("return {focus:document.activeElement.id,window:scrollY,landing:document.getElementById('np-reading-landing').scrollTop};")
+        if back_origin != endpoint_origin:
+            raise RuntimeError('Relationship endpoint Back lost exact saved focus or reading scroll')
+        evidence(expected, expected_focus=endpoint_origin['focus'])
+        # Fresh document for real SVG hit tests; do not force a hidden path click.
+        for rid in ('tasks:relation:90', 'tasks:relation:92'):
+            driver.call('POST', '/url', {'url': 'about:blank'})
+            driver.call('POST', '/url', {'url': base})
+            wait_for(lambda: driver.js("return !!window.NavigationProductApp&&document.querySelector('[data-load-state]')?.dataset.loadState==='ready'"))
+            driver.settle()
+            point = driver.js("""var e=[...document.querySelectorAll('path[data-map-relation]')].find(n=>n.dataset.mapRelation===arguments[0]),len=e.getTotalLength(),matrix=e.getScreenCTM();for(var i=10;i<=90;i++){var q=e.getPointAtLength(len*i/100),p=new DOMPoint(q.x,q.y).matrixTransform(matrix),x=Math.round(p.x),y=Math.round(p.y);if(x<1||y<1||x>=innerWidth-1||y>=innerHeight-1)continue;if(document.elementFromPoint(x,y)===e)return {x:x,y:y,id:e.dataset.mapRelation,fraction:i/100};}return null;""",rid)
+            if not point:
+                raise RuntimeError('Relationship SVG has no independently hittable visible segment: ' + rid)
+            driver.call('POST', '/actions', {'actions':[{'type':'pointer','id':'relation-pointer','parameters':{'pointerType':'mouse'},'actions':[{'type':'pointerMove','duration':0,'origin':'viewport','x':point['x'],'y':point['y']},{'type':'pointerDown','button':0},{'type':'pointerUp','button':0}]}]})
+            driver.settle()
+            expected = next(r for r in relation_expected if r['id']==rid)
+            evidence(expected)
+            report.setdefault('relationPointerChecks', []).append(point)
+        # Read one real challenge through its map control, including original applicability.
+        driver.call('POST', '/url', {'url': 'about:blank'})
+        driver.call('POST', '/url', {'url': base})
+        wait_for(lambda: driver.js("return !!window.NavigationProductApp&&document.querySelector('[data-load-state]')?.dataset.loadState==='ready'"))
+        driver.settle()
+        challenge = driver.js("var b=NavigationProductApp.getBundle(),p=Object.values(b.researchMap.positions).find(p=>p.entityId==='legacy:ci_search_unknown_target');return {position:p,control:document.querySelector('[data-challenge-open=\"'+p.id+'\"]')};")
+        driver.click(challenge['control'])
+        q = challenge['position']
+        wait_for(lambda: driver.js("var a=NavigationProductApp,r=a.getState().route,q=arguments[0];return r.node===q.id&&r.tree===q.tree&&r.scope===q.scopeId&&r.paper===(q.paperId||null)&&r.version===(q.versionId||null)&&a.getContent().ready(q.entityId)&&!!document.querySelector('[data-reading-node=\"'+q.id+'\"]');", q))
+        driver.settle()
+        original = science['entities'][q['entityId']]
+        challenge_reading = driver.js(VISUAL_GEOMETRY + "var e=document.querySelector('[data-reading-node=\"'+arguments[0]+'\"]'),h=e.querySelector('h3'),scope=e.querySelector('[data-challenge-scope]');return {route:NavigationProductApp.getState().route,title:box(h),text:e.textContent,scope:scope?box(scope):null,scopeParagraphs:scope?[...scope.querySelectorAll('p')].map(box):[],viewport:{x:0,y:0,width:innerWidth,height:innerHeight}};",q['id'])
+        required = [original['label'],original['detail']['condition_scope']['condition'],*original['detail']['condition_scope']['tasks'],original['detail']['condition_scope']['remaining_limit']]
+        if any(text not in challenge_reading['text'] for text in required):
+            raise RuntimeError('Challenge reader omitted the original question or applicability')
+        for key in ('title','scope'):
+            proof = challenge_reading[key]
+            if proof is None or not proof['visible'] or not proof['opaque'] or not proof['unscaled'] or proof['fontSize'] < 15 or proof['clipped'] or len(proof['foreground']) != 3 or len(proof['background']) != 3 or contrast_ratio(proof['foreground'],proof['background']) < 4.5 or not rect_inside(proof['rect'],challenge_reading['viewport']):
+                raise RuntimeError('Challenge original question and scope are not visible together')
+        if len(challenge_reading['scopeParagraphs']) < 3:
+            raise RuntimeError('Challenge applicability paragraphs are incomplete')
+        for proof in challenge_reading['scopeParagraphs']:
+            if not proof['visible'] or not proof['opaque'] or not proof['unscaled'] or proof['fontSize'] < 15 or proof['clipped'] or len(proof['foreground']) != 3 or len(proof['background']) != 3 or contrast_ratio(proof['foreground'],proof['background']) < 4.5 or not rect_inside(proof['rect'],challenge_reading['viewport']):
+                raise RuntimeError('Challenge applicability paragraph is not visibly readable')
+        report.setdefault('graphChallengeReadingChecks', []).append(challenge_reading)
+        capture(prefix + '-14-original-challenge-reader')
+        driver.click(driver.selector('.np-return-previous'))
+        driver.settle()
+        if not driver.js("return !document.getElementById('np-reading-landing').hidden&&document.activeElement.id===arguments[0];",'np-challenge-entry-'+q['id']):
+            raise RuntimeError('Challenge reader return lost the original map entry focus')
+        # Leave the preserved old16 scenarios at a clean, unscrolled entry.
+        driver.call('POST', '/url', {'url': 'about:blank'})
+        driver.call('POST', '/url', {'url': base})
+        wait_for(lambda: driver.js("return !!window.NavigationProductApp&&document.querySelector('[data-load-state]')?.dataset.loadState==='ready'"))
+        driver.settle()
+
     def parallel_scope(scope):
         data = driver.js(VISUAL_GEOMETRY + """
           var a=NavigationProductApp,b=a.getBundle(),r=a.getState().route;
@@ -440,6 +668,7 @@ def main():
             prefix = f'{width}x{height}'
             reading_home()
             capture(prefix + '-00-default-reading-overview', require_home=True)
+            relationship_checks(prefix, base)
             driver.click(driver.selector('#np-overview-toggle'))
             driver.settle()
             capture(prefix + '-01-overview', require_overview=True)

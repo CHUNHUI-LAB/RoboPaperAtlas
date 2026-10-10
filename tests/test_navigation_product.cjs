@@ -72,3 +72,6 @@ test('spatial canvas keeps complete coverage, readable default geometry and exac
 
 // Original scope/identity regressions remain; paired reading adds complete route coverage.
 test('parallel scope forests and overview interaction regressions',()=>{const env={...process.env};delete env.NODE_TEST_CONTEXT;const r=cp.spawnSync(process.execPath,['--test',path.join(__dirname,'test_navigation_parallel_scopes.cjs'),path.join(__dirname,'test_navigation_parallel_state.cjs')],{cwd:root,env,encoding:'utf8',maxBuffer:8*1024*1024});assert.ifError(r.error);assert.equal(r.signal,null);assert.equal(r.status,0,r.stdout+r.stderr);});
+
+// S0 source-parent geometry and all typed edge interactions use an isolated fixture heap.
+test('graphical overview preserves all source parents, typed relationships and exact reading routes',t=>{const env={...process.env};delete env.NODE_TEST_CONTEXT;const r=cp.spawnSync(process.execPath,['--test',path.join(__dirname,'test_navigation_graphical_overview.cjs')],{cwd:root,env,encoding:'utf8',maxBuffer:8*1024*1024});if(r.stdout)t.diagnostic(r.stdout);if(r.stderr)t.diagnostic(r.stderr);assert.ifError(r.error);assert.equal(r.signal,null);assert.equal(r.status,0,r.stdout+r.stderr);});
