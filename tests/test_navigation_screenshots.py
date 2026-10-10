@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import unittest
 import struct
+import subprocess
 import zlib
 from unittest.mock import patch
 
@@ -14,6 +15,26 @@ SPEC.loader.exec_module(MODULE)
 
 
 class ScreenshotChecks(unittest.TestCase):
+    def test_real_dom_status_selector_ignores_nested_new_tab_label(self):
+        driver = r"""
+const {JSDOM}=require('jsdom'),assert=require('node:assert/strict');
+const script=JSON.parse(require('fs').readFileSync(0,'utf8'));
+function run(markup,check){const d=new JSDOM(markup,{runScripts:'outside-only'});try{const pick=new d.window.Function(script);check(d.window.document,(kind,id='source-1')=>pick.call(d.window,'relation-1',{kind,id}));}finally{d.window.close();}}
+const start='<article data-task-relation="relation-1"><strong>Relation</strong><p><a data-task-relation-source="source-1" href="https://example.org/v1">Original source<span class="sr-only">（新标签页）</span></a>';
+run(start+'<span id="actual-status"> · 未固定全文快照</span></p></article>',(d,pick)=>{
+ assert.equal(pick('status'),d.getElementById('actual-status'));
+ assert.equal(pick('status').textContent,' · 未固定全文快照');
+ assert.equal(pick('source'),d.querySelector('a'));
+ assert.notEqual(pick('status'),d.querySelector('.sr-only'));
+ assert.throws(()=>pick('status','unknown'),/Exact source anchor missing/);
+});
+run(start+'</p></article>',(d,pick)=>assert.throws(()=>pick('status'),/Exact source status sibling missing/));
+run(start+'<em>wrong sibling</em><span> · 未固定全文快照</span></p></article>',(d,pick)=>{assert.equal(d.querySelector('a').nextElementSibling.tagName,'EM');assert.throws(()=>pick('status'),/Exact source status sibling missing/);});
+"""
+        result = subprocess.run(['node', '-e', driver], input=json.dumps(MODULE.RELATION_EVIDENCE_ELEMENT_JS),
+                                text=True, capture_output=True, cwd=Path(__file__).parents[1])
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_graphical_default_rejects_fake_hidden_or_wrong_source_graph(self):
         import copy
         box = {'text':'question','rect':{'x':20,'y':20,'width':180,'height':25}, 'opaque':True,'unscaled':True,'visible':True,'clipped':False,'fontSize':15,'foreground':[26,52,64],'background':[255,255,255]}
