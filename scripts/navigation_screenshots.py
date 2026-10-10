@@ -23,12 +23,30 @@ import urllib.request
 import urllib.parse
 import zlib
 
-VIEWPORTS = [(1440, 900), (1180, 757), (659, 757), (390, 844)]
+# User requested desktop-only, viewport-filling use on 2026-10-10.
+# This does not request browser fullscreen privileges or send F11.
+VIEWPORTS = [(1440, 900), (1920, 1080)]
 ELEMENT = 'element-6066-11e4-a52e-4f735466cecf'
 
 
 def sha(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def rect_inside(rect, area, tolerance=1):
+    return (rect['width'] > 0 and rect['height'] > 0 and
+            rect['x'] >= area['x'] - tolerance and rect['y'] >= area['y'] - tolerance and
+            rect['x'] + rect['width'] <= area['x'] + area['width'] + tolerance and
+            rect['y'] + rect['height'] <= area['y'] + area['height'] + tolerance)
+
+
+def contrast_ratio(foreground, background):
+    def luminance(rgb):
+        channels = [v / 255 for v in rgb[:3]]
+        linear = [v / 12.92 if v <= .04045 else ((v + .055) / 1.055) ** 2.4 for v in channels]
+        return sum(v * weight for v, weight in zip(linear, (.2126, .7152, .0722)))
+    a, b = sorted((luminance(foreground), luminance(background)))
+    return (b + .05) / (a + .05)
 
 
 def png_has_visible_variation(image):
@@ -163,7 +181,9 @@ def main():
     report = {'head': head, 'eventSha': os.environ.get('GITHUB_SHA'), 'tree': command('git', 'rev-parse', 'HEAD^{tree}'),
               'htmlSha256': sha(dist / 'research/navigation/index.html'),
               'scienceSha256': sha(dist / 'research/navigation/product-data.json'),
-              'visualAcceptance': 'pending_human_review', 'captures': [], 'status': 'starting'}
+              'visualAcceptance': 'pending_human_review', 'captures': [], 'status': 'starting',
+              'reviewScope': 'user_requested_desktop_only_2026-10-10',
+              'browserFullscreenRequested': False}
     report['frontendSources'] = {name: sha(name) for name in ('assets/navigation-product.js', 'assets/navigation-product.css', 'scripts/navigation_product.py')}
     report['servedFiles'] = {str(p.relative_to(dist)): sha(p) for p in sorted((dist / 'research/navigation').rglob('*')) if p.is_file()}
     report['servedFiles'].update({str(p.relative_to(dist)): sha(p) for p in sorted((dist / 'assets').glob('navigation-*.js'))})
@@ -176,7 +196,7 @@ def main():
     def save():
         (out / 'receipt.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n')
 
-    def capture(name, require_tree=True):
+    def capture(name, require_tree=True, require_overview=False, require_flow=False):
         driver.settle()
         data = driver.js('''return {viewport:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},
           loadState:document.querySelector('[data-load-state]')?.dataset.loadState,
@@ -186,6 +206,20 @@ def main():
           bounds:[...document.querySelectorAll('#np-workspace,#np-tree-scroll,.np-reading-pane,#np-tree .np-node-row')].map(e=>{let r=e.getBoundingClientRect();return {id:e.id,position:e.closest('[data-position]')?.dataset.position,text:e.textContent.slice(0,180),x:r.x,y:r.y,width:r.width,height:r.height};}),
           nodeCount:document.querySelectorAll('#np-tree [role=treeitem]').length,
           focus:document.activeElement?.id, bodyWidth:document.body.scrollWidth};''')
+        data['readingVisibility'] = driver.js('''function rect(e){if(!e)return null;let r=e.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};}
+          let a=NavigationProductApp,b=a.getBundle(),root=b.researchMap.roots[0];
+          function color(value){let m=/^rgba?\\(([^)]+)\\)$/.exec(value);if(!m)return null;let v=m[1].split(',').map(Number);if(![3,4].includes(v.length)||v.some(n=>!Number.isFinite(n))||v.slice(0,3).some(n=>n<0||n>255))return null;return {rgb:v.slice(0,3),alpha:v.length===4?v[3]:1};}
+          function foreground(e){let c=color(getComputedStyle(e).color);return c&&c.alpha===1?c.rgb:[];}
+          function background(e){while(e){let c=color(getComputedStyle(e).backgroundColor);if(!c)return [];if(c.alpha===1)return c.rgb;if(c.alpha!==0)return [];e=e.parentElement;}return [255,255,255];}
+          function opaqueVisible(e){while(e){let s=getComputedStyle(e);if(Number(s.opacity)!==1||s.visibility!=='visible'||s.display==='none')return false;e=e.parentElement;}return true;}
+          let reader=document.getElementById('np-detail-scroll'),readerRect=rect(reader),heading=reader.querySelector('.np-reader-heading'),headingRect=rect(heading),contentTop=readerRect.y;
+          if(heading&&['sticky','fixed'].includes(getComputedStyle(heading).position)&&headingRect.height>0)contentTop=Math.max(contentTop,headingRect.y+headingRect.height);
+          let contentRect={x:readerRect.x,y:contentTop,width:readerRect.width,height:Math.max(0,readerRect.y+readerRect.height-contentTop)};
+          function uncovered(e){let r=e.getBoundingClientRect();return [[.5,.5],[.05,.05],[.95,.05],[.05,.95],[.95,.95]].every(([fx,fy])=>{let hit=document.elementFromPoint(r.x+r.width*fx,r.y+r.height*fy);return hit&&(hit===e||e.contains(hit));});}
+          return {canvas:rect(document.getElementById('np-tree-scroll')),reader:readerRect,readerContent:contentRect,readerHeading:headingRect,
+            roots:[root,...b.positions[root].childIds].map(id=>{let row=document.getElementById('np-node-'+id)?.querySelector(':scope > .np-node-row'),label=row?.querySelector('.np-node-label');return {id,entity:b.positions[id].entityId,row:rect(row),label:rect(label),text:label?.textContent,opaqueVisible:label?opaqueVisible(label):false,clipped:label?label.scrollHeight>label.clientHeight+1||label.scrollWidth>label.clientWidth+1:true,foreground:label?foreground(label):[],background:label?background(label):[]};}),
+            mechanism:rect(document.querySelector('.np-reading-pane .np-method-mechanism')),
+            flow:[...document.querySelectorAll('.np-reading-pane .np-method-flow dd')].map(e=>({text:e.textContent,rect:rect(e),uncovered:uncovered(e)}))};''')
         image = base64.b64decode(driver.call('GET', '/screenshot'), validate=True)
         if not image.startswith(b'\x89PNG\r\n\x1a\n'):
             raise RuntimeError('Screenshot is not PNG')
@@ -227,6 +261,23 @@ def main():
             raise RuntimeError('No actual tree node visible in captured viewport')
         if not require_tree and not any(r.get('id') == 'np-detail-scroll' for r in visible):
             raise RuntimeError('Reader is not visible in reader screenshot')
+        viewport = {'x': 0, 'y': 0, 'width': data['viewport']['width'], 'height': data['viewport']['height']}
+        if require_overview:
+            roots = data['readingVisibility']['roots']
+            if len(roots) != 3:
+                raise RuntimeError('Overview must expose General goal and both original main branches')
+            for node in roots:
+                if not node['row'] or not rect_inside(node['row'], viewport) or not rect_inside(node['row'], data['readingVisibility']['canvas']):
+                    raise RuntimeError('Overview root or main branch is outside the initial visible canvas: ' + node['id'])
+                if node['clipped']:
+                    raise RuntimeError('Overview main heading text is clipped: ' + node['id'])
+                if not node['opaqueVisible'] or len(node['foreground']) != 3 or len(node['background']) != 3 or contrast_ratio(node['foreground'], node['background']) < 4.5:
+                    raise RuntimeError('Overview main heading contrast is below 4.5:1: ' + node['id'])
+        if require_flow:
+            reader = data['readingVisibility']['readerContent']
+            visible_flow = [item for item in data['readingVisibility']['flow'] if item['text'].strip() and item['uncovered'] and rect_inside(item['rect'], viewport) and rect_inside(item['rect'], reader)]
+            if not visible_flow:
+                raise RuntimeError('Method screenshot does not show any complete actual mechanism field inside the reader')
 
     try:
         binary = shutil.which('google-chrome') or shutil.which('google-chrome-stable')
@@ -288,7 +339,7 @@ def main():
             driver.call('POST', '/url', {'url': base})
             wait_for(lambda: driver.js("return !!window.NavigationProductApp && document.querySelector('[data-load-state]')?.dataset.loadState==='ready'"))
             prefix = f'{width}x{height}'
-            capture(prefix + '-01-overview')
+            capture(prefix + '-01-overview', require_overview=True)
             # Select and expand through actual controls. No test route or bundle is injected.
             task = driver.js("var b=NavigationProductApp.getBundle();var p=Object.values(b.researchMap.positions).find(p=>p.sourceScopeId==='task:category-objectnav'&&p.sourceRootPositionIds);return document.getElementById('np-node-'+p.id).querySelector('.np-node-toggle');")
             driver.click(task)
@@ -314,12 +365,12 @@ def main():
             capture(prefix + '-03-method-reader')
             if driver.js('return NavigationProductApp.getState().route.paper') != 'vlfm':
                 raise RuntimeError('Selected method identity mismatch')
-            driver.js("document.getElementById('np-detail-scroll').scrollIntoView({block:'start'});")
-            capture(prefix + '-03b-reader-visible', require_tree=False)
+            driver.js("document.querySelector('.np-reading-pane .np-method-flow').scrollIntoView({block:'start',inline:'nearest'});")
+            capture(prefix + '-03b-reader-visible', require_tree=False, require_flow=True)
             driver.js("document.getElementById('np-workspace').scrollIntoView({block:'start'});")
             driver.click(driver.selector('[data-tree-tab="g"]'))
             driver.settle()
-            capture(prefix + '-04-return')
+            capture(prefix + '-04-return', require_overview=True)
             if driver.js('var a=NavigationProductApp;return a.getState().route.node===a.getBundle().researchMap.roots[0]') is not True:
                 raise RuntimeError('Return did not restore the global root')
             restored = driver.js("var e=document.getElementById('np-tree-scroll');return {top:e.scrollTop,left:e.scrollLeft,window:scrollY,focus:document.activeElement?.dataset.position||document.activeElement?.id};")

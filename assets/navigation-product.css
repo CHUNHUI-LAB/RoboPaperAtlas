@@ -190,3 +190,86 @@ body{font-size:16px;line-height:1.65;background:#f7f9fa}header.np-header{max-wid
 
 /* Fullscreen retains the entire reading task, including the sibling reading desk. */
 .np-workspace:fullscreen{background:#f7f9fa;padding:20px;width:100vw;height:100dvh;display:flex;flex-direction:column;overflow:auto}.np-workspace:fullscreen .np-workspace-bar{flex:0 0 auto}.np-workspace:fullscreen .np-panels{flex:1 1 auto;min-height:0;align-items:stretch}.np-workspace:fullscreen .np-tree-pane{display:flex;flex-direction:column;min-height:0}.np-workspace:fullscreen .np-pane-top,.np-workspace:fullscreen .np-canvas-footer{flex:0 0 auto}.np-workspace:fullscreen .np-tree-scroll{flex:1 1 auto;height:auto!important;min-height:0!important;max-height:none!important;overflow:auto!important}.np-workspace:fullscreen .np-reading-pane{height:auto;min-height:0;max-height:none}.np-workspace:fullscreen .np-share{flex:0 0 auto}
+
+/* Desktop reading desk: default viewport workspace, measured overview and a compact
+   true-hierarchy rail. All scientific labels and source identities remain in DOM. */
+@media(min-width:1200px){
+ header.np-header{min-height:52px;height:52px;padding:10px 22px}
+ main#navigation-product{padding:10px 18px 28px}
+ #navigation-product .np-global-start{top:-39px}
+ #navigation-product[data-load-state=ready] .np-workspace{height:calc(100dvh - 76px);min-height:650px;display:flex;flex-direction:column;gap:0}
+ #navigation-product .np-workspace-bar{flex:0 0 auto;padding:0 0 10px;gap:4px 16px}
+ #navigation-product .np-global-context{margin:0;min-height:27px;flex-basis:75%}
+ #navigation-product .np-origin-trail{margin:0 0 0 auto;min-height:27px}
+ #navigation-product .np-panels{flex:1 1 auto;min-height:0;align-items:stretch;grid-template-columns:minmax(330px,.7fr) minmax(560px,1fr);gap:16px}
+ #navigation-product[data-reading-layout=overview] .np-panels{grid-template-columns:minmax(0,1fr)}
+ #navigation-product[data-reading-layout=reading] .np-panels{grid-template-columns:320px minmax(560px,1fr)}
+ #navigation-product .np-tree-pane{display:flex;flex-direction:column;min-height:0;border-radius:11px}
+ #navigation-product .np-pane-top{flex:0 0 auto;min-height:43px;padding:7px 13px;gap:12px}
+ #navigation-product .np-pane-top h2{font-size:13px;letter-spacing:0;white-space:normal;line-height:1.5;color:#29434c}
+ #navigation-product .np-tree-scroll{flex:1 1 auto;height:auto;min-height:0;max-height:none;padding:12px;overflow:auto}
+ #navigation-product .np-canvas-footer{height:29px;flex:0 0 auto;font-size:11px;color:#576f78}
+ #navigation-product .np-canvas-footer>span:first-child{color:#576f78}
+ #navigation-product .np-reading-pane{height:auto;min-height:0;max-height:none;margin:0;padding:0 30px 28px;border-radius:11px;overflow:auto}
+ #navigation-product .np-reader-heading{padding:12px 0 10px;margin-bottom:17px;font-size:11px;color:#536d78;letter-spacing:.06em}
+ #navigation-product .np-reader-heading span:last-child{color:#536d78}
+ #navigation-product[data-reading-layout=reading] .np-tree-pane{align-self:start;max-height:100%}
+ #navigation-product[data-reading-layout=reading] .np-tree-scroll{flex:0 1 auto;min-height:0;max-height:calc(100dvh - 290px);background-image:none;padding:12px 10px}
+ #navigation-product[data-reading-layout=reading] .np-pane-top{flex-wrap:wrap;gap:7px}
+ #navigation-product[data-reading-layout=reading] .np-pane-top h2{width:100%;font-size:14px;font-weight:700}
+ #navigation-product[data-reading-layout=reading] .np-view-tools{margin-left:0;flex:1}
+ #navigation-product[data-reading-layout=reading] .np-graph-zoom{flex-wrap:wrap;gap:1px}
+ #navigation-product[data-reading-layout=reading] .np-graph-zoom button{padding:2px 6px;font-size:11px}
+ #navigation-product[data-reading-layout=reading] .np-canvas-footer>span:last-child{display:none}
+ #navigation-product .np-identity-controls[open]{position:absolute;right:18px;top:10px;width:600px;box-shadow:0 10px 45px #20343f20}
+ #navigation-product .np-identity-controls .np-share{padding:9px 0 0;margin:0}
+ #navigation-product .np-identity-controls .np-share input{max-width:none;flex:1}
+ #navigation-product .np-selection-intro{margin-top:24px;padding-top:16px;border-top:1px solid #dfe8e7}
+ #navigation-product[data-reading-layout=browse] .np-selection-intro:first-child{margin:0;padding:0;border:0}
+ #navigation-product .np-node-meaning>h3,#navigation-product .np-method-mechanism>h3{font-size:26px;line-height:1.4;margin:0 0 9px;color:#183d47;font-weight:700;letter-spacing:-.02em}
+ #navigation-product .np-method-mechanism>.np-note,#navigation-product .np-node-source-version{font-size:13px;line-height:1.6;color:#4e6973;margin:0 0 8px}
+ #navigation-product .np-method-context{font-size:14px;line-height:1.6;margin:0 0 7px;color:#295f54}
+ #navigation-product .np-method-scope{font-size:13px;line-height:1.65;color:#536352;background:#f3f7f0;padding:7px 11px;margin:10px 0 18px}
+ #navigation-product .np-method-flow{display:grid;grid-template-columns:70px minmax(0,1fr);gap:0 20px;margin:0 0 24px;font-size:16px}
+ #navigation-product .np-method-flow dt{font-size:14px;letter-spacing:0;color:#226150;margin:0;padding:13px 0;border-top:1px solid #dce8e3;font-weight:700}
+ #navigation-product .np-method-flow dd{font-size:16px;line-height:1.8;color:#294550;margin:0;padding:11px 0 14px;border-top:1px solid #dce8e3}
+ #navigation-product .np-detail-block h3,#navigation-product .np-node-meaning .np-detail-block h3,#navigation-product .np-method-mechanism .np-detail-block h3{font-size:14px;margin:18px 0 5px;color:#306a5b}
+ #navigation-product .np-detail-block p,#navigation-product .np-method-mechanism .np-detail-block p{font-size:16px;line-height:1.8;color:#294550}
+ #navigation-product .np-scientific-changes h3{font-size:17px}
+ #navigation-product .np-scientific-changes article strong{font-size:15px}
+ #navigation-product .np-scientific-changes article p{font-size:15px;line-height:1.75}
+ #navigation-product .np-detail-pane>summary,#navigation-product .np-reading-context-wrap>summary{font-size:14px;color:#355b65;font-weight:650;cursor:pointer;padding:13px 0}
+ #navigation-product .np-reading-context-wrap{margin-top:16px;border-top:1px solid #dfe8e7}
+ #navigation-product .np-reading-context{margin-top:8px}
+ #navigation-product .np-reading-context .np-task-difference{font-size:15px}
+ #navigation-product .np-peer-strip button{font-size:13px}
+ #navigation-product .np-parent-link,#navigation-product .np-selected-relation{font-size:13px}
+ #navigation-product .np-selection-intro .np-note{font-size:14px}
+ #navigation-product .np-node-meaning .np-text-button,#navigation-product .np-method-mechanism .np-text-button,#navigation-product .np-work-method-link{font-size:14px}
+}
+/* Never clamp a scientific/root title. Coordinates use these natural row heights. */
+#navigation-product .np-tree[data-desktop-layout] .np-node-row .np-node-label{font-size:var(--np-label-size,15px)!important;display:block!important;overflow:visible!important;max-height:none!important;-webkit-line-clamp:unset!important;white-space:normal!important;text-overflow:clip!important;line-height:1.45!important;color:#294550!important;overflow-wrap:anywhere}
+#navigation-product .np-tree[data-desktop-layout] .np-node-row{grid-template-rows:auto!important;padding:5px 8px!important}
+#navigation-product .np-tree[data-desktop-layout] .np-node-row[data-canvas-role=directory]{grid-template-rows:auto auto!important}
+#navigation-product .np-tree[data-desktop-layout] .np-node-row[data-canvas-role=directory] .np-node-kind{font-size:10px!important;line-height:1.35!important;color:#50636e}
+#navigation-product .np-tree[data-desktop-layout] .np-node-row[data-canvas-role=goal],#navigation-product .np-tree[data-desktop-layout] li[aria-selected=true]>.np-node-row[data-canvas-role=goal],#navigation-product .np-tree[data-desktop-layout] .np-node-row[data-canvas-role=goal]:hover,#navigation-product .np-tree[data-desktop-layout] li:focus-visible>.np-node-row[data-canvas-role=goal]{background:#203e49!important;border-color:#203e49!important;padding:12px 18px!important;box-shadow:0 5px 18px #203e4918!important}
+#navigation-product .np-tree[data-desktop-layout] .np-node-row[data-canvas-role=goal] .np-node-label{color:#fff!important;font-size:calc(var(--np-label-size,15px) * 1.2)!important;font-weight:700!important}
+#navigation-product .np-tree[data-desktop-layout] .np-node-row[data-canvas-role=literature],#navigation-product .np-tree[data-desktop-layout] .np-node-row[data-canvas-role=challenge]{padding:11px 15px!important}
+#navigation-product .np-tree[data-desktop-layout] .np-node-row[data-canvas-role=literature] .np-node-label,#navigation-product .np-tree[data-desktop-layout] .np-node-row[data-canvas-role=challenge] .np-node-label{font-size:calc(var(--np-label-size,15px) * 1.2)!important;font-weight:700!important;color:#20574d!important}
+#navigation-product .np-tree[data-desktop-layout] .np-node-row[data-canvas-role=challenge] .np-node-label{color:#594775!important}
+#navigation-product .np-tree[data-desktop-layout] .np-node-row[data-canvas-role=question] .np-node-label{color:#514561!important}
+#navigation-product .np-tree[data-desktop-layout] .np-node-row .np-child-count{color:#4f6a72;background:#eaf1f1}
+/* Focus rail is a natural, variable-depth tree, using exactly the original DOM parents. */
+#navigation-product .np-tree[data-desktop-layout=focus]{width:auto!important;height:auto!important;cursor:default;margin:0}
+#navigation-product .np-tree[data-desktop-layout=focus] ul,#navigation-product .np-tree[data-desktop-layout=focus] li{width:auto!important;height:auto!important;position:relative!important;display:block!important;overflow:visible!important}
+#navigation-product .np-tree[data-desktop-layout=focus] li{margin:7px 0!important}
+#navigation-product .np-tree[data-desktop-layout=focus] ul ul{margin:5px 0 8px 9px!important;padding-left:14px!important;border-left:1px solid #b9cec7!important}
+#navigation-product .np-tree[data-desktop-layout=focus] .np-node-row{position:relative!important;left:auto!important;top:auto!important;width:auto!important;height:auto!important;min-height:42px!important;padding:8px 7px!important;background:#f8fbfa!important;border-color:#deebe5!important}
+#navigation-product .np-tree[data-desktop-layout=focus] ul ul>li>.np-node-row:before{display:block!important;content:''!important;position:absolute!important;left:-15px!important;top:50%!important;width:14px!important;border-top:1px solid #b9cec7!important}
+#navigation-product .np-tree[data-desktop-layout=focus] li[aria-selected=true]>.np-node-row{background:#e8f3ed!important;border-color:#2a7968!important}
+#navigation-product .np-tree[data-desktop-layout=focus] .np-edge-label{display:block!important;font-size:11px;color:#56726e;margin:4px 2px 2px 26px}
+#navigation-product .np-workspace:fullscreen{height:100dvh!important;min-height:0!important;padding:12px!important}
+
+#navigation-product .np-tree[data-desktop-layout=overview] .np-node-row[data-canvas-role=task]{padding:3px 8px!important}
+
+#navigation-product .np-reading-association{font-size:14px;line-height:1.7;margin:8px 0 12px;padding:8px 12px;color:#704513;background:#fff5e6}

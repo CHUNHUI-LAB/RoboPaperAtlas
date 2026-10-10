@@ -14,6 +14,14 @@ SPEC.loader.exec_module(MODULE)
 
 
 class ScreenshotChecks(unittest.TestCase):
+    def test_cropped_root_and_low_contrast_are_rejected(self):
+        viewport = {'x': 0, 'y': 0, 'width': 1440, 'height': 900}
+        self.assertTrue(MODULE.rect_inside({'x': 10, 'y': 200, 'width': 350, 'height': 60}, viewport))
+        self.assertFalse(MODULE.rect_inside({'x': 1200, 'y': 200, 'width': 350, 'height': 60}, viewport))
+        self.assertFalse(MODULE.rect_inside({'x': 10, 'y': 870, 'width': 350, 'height': 60}, viewport))
+        self.assertLess(MODULE.contrast_ratio([255, 255, 255], [234, 245, 240]), 4.5)
+        self.assertGreater(MODULE.contrast_ratio([26, 52, 64], [234, 245, 240]), 4.5)
+
     def test_blank_png_rejected_and_nonblank_pixels_detected(self):
         def png(rows, width):
             def chunk(kind, data):
@@ -24,7 +32,7 @@ class ScreenshotChecks(unittest.TestCase):
         self.assertTrue(MODULE.png_has_visible_variation(png([row] * 90, 90)))
 
     def test_required_viewports(self):
-        self.assertEqual(MODULE.VIEWPORTS, [(1440, 900), (1180, 757), (659, 757), (390, 844)])
+        self.assertEqual(MODULE.VIEWPORTS, [(1440, 900), (1920, 1080)])
 
     def test_webdriver_envelope_and_loopback(self):
         driver = MODULE.Driver(12345)
