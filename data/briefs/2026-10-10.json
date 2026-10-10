@@ -1,0 +1,170 @@
+{
+  "schema_version": "1.1",
+  "id": "arxiv-daily-2026-10-10",
+  "date": "2026-10-10",
+  "title": "arXiv 研究总览 · 2026-10-10",
+  "status": "no_material_update",
+  "generated_at": "2026-10-10T08:24:46Z",
+  "language": "zh-CN",
+  "window": {
+    "start": "2026-10-09T08:22:00Z",
+    "end": "2026-10-10T08:22:00Z",
+    "timezone": "UTC",
+    "date_field": "updated_at",
+    "inclusive": true,
+    "duration_hours": 24
+  },
+  "source_snapshot": {
+    "name": "frontier.json",
+    "sha256": "d00bbc98548d17bbf8bc994ba5dfc73c40be6ec6917227ba97c93d677fdf69b8",
+    "generated_at": "2026-10-10T08:23:31Z",
+    "fetched_at": "2026-10-10T08:23:31Z",
+    "last_successful_fetch_at": "2026-10-10T08:23:31Z",
+    "status": "ok",
+    "coverage": {
+      "window_start": "2026-10-03T08:22:00Z",
+      "window_end": "2026-10-10T08:22:00Z",
+      "window_inclusive": true,
+      "date_field": "updated_at",
+      "complete": true,
+      "truncated": false,
+      "api_total_results": 14599,
+      "fetched_entries": 400,
+      "pages_fetched": 4,
+      "window_entries": 358,
+      "matched_entries": 212,
+      "displayed_entries": 212,
+      "stopped_at": "reached_window_start",
+      "source": "arxiv_api",
+      "limitations": [
+        "Candidates are heuristic title-and-abstract matches, not reviewed or deep-read recommendations.",
+        "Coverage is limited to the declared arXiv query and categories; indexing delay and terminology can omit relevant work.",
+        "This feed discovers preprints. Curated reading should prefer an available formally published version.",
+        "New/revision describes the retrieved arXiv version, not novelty, publication acceptance, or first appearance on this site."
+      ]
+    },
+    "query": "(cat:cs.RO OR cat:cs.CV OR cat:cs.AI OR cat:cs.LG OR cat:cs.CL) AND (all:\"vision-language navigation\" OR all:\"vision language navigation\" OR all:VLN OR all:ObjectNav OR all:\"object-goal\" OR all:\"object goal\" OR ((ti:navigation OR abs:navigation) AND (all:agent OR all:memory OR all:feedback OR all:harness OR all:reflection)) OR all:\"spatial memory\" OR all:\"episodic memory\" OR all:\"mobile manipulation\" OR all:\"mobile manipulator\" OR all:quadruped OR all:\"whole-body\" OR all:\"whole body\" OR all:\"end-effector\" OR all:\"end effector\" OR all:\"vision-language-action\" OR all:\"vision language action\" OR all:\"world-action model\" OR all:\"world action model\" OR ((all:VLA OR all:MoE OR all:\"mixture of experts\" OR all:\"mixture-of-experts\" OR all:\"world model\" OR all:\"world models\") AND (all:robot OR all:robotic OR all:robotics OR all:manipulation OR all:navigation OR all:embodied)))",
+    "rule_version": "2026-09-30.3"
+  },
+  "counts": {
+    "source_seven_day_candidates": 212,
+    "window_candidates": 0,
+    "new": 0,
+    "revisions": 0,
+    "selected_new": 0,
+    "selected_revisions": 0,
+    "complete_abstracts_checked_for_selection": 0
+  },
+  "coverage_note": "官方 arXiv API 串行完成 4 页、400 条返回：七天更新时间窗口内 358 条，既有九类关键词规则保留 212 条；相对于声明查询扫描完整，未发生分页或展示截断。最近24小时窗口为 2026-10-09T08:22:00Z 至 2026-10-10T08:22:00Z，保留候选为0。14599 为查询全时段结果数，不是七日候选数。",
+  "overview": "本次声明查询在最近24小时观察窗口内没有保留候选，因此不新增研究主题或选读，也不重复上期摘要。七天候选仍可检索。零命中只说明此次查询和时间窗口的结果，不代表相关研究领域没有新工作。",
+  "new_papers": [],
+  "revised_papers": [],
+  "reading_priority": [],
+  "evidence_note": "本24小时窗口候选元数据及摘要片段为0条，完整摘要核对和独立选读均为0条；没有阅读全文、代码或实验，亦未进行逐版本差异核验。采集成功不意味着关键词标签已人工核实。本次 API 返回的最新候选更新时间为 2026-10-08T17:59:51Z；零候选只反映该查询本次返回的记录。",
+  "limitations": [
+    "查询仅覆盖声明的 arXiv 类别、关键词和 UTC 更新时间窗口；索引延迟、术语差异与筛选规则可能漏检。",
+    "首版与修订仅指 arXiv 版本状态，不代表创新性、同行评审或正式发表。",
+    "本期不作跨期趋势、全领域共识或方法排名判断；正式精读仍优先会议或期刊版本。",
+    "API 返回及索引可能有延迟；本期未逐篇复查固定版本网页的撤回提示、出版状态或资源可用性。"
+  ],
+  "candidate_ids": [],
+  "research_overview": {
+    "headline": "本窗口无可新增归纳的候选，七天发现入口已更新",
+    "executive_summary": "本次声明查询在最近24小时观察窗口内没有保留候选，因此不新增研究主题或选读，也不重复上期摘要。七天候选仍可检索。零命中只说明此次查询和时间窗口的结果，不代表相关研究领域没有新工作。",
+    "coverage": {
+      "candidate_metadata_screened": 0,
+      "complete_abstracts_checked": 0,
+      "full_papers_read": 0,
+      "revision_diffs_checked": 0,
+      "comparison_window_available": false,
+      "topic_count_method": "existing_title_abstract_keyword_heuristic_multilabel",
+      "count_denominator": 0
+    },
+    "topic_distribution": [
+      {
+        "topic": "vln_objectnav",
+        "label": "VLN / ObjectNav",
+        "count": 0,
+        "new": 0,
+        "revisions": 0,
+        "candidate_ids": []
+      },
+      {
+        "topic": "navigation_agents",
+        "label": "Navigation agents / harnesses",
+        "count": 0,
+        "new": 0,
+        "revisions": 0,
+        "candidate_ids": []
+      },
+      {
+        "topic": "spatial_episodic_memory",
+        "label": "Spatial / episodic memory and feedback",
+        "count": 0,
+        "new": 0,
+        "revisions": 0,
+        "candidate_ids": []
+      },
+      {
+        "topic": "mobile_manipulation",
+        "label": "Quadruped-arm / mobile manipulation",
+        "count": 0,
+        "new": 0,
+        "revisions": 0,
+        "candidate_ids": []
+      },
+      {
+        "topic": "whole_body_control",
+        "label": "Whole-body control",
+        "count": 0,
+        "new": 0,
+        "revisions": 0,
+        "candidate_ids": []
+      },
+      {
+        "topic": "end_effector_trajectories",
+        "label": "End-effector trajectories",
+        "count": 0,
+        "new": 0,
+        "revisions": 0,
+        "candidate_ids": []
+      },
+      {
+        "topic": "robot_vla",
+        "label": "Robot VLA",
+        "count": 0,
+        "new": 0,
+        "revisions": 0,
+        "candidate_ids": []
+      },
+      {
+        "topic": "robot_moe",
+        "label": "Robot mixture-of-experts",
+        "count": 0,
+        "new": 0,
+        "revisions": 0,
+        "candidate_ids": []
+      },
+      {
+        "topic": "robot_world_models",
+        "label": "Robot world models",
+        "count": 0,
+        "new": 0,
+        "revisions": 0,
+        "candidate_ids": []
+      }
+    ],
+    "themes": [],
+    "evidence_sources": [],
+    "revision_note": "本24小时窗口没有保留的首版或修订候选；未做任何版本差异核验。",
+    "limitations": [
+      "查询仅覆盖声明的 arXiv 类别、关键词和 UTC 更新时间窗口；索引延迟、术语差异与筛选规则可能漏检。",
+      "首版与修订仅指 arXiv 版本状态，不代表创新性、同行评审或正式发表。",
+      "本期不作跨期趋势、全领域共识或方法排名判断；正式精读仍优先会议或期刊版本。",
+      "九类分布按本窗口保留候选的原始 matched_topics 重算；多标签计数可能重叠，关键词可能误分或漏分，零命中不证明该方向没有新研究。",
+      "API 返回及索引可能有延迟；本期未逐篇复查固定版本网页的撤回提示、出版状态或资源可用性。"
+    ],
+    "candidate_records": [],
+    "keyword_caveats": []
+  }
+}

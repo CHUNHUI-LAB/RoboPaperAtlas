@@ -120,18 +120,35 @@ class WeeklyTests(unittest.TestCase):
    summary=theme['children'][0];self.assertEqual(summary['tag'],'summary');self.assertEqual([x['tag'] for x in summary['children']],['span','span','i']);self.assertEqual(summary['children'][1]['attrs']['class'],'radar-theme-copy')
   window=next(x for x in parser.targets if x['tag']=='details' and x['attrs'].get('class')=='radar-window-list');content=next(x for x in window['children'] if x['tag']=='div');ul=next(x for x in content['children'] if x['tag']=='ul');self.assertEqual(len(ul['children']),238)
   for row in ul['children']:self.assertEqual([x['tag'] for x in row['children']],['span','a','small'])
+ def _weekly_availability_cases(self):
+  wi=copy.deepcopy(self.index);wi['latest']='2026-10-11';wr=copy.deepcopy(self.records);failed=copy.deepcopy(wr['2026-10-04']);failed['date']='2026-10-11';failed['status']='error';failed['research_overview']['themes']=[];wr['2026-10-11']=failed
+  return [('available',self.index,self.records),('missing',None,{}),('failed',wi,wr)]
  def test_home_prefers_available_daily_and_compacts_empty_day(self):
   from briefs import load_archive as load_daily
-  di,dr=load_daily(ROOT);di=copy.deepcopy(di);di['latest']='2026-10-04';page=home_overview(self.index,self.records,di,dr)
-  self.assertIn('历史日报',page);self.assertIn('最近24小时没有新增候选',page);self.assertNotIn('本窗口没有需要新增的研究主题，不重复上期总结',page);self.assertIn('frontier/briefs/2026-10-04/index.html',page);self.assertIn('2026-10-01 / Research Radar',page);self.assertNotIn('data-radar-period="weekly"',page);self.assertIn('frontier/weekly/index.html',page)
+  di,dr=load_daily(ROOT);di=copy.deepcopy(di);di['latest']='2026-10-04';current=dr[di['latest']];historical=dr['2026-10-01']
+  self.assertEqual(current['status'],'no_material_update');self.assertEqual(current['counts']['window_candidates'],0);self.assertFalse(current['research_overview']['themes'])
+  for label,wi,wr in self._weekly_availability_cases():
+   with self.subTest(weekly=label):
+    before=copy.deepcopy((wi,wr,di,dr));page=home_overview(wi,wr,di,dr)
+    self.assertIn('历史日报',page);self.assertIn('最近24小时没有新增候选',page);self.assertNotIn('本窗口没有需要新增的研究主题，不重复上期总结',page);self.assertIn('frontier/briefs/2026-10-04/index.html',page);self.assertIn('2026-10-01 / Research Radar',page);self.assertNotIn('data-radar-period="weekly"',page);self.assertIn('frontier/weekly/index.html',page)
+    self.assertIn('2026-10-01 历史日报',page);self.assertIn('不是当天新发现或本期新增',page);self.assertIn(historical['research_overview']['headline'],page)
+    for value in current['window']['start'],current['window']['end']:self.assertIn(value,page)
+    self.assertIn('data-radar-period="daily"',page);self.assertIn('data-radar-date="2026-10-01"',page);self.assertNotIn('data-radar-date="2026-10-07"',page);self.assertNotIn(current['research_overview']['headline'],page)
+    self.assertEqual((wi,wr,di,dr),before)
 
  def test_home_ready_daily_still_has_explicit_route(self):
   from briefs import load_archive as load_daily
   di,dr=load_daily(ROOT);di=copy.deepcopy(di);di['latest']='2026-09-30';page=home_overview(self.index,self.records,di,dr);self.assertIn('2026-09-30 / Research Radar',page);self.assertIn('frontier/briefs/2026-09-30/index.html',page);self.assertIn('data-radar-period="daily"',page);self.assertNotIn('data-radar-period="weekly"',page)
  def test_home_missing_or_failed_weekly_keeps_historical_window(self):
   from briefs import load_archive as load_daily
-  di,dr=load_daily(ROOT);page=home_overview(None,{},di,dr);self.assertIn(dr[di['latest']]['research_overview']['headline'],page);self.assertNotIn('data-radar-period="weekly"',page)
-  wi=copy.deepcopy(self.index);wi['latest']='2026-10-11';wr=copy.deepcopy(self.records);failed=copy.deepcopy(wr['2026-10-04']);failed['date']='2026-10-11';failed['status']='error';failed['research_overview']['themes']=[];wr['2026-10-11']=failed;page=home_overview(wi,wr,di,dr);self.assertIn(dr[di['latest']]['research_overview']['headline'],page);self.assertNotIn('data-radar-period="weekly"',page);self.assertIn('frontier/weekly/index.html',page)
+  di,dr=load_daily(ROOT);di=copy.deepcopy(di);di['latest']='2026-10-07';current=dr[di['latest']]
+  self.assertEqual(current['status'],'ready');self.assertTrue(current['research_overview']['themes'])
+  for label,wi,wr in self._weekly_availability_cases()[1:]:
+   with self.subTest(weekly=label):
+    before=copy.deepcopy((wi,wr,di,dr));page=home_overview(wi,wr,di,dr)
+    self.assertIn(current['research_overview']['headline'],page);self.assertNotIn('data-radar-period="weekly"',page);self.assertIn('frontier/weekly/index.html',page)
+    self.assertIn('data-radar-period="daily"',page);self.assertIn('data-radar-date="2026-10-07"',page);self.assertIn('frontier/briefs/2026-10-07/index.html',page);self.assertNotIn('最近24小时没有新增候选',page)
+    self.assertEqual((wi,wr,di,dr),before)
  def test_home_daily_failed_or_stale_is_not_zero_claim(self):
   from briefs import load_archive as load_daily
   di,dr=load_daily(ROOT);di=copy.deepcopy(di);di['latest']='2026-10-04'

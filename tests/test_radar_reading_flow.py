@@ -10,9 +10,22 @@ class ReadingFlowTests(unittest.TestCase):
  def setUpClass(cls):
   cls.di,cls.dr=load_archive(ROOT);cls.wi,cls.wr=load_weekly(ROOT)
  def test_home_latest_daily_not_weekly(self):
-  page=home_overview(self.wi,self.wr,self.di,self.dr);current=self.dr[self.di['latest']]
+  # Pin this ready-state contract; the live archive's latest date may be empty.
+  index=copy.deepcopy(self.di);index['latest']='2026-10-07';current=self.dr[index['latest']]
+  self.assertEqual(current['status'],'ready');self.assertTrue(current['research_overview']['themes'])
+  page=home_overview(self.wi,self.wr,index,self.dr)
   self.assertIn('data-radar-period="daily"',page);self.assertIn(current['research_overview']['headline'],page)
   self.assertNotIn('data-radar-period="weekly"',page);self.assertIn('frontier/weekly/index.html',page)
+ def test_home_empty_latest_keeps_dated_daily_history(self):
+  index=copy.deepcopy(self.di);index['latest']='2026-10-04';current=self.dr[index['latest']];historical=self.dr['2026-10-01'];before=copy.deepcopy((index,self.dr))
+  self.assertEqual(current['status'],'no_material_update');self.assertEqual(current['counts']['window_candidates'],0);self.assertFalse(current['research_overview']['themes'])
+  page=home_overview(self.wi,self.wr,index,self.dr)
+  self.assertIn('最近24小时没有新增候选或研究主线',page)
+  for value in current['window']['start'],current['window']['end']:self.assertIn(value,page)
+  self.assertIn('frontier/briefs/2026-10-04/index.html',page);self.assertIn('2026-10-01 历史日报',page);self.assertIn('不是当天新发现或本期新增',page)
+  self.assertIn(historical['research_overview']['headline'],page);self.assertIn('data-radar-period="daily"',page);self.assertIn('data-radar-date="2026-10-01"',page)
+  self.assertNotIn(current['research_overview']['headline'],page);self.assertNotIn('data-radar-date="2026-10-07"',page);self.assertNotIn('data-radar-period="weekly"',page);self.assertIn('frontier/weekly/index.html',page)
+  self.assertEqual((index,self.dr),before)
  def test_stable_complete_navigation_and_no_default_expansion(self):
   for data,index,renderer in [(self.dr['2026-10-07'],self.di,section),(self.wr['2026-10-04'],self.wi,weekly_render)]:
    page=renderer(data,index,'../../../');themes=data['research_overview']['themes']
