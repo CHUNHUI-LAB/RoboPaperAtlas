@@ -1474,5 +1474,178 @@ d.querySelector('.np-return-previous').click();await ready(()=>a.getState().rout
         self.assertEqual(states[1]['route']['template'], '1')
 
 
+class RelationHistoryChecks(unittest.TestCase):
+    @staticmethod
+    def snapshots(length=50):
+        import copy
+        before = ExplorationCaptureChecks().restore_fixture()
+        before.update(historyEntryKey='native-before', historyLength=length,
+                      focus='np-task-route-relations-summary', relationDisclosure={'open': True, 'id': 'np-task-route-relations'})
+        before['taskView']['focusTargetByTree']['l'] = before['focus']
+        before['runtime'].update(revision=1, originTrail=[{'route': {'scope': 'scope:all'}, 'focus': 'saved-origin'}])
+        before['persisted'] = copy.deepcopy(before['runtime'])
+        selected = copy.deepcopy(before)
+        selected.update(historyEntryKey='native-selected', selectedRelation='methods:relation:90', focus='np-task-relation-title')
+        selected['runtime']['revision'] = 2
+        selected['taskView']['focusTargetByTree']['l'] = selected['focus']
+        selected['relationView'] = {'l': {'id': 'methods:relation:90', 'route': copy.deepcopy(selected['route'])}}
+        selected['persisted'] = copy.deepcopy(selected['runtime'])
+        back = copy.deepcopy(before)
+        back['focus'] = 'np-task-change-' + before['route']['scope'] + '-methods:relation:90'
+        back['taskView']['focusTargetByTree']['l'] = back['focus']
+        back['persisted'] = copy.deepcopy(back['runtime'])
+        return before, selected, back, copy.deepcopy(selected)
+
+    def test_relation_history_capped_length_needs_distinct_native_entries_and_exact_revisions(self):
+        import copy
+        # Actual 50c receipt projection; raw SHA256: dabc2e4ff52e6b5ff4dde0b34f54956cae29ea42e09209aaf881f026ec707f7b
+        recorded = json.loads('{"before":{"route":{"bench":null,"claim":null,"mode":"tree","nav":"1","node":"pos:l:74abdf1c989032e2d82e82","paper":null,"protocol":null,"scope":"task:category-objectnav","template":null,"tree":"l","version":null},"historyLength":50,"selectedRelation":null,"focus":"np-task-route-relations-summary","runtime":{"route":{"bench":null,"claim":null,"mode":"tree","nav":"1","node":"pos:l:74abdf1c989032e2d82e82","paper":null,"protocol":null,"scope":"task:category-objectnav","template":null,"tree":"l","version":null},"revision":1},"persisted":{"route":{"bench":null,"claim":null,"mode":"tree","nav":"1","node":"pos:l:74abdf1c989032e2d82e82","paper":null,"protocol":null,"scope":"task:category-objectnav","template":null,"tree":"l","version":null},"revision":1}},"after":{"route":{"bench":null,"claim":null,"mode":"tree","nav":"1","node":"pos:l:74abdf1c989032e2d82e82","paper":null,"protocol":null,"scope":"task:category-objectnav","template":null,"tree":"l","version":null},"historyLength":50,"selectedRelation":"methods:relation:90","focus":"np-task-relation-title","runtime":{"route":{"bench":null,"claim":null,"mode":"tree","nav":"1","node":"pos:l:74abdf1c989032e2d82e82","paper":null,"protocol":null,"scope":"task:category-objectnav","template":null,"tree":"l","version":null},"revision":2},"persisted":{"route":{"bench":null,"claim":null,"mode":"tree","nav":"1","node":"pos:l:74abdf1c989032e2d82e82","paper":null,"protocol":null,"scope":"task:category-objectnav","template":null,"tree":"l","version":null},"revision":2}}}')
+        self.assertEqual(recorded['before']['route'], recorded['after']['route'])
+        self.assertEqual(len(recorded['before']['route']), 11)
+        self.assertEqual((recorded['before']['historyLength'], recorded['after']['historyLength']), (50, 50))
+        # The failed artifact lacks native entry keys and traversal evidence; it alone cannot pass.
+        with self.assertRaisesRegex(RuntimeError, 'native key'):
+            MODULE.check_relation_history_entry(recorded['before'], recorded['after'])
+        before, selected, _, _ = self.snapshots()
+        # These 50c receipt values reproduce the obsolete length gate failure.
+        # Native keys below are unit fixtures, not keys recovered from that failed run.
+        self.assertEqual((before['historyLength'], selected['historyLength']), (50, 50))
+        self.assertEqual((before['runtime']['revision'], selected['runtime']['revision']), (1, 2))
+        self.assertNotEqual(selected['historyLength'], before['historyLength'] + 1)
+        MODULE.check_relation_history_entry(before, selected)
+        added = copy.deepcopy(selected); added['historyLength'] = 51
+        MODULE.check_relation_history_entry(before, added)
+        for field, value in [('historyEntryKey', None), ('historyEntryKey', ''),
+                             ('historyEntryKey', before['historyEntryKey']), ('historyLength', 49),
+                             ('historyLength', 52), ('historyLength', True), ('selectedRelation', 'tasks:relation:90'),
+                             ('focus', 'wrong')]:
+            bad = copy.deepcopy(selected); bad[field] = value
+            with self.subTest(field=field, value=value), self.assertRaises(RuntimeError):
+                MODULE.check_relation_history_entry(before, bad)
+        for target in ('runtime', 'persisted'):
+            for value in (1, 3, True):
+                bad = copy.deepcopy(selected); bad[target]['revision'] = value
+                with self.subTest(target=target, revision=value), self.assertRaises(RuntimeError):
+                    MODULE.check_relation_history_entry(before, bad)
+        bad = copy.deepcopy(before); bad['historyEntryKey'] = None
+        with self.assertRaises(RuntimeError): MODULE.check_relation_history_entry(bad, selected)
+        for target in ('runtime', 'persisted'):
+            bad = copy.deepcopy(before); bad[target]['revision'] = True
+            with self.subTest(before_revision=target), self.assertRaises(RuntimeError):
+                MODULE.check_relation_history_entry(bad, selected)
+        # replaceState cannot pass merely by increasing the model revision at length 50.
+        replaced = copy.deepcopy(selected); replaced['historyEntryKey'] = before['historyEntryKey']
+        with self.assertRaisesRegex(RuntimeError, 'replaced'):
+            MODULE.check_relation_history_entry(before, replaced)
+        # A selected entry and its faithful Forward replay must not both carry
+        # damage introduced by the initial click to unrelated state.
+        mutations = [lambda x: x['taskView']['focusTargetByTree'].update(c='stolen'),
+                     lambda x: x['taskView']['lastRouteByTree'].update(c={'node': 'wrong'}),
+                     lambda x: x['runtime']['originTrail'][0].update(focus='changed'),
+                     lambda x: x['persisted']['originTrail'][0].update(focus='changed')]
+        for index, mutate in enumerate(mutations):
+            bad_selected = copy.deepcopy(selected); mutate(bad_selected)
+            bad_forward = copy.deepcopy(bad_selected)
+            self.assertEqual(bad_selected, bad_forward)
+            with self.subTest(initial_selection=index), self.assertRaises(RuntimeError):
+                MODULE.check_relation_history_entry(before, bad_selected)
+
+    def test_relation_history_roundtrip_keeps_full_routes_scopes_scroll_disclosure_and_origin(self):
+        import copy
+        before, selected, back, forward = self.snapshots()
+        for expected, actual, focus in ((before, back, back['focus']), (selected, forward, selected['focus'])):
+            MODULE.check_relation_history_restore(expected, actual, focus, 50)
+            mutations = [lambda x: x.update(historyEntryKey='wrong'), lambda x: x.update(historyLength=49),
+                         lambda x: x['runtime'].update(revision=17), lambda x: x['persisted'].update(revision=17),
+                         lambda x: x['runtime'].update(revision=True), lambda x: x['persisted'].update(revision=True),
+                         lambda x: x.update(selectedRelation='methods:relation:89'), lambda x: x.update(scale=.9),
+                         lambda x: x['treeScroll'].update(top=0), lambda x: x['readerScroll'].update(top=0),
+                         lambda x: x['relationDisclosure'].update(open=False),
+                         lambda x: x['taskView']['focusTargetByTree'].update(c='stolen'),
+                         lambda x: x['runtime']['originTrail'][0].update(focus='changed'),
+                         lambda x: x['persisted']['originTrail'][0].update(focus='changed')]
+            for field in expected['route']:
+                mutations.append(lambda x, f=field: x['route'].__setitem__(f, 'changed'))
+            for index, mutate in enumerate(mutations):
+                bad = copy.deepcopy(actual); mutate(bad)
+                with self.subTest(focus=focus, mutation=index), self.assertRaises(RuntimeError):
+                    MODULE.check_relation_history_restore(expected, bad, focus, 50)
+        summary_focus = copy.deepcopy(back); summary_focus['focus'] = before['focus']
+        with self.assertRaises(RuntimeError):
+            MODULE.check_relation_history_restore(before, summary_focus, back['focus'], 50)
+
+    def test_relation_history_uses_real_back_forward_and_saves_failed_wait(self):
+        import copy
+        before, selected, back, forward = self.snapshots()
+        class Driver:
+            def __init__(self): self.state = copy.deepcopy(selected); self.actions = []; self.waits = []
+            def settle(self): pass
+            def call(self, method, path, body):
+                self.actions.append((method, path, body))
+                self.state = copy.deepcopy(back if path == '/back' else forward)
+            def js(self, script, *args):
+                if script == MODULE.TASK_ROUTE_SNAPSHOT_JS: return copy.deepcopy(self.state)
+                if script == MODULE.TASK_RELATION_HISTORY_WAIT_JS:
+                    self.waits.append(args); return True
+                return {'diagnostic': 'origin'}
+        driver, record, saved = Driver(), {}, []
+        MODULE.relation_history_checks(driver, record, lambda: saved.append(copy.deepcopy(record)), before, selected)
+        self.assertEqual(driver.actions, [('POST', '/back', {}), ('POST', '/forward', {})])
+        self.assertEqual([x['kind'] for x in record['transitions']], ['browser-back-relation-selection', 'browser-forward-relation-selection'])
+        self.assertEqual(driver.waits[0], (before['route'], back['focus'], before))
+        self.assertEqual(driver.waits[1], (selected['route'], selected['focus'], selected))
+        replaced = copy.deepcopy(selected); replaced['historyEntryKey'] = before['historyEntryKey']
+        replacement_driver = Driver()
+        with self.assertRaisesRegex(RuntimeError, 'replaced'):
+            MODULE.relation_history_checks(replacement_driver, {}, lambda: None, before, replaced)
+        self.assertEqual(replacement_driver.actions, [], 'replaceState fails before navigation')
+        driver, record, saved = Driver(), {}, []
+        failure = TimeoutError('wrong browser entry')
+        with patch.object(MODULE, 'wait_for', side_effect=failure):
+            with self.assertRaises(TimeoutError) as caught:
+                MODULE.relation_history_checks(driver, record, lambda: saved.append(copy.deepcopy(record)), before, selected)
+        self.assertIs(caught.exception, failure)
+        self.assertEqual(saved[-1]['transitions'][0]['before'], selected)
+        self.assertEqual(saved[-1]['transitions'][0]['after'], back)
+        self.assertEqual(driver.actions, [('POST', '/back', {})])
+
+    def test_relation_history_wait_checks_native_key_revision_relation_and_all_route_fields(self):
+        script = r"""
+const assert=require('node:assert/strict'),input=JSON.parse(require('fs').readFileSync(0,'utf8'));
+const route={nav:'1',tree:'l',node:'root',scope:'task:category-objectnav',bench:null,protocol:null,paper:null,version:null,claim:null,mode:'tree',template:null};
+let state={route,revision:2},key='native-key',relation='methods:relation:90',focus='np-task-relation-title',ready='ready';
+globalThis.window={get navigation(){return {currentEntry:{key}}}};
+globalThis.NavigationProductApp={getState:()=>state,getBundle:()=>({positions:{root:{entityId:'r'}}}),getContent:()=>({ready:()=>true})};
+globalThis.document={querySelector:s=>s==='[data-task-route-scope]'?{dataset:{taskRouteState:'ready'}}:s==='[data-selected-task-relation]'?(relation?{dataset:{selectedTaskRelation:relation}}:null):s==='[data-relation-state]'?{dataset:{relationState:ready}}:null,get activeElement(){return {id:focus}}};
+const predicate=new Function(input.script),expected={route,runtime:{revision:2},historyEntryKey:key,selectedRelation:relation};
+assert.equal(predicate({...route},focus,expected),true);
+for(const wrong of [null,'','old-key']){key=wrong;assert.equal(predicate(route,focus,expected),false);}key=expected.historyEntryKey;
+state.revision=1;assert.equal(predicate(route,focus,expected),false);state.revision=2;
+relation=null;assert.equal(predicate(route,focus,expected),false);relation=expected.selectedRelation;
+ready='loading';assert.equal(predicate(route,focus,expected),false);ready='ready';
+for(const field of Object.keys(route)){assert.equal(predicate({...route,[field]:'changed'},focus,expected),false,field);const missing={...route};delete missing[field];assert.equal(predicate(missing,focus,expected),false,field+' missing');}
+focus='wrong';assert.equal(predicate(route,'np-task-relation-title',expected),false);
+"""
+        result = subprocess.run(['node', '-e', script], input=json.dumps({'script': MODULE.TASK_RELATION_HISTORY_WAIT_JS}), capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_real_jsdom_push_and_replace_history_restore_different_predecessors(self):
+        # Actual JSDOM history traversal is a state-control test. It has no native
+        # Navigation API key support and is not evidence of Chrome geometry/keys.
+        script = r"""
+const {JSDOM}=require('jsdom'),assert=require('node:assert/strict');
+(async()=>{for(const operation of ['pushState','replaceState']){const dom=new JSDOM('',{url:'https://example.org/task'}),w=dom.window;
+try{const route={scope:'task:category-objectnav',tree:'l',node:'root',paper:null,version:null,claim:null,bench:null,protocol:null,template:null,mode:'tree',nav:'1'};
+const before={route,revision:1,selectedRelation:null},selected={route,revision:2,selectedRelation:'methods:relation:90'};
+w.history.replaceState({route:{scope:'scope:all'},revision:0},'');w.history.pushState(before,'');w.history[operation](selected,'');
+async function traverse(direction){const done=new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('history timeout')),1000);w.addEventListener('popstate',()=>{clearTimeout(timer);resolve(w.history.state)},{once:true});});w.history[direction]();return done;}
+const back=await traverse('back');if(operation==='pushState')assert.deepEqual(back,before);else assert.notDeepEqual(back,before,'replaceState must not retain the overwritten task entry');
+assert.deepEqual(await traverse('forward'),selected);
+}finally{dom.window.close();}}})().catch(e=>{console.error(e);process.exitCode=1;});
+"""
+        result = subprocess.run(['node', '-e', script], cwd=Path(__file__).parents[1], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+
 if __name__ == '__main__':
     unittest.main()

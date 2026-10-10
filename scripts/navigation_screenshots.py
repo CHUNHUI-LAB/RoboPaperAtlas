@@ -639,6 +639,13 @@ return sameRoute(actual,expected)&&p&&p.dataset.taskRouteState==='ready'&&docume
 """
 
 
+TASK_RELATION_HISTORY_WAIT_JS = r"""
+var wanted=arguments[2],current=NavigationProductApp.getState(),relation=document.querySelector('[data-selected-task-relation]');
+if(window.navigation?.currentEntry?.key!==wanted.historyEntryKey||current.revision!==wanted.runtime.revision||
+   (relation?relation.dataset.selectedTaskRelation:null)!==wanted.selectedRelation)return false;
+""" + TASK_ROUTE_RETURN_WAIT_JS
+
+
 TASK_ROUTE_DIAGNOSTIC_JS = r"""
 function taskRouteDiagnostic(api,model,state,reader,panel){
   function rect(node){if(!node)return null;var r=node.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};}
@@ -726,6 +733,7 @@ return {route:s.route,position:identity(p),ready:document.querySelector('[data-l
   rovingCount:host.querySelectorAll('[role=treeitem][tabindex="0"]').length,inactiveItemCount:all.filter(e=>e.dataset.tree!==s.route.tree).length,
   selected:all.filter(e=>e.getAttribute('aria-selected')==='true').map(e=>e.dataset.position),expanded:bucket.expandedByTree,taskView:m.taskView(s),relationView:bucket.relationViewByTree||{},
   runtime:s,persisted:history.state&&history.state[m.KEY],historyLength:history.length,url:location.href,
+  historyEntryKey:window.navigation?.currentEntry?.key||null,
   analysisEntry:reader.querySelector('[data-analysis-state]')?{state:reader.querySelector('[data-analysis-state]').dataset.analysisState,paper:reader.querySelector('[data-analysis-state]').dataset.analysisPaper,version:reader.querySelector('[data-analysis-state]').dataset.analysisVersion}:null,
   widths:{canvas:tree.getBoundingClientRect().width,tree:host.getBoundingClientRect().width,forest:host.querySelector('[data-parallel-tree]')?.getBoundingClientRect().width||0,reader:reader.getBoundingClientRect().width}};
 """
@@ -953,6 +961,58 @@ def check_exploration_restore(before, after, focus=None, nonzero=False, inactive
             raise RuntimeError('Current view restore overwrote the inactive tree route or focus pointer')
 
 
+def check_relation_history_entry(before, selected):
+    """Length alone cannot prove pushState when the browser trims old entries."""
+    for state in (before, selected):
+        if (not isinstance(state.get('historyEntryKey'), str) or not state['historyEntryKey'] or
+                type(state['runtime']['revision']) is not int or
+                type(state['persisted']['revision']) is not int or
+                type(state['historyLength']) is not int or state['historyLength'] < 1 or
+                state['persisted']['revision'] != state['runtime']['revision'] or
+                state['runtime']['route'] != state['route'] or state['persisted']['route'] != state['route']):
+            raise RuntimeError('Relation history entry lacks an exact native key, revision or persisted route')
+    if (selected['route'] != before['route'] or before['selectedRelation'] is not None or
+            selected['selectedRelation'] != 'methods:relation:90' or
+            selected['focus'] != 'np-task-relation-title' or
+            selected['historyEntryKey'] == before['historyEntryKey'] or
+            selected['runtime']['revision'] != before['runtime']['revision'] + 1 or
+            selected['historyLength'] not in (before['historyLength'], before['historyLength'] + 1)):
+        raise RuntimeError('Relation selection changed science or replaced its presentation history entry')
+    other = 'c' if before['route']['tree'] == 'l' else 'l'
+    if any(before['taskView'][field][other] != selected['taskView'][field][other]
+           for field in ('lastRouteByTree', 'focusTargetByTree')):
+        raise RuntimeError('Relation selection changed the inactive tree route or focus pointer')
+    for name in ('runtime', 'persisted'):
+        if before[name]['originTrail'] != selected[name]['originTrail']:
+            raise RuntimeError('Relation selection changed the original origin trail')
+
+
+def check_relation_history_restore(expected, restored, focus, history_length):
+    if (type(restored['runtime']['revision']) is not int or type(restored['persisted']['revision']) is not int or
+            restored['historyEntryKey'] != expected['historyEntryKey'] or
+            restored['runtime']['revision'] != expected['runtime']['revision'] or
+            restored['persisted']['revision'] != expected['runtime']['revision'] or
+            restored['historyLength'] != history_length):
+        raise RuntimeError('Relation history traversal did not restore the exact entry and revision')
+    check_exploration_restore(expected, restored, focus=focus)
+    if restored['relationDisclosure'] != expected['relationDisclosure']:
+        raise RuntimeError('Relation history traversal changed the actual relationship disclosure')
+    for name in ('runtime', 'persisted'):
+        if restored[name]['originTrail'] != expected[name]['originTrail']:
+            raise RuntimeError('Relation history traversal changed the original origin trail')
+
+
+def relation_history_checks(driver, record, save, before, selected):
+    """Prove two real browser entries before continuing the selected relation."""
+    check_relation_history_entry(before, selected)
+    control = 'np-task-change-' + before['route']['scope'] + '-methods:relation:90'
+    for direction, expected, focus in (('back', before, control), ('forward', selected, selected['focus'])):
+        phase = transition_record(driver, record, save, 'browser-' + direction + '-relation-selection',
+            lambda d=direction: driver.call('POST', '/' + d, {}),
+            lambda e=expected, f=focus: driver.js(TASK_RELATION_HISTORY_WAIT_JS, e['route'], f, e))
+        check_relation_history_restore(expected, phase['after'], focus, selected['historyLength'])
+
+
 def task_route_checks(driver, report, save, capture, prefix, base, science, server=None, dist=None):
     """Actual active-tree traversal, selected relation, method, claim and return."""
     expected = task_route_expected(science)
@@ -1071,8 +1131,7 @@ def task_route_checks(driver, report, save, capture, prefix, base, science, serv
     before_relation = snapshot()
     phase = transition_record(driver, record, save, 'select-methods-relation-90', lambda: driver.click(entry),
         lambda: driver.js("return document.querySelector('[data-selected-task-relation=\"methods:relation:90\"]')&&document.querySelector('[data-relation-state]')?.dataset.relationState==='ready'"))
-    if phase['after']['route'] != before_relation['route'] or phase['after']['historyLength'] != before_relation['historyLength'] + 1 or phase['after']['runtime']['revision'] <= before_relation['runtime']['revision']:
-        raise RuntimeError('Relation selection changed science or failed to create its presentation history entry')
+    relation_history_checks(driver, record, save, before_relation, phase['after'])
     rel = '[data-selected-task-relation="methods:relation:90"]'
     claim = expected['claim']
     cs = rel + ' [data-task-change-claim="' + claim['id'] + '"]'
