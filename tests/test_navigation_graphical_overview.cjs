@@ -35,6 +35,7 @@ if (!graphicalGroup) {
   for (const [group, pattern, expectedPasses] of [
     ['original22', originalPattern, 22],
     ['review8', '^review: ', 8],
+    ['nohash3', '^nohash: ', 3],
   ]) {
     test('graphical overview isolated group: ' + group, t => {
       const env = {...process.env, NAV_GRAPHICAL_TEST_GROUP:group, PYTHONDONTWRITEBYTECODE:'1'};
@@ -54,7 +55,7 @@ if (!graphicalGroup) {
     });
   }
 } else {
-  require('node:assert/strict').ok(['original22', 'review8'].includes(graphicalGroup), 'unknown graphical test group');
+  require('node:assert/strict').ok(['original22', 'review8', 'nohash3'].includes(graphicalGroup), 'unknown graphical test group');
 // S0 graphical-overview behavioral and identity regression only.
 // JSDOM does not establish real-browser 1440-pixel readability or visual acceptance.
 // The fixture renders production code unchanged and serves exact generated packets
@@ -1197,6 +1198,67 @@ test('review: computed normal and selected connector contrast stays at least 3 t
   // legend's ::before marks, actual hover/focus appearance and rendered pixels
   // remain part of real-browser screenshot/interaction acceptance.
   healthy(x);
+});
+
+
+test('nohash: saved relation focus and disclosure restore on the actual bare URL', async t => {
+  const x = await page(); t.after(() => x.w.close());
+  assert.equal(x.w.location.hash, '');
+  relationPath(x, 'tasks:relation:90').dispatchEvent(new x.w.MouseEvent('click', {bubbles:true}));
+  await frames(x.w);
+  home(x).scrollTop = 143;
+  x.w.scrollTo(0, 211);
+  x.w.dispatchEvent(new x.w.Event('pagehide'));
+  const saved = clean(x.w.history.state), focus = x.d.activeElement.id;
+  assert.equal(x.w.location.hash, '');
+  const reload = await page({saved}); t.after(() => reload.w.close());
+  assert.equal(reload.w.location.hash, '', 'test the original bare URL, not a synthetic canonical hash');
+  assert.equal(reload.d.activeElement.id, focus);
+  assert.equal(reload.d.activeElement.tagName, 'ARTICLE');
+  assert.equal(reload.d.querySelector('#np-task-relations').open, true);
+  assert.equal(home(reload).scrollTop, 143);
+  assert.equal(reload.w.scrollY, 211);
+  assert.deepEqual(clean(reload.a.getState().route), clean(x.a.getState().route));
+  visible(reload, reload.d.activeElement);
+  healthy(x); healthy(reload);
+});
+
+test('nohash: fresh and invalid-history bare entry do not force focus', async t => {
+  const fresh = await page(); t.after(() => fresh.w.close());
+  assert.equal(fresh.d.activeElement, fresh.d.body);
+  assert.equal(home(fresh).hidden, false);
+  const root = fresh.a.getBundle().researchMap.roots[0];
+  for (const invalid of [{invalid:true}, {route:{tree:'g',node:root}}]) {
+    const x = await page({saved:{[fresh.M.KEY]:invalid}}); t.after(() => x.w.close());
+    assert.equal(x.w.location.hash, '');
+    assert.equal(x.d.activeElement, x.d.body);
+    assert.equal(home(x).hidden, false, 'rejected history cannot switch presentation mode');
+    assert.equal(x.M.getBucket(x.a.getState()).originalMapOpen, false);
+    healthy(x);
+  }
+  healthy(fresh);
+});
+
+test('nohash: rapid task switches after restored relation keep the newest route and focus', async t => {
+  const x = await page(); t.after(() => x.w.close());
+  relationPath(x, 'tasks:relation:90').dispatchEvent(new x.w.MouseEvent('click', {bubbles:true}));
+  await frames(x.w);
+  x.w.dispatchEvent(new x.w.Event('pagehide'));
+  const reload = await page({saved:clean(x.w.history.state)}); t.after(() => reload.w.close());
+  assert.equal(reload.d.activeElement.id, 'np-map-relation-evidence-tasks:relation:90');
+  reload.a.render({restore:true, focus:true}); // Leave an old restoration RAF queued.
+  const audio = graphTask(reload, 'task:audiogoal'), goat = graphTask(reload, 'task:goat');
+  audio.click();
+  goat.click();
+  await frames(reload.w);
+  const route = clean(reload.a.getState().route);
+  assert.equal(route.scope, 'task:goat');
+  assert.equal(reload.d.activeElement.id, 'np-node-' + route.node);
+  assert.notEqual(reload.d.activeElement.tagName, 'ARTICLE');
+  await frames(reload.w);
+  assert.deepEqual(clean(reload.a.getState().route), route);
+  assert.equal(reload.d.activeElement.id, 'np-node-' + route.node);
+  healthy(x); healthy(reload);
 });
 
 }
