@@ -739,6 +739,7 @@ await ready(()=>w.NavigationProductApp);const a=w.NavigationProductApp,snapshot=
 async function scope(id){for(let i=0;i<8&&!d.querySelector('[data-scope-open="'+id+'"]');i++){d.querySelector('.np-return-previous').click();await wait(40);}d.querySelector('[data-scope-open="'+id+'"]').click();await ready(()=>a.getState().route.scope===id&&[...d.querySelectorAll('[data-route-method],[data-route-group]')].every(n=>a.getContent().ready(a.getBundle().positions[n.dataset.routeMethod||n.dataset.routeGroup].entityId)));}
 async function back(before){d.querySelector('.np-return-previous').click();await ready(()=>JSON.stringify(a.getState().route)===JSON.stringify(before.route));assert.equal(d.activeElement.id,before.focus);assert.equal(d.getElementById('np-detail-scroll').scrollTop,before.readerScroll.top);}
 await scope('task:category-objectnav');const states=[snapshot()];
+const stableBefore=JSON.stringify({state:a.getState(),history:w.history.state}),current=snapshot(),legacy=new w.Function(input.legacySnapshot)();delete current.diagnostic;assert.deepEqual(JSON.parse(JSON.stringify(current)),JSON.parse(JSON.stringify(legacy)),'diagnostic addition preserves every old snapshot field');assert.equal(JSON.stringify({state:a.getState(),history:w.history.state}),stableBefore,'snapshot does not change runtime or persisted state');
 const poni=e.poni,group=s.positions[poni.parentId];assert.equal(d.querySelector('[data-route-group="'+group.id+'"] > h3 > button').textContent,s.entities[group.entityId].label);
 assert.equal(d.querySelector('[data-route-method="'+poni.id+'"] > button').textContent,'PONI');
 const relation=d.querySelector('[data-task-change="methods:relation:90"]');relation.querySelector('summary').click();assert.equal(relation.open,true);
@@ -751,7 +752,8 @@ await scope('task:imagenav');states.push(snapshot());for(const p of e.image){con
 await scope('setting:portable-objectnav');states.push(snapshot());for(const p of e.portable){const button=d.querySelector('[data-route-method="'+p.id+'"] > button');assert.equal(button.textContent,s.entities[p.entityId].label);button.focus();const before=snapshot();button.click();await ready(()=>a.getState().route.node===p.id&&a.getContent().ready(p.entityId));assert.equal(d.querySelector('[data-mechanism-entity="'+p.entityId+'"] > h3').textContent,s.entities[p.entityId].label+' · 方法内部结构');states.push(snapshot());await back(before);}
 assert.deepEqual(errors,[]);process.stdout.write(JSON.stringify(states));dom.window.close();})().catch(e=>{console.error(e);dom.window.close();process.exitCode=1;});
 """
-            result = subprocess.run(['node', '-e', script], input=json.dumps({'temp': tmp, 'snapshot': MODULE.TASK_ROUTE_SNAPSHOT_JS, 'returnWait': MODULE.TASK_ROUTE_RETURN_WAIT_JS, 'expected': self.expected, 'science': self.science}), cwd=root, text=True, capture_output=True, timeout=120)
+            legacy_snapshot = MODULE.TASK_ROUTE_SNAPSHOT_JS.removeprefix(MODULE.TASK_ROUTE_DIAGNOSTIC_JS).replace('  diagnostic:taskRouteDiagnostic(a,m,s,reader,panel),\n', '')
+            result = subprocess.run(['node', '-e', script], input=json.dumps({'temp': tmp, 'snapshot': MODULE.TASK_ROUTE_SNAPSHOT_JS, 'legacySnapshot': legacy_snapshot, 'returnWait': MODULE.TASK_ROUTE_RETURN_WAIT_JS, 'expected': self.expected, 'science': self.science}), cwd=root, text=True, capture_output=True, timeout=120)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             states = json.loads(result.stdout)
             for index, scope in ((0, 'task:category-objectnav'), (2, 'task:category-objectnav'), (3, 'task:imagenav'), (4, 'setting:portable-objectnav')):
@@ -855,6 +857,39 @@ focus='wrong';assert.equal(predicate(wire,'exact-control'),false);focus='exact-c
 for(const entity of ['m','g']){pending=entity;assert.equal(predicate(wire,'exact-control'),false,entity+' content still pending');}pending=null;assert.equal(predicate(wire,'exact-control'),true);
 """
         result = subprocess.run(['node', '-e', script], input=json.dumps({'script': MODULE.TASK_ROUTE_RETURN_WAIT_JS}), text=True, capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_task_route_scroll_diagnostics_read_actual_fields_without_actions_or_state_changes(self):
+        import ast
+        import inspect
+        task = ast.parse(inspect.getsource(MODULE.task_route_checks)).body[0]
+        snapshot = next(node for node in task.body if isinstance(node, ast.FunctionDef) and node.name == 'snapshot')
+        expected = ast.parse('def snapshot():\n    return driver.js(TASK_ROUTE_SNAPSHOT_JS)\n').body[0]
+        self.assertEqual(ast.dump(snapshot, include_attributes=False), ast.dump(expected, include_attributes=False), 'diagnostics stay in the original single snapshot call')
+        script = r"""
+const {JSDOM}=require('jsdom'),assert=require('node:assert/strict'),input=JSON.parse(require('fs').readFileSync(0,'utf8'));
+const dom=new JSDOM(`<!doctype html><style>#np-detail-scroll{overflow-anchor:none;overflow-y:auto;font-size:15px;line-height:24px}.np-reader-heading{position:sticky}</style><main id="navigation-product" data-reading-layout="browse"><aside id="np-detail-scroll"><div class="np-reader-heading">Reader</div><section data-task-route-scope="task:category-objectnav"><h2>已有路线与方法</h2><p id="intro">原记录</p><details data-task-change="methods:relation:90" open><summary id="relation-summary">SemExp → PONI</summary><article><p id="claim">原句第一行与第二行</p></article><nav><button id="endpoint" data-change-target="poni-position">PONI</button></nav></details></section></aside></main>`,{url:'https://example.org/',runScripts:'outside-only'});
+try{const w=dom.window,d=w.document,reader=d.getElementById('np-detail-scroll'),panel=d.querySelector('[data-task-route-scope]'),button=d.getElementById('endpoint');
+// Explicit geometry fixtures test collection only; they are not evidence of
+// Chrome layout, legal clamping, or the cause of the production 29px movement.
+let top=2635,total=3700;const rect=(x,y,width,height)=>({x,y,width,height,left:x,top:y,right:x+width,bottom:y+height});
+for(const node of d.querySelectorAll('*')){node.getBoundingClientRect=()=>node===reader?rect(900,100,720,1000):node.className==='np-reader-heading'?rect(900,100,720,40):rect(920,620,650,60);for(const [key,value] of Object.entries({clientTop:0,clientLeft:0,clientHeight:60,clientWidth:650,offsetHeight:62,offsetWidth:652,scrollHeight:60,scrollWidth:650,scrollTop:0,scrollLeft:0}))Object.defineProperty(node,key,{configurable:true,get:()=>value,set:()=>{throw Error('Unexpected diagnostic DOM write '+key);}});}
+Object.defineProperties(reader,{scrollTop:{get:()=>top},scrollHeight:{get:()=>total},clientHeight:{get:()=>1000},offsetHeight:{get:()=>1002},clientWidth:{get:()=>720}});
+w.Range.prototype.getClientRects=function(){return [rect(920,620,300,20),rect(920,644,250,20)];};
+const faces=[{family:'Noto Sans CJK SC',status:'loaded',style:'normal',weight:'400',display:'swap'}];faces.status='loaded';Object.defineProperty(d,'fonts',{value:faces});
+const bucket={focusTarget:'endpoint',windowScroll:88,detailScrollByTree:{l:2635},treeScrollByTree:{l:0},treeScrollLeftByTree:{l:0},selectedByTree:{l:'root'},expandedByTree:{l:['root']}};
+const state={route:{scope:'task:category-objectnav',tree:'l'},revision:9,contexts:{context:bucket},originTrail:[{route:{scope:'scope:all',tree:'g'},bucket:{detailScrollByTree:{g:0,l:17}}}]},persisted=JSON.parse(JSON.stringify(state));persisted.contexts.context.detailScrollByTree.l=2631;w.history.replaceState({nav:persisted},'');
+const model={KEY:'nav',contextKey:()=> 'context',getBucket:value=>value.contexts.context},api={};button.focus();
+const read=new w.Function('"use strict";'+input.script+'return taskRouteDiagnostic(...arguments);'),savedState=JSON.stringify(state),savedHistory=JSON.stringify(w.history.state),before=read(api,model,state,reader,panel);
+assert.equal(before.reader.scrollTop,2635);assert.equal(before.reader.scrollHeight,3700);assert.equal(before.reader.clientHeight,1000);assert.equal(before.reader.offsetHeight,1002);assert.equal(before.reader.maxTop,2700);assert.equal(before.reader.style.overflowAnchor,'none');assert.equal(before.availableContent.y,140);assert.equal(before.availableContent.bottom,1100);
+assert.equal(before.runtime.bucket.detailScrollByTree.l,2635);assert.equal(before.persisted.bucket.detailScrollByTree.l,2631);assert.equal(before.runtime.originTrail[0].bucket.detailScrollByTree.l,17,'remaining trail is reported without substituting the popped activation origin');
+assert.equal(before.activeElement.id,'endpoint');assert.equal(before.runtimeFocusTarget.element.id,'endpoint');assert.equal(before.targetControls[0].position,'poni-position');assert.equal(before.targetControls[0].ancestorDisclosures[0].open,true);assert.equal(before.disclosures[0].relation,'methods:relation:90');assert.equal(before.disclosures[0].open,true);assert.ok(before.directReaderChildren.length);assert.ok(before.overviewBlocks.length);
+const text=before.textBlocks.find(x=>x.geometry.id==='claim');assert.equal(text.textFragmentCount,2);assert.equal(text.textHeight,44);assert.equal(before.fonts.status,'loaded');assert.equal(before.fonts.faces[0].family,'Noto Sans CJK SC');assert.equal(before.restoring.available,false);
+top=2606;total=3606;d.querySelector('details').open=false;const after=read(api,model,state,reader,panel);assert.equal(after.reader.scrollTop,2606);assert.equal(after.reader.maxTop,2606);assert.equal(after.runtime.bucket.detailScrollByTree.l,2635);assert.equal(after.persisted.bucket.detailScrollByTree.l,2631);assert.equal(after.disclosures[0].open,false);assert.equal(after.targetControls[0].ancestorDisclosures[0].open,false);
+assert.equal(JSON.stringify(state),savedState);assert.equal(JSON.stringify(w.history.state),savedHistory);assert.equal(d.activeElement,button);assert.equal(reader.scrollTop,2606);
+}finally{dom.window.close();}
+"""
+        result = subprocess.run(['node', '-e', script], input=json.dumps({'script': MODULE.TASK_ROUTE_DIAGNOSTIC_JS}), cwd=Path(__file__).parents[1], text=True, capture_output=True)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
 

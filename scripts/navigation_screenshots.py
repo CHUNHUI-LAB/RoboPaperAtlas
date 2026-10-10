@@ -571,7 +571,66 @@ return sameRoute(actual,expected)&&p&&document.activeElement.id===arguments[1]&&
 """
 
 
-TASK_ROUTE_SNAPSHOT_JS = r"""
+TASK_ROUTE_DIAGNOSTIC_JS = r"""
+function taskRouteDiagnostic(api,model,state,reader,panel){
+  function rect(node){if(!node)return null;var r=node.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};}
+  function geometry(node){
+    if(!node)return null;
+    var cs=getComputedStyle(node),r=rect(node);
+    return {id:node.id,tag:node.tagName,className:node.getAttribute('class'),rect:r,
+      scrollTop:node.scrollTop,scrollLeft:node.scrollLeft,scrollHeight:node.scrollHeight,scrollWidth:node.scrollWidth,
+      clientHeight:node.clientHeight,clientWidth:node.clientWidth,offsetHeight:node.offsetHeight,offsetWidth:node.offsetWidth,
+      maxTop:Math.max(0,node.scrollHeight-node.clientHeight),maxLeft:Math.max(0,node.scrollWidth-node.clientWidth),
+      style:{display:cs.display,visibility:cs.visibility,position:cs.position,font:cs.font,fontSize:cs.fontSize,lineHeight:cs.lineHeight,
+        overflowX:cs.overflowX,overflowY:cs.overflowY,overflowAnchor:cs.overflowAnchor,scrollBehavior:cs.scrollBehavior,
+        scrollbarGutter:cs.scrollbarGutter,boxSizing:cs.boxSizing,paddingTop:cs.paddingTop,paddingBottom:cs.paddingBottom,
+        borderTopWidth:cs.borderTopWidth,borderBottomWidth:cs.borderBottomWidth,transform:cs.transform,zoom:cs.zoom}};
+  }
+  function bucket(value){return value?{focusTarget:value.focusTarget,windowScroll:value.windowScroll,
+    detailScrollByTree:value.detailScrollByTree,treeScrollByTree:value.treeScrollByTree,treeScrollLeftByTree:value.treeScrollLeftByTree,
+    selectedByTree:value.selectedByTree,expandedByTree:value.expandedByTree}:null;}
+  function stateRecord(value){
+    if(!value||!value.route||!value.contexts)return null;
+    var key=model.contextKey(value.route);
+    return {route:value.route,contextKey:key,revision:value.revision,bucket:bucket(value.contexts[key]),
+      // After returning, this is the remaining trail. The popped entry is still
+      // retained in the earlier activation receipt; it is not this last entry.
+      originTrail:(value.originTrail||[]).map(e=>({route:e.route,bucket:bucket(e.bucket)}))};
+  }
+  function ancestors(node){var result=[];for(var n=node&&node.parentElement;n&&n!==reader;n=n.parentElement)if(n.tagName==='DETAILS')result.push({id:n.id,summaryId:n.querySelector(':scope > summary')?.id,open:n.open,geometry:geometry(n)});return result;}
+  function target(node){return {id:node.id,position:node.dataset.changeTarget||node.closest('[data-route-method]')?.dataset.routeMethod||null,
+    geometry:geometry(node),ancestorDisclosures:ancestors(node)};}
+  function textGeometry(node){
+    var range=document.createRange();range.selectNodeContents(node);var rs=typeof range.getClientRects==='function'?[...range.getClientRects()]:null;
+    var nonempty=rs&&rs.filter(r=>r.width>0&&r.height>0),top=nonempty&&nonempty.length?Math.min(...nonempty.map(r=>r.y)):null,
+        bottom=nonempty&&nonempty.length?Math.max(...nonempty.map(r=>r.y+r.height)):null;
+    return {geometry:geometry(node),textLength:node.textContent.length,textStart:node.textContent.slice(0,160),
+      textGeometryAvailable:rs!==null,textFragmentCount:nonempty?nonempty.length:null,textTop:top,textBottom:bottom,
+      textHeight:top===null?null:bottom-top,ancestorDisclosures:ancestors(node)};
+  }
+  var runtime=stateRecord(state),persisted=stateRecord(history.state&&history.state[model.KEY]),heading=reader.querySelector('.np-reader-heading'),
+      rr=reader.getBoundingClientRect(),hr=heading&&heading.getBoundingClientRect(),active=document.activeElement,
+      focusId=model.getBucket(state).focusTarget,focus=focusId&&(document.getElementById(focusId)||document.getElementById('np-node-'+focusId));
+  return {reader:geometry(reader),readerHeading:geometry(heading),
+    availableContent:{x:rr.x+reader.clientLeft,y:Math.max(rr.y+reader.clientTop,hr?hr.y+hr.height:rr.y+reader.clientTop),
+      bottom:rr.y+reader.clientTop+reader.clientHeight,width:reader.clientWidth},
+    activeElement:active?target(active):null,runtimeFocusTarget:{value:focusId,element:focus?target(focus):null},
+    targetControls:panel?[...panel.querySelectorAll('[data-change-target],[data-route-method] > button')].map(target):[],
+    directReaderChildren:[...reader.children].map(geometry),taskOverview:geometry(panel),
+    overviewBlocks:panel?[...panel.children].map(geometry):[],
+    disclosures:[...reader.querySelectorAll('details')].map(e=>({id:e.id,summaryId:e.querySelector(':scope > summary')?.id,
+      relation:e.dataset.taskChange||null,open:e.open,geometry:geometry(e),directChildren:[...e.children].map(geometry)})),
+    textBlocks:[...reader.querySelectorAll('[data-task-route-scope] h2,[data-task-route-scope] h3,[data-task-route-scope] p,[data-task-route-scope] summary')].map(textGeometry),
+    runtime:runtime,persisted:persisted,historyScrollRestoration:history.scrollRestoration,
+    fonts:{status:document.fonts?document.fonts.status:null,faces:document.fonts?[...document.fonts].map(f=>({family:f.family,status:f.status,style:f.style,weight:f.weight,display:f.display})):[]},
+    documentReadyState:document.readyState,timeOriginMs:performance.timeOrigin,relativeTimeMs:performance.now(),
+    readerLayout:document.getElementById('navigation-product').dataset.readingLayout,
+    restoring:{value:null,available:false,reason:'The controller keeps restoring in a private closure; no public getter exists.'}};
+}
+"""
+
+
+TASK_ROUTE_SNAPSHOT_JS = TASK_ROUTE_DIAGNOSTIC_JS + r"""
 var a=NavigationProductApp,m=NavigationProductModel,s=a.getState(),b=a.getBundle(),reader=document.getElementById('np-detail-scroll'),
     tree=document.getElementById('np-tree-scroll'),panel=reader.querySelector('[data-task-route-scope]'),p=b.positions[s.route.node],mechanism=reader.querySelector('[data-mechanism-entity]');
 function identity(p){return p?{id:p.id,entity:p.entityId,scope:p.scopeId,tree:p.tree,paper:p.paperId,version:p.versionId,kind:p.kind}:null;}
@@ -582,6 +641,7 @@ return {route:s.route,position:identity(p),ready:document.querySelector('[data-l
   panelScope:panel&&panel.dataset.taskRouteScope,readerHidden:reader.hidden,
   groups:panel?[...panel.querySelectorAll('[data-route-group]')].map(e=>e.dataset.routeGroup):[],
   groupReadiness:panel?[...panel.querySelectorAll('[data-route-group]')].map(e=>({position:e.dataset.routeGroup,entity:b.positions[e.dataset.routeGroup].entityId,ready:a.getContent().ready(b.positions[e.dataset.routeGroup].entityId)})):[],
+  diagnostic:taskRouteDiagnostic(a,m,s,reader,panel),
   methods:panel?[...panel.querySelectorAll('[data-route-method]')].map(e=>{var p=b.positions[e.dataset.routeMethod],control=e.querySelector(':scope > button'),stamp=e.querySelector(':scope > [data-route-association]');return {position:identity(p),parent:e.dataset.routeParent,control:control.id,label:control.textContent,association:stamp.dataset.routeAssociation,version:stamp.dataset.routeVersion,ready:a.getContent().ready(p.entityId)};}):[],
   mechanism:mechanism?{entity:mechanism.dataset.mechanismEntity,ready:a.getContent().ready(p.entityId),flow:[...mechanism.querySelectorAll('.np-method-flow dd')].map(e=>e.textContent),claims:[...mechanism.querySelectorAll('[data-method-claim]')].map(e=>({id:e.dataset.methodClaim,statement:e.querySelector(':scope > p').textContent}))}:null,
   changes:panel?[...panel.querySelectorAll('[data-task-change]')].map(e=>({id:e.dataset.taskChange,type:e.dataset.relationType,renderAsTree:e.dataset.renderAsTree,scope:e.dataset.changeScope,open:e.open,
