@@ -40,6 +40,24 @@ def rect_inside(rect, area, tolerance=1):
             rect['y'] + rect['height'] <= area['y'] + area['height'] + tolerance)
 
 
+def check_context_path(data):
+    """Verify local ancestry independently from the separately labelled global navigation."""
+    if data['route']['tree'] != 'c' or data['route']['node'] != 'pos:c:6dcc2ce43c02d908266f20':
+        raise RuntimeError('Wrong AudioGoal challenge route')
+    if data['localIds'] != data['expectedIds'] or any(t != 'c' for t in data['localTrees']):
+        raise RuntimeError('Current challenge path differs from actual parent chain')
+    if data['globalIds'] != data['expectedGlobalIds'] or data['globalSeparators'] != 0:
+        raise RuntimeError('Global entry links imply a false ancestry chain')
+    if data['labels'] != ['全局入口', '挑战–思路树 · 当前路径']:
+        raise RuntimeError('Global entry and current path need distinct readable labels')
+    if len(data['rows']) != 2 or data['rows'][0]['y'] + data['rows'][0]['height'] > data['rows'][1]['y'] + 1:
+        raise RuntimeError('Context groups are not on separate lines')
+    if not all(rect_inside(r, data['viewport']) for r in data['rows']):
+        raise RuntimeError('Context rows are outside the screenshot')
+    if not data['buttons'] or not all(x['uncovered'] and rect_inside(x['rect'], data['viewport']) and rect_inside(x['rect'], x['row']) and not x['clipped'] for x in data['buttons']):
+        raise RuntimeError('Context link is clipped, covered or outside the screenshot')
+
+
 def contrast_ratio(foreground, background):
     def luminance(rgb):
         channels = [v / 255 for v in rgb[:3]]
@@ -389,6 +407,36 @@ def main():
             driver.click(driver.selector('#np-zoom-reset'))
             if not driver.js("return NavigationProductModel.getBucket(NavigationProductApp.getState()).graphScale===1&&document.activeElement.id==='np-zoom-reset'"):
                 raise RuntimeError('Zoom reset did not restore scale and control focus')
+            # Cold canonical CI deep link, then actual global entry and browser Back.
+            ci_target = 'pos:c:6dcc2ce43c02d908266f20'
+            ci_hash = driver.js("var a=NavigationProductApp;return NavigationProductModel.encodeRoute(NavigationProductModel.routeForPosition(a.getBundle(),a.getState().route,arguments[0]));", ci_target)
+            driver.call('POST', '/url', {'url': 'about:blank'})
+            driver.call('POST', '/url', {'url': base + ci_hash})
+            wait_for(lambda: driver.js("var a=window.NavigationProductApp;if(!a)return false;var p=a.getBundle().positions[arguments[0]];return a.getState().route.node===p.id&&a.getContent().ready(p.entityId)&&document.querySelector('[data-load-state]')?.dataset.loadState==='ready';", ci_target))
+            driver.settle()
+            context = driver.js("""
+                var a=NavigationProductApp,b=a.getBundle(),r=a.getState().route,p=b.positions[r.node],expected=[];
+                while(p){expected.unshift(p.id);p=p.parentId?b.positions[p.parentId]:null;}
+                var host=document.getElementById('np-global-context'),entry=host.querySelector('[data-path-kind="global-entry"]'),local=host.querySelector('[data-path-kind="local-ancestry"]');
+                function rect(n){var q=n.getBoundingClientRect();return {x:q.x,y:q.y,width:q.width,height:q.height};}
+                function ids(n){return Array.from(n.querySelectorAll('[data-context-position]'),x=>x.dataset.contextPosition);}
+                var root=b.researchMap.roots[0],scope=b.researchMap.canonicalScopePositionIds[r.scope];
+                return {route:r,expectedIds:expected,localIds:ids(local),localTrees:ids(local).map(id=>b.positions[id].tree),globalIds:ids(entry),expectedGlobalIds:scope&&scope!==root?[root,scope]:[root],globalSeparators:entry.querySelectorAll('.np-path-separator').length,labels:[entry,local].map(n=>n.querySelector('.np-context-label').textContent),rows:[entry,local].map(rect),viewport:{x:0,y:0,width:innerWidth,height:innerHeight},buttons:Array.from(host.querySelectorAll('[data-context-position]'),n=>{var q=rect(n),points=[[.5,.5],[.1,.1],[.9,.1],[.1,.9],[.9,.9]],uncovered=points.every(v=>{var hit=document.elementFromPoint(q.x+q.width*v[0],q.y+q.height*v[1]);return !!hit&&(hit===n||n.contains(hit));});return {id:n.dataset.contextPosition,text:n.textContent,rect:q,row:rect(n.closest('[data-path-kind]')),clipped:n.scrollWidth>n.clientWidth+1||n.scrollHeight>n.clientHeight+1,uncovered:uncovered};})};
+            """)
+            check_context_path(context)
+            report.setdefault('contextPathChecks', []).append({'viewport': prefix, 'evidence': context})
+            capture(prefix + '-06-audiogoal-ci-path')
+            driver.click(driver.selector('[data-path-kind="global-entry"] [data-context-position]'))
+            driver.settle()
+            capture(prefix + '-07-ci-return-overview', require_overview=True)
+            if not driver.js("var a=NavigationProductApp,r=a.getState().route;return r.tree==='g'&&r.node===a.getBundle().researchMap.roots[0];"):
+                raise RuntimeError('Challenge global entry did not restore the global root route')
+            driver.call('POST', '/back', {})
+            wait_for(lambda: driver.js('return NavigationProductApp.getState().route.node===arguments[0]', ci_target))
+            driver.settle()
+            if driver.js('return NavigationProductApp.getState().route') != context['route']:
+                raise RuntimeError('Back from global entry changed the challenge identity')
+            report['contextPathChecks'][-1]['backRouteRestored'] = True
         report['status'] = 'captured_for_human_review'
     except Exception as exc:
         report['status'] = 'failed'

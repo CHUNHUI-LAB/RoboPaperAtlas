@@ -14,6 +14,31 @@ SPEC.loader.exec_module(MODULE)
 
 
 class ScreenshotChecks(unittest.TestCase):
+    def test_context_paths_reject_mixed_ancestry_and_unreadable_links(self):
+        import copy
+        data = {'route': {'tree': 'c', 'node': 'pos:c:6dcc2ce43c02d908266f20'},
+                'expectedIds': ['root-c', 'insight'], 'localIds': ['root-c', 'insight'],
+                'localTrees': ['c', 'c'], 'globalIds': ['goal', 'scope'],
+                'expectedGlobalIds': ['goal', 'scope'], 'globalSeparators': 0,
+                'labels': ['全局入口', '挑战–思路树 · 当前路径'],
+                'rows': [{'x': 20, 'y': 100, 'width': 900, 'height': 30}, {'x': 20, 'y': 134, 'width': 900, 'height': 30}],
+                'viewport': {'x': 0, 'y': 0, 'width': 1440, 'height': 900},
+                'buttons': [{'uncovered': True, 'clipped': False, 'row': {'x': 20, 'y': 134, 'width': 900, 'height': 30}, 'rect': {'x': 90, 'y': 135, 'width': 200, 'height': 25}}]}
+        MODULE.check_context_path(data)
+        mutations = [lambda x: x['localIds'].insert(0, 'literature'),
+                     lambda x: x['localTrees'].__setitem__(0, 'g'),
+                     lambda x: x.__setitem__('globalSeparators', 1),
+                     lambda x: x['rows'][1].__setitem__('y', 100),
+                     lambda x: x['buttons'][0].__setitem__('uncovered', False),
+                     lambda x: x['buttons'][0].__setitem__('clipped', True),
+                     lambda x: x['rows'][1].__setitem__('y', 950),
+                     lambda x: x['buttons'][0]['row'].__setitem__('width', 10)]
+        for mutate in mutations:
+            bad = copy.deepcopy(data)
+            mutate(bad)
+            with self.assertRaises(RuntimeError):
+                MODULE.check_context_path(bad)
+
     def test_cropped_root_and_low_contrast_are_rejected(self):
         viewport = {'x': 0, 'y': 0, 'width': 1440, 'height': 900}
         self.assertTrue(MODULE.rect_inside({'x': 10, 'y': 200, 'width': 350, 'height': 60}, viewport))

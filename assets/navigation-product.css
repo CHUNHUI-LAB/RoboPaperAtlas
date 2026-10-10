@@ -273,3 +273,10 @@ body{font-size:16px;line-height:1.65;background:#f7f9fa}header.np-header{max-wid
 #navigation-product .np-tree[data-desktop-layout=overview] .np-node-row[data-canvas-role=task]{padding:3px 8px!important}
 
 #navigation-product .np-reading-association{font-size:14px;line-height:1.7;margin:8px 0 12px;padding:8px 12px;color:#704513;background:#fff5e6}
+
+/* Global entry links are separate from the source model's local ancestor chain. */
+.np-global-context .np-context-group{display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;min-width:0}
+#navigation-product .np-global-context[data-path-kind=local-context]{display:grid;grid-template-columns:minmax(0,1fr);gap:3px;flex-basis:100%;white-space:normal;overflow:visible}
+.np-global-context .np-context-local{overflow-x:auto;max-width:100%;padding-bottom:2px}
+.np-global-context .np-context-label{font-size:11px;line-height:1.5;font-weight:650;color:#4e6973;white-space:nowrap;margin-right:4px}
+.np-global-context .np-context-empty{font-size:12px;color:#536c76}
