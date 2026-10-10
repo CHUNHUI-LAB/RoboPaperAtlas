@@ -509,9 +509,11 @@ def main():
         wait_for(lambda: driver.js("return !!window.NavigationProductApp&&document.querySelector('[data-load-state]')?.dataset.loadState==='ready'"))
         driver.settle()
         restored = driver.js("return {focus:document.activeElement.id,window:scrollY,landing:document.getElementById('np-reading-landing').scrollTop,open:document.getElementById('np-task-relations').open,lines:document.getElementById('np-overview-map').dataset.relationsVisible};")
+        report.setdefault('relationColdRestoreChecks', []).append({'before':stored,'after':restored,
+            'differentFields':sorted(key for key in set(stored) | set(restored) if stored.get(key) != restored.get(key))})
+        save()
         if restored != stored:
             raise RuntimeError('Cold relationship restoration lost disclosure, line visibility, focus or scroll')
-        report.setdefault('relationColdRestoreChecks', []).append({'before':stored,'after':restored})
         evidence(expected)
         # Visit the exact relation endpoint and restore through actual browser Back.
         control = driver.js("return document.getElementById(arguments[0]);", 'np-relation-entry-' + expected['id'] + '-' + expected['to'])
