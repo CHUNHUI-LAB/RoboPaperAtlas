@@ -660,7 +660,7 @@ class TaskRouteScreenshotChecks(unittest.TestCase):
         import inspect
         source = inspect.getsource(MODULE.task_route_checks)
         tree = ast.parse(source)
-        scripts = [MODULE.TASK_ROUTE_PROOF_JS, MODULE.TASK_ROUTE_SNAPSHOT_JS]
+        scripts = [MODULE.TASK_ROUTE_PROOF_JS, MODULE.TASK_ROUTE_SNAPSHOT_JS, MODULE.TASK_ROUTE_RETURN_WAIT_JS]
         for node in ast.walk(tree):
             if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == 'js' and node.args and isinstance(node.args[0], ast.Constant):
                 scripts.append(node.args[0].value)
@@ -746,11 +746,12 @@ const claim=relation.querySelector('[data-task-change-claim="method-edge:89"]');
 assert.ok([...claim.querySelectorAll(':scope > p')].some(n=>n.textContent==='原文定位：'+e.claim.locator.join('；')));
 const anchor=claim.querySelector('.np-source a');assert.equal(anchor.href,e.claim.sourceRefs[0].url);assert.equal(anchor.nextElementSibling.textContent,' · '+s.versions[e.claim.versionId].label);
 const endpoint=relation.querySelector('[data-change-target="'+poni.id+'"]');endpoint.focus();d.getElementById('np-detail-scroll').scrollTop=333;await wait(10);const before=snapshot();endpoint.click();await ready(()=>a.getState().route.node===poni.id&&a.getContent().ready(poni.entityId));states.push(snapshot());await back(before);states.push(snapshot());
+const wire=Object.fromEntries(Object.keys(before.route).sort().map(k=>[k,before.route[k]]));assert.notEqual(JSON.stringify(a.getState().route),JSON.stringify(wire),'WebDriver returns a different key insertion order');assert.equal(new w.Function(input.returnWait)(wire,before.focus),true,'actual predicate accepts exact restored route despite wire key order');assert.equal(snapshot().groupReadiness.length,7);assert.equal(snapshot().groupReadiness.every(n=>n.ready),true);
 await scope('task:imagenav');states.push(snapshot());for(const p of e.image){const row=d.querySelector('[data-route-method="'+p.id+'"]');assert.equal(row.querySelector('[data-route-association]').dataset.routeAssociation,'condition');const c=row.querySelector('[data-route-condition-input] > p');assert.equal(c.textContent,'条件输入：'+s.entities[p.entityId].detail.pipeline.input);assert.equal(c.closest('details'),null);if(p.paperId==='zhu'){const condition=d.querySelector('[data-route-group-condition="'+p.parentId+'"]');assert.ok(condition.textContent.includes(s.entities[s.positions[p.parentId].entityId].detail.evidence));assert.equal(condition.closest('details'),null);}}
 await scope('setting:portable-objectnav');states.push(snapshot());for(const p of e.portable){const button=d.querySelector('[data-route-method="'+p.id+'"] > button');assert.equal(button.textContent,s.entities[p.entityId].label);button.focus();const before=snapshot();button.click();await ready(()=>a.getState().route.node===p.id&&a.getContent().ready(p.entityId));assert.equal(d.querySelector('[data-mechanism-entity="'+p.entityId+'"] > h3').textContent,s.entities[p.entityId].label+' · 方法内部结构');states.push(snapshot());await back(before);}
 assert.deepEqual(errors,[]);process.stdout.write(JSON.stringify(states));dom.window.close();})().catch(e=>{console.error(e);dom.window.close();process.exitCode=1;});
 """
-            result = subprocess.run(['node', '-e', script], input=json.dumps({'temp': tmp, 'snapshot': MODULE.TASK_ROUTE_SNAPSHOT_JS, 'expected': self.expected, 'science': self.science}), cwd=root, text=True, capture_output=True, timeout=120)
+            result = subprocess.run(['node', '-e', script], input=json.dumps({'temp': tmp, 'snapshot': MODULE.TASK_ROUTE_SNAPSHOT_JS, 'returnWait': MODULE.TASK_ROUTE_RETURN_WAIT_JS, 'expected': self.expected, 'science': self.science}), cwd=root, text=True, capture_output=True, timeout=120)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             states = json.loads(result.stdout)
             for index, scope in ((0, 'task:category-objectnav'), (2, 'task:category-objectnav'), (3, 'task:imagenav'), (4, 'setting:portable-objectnav')):
@@ -814,7 +815,7 @@ assert.deepEqual(errors,[]);process.stdout.write(JSON.stringify(states));dom.win
                     def save():
                         saved.append(copy.deepcopy(record))
 
-                    env = {'driver': driver, 'record': record, 'save': save, 'snapshot': snapshot,
+                    env = {'driver': driver, 'record': record, 'save': save, 'snapshot': snapshot, 'TASK_ROUTE_RETURN_WAIT_JS': MODULE.TASK_ROUTE_RETURN_WAIT_JS,
                            'wait_for': wait, 'reveal': lambda spec: {'id': 'exact-endpoint'}}
                     exec(code, env)
                     with self.assertRaises(type(failure)) as raised:
@@ -833,6 +834,28 @@ assert.deepEqual(errors,[]);process.stdout.write(JSON.stringify(states));dom.win
                     else:
                         self.assertEqual(phase['after']['focus'], 'wrong-focus-after-click')
                         self.assertEqual(phase['after']['readerScroll']['top'], 777)
+
+    def test_task_route_return_predicate_keeps_all_own_fields_types_focus_and_content_ready(self):
+        script = r"""
+const assert=require('node:assert/strict'),input=JSON.parse(require('fs').readFileSync(0,'utf8'));
+const route={nav:'1',tree:'l',node:'root',scope:'task:category-objectnav',bench:null,protocol:null,paper:null,version:null,claim:null,mode:'tree',template:null};
+const nodes=[{dataset:{routeMethod:'method'}},{dataset:{routeGroup:'group'}}],panel={querySelectorAll:()=>nodes},positions={method:{entityId:'m'},group:{entityId:'g'}};
+let current=route,hasPanel=true,focus='exact-control',pending=null;
+globalThis.NavigationProductApp={getState:()=>({route:current}),getBundle:()=>({positions}),getContent:()=>({ready:entity=>entity!==pending})};
+globalThis.document={querySelector:()=>hasPanel?panel:null,get activeElement(){return {id:focus}}};
+const predicate=new Function(input.script),wire=Object.fromEntries(Object.keys(route).sort().map(k=>[k,route[k]]));
+assert.notEqual(JSON.stringify(route),JSON.stringify(wire));assert.equal(predicate(wire,'exact-control'),true);
+// Every own field matters, including fields whose original value is null.
+for(const key of Object.keys(route)){const wrong={...wire,[key]:route[key]===null?'changed':null};assert.equal(predicate(wrong,'exact-control'),false,key+' changed');const missing={...wire};delete missing[key];assert.equal(predicate(missing,'exact-control'),false,key+' missing');current={...route};delete current[key];assert.equal(predicate(wire,'exact-control'),false,key+' missing from runtime');current=route;}
+assert.equal(predicate({...wire,nav:1},'exact-control'),false,'string/number identity');
+assert.equal(predicate({...wire,extra:null},'exact-control'),false,'extra null field');current={...route,extra:null};assert.equal(predicate(wire,'exact-control'),false,'extra runtime field');current=route;
+for(const value of [null,undefined,[],1,'route'])assert.equal(predicate(value,'exact-control'),false,'non-object route');
+const inherited=Object.create(wire);assert.equal(predicate(inherited,'exact-control'),false,'inherited fields cannot replace own fields');
+focus='wrong';assert.equal(predicate(wire,'exact-control'),false);focus='exact-control';hasPanel=false;assert.ok(!predicate(wire,'exact-control'));hasPanel=true;
+for(const entity of ['m','g']){pending=entity;assert.equal(predicate(wire,'exact-control'),false,entity+' content still pending');}pending=null;assert.equal(predicate(wire,'exact-control'),true);
+"""
+        result = subprocess.run(['node', '-e', script], input=json.dumps({'script': MODULE.TASK_ROUTE_RETURN_WAIT_JS}), text=True, capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
 
 if __name__ == '__main__':

@@ -558,6 +558,19 @@ return Object.assign(b,{id:e.id,tag:e.tagName,disabled:!!e.disabled,href:e.tagNa
 """
 
 
+TASK_ROUTE_RETURN_WAIT_JS = r"""
+var a=NavigationProductApp,p=document.querySelector('[data-task-route-scope]'),actual=a.getState().route,expected=arguments[0];
+// WebDriver object serialization may reorder keys. Retain every own route field,
+// including null values, with the same key set and strict value/type identity.
+function sameRoute(left,right){
+  if(!left||!right||typeof left!=='object'||typeof right!=='object'||Array.isArray(left)||Array.isArray(right))return false;
+  var keys=Object.keys(left).sort(),other=Object.keys(right).sort();
+  return keys.length===other.length&&keys.every((key,i)=>key===other[i]&&left[key]===right[key]);
+}
+return sameRoute(actual,expected)&&p&&document.activeElement.id===arguments[1]&&[...p.querySelectorAll('[data-route-method],[data-route-group]')].every(e=>a.getContent().ready(a.getBundle().positions[e.dataset.routeMethod||e.dataset.routeGroup].entityId));
+"""
+
+
 TASK_ROUTE_SNAPSHOT_JS = r"""
 var a=NavigationProductApp,m=NavigationProductModel,s=a.getState(),b=a.getBundle(),reader=document.getElementById('np-detail-scroll'),
     tree=document.getElementById('np-tree-scroll'),panel=reader.querySelector('[data-task-route-scope]'),p=b.positions[s.route.node],mechanism=reader.querySelector('[data-mechanism-entity]');
@@ -568,6 +581,7 @@ return {route:s.route,position:identity(p),ready:document.querySelector('[data-l
   treeScroll:{top:tree.scrollTop,left:tree.scrollLeft},focus:document.activeElement.id,
   panelScope:panel&&panel.dataset.taskRouteScope,readerHidden:reader.hidden,
   groups:panel?[...panel.querySelectorAll('[data-route-group]')].map(e=>e.dataset.routeGroup):[],
+  groupReadiness:panel?[...panel.querySelectorAll('[data-route-group]')].map(e=>({position:e.dataset.routeGroup,entity:b.positions[e.dataset.routeGroup].entityId,ready:a.getContent().ready(b.positions[e.dataset.routeGroup].entityId)})):[],
   methods:panel?[...panel.querySelectorAll('[data-route-method]')].map(e=>{var p=b.positions[e.dataset.routeMethod],control=e.querySelector(':scope > button'),stamp=e.querySelector(':scope > [data-route-association]');return {position:identity(p),parent:e.dataset.routeParent,control:control.id,label:control.textContent,association:stamp.dataset.routeAssociation,version:stamp.dataset.routeVersion,ready:a.getContent().ready(p.entityId)};}):[],
   mechanism:mechanism?{entity:mechanism.dataset.mechanismEntity,ready:a.getContent().ready(p.entityId),flow:[...mechanism.querySelectorAll('.np-method-flow dd')].map(e=>e.textContent),claims:[...mechanism.querySelectorAll('[data-method-claim]')].map(e=>({id:e.dataset.methodClaim,statement:e.querySelector(':scope > p').textContent}))}:null,
   changes:panel?[...panel.querySelectorAll('[data-task-change]')].map(e=>({id:e.dataset.taskChange,type:e.dataset.relationType,renderAsTree:e.dataset.renderAsTree,scope:e.dataset.changeScope,open:e.open,
@@ -800,7 +814,7 @@ def task_route_checks(driver, report, save, capture, prefix, base, science):
         save()
         try:
             driver.click(driver.selector('.np-return-previous'))
-            wait_for(lambda: driver.js("var a=NavigationProductApp,p=document.querySelector('[data-task-route-scope]');return JSON.stringify(a.getState().route)===JSON.stringify(arguments[0])&&p&&document.activeElement.id===arguments[1]&&[...p.querySelectorAll('[data-route-method],[data-route-group]')].every(e=>a.getContent().ready(a.getBundle().positions[e.dataset.routeMethod||e.dataset.routeGroup].entityId));", before['route'], before['activatedControl']))
+            wait_for(lambda: driver.js(TASK_ROUTE_RETURN_WAIT_JS, before['route'], before['activatedControl']))
             driver.settle()
         finally:
             transition_diagnostics(phase)
