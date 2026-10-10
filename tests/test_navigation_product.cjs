@@ -62,3 +62,9 @@ test('all production global DOM and published-history contracts pass in an isola
 test("reading clarity counterexamples",()=>{const env={...process.env};delete env.NODE_TEST_CONTEXT;const r=cp.spawnSync(process.execPath,["--test",path.join(__dirname,"test_navigation_reading_clarity.cjs")],{cwd:root,env,encoding:"utf8",maxBuffer:8*1024*1024});assert.ifError(r.error);assert.equal(r.signal,null);assert.equal(r.status,0,r.stdout+r.stderr);});
 
 test('scoped scientific additions retain visible protocol and version boundaries',()=>{const env={...process.env};delete env.NODE_TEST_CONTEXT;const r=cp.spawnSync(process.execPath,['--test',path.join(__dirname,'test_navigation_science_routes.cjs')],{cwd:root,env,encoding:'utf8',maxBuffer:8*1024*1024});assert.ifError(r.error);assert.equal(r.signal,null);assert.equal(r.status,0,r.stdout+r.stderr);});
+
+test('spatial canvas keeps complete coverage, readable default geometry and exact reading navigation',()=>{
+ const env={...process.env};delete env.NODE_TEST_CONTEXT;
+ const r=cp.spawnSync(process.execPath,['--test',path.join(__dirname,'test_navigation_spatial_canvas.cjs')],{cwd:root,env,encoding:'utf8',maxBuffer:8*1024*1024});
+ assert.ifError(r.error);assert.equal(r.signal,null);assert.equal(r.status,0,r.stdout+r.stderr);
+});
