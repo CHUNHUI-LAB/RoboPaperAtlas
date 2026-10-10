@@ -280,3 +280,7 @@ body{font-size:16px;line-height:1.65;background:#f7f9fa}header.np-header{max-wid
 .np-global-context .np-context-local{overflow-x:auto;max-width:100%;padding-bottom:2px}
 .np-global-context .np-context-label{font-size:11px;line-height:1.5;font-weight:650;color:#4e6973;white-space:nowrap;margin-right:4px}
 .np-global-context .np-context-empty{font-size:12px;color:#536c76}
+
+/* The real local ancestry must remain fully readable, including long CI labels. */
+#navigation-product .np-global-context [data-path-kind=local-ancestry]{flex-wrap:wrap;overflow:visible;align-items:baseline;row-gap:4px}
+#navigation-product .np-global-context [data-path-kind=local-ancestry] .np-crumb{max-width:100%;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;line-height:1.55;flex:0 1 auto}

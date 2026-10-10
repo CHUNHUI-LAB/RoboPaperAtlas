@@ -423,8 +423,9 @@ def main():
                 var root=b.researchMap.roots[0],scope=b.researchMap.canonicalScopePositionIds[r.scope];
                 return {route:r,expectedIds:expected,localIds:ids(local),localTrees:ids(local).map(id=>b.positions[id].tree),globalIds:ids(entry),expectedGlobalIds:scope&&scope!==root?[root,scope]:[root],globalSeparators:entry.querySelectorAll('.np-path-separator').length,labels:[entry,local].map(n=>n.querySelector('.np-context-label').textContent),rows:[entry,local].map(rect),viewport:{x:0,y:0,width:innerWidth,height:innerHeight},buttons:Array.from(host.querySelectorAll('[data-context-position]'),n=>{var q=rect(n),points=[[.5,.5],[.1,.1],[.9,.1],[.1,.9],[.9,.9]],uncovered=points.every(v=>{var hit=document.elementFromPoint(q.x+q.width*v[0],q.y+q.height*v[1]);return !!hit&&(hit===n||n.contains(hit));});return {id:n.dataset.contextPosition,text:n.textContent,rect:q,row:rect(n.closest('[data-path-kind]')),clipped:n.scrollWidth>n.clientWidth+1||n.scrollHeight>n.clientHeight+1,uncovered:uncovered};})};
             """)
-            check_context_path(context)
             report.setdefault('contextPathChecks', []).append({'viewport': prefix, 'evidence': context})
+            save()
+            check_context_path(context)
             capture(prefix + '-06-audiogoal-ci-path')
             driver.click(driver.selector('[data-path-kind="global-entry"] [data-context-position]'))
             driver.settle()

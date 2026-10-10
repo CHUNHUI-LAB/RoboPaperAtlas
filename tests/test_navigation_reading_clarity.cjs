@@ -65,3 +65,11 @@ test('actual AudioGoal challenge clicks and separated breadcrumb controls preser
  d.querySelector('[data-path-kind="global-entry"] [data-context-position="'+b.researchMap.roots[0]+'"]').click();await settled(w);assert.equal(a.getState().route.tree,'g');assert.equal(a.getState().route.node,b.researchMap.roots[0]);
  w.history.back();await settled(w);assert.equal(a.getState().route.node,p.id);assert.equal(a.getState().route.version,'arxiv:1912.11474v3');assert.equal(d.querySelector('#np-detail-scroll').scrollTop,173);assert.equal(d.activeElement.dataset.position,p.id);assertLocalAncestorContext(w,p);assert.deepEqual(x.errors,[]);
 });
+
+test('long local CI breadcrumb labels wrap without the legacy clipped one-line crumb style',async t=>{
+ const x=await page();t.after(()=>x.w.close());const w=x.w,a=w.NavigationProductApp,b=a.getBundle(),M=w.NavigationProductModel,p=b.positions['pos:c:6dcc2ce43c02d908266f20'];
+ a.navigate(M.routeForPosition(b,{scope:p.scopeId},p.id),{cross:true});await settled(w);const {entry,local,ids}=assertLocalAncestorContext(w,p),groupStyle=w.getComputedStyle(local);
+ assert.equal(groupStyle.flexWrap,'wrap');assert.equal(groupStyle.overflow,'visible');
+ for(const control of local.querySelectorAll('button[data-context-position]')){const style=w.getComputedStyle(control);assert.equal(style.whiteSpace,'normal');assert.equal(style.overflow,'visible');assert.equal(style.textOverflow,'clip');assert.equal(style.maxWidth,'100%');assert.equal(control.textContent,control.getAttribute('aria-label'));}
+ assert.deepEqual(ids,[...M.ancestors(b,p.id),p.id]);assert.ok(entry.querySelector('button'));assert.equal(w.getComputedStyle(entry.querySelector('button')).whiteSpace,'nowrap','global entry presentation is unchanged');assert.deepEqual(x.errors,[]);
+});
