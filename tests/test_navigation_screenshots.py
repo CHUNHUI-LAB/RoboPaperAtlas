@@ -523,5 +523,317 @@ try {
         self.assertEqual(saved[-1]['readerToggleChecks'][0]['afterWheel'], original)
 
 
+class TaskRouteScreenshotChecks(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        import gzip
+        cls.science = json.loads(gzip.decompress((Path(__file__).parents[1] / 'data/navigation-product/model.json.gz').read_bytes()))
+        cls.expected = MODULE.task_route_expected(cls.science)
+
+    def scope_snapshot(self, scope='task:category-objectnav'):
+        import copy
+        expected = self.expected['scopes'][scope]
+        return {'ready': 'ready', 'home': False, 'readerHidden': False, 'scale': 1,
+                'viewport': {'width': 1440, 'height': 900},
+                'route': {'scope': scope, 'tree': 'l', 'node': expected['roots'][0], 'paper': None, 'version': None},
+                'panelScope': scope, 'groups': list(expected['groups']),
+                'methods': [dict(copy.deepcopy(row), ready=True) for row in expected['methods']],
+                'readerScroll': {'top': 490, 'left': 0}, 'treeScroll': {'top': 0, 'left': 0},
+                'window': {'x': 0, 'y': 120}, 'focus': 'exact-endpoint', 'activatedControl': 'exact-endpoint'}
+
+    def test_task_route_original_source_expectations_keep_scope_variants_and_condition_fields(self):
+        e, s = self.expected, self.science
+        self.assertEqual(e['poni']['id'], 'pos:l:98bc421b8bfd17d6699922')
+        self.assertEqual(e['relation']['detail']['claimIds'], ['method-edge:89'])
+        self.assertEqual(e['claim']['versionId'], 'publication:poni:e83f98bb7132')
+        self.assertEqual([p['label'] for p in e['portable']], ['TAP-RL', 'TAP-LLM'])
+        self.assertEqual(len({p['id'] for p in e['portable']}), 2)
+        self.assertEqual(len({p['entityId'] for p in e['portable']}), 2)
+        self.assertEqual(s['entities'][e['image'][1]['entityId']]['detail']['pipeline']['input'], '预给遍历录制、当前与goal RGB')
+        self.assertEqual(s['entities'][e['image'][2]['entityId']]['detail']['pipeline']['input'], '目标环境已收集轨迹、当前/goal RGB')
+        parent = s['positions'][e['image'][0]['parentId']]['entityId']
+        self.assertIn('scene-specific适应条件可见，不标成未知房屋零样本', s['entities'][parent]['detail']['evidence'])
+
+    def test_task_route_scope_rejects_missing_stale_unready_or_merged_original_positions(self):
+        import copy
+        valid = self.scope_snapshot()
+        expected = self.expected['scopes']['task:category-objectnav']
+        MODULE.check_task_route_scope(valid, 'task:category-objectnav', expected)
+        mutations = [lambda x: x.update(home=True), lambda x: x.update(scale=.9),
+                     lambda x: x.update(readerHidden=True), lambda x: x.update(panelScope='task:imagenav'),
+                     lambda x: x['route'].update(node='different-root'), lambda x: x['route'].update(paper='poni'),
+                     lambda x: x['methods'].pop(), lambda x: x['methods'][0].update(ready=False),
+                     lambda x: x['methods'][0]['position'].update(entity='other'),
+                     lambda x: x['methods'][0].update(control='merged-control'),
+                     lambda x: x['methods'][0].update(association='condition'), lambda x: x['groups'].reverse()]
+        for mutate in mutations:
+            bad = copy.deepcopy(valid)
+            mutate(bad)
+            with self.assertRaises(RuntimeError):
+                MODULE.check_task_route_scope(bad, 'task:category-objectnav', expected)
+
+    def test_task_route_proof_rejects_hidden_text_fragments_clipping_sticky_overlay_and_small_type(self):
+        import copy
+        area = {'x': 900, 'y': 200, 'width': 500, 'height': 600}
+        rect = {'x': 930, 'y': 300, 'width': 350, 'height': 40}
+        good = {'visible': True, 'opaque': True, 'unscaled': True, 'clipped': False, 'fontSize': 15,
+                'foreground': [20, 30, 40], 'background': [255, 255, 255], 'rect': rect,
+                'viewport': {'x': 0, 'y': 0, 'width': 1440, 'height': 900}, 'readerContent': area,
+                'clipAreas': [dict(area)], 'renderedText': '原条件', 'fragments': [dict(rect, visible=True)]}
+        good['textRuns'] = [{'text': '原条件', 'fontSize': 15, 'opaque': True, 'unscaled': True,
+                             'foreground': [20, 30, 40], 'background': [255, 255, 255],
+                             'fragments': [dict(rect, visible=True)], 'clipAreas': [dict(area)]}]
+        MODULE.check_task_route_proof(good, '原条件')
+        mutations = [lambda x: x.update(visible=False), lambda x: x.update(opaque=False),
+                     lambda x: x.update(unscaled=False), lambda x: x.update(clipped=True),
+                     lambda x: x.update(fontSize=14.99), lambda x: x.update(foreground=[180, 180, 180]),
+                     lambda x: x.update(renderedText='同任务零样本'), lambda x: x.update(fragments=[]),
+                     lambda x: x['fragments'][0].update(visible=False),
+                     lambda x: x['fragments'][0].update(y=190),
+                     lambda x: x['readerContent'].update(y=350),
+                     lambda x: x['clipAreas'][0].update(height=90), lambda x: x['rect'].update(x=1300),
+                     lambda x: x['textRuns'][0].update(fontSize=10), lambda x: x['textRuns'][0].update(foreground=[]),
+                     lambda x: x['textRuns'][0].update(fragments=[]), lambda x: x['textRuns'][0]['clipAreas'][0].update(height=90)]
+        for mutate in mutations:
+            bad = copy.deepcopy(good)
+            mutate(bad)
+            with self.assertRaises(RuntimeError):
+                MODULE.check_task_route_proof(bad, '原条件')
+
+    def test_task_route_relation_rejects_wrong_claim_source_namespace_version_and_closed_evidence(self):
+        import copy
+        e, c = self.expected, self.expected['claim']
+        row = {'id': e['relation']['id'], 'type': e['relation']['relationType'], 'renderAsTree': 'false',
+               'scope': 'current-scope', 'open': True,
+               'claims': [{'id': c['id'], 'version': c['versionId'], 'relation': 'same-version',
+                           'statement': c['statement'], 'sources': [{'url': r['url'], 'status': e['claimSourceStatus']} for r in c['sourceRefs']]}],
+               'targets': [{'position': e['poni']['id'], 'control': 'exact-endpoint'}]}
+        MODULE.check_task_route_relation({'changes': [row]}, e)
+        mutations = [lambda x: x.update(id='tasks:relation:90'), lambda x: x.update(open=False),
+                     lambda x: x.update(renderAsTree='true'), lambda x: x.update(scope='outside-scope'),
+                     lambda x: x['claims'][0].update(id='method-edge:90'),
+                     lambda x: x['claims'][0].update(version='arxiv:2201.10029v1'),
+                     lambda x: x['claims'][0].update(statement='Other statement'),
+                     lambda x: x['claims'][0].update(sources=['https://example.org/']),
+                     lambda x: x['claims'][0]['sources'][0].update(status='stale source version'),
+                     lambda x: x['targets'][0].update(position='same-paper-wrong-position')]
+        for mutate in mutations:
+            bad = copy.deepcopy(row)
+            mutate(bad)
+            with self.assertRaises(RuntimeError):
+                MODULE.check_task_route_relation({'changes': [bad]}, e)
+
+    def test_task_route_return_requires_exact_original_route_scroll_and_active_control(self):
+        import copy
+        before = self.scope_snapshot()
+        MODULE.check_task_route_return(before, copy.deepcopy(before), 'exact-endpoint')
+        mutations = [lambda x: x['route'].update(scope='scope:all'), lambda x: x['route'].update(version='another'),
+                     lambda x: x.update(focus='other-method-on-same-paper'), lambda x: x.update(panelScope='task:imagenav'),
+                     lambda x: x['readerScroll'].update(top=489), lambda x: x['treeScroll'].update(left=1),
+                     lambda x: x['window'].update(y=0), lambda x: x.update(scale=.9)]
+        for mutate in mutations:
+            bad = copy.deepcopy(before)
+            mutate(bad)
+            with self.assertRaises(RuntimeError):
+                MODULE.check_task_route_return(before, bad, 'exact-endpoint')
+
+    def test_task_route_method_rejects_same_paper_wrong_variant_version_or_pipeline(self):
+        import copy
+        p = self.expected['poni']
+        e = self.science['entities'][p['entityId']]
+        data = {'ready': 'ready', 'home': False, 'readerHidden': False, 'scale': 1,
+                'route': {k: p[v] for k, v in {'node': 'id', 'scope': 'scopeId', 'tree': 'tree', 'paper': 'paperId', 'version': 'versionId'}.items()},
+                'position': {'entity': p['entityId']}, 'mechanism': {'entity': p['entityId'], 'ready': True,
+                'flow': [e['detail']['pipeline'][k] for k in ('input', 'representation', 'decision', 'execution', 'feedback')]}}
+        MODULE.check_task_route_method(data, p, e)
+        mutations = [lambda x: x['route'].update(node='another-position'), lambda x: x['route'].update(version='another-version'),
+                     lambda x: x['mechanism'].update(entity='other-same-paper-variant'),
+                     lambda x: x['mechanism'].update(ready=False), lambda x: x['mechanism']['flow'].reverse()]
+        for mutate in mutations:
+            bad = copy.deepcopy(data)
+            mutate(bad)
+            with self.assertRaises(RuntimeError):
+                MODULE.check_task_route_method(bad, p, e)
+
+    def test_task_route_javascript_compiles_actual_scripts_and_uses_real_inputs(self):
+        import ast
+        import inspect
+        source = inspect.getsource(MODULE.task_route_checks)
+        tree = ast.parse(source)
+        scripts = [MODULE.TASK_ROUTE_PROOF_JS, MODULE.TASK_ROUTE_SNAPSHOT_JS]
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == 'js' and node.args and isinstance(node.args[0], ast.Constant):
+                scripts.append(node.args[0].value)
+        result = subprocess.run(['node', '-e', "for(const s of JSON.parse(require('fs').readFileSync(0,'utf8')))new Function(s);"], input=json.dumps(scripts), text=True, capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertNotIn('.navigate(', source)
+        self.assertNotIn('.dispatch(', source)
+        self.assertNotIn('history.replaceState', source)
+        self.assertNotIn('style.', source)
+        self.assertNotIn('.click()', source)
+        self.assertNotIn('.focus(', source)
+        self.assertIn('driver.click(', source)
+        self.assertIn("'type': 'wheel'", source)
+        self.assertIn("'capturesExpected': 10", source)
+
+    def test_task_route_real_js_measures_nested_hidden_transparent_small_and_clipped_text(self):
+        script = r"""
+const {JSDOM}=require('jsdom'),input=JSON.parse(require('fs').readFileSync(0,'utf8'));
+const dom=new JSDOM(`<!doctype html><style>*{opacity:1;visibility:visible;transform:none;zoom:1;color:rgb(20,30,40);background-color:rgb(255,255,255);font-size:15px}a,span{display:inline}</style><aside id="np-detail-scroll"><div class="np-reader-heading">Reader</div><p id="proof">精确<span id="nested">限定</span></p><p><a id="source" href="https://example.org/">§3.4–3.6 ↗<span class="np-sr">（新标签页）</span></a></p></aside><div id="overlay"></div>`,{runScripts:'outside-only'});
+try{const w=dom.window,d=w.document,nested=d.getElementById('nested'),root=d.getElementById('proof'),source=d.getElementById('source'),reader=d.getElementById('np-detail-scroll');
+Object.defineProperty(w,'innerWidth',{value:1440});Object.defineProperty(w,'innerHeight',{value:900});
+// JSDOM omits Chrome's computed zoom property; geometry remains an explicit
+// fixture, while opacity/color/font/overflow come from the real CSS cascade.
+const style=w.getComputedStyle.bind(w);w.getComputedStyle=e=>new Proxy(style(e),{get:(target,key)=>key==='zoom'?(target.zoom||'1'):Reflect.get(target,key)});
+function r(x,y,width,height){return {x,y,width,height,left:x,top:y,right:x+width,bottom:y+height};}
+for(const n of d.querySelectorAll('*')){n.getBoundingClientRect=()=>n===reader?r(850,100,550,700):n.className==='np-reader-heading'?r(850,100,550,50):r(900,250,300,24);for(const [k,v]of Object.entries({clientLeft:0,clientTop:0,clientWidth:550,clientHeight:700,scrollWidth:550,scrollHeight:700}))Object.defineProperty(n,k,{value:v,configurable:true});}
+w.Range.prototype.getClientRects=function(){const p=this.startContainer.parentElement;if(w.getComputedStyle(p).fontSize==='0px')return [];return [r(900,250,200,20)];};
+let overlay=false,anchor=false;d.elementFromPoint=()=>overlay?d.getElementById('overlay'):anchor?source:nested.style.display==='none'?root:nested;
+const snapshot=new w.Function(input.script),spec={selector:'#proof',text:'精确限定'},results=[snapshot(spec)];
+for(const style of ['font-size:10px','color:rgba(20,30,40,0)','font-size:0px','display:none','opacity:0','transform:scale(.5)']){nested.setAttribute('style',style);results.push(snapshot(spec));nested.removeAttribute('style');}
+nested.style.overflowX='hidden';Object.defineProperty(nested,'clientWidth',{value:30,configurable:true});results.push(snapshot(spec));nested.removeAttribute('style');Object.defineProperty(nested,'clientWidth',{value:550,configurable:true});
+overlay=true;results.push(snapshot(spec));overlay=false;anchor=true;results.push(snapshot({selector:'#source'}));
+const assert=require('node:assert/strict'),duplicate=root.cloneNode(true);reader.appendChild(duplicate);assert.throws(()=>snapshot(spec),/duplicated/);duplicate.remove();d.body.appendChild(root);assert.throws(()=>snapshot(spec),/outside the reader/);reader.appendChild(root);
+process.stdout.write(JSON.stringify(results));}finally{dom.window.close();}
+"""
+        result = subprocess.run(['node', '-e', script], input=json.dumps({'script': MODULE.TASK_ROUTE_PROOF_JS}), text=True, capture_output=True, cwd=Path(__file__).parents[1])
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        results = json.loads(result.stdout)
+        MODULE.check_task_route_proof(results[0], '精确限定')
+        for snapshot in results[1:-1]:
+            with self.assertRaises(RuntimeError):
+                MODULE.check_task_route_proof(snapshot, '精确限定')
+        MODULE.check_task_route_proof(results[-1], '§3.4–3.6 ↗')
+
+    def test_task_route_portable_claims_cannot_be_swapped_or_omitted(self):
+        import copy
+        rl, llm = self.expected['portable']
+        def selected(p):
+            return {'ready': 'ready', 'home': False, 'readerHidden': False, 'scale': 1,
+                    'route': {k: p[v] for k, v in {'node': 'id', 'scope': 'scopeId', 'tree': 'tree', 'paper': 'paperId', 'version': 'versionId'}.items()},
+                    'position': {'entity': p['entityId']}, 'mechanism': {'entity': p['entityId'], 'ready': True, 'flow': [],
+                    'claims': [{'id': c['id'], 'statement': c['statement']} for c in MODULE.task_route_claims(self.science, p)]}}
+        valid = selected(rl)
+        MODULE.check_task_route_method(valid, rl, self.science['entities'][rl['entityId']], MODULE.task_route_claims(self.science, rl))
+        for claims in ([], selected(llm)['mechanism']['claims'], [dict(valid['mechanism']['claims'][0], statement='Shared generic method')]):
+            bad = copy.deepcopy(valid)
+            bad['mechanism']['claims'] = claims
+            with self.assertRaises(RuntimeError):
+                MODULE.check_task_route_method(bad, rl, self.science['entities'][rl['entityId']], MODULE.task_route_claims(self.science, rl))
+
+    def test_task_route_production_dom_exact_selectors_and_actual_controls(self):
+        import tempfile
+        root = Path(__file__).parents[1]
+        with tempfile.TemporaryDirectory(prefix='.navigation-capture-test-', dir=root) as tmp:
+            build = subprocess.run(['python3', '-c', "import sys;from pathlib import Path;sys.path.insert(0,'scripts');import navigation_product as p;p.write_preview(Path('.').resolve(),Path(sys.argv[1]))", tmp], cwd=root, capture_output=True, text=True)
+            self.assertEqual(build.returncode, 0, build.stdout + build.stderr)
+            script = r"""
+const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto'),assert=require('node:assert/strict');
+const {JSDOM,ResourceLoader,VirtualConsole}=require('jsdom'),input=JSON.parse(fs.readFileSync(0,'utf8')),output=path.join(input.temp,'research/navigation'),errors=[];
+class Resources extends ResourceLoader{fetch(url){throw Error('Unexpected resource '+url);}}
+const vc=new VirtualConsole();vc.on('jsdomError',e=>errors.push(e.message));
+const dom=new JSDOM(fs.readFileSync(path.join(output,'index.html'),'utf8'),{url:'https://example.org/research/navigation/',runScripts:'dangerously',pretendToBeVisual:true,resources:new Resources(),virtualConsole:vc,beforeParse(w){w.TextEncoder=TextEncoder;w.TextDecoder=TextDecoder;w.scrollTo=(x,y)=>Object.defineProperty(w,'scrollY',{value:y,configurable:true});w.HTMLElement.prototype.scrollIntoView=function(){};Object.defineProperty(w.crypto,'subtle',{value:crypto.webcrypto.subtle});w.fetch=url=>Promise.resolve({ok:true,arrayBuffer:async()=>fs.readFileSync(path.join(output,url))});}});
+(async()=>{const w=dom.window,d=w.document,wait=ms=>new Promise(r=>setTimeout(r,ms));
+async function ready(check){for(let i=0;i<200&&!check();i++)await wait(10);assert.ok(check());await new Promise(r=>w.requestAnimationFrame(()=>w.requestAnimationFrame(r)));}
+await ready(()=>w.NavigationProductApp);const a=w.NavigationProductApp,snapshot=new w.Function(input.snapshot),e=input.expected,s=input.science;
+async function scope(id){for(let i=0;i<8&&!d.querySelector('[data-scope-open="'+id+'"]');i++){d.querySelector('.np-return-previous').click();await wait(40);}d.querySelector('[data-scope-open="'+id+'"]').click();await ready(()=>a.getState().route.scope===id&&[...d.querySelectorAll('[data-route-method],[data-route-group]')].every(n=>a.getContent().ready(a.getBundle().positions[n.dataset.routeMethod||n.dataset.routeGroup].entityId)));}
+async function back(before){d.querySelector('.np-return-previous').click();await ready(()=>JSON.stringify(a.getState().route)===JSON.stringify(before.route));assert.equal(d.activeElement.id,before.focus);assert.equal(d.getElementById('np-detail-scroll').scrollTop,before.readerScroll.top);}
+await scope('task:category-objectnav');const states=[snapshot()];
+const poni=e.poni,group=s.positions[poni.parentId];assert.equal(d.querySelector('[data-route-group="'+group.id+'"] > h3 > button').textContent,s.entities[group.entityId].label);
+assert.equal(d.querySelector('[data-route-method="'+poni.id+'"] > button').textContent,'PONI');
+const relation=d.querySelector('[data-task-change="methods:relation:90"]');relation.querySelector('summary').click();assert.equal(relation.open,true);
+const claim=relation.querySelector('[data-task-change-claim="method-edge:89"]');assert.equal(claim.querySelector('.np-change-claim').textContent,e.claim.statement);
+assert.ok([...claim.querySelectorAll(':scope > p')].some(n=>n.textContent==='原文定位：'+e.claim.locator.join('；')));
+const anchor=claim.querySelector('.np-source a');assert.equal(anchor.href,e.claim.sourceRefs[0].url);assert.equal(anchor.nextElementSibling.textContent,' · '+s.versions[e.claim.versionId].label);
+const endpoint=relation.querySelector('[data-change-target="'+poni.id+'"]');endpoint.focus();d.getElementById('np-detail-scroll').scrollTop=333;await wait(10);const before=snapshot();endpoint.click();await ready(()=>a.getState().route.node===poni.id&&a.getContent().ready(poni.entityId));states.push(snapshot());await back(before);states.push(snapshot());
+await scope('task:imagenav');states.push(snapshot());for(const p of e.image){const row=d.querySelector('[data-route-method="'+p.id+'"]');assert.equal(row.querySelector('[data-route-association]').dataset.routeAssociation,'condition');const c=row.querySelector('[data-route-condition-input] > p');assert.equal(c.textContent,'条件输入：'+s.entities[p.entityId].detail.pipeline.input);assert.equal(c.closest('details'),null);if(p.paperId==='zhu'){const condition=d.querySelector('[data-route-group-condition="'+p.parentId+'"]');assert.ok(condition.textContent.includes(s.entities[s.positions[p.parentId].entityId].detail.evidence));assert.equal(condition.closest('details'),null);}}
+await scope('setting:portable-objectnav');states.push(snapshot());for(const p of e.portable){const button=d.querySelector('[data-route-method="'+p.id+'"] > button');assert.equal(button.textContent,s.entities[p.entityId].label);button.focus();const before=snapshot();button.click();await ready(()=>a.getState().route.node===p.id&&a.getContent().ready(p.entityId));assert.equal(d.querySelector('[data-mechanism-entity="'+p.entityId+'"] > h3').textContent,s.entities[p.entityId].label+' · 方法内部结构');states.push(snapshot());await back(before);}
+assert.deepEqual(errors,[]);process.stdout.write(JSON.stringify(states));dom.window.close();})().catch(e=>{console.error(e);dom.window.close();process.exitCode=1;});
+"""
+            result = subprocess.run(['node', '-e', script], input=json.dumps({'temp': tmp, 'snapshot': MODULE.TASK_ROUTE_SNAPSHOT_JS, 'expected': self.expected, 'science': self.science}), cwd=root, text=True, capture_output=True, timeout=120)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            states = json.loads(result.stdout)
+            for index, scope in ((0, 'task:category-objectnav'), (2, 'task:category-objectnav'), (3, 'task:imagenav'), (4, 'setting:portable-objectnav')):
+                # JSDOM has no physical desktop viewport. Only the transport unit
+                # harness supplies that field; browser geometry is checked in CI.
+                states[index]['viewport'] = {'width': 1440, 'height': 900}
+                MODULE.check_task_route_scope(states[index], scope, self.expected['scopes'][scope])
+            MODULE.check_task_route_relation(states[2], self.expected)
+            for index, p in ((1, self.expected['poni']), (5, self.expected['portable'][0]), (6, self.expected['portable'][1])):
+                MODULE.check_task_route_method(states[index], p, self.science['entities'][p['entityId']], MODULE.task_route_claims(self.science, p))
+
+    def test_task_route_actual_transition_functions_save_failed_click_and_wait_diagnostics(self):
+        import ast
+        import copy
+        import inspect
+        tree = ast.parse(inspect.getsource(MODULE.task_route_checks))
+        names = {'select_method', 'return_method', 'transition_diagnostics'}
+        actual = ast.Module(body=[node for node in tree.body[0].body if isinstance(node, ast.FunctionDef) and node.name in names], type_ignores=[])
+        code = compile(ast.fix_missing_locations(actual), '<actual-task-route-transitions>', 'exec')
+        for function, key in (('select_method', 'activations'), ('return_method', 'returns')):
+            for failure_point in ('wait', 'click', 'wait-with-broken-snapshot'):
+                with self.subTest(function=function, failure_point=failure_point):
+                    before = self.scope_snapshot()
+                    record, saved, reads = {}, [], []
+                    failure = TimeoutError('actual bounded transition wait failed') if failure_point != 'click' else RuntimeError('actual click failed')
+
+                    class Driver:
+                        def __init__(self):
+                            self.clicked = False
+                            self.ui = copy.deepcopy(before)
+                        def settle(self):
+                            pass
+                        def selector(self, selector):
+                            return {'selector': selector}
+                        def click(self, element):
+                            self.clicked = True
+                            self.ui['focus'] = 'wrong-focus-after-click'
+                            self.ui['readerScroll']['top'] = 777
+                            if failure_point == 'click':
+                                raise failure
+                        def js(self, script, *args):
+                            if script == 'return arguments[0].id':
+                                return 'exact-endpoint'
+                            if 'originTrail' in script:
+                                reads.append('origin')
+                                return {'route': copy.deepcopy(self.ui['route']), 'bucket': {'focusTarget': self.ui['focus']}}
+                            return False
+
+                    driver = Driver()
+
+                    def snapshot():
+                        reads.append('after' if driver.clicked else 'before')
+                        if driver.clicked and failure_point == 'wait-with-broken-snapshot':
+                            raise RuntimeError('diagnostic snapshot failed')
+                        return copy.deepcopy(driver.ui)
+
+                    def wait(check):
+                        self.assertFalse(check())
+                        raise failure
+
+                    def save():
+                        saved.append(copy.deepcopy(record))
+
+                    env = {'driver': driver, 'record': record, 'save': save, 'snapshot': snapshot,
+                           'wait_for': wait, 'reveal': lambda spec: {'id': 'exact-endpoint'}}
+                    exec(code, env)
+                    with self.assertRaises(type(failure)) as raised:
+                        if function == 'select_method':
+                            env[function](self.expected['poni'], '#exact-endpoint')
+                        else:
+                            env[function](before)
+                    self.assertIs(raised.exception, failure, 'diagnostics must preserve the actual transition exception')
+                    self.assertEqual(saved[0][key], [{'before': before}], 'before is saved before any click')
+                    phase = saved[-1][key][0]
+                    self.assertEqual(phase['origin']['bucket']['focusTarget'], 'wrong-focus-after-click')
+                    self.assertIn('after', reads)
+                    self.assertIn('origin', reads)
+                    if failure_point == 'wait-with-broken-snapshot':
+                        self.assertEqual(phase['afterError'], 'diagnostic snapshot failed')
+                    else:
+                        self.assertEqual(phase['after']['focus'], 'wrong-focus-after-click')
+                        self.assertEqual(phase['after']['readerScroll']['top'], 777)
+
+
 if __name__ == '__main__':
     unittest.main()

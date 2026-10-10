@@ -537,6 +537,345 @@ def reader_toggle_checks(driver, report, save, capture, prefix):
         before = after
 
 
+TASK_ROUTE_PROOF_JS = VISUAL_GEOMETRY + r"""
+var spec=arguments[0],matches=[...document.querySelectorAll(spec.selector)].filter(n=>spec.text===undefined||n.textContent===spec.text),
+    e=matches.length===1?matches[0]:null,reader=document.getElementById('np-detail-scroll');
+if(!e||!reader.contains(e))throw Error('Exact task-route proof is missing, duplicated or outside the reader: '+JSON.stringify(spec));
+var rr=rect(reader),heading=reader.querySelector('.np-reader-heading'),hr=rect(heading),
+    top=Math.max(rr.y+reader.clientTop,hr.y+hr.height),content={x:rr.x+reader.clientLeft,y:top,width:reader.clientWidth,height:Math.max(0,rr.y+reader.clientTop+reader.clientHeight-top)},b=box(e);
+// A whole article's textContent cannot prove that a collapsed/hidden sentence is visible.
+// Measure the original text itself, including every wrapped line, with a DOM Range.
+var texts=[],walker=document.createTreeWalker(e,NodeFilter.SHOW_TEXT),n;
+while(n=walker.nextNode()){if(n.parentElement.closest('.np-sr'))continue;if(n.textContent.trim())texts.push(n);}
+function clips(element){var result=[];for(var a=element;a&&a!==reader;a=a.parentElement){var cs=getComputedStyle(a);if(/auto|scroll|hidden|clip/.test(cs.overflowY+' '+cs.overflowX)){var ar=rect(a);result.push({x:ar.x+a.clientLeft,y:ar.y+a.clientTop,width:a.clientWidth,height:a.clientHeight});}}return result;}
+var fragments=[],textRuns=[];
+texts.forEach(n=>{var range=document.createRange();range.selectNodeContents(n);var parent=box(n.parentElement),run={text:n.textContent,fontSize:parent.fontSize,foreground:parent.foreground,background:parent.background,opaque:parent.opaque,unscaled:parent.unscaled,clipAreas:clips(n.parentElement),fragments:[]};[...range.getClientRects()].filter(r=>r.width>0&&r.height>0).forEach(r=>{var visible=parent.opaque&&parent.unscaled&&[[.5,.5],[.1,.1],[.9,.1],[.1,.9],[.9,.9]].every(([x,y])=>{var hit=document.elementFromPoint(r.x+r.width*x,r.y+r.height*y);return hit===n.parentElement||n.parentElement.contains(hit);});var fragment={x:r.x,y:r.y,width:r.width,height:r.height,visible:visible};fragments.push(fragment);run.fragments.push(fragment);});textRuns.push(run);});
+if(getComputedStyle(e).display==='inline'){b.visible=b.opaque&&fragments.length>0&&fragments.every(r=>r.visible);b.clipped=false;}
+var ancestors=clips(e);
+return Object.assign(b,{id:e.id,tag:e.tagName,disabled:!!e.disabled,href:e.tagName==='A'?e.href:null,
+  renderedText:texts.map(n=>n.textContent).join(''),fragments:fragments,textRuns:textRuns,clipAreas:ancestors,
+  viewport:{x:0,y:0,width:innerWidth,height:innerHeight},readerContent:content});
+"""
+
+
+TASK_ROUTE_SNAPSHOT_JS = r"""
+var a=NavigationProductApp,m=NavigationProductModel,s=a.getState(),b=a.getBundle(),reader=document.getElementById('np-detail-scroll'),
+    tree=document.getElementById('np-tree-scroll'),panel=reader.querySelector('[data-task-route-scope]'),p=b.positions[s.route.node],mechanism=reader.querySelector('[data-mechanism-entity]');
+function identity(p){return p?{id:p.id,entity:p.entityId,scope:p.scopeId,tree:p.tree,paper:p.paperId,version:p.versionId,kind:p.kind}:null;}
+return {route:s.route,position:identity(p),ready:document.querySelector('[data-load-state]').dataset.loadState,
+  home:!document.getElementById('np-reading-landing').hidden,scale:m.getBucket(s).graphScale,
+  viewport:{width:innerWidth,height:innerHeight},window:{x:scrollX,y:scrollY},readerScroll:{top:reader.scrollTop,left:reader.scrollLeft},
+  treeScroll:{top:tree.scrollTop,left:tree.scrollLeft},focus:document.activeElement.id,
+  panelScope:panel&&panel.dataset.taskRouteScope,readerHidden:reader.hidden,
+  groups:panel?[...panel.querySelectorAll('[data-route-group]')].map(e=>e.dataset.routeGroup):[],
+  methods:panel?[...panel.querySelectorAll('[data-route-method]')].map(e=>{var p=b.positions[e.dataset.routeMethod],control=e.querySelector(':scope > button'),stamp=e.querySelector(':scope > [data-route-association]');return {position:identity(p),parent:e.dataset.routeParent,control:control.id,label:control.textContent,association:stamp.dataset.routeAssociation,version:stamp.dataset.routeVersion,ready:a.getContent().ready(p.entityId)};}):[],
+  mechanism:mechanism?{entity:mechanism.dataset.mechanismEntity,ready:a.getContent().ready(p.entityId),flow:[...mechanism.querySelectorAll('.np-method-flow dd')].map(e=>e.textContent),claims:[...mechanism.querySelectorAll('[data-method-claim]')].map(e=>({id:e.dataset.methodClaim,statement:e.querySelector(':scope > p').textContent}))}:null,
+  changes:panel?[...panel.querySelectorAll('[data-task-change]')].map(e=>({id:e.dataset.taskChange,type:e.dataset.relationType,renderAsTree:e.dataset.renderAsTree,scope:e.dataset.changeScope,open:e.open,
+    claims:[...e.querySelectorAll('[data-task-change-claim]')].map(c=>({id:c.dataset.taskChangeClaim,version:c.dataset.evidenceVersion,relation:c.dataset.versionRelation,statement:c.querySelector('.np-change-claim').textContent,sources:[...c.querySelectorAll('.np-source a')].map(a=>({url:a.href,status:a.nextElementSibling&&a.nextElementSibling.tagName==='SPAN'&&a.nextElementSibling.parentElement===a.parentElement?a.nextElementSibling.textContent:null}))})),
+    targets:[...e.querySelectorAll('[data-change-target]')].map(c=>({position:c.dataset.changeTarget,control:c.id}))})):[]};
+"""
+
+
+def task_route_expected(science):
+    """Independent expectations from the already SHA-pinned original 9069 export."""
+    def identity(p):
+        return {k: p.get(v) for k, v in {'id': 'id', 'entity': 'entityId', 'scope': 'scopeId',
+                'tree': 'tree', 'paper': 'paperId', 'version': 'versionId', 'kind': 'kind'}.items()}
+
+    def descendants(pid):
+        p = science['positions'][pid]
+        return [p] + [v for cid in p['childIds'] for v in descendants(cid)]
+
+    scopes = {}
+    for sid in ('task:category-objectnav', 'task:imagenav', 'setting:portable-objectnav'):
+        roots = science['forests'][sid]['l']
+        rows = [p for root in roots for p in descendants(root) if p['kind'] in ('pipeline_recipe', 'versioned_method_card')]
+        groups = [cid for root in roots for cid in science['positions'][root]['childIds']
+                  if science['positions'][cid]['kind'] not in ('pipeline_recipe', 'versioned_method_card')
+                  and any(p['kind'] in ('pipeline_recipe', 'versioned_method_card') for p in descendants(cid))]
+        scopes[sid] = {'roots': roots, 'groups': groups, 'methods': [
+            {'position': identity(p), 'parent': p['parentId'], 'association': p['association'],
+             'version': p['versionId'], 'control': 'np-task-route-method-' + p['id']} for p in rows]}
+
+    def method(scope, entity):
+        matches = [p for p in science['positions'].values() if p['tree'] == 'l' and p['scopeId'] == scope and p['entityId'] == entity]
+        if len(matches) != 1:
+            raise RuntimeError('Task-route source method identity is ambiguous: ' + entity)
+        return matches[0]
+
+    poni = method('task:category-objectnav', 'methods:pipeline-poni')
+    relation = science['relations']['methods:relation:90']
+    claim = science['claims']['method-edge:89']
+    if (relation['detail']['claimIds'] != [claim['id']] or relation['renderAsTree'] is not False or
+            claim['versionId'] != 'publication:poni:e83f98bb7132' or claim['versionId'] != poni['versionId']):
+        raise RuntimeError('Task-route original PONI relation/claim/version contract changed')
+    image = [method('task:imagenav', 'methods:pipeline-' + name) for name in ('zhu', 'sptm', 'ving')]
+    portable = [method('setting:portable-objectnav', 'methods:pipeline-tap-' + name) for name in ('rl', 'llm')]
+    if len({p['id'] for p in portable}) != 2 or len({p['entityId'] for p in portable}) != 2:
+        raise RuntimeError('Portable source variants were merged')
+    return {'scopes': scopes, 'poni': poni, 'relation': relation, 'claim': claim,
+            'claimSourceStatus': ' · ' + science['versions'][claim['versionId']]['label'],
+            'image': image, 'portable': portable}
+
+
+def check_task_route_proof(proof, text=None):
+    areas = [proof['viewport'], proof['readerContent']] + proof['clipAreas']
+    if text is not None and proof['renderedText'] != text:
+        raise RuntimeError('Task-route visible text differs from the original source field')
+    if not _reader_proof(proof, *areas, font_size=15) or not proof['fragments'] or not proof['textRuns']:
+        raise RuntimeError('Task-route proof is hidden, clipped, scaled, covered or below 15px')
+    for run in proof['textRuns']:
+        if (not run['opaque'] or not run['unscaled'] or run['fontSize'] < 15 or
+                len(run['foreground']) != 3 or len(run['background']) != 3 or
+                contrast_ratio(run['foreground'], run['background']) < 4.5 or not run['fragments']):
+            raise RuntimeError('Task-route nested text is hidden, transparent, small or has no rendered fragment')
+        if any(not f['visible'] or not all(rect_inside(f, area) for area in areas + run['clipAreas']) for f in run['fragments']):
+            raise RuntimeError('Task-route nested text is clipped or covered inside its own ancestor')
+    if any(not f['visible'] or not all(rect_inside(f, area) for area in areas) for f in proof['fragments']):
+        raise RuntimeError('Task-route original text is not fully visible inside the reader')
+
+
+def check_task_route_scope(data, scope, expected):
+    if (data['ready'] != 'ready' or data['home'] or data['readerHidden'] or data['scale'] != 1 or
+            (data['viewport']['width'], data['viewport']['height']) not in VIEWPORTS or
+            data['route']['scope'] != scope or data['route']['tree'] != 'l' or
+            data['route']['node'] not in expected['roots'] or data['route']['paper'] or data['route']['version'] or
+            data['panelScope'] != scope or data['groups'] != expected['groups']):
+        raise RuntimeError('Task-route root, scope, original groups or desktop reading state changed')
+    actual = [{key: row[key] for key in ('position', 'parent', 'association', 'version', 'control')} for row in data['methods']]
+    if actual != expected['methods'] or not all(row['ready'] for row in data['methods']):
+        raise RuntimeError('Task-route methods differ from original positions or their content is not ready')
+
+
+def task_route_claims(science, position):
+    entity = science['entities'][position['entityId']]
+    ids = list(dict.fromkeys(position.get('claimIds', []) + entity.get('claimIds', [])))
+    return [science['claims'][cid] for cid in ids if cid in science['claims'] and
+            science['claims'][cid].get('paperId', position['paperId']) == position['paperId'] and
+            science['claims'][cid].get('versionId', position['versionId']) == position['versionId']]
+
+
+def check_task_route_method(data, position, entity, claims=()):
+    if (data['ready'] != 'ready' or data['home'] or data['readerHidden'] or data['scale'] != 1 or
+            any(data['route'][key] != position[other] for key, other in
+                (('node', 'id'), ('scope', 'scopeId'), ('tree', 'tree'), ('paper', 'paperId'), ('version', 'versionId'))) or
+            data['position']['entity'] != position['entityId'] or not data['mechanism'] or
+            data['mechanism']['entity'] != position['entityId'] or not data['mechanism']['ready']):
+        raise RuntimeError('Task-route method control opened the wrong source position or unready content')
+    flow = entity.get('detail', {}).get('pipeline', {})
+    if flow and data['mechanism']['flow'] != [flow[k] for k in ('input', 'representation', 'decision', 'execution', 'feedback') if flow.get(k)]:
+        raise RuntimeError('Selected task-route method substituted its original pipeline fields')
+    if not flow and data['mechanism']['claims'] != [{'id': c['id'], 'statement': c.get('statement') or c['label']} for c in claims]:
+        raise RuntimeError('Selected task-route variant substituted its original method claims')
+
+
+def check_task_route_relation(data, expected):
+    rel, claim = expected['relation'], expected['claim']
+    matches = [r for r in data['changes'] if r['id'] == rel['id']]
+    if len(matches) != 1:
+        raise RuntimeError('Exact task-route relation is absent or duplicated')
+    row = matches[0]
+    wanted = {'id': claim['id'], 'version': claim['versionId'], 'relation': 'same-version',
+              'statement': claim['statement'], 'sources': [{'url': ref['url'], 'status': expected['claimSourceStatus']} for ref in claim['sourceRefs']]}
+    if (row['type'] != rel['relationType'] or row['renderAsTree'] != 'false' or row['scope'] != 'current-scope' or
+            not row['open'] or row['claims'] != [wanted] or
+            not any(t['position'] == expected['poni']['id'] for t in row['targets'])):
+        raise RuntimeError('Task-route relation lost exact claim, version, source or PONI endpoint')
+
+
+def check_task_route_return(before, after, expected_control):
+    for key in ('route', 'panelScope', 'scale', 'readerScroll', 'treeScroll', 'window'):
+        if before[key] != after[key]:
+            raise RuntimeError('Task-route return lost saved context: ' + key)
+    if before['activatedControl'] != expected_control or after['focus'] != expected_control:
+        raise RuntimeError('Task-route return lost the exact activated control focus')
+
+
+def task_route_checks(driver, report, save, capture, prefix, base, science):
+    """Append ten actual-control captures per desktop; do not alter the original 48 gates."""
+    expected = task_route_expected(science)
+    record = {'viewport': prefix, 'scenes': [], 'capturesExpected': 10}
+    report.setdefault('taskRouteChecks', []).append(record)
+    save()
+
+    def snapshot():
+        return driver.js(TASK_ROUTE_SNAPSHOT_JS)
+
+    def proof(spec):
+        return driver.js(TASK_ROUTE_PROOF_JS, spec)
+
+    def reveal(spec):
+        element = driver.js("var s=arguments[0],all=[...document.querySelectorAll(s.selector)];return s.text===undefined?all[0]:all.find(n=>n.textContent===s.text);", spec)
+        if not element:
+            raise RuntimeError('Task-route exact scroll target is missing')
+        driver.js("arguments[0].scrollIntoView({block:'center',inline:'nearest'});", element)
+        driver.settle()
+        return element
+
+    def scene(name, specs, anchor=None, method=None, relation=False, before=None, control=None):
+        # All proofs belong to this screenshot, after the final scroll. Earlier
+        # per-element visibility cannot be reused as evidence for a later capture.
+        item = {'name': prefix + name, 'specs': specs, 'proofs': [], 'alignment': [], 'phase': 'resolving'}
+        record['scenes'].append(item)
+        save()
+        reveal(anchor or specs[0])
+        # Centre the measured collection using bounded native wheel input. This
+        # changes only normal scroll, never CSS scale, layout, model or history.
+        alignment = item['alignment']
+        for _ in range(4):
+            boxes = [proof(spec) for spec in specs]
+            area = boxes[0]['readerContent']
+            top = min(b['rect']['y'] for b in boxes)
+            bottom = max(b['rect']['y'] + b['rect']['height'] for b in boxes)
+            if top >= area['y'] and bottom <= area['y'] + area['height']:
+                break
+            delta = round((top + bottom - 2 * area['y'] - area['height']) / 2)
+            alignment.append({'top': top, 'bottom': bottom, 'area': area, 'wheelDelta': delta})
+            save()
+            if bottom - top > area['height'] or not delta:
+                break  # Keep the failing geometry; never shrink to manufacture a fit.
+            driver.call('POST', '/actions', {'actions': [{'type': 'wheel', 'id': 'task-route-scroll', 'actions': [
+                {'type': 'scroll', 'origin': driver.selector('#np-detail-scroll'), 'x': 0, 'y': 0,
+                 'deltaX': 0, 'deltaY': delta, 'duration': 100}]}]})
+            driver.settle()
+        state = snapshot()
+        item.update(state=state, phase='checking',
+                    nonInitialViewport=bool(state['readerScroll']['top'] or state['readerScroll']['left'] or state['window']['x'] or state['window']['y']))
+        save()
+        for spec in specs:
+            item['proofs'].append({'spec': spec, 'actual': proof(spec)})
+            save()
+        if method:
+            check_task_route_method(state, method, science['entities'][method['entityId']], task_route_claims(science, method))
+        else:
+            sid = state['panelScope']
+            check_task_route_scope(state, sid, expected['scopes'][sid])
+        if relation:
+            check_task_route_relation(state, expected)
+        if before:
+            check_task_route_return(before, state, control)
+        for result in item['proofs']:
+            spec, actual = result['spec'], result['actual']
+            check_task_route_proof(actual, spec.get('renderedText', spec.get('text')))
+            if spec.get('href') and actual['href'] != spec['href']:
+                raise RuntimeError('Task-route visible source anchor URL changed')
+        capture(item['name'], require_tree=False)
+        item['phase'] = 'captured'
+        save()
+        return state
+
+    def open_scope(sid, directory=False):
+        driver.call('POST', '/url', {'url': base})
+        wait_for(lambda: driver.js("return !!window.NavigationProductApp&&document.querySelector('[data-load-state]')?.dataset.loadState==='ready'"))
+        if directory:
+            driver.click(driver.selector('#np-all-scopes > summary'))
+        spec = {'selector': '[data-' + ('scope' if directory else 'task') + '-open="' + sid + '"]'}
+        driver.click(reveal(spec))
+        wait_for(lambda: driver.js("var a=NavigationProductApp,r=a.getState().route,p=document.querySelector('[data-task-route-scope]');return r.scope===arguments[0]&&r.tree==='l'&&p?.dataset.taskRouteScope===arguments[0]&&[...p.querySelectorAll('[data-route-method],[data-route-group]')].every(e=>a.getContent().ready(a.getBundle().positions[e.dataset.routeMethod||e.dataset.routeGroup].entityId));", sid))
+        driver.settle()
+
+    def select_method(position, selector):
+        element = reveal({'selector': selector})
+        driver.settle()
+        before = snapshot()
+        before['activatedControl'] = driver.js('return arguments[0].id', element)
+        phase = {'before': before}
+        record.setdefault('activations', []).append(phase)
+        save()
+        try:
+            driver.click(element)
+            wait_for(lambda: driver.js("var a=NavigationProductApp,p=arguments[0],r=a.getState().route,m=document.querySelector('[data-mechanism-entity]');return r.node===p.id&&r.scope===p.scopeId&&r.tree===p.tree&&r.paper===p.paperId&&r.version===p.versionId&&a.getContent().ready(p.entityId)&&m?.dataset.mechanismEntity===p.entityId;", position))
+            driver.settle()
+        finally:
+            transition_diagnostics(phase)
+        origin = phase.get('origin')
+        if (not origin or origin['route'] != before['route'] or
+                origin['bucket']['focusTarget'] != before['activatedControl']):
+            raise RuntimeError('Actual method click did not save its exact original route and control focus')
+        return before
+
+    def return_method(before):
+        phase = {'before': before}
+        record.setdefault('returns', []).append(phase)
+        save()
+        try:
+            driver.click(driver.selector('.np-return-previous'))
+            wait_for(lambda: driver.js("var a=NavigationProductApp,p=document.querySelector('[data-task-route-scope]');return JSON.stringify(a.getState().route)===JSON.stringify(arguments[0])&&p&&document.activeElement.id===arguments[1]&&[...p.querySelectorAll('[data-route-method],[data-route-group]')].every(e=>a.getContent().ready(a.getBundle().positions[e.dataset.routeMethod||e.dataset.routeGroup].entityId));", before['route'], before['activatedControl']))
+            driver.settle()
+        finally:
+            transition_diagnostics(phase)
+        after = phase['after']
+        check_task_route_scope(after, before['panelScope'], expected['scopes'][before['panelScope']])
+        check_task_route_return(before, after, before['activatedControl'])
+
+    def transition_diagnostics(phase):
+        # Preserve the original click/wait exception even if diagnostic reads fail.
+        for name, read in (('after', snapshot), ('origin', lambda: driver.js('var trail=NavigationProductApp.getState().originTrail;return trail[trail.length-1]'))):
+            try:
+                phase[name] = read()
+            except Exception as exc:
+                phase[name + 'Error'] = str(exc)[:2000]
+        save()
+
+    poni = expected['poni']
+    open_scope(poni['scopeId'])
+    group = science['positions'][poni['parentId']]
+    group_spec = {'selector': '[data-route-group="' + group['id'] + '"] > h3 > button', 'text': science['entities'][group['entityId']]['label']}
+    poni_spec = {'selector': '[data-route-method="' + poni['id'] + '"] > button', 'text': 'PONI'}
+    scene('-14-task-route-objectnav', [group_spec, poni_spec], anchor=poni_spec)
+    rel_selector = '[data-task-change="methods:relation:90"]'
+    driver.click(reveal({'selector': rel_selector + ' > summary'}))
+    claim = expected['claim']
+    claim_selector = rel_selector + ' [data-task-change-claim="' + claim['id'] + '"]'
+    locator = '；'.join(claim['locator'])
+    ref = claim['sourceRefs'][0]
+    evidence_specs = [
+        {'selector': rel_selector + ' > summary', 'text': 'SemExp → PONI · 复用组件并替换策略'},
+        {'selector': claim_selector + ' .np-change-claim', 'text': claim['statement']},
+        {'selector': claim_selector + ' > p', 'text': '原文定位：' + locator},
+        {'selector': claim_selector + ' .np-source a', 'renderedText': '；'.join(ref['locator']) + ' ↗', 'href': ref['url']},
+        {'selector': claim_selector + ' .np-source > a + span', 'text': expected['claimSourceStatus']}]
+    scene('-15-task-route-poni-evidence-scrolled', evidence_specs, anchor={'selector': claim_selector}, relation=True)
+    target_selector = rel_selector + ' [data-change-target="' + poni['id'] + '"]'
+    before = select_method(poni, target_selector)
+    flow = science['entities'][poni['entityId']]['detail']['pipeline']
+    scene('-16-task-route-poni-method-scrolled', [{'selector': '[data-mechanism-entity="' + poni['entityId'] + '"] .np-method-flow dd', 'text': flow['representation']}], method=poni)
+    return_method(before)
+    # Capture the restored state without scrolling, which could conceal a bad restore.
+    state = snapshot()
+    result = proof({'selector': target_selector})
+    item = {'name': prefix + '-17-task-route-poni-return-scrolled', 'state': state, 'proofs': [result], 'nonInitialViewport': True}
+    record['scenes'].append(item)
+    save()
+    check_task_route_return(before, state, before['activatedControl'])
+    check_task_route_relation(state, expected)
+    check_task_route_proof(result)
+    capture(item['name'], require_tree=False)
+
+    open_scope('task:imagenav')
+    for p in expected['image']:
+        row = '[data-route-method="' + p['id'] + '"]'
+        specs = [{'selector': row + ' > button', 'text': science['entities'][p['entityId']]['label'].removesuffix(' 输入到反馈')}, {'selector': row + ' [data-route-association] > span:first-child', 'text': '条件关联'},
+                 {'selector': '[data-route-condition-input="' + p['id'] + '"] > p', 'text': '条件输入：' + science['entities'][p['entityId']]['detail']['pipeline']['input']}]
+        if p['paperId'] == 'zhu':
+            parent = science['entities'][science['positions'][p['parentId']]['entityId']]
+            specs.insert(0, {'selector': '[data-route-group-condition="' + p['parentId'] + '"] > p', 'text': '依据：' + parent['detail']['evidence']})
+        scene('-18-task-route-imagenav-' + p['paperId'] + '-scrolled', specs, anchor=specs[-1])
+
+    open_scope('setting:portable-objectnav', directory=True)
+    portable_specs = [{'selector': '[data-route-method="' + p['id'] + '"] > button', 'text': science['entities'][p['entityId']]['label']} for p in expected['portable']]
+    scene('-19-task-route-portable-variants-scrolled', portable_specs)
+    for p, spec in zip(expected['portable'], portable_specs):
+        before = select_method(p, spec['selector'])
+        claim = task_route_claims(science, p)[0]
+        scene('-20-task-route-' + p['entityId'].split('pipeline-')[-1] + '-scrolled',
+              [{'selector': '[data-mechanism-entity="' + p['entityId'] + '"] > h3', 'text': science['entities'][p['entityId']]['label'] + ' · 方法内部结构'},
+               {'selector': '[data-mechanism-entity="' + p['entityId'] + '"] [data-method-claim="' + claim['id'] + '"] > p:first-child', 'text': claim['statement']}], method=p)
+        return_method(before)
+    if len(record['scenes']) != record['capturesExpected']:
+        raise RuntimeError('Task-route desktop screenshot coverage is incomplete')
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dist', type=Path, required=True)
@@ -1072,6 +1411,7 @@ def main():
                     raise RuntimeError('Directory return lost open state, scroll or exact entry focus')
                 report.setdefault('directoryReturnChecks', []).append({'scope': scope, 'before': before, 'after': after})
             capture(prefix + '-12-directory-return', require_home=True)
+            task_route_checks(driver, report, save, capture, prefix, base, science)
         report['status'] = 'captured_for_human_review'
     except Exception as exc:
         report['status'] = 'failed'

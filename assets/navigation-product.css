@@ -345,3 +345,56 @@ body{font-size:16px;line-height:1.65;background:#f7f9fa}header.np-header{max-wid
 
 /* Text selectors are the primary, separate hit targets for typed relations. */
 .np-relation-selectors{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 0 16px}.np-relation-selectors .np-relation-selector{display:block;width:100%;min-height:44px;padding:8px 12px;border:1px solid #9fbbb3;border-radius:5px;text-align:left;background:#fff;color:#275f53;font-size:15px;line-height:1.55;white-space:normal}.np-relation-selectors .np-relation-selector:hover,.np-relation-selectors .np-relation-selector:focus-visible{background:#eaf4ef;outline:2px solid #377d68;outline-offset:1px}
+
+/* Compact source groups keep route controls independent of lazy body arrival. */
+.np-task-route-overview{min-width:0;margin-block:8px 20px}
+.np-task-route-overview h2{margin:0 0 6px;font-size:1.3rem}
+.np-task-route-overview h3{margin:0 0 5px;font-size:1rem}
+.np-task-route-group,.np-task-route-ungrouped{padding:14px 0;border-top:1px solid var(--np-line,#dce4e8)}
+.np-task-route-overview .np-text-button{text-align:left;max-width:100%;overflow-wrap:anywhere}
+.np-task-route-overview p{margin:5px 0;line-height:1.55}
+.np-task-route-overview ul{list-style:none;margin:8px 0 0;padding:0}
+.np-task-route-method{padding:8px 0;border-top:1px dotted var(--np-line,#dce4e8)}
+.np-task-route-method>.np-text-button{font-weight:700}
+.np-route-stamp{font-size:.8rem;color:var(--np-muted,#586674)}
+.np-route-stamp[data-route-association=condition],.np-route-stamp[data-route-association=context]{color:var(--np-ink,#334955);font-weight:600}
+.np-route-group-summary{font-size:.9rem}
+.np-route-group-disclosure>summary,.np-route-method-summary>summary,.np-task-route-supplemental>summary{cursor:pointer;font-size:.84rem;padding:5px 0}
+.np-route-group-disclosure>div,.np-route-method-summary>div{padding:4px 0 4px 12px;border-left:2px solid var(--np-line,#dce4e8);font-size:.88rem}
+.np-task-route-changes{margin:12px 0;padding:10px 0;border-top:1px solid var(--np-line,#dce4e8)}
+.np-task-change{padding:7px 0;border-bottom:1px dotted var(--np-line,#dce4e8)}
+.np-task-change>summary{cursor:pointer;line-height:1.5;font-size:.88rem;font-weight:600}
+.np-task-change>article,.np-task-change>nav{padding:6px 0 4px 12px;font-size:.86rem}
+.np-task-change>nav{display:grid;gap:6px}
+.np-task-route-supplemental{border-top:1px solid var(--np-line,#dce4e8);padding-top:8px}
+.np-task-route-supplemental>div{padding:7px 0}
+.np-task-route-outside{margin-top:8px;font-size:.84rem}
+.np-task-route-outside>summary{cursor:pointer}
+/* An opened loading disclosure has the same footprint after its packet arrives. */
+.np-route-group-disclosure>div,.np-route-method-summary>div{box-sizing:border-box;height:14rem;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
+
+.np-route-condition-input{box-sizing:border-box;height:5rem;overflow:auto;scrollbar-gutter:stable;font-size:.85rem;border-left:2px solid var(--np-line,#dce4e8);padding-left:10px}
+
+.np-route-group-condition{box-sizing:border-box;height:7rem;overflow:auto;scrollbar-gutter:stable;font-size:.85rem;border-left:2px solid var(--np-line,#dce4e8);padding-left:10px}
+
+/* Task-root reading text keeps the 15px floor, including inherited legacy notes. */
+#navigation-product .np-task-route-overview,
+#navigation-product .np-task-route-overview p,
+#navigation-product .np-task-route-overview li,
+#navigation-product .np-task-route-overview span,
+#navigation-product .np-task-route-overview small,
+#navigation-product .np-task-route-overview summary,
+#navigation-product .np-task-route-overview button,
+#navigation-product .np-task-route-overview a,
+#navigation-product .np-task-route-overview .np-note,
+#navigation-product .np-task-route-overview .np-route-stamp,
+#navigation-product .np-task-route-overview .np-route-group-summary,
+#navigation-product .np-task-route-overview .np-route-group-disclosure>div,
+#navigation-product .np-task-route-overview .np-route-method-summary>div,
+#navigation-product .np-task-route-overview .np-task-change>article,
+#navigation-product .np-task-route-overview .np-task-change>nav,
+#navigation-product .np-task-route-overview .np-task-route-outside,
+#navigation-product .np-task-route-overview .np-route-condition-input,
+#navigation-product .np-task-route-overview .np-route-group-condition{font-size:15px;line-height:1.55}
+#navigation-product .np-task-route-overview h2,
+#navigation-product .np-task-route-overview h3{line-height:1.55}
