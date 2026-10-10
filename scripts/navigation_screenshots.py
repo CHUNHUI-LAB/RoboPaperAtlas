@@ -387,7 +387,7 @@ function preserved(value){
 var historyState=history.state,unrelated=historyState&&typeof historyState==='object'?Object.assign({},historyState):historyState;
 if(unrelated&&typeof unrelated==='object')delete unrelated[m.KEY];
 var ts=scrollBox(tree),rr=row&&rect(row);
-return {route:state.route,position:p?{id:p.id,scope:p.scopeId,tree:p.tree,paper:p.paperId,version:p.versionId,entity:p.entityId,kind:p.kind}:null,
+return {route:state.route,taskContextKey:m.taskContextKey(state.route),position:p?{id:p.id,scope:p.scopeId,tree:p.tree,paper:p.paperId,version:p.versionId,entity:p.entityId,kind:p.kind}:null,
   graphScale:bucket.graphScale,expanded:bucket.expandedByTree,preservedState:preserved(state),
   history:{length:history.length,url:location.href,modelKey:m.KEY,contextKey:context,
     entryKey:window.navigation&&window.navigation.currentEntry?window.navigation.currentEntry.key:null,
@@ -491,9 +491,34 @@ def check_reader_toggle_snapshot(data, collapsed):
             raise RuntimeError('Expanded reader, sticky heading or separate tree/reader boundaries are not visible')
 
 
+def _reader_toggle_preserved(data, expected_focus):
+    """Validate the one intended neutral focus update before projecting it out."""
+    route = data['route']
+    key = json.dumps([route['scope'], route.get('bench') or None, route.get('protocol') or None,
+                      None, None, None], separators=(',', ':'))
+    dom_focus = 'np-node-' + route['node'] if expected_focus == route['node'] else expected_focus
+    if data.get('taskContextKey') != key or data['focus'] != dom_focus:
+        raise RuntimeError('Reader toggle has an incorrect task context or actual focus')
+    preserved, history = json.loads(json.dumps([data['preservedState'], data['history']]))
+    for state in (preserved, history['model']):
+        view = state.get('contexts', {}).get(key, {}).get('taskView', {})
+        targets = view.get('focusTargetByTree', {})
+        if targets.get(route['tree']) != expected_focus:
+            raise RuntimeError('Reader toggle did not persist the exact current-tree neutral focus')
+        # This is the sole additional exclusion. Keep taskView routes, its other
+        # tree focus, all other buckets and every origin snapshot byte-equivalent.
+        del targets[route['tree']]
+    return preserved, history
+
+
 def check_reader_toggle_transition(before, after, original, collapsed):
     check_reader_toggle_snapshot(after, collapsed)
-    for key in ('route', 'position', 'graphScale', 'expanded', 'preservedState', 'history', 'viewport', 'window'):
+    original_preserved = _reader_toggle_preserved(original, original['route']['node'])
+    before_preserved = _reader_toggle_preserved(before, before['route']['node'] if collapsed else 'np-reader-toggle')
+    after_preserved = _reader_toggle_preserved(after, 'np-reader-toggle' if collapsed else 'np-detail-scroll')
+    if before_preserved != after_preserved or original_preserved != after_preserved:
+        raise RuntimeError('Reader toggle changed preserved navigation state beyond the current neutral focus')
+    for key in ('route', 'position', 'graphScale', 'expanded', 'taskContextKey', 'viewport', 'window'):
         if before[key] != after[key] or original[key] != after[key]:
             raise RuntimeError('Reader toggle changed preserved navigation state: ' + key)
     if after['title']['text'] != original['title']['text'] or after['selected']['label']['text'] != original['selected']['label']['text']:
