@@ -305,16 +305,20 @@ function renderTaskRouteOverview(host,p){
   var outside=el('details',{class:'np-task-route-outside',hidden:true}),outsideList=el('div',{});
   outside.appendChild(el('summary',{id:'np-task-route-outside-'+scope.id},'范围外的方法关联'));
   addParagraph(outside,'以下关系有端点不在当前范围的方法位置中；保留相关阅读，不增加本任务解法归属。','np-note');outside.appendChild(outsideList);
-  changes.appendChild(el('h3',{},'有据变化与对照'));changes.appendChild(changeList);changes.appendChild(changeStatus);changes.appendChild(outside);
+  changes.appendChild(changeList);
  function endpointPositions(paper){
   var local=rows.methods.filter(function(method){return method.paperId===paper;});if(local.length)return local;
   var indexed=Object.values(bundle.positions).filter(function(target){return target.scopeId==='scope:all'&&target.tree==='l'&&target.paperId===paper&&(target.kind==='pipeline_recipe'||target.kind==='paper');}),recipes=indexed.filter(function(target){return target.kind==='pipeline_recipe';});return recipes.length?recipes:indexed;
  }
+ function taskRoutePaperLabel(paper){
+  var identities=new Map();Object.values(bundle.positions).forEach(function(position){if(position.kind==='pipeline_recipe'&&position.paperId===paper)identities.set(position.entityId,position);});
+  return identities.size===1?readingLabel(Array.from(identities.values())[0]):shortPaper(paper);
+ }
  function appendChange(rel){
   var from=bundle.entities[rel.from||rel.fromId],to=bundle.entities[rel.to||rel.toId],rd=rel.detail||{},box=el('details',{class:'np-task-change','data-task-change':rel.id,'data-relation-type':rel.relationType,'data-render-as-tree':'false'});
-  var summary=el('summary',{id:'np-task-change-'+scope.id+'-'+rel.id},shortPaper(from.paperId)+' → '+shortPaper(to.paperId)+' · '+relationLabel(rel.relationType));
+  var fullLabel=shortPaper(from.paperId)+' → '+shortPaper(to.paperId)+' · '+relationLabel(rel.relationType),visibleLabel=taskRoutePaperLabel(from.paperId)+' → '+taskRoutePaperLabel(to.paperId)+' · '+relationLabel(rel.relationType),summary=el('summary',{id:'np-task-change-'+scope.id+'-'+rel.id},visibleLabel);
   var absent=[from,to].filter(function(endpoint){return !rows.methods.some(function(method){return method.paperId===endpoint.paperId;});}),inScope=!absent.length;
-  box.setAttribute('data-change-scope',inScope?'current-scope':'outside-scope');box.appendChild(summary);
+  box.setAttribute('data-change-scope',inScope?'current-scope':'outside-scope');box.appendChild(summary);if(visibleLabel!==fullLabel)addParagraph(box,fullLabel,'np-change-paper-identity');
   if(!inScope)addParagraph(box,'范围外关联：'+absent.map(function(endpoint){return shortPaper(endpoint.paperId);}).join('、')+' 不在当前任务的方法位置中。','np-boundary');
   if(rd.attribution)addParagraph(box,'关系归属：'+(rd.attribution==='curator_comparison'?'编辑对照':rd.attribution==='source_grounded_typed_relation'?'有来源的限定类型关系':rd.attribution),'np-note');
   list(rel.claimIds||rd.claimIds).forEach(function(cid){
@@ -333,7 +337,7 @@ function renderTaskRouteOverview(host,p){
   });box.appendChild(targets);var listHost=inScope?changeList:outsideList;if(!inScope)outside.hidden=false;
   var reading=el('div',{class:'np-task-change-reading'}),preview=el('div',{'data-task-change-preview':rel.id,class:'np-task-change-preview'});reading.appendChild(box);
   list(rel.claimIds||rd.claimIds).forEach(function(cid){var claim=bundle.claims[cid];if(!claim)return;var original=box.querySelector('[data-task-change-claim="'+cid+'"]'),item=el('div',{'data-route-change-claim':cid,'data-evidence-version':M.versionOf(claim)||'','data-version-relation':original.dataset.versionRelation});
-   addParagraph(item,original.querySelector('.np-change-version').textContent,'np-change-version');addParagraph(item,claim.statement||claim.label,'np-change-claim');preview.appendChild(item);
+   addParagraph(item,original.querySelector('.np-change-version').textContent.replace(shortPaper(M.paperOf(claim)),taskRoutePaperLabel(M.paperOf(claim))),'np-change-version');addParagraph(item,claim.statement||claim.label,'np-change-claim');preview.appendChild(item);
   });reading.appendChild(preview);listHost.appendChild(reading);
  }
 
@@ -349,7 +353,7 @@ function renderTaskRouteOverview(host,p){
    var disclosure=el('details',{class:'np-route-method-summary'});disclosure.appendChild(el('summary',{id:'np-task-route-summary-'+method.id},'适用条件与来源'));var body=el('div',{});disclosure.appendChild(body);row.appendChild(disclosure);parent.appendChild(row);
    ownerBody(reading,method,function(entity){var d=entity.detail||{},flow=d.pipeline||d.pipeline_contract,seen=new Map(),sourceRefs=list(entity.sourceRefs);
     if(method.association==='condition'){var input=el('div',{class:'np-route-condition-input','data-route-condition-input':method.id});field(input,'条件输入',flow&&flow.input||'未记录；按适用条件与原文核对。',seen);reading.appendChild(input);}
-    if(flow){[['representation','表示'],['decision','决策']].forEach(function(pair){if(flow[pair[0]])field(reading,pair[1],flow[pair[0]],seen);else addParagraph(reading,pair[1]+'：未记录');});}
+    if(flow){[['representation','表示'],['decision','决策']].forEach(function(pair){if(flow[pair[0]])field(reading,pair[1],flow[pair[0]],seen,'np-route-method-field');else addParagraph(reading,pair[1]+'：未记录','np-route-method-field');});}
     else{var claims=Array.from(new Set(list(method.claimIds).concat(list(entity.claimIds)))).map(function(id){return bundle.claims[id];}).filter(function(claim){return claim&&M.paperOf(claim)===method.paperId&&M.versionOf(claim)===method.versionId;});
      claims.forEach(function(claim){reading.appendChild(el('p',{'data-route-method-claim':claim.id},claim.statement||claim.label));if(claim.scope)field(body,'选段范围',claim.scope,seen,'np-note');sourceRefs=sourceRefs.concat(list(claim.sourceRefs));});
      if(!claims.length)addParagraph(reading,'本版本未记录表示／决策或已核方法选段。','np-note');
@@ -359,13 +363,14 @@ function renderTaskRouteOverview(host,p){
   }
   rows.groups.forEach(function(group){var gp=group.position,block=el('section',{class:'np-task-route-group','data-route-group':gp.id}),head=el('h3',{}),control=button(readingLabel(gp),function(){goPosition(gp.id,{cross:true});},'np-text-button');
    control.id='np-task-route-group-'+gp.id;head.appendChild(control);block.appendChild(head);taskRouteStamp(block,gp);
-   var summary=el('div',{class:'np-route-group-summary'+(gp.association==='condition'?' np-route-group-condition':'')});if(gp.association==='condition')summary.dataset.routeGroupCondition=gp.id;block.appendChild(summary);
-   var disclosure=el('details',{class:'np-route-group-disclosure'});disclosure.appendChild(el('summary',{id:'np-task-route-group-summary-'+gp.id},'来源依据'));var sources=el('div',{});disclosure.appendChild(sources);block.appendChild(disclosure);
+   var summary=el('div',{class:'np-route-group-summary'+(gp.association==='condition'?' np-route-group-condition':'')});if(gp.association==='condition')summary.dataset.routeGroupCondition=gp.id;
+   var disclosure=el('details',{class:'np-route-group-disclosure'});disclosure.appendChild(el('summary',{id:'np-task-route-group-summary-'+gp.id},'来源依据'));var sources=el('div',{});disclosure.appendChild(sources);block.appendChild(disclosure);block.appendChild(summary);
    ownerBody(summary,gp,function(entity){var d=entity.detail||{},seen=new Map();[['condition','适用条件'],['scope','范围'],['evidence','依据']].forEach(function(pair){field(summary,pair[1],d[pair[0]],seen,pair[0]==='evidence'?'np-note':null);});if(!summary.childNodes.length)addParagraph(summary,'路线条件与范围未记录；请分别核对方法的条件输入与来源。');renderSources(sources,entity.sourceRefs||[]);});
    var methods=el('ul',{});block.appendChild(methods);snapshot.appendChild(block);group.methods.forEach(function(method){methodRow(methods,method);});
   });
   if(rows.ungrouped.length){var ungrouped=el('section',{class:'np-task-route-ungrouped'});ungrouped.appendChild(el('h3',{},'未声明路线分组的方法与选段'));var methods=el('ul',{});ungrouped.appendChild(methods);snapshot.appendChild(ungrouped);rows.ungrouped.forEach(function(method){methodRow(methods,method);});}
   if(rows.supplemental.length){var supplemental=el('details',{class:'np-task-route-supplemental'});supplemental.appendChild(el('summary',{id:'np-task-route-supplemental-'+scope.id},'其他原有分枝与补充证据'));rows.supplemental.forEach(function(target){var row=el('div',{'data-route-supplemental':target.id}),control=button(readingLabel(target),function(){goPosition(target.id,{cross:true});},'np-text-button');control.id='np-task-route-supplement-'+target.id;row.appendChild(control);taskRouteStamp(row,target);supplemental.appendChild(row);});snapshot.appendChild(supplemental);}
+  if(rows.methods.length){snapshot.appendChild(changeStatus);snapshot.appendChild(outside);}
   var boundaries=el('aside',{class:'np-task-route-boundaries'});addParagraph(boundaries,'按当前文献树的真实位置阅读；机制对照，实验可比性未核。','np-note');
   var recipes=rows.methods.filter(function(method){return method.kind==='pipeline_recipe';}),associations=new Set(recipes.map(function(method){return method.association;}));
   if(recipes.length)addParagraph(boundaries,associations.has('direct')?(associations.has('condition')?'当前同时有直接与条件关联；分别核对每个位置。':'当前有直接关联方法；按各自记录范围阅读。'):associations.has('condition')?'当前方法仅为条件关联，不能当作同一任务或同一评测协议。':'当前方法仅作跨任务相关阅读。','np-note');snapshot.appendChild(boundaries);

@@ -350,14 +350,18 @@ body{font-size:16px;line-height:1.65;background:#f7f9fa}header.np-header{max-wid
 .np-task-route-overview{min-width:0;margin-block:8px 20px}
 .np-task-route-overview h2{margin:0 0 6px;font-size:1.3rem}
 .np-task-route-overview h3{margin:0 0 5px;font-size:1rem}
-.np-task-route-group,.np-task-route-ungrouped{padding:14px 0;border-top:1px solid var(--np-line,#dce4e8)}
+.np-task-route-group,.np-task-route-ungrouped{padding:10px 0;border-top:1px solid var(--np-line,#dce4e8)}
 .np-task-route-overview .np-text-button{text-align:left;max-width:100%;overflow-wrap:anywhere}
-.np-task-route-overview p{margin:5px 0;line-height:1.55}
+.np-task-route-overview p{margin:4px 0;line-height:1.55}
 .np-task-route-overview ul{list-style:none;margin:8px 0 0;padding:0}
 .np-task-route-method{padding:8px 0;border-top:1px dotted var(--np-line,#dce4e8)}
 .np-task-route-method>.np-text-button{font-weight:700;display:inline;margin-right:8px}
 .np-task-route-method>.np-route-stamp{display:inline}
 .np-route-method-reading{margin-top:5px}
+.np-route-method-reading>.np-route-method-field{display:inline;margin-right:12px}
+.np-task-route-group>h3,.np-task-route-group>.np-route-stamp{display:inline;margin-right:8px}
+.np-route-group-disclosure:not([open]){display:inline-block;vertical-align:middle;margin-left:4px}
+.np-route-group-disclosure[open]{display:block}
 .np-route-stamp{font-size:.8rem;color:var(--np-muted,#586674)}
 .np-route-stamp[data-route-association=condition],.np-route-stamp[data-route-association=context]{color:var(--np-ink,#334955);font-weight:600}
 .np-route-group-summary{font-size:.9rem}
