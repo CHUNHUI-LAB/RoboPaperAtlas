@@ -15,6 +15,23 @@ SPEC.loader.exec_module(MODULE)
 
 
 class ScreenshotChecks(unittest.TestCase):
+    def test_parallel_root_selector_preserves_tree_level_and_excludes_nested_groups(self):
+        driver = r"""
+const {JSDOM}=require('jsdom'),assert=require('node:assert/strict');
+const selector=JSON.parse(require('fs').readFileSync(0,'utf8'));
+const dom=new JSDOM('<section id="panel"><h3>Tree</h3><ul role="tree"><li role="treeitem" data-position="root"><ul role="group"><li role="treeitem" data-position="child"></li></ul></li></ul><div><ul role="tree"><li role="treeitem" data-position="unrelated"></li></ul></div></section>');
+try {
+ const p=dom.window.document.getElementById('panel');
+ assert.deepEqual([...p.querySelectorAll(selector)].map(n=>n.dataset.position),['root']);
+ assert.deepEqual([...p.querySelectorAll(':scope > [role=group] > [role=treeitem]')],[], 'old selector loses real tree roots');
+ p.querySelector(':scope > [role=tree]').setAttribute('role','group');
+ assert.deepEqual([...p.querySelectorAll(selector)],[], 'nested-group semantics must not substitute for a forest root');
+}finally{dom.window.close();}
+"""
+        result = subprocess.run(['node', '-e', driver], input=json.dumps(MODULE.PARALLEL_ROOT_SELECTOR),
+                                text=True, capture_output=True, cwd=Path(__file__).parents[1])
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_real_dom_status_selector_ignores_nested_new_tab_label(self):
         driver = r"""
 const {JSDOM}=require('jsdom'),assert=require('node:assert/strict');

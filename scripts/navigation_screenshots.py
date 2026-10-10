@@ -73,6 +73,9 @@ def check_reading_home(data):
         raise RuntimeError('All22 contracts and three headings must be fully readable on the unscrolled default screen')
 
 
+PARALLEL_ROOT_SELECTOR = ':scope > [role=tree] > [role=treeitem]'
+
+
 def check_parallel_scope(data):
     if data['scope'] != data['expectedScope'] or data['home']:
         raise RuntimeError('Task did not enter its own parallel reading view')
@@ -616,8 +619,8 @@ def main():
     def parallel_scope(scope):
         data = driver.js(VISUAL_GEOMETRY + """
           var a=NavigationProductApp,b=a.getBundle(),r=a.getState().route;
-          return {scope:r.scope,expectedScope:arguments[0],home:!document.getElementById('np-reading-landing').hidden,viewport:{x:0,y:0,width:innerWidth,height:innerHeight},panels:[...document.querySelectorAll('#np-tree [data-parallel-tree]')].map(e=>{var tree=e.dataset.parallelTree,roots=b.forests[r.scope][tree],h=e.querySelector('h3'),hb=box(h),q=hb.rect;return {tree:tree,scope:e.dataset.scopeId,roots:[...e.querySelectorAll(':scope > [role=group] > [role=treeitem]')].map(n=>n.dataset.position),expectedRoots:roots,expectedChildren:roots.some(id=>b.positions[id].childIds.length>0),children:[...e.querySelectorAll('[role=treeitem]')].filter(n=>!roots.includes(n.dataset.position)).map(n=>box(n.querySelector(':scope > .np-node-row'))),rect:rect(e),heading:q,headingVisible:hb.visible&&hb.opaque&&!hb.clipped};})};
-        """, scope)
+          return {scope:r.scope,expectedScope:arguments[0],home:!document.getElementById('np-reading-landing').hidden,viewport:{x:0,y:0,width:innerWidth,height:innerHeight},panels:[...document.querySelectorAll('#np-tree [data-parallel-tree]')].map(e=>{var tree=e.dataset.parallelTree,roots=b.forests[r.scope][tree],h=e.querySelector('h3'),hb=box(h),q=hb.rect;return {tree:tree,scope:e.dataset.scopeId,roots:[...e.querySelectorAll(arguments[1])].map(n=>n.dataset.position),expectedRoots:roots,expectedChildren:roots.some(id=>b.positions[id].childIds.length>0),children:[...e.querySelectorAll('[role=treeitem]')].filter(n=>!roots.includes(n.dataset.position)).map(n=>box(n.querySelector(':scope > .np-node-row'))),rect:rect(e),heading:q,headingVisible:hb.visible&&hb.opaque&&!hb.clipped};})};
+        """, scope, PARALLEL_ROOT_SELECTOR)
         report.setdefault('parallelScopeChecks', []).append(data)
         save()
         check_parallel_scope(data)
