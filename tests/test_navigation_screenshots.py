@@ -1842,5 +1842,132 @@ const report=new w.Function(input.stop)();assert.ok(report.errors.length);assert
 
 
 
+class ReturnClickDiagnosticChecks(unittest.TestCase):
+    def test_http_error_preserves_exception_and_exports_only_bounded_recognized_fields(self):
+        class Body(io.BytesIO):
+            def __init__(self, value): super().__init__(value); self.reads = []
+            def read(self, size=-1): self.reads.append(size); return super().read(size)
+        body = Body(json.dumps({'value': {'error': 'element click intercepted', 'message':
+            'element click intercepted: Element <button id="np-task-route-return" value="PRIVATE_HTML_TOKEN">SECRET_TEXT</button> is not clickable at point (701, 154). Other element would receive the click: <div data-token="PRIVATE_TOKEN">. https://site/?token=PRIVATE_URL_TOKEN Bearer PRIVATE_BEARER_TOKEN',
+            'stacktrace': 'PRIVATE_STACK', 'token': 'PRIVATE_JSON_TOKEN'}, 'extra': 'PRIVATE_EXTRA'}).encode())
+        original = MODULE.urllib.error.HTTPError('http://127.0.0.1/session/PRIVATE_SESSION', 400, 'Bad Request', {'Set-Cookie': 'PRIVATE_COOKIE'}, body)
+        driver = MODULE.Driver(1)
+        with patch.object(MODULE.urllib.request, 'urlopen', side_effect=original):
+            with self.assertRaises(MODULE.urllib.error.HTTPError) as caught:
+                driver.request('POST', '/session/PRIVATE_SESSION/element/PRIVATE_ELEMENT/click', {'private': 'PRIVATE_REQUEST'})
+        self.assertIs(caught.exception, original)
+        self.assertEqual(str(caught.exception), 'HTTP Error 400: Bad Request')
+        diagnostic = original.navigation_webdriver_diagnostic
+        self.assertEqual(body.reads, [MODULE.WEBDRIVER_HTTP_BODY_LIMIT + 1])
+        self.assertEqual(diagnostic['error'], 'element click intercepted')
+        self.assertIn('not clickable at point (701, 154)', diagnostic['message'])
+        self.assertIn('other element would receive the click', diagnostic['message'])
+        self.assertEqual(diagnostic['command'], '/session/:session/element/:element/click')
+        self.assertNotIn('PRIVATE', json.dumps(diagnostic)); self.assertNotIn('SECRET_TEXT', json.dumps(diagnostic))
+        self.assertNotIn('<', diagnostic['message']); self.assertNotIn('headers', diagnostic)
+
+    def test_http_error_non_json_oversize_shape_and_diagnostic_failures_fail_closed(self):
+        cases = [b'<html>PRIVATE_NON_JSON</html>', b'x' * (MODULE.WEBDRIVER_HTTP_BODY_LIMIT + 1),
+                 b'{}', b'[]', b'{"value":null}', b'{"value":{"error":[]}}',
+                 b'{"value":{"error":17}}', b'{"value":{"error":"PRIVATE_UNKNOWN"}}',
+                 b'{"value":{"error":"unknown error","message":"PRIVATE_UNKNOWN_MESSAGE"}}',
+                 b'{"value":{"error":"unknown error","message":[]}}']
+        for raw in cases:
+            original = MODULE.urllib.error.HTTPError('http://localhost/private', 400, 'Bad Request', {}, io.BytesIO(raw))
+            with self.subTest(raw_type=raw[:20]), patch.object(MODULE.urllib.request, 'urlopen', side_effect=original):
+                with self.assertRaises(MODULE.urllib.error.HTTPError) as caught:
+                    MODULE.Driver(1).request('POST', '/PRIVATE_UNRECOGNIZED?token=PRIVATE_TOKEN')
+                self.assertIs(caught.exception, original)
+                diagnostic = original.navigation_webdriver_diagnostic
+                self.assertEqual(diagnostic['httpStatus'], 400)
+                self.assertNotIn('PRIVATE', json.dumps(diagnostic)); self.assertNotIn('body', diagnostic)
+                self.assertEqual(diagnostic['truncated'], len(raw) > MODULE.WEBDRIVER_HTTP_BODY_LIMIT)
+                if diagnostic['truncated']: self.assertNotIn('error', diagnostic); self.assertNotIn('message', diagnostic)
+        class BrokenBody:
+            def read(self, size): raise ValueError('PRIVATE_READ_ERROR')
+            def close(self): pass
+        for failure in ('read', 'decoder'):
+            original = MODULE.urllib.error.HTTPError('http://localhost/', 400, 'Bad Request', {}, BrokenBody() if failure == 'read' else io.BytesIO(b'{}'))
+            with patch.object(MODULE.urllib.request, 'urlopen', side_effect=original):
+                with patch.object(MODULE, 'webdriver_http_diagnostic', side_effect=ValueError('PRIVATE_DECODER_ERROR')) if failure == 'decoder' else patch.object(MODULE.json, 'loads', wraps=MODULE.json.loads):
+                    with self.assertRaises(MODULE.urllib.error.HTTPError) as caught: MODULE.Driver(1).request('POST', '/session')
+            self.assertIs(caught.exception, original)
+            self.assertNotIn('PRIVATE', json.dumps(getattr(original, 'navigation_webdriver_diagnostic', {})))
+
+    def test_current_action_http_error_survives_different_error_during_after_snapshot(self):
+        import copy
+        errors = [MODULE.urllib.error.HTTPError('http://localhost/', 400, 'Bad Request', {}, io.BytesIO(json.dumps({'value': {'error': code, 'message': code}}).encode()))
+                  for code in ('element click intercepted', 'javascript error')]
+        native = MODULE.Driver(1)
+        class Driver:
+            def __init__(self): self.calls = 0
+            def js(self, script, *args):
+                if script == MODULE.TASK_ROUTE_RETURN_SNAPSHOT_JS:
+                    self.calls += 1
+                    if self.calls == 1: return {'returnClickDiagnostic': {'before': True}}
+                    return native.request('POST', '/session/opaque/execute/sync')
+                return {'origin': 'diagnostic'}
+            def settle(self): pass
+        record, saved = {}, []
+        with patch.object(MODULE.urllib.request, 'urlopen', side_effect=errors):
+            with self.assertRaises(MODULE.urllib.error.HTTPError) as caught:
+                MODULE.transition_record(Driver(), record, lambda: saved.append(copy.deepcopy(record)), 'relation-to-task',
+                                         lambda: native.request('POST', '/session/opaque/element/opaque/click'))
+        self.assertIs(caught.exception, errors[0])
+        phase = saved[-1]['transitions'][0]
+        self.assertEqual(phase['webdriverError']['error'], 'element click intercepted')
+        self.assertEqual(errors[1].navigation_webdriver_diagnostic['error'], 'javascript error')
+        self.assertEqual(errors[0].navigation_webdriver_diagnostic['error'], 'element click intercepted')
+        self.assertIn('afterError', phase)
+        self.assertEqual(phase['before']['returnClickDiagnostic'], {'before': True})
+
+    def test_return_button_geometry_reports_sticky_hit_without_actions_or_text(self):
+        script = r"""
+const {JSDOM}=require('jsdom'),assert=require('node:assert/strict'),input=JSON.parse(require('fs').readFileSync(0,'utf8'));
+const dom=new JSDOM('<style>*{display:block;opacity:1;visibility:visible} .np-reader-heading{position:sticky}</style><main id="navigation-product"><div id="np-tree-scroll"></div><aside id="np-detail-scroll"><div class="np-reader-heading">PRIVATE_HEADER_TEXT</div><section><button id="np-task-route-return" class="np-return" value="PRIVATE_VALUE">PRIVATE_BUTTON_TEXT</button></section></aside></main>',{url:'https://example.org/',runScripts:'outside-only'});
+try{const w=dom.window,d=w.document,reader=d.getElementById('np-detail-scroll'),button=d.getElementById('np-task-route-return'),header=d.querySelector('.np-reader-heading');
+const rect=(x,y,width,height)=>({x,y,width,height,left:x,top:y,right:x+width,bottom:y+height});let headerHeight=45;
+for(const e of d.querySelectorAll('*')){e.getBoundingClientRect=()=>e===button?rect(620,145,300,38):e===header?rect(600,126,808,headerHeight):rect(600,126,808,672);e.getClientRects=()=>[e.getBoundingClientRect()];
+for(const [key,value] of Object.entries({clientLeft:0,clientTop:0,clientWidth:808,clientHeight:672,scrollTop:53,scrollLeft:0,scrollHeight:1000}))Object.defineProperty(e,key,{get:()=>value,set:()=>{throw Error('diagnostic write '+key);}});
+for(const name of ['click','focus','scrollIntoView'])e[name]=()=>{throw Error('diagnostic action '+name);};}
+Object.defineProperties(w,{innerWidth:{value:1440},innerHeight:{value:900},scrollX:{value:0},scrollY:{value:0}});
+d.elementFromPoint=(x,y)=>y<126+headerHeight?header:button;d.elementsFromPoint=(x,y)=>[d.elementFromPoint(x,y),reader];
+const run=new w.Function(input.script+';return relationReturnClickDiagnostic();'),beforeHTML=d.documentElement.outerHTML,beforeHistory=JSON.stringify(w.history.state),covered=run();
+assert.equal(covered.count,1);assert.equal(covered.button.computedVisible,true);assert.equal(covered.points.length,5);assert.equal(covered.points[0].hitsTarget,false);assert.equal(covered.points[0].top.className,'np-reader-heading');assert.equal(covered.points[0].inEffectiveReader,false);
+assert.equal(covered.points[3].hitsTarget,true);assert.equal(covered.points[3].inEffectiveReader,true);assert.equal(covered.effectiveReader.y,171);assert.equal(covered.scroll.reader.top,53);
+assert.ok(!JSON.stringify(covered).includes('PRIVATE'));assert.equal(d.documentElement.outerHTML,beforeHTML);assert.equal(JSON.stringify(w.history.state),beforeHistory);
+headerHeight=20;const clear=run();assert.equal(clear.points[0].hitsTarget,true);assert.equal(clear.points[0].inEffectiveReader,true);
+d.getElementById('navigation-product').style.opacity='0';assert.equal(run().button.computedVisible,false);d.getElementById('navigation-product').style.opacity='1';button.disabled=true;assert.equal(run().button.disabled,true);
+button.remove();const missing=run();assert.equal(missing.count,0);assert.equal(missing.button,null);assert.deepEqual(JSON.parse(JSON.stringify(missing.points)),[]);
+}finally{dom.window.close();}
+"""
+        result = subprocess.run(['node', '-e', script], input=json.dumps({'script': MODULE.TASK_ROUTE_DIAGNOSTIC_JS}),
+                                cwd=Path(__file__).parents[1], text=True, capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_relation_to_task_retains_native_click_wait_and_one_before_after_snapshot(self):
+        import ast, inspect
+        source = inspect.getsource(MODULE.task_route_checks)
+        function = ast.parse(source).body[0]
+        calls = [n for n in ast.walk(function) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'transition_record'
+                 and len(n.args) > 3 and isinstance(n.args[3], ast.Constant) and n.args[3].value == 'relation-to-task']
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(ast.unparse(calls[0].args[4]), "lambda: driver.click(driver.selector('#np-task-route-return'))")
+        self.assertIn('document.activeElement.id===arguments[0]', ast.unparse(calls[0].args[5]))
+        self.assertEqual(MODULE.TASK_ROUTE_RETURN_SNAPSHOT_JS,
+                         MODULE.TASK_ROUTE_SNAPSHOT_JS.replace('return {route:s.route,', 'return {returnClickDiagnostic:relationReturnClickDiagnostic(),route:s.route,', 1))
+        self.assertNotIn('returnClickDiagnostic:relationReturnClickDiagnostic()', MODULE.TASK_ROUTE_SNAPSHOT_JS)
+        class Driver:
+            def __init__(self): self.scripts = []; self.actions = 0
+            def js(self, script, *args): self.scripts.append(script); return {}
+            def settle(self): pass
+        driver = Driver()
+        MODULE.transition_record(driver, {}, lambda: None, 'relation-to-task', lambda: setattr(driver, 'actions', driver.actions + 1), lambda: True)
+        self.assertEqual(driver.actions, 1)
+        self.assertEqual(driver.scripts.count(MODULE.TASK_ROUTE_RETURN_SNAPSHOT_JS), 2)
+        self.assertNotIn(MODULE.TASK_ROUTE_SNAPSHOT_JS, driver.scripts)
+
+
+
 if __name__ == '__main__':
     unittest.main()

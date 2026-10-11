@@ -22,6 +22,7 @@ import subprocess
 import threading
 import time
 import urllib.request
+import urllib.error
 import urllib.parse
 import zlib
 
@@ -253,6 +254,66 @@ def wait_for(check, timeout=45):
     raise TimeoutError('Browser condition did not become ready within bounded wait')
 
 
+WEBDRIVER_HTTP_BODY_LIMIT = 16384
+WEBDRIVER_ERRORS = frozenset((
+    'element click intercepted', 'element not interactable', 'insecure certificate',
+    'invalid argument', 'invalid cookie domain', 'invalid element state', 'invalid selector',
+    'invalid session id', 'javascript error', 'move target out of bounds', 'no such alert',
+    'no such cookie', 'no such element', 'no such frame', 'no such shadow root', 'no such window',
+    'script timeout', 'session not created', 'stale element reference', 'timeout',
+    'unable to capture screen', 'unable to set cookie', 'unexpected alert open',
+    'unknown command', 'unknown error', 'unknown method', 'unsupported operation',
+))
+
+
+def webdriver_http_diagnostic(error, method, path):
+    """Read one bounded response; export only recognized diagnostic vocabulary."""
+    commands = (r'/session', r'/session/[^/]+', r'/session/[^/]+/element/[^/]+/click',
+                r'/session/[^/]+/(?:element|elements|back|forward|refresh|screenshot|log|actions)',
+                r'/session/[^/]+/(?:execute/(?:sync|async)|goog/cdp/execute)')
+    command = '[unrecognized command]'
+    if any(re.fullmatch(pattern, path) for pattern in commands):
+        command = re.sub(r'^/session/[^/]+', '/session/:session', path)
+        command = re.sub(r'/element/[^/]+/click$', '/element/:element/click', command)
+    result = {'httpStatus': error.code if type(error.code) is int else None,
+              'method': method if method in ('GET', 'POST', 'DELETE') else 'OTHER',
+              'command': command, 'bodyReadLimit': WEBDRIVER_HTTP_BODY_LIMIT, 'truncated': False}
+    try:
+        body = error.read(WEBDRIVER_HTTP_BODY_LIMIT + 1)
+        if len(body) > WEBDRIVER_HTTP_BODY_LIMIT:
+            result['truncated'] = True
+            return result
+        payload = json.loads(body)
+        value = payload.get('value') if isinstance(payload, dict) else None
+        if not isinstance(value, dict) or not isinstance(value.get('error'), str) or value['error'] not in WEBDRIVER_ERRORS:
+            result['unrecognizedResponse'] = True
+            return result
+        result['error'] = value['error']
+        if isinstance(value.get('message'), str):
+            message = value['message'].lower()
+            # Do not export arbitrary plain text, HTML attributes, URLs, stack
+            # traces or token-like strings, even if they occur in `message`.
+            parts = [value['error']]
+            recognized = value['error'] in message
+            point = re.search(r'not clickable at point\s*\(\s*(-?\d{1,7}(?:\.\d{1,3})?),\s*(-?\d{1,7}(?:\.\d{1,3})?)\s*\)', message)
+            if point:
+                recognized = True
+                parts.append('not clickable at point (' + point[1] + ', ' + point[2] + ')')
+            for phrase in ('other element would receive the click', 'element is not attached to the page document',
+                           'element has zero size', 'element is outside of the viewport', 'target frame detached'):
+                if phrase in message:
+                    recognized = True
+                    parts.append(phrase)
+            result['message'] = '; '.join(parts)[:512] if recognized else '[unrecognized message omitted]'
+            result['messageRedacted'] = True
+        else:
+            result['messageOmitted'] = True
+    except Exception:
+        # Diagnostic failure must never replace the HTTPError being investigated.
+        result['diagnosticUnavailable'] = True
+    return result
+
+
 class Driver:
     def __init__(self, port):
         self.url = f'http://127.0.0.1:{port}'
@@ -262,8 +323,15 @@ class Driver:
         raw = None if data is None else json.dumps(data).encode()
         req = urllib.request.Request(self.url + path, data=raw, method=method,
                                      headers={'Content-Type': 'application/json'})
-        with urllib.request.urlopen(req, timeout=50) as response:
-            value = json.load(response)['value']
+        try:
+            with urllib.request.urlopen(req, timeout=50) as response:
+                value = json.load(response)['value']
+        except urllib.error.HTTPError as exc:
+            try:
+                exc.navigation_webdriver_diagnostic = webdriver_http_diagnostic(exc, method, path)
+            except Exception:
+                pass
+            raise
         if isinstance(value, dict) and value.get('error'):
             raise RuntimeError(value['error'] + ': ' + value.get('message', ''))
         return value
@@ -647,6 +715,39 @@ if(window.navigation?.currentEntry?.key!==wanted.historyEntryKey||current.revisi
 
 
 TASK_ROUTE_DIAGNOSTIC_JS = r"""
+function relationReturnClickDiagnostic(){
+  var nodes=document.querySelectorAll('#np-task-route-return'),button=nodes[0],reader=document.getElementById('np-detail-scroll'),
+      header=reader&&reader.querySelector('.np-reader-heading'),tree=document.getElementById('np-tree-scroll');
+  function rect(e){if(!e)return null;var r=e.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};}
+  function intersect(a,b){var x=Math.max(a.x,b.x),y=Math.max(a.y,b.y);return {x:x,y:y,width:Math.max(0,Math.min(a.x+a.width,b.x+b.width)-x),height:Math.max(0,Math.min(a.y+a.height,b.y+b.height)-y)};}
+  function identity(e){if(!e)return null;var id=e.id||'',cls=typeof e.className==='string'?e.className:'';return {tag:e.tagName,id:id.slice(0,256)||null,className:cls.slice(0,256)||null,identityTruncated:id.length>256||cls.length>256};}
+  function position(e){return e?{top:e.scrollTop,left:e.scrollLeft,clientHeight:e.clientHeight,scrollHeight:e.scrollHeight}:null;}
+  var viewport={x:0,y:0,width:innerWidth,height:innerHeight},rr=rect(reader),hr=rect(header),br=rect(button),
+      client=reader&&{x:rr.x+reader.clientLeft,y:rr.y+reader.clientTop,width:reader.clientWidth,height:reader.clientHeight},
+      visible=client&&intersect(client,viewport),effective=visible&&Object.assign({},visible),hs=header&&getComputedStyle(header),
+      headerVisible=!!(header&&hr.width>0&&hr.height>0&&hs.display!=='none'&&hs.visibility!=='hidden'&&parseFloat(hs.opacity)>0);
+  if(effective&&headerVisible&&(hs.position==='sticky'||hs.position==='fixed')&&intersect(hr,visible).height>0){
+    var bottom=effective.y+effective.height;effective.y=Math.max(effective.y,hr.y+hr.height);effective.height=Math.max(0,bottom-effective.y);}
+  var chain=[],computedVisible=!!(button&&br.width>0&&br.height>0),n=button;
+  while(n&&n.nodeType===1&&chain.length<10){var cs=getComputedStyle(n);chain.push({element:identity(n),rect:rect(n),display:cs.display,visibility:cs.visibility,opacity:cs.opacity,pointerEvents:cs.pointerEvents,overflowX:cs.overflowX,overflowY:cs.overflowY});
+    if(cs.display==='none'||cs.visibility==='hidden'||cs.visibility==='collapse'||parseFloat(cs.opacity)===0)computedVisible=false;
+    n=n.parentElement;}
+  function contains(r,p){return !!r&&p.x>=r.x&&p.x<r.x+r.width&&p.y>=r.y&&p.y<r.y+r.height;}
+  function hit(name,x,y){var point={x:x,y:y},inside=contains(viewport,point),top=inside?document.elementFromPoint(x,y):null,
+      stack=inside&&typeof document.elementsFromPoint==='function'?document.elementsFromPoint(x,y).slice(0,5):[];
+    return {name:name,x:x,y:y,inViewport:inside,inReader:contains(visible,point),inEffectiveReader:contains(effective,point),
+      hitsTarget:!!(top&&button&&(top===button||button.contains(top))),top:identity(top),stack:stack.map(identity)};}
+  var points=br?[hit('center',br.x+br.width/2,br.y+br.height/2),hit('upper-left',br.x+br.width*.2,br.y+br.height*.2),
+    hit('upper-right',br.x+br.width*.8,br.y+br.height*.2),hit('lower-left',br.x+br.width*.2,br.y+br.height*.8),hit('lower-right',br.x+br.width*.8,br.y+br.height*.8)]:[];
+  var inView=br&&intersect(br,viewport);
+  return {time:performance.now(),limitation:'Geometry reads can force layout; hit samples alone do not identify the WebDriver failure.',
+    count:nodes.length,button:button?{element:identity(button),rect:br,computedVisible:computedVisible,disabled:button.disabled,hidden:button.hidden,
+      clientRects:[...button.getClientRects()].slice(0,5).map(r=>({x:r.x,y:r.y,width:r.width,height:r.height}))}:null,
+    viewport:viewport,reader:rr,readerClient:client,readerVisible:visible,effectiveReader:effective,
+    sticky:header?{element:identity(header),rect:hr,position:hs.position,visible:headerVisible}:null,
+    scroll:{window:{x:scrollX,y:scrollY},reader:position(reader),tree:position(tree)},ancestors:chain,ancestorLimitReached:!!n&&chain.length===10,
+    points:points,inViewCenter:inView&&inView.width>0&&inView.height>0?hit('viewport-clipped-center',inView.x+inView.width/2,inView.y+inView.height/2):null};
+}
 function taskRouteDiagnostic(api,model,state,reader,panel){
   function rect(node){if(!node)return null;var r=node.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};}
   function geometry(node){
@@ -737,6 +838,11 @@ return {route:s.route,position:identity(p),ready:document.querySelector('[data-l
   analysisEntry:reader.querySelector('[data-analysis-state]')?{state:reader.querySelector('[data-analysis-state]').dataset.analysisState,paper:reader.querySelector('[data-analysis-state]').dataset.analysisPaper,version:reader.querySelector('[data-analysis-state]').dataset.analysisVersion}:null,
   widths:{canvas:tree.getBoundingClientRect().width,tree:host.getBoundingClientRect().width,forest:host.querySelector('[data-parallel-tree]')?.getBoundingClientRect().width||0,reader:reader.getBoundingClientRect().width}};
 """
+
+
+# Same snapshot round trip and original action timing; only this transition reads hit geometry.
+TASK_ROUTE_RETURN_SNAPSHOT_JS = TASK_ROUTE_SNAPSHOT_JS.replace(
+    'return {route:s.route,', 'return {returnClickDiagnostic:relationReturnClickDiagnostic(),route:s.route,', 1)
 
 
 def task_route_expected(science):
@@ -880,7 +986,8 @@ def check_task_route_return(before, after, expected_control):
 
 def transition_record(driver, record, save, kind, action, ready=None):
     """Save before/after even on action failure; never replace the original error."""
-    phase = {'kind': kind, 'before': driver.js(TASK_ROUTE_SNAPSHOT_JS)}
+    snapshot_script = TASK_ROUTE_RETURN_SNAPSHOT_JS if kind == 'relation-to-task' else TASK_ROUTE_SNAPSHOT_JS
+    phase = {'kind': kind, 'before': driver.js(snapshot_script)}
     record.setdefault('transitions', []).append(phase)
     save()
     completed = False
@@ -890,9 +997,13 @@ def transition_record(driver, record, save, kind, action, ready=None):
             wait_for(ready)
         driver.settle()
         completed = True
+    except Exception as exc:
+        if isinstance(exc, urllib.error.HTTPError) and hasattr(exc, 'navigation_webdriver_diagnostic'):
+            phase['webdriverError'] = exc.navigation_webdriver_diagnostic
+        raise
     finally:
         diagnostic_error = None
-        for name, script in (('after', TASK_ROUTE_SNAPSHOT_JS), ('origin', 'var trail=NavigationProductApp.getState().originTrail;return trail[trail.length-1]')):
+        for name, script in (('after', snapshot_script), ('origin', 'var trail=NavigationProductApp.getState().originTrail;return trail[trail.length-1]')):
             try:
                 phase[name] = driver.js(script)
             except Exception as exc:
@@ -2291,6 +2402,8 @@ def main():
     except Exception as exc:
         report['status'] = 'failed'
         report['error'] = str(exc)[:2000]
+        if isinstance(exc, urllib.error.HTTPError) and hasattr(exc, 'navigation_webdriver_diagnostic'):
+            report['webdriverError'] = exc.navigation_webdriver_diagnostic
         if driver and driver.session:
             try:
                 (out / 'failure.png').write_bytes(base64.b64decode(driver.call('GET', '/screenshot')))
