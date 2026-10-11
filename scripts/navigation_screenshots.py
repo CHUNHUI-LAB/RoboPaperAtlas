@@ -1258,6 +1258,86 @@ def relation_history_checks(driver, record, save, before, selected):
         check_relation_history_restore(expected, phase['after'], focus, selected['historyLength'])
 
 
+TASK_OVERVIEW_RETURN_WAIT_JS = r"""
+var disclosure=document.getElementById('np-task-route-relations');
+if(!disclosure||disclosure.open||document.querySelector('[data-selected-task-relation]'))return false;
+""" + TASK_ROUTE_RETURN_WAIT_JS
+
+
+def task_return_state_with_focus(state, route, focus):
+    """Only the native clicked control changes focus in the saved predecessor."""
+    result = json.loads(json.dumps(state))
+    key = json.dumps([route.get(k) for k in ('scope', 'bench', 'protocol', 'paper', 'version', 'template')], separators=(',', ':'), ensure_ascii=False)
+    neutral = json.dumps([route.get(k) for k in ('scope', 'bench', 'protocol')] + [None, None, None], separators=(',', ':'), ensure_ascii=False)
+    result['contexts'][key]['focusTarget'] = focus
+    result['contexts'][neutral]['taskView']['focusTargetByTree'][route['tree']] = focus
+    return result
+
+
+def check_task_overview_return(before, after):
+    """Permit only the explicit relationship-to-overview presentation change."""
+    same = lambda a, b: json.dumps(a, sort_keys=True) == json.dumps(b, sort_keys=True)
+    tree = before['route']['tree']
+    if tree not in ('l', 'c') or before['selectedRelation'] != 'methods:relation:90' or before['relationDisclosure']['open'] is not True:
+        raise RuntimeError('Overview return did not begin at the selected open relation')
+    for value in (before, after):
+        if (not isinstance(value['historyEntryKey'], str) or not value['historyEntryKey'] or
+                type(value['historyLength']) is not int or value['historyLength'] < 1 or
+                any(type(value[name]['revision']) is not int for name in ('runtime', 'persisted')) or
+                any(not same(value[name]['route'], value['route']) for name in ('runtime', 'persisted')) or
+                value['runtime']['revision'] != value['persisted']['revision']):
+            raise RuntimeError('Overview return lacks exact native history entry and revision')
+    if (before['historyEntryKey'] == after['historyEntryKey'] or
+            after['historyLength'] not in (before['historyLength'], before['historyLength'] + 1)):
+        raise RuntimeError('Overview return replaced its browser history entry')
+    for key in ('route', 'position', 'expanded', 'selected', 'window', 'scale', 'readerHidden'):
+        if not same(before[key], after[key]):
+            raise RuntimeError('Overview return changed preserved ' + key)
+    if (after['selectedRelation'] is not None or after['focus'] != 'np-task-route-relations-summary' or
+            after['relationDisclosure']['open'] is not False or after['readerLists'] != 0 or
+            after['readerHidden'] is not False or
+            any(type(after['treeScroll'][axis]) not in (int, float) or after['treeScroll'][axis] != 0 for axis in ('top', 'left')) or
+            type(after['readerScroll']['top']) not in (int, float) or after['readerScroll']['top'] != 0 or
+            after['readerScroll']['left'] != before['readerScroll']['left']):
+        raise RuntimeError('Overview return did not expose the collapsed task at its summary')
+    overview = json.loads(json.dumps(before['relationOverview']))
+    overview[tree] = {'route': before['route'], 'open': False}
+    view = json.loads(json.dumps(before['relationView'])); view[tree] = None
+    disclosure = dict(before['relationDisclosure'], open=False)
+    for expected, actual in ((overview, after['relationOverview']), (view, after['relationView']), (disclosure, after['relationDisclosure'])):
+        if not same(expected, actual):
+            raise RuntimeError('Overview return changed unrelated relation presentation')
+    key = json.dumps([before['route'].get(k) for k in ('scope', 'bench', 'protocol', 'paper', 'version', 'template')], separators=(',', ':'), ensure_ascii=False)
+    for name in ('runtime', 'persisted'):
+        expected = task_return_state_with_focus(before[name], before['route'], after['focus'])
+        expected['revision'] += 1
+        bucket = expected['contexts'][key]
+        bucket['relationViewByTree'][tree] = None
+        bucket['relationOverviewByTree'][tree] = {'route': before['route'], 'open': False}
+        bucket['treeScrollByTree'][tree] = 0
+        bucket['treeScrollLeftByTree'][tree] = 0
+        bucket['detailScrollByTree'][tree] = 0
+        if not same(expected, after[name]):
+            raise RuntimeError('Overview return changed unrelated ' + name + ' state or a strict field type')
+    check_exploration_restore(after, after, inactive_before=before)
+
+
+def task_overview_history_checks(driver, record, save, before, collapsed):
+    """Explicit return collapses; browser traversal restores each exact presentation."""
+    check_task_overview_return(before, collapsed)
+    for direction, expected, focus in (('back', before, 'np-task-route-return'),
+                                       ('forward', collapsed, 'np-task-route-relations-summary')):
+        phase = transition_record(driver, record, save, 'browser-' + direction + '-task-overview-return',
+            lambda d=direction: driver.call('POST', '/' + d, {}),
+            lambda e=expected, f=focus: driver.js(TASK_RELATION_HISTORY_WAIT_JS, e['route'], f, e))
+        restored = phase['after']
+        check_relation_history_restore(expected, restored, focus, collapsed['historyLength'])
+        for name in ('runtime', 'persisted'):
+            wanted = task_return_state_with_focus(expected[name], expected['route'], focus)
+            if json.dumps(wanted, sort_keys=True) != json.dumps(restored[name], sort_keys=True):
+                raise RuntimeError('Overview history traversal changed exact ' + name + ' state')
+
+
 def task_route_checks(driver, report, save, capture, prefix, base, science, server=None, dist=None):
     """Actual active-tree traversal, selected relation, method, claim and return."""
     expected = task_route_expected(science)
@@ -1413,9 +1493,13 @@ def task_route_checks(driver, report, save, capture, prefix, base, science, serv
     check_exploration_restore(restored_relation, snapshot())
     cold_relation_refresh_comparison(driver, record, save, restored_relation,
         lambda: driver.js("return !!window.NavigationProductApp&&document.querySelector('[data-selected-task-relation=\"methods:relation:90\"]')&&document.querySelector('[data-relation-state]')?.dataset.relationState==='ready'"))
-    transition_record(driver, record, save, 'relation-to-task', lambda: driver.click(driver.selector('#np-task-route-return')),
-        lambda: driver.js("return !document.querySelector('[data-selected-task-relation]')&&document.activeElement.id===arguments[0]", 'np-task-change-task:category-objectnav-methods:relation:90'))
-    scene('-26-return-objectnav-task', [{'selector': selector, 'region': 'canvas'}], scroll=False)
+    returned = transition_record(driver, record, save, 'relation-to-task', lambda: driver.click(driver.selector('#np-task-route-return')),
+        lambda: driver.js(TASK_OVERVIEW_RETURN_WAIT_JS, restored_relation['route'], 'np-task-route-relations-summary'))
+    check_task_overview_return(returned['before'], returned['after'])
+    scene('-26-return-objectnav-task', [{'selector': '#np-task-route-relations-summary', 'region': 'canvas'},
+        {'selector': tree_label_selector(restored_relation['route']['node']), 'region': 'canvas',
+         'text': science['positions'][restored_relation['route']['node']]['label']}], scroll=False)
+    task_overview_history_checks(driver, record, save, returned['before'], returned['after'])
     transition_record(driver, record, save, 'task-to-global', lambda: driver.click(driver.selector('[data-tree-tab="g"]')),
         lambda: driver.js('return !document.getElementById("np-reading-landing").hidden'))
     if driver.js('return NavigationProductApp.getState().route.paper') is not None:

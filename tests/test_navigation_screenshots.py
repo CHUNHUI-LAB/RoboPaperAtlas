@@ -1953,7 +1953,8 @@ button.remove();const missing=run();assert.equal(missing.count,0);assert.equal(m
                  and len(n.args) > 3 and isinstance(n.args[3], ast.Constant) and n.args[3].value == 'relation-to-task']
         self.assertEqual(len(calls), 1)
         self.assertEqual(ast.unparse(calls[0].args[4]), "lambda: driver.click(driver.selector('#np-task-route-return'))")
-        self.assertIn('document.activeElement.id===arguments[0]', ast.unparse(calls[0].args[5]))
+        self.assertIn('TASK_OVERVIEW_RETURN_WAIT_JS', ast.unparse(calls[0].args[5]))
+        self.assertTrue(MODULE.TASK_OVERVIEW_RETURN_WAIT_JS.endswith(MODULE.TASK_ROUTE_RETURN_WAIT_JS))
         self.assertEqual(MODULE.TASK_ROUTE_RETURN_SNAPSHOT_JS,
                          MODULE.TASK_ROUTE_SNAPSHOT_JS.replace('return {route:s.route,', 'return {returnClickDiagnostic:relationReturnClickDiagnostic(),route:s.route,', 1))
         self.assertNotIn('returnClickDiagnostic:relationReturnClickDiagnostic()', MODULE.TASK_ROUTE_SNAPSHOT_JS)
@@ -1967,6 +1968,177 @@ button.remove();const missing=run();assert.equal(missing.count,0);assert.equal(m
         self.assertEqual(driver.scripts.count(MODULE.TASK_ROUTE_RETURN_SNAPSHOT_JS), 2)
         self.assertNotIn(MODULE.TASK_ROUTE_SNAPSHOT_JS, driver.scripts)
 
+
+
+class TaskOverviewReturnChecks(unittest.TestCase):
+    @staticmethod
+    def snapshots():
+        import copy
+        route = dict(nav='1', scope='task:category-objectnav', tree='l', node='pos:l:74abdf1c989032e2d82e82',
+                     paper=None, version=None, bench=None, protocol=None, template=None, claim=None, mode='tree')
+        key = json.dumps([route[k] for k in ('scope', 'bench', 'protocol', 'paper', 'version', 'template')], separators=(',', ':'))
+        focus = 'np-task-change-target-task:category-objectnav-methods:relation:90-pos:l:98bc421b8bfd17d6699922'
+        view = {'schema': 1, 'lastRouteByTree': {'l': route, 'c': {'tree': 'c', 'node': 'prior-challenge'}},
+                'focusTargetByTree': {'l': focus, 'c': 'prior-challenge-focus'}}
+        overview = {'l': {'route': route, 'open': True}, 'c': {'route': {'tree': 'c'}, 'open': True}}
+        relation = {'l': {'id': 'methods:relation:90', 'route': route}, 'c': None}
+        bucket = {'focusTarget': focus, 'taskView': view, 'relationOverviewByTree': overview, 'relationViewByTree': relation,
+                  'expandedByTree': {'l': [route['node'], 'prior-group'], 'c': ['prior-challenge']},
+                  'treeScrollByTree': {'l': 120, 'c': 83}, 'treeScrollLeftByTree': {'l': 17, 'c': 3},
+                  'detailScrollByTree': {'l': 70, 'c': 61}, 'graphScale': 1, 'windowScroll': 88}
+        runtime = {'route': route, 'revision': 5, 'contexts': {key: bucket, 'other': {'focusTarget': 'retained'}},
+                   'originTrail': [{'route': {'scope': 'scope:all'}, 'bucket': {'focusTarget': 'origin'}}]}
+        before = {'route': route, 'position': {'id': route['node'], 'entity': route['scope'], 'kind': 'task'},
+                  'selectedRelation': 'methods:relation:90', 'expanded': bucket['expandedByTree'], 'selected': [route['node']],
+                  'relationOverview': overview, 'relationView': relation, 'scale': 1, 'treeScroll': {'top': 120, 'left': 17},
+                  'readerScroll': {'top': 70, 'left': 0}, 'window': {'x': 0, 'y': 88}, 'focus': focus,
+                  'relationDisclosure': {'id': 'np-task-route-relations', 'summary': 'np-task-route-relations-summary', 'open': True,
+                                         'beforeTree': True, 'insideTree': False, 'tag': 'DETAILS', 'current': '5', 'outside': '2'},
+                  'readerHidden': False, 'readerLists': 0, 'taskView': view, 'treeCount': 1, 'forestCount': 1,
+                  'rovingCount': 1, 'inactiveItemCount': 0, 'runtime': runtime, 'persisted': copy.deepcopy(runtime),
+                  'historyEntryKey': 'native-relation-fixture', 'historyLength': 50}
+        after = copy.deepcopy(before)
+        after.update(focus='np-task-route-relations-summary', selectedRelation=None, historyEntryKey='native-task-fixture')
+        after['treeScroll'] = {'top': 0, 'left': 0}; after['readerScroll']['top'] = 0
+        after['relationDisclosure']['open'] = False
+        after['relationOverview']['l']['open'] = False; after['relationView']['l'] = None
+        after['taskView']['focusTargetByTree']['l'] = after['focus']
+        after['runtime']['revision'] = 6
+        after['runtime']['contexts'][key].update(focusTarget=after['focus'])
+        after['runtime']['contexts'][key]['treeScrollByTree']['l'] = 0
+        after['runtime']['contexts'][key]['treeScrollLeftByTree']['l'] = 0
+        after['runtime']['contexts'][key]['detailScrollByTree']['l'] = 0
+        after['persisted'] = copy.deepcopy(after['runtime'])
+        back = copy.deepcopy(before); back['focus'] = 'np-task-route-return'
+        back['taskView']['focusTargetByTree']['l'] = back['focus']
+        back['runtime']['contexts'][key]['focusTarget'] = back['focus']
+        back['persisted'] = copy.deepcopy(back['runtime'])
+        return before, after, back, copy.deepcopy(after)
+
+    def test_explicit_return_allows_only_collapsed_current_presentation_and_new_entry(self):
+        import copy
+        before, after, _, _ = self.snapshots()
+        MODULE.check_task_overview_return(before, after)
+        mutations = [lambda x: x['relationDisclosure'].update(open=True), lambda x: x.update(focus='np-task-change-task:category-objectnav-methods:relation:90'),
+                     lambda x: x.update(selectedRelation='methods:relation:90'), lambda x: x['treeScroll'].update(top=1),
+                     lambda x: x['treeScroll'].update(left=1), lambda x: x['readerScroll'].update(top=70),
+                     lambda x: x['window'].update(y=0), lambda x: x.update(scale=.9), lambda x: x.update(readerHidden=True),
+                     lambda x: x.update(readerLists=1), lambda x: x['expanded']['l'].clear(),
+                     lambda x: x['relationOverview']['c'].update(open=False), lambda x: x['relationView'].update(c={'id': 'wrong'}),
+                     lambda x: x['taskView']['focusTargetByTree'].update(c='stolen'),
+                     lambda x: x['taskView']['focusTargetByTree'].update(l='wrong-current-copy'),
+                     lambda x: x['taskView']['lastRouteByTree'].update(c={'tree': 'c', 'node': 'changed'}),
+                     lambda x: x.update(historyEntryKey=before['historyEntryKey']), lambda x: x.update(historyLength=True)]
+        for name in ('runtime', 'persisted'):
+            mutations += [lambda x, n=name: x[n].update(revision=True), lambda x, n=name: x[n].update(revision=7),
+                          lambda x, n=name: x[n]['contexts']['other'].update(focusTarget='changed'),
+                          lambda x, n=name: x[n]['originTrail'][0]['bucket'].update(focusTarget='changed')]
+            active_key = next(k for k in before[name]['contexts'] if k != 'other')
+            for scroll_field in ('treeScrollByTree', 'treeScrollLeftByTree', 'detailScrollByTree'):
+                mutations.append(lambda x, n=name, k=active_key, f=scroll_field: x[n]['contexts'][k][f].update(c=999))
+        for field in before['route']:
+            mutations.append(lambda x, f=field: x['route'].__setitem__(f, 'changed'))
+        for index, mutate in enumerate(mutations):
+            bad = copy.deepcopy(after); mutate(bad)
+            with self.subTest(mutation=index), self.assertRaises(RuntimeError): MODULE.check_task_overview_return(before, bad)
+        # The actual ae264 failure returned with open=true and focus on this entry.
+        # These are recorded values, not a successful image or native traversal fixture.
+        old = copy.deepcopy(after); old['relationDisclosure']['open'] = True
+        old['focus'] = 'np-task-change-task:category-objectnav-methods:relation:90'
+        with self.assertRaisesRegex(RuntimeError, 'collapsed'): MODULE.check_task_overview_return(before, old)
+
+    def test_overview_return_real_back_forward_contract_and_failure_diagnostics(self):
+        import copy
+        before, collapsed, back, forward = self.snapshots()
+        class Driver:
+            def __init__(self): self.state = copy.deepcopy(collapsed); self.actions = []; self.waits = []
+            def settle(self): pass
+            def call(self, method, path, body):
+                self.actions.append((method, path, body)); self.state = copy.deepcopy(back if path == '/back' else forward)
+            def js(self, script, *args):
+                if script == MODULE.TASK_ROUTE_SNAPSHOT_JS: return copy.deepcopy(self.state)
+                if script == MODULE.TASK_RELATION_HISTORY_WAIT_JS: self.waits.append(args); return True
+                return {}
+        driver, record, saved = Driver(), {}, []
+        MODULE.task_overview_history_checks(driver, record, lambda: saved.append(copy.deepcopy(record)), before, collapsed)
+        self.assertEqual(driver.actions, [('POST', '/back', {}), ('POST', '/forward', {})])
+        self.assertEqual(driver.waits[0], (before['route'], 'np-task-route-return', before))
+        self.assertEqual(driver.waits[1], (collapsed['route'], 'np-task-route-relations-summary', collapsed))
+        for index in range(2):
+            self.assertIn('before', saved[-1]['transitions'][index]); self.assertIn('after', saved[-1]['transitions'][index])
+        for mutation in ('open', 'focus', 'scroll', 'neutral', 'other', 'origin', 'revision'):
+            original = copy.deepcopy(back)
+            if mutation == 'open': back['relationDisclosure']['open'] = False
+            elif mutation == 'focus': back['focus'] = 'np-task-route-relations-summary'
+            elif mutation == 'scroll': back['readerScroll']['top'] = 0
+            elif mutation == 'neutral': back['taskView']['focusTargetByTree']['l'] = 'wrong'
+            elif mutation == 'other': back['runtime']['contexts']['other']['focusTarget'] = 'wrong'
+            elif mutation == 'origin': back['runtime']['originTrail'] = []
+            else: back['runtime']['revision'] = 6
+            with self.subTest(back_mutation=mutation), self.assertRaises(RuntimeError):
+                MODULE.task_overview_history_checks(Driver(), {}, lambda: None, before, collapsed)
+            back.clear(); back.update(original)
+        for mutate in (lambda x: x['relationDisclosure'].update(open=True),
+                       lambda x: x.update(focus='np-task-route-return'),
+                       lambda x: x['treeScroll'].update(top=120),
+                       lambda x: x['runtime']['contexts']['other'].update(focusTarget='changed')):
+            original = copy.deepcopy(forward); mutate(forward)
+            with self.assertRaises(RuntimeError):
+                MODULE.task_overview_history_checks(Driver(), {}, lambda: None, before, collapsed)
+            forward.clear(); forward.update(original)
+        failure = TimeoutError('original traversal failure'); record = {}; saved = []
+        with patch.object(MODULE, 'wait_for', side_effect=failure), self.assertRaises(TimeoutError) as caught:
+            MODULE.task_overview_history_checks(Driver(), record, lambda: saved.append(copy.deepcopy(record)), before, collapsed)
+        self.assertIs(caught.exception, failure); self.assertIn('after', saved[-1]['transitions'][0])
+
+    def test_overview_ready_and_scene_keep_original_scientific_wait_native_click_and_visible_tree(self):
+        import ast, inspect
+        source = inspect.getsource(MODULE.task_route_checks); function = ast.parse(source).body[0]
+        calls = [n for n in ast.walk(function) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)]
+        action = next(n for n in calls if n.func.id == 'transition_record' and len(n.args) > 3 and isinstance(n.args[3], ast.Constant) and n.args[3].value == 'relation-to-task')
+        self.assertEqual(ast.unparse(action.args[4]), "lambda: driver.click(driver.selector('#np-task-route-return'))")
+        self.assertIn('TASK_OVERVIEW_RETURN_WAIT_JS', ast.unparse(action.args[5]))
+        scene = next(n for n in calls if n.func.id == 'scene' and isinstance(n.args[0], ast.Constant) and n.args[0].value == '-26-return-objectnav-task')
+        self.assertEqual(len(scene.args[1].elts), 2); self.assertIn('tree_label_selector', ast.unparse(scene.args[1]))
+        self.assertIn("science['positions']", ast.unparse(scene.args[1])); self.assertEqual(ast.literal_eval(scene.keywords[0].value), False)
+        self.assertIn("require_tree=specs[0].get('region') == 'canvas'", source)
+        self.assertTrue(MODULE.TASK_OVERVIEW_RETURN_WAIT_JS.endswith(MODULE.TASK_ROUTE_RETURN_WAIT_JS))
+        script = r"""
+const assert=require('node:assert/strict'),input=JSON.parse(require('fs').readFileSync(0,'utf8'));
+let open=false,selected=false,focus='np-task-route-relations-summary',ready=true,state='ready';const route=input.route;
+global.NavigationProductApp={getState:()=>({route}),getContent:()=>({ready:()=>ready}),getBundle:()=>({positions:{[route.node]:{entityId:'task:category-objectnav'}}})};
+global.document={activeElement:{get id(){return focus;}},getElementById:()=>({get open(){return open;}}),querySelector:q=>q==='[data-task-route-scope]'?{dataset:{taskRouteState:state}}:q==='[data-selected-task-relation]'&&selected?{}:null};
+const run=new Function(input.script);assert.equal(!!run(route,focus),true);
+open=true;assert.equal(run(route,focus),false);open=false;selected=true;assert.equal(run(route,focus),false);selected=false;
+focus='wrong';assert.equal(!!run(route,'np-task-route-relations-summary'),false);focus='np-task-route-relations-summary';ready=false;assert.equal(!!run(route,focus),false);ready=true;
+for(const key of Object.keys(route)){const wrong={...route,[key]:'wrong'};assert.equal(!!run(wrong,focus),false);}
+state='loading';assert.equal(!!run(route,focus),false);
+"""
+        result = subprocess.run(['node', '-e', script], input=json.dumps({'script': MODULE.TASK_OVERVIEW_RETURN_WAIT_JS, 'route': self.snapshots()[0]['route']}), text=True, capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_production_explicit_return_and_history_restore_distinct_overview_presentations(self):
+        import gzip
+        science = json.loads(gzip.decompress((Path(__file__).parents[1] / 'data/navigation-product/model.json.gz').read_bytes()))
+        body = r"""
+await scope('task:category-objectnav');const overview=d.getElementById('np-task-route-relations');overview.querySelector('summary').click();await ready(()=>overview.open);
+let relationButton=d.querySelector('[data-task-change="methods:relation:90"]');relationButton.focus();relationButton.click();await ready(()=>d.querySelector('[data-selected-task-relation="methods:relation:90"]')&&d.querySelector('[data-relation-state]')?.dataset.relationState==='ready');
+const before=snapshot(),button=d.getElementById('np-task-route-return');button.focus();button.click();await ready(()=>new w.Function(input.returnWait)(before.route,'np-task-route-relations-summary'));
+const collapsed=snapshot();states.push(before,collapsed);assert.equal(d.getElementById('np-task-route-relations').open,false);assert.equal(label(before.route.node).textContent,s.positions[before.route.node].label);
+w.history.back();await ready(()=>d.querySelector('[data-selected-task-relation="methods:relation:90"]')&&d.activeElement.id==='np-task-route-return');states.push(snapshot());
+w.history.forward();await ready(()=>new w.Function(input.returnWait)(before.route,'np-task-route-relations-summary'));states.push(snapshot());
+"""
+        before, collapsed, back, forward = run_product_capture_script(self, body, {'science': science, 'expected': MODULE.task_route_expected(science), 'returnWait': MODULE.TASK_OVERVIEW_RETURN_WAIT_JS})
+        # JSDOM exercises actual product push/back/forward state, not native Navigation API keys or layout.
+        self.assertIsNone(before['historyEntryKey']); self.assertIsNone(collapsed['historyEntryKey'])
+        self.assertTrue(before['relationDisclosure']['open']); self.assertFalse(collapsed['relationDisclosure']['open'])
+        self.assertEqual(back['selectedRelation'], 'methods:relation:90'); self.assertEqual(back['focus'], 'np-task-route-return')
+        self.assertTrue(back['relationDisclosure']['open']); self.assertFalse(forward['relationDisclosure']['open'])
+        for original, restored in ((before, back), (collapsed, forward)):
+            MODULE.check_exploration_restore(original, restored, focus=restored['focus'])
+        # Unit keys only let the same strict state validator inspect these real DOM/model snapshots.
+        before['historyEntryKey'] = 'unit-before'; collapsed['historyEntryKey'] = 'unit-collapsed'
+        MODULE.check_task_overview_return(before, collapsed)
 
 
 if __name__ == '__main__':
