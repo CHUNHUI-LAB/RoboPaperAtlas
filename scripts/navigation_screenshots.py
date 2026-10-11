@@ -187,6 +187,9 @@ def check_context_path(data):
         raise RuntimeError('Global entry links imply a false ancestry chain')
     if data['labels'] != ['领域', '挑战–思路树']:
         raise RuntimeError('Compact global entry and actual local ancestry need distinct readable labels')
+    if data.get('desktopDisclosure') is not None:
+        check_context_disclosure(data)
+        return
     if (len(data['rows']) != 2 or abs(data['rows'][0]['y'] - data['rows'][1]['y']) > 1 or
             data['rows'][0]['x'] + data['rows'][0]['width'] > data['rows'][1]['x'] + 1):
         raise RuntimeError('Global links and local ancestry do not share the compact, non-overlapping context row')
@@ -194,6 +197,106 @@ def check_context_path(data):
         raise RuntimeError('Context rows are outside the screenshot')
     if not data['buttons'] or not all(x['uncovered'] and rect_inside(x['rect'], data['viewport']) and rect_inside(x['rect'], x['row']) and not x['clipped'] for x in data['buttons']):
         raise RuntimeError('Context link is clipped, covered or outside the screenshot')
+
+
+CONTEXT_ANCESTRY_SUMMARY_SELECTOR = '#np-global-context .np-ancestry-disclosure > summary'
+CONTEXT_ANCESTRY_STATE_JS = r"""
+var a=NavigationProductApp,s=a.getState(),tree=document.getElementById('np-tree-scroll'),reader=document.getElementById('np-detail-scroll'),disclosure=document.querySelector('#np-global-context .np-ancestry-disclosure');
+return {open:disclosure?disclosure.open:null,route:s.route,originTrail:s.originTrail,historyLength:history.length,
+  window:{x:scrollX,y:scrollY},treeScroll:{top:tree.scrollTop,left:tree.scrollLeft},readerScroll:{top:reader.scrollTop,left:reader.scrollLeft}};
+"""
+CONTEXT_PATH_SNAPSHOT_JS = VISUAL_GEOMETRY + r"""
+var a=NavigationProductApp,b=a.getBundle(),r=a.getState().route,p=b.positions[r.node],expected=[];
+while(p){expected.unshift(p.id);p=p.parentId?b.positions[p.parentId]:null;}
+var host=document.getElementById('np-global-context'),entry=host.querySelector('[data-path-kind="global-entry"]'),local=host.querySelector('[data-path-kind="local-ancestry"]'),disclosure=local.closest('.np-ancestry-disclosure'),summary=disclosure.querySelector(':scope > summary');
+function ids(n){return Array.from(n.querySelectorAll('[data-context-position]'),x=>x.dataset.contextPosition);}
+function sourceLabel(id){var p=b.positions[id],e=b.entities[p.entityId];return e&&e.label||p.sourceLabel||p.label;}
+function proof(e){var result=box(e),range=document.createRange();range.selectNodeContents(e);
+  result.fragments=[...range.getClientRects()].filter(r=>r.width>0&&r.height>0).map(r=>({x:r.x,y:r.y,width:r.width,height:r.height,visible:[[.5,.5],[.1,.1],[.9,.1],[.1,.9],[.9,.9]].every(([x,y])=>{var hit=document.elementFromPoint(r.x+r.width*x,r.y+r.height*y);return !!hit&&(hit===e||e.contains(hit));})}));return result;}
+function buttons(n){return [...n.querySelectorAll('[data-context-position]')].map(e=>({id:e.dataset.contextPosition,text:e.textContent,title:e.title,aria:e.getAttribute('aria-label'),proof:proof(e)}));}
+var root=b.researchMap.roots[0],scope=b.researchMap.canonicalScopePositionIds[r.scope];
+return {route:r,expectedIds:expected,localIds:ids(local),localTrees:ids(local).map(id=>b.positions[id].tree),globalIds:ids(entry),expectedGlobalIds:scope&&scope!==root?[root,scope]:[root],globalSeparators:entry.querySelectorAll('.np-path-separator').length,
+  labels:[entry.querySelector('[data-context-position]').textContent,local.querySelector('.np-context-label').textContent],viewport:{x:0,y:0,width:innerWidth,height:innerHeight},
+  desktopDisclosure:{tag:disclosure.tagName,open:disclosure.open,summary:proof(summary),compactRows:[rect(entry),rect(summary)],popover:rect(local),localLabel:proof(local.querySelector('.np-context-label')),
+    expectedLocalLabels:expected.map(sourceLabel),globalButtons:buttons(entry),localButtons:buttons(local)}};
+"""
+
+
+def check_context_disclosure(data):
+    """Desktop migration: compact entry/summary, then the complete original path."""
+    d, viewport = data['desktopDisclosure'], data['viewport']
+    def readable(proof, *areas):
+        return (_reader_proof(proof, viewport, *areas, font_size=15) and proof.get('fragments') and
+                all(f.get('visible') and all(rect_inside(f, area) for area in (viewport, *areas)) for f in proof['fragments']))
+    rows = d['compactRows']
+    if (d['tag'] != 'DETAILS' or type(d['open']) is not bool or len(rows) != 2 or
+            abs(rows[0]['y'] + rows[0]['height'] / 2 - rows[1]['y'] - rows[1]['height'] / 2) > 1 or rows[0]['x'] + rows[0]['width'] > rows[1]['x'] + 1 or
+            not all(rect_inside(row, viewport) for row in rows) or
+            d['summary']['text'] != data['labels'][1] + ' · 原树路径' or not readable(d['summary'], rows[1])):
+        raise RuntimeError('Compact context entry or original-path disclosure summary is hidden, covered or misplaced')
+    globals_, locals_ = d['globalButtons'], d['localButtons']
+    if ([item['id'] for item in globals_] != data['expectedGlobalIds'] or
+            not all(readable(item['proof'], rows[0]) for item in globals_) or
+            [item['id'] for item in locals_] != data['expectedIds'] or
+            [item['text'] for item in locals_] != d['expectedLocalLabels'] or
+            any(item['title'] != text or item['aria'] != text for item, text in zip(locals_, d['expectedLocalLabels']))):
+        raise RuntimeError('Context disclosure changed ordered original ancestors, full labels or visible global controls')
+    if d['open']:
+        if (not rect_inside(d['popover'], viewport) or not readable(d['localLabel'], d['popover']) or
+                not all(readable(item['proof'], d['popover']) for item in locals_)):
+            raise RuntimeError('Original-path popover label or ancestor link is hidden, clipped or covered')
+    elif any(f.get('visible') for item in locals_ for f in item['proof']['fragments']):
+        raise RuntimeError('Closed original-path disclosure still exposes ancestor text')
+
+
+def check_context_ancestry_transition(before, after, opened):
+    if type(after.get('open')) is not bool or after['open'] is not opened:
+        raise RuntimeError('Original-path disclosure did not reach the requested open state')
+    for key in ('route', 'originTrail', 'historyLength', 'window', 'treeScroll', 'readerScroll'):
+        if before[key] != after[key]:
+            raise RuntimeError('Original-path disclosure changed preserved navigation: ' + key)
+
+
+def set_context_ancestry_open(driver, opened):
+    before = driver.js(CONTEXT_ANCESTRY_STATE_JS)
+    if type(before.get('open')) is not bool:
+        raise RuntimeError('Original-path disclosure is missing')
+    if before['open'] is not opened:
+        driver.click(driver.selector(CONTEXT_ANCESTRY_SUMMARY_SELECTOR))
+        driver.settle()
+    after = driver.js(CONTEXT_ANCESTRY_STATE_JS)
+    check_context_ancestry_transition(before, after, opened)
+    return {'before': before, 'after': after}
+
+
+def context_path_checks(driver, report, save, capture, prefix):
+    """Read the real popover through native open/close/reopen controls."""
+    record = {'viewport': prefix, 'disclosureChecks': {'transitions': []}}
+    report.setdefault('contextPathChecks', []).append(record)
+    initial = driver.js(CONTEXT_PATH_SNAPSHOT_JS)
+    record['disclosureChecks']['initial'] = initial
+    save()
+    check_context_path(initial)
+    if initial['desktopDisclosure']['open']:
+        raise RuntimeError('Cold original-path disclosure must start closed')
+    for opened in (True, False, True):
+        phase = set_context_ancestry_open(driver, opened)
+        record['disclosureChecks']['transitions'].append(phase)
+        phase['evidence'] = driver.js(CONTEXT_PATH_SNAPSHOT_JS)
+        save()
+        check_context_path(phase['evidence'])
+    context = phase['evidence']
+    record['evidence'] = context
+    save()
+    closed = set_context_ancestry_open(driver, False)
+    record['disclosureChecks']['transitions'].append(closed)
+    closed['evidence'] = driver.js(CONTEXT_PATH_SNAPSHOT_JS)
+    save()
+    check_context_path(closed['evidence'])
+    # The temporary path overlay may cover fixed reader identity; photograph
+    # its closed default after recording complete open/reopen visibility proofs.
+    capture(prefix + '-06-audiogoal-ci-path')
+    return context
 
 
 def contrast_ratio(foreground, background):
@@ -962,12 +1065,28 @@ TASK_ROUTE_PROOF_JS = VISUAL_GEOMETRY + r"""
 var spec=arguments[0],matches=[...document.querySelectorAll(spec.selector)].filter(n=>spec.text===undefined||n.textContent===spec.text),
     e=matches.length===1?matches[0]:null,reader=spec.region==='toolbar'?document.querySelector('.np-workspace-bar'):document.getElementById(spec.region==='canvas'?'np-tree-scroll':spec.region==='heading'?'np-reader-heading':spec.region==='analysis-entry'?'np-reader-analysis-entry':'np-detail-scroll');
 if(!e||!reader.contains(e))throw Error('Exact task-route proof is missing, duplicated or outside its measured region: '+JSON.stringify(spec));
+// Only the generated method-name prefix may be represented by the exact fixed title.
+// Never skip arbitrary hidden descendants or scientific text in a proof.
+var representedPrefix=null;
+if(spec.methodIdentity){
+  var i=spec.methodIdentity,route=NavigationProductApp.getState().route,host=document.getElementById('np-reader-object-title'),titles=host?.querySelectorAll(':scope > h2'),prefix=e.firstElementChild;
+  if(spec.selector!=='[data-mechanism-entity="'+i.entity+'"] > h3'||spec.region||
+      e.tagName!=='H3'||e.parentElement.dataset.mechanismEntity!==i.entity||e.childNodes.length!==2||e.children.length!==1||
+      !prefix||!prefix.matches('span.np-method-identity-prefix.np-reader-identity-duplicate')||prefix.childNodes.length!==1||prefix.firstChild.nodeType!==Node.TEXT_NODE||
+      prefix.dataset.readerDuplicatePosition!==i.position||prefix.textContent!==i.title+' · '||getComputedStyle(prefix).display!=='none'||
+      e.lastChild.nodeType!==Node.TEXT_NODE||e.lastChild.textContent!=='方法内部结构'||
+      spec.text!==i.title+' · 方法内部结构'||spec.renderedText!=='方法内部结构'||
+      titles?.length!==1||titles[0].textContent!==i.title||host.dataset.objectPosition!==i.position||host.dataset.objectEntity!==i.entity||
+      host.dataset.objectPaper!==i.paper||host.dataset.objectVersion!==i.version||route.node!==i.position||route.paper!==i.paper||route.version!==i.version)
+    throw Error('Method section duplicate does not match the exact fixed source identity');
+  representedPrefix=prefix;
+}
 var rr=rect(reader),heading=reader.querySelector('.np-reader-heading'),hr=heading?rect(heading):null,
     top=Math.max(rr.y+reader.clientTop,hr&&['sticky','fixed'].includes(getComputedStyle(heading).position)?hr.y+hr.height:rr.y+reader.clientTop),content={x:rr.x+reader.clientLeft,y:top,width:reader.clientWidth,height:Math.max(0,rr.y+reader.clientTop+reader.clientHeight-top)},b=box(e);
 // A whole article's textContent cannot prove that a collapsed/hidden sentence is visible.
 // Measure the original text itself, including every wrapped line, with a DOM Range.
 var texts=[],walker=document.createTreeWalker(e,NodeFilter.SHOW_TEXT),n;
-while(n=walker.nextNode()){if(n.parentElement.closest('.np-sr'))continue;if(n.textContent.trim())texts.push(n);}
+while(n=walker.nextNode()){if(n.parentElement.closest('.np-sr')||n.parentElement===representedPrefix)continue;if(n.textContent.trim())texts.push(n);}
 function clips(element){var result=[];for(var a=element;a&&a!==reader;a=a.parentElement){var cs=getComputedStyle(a);if(/auto|scroll|hidden|clip/.test(cs.overflowY+' '+cs.overflowX)){var ar=rect(a);result.push({x:ar.x+a.clientLeft,y:ar.y+a.clientTop,width:a.clientWidth,height:a.clientHeight});}}return result;}
 var fragments=[],textRuns=[];
 texts.forEach(n=>{var range=document.createRange();range.selectNodeContents(n);var parent=box(n.parentElement),run={text:n.textContent,fontSize:parent.fontSize,foreground:parent.foreground,background:parent.background,opaque:parent.opaque,unscaled:parent.unscaled,clipAreas:clips(n.parentElement),fragments:[]};[...range.getClientRects()].filter(r=>r.width>0&&r.height>0).forEach(r=>{var visible=parent.opaque&&parent.unscaled&&[[.5,.5],[.1,.1],[.9,.1],[.1,.9],[.9,.9]].every(([x,y])=>{var hit=document.elementFromPoint(r.x+r.width*x,r.y+r.height*y);return hit===n.parentElement||n.parentElement.contains(hit);});var fragment={x:r.x,y:r.y,width:r.width,height:r.height,visible:visible};fragments.push(fragment);run.fragments.push(fragment);});textRuns.push(run);});
@@ -1224,6 +1343,23 @@ def check_task_route_scope(data, scope, expected):
     actual_relations = [{k: r.get(k) for k in ('id', 'type', 'renderAsTree', 'scope', 'from', 'to', 'control')} for r in data['relationEntries']]
     if actual_relations != expected['relations']:
         raise RuntimeError('Task-root choices differ from the source-grounded typed relationship inventory')
+
+
+def portable_method_proof_specs(science, position, claim):
+    title = science['entities'][position['entityId']]['label']
+    identity = {'position': position['id'], 'entity': position['entityId'],
+                'paper': position['paperId'], 'version': position['versionId'], 'title': title}
+    version = science['versions'][position['versionId']]
+    meta = '具体方法 · ' + version['label'] + (' · 未固定快照' if version.get('versionStatus') == 'snapshot_not_version_pinned' else '')
+    fixed = '#np-reader-object-title' + ''.join('[data-object-' + key + '=' + json.dumps(value) + ']'
+        for key, value in identity.items() if key != 'title') + ' > h2'
+    return [
+        {'selector': '[data-mechanism-entity="' + position['entityId'] + '"] > h3',
+         'text': title + ' · 方法内部结构', 'renderedText': '方法内部结构', 'methodIdentity': identity},
+        {'selector': '[data-method-claim="' + claim['id'] + '"] > p:first-child', 'text': claim['statement']},
+        {'selector': fixed, 'text': title, 'region': 'heading'},
+        {'selector': '#np-reader-object-meta', 'text': meta, 'region': 'heading'},
+    ]
 
 
 def task_route_claims(science, position):
@@ -1695,11 +1831,13 @@ def task_route_checks(driver, report, save, capture, prefix, base, science, serv
         save()
         completed = False
         try:
-            if scroll:
-                reveal_control(driver, specs[0])
+            # Fixed title/version proofs stay visible independently of reader scrolling.
+            scrolling_specs = [spec for spec in specs if spec.get('region') not in ('heading', 'analysis-entry')]
+            if scroll and scrolling_specs:
+                reveal_control(driver, scrolling_specs[0])
                 for _ in range(4):
-                    boxes = [proof(spec) for spec in specs]
-                    # One photographed proof set always belongs to one region.
+                    boxes = [proof(spec) for spec in scrolling_specs]
+                    # Align only the photographed text that belongs to the scrolling region.
                     area = boxes[0]['readerContent']
                     top, bottom = min(b['rect']['y'] for b in boxes), max(b['rect']['y'] + b['rect']['height'] for b in boxes)
                     if top >= area['y'] and bottom <= area['y'] + area['height']:
@@ -1707,7 +1845,7 @@ def task_route_checks(driver, report, save, capture, prefix, base, science, serv
                     delta = round((top + bottom - 2 * area['y'] - area['height']) / 2)
                     if bottom - top > area['height'] or not delta:
                         break
-                    region = '#np-tree-scroll' if specs[0].get('region') == 'canvas' else '#np-detail-scroll'
+                    region = '#np-tree-scroll' if scrolling_specs[0].get('region') == 'canvas' else '#np-detail-scroll'
                     transition_record(driver, record, save, 'align-selected-object-with-wheel', lambda: driver.call('POST', '/actions', {'actions': [{'type': 'wheel', 'id': 'selected-object-scroll', 'actions': [{'type': 'scroll', 'origin': driver.selector(region), 'x': 0, 'y': 0, 'deltaX': 0, 'deltaY': delta, 'duration': 100}]}]}))
             item['state'] = snapshot()
             item['proofs'] = driver.js(TASK_DENSITY_PROOFS_JS, specs)
@@ -1869,6 +2007,7 @@ def task_route_checks(driver, report, save, capture, prefix, base, science, serv
             evidence = science['entities'][parent['entityId']]['detail']['evidence']
             scene('-27-imagenav-' + p['paperId'] + '-route-condition', [{'selector': '#np-reader-summary .np-node-meaning .np-detail-block > p', 'text': evidence}])
             # Explicitly return to the task snapshot before choosing a method.
+            set_context_ancestry_open(driver, True)
             transition_record(driver, record, save, 'return-route-group', lambda: driver.click(driver.selector('[data-path-kind="local-ancestry"] [data-context-position="' + expected['scopes']['task:imagenav']['roots'][0] + '"]')),
                 lambda: driver.js('return NavigationProductApp.getState().route.node===arguments[0]', expected['scopes']['task:imagenav']['roots'][0]))
         before = select_method(p)
@@ -1884,8 +2023,7 @@ def task_route_checks(driver, report, save, capture, prefix, base, science, serv
         before = select_method(p)
         claim = task_route_claims(science, p)[0]
         scene('-28-portable-' + p['entityId'].split('pipeline-tap-')[-1],
-              [{'selector': '[data-mechanism-entity="' + p['entityId'] + '"] > h3', 'text': science['entities'][p['entityId']]['label'] + ' · 方法内部结构'},
-               {'selector': '[data-method-claim="' + claim['id'] + '"] > p:first-child', 'text': claim['statement']}], method=p)
+              portable_method_proof_specs(science, p, claim), method=p)
         return_method(before)
     if server is not None:
         for interrupt in ('none', 'wheel', 'scope'):
@@ -2484,6 +2622,19 @@ def exploration_state_checks(driver, report, save, capture, prefix, base, scienc
         raise RuntimeError('Legacy workspace anchor reset evidence identity')
 
 
+# The stationary reading-pane wrapper and its inner scrolling body are distinct.
+# Collect both, but only the real reader ID can satisfy a reader-only capture.
+CAPTURE_BOUNDS_SELECTOR = '#np-workspace,#np-tree-scroll,.np-reading-pane,#np-detail-scroll,#np-tree .np-node-row'
+
+
+def check_capture_visible_regions(data, require_tree=True, require_home=False):
+    visible = [r for r in data['bounds'] if r['width'] > 0 and r['height'] > 0 and r['x'] < data['viewport']['width'] and r['y'] < data['viewport']['height'] and r['x'] + r['width'] > 0 and r['y'] + r['height'] > 0]
+    if require_tree and not require_home and not any(r.get('position') for r in visible):
+        raise RuntimeError('No actual tree node visible in captured viewport')
+    if not require_tree and not require_home and not any(r.get('id') == 'np-detail-scroll' for r in visible):
+        raise RuntimeError('Reader is not visible in reader screenshot')
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dist', type=Path, required=True)
@@ -2541,9 +2692,9 @@ def main():
           route:window.NavigationProductApp?.getState().route,
           fonts:document.fonts.status, ready:!!window.NavigationProductApp,
           fallbackHidden:document.getElementById('np-static-reading')?.hidden,
-          bounds:[...document.querySelectorAll('#np-workspace,#np-tree-scroll,.np-reading-pane,#np-tree .np-node-row')].map(e=>{let r=e.getBoundingClientRect();return {id:e.id,position:e.closest('[data-position]')?.dataset.position,text:e.textContent.slice(0,180),x:r.x,y:r.y,width:r.width,height:r.height};}),
+          bounds:[...document.querySelectorAll(arguments[0])].map(e=>{let r=e.getBoundingClientRect();return {id:e.id,position:e.closest('[data-position]')?.dataset.position,text:e.textContent.slice(0,180),x:r.x,y:r.y,width:r.width,height:r.height};}),
           nodeCount:document.querySelectorAll('#np-tree [role=treeitem]').length,
-          focus:document.activeElement?.id, bodyWidth:document.body.scrollWidth};''')
+          focus:document.activeElement?.id, bodyWidth:document.body.scrollWidth};''', CAPTURE_BOUNDS_SELECTOR)
         data['desktopShell'] = driver.js(DESKTOP_SHELL_SNAPSHOT_JS)
         data['screenKind'] = 'default_reading_overview' if require_home else 'tree_or_reader'
         data['readingVisibility'] = driver.js('''function rect(e){if(!e)return null;let r=e.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};}
@@ -2597,11 +2748,7 @@ def main():
             raise RuntimeError('Browser console contains severe errors')
         if data['networkFailures']:
             raise RuntimeError('Candidate resource request failed')
-        visible = [r for r in data['bounds'] if r['width'] > 0 and r['height'] > 0 and r['x'] < data['viewport']['width'] and r['y'] < data['viewport']['height'] and r['x'] + r['width'] > 0 and r['y'] + r['height'] > 0]
-        if require_tree and not require_home and not any(r.get('position') for r in visible):
-            raise RuntimeError('No actual tree node visible in captured viewport')
-        if not require_tree and not require_home and not any(r.get('id') == 'np-detail-scroll' for r in visible):
-            raise RuntimeError('Reader is not visible in reader screenshot')
+        check_capture_visible_regions(data, require_tree, require_home)
         viewport = {'x': 0, 'y': 0, 'width': data['viewport']['width'], 'height': data['viewport']['height']}
         if require_overview:
             roots = data['readingVisibility']['roots']
@@ -2952,19 +3099,7 @@ def main():
             driver.call('POST', '/url', {'url': base + ci_hash})
             wait_for(lambda: driver.js("var a=window.NavigationProductApp;if(!a)return false;var p=a.getBundle().positions[arguments[0]];return a.getState().route.node===p.id&&a.getContent().ready(p.entityId)&&document.querySelector('[data-load-state]')?.dataset.loadState==='ready';", ci_target))
             driver.settle()
-            context = driver.js("""
-                var a=NavigationProductApp,b=a.getBundle(),r=a.getState().route,p=b.positions[r.node],expected=[];
-                while(p){expected.unshift(p.id);p=p.parentId?b.positions[p.parentId]:null;}
-                var host=document.getElementById('np-global-context'),entry=host.querySelector('[data-path-kind="global-entry"]'),local=host.querySelector('[data-path-kind="local-ancestry"]');
-                function rect(n){var q=n.getBoundingClientRect();return {x:q.x,y:q.y,width:q.width,height:q.height};}
-                function ids(n){return Array.from(n.querySelectorAll('[data-context-position]'),x=>x.dataset.contextPosition);}
-                var root=b.researchMap.roots[0],scope=b.researchMap.canonicalScopePositionIds[r.scope];
-                return {route:r,expectedIds:expected,localIds:ids(local),localTrees:ids(local).map(id=>b.positions[id].tree),globalIds:ids(entry),expectedGlobalIds:scope&&scope!==root?[root,scope]:[root],globalSeparators:entry.querySelectorAll('.np-path-separator').length,labels:[entry.querySelector('[data-context-position]').textContent,local.querySelector('.np-context-label').textContent],rows:[entry,local].map(rect),viewport:{x:0,y:0,width:innerWidth,height:innerHeight},buttons:Array.from(host.querySelectorAll('[data-context-position]'),n=>{var q=rect(n),points=[[.5,.5],[.1,.1],[.9,.1],[.1,.9],[.9,.9]],uncovered=points.every(v=>{var hit=document.elementFromPoint(q.x+q.width*v[0],q.y+q.height*v[1]);return !!hit&&(hit===n||n.contains(hit));});return {id:n.dataset.contextPosition,text:n.textContent,rect:q,row:rect(n.closest('[data-path-kind]')),clipped:n.scrollWidth>n.clientWidth+1||n.scrollHeight>n.clientHeight+1,uncovered:uncovered};})};
-            """)
-            report.setdefault('contextPathChecks', []).append({'viewport': prefix, 'evidence': context})
-            save()
-            check_context_path(context)
-            capture(prefix + '-06-audiogoal-ci-path')
+            context = context_path_checks(driver, report, save, capture, prefix)
             driver.click(driver.selector('[data-path-kind="global-entry"] [data-context-position]'))
             driver.settle()
             if driver.js('return !document.getElementById("np-reading-landing").hidden'):

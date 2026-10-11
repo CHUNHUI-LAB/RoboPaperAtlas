@@ -44,6 +44,82 @@ assert.deepEqual(errors,[]);process.stdout.write(JSON.stringify(states));dom.win
 
 
 class ScreenshotChecks(unittest.TestCase):
+    def capture_bounds_fixture(self, mutation=''):
+        """Execute the exact capture snapshot in JSDOM; rectangles are test fixtures."""
+        import ast
+        source = ast.parse((Path(__file__).parents[1] / 'scripts/navigation_screenshots.py').read_text())
+        main = next(n for n in source.body if isinstance(n, ast.FunctionDef) and n.name == 'main')
+        capture = next(n for n in main.body if isinstance(n, ast.FunctionDef) and n.name == 'capture')
+        snapshot = next(n for n in capture.body if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == 'data' for t in n.targets)).value
+        self.assertEqual(snapshot.func.attr, 'js')
+        self.assertEqual(snapshot.args[1].id, 'CAPTURE_BOUNDS_SELECTOR')
+        gates = [n for n in ast.walk(capture) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'check_capture_visible_regions']
+        self.assertEqual(len(gates), 1)
+        self.assertEqual([a.id for a in gates[0].args], ['data', 'require_tree', 'require_home'])
+        driver = r"""
+const {JSDOM}=require('jsdom'),assert=require('node:assert/strict');
+const input=JSON.parse(require('fs').readFileSync(0,'utf8'));
+const dom=new JSDOM('<main id="np-workspace"><div id="np-tree-scroll"><ul id="np-tree"><li data-position="actual-tree-position"><div class="np-node-row">Actual tree label</div></li></ul></div><aside class="np-reading-pane"><header id="np-reader-heading"><h2>Fixed identity</h2></header><div id="np-detail-scroll"><div id="np-reader-summary">Actual reader summary</div><div class="np-detail-scroll">Nested evidence</div></div></aside></main>',{runScripts:'outside-only'});
+try {
+ const w=dom.window,d=w.document;
+ Object.defineProperty(w,'innerWidth',{value:1440});Object.defineProperty(w,'innerHeight',{value:900});Object.defineProperty(w,'devicePixelRatio',{value:1});
+ Object.defineProperty(d,'fonts',{value:{status:'loaded'}});
+ w.HTMLElement.prototype.getBoundingClientRect=function(){return this.id==='np-detail-scroll'?{x:801,y:319.296875,width:622,height:563.703125}:{x:800,y:132,width:624,height:752};};
+ const reader=d.getElementById('np-detail-scroll'),wrapper=reader.parentElement;
+ assert.ok(wrapper.matches('.np-reading-pane'));assert.equal(wrapper.id,'');assert.notEqual(reader,wrapper);
+ if(input.mutation==='missing-id')reader.removeAttribute('id');
+ if(input.mutation==='detached-reader')reader.remove();
+ if(input.mutation==='renamed-id')reader.id='np-reader-body';
+ const snapshot=new w.Function(input.snapshot);
+ const current=snapshot.call(w,input.selector),legacy=snapshot.call(w,input.selector.replace(',#np-detail-scroll',''));
+ assert.ok(current.bounds.some(r=>r.id===''),'wrapper diagnostics are still collected');
+ assert.ok(!legacy.bounds.some(r=>r.id==='np-detail-scroll'),'legacy wrapper selector omits the moved inner reader');
+ process.stdout.write(JSON.stringify({current,legacy}));
+}finally{dom.window.close();}
+"""
+        result = subprocess.run(['node', '-e', driver], input=json.dumps({'selector': MODULE.CAPTURE_BOUNDS_SELECTOR, 'snapshot': snapshot.args[0].value, 'mutation': mutation}), text=True, capture_output=True, cwd=Path(__file__).parents[1])
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        return json.loads(result.stdout)
+
+    def test_capture_bounds_collects_real_inner_reader_and_preserves_wrapper_diagnostics(self):
+        data = self.capture_bounds_fixture()
+        readers = [r for r in data['current']['bounds'] if r['id'] == 'np-detail-scroll']
+        self.assertEqual(len(readers), 1)
+        self.assertEqual({k: readers[0][k] for k in ('x', 'y', 'width', 'height')}, {'x': 801, 'y': 319.296875, 'width': 622, 'height': 563.703125})
+        MODULE.check_capture_visible_regions(data['current'], require_tree=False)
+        with self.assertRaisesRegex(RuntimeError, 'Reader is not visible'):
+            MODULE.check_capture_visible_regions(data['legacy'], require_tree=False)
+
+    def test_capture_bounds_visible_wrapper_cannot_replace_missing_or_detached_reader(self):
+        for mutation in ('missing-id', 'detached-reader', 'renamed-id'):
+            with self.subTest(mutation=mutation):
+                data = self.capture_bounds_fixture(mutation)['current']
+                self.assertTrue(any(r['id'] == '' and r['width'] > 0 and r['height'] > 0 for r in data['bounds']))
+                self.assertFalse(any(r['id'] == 'np-detail-scroll' for r in data['bounds']))
+                with self.assertRaisesRegex(RuntimeError, 'Reader is not visible'):
+                    MODULE.check_capture_visible_regions(data, require_tree=False)
+
+    def test_capture_bounds_preserves_reader_geometry_and_tree_identity_negatives(self):
+        import copy
+        box = {'id': 'np-detail-scroll', 'x': 801, 'y': 319, 'width': 622, 'height': 564}
+        wrapper = {'id': '', 'x': 800, 'y': 132, 'width': 624, 'height': 752}
+        data = {'viewport': {'width': 1440, 'height': 900}, 'bounds': [wrapper, box]}
+        MODULE.check_capture_visible_regions(data, require_tree=False)
+        for mutation in ({'width': 0}, {'height': 0}, {'x': 1440}, {'y': 900}, {'x': -622}, {'y': -564}, {'id': ''}):
+            broken = copy.deepcopy(data); broken['bounds'][1].update(mutation)
+            with self.subTest(mutation=mutation), self.assertRaisesRegex(RuntimeError, 'Reader is not visible'):
+                MODULE.check_capture_visible_regions(broken, require_tree=False)
+        with self.assertRaisesRegex(RuntimeError, 'No actual tree node visible'):
+            MODULE.check_capture_visible_regions(data)
+        tree = dict(box, id='', position='actual-tree-position')
+        data['bounds'].append(tree)
+        MODULE.check_capture_visible_regions(data)
+        tree['height'] = 0
+        with self.assertRaisesRegex(RuntimeError, 'No actual tree node visible'):
+            MODULE.check_capture_visible_regions(data)
+        # Home never depended on the hidden tree/reader bounds; its own map gates remain.
+        MODULE.check_capture_visible_regions({'viewport': data['viewport'], 'bounds': []}, require_home=True)
+
     def test_parallel_root_selector_preserves_tree_level_and_excludes_nested_groups(self):
         driver = r"""
 const {JSDOM}=require('jsdom'),assert=require('node:assert/strict');
@@ -215,6 +291,88 @@ run(start+'<em>wrong sibling</em><span> · 未固定全文快照</span></p></art
             mutate(bad)
             with self.assertRaises(RuntimeError):
                 MODULE.check_context_path(bad)
+
+    def test_desktop_context_disclosure_rejects_wrong_ancestry_labels_and_covered_text(self):
+        import copy
+        def rect(x, y, w, h): return dict(x=x, y=y, width=w, height=h)
+        def proof(text, area):
+            return dict(text=text, rect=area, visible=True, opaque=True, unscaled=True, clipped=False,
+                        fontSize=15, foreground=[20, 30, 40], background=[255, 255, 255], fragments=[dict(area, visible=True)])
+        def button(id, text, area):
+            return dict(id=id, text=text, title=text, aria=text, proof=proof(text, area))
+        viewport = rect(0, 0, 1440, 900)
+        entry, summary, popover = rect(20, 50, 290, 30), rect(320, 51, 240, 28), rect(320, 90, 820, 140)
+        data = dict(route=dict(tree='c', node='pos:c:6dcc2ce43c02d908266f20'),
+                    expectedIds=['root-c', 'insight'], localIds=['root-c', 'insight'], localTrees=['c', 'c'],
+                    expectedGlobalIds=['goal', 'scope'], globalIds=['goal', 'scope'], globalSeparators=0,
+                    labels=['领域', '挑战–思路树'], viewport=viewport,
+                    desktopDisclosure=dict(tag='DETAILS', open=True, summary=proof('挑战–思路树 · 原树路径', summary),
+                      compactRows=[entry, summary], popover=popover, localLabel=proof('挑战–思路树', rect(334, 104, 120, 24)),
+                      expectedLocalLabels=['完整原始任务', '完整原始问题'],
+                      globalButtons=[button('goal', '领域', rect(22, 52, 45, 26)), button('scope', 'AudioGoal', rect(72, 52, 230, 26))],
+                      localButtons=[button('root-c', '完整原始任务', rect(460, 104, 400, 28)), button('insight', '完整原始问题', rect(334, 145, 700, 48))]))
+        MODULE.check_context_path(data)
+        changes = [lambda d: d['localIds'].__setitem__(0, 'wrong'), lambda d: d['localTrees'].__setitem__(0, 'l'),
+                   lambda d: d['desktopDisclosure']['localButtons'].reverse(),
+                   lambda d: d['desktopDisclosure']['localButtons'][0].update(id='wrong'),
+                   lambda d: d['desktopDisclosure']['localButtons'][0].update(text='简称'),
+                   lambda d: d['desktopDisclosure']['localButtons'][0].update(aria='different'),
+                   lambda d: d['desktopDisclosure']['localButtons'][0]['proof'].update(visible=False),
+                   lambda d: d['desktopDisclosure']['localButtons'][1]['proof']['fragments'][0].update(visible=False),
+                   lambda d: d['desktopDisclosure']['localButtons'][1]['proof'].update(clipped=True),
+                   lambda d: d['desktopDisclosure']['localButtons'][1]['proof']['fragments'][0].update(width=1500),
+                   lambda d: d['desktopDisclosure']['summary'].update(visible=False),
+                   lambda d: d['desktopDisclosure']['globalButtons'][0]['proof'].update(visible=False),
+                   lambda d: d['desktopDisclosure']['popover'].update(y=880),
+                   lambda d: d['desktopDisclosure']['compactRows'][1].update(y=90)]
+        for change in changes:
+            bad = copy.deepcopy(data); change(bad)
+            with self.assertRaises(RuntimeError): MODULE.check_context_path(bad)
+        closed = copy.deepcopy(data); closed['desktopDisclosure']['open'] = False
+        for item in closed['desktopDisclosure']['localButtons']:
+            item['proof'].update(visible=False, fragments=[])
+        MODULE.check_context_path(closed)
+        closed['desktopDisclosure']['localButtons'][0]['proof']['fragments'] = [dict(rect(334, 104, 100, 28), visible=True)]
+        with self.assertRaises(RuntimeError): MODULE.check_context_path(closed)
+
+    def test_context_disclosure_transition_preserves_route_scroll_and_origin(self):
+        import copy
+        before = dict(open=False, route=dict(scope='audio', tree='c', node='source', paper='paper', version='version'),
+                      originTrail=[dict(route=dict(scope='all'), bucket=dict(treeScrollByTree=dict(g=71)))], historyLength=3,
+                      window=dict(x=0, y=0), treeScroll=dict(top=137, left=4), readerScroll=dict(top=211, left=0))
+        opened = copy.deepcopy(before); opened['open'] = True
+        MODULE.check_context_ancestry_transition(before, opened, True)
+        closed = copy.deepcopy(opened); closed['open'] = False
+        MODULE.check_context_ancestry_transition(opened, closed, False)
+        MODULE.check_context_ancestry_transition(closed, opened, True)
+        for change in (lambda d: d.update(open=False), lambda d: d['route'].update(node='wrong'),
+                       lambda d: d['originTrail'].clear(), lambda d: d.update(historyLength=4),
+                       lambda d: d['treeScroll'].update(top=0), lambda d: d['readerScroll'].update(top=0),
+                       lambda d: d['window'].update(y=1)):
+            bad = copy.deepcopy(opened); change(bad)
+            with self.assertRaises(RuntimeError): MODULE.check_context_ancestry_transition(before, bad, True)
+
+    def test_production_context_disclosure_uses_real_summary_and_full_source_path(self):
+        import gzip
+        science = json.loads(gzip.decompress((Path(__file__).parents[1] / 'data/navigation-product/model.json.gz').read_bytes()))
+        body = r"""
+const pid='pos:c:6dcc2ce43c02d908266f20',p=s.positions[pid];
+a.navigate(m.routeForPosition(a.getBundle(),{scope:p.scopeId},pid),{cross:true,initialTree:true});await ready(()=>a.getState().route.node===pid&&a.getContent().ready(p.entityId));
+const tree=d.getElementById('np-tree-scroll'),reader=d.getElementById('np-detail-scroll');tree.scrollTop=137;tree.scrollLeft=4;reader.scrollTop=211;
+const stateRead=new w.Function(input.contextState),pathRead=new w.Function(input.contextPath),statesBefore=JSON.parse(JSON.stringify(stateRead()));
+d.elementFromPoint=()=>null;w.Range.prototype.getClientRects=()=>[];
+let detail=d.querySelector('#np-global-context .np-ancestry-disclosure');assert.equal(detail.open,false);
+const first=pathRead();assert.deepEqual(first.localIds,first.expectedIds);assert.deepEqual(first.desktopDisclosure.localButtons.map(b=>b.text),first.expectedIds.map(id=>s.entities[s.positions[id].entityId].label));
+assert.equal(first.desktopDisclosure.summary.text,'挑战–思路树 · 原树路径');
+for(const open of [true,false,true,false]){d.querySelector(input.contextSummary).click();assert.equal(detail.open,open);const now=JSON.parse(JSON.stringify(stateRead()));for(const key of ['route','originTrail','historyLength','window','treeScroll','readerScroll'])assert.deepEqual(now[key],statesBefore[key],key);states.push(now);}
+await scope('task:imagenav');const group=s.positions[e.image.find(p=>p.paperId==='zhu').parentId];await select(group.id);
+detail=d.querySelector('#np-global-context .np-ancestry-disclosure');assert.equal(detail.open,false);d.querySelector(input.contextSummary).click();assert.equal(detail.open,true);
+const root=e.scopes['task:imagenav'].roots[0],target=d.querySelector('[data-path-kind="local-ancestry"] [data-context-position="'+root+'"]');assert.ok(target);assert.equal(target.closest('details:not([open])'),null);target.click();await ready(()=>a.getState().route.node===root);assert.equal(a.getState().route.node,root);
+"""
+        result = run_product_capture_script(self, body, {'science': science, 'expected': MODULE.task_route_expected(science),
+            'contextState': MODULE.CONTEXT_ANCESTRY_STATE_JS, 'contextPath': MODULE.CONTEXT_PATH_SNAPSHOT_JS,
+            'contextSummary': MODULE.CONTEXT_ANCESTRY_SUMMARY_SELECTOR})
+        self.assertEqual([item['open'] for item in result], [True, False, True, False])
 
     def test_cropped_root_and_low_contrast_are_rejected(self):
         viewport = {'x': 0, 'y': 0, 'width': 1440, 'height': 900}
@@ -1022,6 +1180,58 @@ process.stdout.write(JSON.stringify(results));}finally{dom.window.close();}
             with self.assertRaises(RuntimeError):
                 MODULE.check_task_route_proof(snapshot, '精确限定')
         MODULE.check_task_route_proof(results[-1], '§3.4–3.6 ↗')
+
+    def test_portable_fixed_identity_and_section_proofs_reject_wrong_or_hidden_text(self):
+        script = r"""
+const {JSDOM}=require('jsdom'),assert=require('node:assert/strict'),input=JSON.parse(require('fs').readFileSync(0,'utf8')),specs=input.specs,i=specs[0].methodIdentity;
+const dom=new JSDOM('<style>*{opacity:1;visibility:visible;transform:none;zoom:1;color:rgb(20,30,40);background-color:rgb(255,255,255);font-size:15px}.np-reader-identity-duplicate{display:none}</style><aside class="np-reading-pane"><header id="np-reader-heading"><div id="np-reader-object-title"><h2></h2></div><div id="np-reader-object-meta"></div></header><div id="np-detail-scroll"><section data-mechanism-entity="'+i.entity+'"><h3><span class="np-method-identity-prefix np-reader-identity-duplicate"></span>方法内部结构</h3><article data-method-claim="'+input.claim+'"><p></p></article></section></div></aside><div id="overlay"></div>',{runScripts:'outside-only'});
+try{const w=dom.window,d=w.document,host=d.getElementById('np-reader-object-title'),title=host.querySelector('h2'),meta=d.getElementById('np-reader-object-meta'),heading=d.querySelector('[data-mechanism-entity] > h3'),prefix=heading.firstElementChild,claim=d.querySelector('[data-method-claim] > p'),reader=d.getElementById('np-detail-scroll'),header=d.getElementById('np-reader-heading');
+for(const key of ['position','entity','paper','version'])host.dataset['object'+key[0].toUpperCase()+key.slice(1)]=i[key];title.textContent=i.title;meta.textContent=specs[3].text;prefix.textContent=i.title+' · ';prefix.dataset.readerDuplicatePosition=i.position;claim.textContent=specs[1].text;
+w.NavigationProductApp={getState:()=>({route:{node:i.position,paper:i.paper,version:i.version}})};
+Object.defineProperty(w,'innerWidth',{value:1440});Object.defineProperty(w,'innerHeight',{value:900});
+const style=w.getComputedStyle.bind(w);w.getComputedStyle=e=>new Proxy(style(e),{get:(target,key)=>key==='zoom'?(target.zoom||'1'):Reflect.get(target,key)});
+function r(y,h=24){return{x:820,y,width:560,height:h,left:820,top:y,right:1380,bottom:y+h};}
+for(const n of d.querySelectorAll('*')){n.getBoundingClientRect=()=>n===reader?r(220,600):n===header?r(132,88):n===title?r(144):n===meta?r(176):n===heading?r(240):r(290);for(const[k,v]of Object.entries({clientLeft:0,clientTop:0,clientWidth:560,clientHeight:n===reader?600:n===header?88:24,scrollWidth:560,scrollHeight:n===reader?600:n===header?88:24}))Object.defineProperty(n,k,{value:v,configurable:true});}
+w.Range.prototype.getClientRects=function(){const parent=this.startContainer.parentElement;return w.getComputedStyle(parent).display==='none'?[]:[parent.getBoundingClientRect()];};
+let covered=false;d.elementFromPoint=(x,y)=>covered?d.getElementById('overlay'):y<170?title:y<210?meta:y<270?heading:claim;
+const proof=new w.Function(input.proof),results={valid:specs.map(s=>proof(s)),legacy:proof({selector:specs[0].selector,text:specs[0].text})};
+// A wrong visible title or exact source/version attribute cannot represent the hidden prefix.
+for(const key of ['position','entity','paper','version']){const attr='object'+key[0].toUpperCase()+key.slice(1),old=host.dataset[attr];host.dataset[attr]='wrong';assert.throws(()=>proof(specs[0]),/exact fixed source identity/);assert.throws(()=>proof(specs[2]),/missing/);host.dataset[attr]=old;}
+title.textContent='wrong title';assert.throws(()=>proof(specs[0]),/exact fixed source identity/);assert.throws(()=>proof(specs[2]),/missing/);title.textContent=i.title;
+meta.textContent='wrong version';assert.throws(()=>proof(specs[3]),/missing/);meta.textContent=specs[3].text;
+const oldRoute=w.NavigationProductApp;w.NavigationProductApp={getState:()=>({route:{node:i.position,paper:i.paper,version:'wrong-version'}})};assert.throws(()=>proof(specs[0]),/exact fixed source identity/);w.NavigationProductApp=oldRoute;
+prefix.dataset.readerDuplicatePosition='wrong-position';assert.throws(()=>proof(specs[0]),/exact fixed source identity/);prefix.dataset.readerDuplicatePosition=i.position;
+prefix.style.display='inline';assert.throws(()=>proof(specs[0]),/exact fixed source identity/);prefix.removeAttribute('style');
+const hidden=d.createElement('span');hidden.style.display='none';hidden.textContent='scientific qualifier';heading.appendChild(hidden);assert.throws(()=>proof({...specs[0],text:heading.textContent}),/exact fixed source identity/);hidden.remove();
+covered=true;results.covered=specs.map(s=>proof(s));covered=false;
+title.style.opacity='0';results.hiddenTitle=proof(specs[2]);title.removeAttribute('style');heading.style.opacity='0';results.hiddenSection=proof(specs[0]);heading.removeAttribute('style');
+process.stdout.write(JSON.stringify(results));}finally{dom.window.close();}
+"""
+        for position in self.expected['portable']:
+            claim = MODULE.task_route_claims(self.science, position)[0]
+            specs = MODULE.portable_method_proof_specs(self.science, position, claim)
+            self.assertEqual(len(specs), 4)
+            self.assertEqual(specs[2]['text'], self.science['entities'][position['entityId']]['label'])
+            self.assertIn(self.science['versions'][position['versionId']]['label'], specs[3]['text'])
+            result = subprocess.run(['node', '-e', script], input=json.dumps({'specs': specs, 'claim': claim['id'], 'proof': MODULE.TASK_ROUTE_PROOF_JS}), text=True, capture_output=True, cwd=Path(__file__).parents[1])
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            actual = json.loads(result.stdout)
+            for spec, proof in zip(specs, actual['valid']):
+                MODULE.check_task_route_proof(proof, spec.get('renderedText', spec.get('text')))
+            for proof in actual['covered'] + [actual['hiddenTitle'], actual['hiddenSection'], actual['legacy']]:
+                with self.assertRaises(RuntimeError):
+                    MODULE.check_task_route_proof(proof)
+
+    def test_portable_capture_specs_match_actual_source_dom_for_both_variants(self):
+        specs = [MODULE.portable_method_proof_specs(self.science, p, MODULE.task_route_claims(self.science, p)[0]) for p in self.expected['portable']]
+        body = r"""
+await scope('setting:portable-objectnav');await inventory('setting:portable-objectnav');
+for(let index=0;index<e.portable.length;index++){const p=e.portable[index];await select(p.id);for(const spec of input.specs[index]){const nodes=[...d.querySelectorAll(spec.selector)].filter(n=>spec.text===undefined||n.textContent===spec.text);assert.equal(nodes.length,1,JSON.stringify(spec));}const h=d.querySelector('[data-mechanism-entity="'+p.entityId+'"] > h3');assert.equal(h.lastChild.nodeType,w.Node.TEXT_NODE);assert.equal(h.lastChild.textContent,'方法内部结构');assert.equal(h.firstElementChild.dataset.readerDuplicatePosition,p.id);states.push(snapshot());d.querySelector('.np-return-previous').click();await ready(()=>a.getState().route.node===e.scopes['setting:portable-objectnav'].roots[0]);}
+"""
+        states = run_product_capture_script(self, body, {'science': self.science, 'expected': self.expected, 'specs': specs})
+        self.assertEqual(len(states), 2)
+        for state, position in zip(states, self.expected['portable']):
+            MODULE.check_task_route_method(state, position, self.science['entities'][position['entityId']], MODULE.task_route_claims(self.science, position))
 
     def test_task_route_portable_claims_cannot_be_swapped_or_omitted(self):
         import copy
