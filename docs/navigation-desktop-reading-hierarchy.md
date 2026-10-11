@@ -10,6 +10,16 @@ This candidate reorganizes the navigation reading shell at desktop widths (the a
 
 Counts are derived from current model records. Coverage is selected-section reading, not a claim of complete-paper review or independent reproduction. An imported analysis version with no corresponding local method position remains available through the explicit version library; no method placement is manufactured.
 
+## Method-reading state
+
+At desktop widths, an actual selected `pipeline_recipe` or `versioned_method_card` in g or L uses a 400px tree pane at1440 and448px at1920, with a16px gap and a primary992px/1424px reader pane. This is derived presentation state, not a new route field. S0, task inventory, selected relationships, C, A and narrow layouts keep their own geometry.
+
+The method tree now shows the exact source ancestor chain, selected method and normally expanded original children. It does not substitute a local L placement for a g method, or combine same-paper versions. The title is “当前位置与来路”. Other real-parent children remain explicit native navigation controls outside the ARIA tree, in their original order, with full source labels, roles and version warnings. They are not a new scientific group or an inheritance claim. Displaying the path does not rewrite persisted expansion buckets. Right-arrow follows the actual rendered child in this path, and all tree levels/parent IDs remain original.
+
+The fixed method heading retains the complete existing object label, full source version and snapshot warning. Analysis status and existing actions share a compact row. The measured VLFM acceptance target is a heading no taller than128px and body starting byy261; there is no clipping, ellipsis, line clamp or hard height cap to force long source identity through. Original source warnings take priority if a real case cannot meet that target. The method body no longer visibly repeats the role/parent/direct-branch interface introduction; the full mechanism, conditions, boundaries and evidence remain. All genuine A answers are unchanged.
+
+Method navigation is a natural-flow tree rather than the absolute-positioned overview map. It does not carry legacy map geometry attributes, which would otherwise activate old high-priority card and truncation styles. The two permanent scrolling regions remain the same. Entering a method saves the previous effective layout offsets before narrowing; returning restores the exact original task/relation route, selected relationship, scroll, focus and origin. Reader collapse/reopen preserves actual DOM identity.
+
 ## Display migration and unchanged state contracts
 
 The ready desktop document has no outer-page scrolling. `#np-tree-scroll` and `#np-detail-scroll` are the two permanent reading scrollers. The latter is now a child of the stationary `.np-reading-pane`; its title is a fixed sibling. The inner evidence `.np-detail-scroll` remains natural flow.

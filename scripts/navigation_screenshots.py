@@ -103,6 +103,21 @@ def check_parallel_scope(data):
             raise RuntimeError('Active forest identity differs from original scope roots')
         if not panel['headingVisible'] or not rect_inside(panel['heading'], data['viewport']):
             raise RuntimeError('Active task tree heading is not visible')
+        if (panel['headingSelector'] != '#np-tree-heading' or panel['headingTree'] != panel['tree'] or not panel['headingInPane'] or
+                panel['headingProof']['rect'] != panel['heading']):
+            raise RuntimeError('Active task heading is not the visible fixed heading of this exact forest')
+        check_task_route_proof(panel['headingProof'], {'l': '文献树', 'c': '挑战–思路树'}[panel['tree']])
+        records = panel['rootRecords']; expected = panel['expectedRootRecords']
+        if ([row['id'] for row in expected] != panel['expectedRoots'] or len(records) != len(expected) or
+                any({key: row[key] for key in ('id', 'entity', 'tree', 'scope')} != {key: source[key] for key in ('id', 'entity', 'tree', 'scope')}
+                    for row, source in zip(records, expected))):
+            raise RuntimeError('Active task visible root identity differs from its original tree and scope')
+        for row, source in zip(records, expected):
+            if source['tree'] != panel['tree'] or source['scope'] != panel['scope']:
+                raise RuntimeError('Active task expected root belongs to another tree or scope')
+            check_task_route_proof(row['proof'], source['label'])
+            if not rect_inside(row['proof']['rect'], panel['rect']):
+                raise RuntimeError('Active task original root label is outside its actual forest')
         visible_children = [x for x in panel['children'] if x['visible'] and x['opaque'] and rect_inside(x['rect'], data['viewport']) and rect_inside(x['rect'], panel['rect'])]
         if panel['expectedChildren'] and not visible_children:
             raise RuntimeError('Task forest with recorded descendants shows only a folded root')
@@ -695,7 +710,7 @@ return {route:state.route,taskContextKey:m.taskContextKey(state.route),position:
     entryKey:window.navigation&&window.navigation.currentEntry?window.navigation.currentEntry.key:null,
     timeOrigin:performance.timeOrigin,model:preserved(historyState&&historyState[m.KEY]),unrelated:unrelated},
   viewport:{x:0,y:0,width:innerWidth,height:innerHeight},window:{x:scrollX,y:scrollY},
-  layout:app.dataset.readingLayout,collapsed:app.dataset.readerCollapsed,focus:document.activeElement.id,
+  layout:app.dataset.readingLayout,methodReading:app.dataset.methodReading,collapsed:app.dataset.readerCollapsed,focus:document.activeElement.id,
   panels:rect(document.querySelector('.np-panels')),columnGap:parseFloat(getComputedStyle(document.querySelector('.np-panels')).columnGap),
   treePane:proof(document.querySelector('.np-tree-pane')),tree:ts,treeProof:proof(tree),title:proof(document.getElementById('np-tree-heading')),
   selected:{count:document.querySelectorAll('#np-tree [aria-selected="true"]').length,id:selected&&selected.dataset.position,
@@ -744,6 +759,11 @@ DISPLAY_CONTRACT_MIGRATIONS = {
     'outer_scroll': 'ready desktop window is zero; exact effective tree/reader offsets and other buckets retained',
     'overview_relations': 'all seven paths and controls retained; selected-only default plus explicit show-all',
     'analysis_entry': 'first actual version answer; explicit legacy root remains coverage and full original topology',
+    'active_forest_heading': 'same active source forest and roots; visible #np-tree-heading plus exact root-label proofs replace the deliberately hidden duplicate forest h3',
+    'method_geometry': 'actual desktop g/L method only: 400/448px real-path pane, 16px gap, 992/1424px reader; task/relation/A unchanged',
+    'method_ancestry': 'original root-to-selection parent edges and children; real-parent siblings in native navigation disclosure, never tree nodes',
+    'method_introduction': 'desktop selected method hides only repeated interface introduction; original mechanism and source boundaries remain natural flow',
+    'method_analysis_controls': 'full fixed title/version/warning and genuine analysis controls in a compact status row; no cropped identity',
 }
 
 
@@ -779,7 +799,7 @@ function proof(e){return e?box(e):null;}
 function scroll(e){return {top:e.scrollTop,left:e.scrollLeft};}
 var roots=host.querySelectorAll('[data-parallel-tree] > [role=tree] > [role=treeitem]'),b=a.getBundle(),
     scrollCandidates=[tree,reader,...tree.querySelectorAll('*'),...reader.querySelectorAll('*')].map(scrollRegionCandidate).filter(Boolean);
-return {ready:app.dataset.loadState,route:s.route,window:{x:scrollX,y:scrollY},
+return {ready:app.dataset.loadState,route:s.route,methodReading:app.dataset.methodReading,readingLayout:app.dataset.readingLayout,window:{x:scrollX,y:scrollY},
   viewport:{x:0,y:0,width:innerWidth,height:innerHeight},home:!document.getElementById('np-reading-landing').hidden,
   collapsed:app.dataset.readerCollapsed==='true',sourceOverview:app.dataset.activeTree==='g'&&app.dataset.globalFocus==='overview',panels:rect(document.querySelector('.np-panels')),
   tree:rect(tree),treePane:rect(document.querySelector('.np-tree-pane')),reader:rect(reader),pane:rect(pane),
@@ -805,6 +825,14 @@ def check_desktop_shell(data):
     if ((viewport['width'], viewport['height']) not in VIEWPORTS or data['ready'] != 'ready' or
             data['window'] != {'x': 0, 'y': 0}):
         raise RuntimeError('Ready desktop shell is unready or has outer window scroll')
+    position = data.get('position')
+    method = bool(position and position['kind'] in ('pipeline_recipe', 'versioned_method_card') and
+                  data['route']['tree'] in ('g', 'l') and not data.get('relation') and not data['home'])
+    if data.get('methodReading') != str(method).lower():
+        raise RuntimeError('Desktop method presentation does not match the actual selected source object')
+    if method and (data.get('readingLayout') != 'reading' or any(data['route'].get(k) != position.get(v) for k, v in
+            (('node', 'id'), ('paper', 'paper'), ('version', 'version')))):
+        raise RuntimeError('Desktop method presentation changed reading layout or exact source identity')
     if data['home']:
         return
     expected = {'x': 16, 'y': 132, 'width': viewport['width'] - 32, 'height': viewport['height'] - 148}
@@ -828,7 +856,7 @@ def check_desktop_shell(data):
             data['heading']['rect']['y'] + data['heading']['rect']['height'] > data['reader']['y'] + 1):
         raise RuntimeError('Current object title/version or natural reader content is hidden, clipped or scrolling')
     analysis = data['route']['tree'] == 'a'
-    tree_width = (400 if viewport['width'] == 1440 else 448) if analysis else (768 if viewport['width'] == 1440 else 1056)
+    tree_width = (400 if viewport['width'] == 1440 else 448) if analysis or method else (768 if viewport['width'] == 1440 else 1056)
     gap = 24 if analysis else 16
     if (not _reader_close(data['treePane']['width'], tree_width) or
             not _reader_close(data['pane']['width'], expected['width'] - tree_width - gap) or
@@ -899,7 +927,7 @@ def check_reader_toggle_snapshot(data, collapsed):
             selected['count'] != 1 or selected['id'] != route['node'] or selected['aria'] != 'true' or
             selected['scope'] != route['scope'] or selected['tree'] != route['tree'] or selected['entity'] != position['entity']):
         raise RuntimeError('Reader toggle lost exact ObjectNav/VLFM source or selected-row identity')
-    if (data['layout'] != 'reading' or data['collapsed'] != str(collapsed).lower() or
+    if (data['layout'] != 'reading' or data.get('methodReading') != 'true' or data['collapsed'] != str(collapsed).lower() or
             data['reader']['hidden'] != collapsed or data['reader']['entity'] != position['entity'] or
             data['reader']['flowCount'] != 5 or data['history']['model'] != data['preservedState']):
         raise RuntimeError('Reader toggle layout, source content or persisted route is inconsistent')
@@ -936,7 +964,7 @@ def check_reader_toggle_snapshot(data, collapsed):
             raise RuntimeError('Collapsed tree does not recover the complete panel width')
     else:
         rr, tr = reader['proof']['rect'], data['treePane']['rect']
-        expected_reader_width = 624 if viewport['width'] == 1440 else 816
+        expected_reader_width = 992 if viewport['width'] == 1440 else 1424
         if (reader['display'] == 'none' or reader['tabIndex'] != -1 or
                 not _reader_close(rr['width'], expected_reader_width) or
                 not _reader_close(tr['width'], panels['width'] - data['columnGap'] - expected_reader_width) or rr['height'] < 320 or
@@ -974,7 +1002,7 @@ def check_reader_toggle_transition(before, after, original, collapsed):
     after_preserved = _reader_toggle_preserved(after, 'np-reader-toggle' if collapsed else 'np-detail-scroll')
     if before_preserved != after_preserved or original_preserved != after_preserved:
         raise RuntimeError('Reader toggle changed preserved navigation state beyond the current neutral focus')
-    for key in ('route', 'position', 'graphScale', 'expanded', 'taskContextKey', 'viewport', 'window'):
+    for key in ('route', 'position', 'graphScale', 'expanded', 'taskContextKey', 'viewport', 'window', 'methodReading'):
         if before[key] != after[key] or original[key] != after[key]:
             raise RuntimeError('Reader toggle changed preserved navigation state: ' + key)
     if after['title']['text'] != original['title']['text'] or after['selected']['label']['text'] != original['selected']['label']['text']:
@@ -1063,7 +1091,7 @@ def reader_toggle_checks(driver, report, save, capture, prefix):
 
 TASK_ROUTE_PROOF_JS = VISUAL_GEOMETRY + r"""
 var spec=arguments[0],matches=[...document.querySelectorAll(spec.selector)].filter(n=>spec.text===undefined||n.textContent===spec.text),
-    e=matches.length===1?matches[0]:null,reader=spec.region==='toolbar'?document.querySelector('.np-workspace-bar'):document.getElementById(spec.region==='canvas'?'np-tree-scroll':spec.region==='heading'?'np-reader-heading':spec.region==='analysis-entry'?'np-reader-analysis-entry':'np-detail-scroll');
+    e=matches.length===1?matches[0]:null,reader=spec.region==='toolbar'?document.querySelector('.np-workspace-bar'):spec.region==='tree-heading'?document.querySelector('.np-tree-pane .np-pane-top'):document.getElementById(spec.region==='canvas'?'np-tree-scroll':spec.region==='heading'?'np-reader-heading':spec.region==='analysis-entry'?'np-reader-analysis-entry':'np-detail-scroll');
 if(!e||!reader.contains(e))throw Error('Exact task-route proof is missing, duplicated or outside its measured region: '+JSON.stringify(spec));
 // Only the generated method-name prefix may be represented by the exact fixed title.
 // Never skip arbitrary hidden descendants or scientific text in a proof.
@@ -1096,6 +1124,244 @@ return Object.assign(b,{id:e.id,tag:e.tagName,disabled:!!e.disabled,href:e.tagNa
   renderedText:texts.map(n=>n.textContent).join(''),fragments:fragments,textRuns:textRuns,clipAreas:ancestors,
   viewport:{x:0,y:0,width:innerWidth,height:innerHeight},readerContent:content});
 """
+
+
+PARALLEL_SCOPE_SNAPSHOT_JS = VISUAL_GEOMETRY + r"""
+function measured(spec){return (function(){
+""" + TASK_ROUTE_PROOF_JS + r"""
+}).call(null,spec);}
+var a=NavigationProductApp,b=a.getBundle(),r=a.getState().route,expectedScope=arguments[0],rootSelector=arguments[1],sourceRoots=arguments[2],sourceChildren=arguments[3],rootRecords=arguments[4];
+return {scope:r.scope,expectedScope:expectedScope,activeTree:r.tree,selectedTree:document.querySelector('[data-tree-tab][aria-selected=true]')?.dataset.treeTab,
+  treeCount:document.querySelectorAll('#np-tree [role=tree]').length,rovingCount:document.querySelectorAll('#np-tree [role=treeitem][tabindex="0"]').length,
+  inactiveItemCount:[...document.querySelectorAll('#np-tree [role=treeitem]')].filter(e=>e.dataset.tree!==r.tree).length,
+  home:!document.getElementById('np-reading-landing').hidden,viewport:{x:0,y:0,width:innerWidth,height:innerHeight},
+  panels:[...document.querySelectorAll('#np-tree [data-parallel-tree]')].map(e=>{var tree=e.dataset.parallelTree,roots=sourceRoots[tree],
+    heading=measured({selector:'#np-tree-heading',region:'tree-heading'}),old=e.querySelector(':scope > h3');
+    return {tree:tree,scope:e.dataset.scopeId,roots:[...e.querySelectorAll(rootSelector)].map(n=>n.dataset.position),expectedRoots:roots,
+      expectedChildren:sourceChildren[tree],children:[...e.querySelectorAll('[role=treeitem]')].filter(n=>!roots.includes(n.dataset.position)).map(n=>box(n.querySelector(':scope > .np-node-row'))),rect:rect(e),
+      heading:heading.rect,headingVisible:heading.visible&&heading.opaque&&!heading.clipped,headingProof:heading,headingSelector:'#np-tree-heading',
+      headingTree:document.getElementById('navigation-product').dataset.activeTree,headingInPane:e.closest('.np-tree-pane')?.contains(document.getElementById('np-tree-heading'))===true,
+      legacyHeading:old?box(old):null,expectedRootRecords:rootRecords[tree],
+      rootRecords:[...e.querySelectorAll(rootSelector)].map(n=>({id:n.dataset.position,entity:n.dataset.entity,tree:n.dataset.tree,scope:e.dataset.scopeId,
+        proof:measured({selector:'[id='+JSON.stringify(n.id)+'] > .np-node-row > .np-node-label',region:'canvas'})}))};})};
+"""
+
+
+# This receipt is collected for existing method scenes. The 98-image plan is unchanged.
+METHOD_READING_SNAPSHOT_JS = VISUAL_GEOMETRY + SCROLL_REGION_VISIBILITY_JS + r"""
+function measured(spec){return (function(){
+""" + TASK_ROUTE_PROOF_JS + r"""
+}).call(null,spec);}
+var a=NavigationProductApp,m=NavigationProductModel,s=a.getState(),b=a.getBundle(),app=document.getElementById('navigation-product'),
+    host=document.getElementById('np-tree'),tree=document.getElementById('np-tree-scroll'),reader=document.getElementById('np-detail-scroll'),
+    title=document.getElementById('np-reader-object-title'),mechanism=reader.querySelector('[data-mechanism-entity]'),p=b.positions[s.route.node],
+    siblings=[...host.querySelectorAll('details[data-method-siblings]')],intro=[...reader.querySelectorAll('.np-selection-intro')];
+function proof(e){return e?box(e):null;}
+function field(e){return {text:e.textContent,rendering:renderedElementState(e),proof:box(e)};}
+var fields=mechanism?[...mechanism.querySelectorAll('.np-method-flow dd,.np-detail-block > p,.np-method-scope,.np-reading-association,[data-method-claim] > p')]:[];
+return {route:s.route,expanded:m.getBucket(s).expandedByTree,methodReading:app.dataset.methodReading,readingLayout:app.dataset.readingLayout,
+  selectedRelation:reader.querySelector('[data-selected-task-relation]')?.dataset.selectedTaskRelation||null,
+  title:measured({selector:'#np-reader-object-title > h2',region:'heading'}),meta:measured({selector:'#np-reader-object-meta',region:'heading'}),
+  fixedIdentity:{position:title.dataset.objectPosition||null,entity:title.dataset.objectEntity||null,paper:title.dataset.objectPaper||null,version:title.dataset.objectVersion||null},
+  treeHeading:proof(document.getElementById('np-tree-heading')),tree:rect(tree),reader:rect(reader),heading:proof(document.getElementById('np-reader-heading')),
+  viewport:{x:0,y:0,width:innerWidth,height:innerHeight},
+  rows:[...host.querySelectorAll('[role=treeitem]')].map(e=>({id:e.dataset.position,parent:e.dataset.parent||null,domParent:e.parentElement.closest('[role=treeitem]')?.dataset.position||null,
+    entity:e.dataset.entity,tree:e.dataset.tree,level:Number(e.getAttribute('aria-level')),ancestor:e.dataset.methodAncestor==='true',selected:e.getAttribute('aria-selected')==='true',
+    tabIndex:e.tabIndex,label:e.querySelector(':scope > .np-node-row > .np-node-label')?.textContent||null,
+    sourceLabel:e.querySelector(':scope > .np-node-row > .np-node-label')?.title||null,
+    role:e.querySelector(':scope > .np-node-row > .np-node-kind')?.textContent||null,roleProof:proof(e.querySelector(':scope > .np-node-row > .np-node-kind')),proof:proof(e.querySelector(':scope > .np-node-row > .np-node-label'))})),
+  siblings:siblings.map(e=>({tag:e.tagName,parent:e.dataset.methodSiblings,open:e.open,summary:proof(e.querySelector(':scope > summary')),
+    controls:[...e.querySelectorAll('[data-method-sibling]')].map(c=>({tag:c.tagName,id:c.dataset.methodSibling,treeRole:!!c.closest('[role=treeitem],[role=group]'),text:c.textContent,sourceLabel:c.title,meta:c.querySelector('.np-method-sibling-meta')?.textContent||null,disabled:c.disabled}))})),
+  introductions:intro.map(e=>({text:e.textContent,rendering:renderedElementState(e)})),
+  mechanism:mechanism?{entity:mechanism.dataset.mechanismEntity,ready:a.getContent().ready(p.entityId),rect:rect(mechanism),fields:fields.map(field)}:null,
+  analysisControls:[...document.querySelectorAll('#np-reader-analysis-entry [data-analysis-state] > p,#np-reader-analysis-entry [data-analysis-state] > button,#np-reader-analysis-entry [data-analysis-state] > details > summary')].map(proof)};
+"""
+
+
+def method_reading_expected(science, position, source_positions=None):
+    """Original source path and siblings; never a same-paper inferred placement."""
+    positions = source_positions if source_positions is not None else science['positions']
+    if position['kind'] not in ('pipeline_recipe', 'versioned_method_card') or position['tree'] not in ('g', 'l'):
+        raise RuntimeError('Method receipt requires a real selected g/L source method')
+    chain, seen, current = [], set(), position
+    while current:
+        if current['id'] in seen:
+            raise RuntimeError('Original method ancestry contains a cycle')
+        seen.add(current['id']); chain.insert(0, current['id'])
+        parent = positions.get(current.get('parentId'))
+        if current.get('parentId') and (not parent or current['id'] not in parent['childIds'] or parent['tree'] != position['tree']):
+            raise RuntimeError('Original method ancestry has no matching parent edge')
+        current = parent
+    parent = positions.get(position.get('parentId'))
+    siblings = [pid for pid in parent['childIds'] if pid != position['id']] if parent else []
+    def text(value):
+        if isinstance(value, str): return value.replace('\\n', '\n')
+        if isinstance(value, list): return '；'.join(filter(None, (text(v) for v in value)))
+        if isinstance(value, dict): return text(next((value[k] for k in ('text', 'value', 'description', 'statement') if value.get(k)), None))
+        return '' if value is None else str(value)
+    detail = science['entities'][position['entityId']].get('detail', {})
+    flow = detail.get('pipeline') or detail.get('pipeline_contract') or {}
+    snippets = ['以下为该方法记录的内部结构；不表示所有关联任务与评测协议都启用全部组件。']
+    snippets += [text(flow[k]) for k in ('input', 'representation', 'decision', 'execution', 'feedback') if flow.get(k)]
+    snippets += [text(detail[k]) for k in ('change', 'insight', 'scope', 'requiredDisplayConditions', 'boundaries', 'limits') if text(detail.get(k))]
+    if detail.get('condition') and not detail.get('requiredDisplayConditions'):
+        snippets.append(text(detail['condition']))
+    if position.get('association') in ('condition', 'context'):
+        snippets.append('条件关联，不能按同一任务或同一评测协议理解。' if position['association'] == 'condition' else '跨任务相关阅读，不作为本任务的解法子节点。')
+    return {'position': position, 'chain': chain, 'children': position['childIds'], 'siblings': siblings,
+            'version': science['versions'][position['versionId']], 'snippets': snippets,
+            'siblingLabels': {pid: positions[pid].get('sourceLabel') or positions[pid]['label'] for pid in siblings},
+            'siblingVersions': {pid: science['versions'][positions[pid]['versionId']]['label'] for pid in siblings if positions[pid].get('versionId')}}
+
+
+def method_visible_source_ids(expected, source_positions, expanded):
+    """Existing expansion governs original descendants; ancestry is a filtered projection."""
+    chain = expected['chain']; path = set(chain); result = []
+    def visit(pid):
+        result.append(pid)
+        if pid not in expanded: return
+        children = source_positions[pid]['childIds']
+        if any(cid in path for cid in children): children = [cid for cid in children if cid in path]
+        for child in children: visit(child)
+    visit(chain[0])
+    return result
+
+
+def check_method_reading(data, expected, source_positions, *, compact=False, visual=True):
+    """Keep science/source ancestry strict; geometry changes only this presentation."""
+    p = expected['position']
+    identity = {'position': p['id'], 'entity': p['entityId'], 'paper': p['paperId'], 'version': p['versionId']}
+    if (data['methodReading'] != 'true' or data['readingLayout'] != 'reading' or data['selectedRelation'] or
+            data['fixedIdentity'] != identity or any(data['route'].get(k) != p.get(v) for k, v in
+                (('node', 'id'), ('tree', 'tree'), ('scope', 'scopeId'), ('paper', 'paperId'), ('version', 'versionId')))):
+        raise RuntimeError('Method reading receipt substituted its exact route, entity, tree, scope or version')
+    rows = data['rows']; ids = [row['id'] for row in rows]
+    # Preserve original expanded descendants and closed children without inventing peers.
+    wanted = method_visible_source_ids(expected, source_positions, data['expanded'][p['tree']])
+    if any(pid not in ids for pid in expected['chain']) or ids != wanted or len(set(ids)) != len(ids) or sum(row['tabIndex'] == 0 for row in rows) != 1:
+        raise RuntimeError('Method path lost a real node, added fake peers or changed its one keyboard scope')
+    for row in rows:
+        source = source_positions[row['id']]
+        ancestors = expected['chain'][:-1]
+        depth, ancestor = 1, source
+        while ancestor.get('parentId'):
+            depth += 1; ancestor = source_positions[ancestor['parentId']]
+        if (row['parent'] != source.get('parentId') or row['domParent'] != source.get('parentId') or
+                row['entity'] != source['entityId'] or row['tree'] != p['tree'] or row['level'] != depth or
+                row['ancestor'] != (row['id'] in ancestors) or row['selected'] != (row['id'] == p['id']) or
+                row['sourceLabel'] != (source.get('sourceLabel') or source['label']) or not row['label'] or not row['role']):
+            raise RuntimeError('Method path changed an original parent edge, role, label or ARIA hierarchy')
+        if visual and row['id'] in expected['chain'] + expected['children'] and any(not _reader_proof(row[key], data['tree'], data['viewport'], font_size=15) for key in ('proof', 'roleProof')):
+            raise RuntimeError('Method current position and full original ancestor labels are not readable together')
+    selected = rows[len(expected['chain']) - 1]
+    if data['title']['text'] != selected['label'] or data['treeHeading']['text'] != '当前位置与来路':
+        raise RuntimeError('Method fixed title and real-path navigation describe different selected objects')
+    siblings = data['siblings']
+    if expected['siblings']:
+        if len(siblings) != 1 or siblings[0]['tag'] != 'DETAILS' or siblings[0]['parent'] != p['parentId']:
+            raise RuntimeError('Method sibling navigation is not its real-parent native disclosure')
+        controls = siblings[0]['controls']
+        if [c['id'] for c in controls] != expected['siblings'] or any(c['tag'] != 'BUTTON' or c['treeRole'] or c['disabled'] or not c['text'] for c in controls):
+            raise RuntimeError('Method sibling navigation invented, merged or reordered original positions')
+        for control in controls:
+            pid = control['id']
+            if (control['sourceLabel'] != expected['siblingLabels'][pid] or not control['text'].startswith(expected['siblingLabels'][pid]) or
+                    not control['meta'] or (pid in expected['siblingVersions'] and expected['siblingVersions'][pid] not in control['meta'])):
+                raise RuntimeError('Method sibling navigation shortened its original source label or full version')
+    elif siblings:
+        raise RuntimeError('Method without original siblings must not manufacture alternatives')
+    if (len(data['introductions']) != 1 or (visual and (data['introductions'][0]['rendering']['display'] != 'none' or
+            data['introductions'][0]['rendering']['rendered'] is not False))):
+        raise RuntimeError('Method repeated interface introduction remains visible or was removed rather than desktop-hidden')
+    mechanism = data['mechanism']
+    if not mechanism or mechanism['entity'] != p['entityId'] or not mechanism['ready']:
+        raise RuntimeError('Method original mechanism is unready or belongs to another entity')
+    fields = mechanism['fields']
+    for snippet in expected['snippets']:
+        if not any(snippet in field['text'] for field in fields):
+            raise RuntimeError('Method natural-flow body lost an original mechanism or scope boundary')
+    version = expected['version']
+    if version['label'] not in data['meta']['text'] or (version.get('versionStatus') == 'snapshot_not_version_pinned' and '未固定快照' not in data['meta']['text']):
+        raise RuntimeError('Method fixed heading omitted its full source version or snapshot warning')
+    if not data['analysisControls']:
+        raise RuntimeError('Method fixed heading lost its genuine version-analysis state and controls')
+    if visual:
+        for key in ('title', 'meta'):
+            check_task_route_proof(data[key])
+        if not _reader_proof(data['treeHeading'], data['viewport'], font_size=15):
+            raise RuntimeError('Method real-path heading is unreadable')
+        for field in fields:
+            proof = field['proof']
+            if (not field['rendering']['rendered'] or not proof['opaque'] or not proof['unscaled'] or proof['clipped'] or
+                    proof['fontSize'] < 15 or len(proof['foreground']) != 3 or len(proof['background']) != 3 or
+                    contrast_ratio(proof['foreground'], proof['background']) < 4.5):
+                raise RuntimeError('Method mechanism or scientific boundary is hidden, clipped, scaled or unreadable')
+        for control in data['analysisControls']:
+            if not _reader_proof(control, data['heading']['rect'], data['viewport'], font_size=15):
+                raise RuntimeError('Method fixed analysis state or action is unreadable')
+        if compact and (data['heading']['rect']['height'] > 128 or data['reader']['y'] > 261):
+            raise RuntimeError('Reviewed method acceptance case exceeds its 128px fixed heading or y261 body entry')
+        if not 720 <= mechanism['rect']['width'] <= 880:
+            raise RuntimeError('Desktop method prose does not keep the approved natural-flow reading measure')
+
+
+METHOD_NAVIGATION_STATE_JS = r"""
+var a=NavigationProductApp,m=NavigationProductModel,s=a.getState(),tree=document.getElementById('np-tree-scroll'),reader=document.getElementById('np-detail-scroll');
+return {route:s.route,originTrail:s.originTrail,historyLength:history.length,expanded:m.getBucket(s).expandedByTree,
+  window:{x:scrollX,y:scrollY},treeScroll:{top:tree.scrollTop,left:tree.scrollLeft},readerScroll:{top:reader.scrollTop,left:reader.scrollLeft},
+  focus:document.activeElement.id,roving:[...document.querySelectorAll('#np-tree [role=treeitem][tabindex="0"]')].map(e=>e.dataset.position),
+  methodReading:document.getElementById('navigation-product').dataset.methodReading,
+  siblings:[...document.querySelectorAll('#np-tree details[data-method-siblings]')].map(e=>({parent:e.dataset.methodSiblings,open:e.open}))};
+"""
+
+
+def check_method_navigation_transition(before, after, focus=None, exact_tree_scroll=False):
+    for key in ('route', 'originTrail', 'historyLength', 'expanded', 'window', 'readerScroll', 'methodReading'):
+        if before[key] != after[key]:
+            raise RuntimeError('Method navigation controls changed preserved source context: ' + key)
+    if after['methodReading'] != 'true' or len(after['roving']) != 1:
+        raise RuntimeError('Method navigation lost the actual method presentation or single keyboard tree')
+    if focus is not None and (after['focus'] != 'np-node-' + focus or after['roving'] != [focus]):
+        raise RuntimeError('Method keyboard traversal did not reach the exact original position')
+    if exact_tree_scroll and before['treeScroll'] != after['treeScroll']:
+        raise RuntimeError('Method navigation changed the exact tree scroll without leaving the source object')
+
+
+def method_navigation_checks(driver, report, save, prefix, expected, source_positions):
+    """Native keyboard traverses every displayed original parent edge without navigation."""
+    before = driver.js(METHOD_NAVIGATION_STATE_JS)
+    record = {'viewport': prefix, 'position': expected['position']['id'], 'before': before, 'steps': []}
+    report.setdefault('methodNavigationChecks', []).append(record)
+    save()
+    def key(value, target):
+        element = driver.selector('[id="' + ('np-node-' + expected['position']['id'] if not record['steps'] else record['steps'][-1]['after']['focus']) + '"]')
+        step = {'input': value, 'expectedFocus': target}
+        record['steps'].append(step); save()
+        try:
+            driver.call('POST', '/element/' + element[ELEMENT] + '/value', {'text': value, 'value': [value]})
+            driver.settle()
+        finally:
+            step['after'] = driver.js(METHOD_NAVIGATION_STATE_JS); save()
+        check_method_navigation_transition(before, step['after'], target)
+    path = method_visible_source_ids(expected, source_positions, before['expanded'][expected['position']['tree']])
+    key('\ue011', path[0])  # Home
+    for pid in path[1:]:
+        key('\ue015', pid)  # ArrowDown
+    key('\ue011', path[0])
+    for pid in expected['chain'][1:]:
+        key('\ue015', pid)
+    record['after'] = driver.js(METHOD_NAVIGATION_STATE_JS); save()
+    check_method_navigation_transition(before, record['after'], expected['position']['id'], exact_tree_scroll=True)
+    record['status'] = 'verified_native_keyboard'
+    save()
+
+
+def check_method_layout_return(before, after):
+    """Return rederives the original non-method geometry before restoring offsets."""
+    check_desktop_shell(before); check_desktop_shell(after)
+    for key in ('route', 'methodReading', 'treePane', 'tree', 'pane', 'reader', 'offsets', 'relation'):
+        if before[key] != after[key]:
+            raise RuntimeError('Return from method did not restore original layout and exact effective offsets: ' + key)
 
 
 TASK_ROUTE_RETURN_WAIT_JS = r"""
@@ -1907,10 +2173,13 @@ def task_route_checks(driver, report, save, capture, prefix, base, science, serv
     def select_method(position, selector=None):
         element = reveal_control(driver, {'selector': selector}) if selector else expose_source_position(driver, position['id'], record, save)
         before = snapshot()
+        before['desktopShell'] = driver.js(DESKTOP_SHELL_SNAPSHOT_JS)
         before['activatedControl'] = driver.js("return arguments[0].id||arguments[0].closest('[role=treeitem]').id;", element)
         before['originFocusTarget'] = driver.js("return arguments[0].closest('[data-position]')?.dataset.position||arguments[0].id;", element)
         phase = transition_record(driver, record, save, 'select-exact-method', lambda: driver.click(element),
             lambda: driver.js("var a=NavigationProductApp,p=arguments[0],r=a.getState().route,m=document.querySelector('[data-mechanism-entity]');return r.node===p.id&&r.scope===p.scopeId&&r.tree===p.tree&&r.paper===p.paperId&&r.version===p.versionId&&a.getContent().ready(p.entityId)&&m?.dataset.mechanismEntity===p.entityId;", position))
+        phase['desktopShellBefore'] = before['desktopShell']
+        save()
         origin = phase['origin']
         if not origin or origin['route'] != before['route'] or origin['bucket']['focusTarget'] != before['originFocusTarget']:
             raise RuntimeError('Method click lost its exact original route/control')
@@ -1936,6 +2205,9 @@ def task_route_checks(driver, report, save, capture, prefix, base, science, serv
         phase = transition_record(driver, record, save, 'explicit-return-method-origin', lambda: driver.click(driver.selector('.np-return-previous')),
             lambda: driver.js(TASK_ROUTE_RETURN_WAIT_JS, before['route'], before['activatedControl']))
         check_task_route_return(before, phase['after'], before['activatedControl'])
+        phase['desktopShellAfter'] = driver.js(DESKTOP_SHELL_SNAPSHOT_JS)
+        save()
+        check_method_layout_return(before['desktopShell'], phase['desktopShellAfter'])
 
     poni = expected['poni']
     open_scope(poni['scopeId'])
@@ -2664,6 +2936,9 @@ def main():
     if report['scienceSha256'] != '9069c6a11ae9a867671522d04e6a24b4edcada660d03feb2f41340bfc395825c':
         raise RuntimeError('Screenshot scientific identity differs from reviewed9069 source')
     science = json.loads((dist / 'research/navigation/product-data.json').read_text())
+    from navigation_research_map import build_research_map
+    method_positions = dict(science['positions'])
+    method_positions.update(build_research_map(science)['positions'])
     relation_expected = []
     for number in range(88, 95):
         rel = science['relations']['tasks:relation:' + str(number)]
@@ -2696,6 +2971,8 @@ def main():
           nodeCount:document.querySelectorAll('#np-tree [role=treeitem]').length,
           focus:document.activeElement?.id, bodyWidth:document.body.scrollWidth};''', CAPTURE_BOUNDS_SELECTOR)
         data['desktopShell'] = driver.js(DESKTOP_SHELL_SNAPSHOT_JS)
+        if data['desktopShell'].get('methodReading') == 'true' and not data['desktopShell']['collapsed']:
+            data['methodReading'] = driver.js(METHOD_READING_SNAPSHOT_JS)
         data['screenKind'] = 'default_reading_overview' if require_home else 'tree_or_reader'
         data['readingVisibility'] = driver.js('''function rect(e){if(!e)return null;let r=e.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};}
           let a=NavigationProductApp,b=a.getBundle(),root=b.researchMap.roots[0];
@@ -2740,6 +3017,10 @@ def main():
         report['captures'].append(data)
         save()
         check_desktop_shell(data['desktopShell'])
+        if 'methodReading' in data:
+            method_expected = method_reading_expected(science, method_positions[data['route']['node']], method_positions)
+            check_method_reading(data['methodReading'], method_expected, method_positions,
+                                 compact=name.endswith(('-03-method-reader', '-03b-reader-visible', '-11-active-method-reader', '-11c-reader-reopened')))
         if not data['ready'] or data['loadState'] != 'ready' or not data['fallbackHidden'] or (not require_home and not data['nodeCount']) or data['fonts'] != 'loaded':
             raise RuntimeError('Blank, unready, or font-pending capture')
         if not data['pixelVariation']:
@@ -2944,10 +3225,10 @@ def main():
         driver.settle()
 
     def parallel_scope(scope):
-        data = driver.js(VISUAL_GEOMETRY + """
-          var a=NavigationProductApp,b=a.getBundle(),r=a.getState().route;
-          return {scope:r.scope,expectedScope:arguments[0],activeTree:r.tree,selectedTree:document.querySelector('[data-tree-tab][aria-selected=true]')?.dataset.treeTab,treeCount:document.querySelectorAll('#np-tree [role=tree]').length,rovingCount:document.querySelectorAll('#np-tree [role=treeitem][tabindex="0"]').length,inactiveItemCount:[...document.querySelectorAll('#np-tree [role=treeitem]')].filter(e=>e.dataset.tree!==r.tree).length,home:!document.getElementById('np-reading-landing').hidden,viewport:{x:0,y:0,width:innerWidth,height:innerHeight},panels:[...document.querySelectorAll('#np-tree [data-parallel-tree]')].map(e=>{var tree=e.dataset.parallelTree,roots=arguments[2][tree],h=e.querySelector('h3'),hb=box(h),q=hb.rect;return {tree:tree,scope:e.dataset.scopeId,roots:[...e.querySelectorAll(arguments[1])].map(n=>n.dataset.position),expectedRoots:roots,expectedChildren:arguments[3][tree],children:[...e.querySelectorAll('[role=treeitem]')].filter(n=>!roots.includes(n.dataset.position)).map(n=>box(n.querySelector(':scope > .np-node-row'))),rect:rect(e),heading:q,headingVisible:hb.visible&&hb.opaque&&!hb.clipped};})};
-        """, scope, PARALLEL_ROOT_SELECTOR, science['forests'][scope], {t: any(science['positions'][pid]['childIds'] for pid in science['forests'][scope][t]) for t in ('l', 'c')})
+        root_records = {tree: [{'id': pid, 'entity': science['positions'][pid]['entityId'], 'tree': tree, 'scope': scope,
+            'label': science['entities'][science['positions'][pid]['entityId']]['label']} for pid in science['forests'][scope][tree]] for tree in ('l', 'c')}
+        data = driver.js(PARALLEL_SCOPE_SNAPSHOT_JS, scope, PARALLEL_ROOT_SELECTOR, science['forests'][scope],
+            {tree: any(science['positions'][pid]['childIds'] for pid in science['forests'][scope][tree]) for tree in ('l', 'c')}, root_records)
         report.setdefault('parallelScopeChecks', []).append(data)
         save()
         check_parallel_scope(data)
@@ -3065,6 +3346,7 @@ def main():
                 raise RuntimeError('Method control did not become reachable')
             driver.click(element)
             wait_for(lambda: driver.js("var a=NavigationProductApp,p=a.getBundle().positions[arguments[0]],s=document.querySelector('.np-reading-pane .np-method-mechanism');return a.getState().route.node===p.id && a.getState().route.paper===p.paperId && a.getState().route.version===p.versionId && a.getContent().ready(p.entityId) && s?.dataset.mechanismEntity===p.entityId && s.querySelectorAll('.np-method-flow dd').length>0", target))
+            method_navigation_checks(driver, report, save, prefix, method_reading_expected(science, method_positions[target], method_positions), method_positions)
             capture(prefix + '-03-method-reader')
             if driver.js('return NavigationProductApp.getState().route.paper') != 'vlfm':
                 raise RuntimeError('Selected method identity mismatch')
@@ -3148,6 +3430,7 @@ def main():
                     method = driver.js("var b=NavigationProductApp.getBundle();return Object.values(b.positions).find(p=>p.tree==='l'&&p.scopeId==='task:category-objectnav'&&p.paperId==='vlfm'&&p.kind==='pipeline_recipe').id;")
                     select_node(method)
                     wait_for(lambda: driver.js('var a=NavigationProductApp;return a.getContent().ready(a.getBundle().positions[arguments[0]].entityId)&&document.querySelectorAll(".np-method-flow dd").length===5', method))
+                    method_navigation_checks(driver, report, save, prefix, method_reading_expected(science, method_positions[method], method_positions), method_positions)
                     capture(prefix + '-11-active-method-reader', require_flow=True)
                     reader_toggle_checks(driver, report, save, capture, prefix)
                 # Exact origin is the real overview entry, not a reconstructed route.

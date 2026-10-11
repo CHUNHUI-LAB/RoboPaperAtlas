@@ -26,7 +26,7 @@ const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypt
 const input=JSON.parse(fs.readFileSync(0,'utf8')),output=path.join(input.temp,'research/navigation'),errors=[];
 class Resources extends ResourceLoader{fetch(url){throw Error('Unexpected external resource '+url);}}
 const vc=new VirtualConsole();vc.on('jsdomError',e=>errors.push(e.message));
-const dom=new JSDOM(fs.readFileSync(path.join(output,'index.html'),'utf8'),{url:'https://example.org/research/navigation/',runScripts:'dangerously',pretendToBeVisual:true,resources:new Resources(),virtualConsole:vc,beforeParse(w){w.TextEncoder=TextEncoder;w.TextDecoder=TextDecoder;w.scrollTo=(x,y)=>Object.defineProperty(w,'scrollY',{value:y,configurable:true});w.HTMLElement.prototype.scrollIntoView=function(){};Object.defineProperty(w.crypto,'subtle',{value:crypto.webcrypto.subtle});w.fetch=url=>Promise.resolve({ok:true,arrayBuffer:async()=>fs.readFileSync(path.join(output,url))});}});
+const dom=new JSDOM(fs.readFileSync(path.join(output,'index.html'),'utf8'),{url:'https://example.org/research/navigation/',runScripts:'dangerously',pretendToBeVisual:true,resources:new Resources(),virtualConsole:vc,beforeParse(w){if(input.viewport){Object.defineProperty(w,'innerWidth',{value:input.viewport.width,configurable:true});Object.defineProperty(w,'innerHeight',{value:input.viewport.height,configurable:true});}w.TextEncoder=TextEncoder;w.TextDecoder=TextDecoder;w.scrollTo=(x,y)=>Object.defineProperty(w,'scrollY',{value:y,configurable:true});w.HTMLElement.prototype.scrollIntoView=function(){};Object.defineProperty(w.crypto,'subtle',{value:crypto.webcrypto.subtle});w.fetch=url=>Promise.resolve({ok:true,arrayBuffer:async()=>fs.readFileSync(path.join(output,url))});}});
 (async()=>{const w=dom.window,d=w.document,wait=ms=>new Promise(r=>setTimeout(r,ms));
 async function ready(check){for(let i=0;i<250&&!check();i++)await wait(10);assert.ok(check());await new Promise(r=>w.requestAnimationFrame(()=>w.requestAnimationFrame(r)));}
 await ready(()=>w.NavigationProductApp);const a=w.NavigationProductApp,m=w.NavigationProductModel,s=input.science,e=input.expected,snapshot=new w.Function(input.snapshot),states=[];
@@ -253,12 +253,25 @@ run(start+'<em>wrong sibling</em><span> · 未固定全文快照</span></p></art
                         'headingVisible': True, 'heading': {'x': 20, 'y': 200, 'width': 350, 'height': 25},
                         'rect': {'x': 20, 'y': 190, 'width': 500, 'height': 500}, 'expectedChildren': True,
                         'children': [{'visible': True, 'opaque': True, 'rect': {'x': 30, 'y': 250, 'width': 350, 'height': 30}}]}]}
+            panel = data['panels'][0]
+            panel.update(headingSelector='#np-tree-heading', headingTree=tree, headingInPane=True,
+                         headingProof=MethodReadingCaptureChecks.proof('文献树' if tree == 'l' else '挑战–思路树', 20, 200, 350, 25),
+                         expectedRootRecords=[dict(id=tree, entity='source-root', tree=tree, scope=data['scope'], label='Original task root')],
+                         rootRecords=[dict(id=tree, entity='source-root', tree=tree, scope=data['scope'], proof=MethodReadingCaptureChecks.proof('Original task root', 30, 225, 350, 25))])
             MODULE.check_parallel_scope(data)
             mutations = [lambda x: x['panels'].pop(), lambda x: x['panels'].append(copy.deepcopy(x['panels'][0])),
                          lambda x: x['panels'][0].update(scope='task:category-objectnav'),
                          lambda x: x['panels'][0].update(roots=['wrong']), lambda x: x.update(treeCount=2),
                          lambda x: x.update(rovingCount=2), lambda x: x.update(inactiveItemCount=1),
                          lambda x: x.update(selectedTree='g'), lambda x: x['panels'][0].update(headingVisible=False),
+                         lambda x: x['panels'][0].update(headingSelector='h3'), lambda x: x['panels'][0].update(headingTree='g'),
+                         lambda x: x['panels'][0].update(headingInPane=False), lambda x: x['panels'][0]['headingProof'].update(fontSize=14),
+                         lambda x: x['panels'][0]['headingProof'].update(renderedText='wrong tree'),
+                         lambda x: x['panels'][0]['rootRecords'][0].update(entity='same-label-wrong-root'),
+                         lambda x: x['panels'][0]['rootRecords'][0]['proof'].update(renderedText='different scope'),
+                         lambda x: x['panels'][0]['rootRecords'][0]['proof'].update(visible=False),
+                         lambda x: x['panels'][0]['rootRecords'][0]['proof'].update(clipped=True),
+                         lambda x: x['panels'][0]['rootRecords'][0]['proof'].update(foreground=[230,230,230]),
                          lambda x: x['panels'][0]['children'][0].update(visible=False),
                          lambda x: x['panels'][0]['children'][0]['rect'].update(y=1500)]
             for mutate in mutations:
@@ -441,17 +454,17 @@ class ReaderToggleChecks(unittest.TestCase):
             'route': route, 'taskContextKey': task_key, 'position': dict(id='method-vlfm', scope='task:category-objectnav', tree='l', paper='vlfm', version='v1', entity='vlfm-recipe', kind='pipeline_recipe'),
             'graphScale': 1, 'expanded': expanded, 'preservedState': preserved,
             'history': dict(length=17, url='http://127.0.0.1/#method-vlfm', modelKey='navigation', contextKey='context', entryKey='stable-entry', timeOrigin=1000, model=copy.deepcopy(preserved), unrelated={'otherApp': {'key': 'keep'}}),
-            'viewport': rect(0, 0, 1440, 900), 'window': dict(x=0, y=0), 'layout': 'reading', 'collapsed': 'false', 'focus': 'np-node-method-vlfm',
+            'viewport': rect(0, 0, 1440, 900), 'window': dict(x=0, y=0), 'layout': 'reading', 'methodReading': 'true', 'collapsed': 'false', 'focus': 'np-node-method-vlfm',
             'panels': rect(16, 132, 1408, 752), 'columnGap': 16,
-            'treePane': proof(rect(16, 132, 768, 752)), 'treeProof': proof(rect(17, 205, 766, 580)),
-            'tree': dict(rect=rect(17, 205, 766, 580), client=rect(18, 206, 764, 578), left=0, top=200, scrollWidth=764, scrollHeight=978, maxLeft=0, maxTop=400),
-            'title': proof(rect(34, 155, 700, 32), 'VLFM · 层级来路'),
+            'treePane': proof(rect(16, 132, 400, 752)), 'treeProof': proof(rect(17, 205, 398, 580)),
+            'tree': dict(rect=rect(17, 205, 398, 580), client=rect(18, 206, 396, 578), left=0, top=200, scrollWidth=396, scrollHeight=978, maxLeft=0, maxTop=400),
+            'title': proof(rect(34, 155, 364, 32), '当前位置与来路'),
             'selected': dict(count=1, id='method-vlfm', tree='l', entity='vlfm-recipe', aria='true', scope='task:category-objectnav',
-                             row=proof(rect(40, 360, 720, 65)), label=proof(rect(60, 370, 680, 30), 'VLFM'), content=dict(x=22, y=354)),
+                             row=proof(rect(40, 360, 356, 65)), label=proof(rect(60, 370, 320, 30), 'VLFM'), content=dict(x=22, y=354)),
             'toggle': dict(tag='BUTTON', hidden=False, disabled=False, controls='np-detail-scroll', expanded='true', proof=proof(rect(150, 90, 150, 32), '收起阅读栏')),
-            'reader': dict(hidden=False, display='block', tabIndex=-1, proof=proof(rect(800, 132, 624, 752)),
-                           scroll=dict(rect=rect(801, 228, 622, 655), client=rect(802, 229, 620, 653), top=160, left=0, maxTop=1000, maxLeft=0, scrollHeight=1718, scrollWidth=545),
-                           heading=proof(rect(801, 133, 622, 95), 'VLFM · v1'), entity='vlfm-recipe', flowCount=5, savedScroll=160, persistedScroll=160)}
+            'reader': dict(hidden=False, display='block', tabIndex=-1, proof=proof(rect(432, 132, 992, 752)),
+                           scroll=dict(rect=rect(433, 228, 990, 655), client=rect(434, 229, 988, 653), top=160, left=0, maxTop=1000, maxLeft=0, scrollHeight=1718, scrollWidth=545),
+                           heading=proof(rect(433, 133, 990, 95), 'VLFM · v1'), entity='vlfm-recipe', flowCount=5, savedScroll=160, persistedScroll=160)}
         collapsed = copy.deepcopy(original)
         collapsed.update(collapsed='true', focus='np-reader-toggle')
         for state in (collapsed['preservedState'], collapsed['history']['model']):
@@ -866,7 +879,7 @@ class ReaderToggleChecks(unittest.TestCase):
 const {JSDOM}=require('jsdom'),assert=require('node:assert/strict');
 const {script,elementsScript,identityScript}=JSON.parse(require('fs').readFileSync(0,'utf8'));
 const dom=new JSDOM(`<!doctype html><style>*{opacity:1;visibility:visible;transform:none;zoom:1;color:rgb(26,52,64);background-color:rgb(255,255,255);font-size:15px;}</style>
-<main id="navigation-product" data-reading-layout="reading" data-reader-collapsed="false">
+<main id="navigation-product" data-reading-layout="reading" data-method-reading="true" data-reader-collapsed="false">
 <button id="np-reader-toggle" aria-controls="np-detail-scroll" aria-expanded="true">收起阅读栏</button>
 <div class="np-panels" style="column-gap:16px"><section class="np-tree-pane"><h2 id="np-tree-heading">Branch</h2><div id="np-tree-scroll"><div id="np-tree"><section data-parallel-tree="l" data-scope-id="task:category-objectnav"><ul><li id="np-node-method" data-position="method" data-tree="l" data-entity="recipe" aria-selected="true"><div class="np-node-row"><button class="np-node-label">VLFM</button></div><ul><li><div class="np-node-row" id="decoy">Other row</div></li></ul></li></ul></section></div></div></section>
 <aside class="np-reading-pane"><div id="np-reader-heading" class="np-reader-heading">VLFM v1</div><div id="np-detail-scroll" tabindex="-1"><div class="np-method-mechanism" data-mechanism-entity="recipe"><dl class="np-method-flow">${'<dd>flow</dd>'.repeat(5)}</dl></div></div></aside></div></main>`,{url:'http://localhost/',runScripts:'outside-only'});
@@ -2503,11 +2516,13 @@ class DefaultOverviewMaterializationChecks(unittest.TestCase):
             if bad_origin: f['origin']['bucket']['relationOverviewByTree']['l']['open'] = True
             phase, saved = {'origin': f['origin'], 'before': copy.deepcopy(before)}, []
             class Driver:
-                def js(self, script, element):
+                def js(self, script, element=None):
+                    if script == MODULE.DESKTOP_SHELL_SNAPSHOT_JS: return {'geometry': 'original-source-layout'}
                     return before['activatedControl'] if "[role=treeitem]" in script else f['origin']['bucket']['focusTarget']
             env = dict(driver=Driver(), snapshot=lambda: before, reveal_control=lambda *args: 'element',
                        expose_source_position=lambda *args: 'element', record={}, save=lambda: saved.append(copy.deepcopy(phase)),
                        transition_record=lambda *args: phase, json=json, MODULE=MODULE,
+                       DESKTOP_SHELL_SNAPSHOT_JS=MODULE.DESKTOP_SHELL_SNAPSHOT_JS,
                        task_route_origin_overview=MODULE.task_route_origin_overview,
                        science={'forests': {before['route']['scope']: {'l': [p['id'] for p in f['roots']]}},
                                 'positions': {p['id']: p for p in f['roots']}})
@@ -2521,7 +2536,8 @@ class DefaultOverviewMaterializationChecks(unittest.TestCase):
                 MODULE.check_task_route_return(result, f['after'], result['activatedControl'])
             self.assertEqual(phase['before'], original)
             self.assertEqual(before['relationOverview'], {})
-            evidence = saved[0]['overviewMaterialization']
+            self.assertEqual(saved[-1]['desktopShellBefore'], {'geometry': 'original-source-layout'})
+            evidence = next(item['overviewMaterialization'] for item in saved if 'overviewMaterialization' in item)
             self.assertEqual(evidence['beforeOverview'], {})
             self.assertEqual(evidence['expectedOverview'], {'l': {'route': original['route'], 'open': False}})
             self.assertEqual(evidence['actualOriginOverview'], f['origin']['bucket']['relationOverviewByTree'])
@@ -2645,7 +2661,7 @@ class DesktopHierarchyContractChecks(unittest.TestCase):
         tw = (400 if width == 1440 else 448) if tree == 'a' else (768 if width == 1440 else 1056)
         gap = 24 if tree == 'a' else 16
         pane = rect(16 + tw + gap, 132, width - 32 - tw - gap, height - 148)
-        return {'ready': 'ready', 'route': {'tree': tree}, 'window': {'x': 0, 'y': 0},
+        return {'ready': 'ready', 'route': {'tree': tree}, 'methodReading': 'false', 'readingLayout': 'browse', 'position': None, 'window': {'x': 0, 'y': 0},
                 'viewport': rect(0, 0, width, height), 'home': False, 'collapsed': False,
                 'panels': rect(16, 132, width - 32, height - 148), 'treePane': rect(16, 132, tw, height - 148),
                 'tree': rect(17, 176, tw - 2, height - 217), 'pane': pane,
@@ -2768,7 +2784,7 @@ d.querySelector('.np-return-previous').click();await ready(()=>a.getState().rout
 
     def test_new_state_capture_mapping_keeps_original_90_scenes_and_historical_diagnostics(self):
         import inspect
-        self.assertEqual(len(MODULE.DISPLAY_CONTRACT_MIGRATIONS), 6)
+        self.assertEqual(len(MODULE.DISPLAY_CONTRACT_MIGRATIONS), 11)
         self.assertEqual(len(MODULE.SCENE_NAMES), 49)
         for name in ('-31-s0-reading-hierarchy', '-32-s1-relation-90', '-33-s2-first-answer', '-30-analysis-root-coverage'):
             self.assertIn(name, MODULE.SCENE_NAMES)
@@ -2780,6 +2796,289 @@ d.querySelector('.np-return-previous').click();await ready(()=>a.getState().rout
         result = subprocess.run(['node', '-e', "new Function(JSON.parse(require('fs').readFileSync(0,'utf8')));"],
                                 input=json.dumps(MODULE.DESKTOP_SHELL_SNAPSHOT_JS), text=True, capture_output=True)
         self.assertEqual(result.returncode, 0, result.stderr)
+
+
+class MethodReadingCaptureChecks(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        import gzip
+        cls.science = json.loads(gzip.decompress((Path(__file__).parents[1] / 'data/navigation-product/model.json.gz').read_bytes()))
+        spec = importlib.util.spec_from_file_location('method_capture_source_map', Path(__file__).parents[1] / 'scripts/navigation_research_map.py')
+        module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+        cls.source_positions = dict(cls.science['positions'])
+        cls.source_positions.update(module.build_research_map(cls.science)['positions'])
+        cls.cases = {
+            'global': cls.source_positions['pos:g:b3c94b96a7de2feaa05e57'],
+            'local': cls.source_positions['pos:l:ff0298ffa17b4cfcf009bd'],
+            'rich': MODULE.task_route_expected(cls.science)['portable'][1],
+            'condition': MODULE.task_route_expected(cls.science)['image'][0],
+            'imported': MODULE.task_route_expected(cls.science)['poni'],
+        }
+
+    @staticmethod
+    def proof(text, x=450, y=145, width=650, height=24):
+        r = dict(x=x, y=y, width=width, height=height)
+        area = dict(x=0, y=0, width=1440, height=900)
+        fragment = dict(r, visible=True)
+        return dict(text=text, renderedText=text, rect=r, visible=True, opaque=True, unscaled=True, clipped=False,
+                    fontSize=15, foreground=[20, 30, 40], background=[255, 255, 255], viewport=area,
+                    readerContent=area, clipAreas=[], fragments=[fragment],
+                    textRuns=[dict(text=text, opaque=True, unscaled=True, fontSize=15, foreground=[20, 30, 40],
+                                   background=[255, 255, 255], fragments=[fragment], clipAreas=[])])
+
+    def receipt(self, case='global'):
+        p = self.cases[case]
+        expected = MODULE.method_reading_expected(self.science, p, self.source_positions)
+        rows = []
+        for index, pid in enumerate(expected['chain'] + expected['children']):
+            source = self.source_positions[pid]
+            label = source.get('sourceLabel') or source['label']
+            rows.append(dict(id=pid, parent=source.get('parentId'), domParent=source.get('parentId'), entity=source['entityId'],
+                             tree=p['tree'], level=index + 1 if pid in expected['chain'] else len(expected['chain']) + 1,
+                             ancestor=pid in expected['chain'][:-1], selected=pid == p['id'], tabIndex=0 if pid == p['id'] else -1,
+                             label=label, sourceLabel=label, role=source['kind'], roleProof=self.proof(source['kind'], 30, 218 + index * 50, 360, 20), proof=self.proof(label, 30, 190 + index * 50, 360, 28)))
+        title = rows[len(expected['chain']) - 1]['label']
+        meta = expected['version']['label'] + (' · 未固定快照' if expected['version'].get('versionStatus') == 'snapshot_not_version_pinned' else '')
+        data = dict(route={k: p[v] for k, v in (('node', 'id'), ('tree', 'tree'), ('scope', 'scopeId'), ('paper', 'paperId'), ('version', 'versionId'))},
+                    expanded={p['tree']: expected['chain'].copy()}, methodReading='true', readingLayout='reading', selectedRelation=None,
+                    fixedIdentity=dict(position=p['id'], entity=p['entityId'], paper=p['paperId'], version=p['versionId']),
+                    title=self.proof(title), meta=self.proof(meta, y=179),
+                    treeHeading=self.proof('当前位置与来路', 30, 144, 360), tree=dict(x=17, y=176, width=398, height=683),
+                    viewport=dict(x=0, y=0, width=1440, height=900), reader=dict(x=433, y=261, width=990, height=622),
+                    heading=self.proof('fixed source identity', 433, 133, 990, 128), rows=rows,
+                    siblings=[], introductions=[dict(text='Original interface introduction', rendering=dict(display='none', rendered=False))],
+                    mechanism=dict(entity=p['entityId'], ready=True, rect=dict(x=465, y=280, width=880, height=900),
+                                   fields=[dict(text=snippet, rendering=dict(rendered=True), proof=self.proof(snippet, y=280)) for snippet in expected['snippets']]),
+                    analysisControls=[self.proof('Original analysis status', y=215, width=500)])
+        if expected['siblings']:
+            data['siblings'] = [dict(tag='DETAILS', parent=p['parentId'], open=False, summary=self.proof('Real parent alternatives', 30, 700, 360),
+                                    controls=[dict(tag='BUTTON', id=pid, treeRole=False, sourceLabel=expected['siblingLabels'][pid], text=expected['siblingLabels'][pid], meta='Original role · '+expected['siblingVersions'].get(pid, ''), disabled=False) for pid in expected['siblings']])]
+        return data, expected
+
+    def test_source_projection_keeps_exact_global_local_and_original_condition_identity(self):
+        global_, local = self.cases['global'], self.cases['local']
+        self.assertNotEqual(global_['id'], local['id'])
+        self.assertEqual(global_['versionId'], local['versionId'])
+        self.assertEqual(self.cases['condition']['association'], 'condition')
+        for case in self.cases:
+            data, expected = self.receipt(case)
+            MODULE.check_method_reading(data, expected, self.source_positions, compact=True)
+            self.assertEqual(expected['chain'][-1], data['route']['node'])
+            self.assertTrue(all(self.source_positions[pid]['tree'] == data['route']['tree'] for pid in expected['chain']))
+        data, expected = self.receipt('rich')
+        self.assertTrue(any('v5内容不能覆盖v1' in text for text in expected['snippets']))
+        self.assertTrue(any('预先提供MP3D拓扑' in text for text in expected['snippets']))
+
+    def test_method_receipt_rejects_fake_ancestor_sibling_same_paper_and_wrong_version(self):
+        import copy
+        data, expected = self.receipt('rich')
+        mutations = [lambda d: d.update(methodReading='false'), lambda d: d.update(readingLayout='new-science-route'),
+                     lambda d: d.update(selectedRelation='methods:relation:90'), lambda d: d['route'].update(tree='g'),
+                     lambda d: d['route'].update(node=self.cases['local']['id']), lambda d: d['route'].update(version='old-version'),
+                     lambda d: d['fixedIdentity'].update(entity='same-paper-other-method'), lambda d: d['rows'].pop(0),
+                     lambda d: d['rows'][1].update(parent='invented'), lambda d: d['rows'][1].update(domParent='invented'),
+                     lambda d: d['rows'][1].update(level=1), lambda d: d['rows'][0].update(ancestor=False),
+                     lambda d: d['rows'][0].update(tabIndex=0), lambda d: d['rows'][-1].update(selected=True),
+                     lambda d: d['rows'][0].update(sourceLabel='truncated'), lambda d: d['rows'][0].update(role=''),
+                     lambda d: d['siblings'][0].update(parent='same-paper-wrong-parent'), lambda d: d['siblings'][0].update(tag='DIV'),
+                     lambda d: d['siblings'][0]['controls'][0].update(id='invented'), lambda d: d['siblings'][0]['controls'][0].update(treeRole=True),
+                     lambda d: d['siblings'][0]['controls'][0].update(sourceLabel='shortened'), lambda d: d['siblings'][0]['controls'][0].update(meta='wrong version'),
+                     lambda d: d['title'].update(text='Another method'), lambda d: d['meta'].update(text='Short version'),
+                     lambda d: d['mechanism'].update(entity='same-paper-other-entity'), lambda d: d['mechanism'].update(ready=False),
+                     lambda d: d['mechanism']['fields'].clear(), lambda d: d.update(analysisControls=[]),
+                     lambda d: d['introductions'][0]['rendering'].update(display='block', rendered=True)]
+        for index, mutate in enumerate(mutations):
+            bad = copy.deepcopy(data); mutate(bad)
+            with self.subTest(index=index), self.assertRaises(RuntimeError):
+                MODULE.check_method_reading(bad, expected, self.source_positions)
+        data, expected = self.receipt('global')
+        self.assertFalse(expected['siblings'])
+        data['siblings'] = [dict(tag='DETAILS', parent=expected['position']['parentId'], controls=[])]
+        with self.assertRaises(RuntimeError): MODULE.check_method_reading(data, expected, self.source_positions)
+
+    def test_method_visual_receipt_rejects_low_contrast_small_type_hidden_boundaries_and_old_header(self):
+        import copy
+        data, expected = self.receipt()
+        mutations = [lambda d: d['heading']['rect'].update(height=129), lambda d: d['reader'].update(y=262),
+                     lambda d: d['mechanism']['rect'].update(width=478), lambda d: d['mechanism']['rect'].update(width=1200),
+                     lambda d: d['rows'][0]['proof'].update(visible=False), lambda d: d['rows'][0]['proof'].update(fontSize=14.99), lambda d: d['rows'][0]['roleProof'].update(fontSize=14),
+                     lambda d: d['title']['textRuns'][0].update(fontSize=10), lambda d: d['title'].update(fragments=[]),
+                     lambda d: d['meta']['textRuns'][0]['fragments'][0].update(visible=False),
+                     lambda d: d['meta'].update(foreground=[200, 200, 200]), lambda d: d['meta'].update(clipped=True),
+                     lambda d: d['mechanism']['fields'][0]['rendering'].update(rendered=False),
+                     lambda d: d['mechanism']['fields'][0]['proof'].update(clipped=True),
+                     lambda d: d['mechanism']['fields'][0]['proof'].update(fontSize=14),
+                     lambda d: d['mechanism']['fields'][0]['proof'].update(foreground=[240, 240, 240]),
+                     lambda d: d['analysisControls'][0].update(visible=False)]
+        for index, mutate in enumerate(mutations):
+            bad = copy.deepcopy(data); mutate(bad)
+            with self.subTest(index=index), self.assertRaises(RuntimeError):
+                MODULE.check_method_reading(bad, expected, self.source_positions, compact=True)
+        # No hard clipping target is imposed on another genuinely long source identity.
+        data['heading']['rect']['height'] = 140
+        MODULE.check_method_reading(data, expected, self.source_positions, compact=False)
+
+    def test_method_geometry_is_separate_from_task_relation_analysis_and_collapse(self):
+        import copy
+        for width in (1440, 1920):
+            for tree in ('g', 'l'):
+                p = self.cases['global' if tree == 'g' else 'local']
+                data = DesktopHierarchyContractChecks.shell(tree, width)
+                data.update(methodReading='true', readingLayout='reading', position=dict(id=p['id'], kind=p['kind'], paper=p['paperId'], version=p['versionId']))
+                data['route'].update(node=p['id'], paper=p['paperId'], version=p['versionId'])
+                old_width = data['treePane']['width']; width_delta = old_width - (400 if width == 1440 else 448)
+                data['treePane']['width'] -= width_delta; data['tree']['width'] -= width_delta
+                for key in ('pane', 'reader'):
+                    data[key]['x'] -= width_delta; data[key]['width'] += width_delta
+                for key in ('heading', 'title', 'meta'):
+                    data[key]['rect']['x'] -= width_delta; data[key]['rect']['width'] += width_delta
+                MODULE.check_desktop_shell(data)
+                self.assertEqual(data['pane']['width'], 992 if width == 1440 else 1424)
+                for mutate in (lambda d: d.update(methodReading='false'), lambda d: d.update(readingLayout='method'),
+                               lambda d: d.update(relation='methods:relation:90'), lambda d: d['route'].update(version='stale'),
+                               lambda d: d['position'].update(kind='challenge'), lambda d: d['route'].update(tree='c')):
+                    bad = copy.deepcopy(data); mutate(bad)
+                    with self.assertRaises(RuntimeError): MODULE.check_desktop_shell(bad)
+                data['collapsed'] = True; data['treePane']['width'] = width - 32; data['tree']['width'] = width - 34
+                data['permanentScrollIds'] = ['np-tree-scroll']
+                MODULE.check_desktop_shell(data)
+            # Existing relation, C and A geometry remains independent and strict.
+            for tree in ('l', 'c', 'a'):
+                data = DesktopHierarchyContractChecks.shell(tree, width)
+                MODULE.check_desktop_shell(data)
+                data['methodReading'] = 'true'
+                with self.assertRaises(RuntimeError): MODULE.check_desktop_shell(data)
+
+    def test_method_capture_reuses_all_98_scenes_and_is_read_only(self):
+        import inspect
+        self.assertEqual(len(MODULE.SCENE_NAMES) * len(MODULE.VIEWPORTS), 98)
+        for suffix in ('-03-method-reader', '-03b-reader-visible', '-11-active-method-reader', '-23-poni-method', '-27-imagenav-zhu', '-28-portable-llm'):
+            self.assertIn(suffix, MODULE.SCENE_NAMES)
+        source = inspect.getsource(MODULE.main)
+        self.assertIn("data['methodReading'] = driver.js(METHOD_READING_SNAPSHOT_JS)", source)
+        self.assertIn('check_method_reading(', source)
+        for operation in ('.click(', '.focus(', 'scrollIntoView(', 'scrollTo(', '.navigate(', '.replaceState(', '.pushState('):
+            self.assertNotIn(operation, MODULE.METHOD_READING_SNAPSHOT_JS)
+        result = subprocess.run(['node', '-e', "new Function(JSON.parse(require('fs').readFileSync(0,'utf8')));"],
+                                input=json.dumps(MODULE.METHOD_READING_SNAPSHOT_JS), text=True, capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_native_keyboard_receipt_preserves_route_scroll_origin_and_expansion(self):
+        import copy
+        before = dict(route=dict(tree='g', node='real-method', scope='scope:all', paper='p', version='v', claim=None),
+                      originTrail=[dict(route=dict(tree='l', node='original'), bucket=dict(expandedByTree=dict(l=['original'])))],
+                      historyLength=5, expanded=dict(g=['root', 'parent', 'real-method'], l=['keep']), window=dict(x=0, y=0),
+                      treeScroll=dict(top=37, left=0), readerScroll=dict(top=211, left=0), focus='np-node-real-method', roving=['real-method'],
+                      methodReading='true', siblings=[])
+        after = copy.deepcopy(before); after.update(focus='np-node-parent', roving=['parent'])
+        MODULE.check_method_navigation_transition(before, after, 'parent', exact_tree_scroll=True)
+        for mutate in (lambda d: d['route'].update(node='same-paper-other-position'), lambda d: d['originTrail'].clear(),
+                       lambda d: d['expanded']['l'].append('new'), lambda d: d['readerScroll'].update(top=0),
+                       lambda d: d['treeScroll'].update(top=0), lambda d: d.update(historyLength=6),
+                       lambda d: d.update(focus='np-node-other'), lambda d: d.update(roving=['parent', 'root']),
+                       lambda d: d.update(methodReading='false')):
+            bad = copy.deepcopy(after); mutate(bad)
+            with self.assertRaises(RuntimeError): MODULE.check_method_navigation_transition(before, bad, 'parent', exact_tree_scroll=True)
+
+    def test_method_return_requires_exact_previous_geometry_and_effective_offsets(self):
+        import copy
+        before = DesktopHierarchyContractChecks.shell()
+        before['route'].update(node='original-task-root', scope='task:category-objectnav')
+        before['relation'] = 'methods:relation:90'
+        before['offsets'] = dict(tree=dict(top=90, left=17), reader=dict(top=211, left=0))
+        MODULE.check_method_layout_return(before, copy.deepcopy(before))
+        for mutate in (lambda d: d['offsets']['tree'].update(top=0), lambda d: d['offsets']['tree'].update(left=0),
+                       lambda d: d['offsets']['reader'].update(top=0), lambda d: d.update(relation=None),
+                       lambda d: d['route'].update(node='same-paper-other-position'), lambda d: d['treePane'].update(width=400),
+                       lambda d: d.update(methodReading='true')):
+            bad = copy.deepcopy(before); mutate(bad)
+            with self.assertRaises(RuntimeError): MODULE.check_method_layout_return(before, bad)
+
+    def test_production_method_source_projection_and_native_controls_keep_real_global_local_identity(self):
+        body = r"""
+// Production DOM and event tests only. JSDOM has no layout; browser geometry is separately gated.
+w.Range.prototype.getClientRects=function(){return [];};d.elementFromPoint=()=>d.body;
+const receipt=new w.Function(input.methodSnapshot),navState=new w.Function(input.navigationSnapshot);
+const stable=()=>{const x=navState();delete x.focus;delete x.roving;return JSON.stringify(x);};
+async function inspect(p){
+  await ready(()=>a.getState().route.node===p.id&&a.getContent().ready(p.entityId));
+  const value=receipt(),chain=[];for(let q=a.getBundle().positions[p.id];q;q=a.getBundle().positions[q.parentId])chain.unshift(q.id);
+  const ids=[],expanded=new Set(m.getBucket(a.getState()).expandedByTree[p.tree]),path=new Set(chain);function visit(id){ids.push(id);if(expanded.has(id)){let children=a.getBundle().positions[id].childIds;if(children.some(cid=>path.has(cid)))children=children.filter(cid=>path.has(cid));children.forEach(visit);}}visit(chain[0]);assert.equal(JSON.stringify(value.rows.map(r=>r.id)),JSON.stringify(ids));assert.equal(value.methodReading,'true');
+  assert.equal(value.readingLayout,'reading');assert.equal(value.fixedIdentity.entity,p.entityId);assert.equal(value.fixedIdentity.version,p.versionId);
+  const before=stable();let current=d.getElementById('np-node-'+p.id);current.focus();
+  current.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Home',bubbles:true}));assert.equal(d.activeElement.dataset.position,ids[0]);
+  for(const id of ids.slice(1)){d.activeElement.dispatchEvent(new w.KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true}));assert.equal(d.activeElement.dataset.position,id);}
+  assert.equal(stable(),before,'keyboard presentation cannot mutate the route, origin, expansion or offsets');
+  const disclosure=d.querySelector('#np-tree details[data-method-siblings]');
+  if(disclosure){const summary=disclosure.querySelector(':scope > summary'),route=JSON.stringify(a.getState().route),expanded=JSON.stringify(m.getBucket(a.getState()).expandedByTree),origin=JSON.stringify(a.getState().originTrail);summary.click();assert.equal(disclosure.open,true);assert.equal(disclosure.closest('[role=treeitem]'),null);assert.equal(disclosure.querySelector('[role=treeitem],[role=group]'),null);summary.click();assert.equal(disclosure.open,false);assert.equal(JSON.stringify(a.getState().route),route);assert.equal(JSON.stringify(m.getBucket(a.getState()).expandedByTree),expanded);assert.equal(JSON.stringify(a.getState().originTrail),origin);}
+  states.push(value);
+}
+// Explicit real g controls, never an inferred ObjectNav/L substitute.
+d.getElementById('np-overview-toggle').click();await ready(()=>d.getElementById('np-reading-landing').hidden);
+const global=input.cases.global;await select(global.id);await inspect(global);
+d.querySelector('[data-tree-tab="g"]').click();await ready(()=>a.getState().route.node===a.getBundle().researchMap.roots[0]);d.getElementById('np-overview-toggle').click();await ready(()=>!d.getElementById('np-reading-landing').hidden);
+for(const name of ['local','rich','condition','imported']){const p=input.cases[name];await scope(p.scopeId);await select(p.id);await inspect(p);}
+"""
+        states = run_product_capture_script(self, body, {'science': self.science, 'expected': MODULE.task_route_expected(self.science),
+            'cases': self.cases, 'methodSnapshot': MODULE.METHOD_READING_SNAPSHOT_JS,
+            'navigationSnapshot': MODULE.METHOD_NAVIGATION_STATE_JS, 'viewport': dict(width=1440, height=900)})
+        self.assertEqual(len(states), 5)
+        for case, data in zip(('global', 'local', 'rich', 'condition', 'imported'), states):
+            expected = MODULE.method_reading_expected(self.science, self.cases[case], self.source_positions)
+            MODULE.check_method_reading(data, expected, self.source_positions, visual=False)
+
+    def test_method_projection_respects_original_collapsed_children_and_expanded_grandchildren(self):
+        import copy
+        data, expected = self.receipt('global')
+        data['expanded']['g'].remove(expected['position']['id'])
+        data['rows'] = data['rows'][:len(expected['chain'])]
+        MODULE.check_method_reading(data, expected, self.source_positions)
+        wrong = copy.deepcopy(data); wrong['rows'].append(self.receipt('global')[0]['rows'][-1])
+        with self.assertRaises(RuntimeError): MODULE.check_method_reading(wrong, expected, self.source_positions)
+        p = next(p for p in self.source_positions.values() if p['tree'] == 'l' and p['kind'] == 'pipeline_recipe'
+                 and any(self.source_positions[c]['childIds'] for c in p['childIds']))
+        expected = MODULE.method_reading_expected(self.science, p, self.source_positions)
+        closed = MODULE.method_visible_source_ids(expected, self.source_positions, expected['chain'])
+        self.assertEqual(closed, expected['chain'] + p['childIds'])
+        child = next(cid for cid in p['childIds'] if self.source_positions[cid]['childIds'])
+        opened = MODULE.method_visible_source_ids(expected, self.source_positions, expected['chain'] + [child])
+        self.assertEqual(opened, closed[:closed.index(child) + 1] + self.source_positions[child]['childIds'] + closed[closed.index(child) + 1:])
+        self.assertTrue(all(pid in self.source_positions for pid in opened))
+        self.assertEqual(expected['siblings'], [pid for pid in self.source_positions[p['parentId']]['childIds'] if pid != p['id']])
+
+    def test_parallel_scope_snapshot_uses_actual_fixed_heading_and_original_root_source(self):
+        import inspect
+        body = r"""
+w.Range.prototype.getClientRects=function(){return [];};d.elementFromPoint=()=>d.body;const parallel=new w.Function(input.parallelSnapshot);
+for(const sid of ['task:audiogoal','task:goat']){await scope(sid);for(const tree of ['l','c']){
+ if(a.getState().route.tree!==tree){d.querySelector('[data-tree-tab="'+tree+'"]').click();await ready(()=>a.getState().route.tree===tree&&a.getContent().ready(a.getBundle().positions[a.getState().route.node].entityId));}
+ const roots=s.forests[sid],records={};for(const t of ['l','c'])records[t]=roots[t].map(id=>({id,entity:s.positions[id].entityId,tree:t,scope:sid,label:s.entities[s.positions[id].entityId].label}));
+ const result=parallel(sid,input.rootSelector,roots,Object.fromEntries(['l','c'].map(t=>[t,roots[t].some(id=>s.positions[id].childIds.length>0)])),records);
+ assert.equal(result.panels.length,1);const panel=result.panels[0];assert.equal(panel.headingSelector,'#np-tree-heading');assert.equal(panel.headingTree,tree);assert.equal(panel.headingInPane,true);assert.equal(panel.headingProof.text,tree==='l'?'文献树':'挑战–思路树');assert.ok(panel.legacyHeading);assert.equal(panel.rootRecords.length,records[tree].length);
+ panel.rootRecords.forEach((root,i)=>{assert.equal(root.id,records[tree][i].id);assert.equal(root.entity,records[tree][i].entity);assert.equal(root.proof.text,records[tree][i].label);});states.push(result);
+}}
+"""
+        states = run_product_capture_script(self, body, {'science': self.science, 'expected': MODULE.task_route_expected(self.science),
+            'parallelSnapshot': MODULE.PARALLEL_SCOPE_SNAPSHOT_JS, 'rootSelector': MODULE.PARALLEL_ROOT_SELECTOR,
+            'viewport': dict(width=1440, height=900)})
+        self.assertEqual([(x['scope'], x['activeTree']) for x in states], [('task:audiogoal', 'l'), ('task:audiogoal', 'c'), ('task:goat', 'l'), ('task:goat', 'c')])
+        source = inspect.getsource(MODULE.main)
+        self.assertIn('PARALLEL_SCOPE_SNAPSHOT_JS', source)
+        self.assertNotIn("h=e.querySelector('h3')", source)
+
+
+    def test_actual_63341ad_parallel_heading_failure_stays_historical_and_strict(self):
+        # Unmodified failed Chrome receipt fragment, head 63341ad8342ff438da52669a2bcd30b86cb6b1c5.
+        # Full receipt SHA256: 7f1ba9abfa86887282fdd5e350491b8eea3fe31491b5a62761592af32f2f858a
+        import copy
+        historical = json.loads(r"""{"activeTree": "l", "expectedScope": "task:audiogoal", "home": false, "inactiveItemCount": 0, "panels": [{"children": [{"background": [248, 251, 250], "clipped": false, "fontSize": 16, "foreground": [32, 52, 63], "opaque": true, "rect": {"height": 42, "width": 718, "x": 53, "y": 240}, "text": "−层级 2AV-Nav 音视听觉目标策略1路线", "unscaled": true, "visible": true}, {"background": [248, 251, 250], "clipped": false, "fontSize": 16, "foreground": [32, 52, 63], "opaque": true, "rect": {"height": 42, "width": 694, "x": 77, "y": 317}, "text": "·层级 3AV-Nav 音视听觉目标策略具体方法", "unscaled": true, "visible": true}], "expectedChildren": true, "expectedRoots": ["pos:l:907fd0617aea6bfeebfe45"], "heading": {"height": 0, "width": 0, "x": 0, "y": 0}, "headingVisible": false, "rect": {"height": 238.25, "width": 742, "x": 29, "y": 184}, "roots": ["pos:l:907fd0617aea6bfeebfe45"], "scope": "task:audiogoal", "tree": "l"}], "rovingCount": 1, "scope": "task:audiogoal", "selectedTree": "l", "treeCount": 1, "viewport": {"height": 900, "width": 1440, "x": 0, "y": 0}}""")
+        unchanged = copy.deepcopy(historical)
+        self.assertEqual(historical['panels'][0]['heading'], dict(x=0, y=0, width=0, height=0))
+        self.assertFalse(historical['panels'][0]['headingVisible'])
+        with self.assertRaisesRegex(RuntimeError, 'heading is not visible'):
+            MODULE.check_parallel_scope(historical)
+        self.assertEqual(historical, unchanged)
+        self.assertIn('active_forest_heading', MODULE.DISPLAY_CONTRACT_MIGRATIONS)
 
 
 class OriginalChallengeCaptureChecks(unittest.TestCase):
