@@ -554,6 +554,19 @@ body{font-size:16px;line-height:1.65;background:#f7f9fa}header.np-header{max-wid
  #navigation-product[data-method-reading=true] .np-canvas-footer>span{flex:1 1 160px;min-width:0;max-width:100%;white-space:normal;overflow:visible;overflow-wrap:anywhere;text-overflow:clip}
 }
 
+
+/* Preserve the legacy inline presentation outside desktop while naming native answer destinations. */
+.np-analysis-answer-index{list-style:none;margin:0;padding:0}
+.np-analysis-answer-index>li{display:inline}
+
+/* Desktop answer destinations have separate rows; method text shares its fixed identity axis. */
+@media(min-width:1200px){
+ #navigation-product .np-analysis-coverage .np-analysis-answer-index>li{display:block;margin:0;padding:0}
+ #navigation-product .np-analysis-coverage .np-analysis-answer-index>li+li{margin-top:6px}
+ #navigation-product .np-analysis-coverage .np-analysis-answer-index>li>.np-text-button{display:block;width:100%;max-width:100%;min-height:36px;margin:0;padding:8px 10px;border-bottom:1px solid #dce5e8;border-radius:3px;text-align:left;white-space:normal;overflow-wrap:anywhere;color:#155b4e}
+ #navigation-product[data-method-reading=true] .np-reader-body{padding-left:20px;padding-right:20px}
+ #navigation-product[data-method-reading=true] .np-reader-body>*{max-width:840px;margin-left:0;margin-right:0}
+}
 /* Task-root reading text keeps the 15px floor, including inherited legacy notes. */
 #navigation-product .np-task-route-overview,
 #navigation-product .np-task-route-overview p,
