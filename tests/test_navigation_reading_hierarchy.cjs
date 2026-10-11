@@ -151,3 +151,31 @@ test('identity dedup: desktop peer CSSOM rejects missing overrides and legacy ne
   const entry=desktopRules('#navigation-product .np-peer-strip')[0],original=entry.rule.cssText;entry.group.deleteRule(entry.index);assert.throws(assertDesktop,/one desktop peer override is required/,'deleting the desktop override recreates the regression');entry.group.insertRule(original,entry.index);assertDesktop();
  }finally{dom.window.close();}
 });
+
+// CSSOM/cascade regression only; the real Chrome capture keeps its strict 4.5 gate.
+test('desktop research-question role inherits readable metadata color instead of the legacy last-child tint',()=>{
+ const css=fs.readFileSync(path.join(root,'assets/navigation-product.css'),'utf8'),selector='#np-reader-object-meta .np-reader-field-role';
+ function contrast(rgb){const linear=rgb.map(v=>v/255).map(v=>v<=0.04045?v/12.92:((v+0.055)/1.055)**2.4);return 1.05/(linear[0]*0.2126+linear[1]*0.7152+linear[2]*0.0722+0.05);}
+ for(const width of [1440,1920]){
+  const dom=new JSDOM('<style></style><div id="navigation-product"><div class="np-reader-heading"><p id="np-reader-object-meta">困难 · 未固定论文版本<span class="np-reader-field-role" data-reader-field-role="plain_language_question"> · 研究问题</span></p></div></div>');
+  try {
+   const w=dom.window,style=w.document.querySelector('style'),role=w.document.querySelector('.np-reader-field-role');style.textContent=css;
+   const entries=[];function collect(rules,media=[]){for(const rule of rules)if(rule.media)collect(rule.cssRules,media.concat(rule.media.mediaText));else if(rule.selectorText)entries.push({rule,media});}collect(style.sheet.cssRules);
+   const overrides=entries.filter(({rule})=>rule.selectorText===selector&&rule.style.getPropertyValue('color'));assert.equal(overrides.length,1);assert.deepEqual(overrides[0].media,['(min-width:1200px)']);assert.equal(overrides[0].rule.style.getPropertyValue('color'),'inherit');assert.equal(overrides[0].rule.style.getPropertyValue('display'),'inline');
+   const legacy=entries.find(({rule})=>rule.selectorText==='.np-reader-heading span:last-child');assert.ok(legacy);assert.ok(role.matches(legacy.rule.selectorText),'the actual last-child span triggers the historical rule');assert.ok(role.matches(selector));assert.equal(legacy.rule.style.getPropertyValue('color'),'#6c838b');assert.ok(selector.startsWith('#np-reader-object-meta '));assert.equal(legacy.rule.selectorText.includes('#'),false,'the exact local ID selector outranks the legacy class/pseudo-class rule');
+   // JSDOM does not apply viewport media queries. Materialize only the current
+   // screen-width rules in their original order; this is not a pixel assertion.
+   function active(media){return media.every(query=>{const match=query.match(/^\((min|max)-width:\s*(\d+)px\)$/);if(match)return match[1]==='min'?width>=Number(match[2]):width<=Number(match[2]);assert.ok(['print','(prefers-reduced-motion:reduce)'].includes(query),'explicitly account for every other media condition');return false;});}
+   const flattened=entries.filter(({media})=>active(media)).map(({rule})=>rule.cssText).join('\n');
+   function install(value){style.textContent=flattened;const rule=[...style.sheet.cssRules].find(rule=>rule.selectorText===selector&&rule.style.getPropertyValue('color'));if(value===null)rule.style.removeProperty('color');else rule.style.setProperty('color',value);style.textContent=[...style.sheet.cssRules].map(rule=>rule.cssText).join('\n');}
+   // cssstyle returns the keyword for explicit inherit, so resolve it through
+   // the actual parent's computed color rather than inventing a fallback color.
+   function rgb(node){const value=w.getComputedStyle(node).color;if(value==='inherit')return rgb(node.parentElement);const match=value.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);assert.ok(match,value);return match.slice(1).map(Number);}
+   function readable(){assert.deepEqual(rgb(role),rgb(role.parentElement),'field role must use its metadata parent color');assert.ok(contrast(rgb(role))>=4.5,'field role must meet the unchanged 4.5:1 contrast floor on white');}
+   install('inherit');assert.deepEqual(rgb(role.parentElement),[69,97,112]);readable();
+   install(null);assert.deepEqual(rgb(role),[108,131,139]);assert.ok(contrast(rgb(role))<4.5);assert.throws(readable,/metadata parent color/,'omitting the local override recreates the measured Chrome contrast failure');
+   install('#6c838b');assert.deepEqual(rgb(role),[108,131,139]);assert.ok(contrast(rgb(role))<4.5);assert.throws(readable,/metadata parent color/,'explicitly restoring the old tint also fails');
+   install('inherit');readable();assert.equal(role.textContent,' · 研究问题');assert.equal(role.dataset.readerFieldRole,'plain_language_question');
+  } finally {dom.window.close();}
+ }
+});
