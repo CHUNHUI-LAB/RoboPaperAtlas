@@ -45,6 +45,16 @@ SCENE_NAMES = (
 )
 
 
+# The existing glossary-open directory-return scene intentionally overlays the
+# landing; it retains shell/state gates but is not a footer-readability scene.
+S0_FOOTER_SCENES = ('-00-default-reading-overview', '-31-s0-reading-hierarchy',
+                    '-13-relation-88', '-13-relation-90', '-13-relation-94')
+
+
+def s0_footer_required(name):
+    return any(name.endswith(suffix) for suffix in S0_FOOTER_SCENES)
+
+
 def sha(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
@@ -185,11 +195,28 @@ def check_relation_evidence(data, expected):
         raise RuntimeError('Relationship original source locator was omitted')
     if len(data['visibleProofs']) != 1 + len(expected['locators']) + 2 * len(expected['sourceRefs']):
         raise RuntimeError('Relationship evidence visibility checks are incomplete')
-    for proof in data['visibleProofs']:
+    specs = [{'kind': 'heading'}, *[{'kind': 'locator', 'text': loc['locator']} for loc in expected['locators']],
+             *[{'kind': kind, 'text': '原文来源 · ' + (ref.get('descriptor') or ref['sourceId']) if kind == 'source' else
+                ' · ' + {'snapshot_not_version_pinned': '未固定全文快照', 'fixed_arxiv_version_url': '来源URL限定版本'}.get(ref['versionStatus'], ref['versionStatus']),
+                'source': {'id': ref['sourceId'], 'url': ref['url'], 'version': ref['versionId'], 'status': ref['versionStatus']}}
+               for ref in expected['sourceRefs'] for kind in ('source', 'status')]]
+    for proof, spec in zip(data['visibleProofs'], specs):
+        if (proof.get('kind') != spec['kind'] or proof.get('sourceRecord') != spec.get('source') or
+                'text' in spec and proof['text'] != spec['text']):
+            raise RuntimeError('Relationship visible fragment belongs to another source, version or locator')
+        if spec['kind'] != 'source' and proof.get('accessibilitySuffix') is not None:
+            raise RuntimeError('Only an exact source anchor may exclude the original screen-reader suffix')
+        if spec['kind'] == 'source' and (proof.get('elementTag') != 'A' or proof.get('accessibilitySuffix') != {'tag': 'SPAN', 'className': 'np-sr', 'text': '（新标签页）'} or
+                proof.get('accessibleText') != proof['text'] + '（新标签页）'):
+            raise RuntimeError('Relationship source proof lost or misused its exact original screen-reader suffix')
         if proof.get('expectedText') is not None and proof['text'] != proof['expectedText']:
             raise RuntimeError('Visible relationship source version status contradicts the original inventory')
         if not proof['visible'] or not proof['opaque'] or not proof['unscaled'] or proof['fontSize'] < 15 or proof['clipped'] or len(proof['foreground']) != 3 or len(proof['background']) != 3 or contrast_ratio(proof['foreground'], proof['background']) < 4.5 or not rect_inside(proof['rect'], proof['viewport']):
             raise RuntimeError('Relationship source or locator is unreadable, hidden or off screen')
+        if (proof.get('panelId') != 'np-overview-relation-panel' or not proof.get('panelContains') or
+                proof.get('relationId') != expected['id'] or not proof.get('panelClientRect')):
+            raise RuntimeError('Relationship proof did not measure this exact source inside the actual panel client region')
+        check_s0_text(proof, spec.get('text', proof.get('expectedText', proof['text'])), proof['panelClientRect'], proof['viewport'])
 
 
 def check_context_path(data):
@@ -757,6 +784,7 @@ DISPLAY_CONTRACT_MIGRATIONS = {
     'reader_identity': 'fixed current title and exact version replace generic sticky READING DESK',
     'context_path': 'one compact row; original global links and real local parent chain remain distinct',
     'outer_scroll': 'ready desktop window is zero; exact effective tree/reader offsets and other buckets retained',
+    's0_footer': 'unchanged legend/readout and source-derived coverage in one natural-flow footer after the original map; only the in-map C-column evidence panel scrolls',
     'overview_relations': 'all seven paths and controls retained; selected-only default plus explicit show-all',
     'analysis_entry': 'first actual version answer; explicit legacy root remains coverage and full original topology',
     'active_forest_heading': 'same active source forest and roots; visible #np-tree-heading plus exact root-label proofs replace the deliberately hidden duplicate forest h3',
@@ -793,12 +821,12 @@ function scrollRegionCandidate(e){var cs=getComputedStyle(e);return /auto|scroll
 # Fixed footer labels use actual text-node ranges, including every wrapped line.
 # This adds evidence; it never replaces the fixed title's original five-point box hit test.
 FIXED_TEXT_PROOF_JS = r"""
-function fixedTextProof(e){
+function fixedTextProof(e,ignoredTextParent){
   var result=box(e),fragments=[],textRuns=[],walker=document.createTreeWalker(e,NodeFilter.SHOW_TEXT),n;
   function clips(element){var areas=[];for(var a=element;a;a=a.parentElement){var cs=getComputedStyle(a);
     if(/auto|scroll|hidden|clip/.test(cs.overflowX+' '+cs.overflowY)){var r=rect(a);areas.push({x:r.x+a.clientLeft,y:r.y+a.clientTop,width:a.clientWidth,height:a.clientHeight});}}
     return areas;}
-  while(n=walker.nextNode()){if(!n.textContent.trim())continue;var parent=n.parentElement,style=box(parent),range=document.createRange();range.selectNodeContents(n);
+  while(n=walker.nextNode()){if(n.parentElement===ignoredTextParent||!n.textContent.trim())continue;var parent=n.parentElement,style=box(parent),range=document.createRange();range.selectNodeContents(n);
     var run={text:n.textContent,opaque:style.opaque,unscaled:style.unscaled,fontSize:style.fontSize,foreground:style.foreground,background:style.background,clipAreas:clips(parent),fragments:[]};
     [...range.getClientRects()].filter(r=>r.width>0&&r.height>0).forEach(r=>{var f={x:r.x,y:r.y,width:r.width,height:r.height,
       visible:style.opaque&&style.unscaled&&[[.5,.5],[.1,.1],[.9,.1],[.1,.9],[.9,.9]].every(([x,y])=>{var hit=document.elementFromPoint(r.x+r.width*x,r.y+r.height*y);return !!hit&&(hit===parent||parent.contains(hit));})};
@@ -808,6 +836,236 @@ function fixedTextProof(e){
   return Object.assign(result,{renderedText:textRuns.map(run=>run.text).join(''),fragments:fragments,textRuns:textRuns,clipAreas:clips(e)});
 }
 """
+
+
+# Only the original link's exact screen-reader suffix is non-visual. Footer and
+# answer-row callers never supply an excluded parent; arbitrary hidden text fails.
+RELATION_EVIDENCE_PROOF_JS = VISUAL_GEOMETRY + FIXED_TEXT_PROOF_JS + r"""
+var e=arguments[0],panel=document.getElementById('np-overview-relation-panel'),r=rect(panel),suffix=null,
+    source=e.matches('[data-task-relation-source]')?e:e.previousElementSibling?.matches('[data-task-relation-source]')?e.previousElementSibling:null;
+if(e.matches('[data-task-relation-source]')){
+  var notes=e.querySelectorAll(':scope > span.np-sr');suffix=notes.length===1?notes[0]:null;
+  if(e.tagName!=='A'||!suffix||suffix!==e.lastChild||suffix.className!=='np-sr'||suffix.textContent!=='（新标签页）'||suffix.children.length)
+    throw Error('Original source link screen-reader suffix was changed or duplicated');
+}
+var proof=fixedTextProof(e,suffix),accessibleText=proof.text;
+if(suffix)proof.text=proof.renderedText;
+return Object.assign(proof,{elementTag:e.tagName,accessibleText:accessibleText,accessibilitySuffix:suffix?{tag:suffix.tagName,className:suffix.className,text:suffix.textContent}:null,
+  panelId:panel.id,panelContains:panel.contains(e),relationId:e.closest('[data-task-relation]')?.dataset.taskRelation,
+  sourceRecord:source?{id:source.dataset.taskRelationSource,url:source.href,version:source.dataset.sourceVersion,status:source.dataset.sourceStatus}:null,
+  panelClientRect:{x:r.x+panel.clientLeft,y:r.y+panel.clientTop,width:panel.clientWidth,height:panel.clientHeight},viewport:{x:0,y:0,width:innerWidth,height:innerHeight}});
+"""
+
+
+# Presentation labels are reviewed copy; identities, parentage and coverage come
+# from the frozen scientific source, never from the DOM being tested.
+S0_RELATION_LABELS = {
+    'tasks:relation:88': '同环境 tour 内多条指令，段间接驳依协议',
+    'tasks:relation:89': '类别目标按序组合', 'tasks:relation:90': '提供类别目标',
+    'tasks:relation:91': '提供实例图片目标', 'tasks:relation:92': '提供语言描述目标',
+    'tasks:relation:93': '语言目标按序接续', 'tasks:relation:94': '成功对象不同：地点与物体实例',
+}
+
+
+def s0_footer_expected(science):
+    from navigation_research_map import build_research_map, NATIVE_RELATION_LABELS
+    graph = build_research_map(science)
+    positions = graph['positions']; root = graph['roots'][0]
+    literature = next(pid for pid in positions[root]['childIds'] if positions[pid]['entityId'] == 'legacy:nav:l')
+    challenge = next(pid for pid in positions[root]['childIds'] if positions[pid]['entityId'] == 'legacy:nav:c')
+    directory = next(pid for pid in positions[literature]['childIds'] if positions[pid].get('sourceDirectoryGroupId') == 'task')
+    scopes = {scope['id']: scope for scope in science['scopes']}
+    tasks = [{'scope': sid, 'id': next(row['canonicalPositionId'] for row in graph['scopeEntries'] if row['scopeId'] == sid)} for sid, _, _ in TASK_INDEX]
+    ids = [root, literature, challenge, directory] + [row['id'] for row in tasks] + positions[challenge]['childIds']
+    def counts(field):
+        result = dict(direct=0, condition=0, gap=0)
+        for task in tasks:
+            coverage = scopes[task['scope']]['coverage']
+            result['direct' if coverage.get('direct', {}).get(field) else 'condition' if coverage.get('condition', {}).get(field) else 'gap'] += 1
+        return result
+    method, ci = counts('methodCount'), counts('challengeCount')
+    coverage = ('当前方法：{direct}个入口直接关联、{condition}个仅条件关联、{gap}个未整理；'.format(**method) +
+                'CI：{direct}个直接关联、{condition}个仅条件关联、{gap}个未整理。'.format(**ci) +
+                '选段覆盖，不代表全文精读或领域穷尽。')
+    return {'root': root, 'challenge': challenge, 'challengeIds': list(positions[challenge]['childIds']), 'tasks': tasks,
+            'nodes': [{'id': pid, 'parent': positions[pid]['parentId'], 'entity': positions[pid]['entityId']} for pid in ids],
+            'coverage': coverage, 'legend': ['实线：原目录父子', '虚线：有据对照／组合'],
+            'defaultReadout': '按需选择关系核对来源',
+            'readouts': {rid: label + ' · ' + NATIVE_RELATION_LABELS[science['relations'][rid]['relationType']] for rid, label in S0_RELATION_LABELS.items()}}
+
+
+S0_FOOTER_SNAPSHOT_JS = VISUAL_GEOMETRY + FIXED_TEXT_PROOF_JS + SCROLL_REGION_VISIBILITY_JS + r"""
+var a=NavigationProductApp,m=NavigationProductModel,s=a.getState(),b=a.getBundle(),landing=document.getElementById('np-reading-landing'),
+    map=document.getElementById('np-overview-map'),panels=document.querySelectorAll('#np-overview-relation-panel'),panel=panels[0],
+    footers=document.querySelectorAll('#np-overview-footer,.np-overview-footer'),footer=footers.length===1?footers[0]:null,
+    legends=document.querySelectorAll('.np-map-legend'),legend=legends.length===1?legends[0]:null,
+    coverages=document.querySelectorAll('.np-map-coverage'),coverage=coverages.length===1?coverages[0]:null,
+    persisted=history.state&&history.state[m.KEY],expected=arguments[0];
+function frame(e){if(!e)return null;var cs=getComputedStyle(e),r=rect(e);return {id:e.id,tag:e.tagName,className:e.className,parent:e.parentElement?.id,
+  rect:r,clientRect:{x:r.x+e.clientLeft,y:r.y+e.clientTop,width:e.clientWidth,height:e.clientHeight},
+  position:cs.position,display:cs.display,flexDirection:cs.flexDirection,flexGrow:cs.flexGrow,flexShrink:cs.flexShrink,flexBasis:cs.flexBasis,
+  rowGap:parseFloat(cs.rowGap),marginTop:parseFloat(cs.marginTop),marginBottom:parseFloat(cs.marginBottom),
+  paddingTop:parseFloat(cs.paddingTop),paddingBottom:parseFloat(cs.paddingBottom),borderTop:parseFloat(cs.borderTopWidth),borderBottom:parseFloat(cs.borderBottomWidth),
+  minHeight:cs.minHeight,maxHeight:cs.maxHeight,overflowX:cs.overflowX,overflowY:cs.overflowY,
+  top:e.scrollTop,left:e.scrollLeft,scrollHeight:e.scrollHeight,clientHeight:e.clientHeight,scrollWidth:e.scrollWidth,clientWidth:e.clientWidth,
+  maxTop:Math.max(0,e.scrollHeight-e.clientHeight),inline:{top:e.style.top,left:e.style.left,width:e.style.width,height:e.style.height}};}
+function overview(value){return value&&value.contexts?.[m.contextKey(value.route)]?.overviewView||null;}
+var candidates=[landing,...landing.querySelectorAll('*')].filter(e=>!e.closest('.np-overview-map-toolbar')).map(scrollRegionCandidate).filter(Boolean),
+    selected=map.dataset.selectedRelation||null;
+return {expected:expected,ready:document.getElementById('navigation-product').dataset.loadState,home:!landing.hidden,
+  viewport:{x:0,y:0,width:innerWidth,height:innerHeight},window:{x:scrollX,y:scrollY},scale:m.getBucket(s).graphScale,
+  route:s.route,historyRoute:persisted?.route||null,focus:document.activeElement.id,selectedRelation:selected,relationsVisible:map.dataset.relationsVisible,
+  selectorOpen:document.getElementById('np-task-relations').open,runtimeOverview:overview(s),historyOverview:overview(persisted),
+  landing:frame(landing),map:frame(map),footerCount:footers.length,legendCount:legends.length,coverageCount:coverages.length,
+  footer:footer?Object.assign(frame(footer),{afterMap:map.nextElementSibling===footer,insideMap:map.contains(footer),children:[...footer.children].map(e=>({id:e.id,className:e.className})),proof:fixedTextProof(footer)}):null,
+  legend:legend?Object.assign(frame(legend),{inFooter:legend.parentElement===footer,labels:[...legend.children].map(e=>({id:e.id,className:e.className,proof:fixedTextProof(e)}))}):null,
+  coverage:coverage?Object.assign(frame(coverage),{inFooter:coverage.parentElement===footer,proof:fixedTextProof(coverage)}):null,
+  nodes:[...map.querySelectorAll('[data-map-position]')].map(e=>({id:e.dataset.mapPosition,parent:b.positions[e.dataset.mapPosition]?.parentId,
+    entity:b.positions[e.dataset.mapPosition]?.entityId,scope:e.dataset.taskOpen||null,visibility:getComputedStyle(e).visibility,display:getComputedStyle(e).display,opacity:getComputedStyle(e).opacity,proof:box(e)})),
+  panel:Object.assign(frame(panel),{count:panels.length,hidden:panel.hidden,articles:[...panel.querySelectorAll('[data-task-relation]')].filter(e=>!e.hidden).map(e=>e.dataset.taskRelation)}),
+  scrollRegionCandidates:candidates,scrollIds:candidates.filter(e=>e.rendered).map(e=>e.id)};
+"""
+
+
+def check_s0_text(proof, text, *areas):
+    areas = list(areas) + [proof['rect']] + proof['clipAreas']
+    if (proof['text'] != text or proof['renderedText'] != text or
+            ''.join(run['text'] for run in proof['textRuns']) != text or
+            not _reader_proof(proof, *areas, font_size=15) or not proof['fragments'] or not proof['textRuns']):
+        raise RuntimeError('S0 complete footer/source text is shortened, hidden, clipped or unreadable')
+    for run in proof['textRuns']:
+        if (not run['opaque'] or not run['unscaled'] or run['fontSize'] < 15 or
+                len(run['foreground']) != 3 or len(run['background']) != 3 or
+                contrast_ratio(run['foreground'], run['background']) < 4.5 or not run['fragments'] or
+                any(not fragment['visible'] or not all(rect_inside(fragment, area) for area in areas + run['clipAreas']) for fragment in run['fragments'])):
+            raise RuntimeError('S0 original wrapped text is covered, scaled or clipped by its actual client region')
+    if any(not fragment['visible'] or not all(rect_inside(fragment, area) for area in areas) for fragment in proof['fragments']):
+        raise RuntimeError('S0 final text fragment is covered or clipped')
+
+
+def check_s0_footer(data):
+    expected, viewport = data['expected'], data['viewport']
+    landing, map_box, footer = data['landing'], data['map'], data['footer']
+    fill = dict(x=16, y=132, width=viewport['width'] - 32, height=viewport['height'] - 148)
+    if (not data['home'] or data['ready'] != 'ready' or (viewport['width'], viewport['height']) not in VIEWPORTS or
+            data['window'] != {'x': 0, 'y': 0} or data['scale'] != 1 or
+            any(not _reader_close(landing['rect'][key], value) for key, value in fill.items()) or
+            data['route'].get('node') != expected['root'] or data['route'].get('tree') != 'g' or
+            data['route'].get('paper') is not None or data['route'].get('version') is not None or data['historyRoute'] != data['route']):
+        raise RuntimeError('S0 lost its exact source root, unscaled full-height landing or zero outer position')
+    if (data['footerCount'] != 1 or not footer or footer['id'] != 'np-overview-footer' or
+            footer['className'] != 'np-overview-footer' or footer['parent'] != 'np-reading-landing' or
+            not footer['afterMap'] or footer['insideMap'] or data['legendCount'] != 1 or data['coverageCount'] != 1 or
+            not data['legend']['inFooter'] or not data['coverage']['inFooter'] or
+            footer['children'] != [{'id': '', 'className': 'np-map-legend'}, {'id': '', 'className': 'np-overview-coverage np-map-coverage'}]):
+        raise RuntimeError('S0 requires one exact normal-flow footer immediately after the map with both original rows')
+    if (landing['display'] != 'flex' or landing['flexDirection'] != 'column' or landing['rowGap'] != 0 or
+            map_box['parent'] != 'np-reading-landing' or map_box['position'] != 'relative' or
+            map_box['flexGrow'] != '1' or map_box['flexShrink'] != '1' or map_box['flexBasis'] != 'auto' or map_box['minHeight'] != '0px' or
+            not _reader_close(map_box['rect']['y'], landing['clientRect']['y'] + landing['paddingTop']) or
+            not _reader_close(map_box['rect']['x'], footer['rect']['x']) or not _reader_close(map_box['rect']['width'], footer['rect']['width']) or
+            not _reader_close(map_box['rect']['height'], landing['clientHeight'] - landing['paddingTop'] - landing['paddingBottom'] -
+                              footer['rect']['height'] - footer['marginTop'] - footer['marginBottom'])):
+        raise RuntimeError('S0 original map no longer receives the remaining natural-flow landing height')
+    for region in (landing, map_box, footer, data['legend'], data['coverage']):
+        if (region['top'] != 0 or region['left'] != 0 or region['scrollHeight'] > region['clientHeight'] + 1 or
+                region['scrollWidth'] > region['clientWidth'] + 1):
+            raise RuntimeError('S0 stationary landing/map/footer has an offset or hidden overflow')
+    for row in (footer, data['legend'], data['coverage']):
+        if (row['position'] not in ('static', 'relative') or row['overflowX'] != 'visible' or row['overflowY'] != 'visible' or
+                any(row['inline'].values()) or not rect_inside(row['rect'], landing['clientRect'])):
+            raise RuntimeError('S0 footer or metadata row kept absolute offsets, clipping or its own scrolling region')
+    if (footer['display'] != 'flex' or footer['flexDirection'] != 'column' or footer['flexGrow'] != '0' or footer['flexShrink'] != '0' or
+            footer['flexBasis'] != 'auto' or footer['maxHeight'] != 'none' or not _reader_close(footer['rowGap'], 4) or
+            not rect_inside(map_box['rect'], landing['clientRect']) or rects_intersect(map_box['rect'], footer['rect']) or
+            footer['rect']['y'] - (map_box['rect']['y'] + map_box['rect']['height']) < 12 - READER_GEOMETRY_TOLERANCE):
+        raise RuntimeError('S0 footer must use natural nonshrinking height and a separate map gap of at least 12px')
+    legend, coverage = data['legend'], data['coverage']
+    natural = sum(row['rect']['height'] + row['marginTop'] + row['marginBottom'] for row in (legend, coverage)) + footer['rowGap'] + sum(footer[key] for key in ('paddingTop', 'paddingBottom', 'borderTop', 'borderBottom'))
+    if (not _reader_close(footer['rect']['height'], natural) or rects_intersect(legend['rect'], coverage['rect']) or
+            not _reader_close(coverage['rect']['y'] - legend['rect']['y'] - legend['rect']['height'], 4) or
+            not _reader_close(footer['rect']['y'] + footer['rect']['height'], landing['clientRect']['y'] + landing['clientRect']['height'] - landing['paddingBottom'])):
+        raise RuntimeError('S0 map did not leave exactly the natural footer rows and bottom padding')
+    selected = data['selectedRelation']
+    if selected is not None and selected not in expected['readouts']:
+        raise RuntimeError('S0 footer readout identifies an unknown source relationship')
+    texts = expected['legend'] + [expected['readouts'][selected] if selected else expected['defaultReadout']]
+    labels = legend['labels']
+    if [(row['id'], row['className']) for row in labels] != [('', 'np-map-parent-key'), ('', 'np-map-relation-key'), ('np-map-relation-readout', '')]:
+        raise RuntimeError('S0 legend/readout identities are missing, duplicated or substituted')
+    for label, text in zip(labels, texts):
+        check_s0_text(label['proof'], text, legend['rect'], footer['rect'], landing['clientRect'], viewport)
+    check_s0_text(coverage['proof'], expected['coverage'], footer['rect'], landing['clientRect'], viewport)
+    check_s0_text(footer['proof'], ''.join(texts) + expected['coverage'], landing['clientRect'], viewport)
+    if [{key: row[key] for key in ('id', 'parent', 'entity')} for row in data['nodes']] != expected['nodes']:
+        raise RuntimeError('S0 footer repair changed original map node IDs, source identities or parents')
+    tasks = [{'scope': row['scope'], 'id': row['id']} for row in data['nodes'] if row['scope'] is not None]
+    if tasks != expected['tasks']:
+        raise RuntimeError('S0 footer repair changed original task identities')
+    for row in data['nodes']:
+        proof = row['proof']
+        replaced_challenge = selected is not None and row['id'] in expected['challengeIds']
+        if (not proof['unscaled'] or not rect_inside(proof['rect'], map_box['clientRect']) or rects_intersect(proof['rect'], footer['rect']) or
+                row['display'] == 'none' or row['opacity'] != '1' or
+                (replaced_challenge and (row['visibility'] != 'hidden' or proof['opaque'] or proof['visible'])) or
+                (not replaced_challenge and (row['visibility'] != 'visible' or not proof['opaque']))):
+            raise RuntimeError('S0 original map node is scaled, incorrectly hidden, clipped or overlaps the footer')
+    panel = data['panel']
+    if panel['count'] != 1 or panel['parent'] != 'np-overview-map' or panel['hidden'] != (selected is None) or panel['articles'] != ([selected] if selected else []):
+        raise RuntimeError('S0 temporary relation panel lost its map parent or exact selected source')
+    if data['scrollIds'] != ([] if selected is None else ['np-overview-relation-panel']):
+        raise RuntimeError('S0 acquired an extra permanent or nested scrolling region')
+    if selected is not None:
+        column = next(row['proof']['rect'] for row in data['nodes'] if row['id'] == expected['challenge'])
+        pr = panel['rect']; mr = map_box['rect']
+        if (panel['position'] != 'absolute' or panel['overflowY'] != 'auto' or panel['overflowX'] != 'auto' or
+                not rect_inside(pr, map_box['clientRect']) or not rect_inside(panel['clientRect'], pr) or
+                not _reader_close(pr['x'], column['x']) or not _reader_close(pr['width'], column['width']) or
+                not _reader_close(pr['y'] - mr['y'], 108) or not _reader_close(pr['height'], mr['height'] - 120) or
+                rects_intersect(pr, footer['rect']) or
+                any(rects_intersect(pr, row['proof']['rect']) for row in data['nodes'] if row['scope'] is not None)):
+            raise RuntimeError('S0 selected panel escapes its actual map/C column or overlaps footer/L tasks')
+        if (panel['maxTop'] != max(0, panel['scrollHeight'] - panel['clientHeight']) or
+                panel['left'] != 0 or panel['top'] < 0 or panel['top'] > panel['maxTop'] or panel['scrollWidth'] > panel['clientWidth'] + 1):
+            raise RuntimeError('S0 temporary evidence panel has invalid effective scrolling')
+
+
+def check_s0_stability(before, after, restore=False):
+    """Only the temporary evidence selection/offset may change the S0 view."""
+    for snapshot in (before, after):
+        check_s0_footer(snapshot)
+    for key in ('expected', 'route', 'historyRoute', 'window', 'scale', 'landing', 'map'):
+        if before[key] != after[key]:
+            raise RuntimeError('S0 relation interaction moved the landing/map/window or changed the source route')
+    if (before['footer']['rect'] != after['footer']['rect'] or
+            [(row['id'], row['proof']['rect']) for row in before['nodes']] != [(row['id'], row['proof']['rect']) for row in after['nodes']]):
+        raise RuntimeError('S0 relation interaction shifted the footer or an original task/node')
+    if restore:
+        for key in ('focus', 'selectedRelation', 'selectorOpen', 'relationsVisible'):
+            if before[key] != after[key]:
+                raise RuntimeError('S0 restoration lost exact focus, disclosure or selected relationship')
+        if before['panel']['top'] != after['panel']['top']:
+            raise RuntimeError('S0 restoration lost the exact effective temporary-panel offset')
+        check_s0_panel_saved(after)
+
+
+def check_s0_panel_saved(data):
+    for state in (data['runtimeOverview'], data['historyOverview']):
+        if (not state or state['selectedRelation'] != data['selectedRelation'] or state['relationScrollTop'] != data['panel']['top'] or
+                state['scrollTop'] != data['landing']['top'] or state['relationsOpen'] != data['selectorOpen'] or
+                state['linesVisible'] != (data['relationsVisible'] == 'true')):
+            raise RuntimeError('S0 history/runtime lost exact effective panel offset or selected source identity')
+
+
+def check_s0_wheel(before, after, delta):
+    check_s0_stability(before, after)
+    for key in ('focus', 'selectedRelation', 'selectorOpen', 'relationsVisible'):
+        if before[key] != after[key]:
+            raise RuntimeError('S0 native wheel changed focus, disclosure or selected source')
+    maximum, start, end = before['panel']['maxTop'], before['panel']['top'], after['panel']['top']
+    if maximum != after['panel']['maxTop'] or not maximum > 0 or delta == 0 or (end - start) * delta <= 0:
+        raise RuntimeError('S0 positive wheel needs real source overflow and a positive native effective movement')
+    check_s0_panel_saved(after)
 
 
 # Hidden overflow can still scroll through focus/scrollIntoView. Record every
@@ -845,6 +1103,7 @@ var roots=host.querySelectorAll('[data-parallel-tree] > [role=tree] > [role=tree
     scrollCandidates=[tree,reader,...tree.querySelectorAll('*'),...reader.querySelectorAll('*'),...(footer?[footer,...footer.querySelectorAll('*')]:[])].map(scrollRegionCandidate).filter(Boolean);
 return {stationaryAncestors:stationaryShellAncestors(),ready:app.dataset.loadState,route:s.route,methodReading:app.dataset.methodReading,readingLayout:app.dataset.readingLayout,window:{x:scrollX,y:scrollY},
   viewport:{x:0,y:0,width:innerWidth,height:innerHeight},home:!document.getElementById('np-reading-landing').hidden,
+  landing:rect(document.getElementById('np-reading-landing')),landingOffsets:{top:document.getElementById('np-reading-landing').scrollTop,left:document.getElementById('np-reading-landing').scrollLeft},
   collapsed:app.dataset.readerCollapsed==='true',sourceOverview:app.dataset.activeTree==='g'&&app.dataset.globalFocus==='overview',panels:rect(document.querySelector('.np-panels')),
   tree:rect(tree),treePane:rect(document.querySelector('.np-tree-pane')),reader:rect(reader),pane:rect(pane),
   fixedIdentity:title?{position:title.dataset.objectPosition||null,paper:title.dataset.objectPaper||null,version:title.dataset.objectVersion||null}:null,
@@ -929,7 +1188,7 @@ def check_desktop_relation_heading(data, expected):
         raise RuntimeError('Fixed relationship heading changed its exact title, relation or source version')
 
 
-def check_desktop_shell(data):
+def check_desktop_shell(data, require_s0_footer=False):
     """The ready desktop document is fixed; only the tree and reader scroll."""
     viewport = data['viewport']
     if ((viewport['width'], viewport['height']) not in VIEWPORTS or data['ready'] != 'ready' or
@@ -944,9 +1203,18 @@ def check_desktop_shell(data):
     if method and (data.get('readingLayout') != 'reading' or any(data['route'].get(k) != position.get(v) for k, v in
             (('node', 'id'), ('paper', 'paper'), ('version', 'version')))):
         raise RuntimeError('Desktop method presentation changed reading layout or exact source identity')
-    if data['home']:
-        return
     expected = {'x': 16, 'y': 132, 'width': viewport['width'] - 32, 'height': viewport['height'] - 148}
+    if require_s0_footer and not data['home']:
+        raise RuntimeError('Designated S0 footer capture did not retain the original home')
+    if data['home']:
+        if (data.get('landingOffsets') != {'top': 0, 'left': 0} or not data.get('landing') or
+                any(not _reader_close(data['landing'][key], value) for key, value in expected.items())):
+            raise RuntimeError('Desktop home lost its full-height unscrolled landing')
+        if require_s0_footer:
+            if not data.get('s0Footer'):
+                raise RuntimeError('Designated desktop home capture omitted its S0 footer proof')
+            check_s0_footer(data['s0Footer'])
+        return
     if any(not _reader_close(data['panels'][k], v) for k, v in expected.items()):
         raise RuntimeError('Desktop workspace differs from the viewport-filling reading contract')
     if data['pickerInsideTree'] or not data['pickerInToolbar'] or data['headingInsideScroll']:
@@ -3089,6 +3357,241 @@ def literature_scroll_position(science, pipeline):
     return rows[0]
 
 
+ANALYSIS_ROUTE_FIELDS = ('nav', 'scope', 'tree', 'node', 'paper', 'version', 'bench', 'protocol', 'template', 'claim', 'mode')
+
+
+def analysis_answer_rows_expected(science, root_id):
+    root = science['positions'][root_id]
+    if root['tree'] != 'a' or root['kind'] == 'analysis_answer' or root['parentId'] is not None:
+        raise RuntimeError('Answer-row source must be an original structural analysis root')
+    def walk(pid):
+        position = science['positions'][pid]
+        yield position
+        for child in position['childIds']:
+            yield from walk(child)
+    rows, chapters = [], []
+    for chapter_id in root['childIds']:
+        original = [p for p in walk(chapter_id) if not p.get('isPaperSpecificInstantiation')]
+        answers = [p for p in original if p['kind'] == 'analysis_answer']
+        chapters.append(chapter_id)
+        for p in answers:
+            if p['paperId'] != root['paperId'] or p['versionId'] != root['versionId']:
+                raise RuntimeError('Answer-row original source borrowed another paper/version')
+            rows.append({'id': p['id'], 'parent': p['parentId'], 'entity': p['entityId'], 'chapter': chapter_id,
+                         'paper': p['paperId'], 'version': p['versionId'], 'scope': p['scopeId'],
+                         'label': science['entities'][p['entityId']].get('label') or p.get('sourceLabel') or p['label']})
+    pair = next(([left['id'], right['id']] for i, left in enumerate(rows) for right in rows[i + 1:]
+                 if left['label'] == right['label'] and left['id'] != right['id']), None)
+    if len(rows) < 2:
+        raise RuntimeError('Answer-row keyboard proof needs two distinct original destinations')
+    return {'root': root_id, 'paper': root['paperId'], 'version': root['versionId'], 'chapters': chapters, 'rows': rows,
+            'keyboardTargets': pair or [rows[0]['id'], rows[-1]['id']],
+            'keyboardSelection': 'same-label-distinct-original-IDs' if pair else 'two-distinct-original-IDs-no-repeated-source-label'}
+
+
+ANALYSIS_ANSWER_ROWS_SNAPSHOT_JS = VISUAL_GEOMETRY + FIXED_TEXT_PROOF_JS + STATIONARY_SHELL_ANCESTORS_JS + r"""
+var a=NavigationProductApp,m=NavigationProductModel,s=a.getState(),b=a.getBundle(),reader=document.getElementById('np-detail-scroll'),tree=document.getElementById('np-tree-scroll'),
+    title=document.getElementById('np-reader-object-title'),roots=reader.querySelectorAll('[data-analysis-root]'),root=roots.length===1?roots[0]:null,
+    historyModel=history.state&&history.state[m.KEY],rr=rect(reader),client={x:rr.x+reader.clientLeft,y:rr.y+reader.clientTop,width:reader.clientWidth,height:reader.clientHeight};
+function metrics(e){return {top:e.scrollTop,left:e.scrollLeft,scrollHeight:e.scrollHeight,clientHeight:e.clientHeight,maxTop:Math.max(0,e.scrollHeight-e.clientHeight)};}
+function contentRect(e){var r=rect(e);return {x:r.x-client.x+reader.scrollLeft,y:r.y-client.y+reader.scrollTop,width:r.width,height:r.height};}
+function saved(value){return value&&value.contexts?.[m.contextKey(value.route)]?.detailScrollByTree?.[value.route.tree];}
+return {ready:document.getElementById('navigation-product').dataset.loadState,route:s.route,historyRoute:historyModel?.route||null,
+  window:{x:scrollX,y:scrollY},viewport:{x:0,y:0,width:innerWidth,height:innerHeight},stationaryAncestors:stationaryShellAncestors(),
+  reader:metrics(reader),readerClient:client,readerRect:rr,tree:metrics(tree),expanded:m.getBucket(s).expandedByTree,
+  runtimeReader:saved(s),historyReader:saved(historyModel),focus:{id:document.activeElement.id,answer:document.activeElement.dataset.analysisAnswerPosition||null},
+  fixedIdentity:{position:title.dataset.objectPosition||null,paper:title.dataset.objectPaper||null,version:title.dataset.objectVersion||null},
+  answerBodyCount:reader.querySelectorAll('.np-analysis-answer').length,coverageCount:roots.length,root:root?.dataset.analysisRoot||null,
+  chapters:root?[...root.querySelectorAll(':scope > [data-analysis-chapter]')].map(e=>e.dataset.analysisChapter):[],
+  rows:root?[...root.querySelectorAll('[data-analysis-answer-position]')].map(e=>{var p=b.positions[e.dataset.analysisAnswerPosition],li=e.parentElement,list=li.parentElement;return {
+    id:e.dataset.analysisAnswerPosition,parent:p?.parentId,entity:p?.entityId,chapter:e.closest('[data-analysis-chapter]')?.dataset.analysisChapter,
+    paper:p?.paperId,version:p?.versionId,scope:p?.scopeId,tag:e.tagName,type:e.type,disabled:e.disabled,hidden:e.hidden,role:e.getAttribute('role'),tabIndex:e.tabIndex,
+    itemTag:li.tagName,itemChildren:li.children.length,listTag:list.tagName,listClass:list.className,listRole:list.getAttribute('role'),
+    itemRect:rect(li),contentRect:contentRect(e),proof:fixedTextProof(e)};}):[]};
+"""
+
+ANALYSIS_EXACT_ROUTE_READY_JS = r"""
+var a=window.NavigationProductApp,expected=arguments[0];if(!a)return false;var actual=a.getState().route,keys=Object.keys(actual).sort(),wanted=Object.keys(expected).sort(),p=a.getBundle().positions[actual.node];
+return keys.length===wanted.length&&keys.every((key,i)=>key===wanted[i]&&actual[key]===expected[key])&&
+  document.querySelector('[data-load-state]')?.dataset.loadState==='ready'&&p&&a.getContent().ready(p.entityId)&&
+  document.getElementById('np-reader-object-title')?.dataset.objectPosition===expected.node;
+"""
+
+
+def exact_analysis_route(actual, expected):
+    return (isinstance(actual, dict) and isinstance(expected, dict) and set(actual) == set(expected) == set(ANALYSIS_ROUTE_FIELDS) and
+            all(type(actual[key]) is type(expected[key]) and actual[key] == expected[key] for key in ANALYSIS_ROUTE_FIELDS))
+
+
+def check_analysis_answer_rows(data, expected):
+    route = data['route']
+    if (data['ready'] != 'ready' or data['window'] != {'x': 0, 'y': 0} or
+            set(route) != set(ANALYSIS_ROUTE_FIELDS) or not exact_analysis_route(data['historyRoute'], route) or
+            (route['tree'], route['node'], route['paper'], route['version'], route['template'], route['claim']) !=
+            ('a', expected['root'], expected['paper'], expected['version'], None, None) or
+            data['fixedIdentity'] != {'position': expected['root'], 'paper': expected['paper'], 'version': expected['version']} or
+            data['coverageCount'] != 1 or data['root'] != expected['root'] or data['answerBodyCount'] != 0 or data['chapters'] != expected['chapters']):
+        raise RuntimeError('Analysis answer rows lost their exact original root, chapters or source-version route')
+    check_stationary_shell_ancestors(data['stationaryAncestors'])
+    check_scroll_metrics(data['reader'])
+    if data['reader']['left'] != 0 or not rect_inside(data['readerClient'], data['viewport']):
+        raise RuntimeError('Analysis answer-row reader is outside its real desktop viewport')
+    fields = ('id', 'parent', 'entity', 'chapter', 'paper', 'version', 'scope')
+    if [{key: row[key] for key in fields} for row in data['rows']] != [{key: row[key] for key in fields} for row in expected['rows']]:
+        raise RuntimeError('Analysis answer rows are missing, merged, reordered or borrowed from another version')
+    previous = None
+    for row, source in zip(data['rows'], expected['rows']):
+        if (row['tag'] != 'BUTTON' or row['type'] != 'button' or row['disabled'] or row['hidden'] or row['role'] is not None or row['tabIndex'] != 0 or
+                row['itemTag'] != 'LI' or row['itemChildren'] != 1 or row['listTag'] != 'UL' or row['listClass'] != 'np-analysis-answer-index' or row['listRole'] is not None or
+                row['proof']['text'] != source['label'] or row['proof']['renderedText'] != source['label'] or
+                not row['proof']['opaque'] or not row['proof']['unscaled'] or row['proof']['clipped'] or
+                row['contentRect']['height'] < 36 or row['contentRect']['width'] <= 0):
+            raise RuntimeError('Analysis answer destination lost its complete original label or native one-row button')
+        if previous and (rects_intersect(previous['contentRect'], row['contentRect']) or
+                         row['contentRect']['y'] < previous['contentRect']['y'] + previous['contentRect']['height']):
+            raise RuntimeError('Analysis answer destinations overlap or share the same visual line')
+        if not rect_inside(row['proof']['rect'], row['itemRect']):
+            raise RuntimeError('Analysis answer button escapes its own separate list row')
+        previous = row
+
+
+def analysis_answer_visible(row, data, label):
+    try:
+        check_s0_text(row['proof'], label, row['itemRect'], data['readerClient'], data['viewport'])
+    except RuntimeError:
+        return False
+    return True
+
+
+def check_analysis_answer_scan(record, expected):
+    frames = record['frames']
+    if len(frames) < 2 or record['positiveWheelCount'] != len(frames) - 1:
+        raise RuntimeError('Analysis answer scan has no positive native reader-wheel evidence')
+    for data in frames:
+        check_analysis_answer_rows(data, expected)
+        if (not exact_analysis_route(data['route'], frames[0]['route']) or data['readerClient'] != frames[0]['readerClient'] or
+                data['tree'] != frames[0]['tree'] or data['expanded'] != frames[0]['expanded'] or
+                [row['contentRect'] for row in data['rows']] != [row['contentRect'] for row in frames[0]['rows']]):
+            raise RuntimeError('Analysis native scan shifted another pane, row layout or original route')
+    if frames[0]['reader']['top'] != 0 or frames[-1]['reader']['top'] != frames[-1]['reader']['maxTop'] or frames[-1]['reader']['top'] <= 0:
+        raise RuntimeError('Analysis answer scan did not reach the real source-content bottom from the top')
+    for before, after in zip(frames, frames[1:]):
+        if after['reader']['top'] <= before['reader']['top'] or before['reader']['maxTop'] != after['reader']['maxTop']:
+            raise RuntimeError('Analysis answer scan claims positive wheel without positive actual offset')
+    visible = []
+    for source in expected['rows']:
+        matches = [(index, next(row for row in frame['rows'] if row['id'] == source['id'])) for index, frame in enumerate(frames)]
+        proven = next((index for index, row in matches if analysis_answer_visible(row, frames[index], source['label'])), None)
+        if proven is None:
+            raise RuntimeError('Analysis scan never shows a complete original answer row inside the actual reader: ' + source['id'])
+        visible.append({'id': source['id'], 'frame': proven, 'label': source['label']})
+    if record['visibleRows'] != visible or record['bottom'] != frames[-1]:
+        raise RuntimeError('Analysis answer scan substituted its ordered complete-row or bottom proof')
+
+
+def analysis_answer_route(root_route, source):
+    return dict(root_route, tree='a', node=source['id'], scope=source['scope'] or root_route['scope'],
+                paper=source['paper'], version=source['version'], claim=None, template=None)
+
+
+def check_analysis_answer_keyboard(record, expected, index):
+    source = next(row for row in expected['rows'] if row['id'] == expected['keyboardTargets'][index])
+    before, selected, after = record['before'], record['selected'], record['after']
+    check_analysis_answer_rows(before, expected); check_analysis_answer_rows(after, expected)
+    if before['reader']['top'] <= 0 or before['reader']['scrollHeight'] <= before['reader']['clientHeight']:
+        raise RuntimeError('Both answer keyboard Back proofs need a genuine positive original reader offset')
+    key = 'Enter' if index == 0 else ' '
+    wanted = analysis_answer_route(before['route'], source)
+    if (record['target'] != source['id'] or record['key'] != key or before['focus']['answer'] != source['id'] or
+            record['expectedRoute'] != wanted or not exact_analysis_route(selected['route'], wanted) or
+            not exact_analysis_route(selected['historyRoute'], wanted) or selected['answerBodyCount'] != 1 or selected['coverageCount'] != 0 or
+            selected['fixedIdentity'] != {'position': source['id'], 'paper': source['paper'], 'version': source['version']} or
+            selected['ready'] != 'ready' or selected['window'] != {'x': 0, 'y': 0}):
+        raise RuntimeError('Native answer keyboard activation selected the wrong key, full route, object or source version')
+    events = record['events']
+    if (len(events) != 2 or [event['type'] for event in events] != ['keydown', 'keyup'] or
+            any(event['key'] != key or event['trusted'] is not True for event in events) or events[0]['target'] != source['id'] or
+            key == ' ' and events[1]['target'] != source['id']):
+        raise RuntimeError('Answer-row Enter/Space proof is not a genuine native keyboard event on the exact target')
+    row = next(row for row in before['rows'] if row['id'] == source['id'])
+    if not analysis_answer_visible(row, before, source['label']):
+        raise RuntimeError('Native answer keyboard target was not fully readable inside the actual reader')
+    if (not exact_analysis_route(after['route'], before['route']) or after['reader'] != before['reader'] or
+            after['tree'] != before['tree'] or after['expanded'] != before['expanded'] or
+            after['historyReader'] != before['reader']['top'] or after['runtimeReader'] != before['reader']['top']):
+        raise RuntimeError('Native browser Back lost the original analysis root or exact effective reader offset')
+
+
+def analysis_answer_rows_checks(driver, record, save, science, root_id):
+    """Real wheel/keyboard evidence inside the existing A-root scene; no new image."""
+    expected = analysis_answer_rows_expected(science, root_id)
+    audit = {'expected': expected, 'frames': [], 'visibleRows': [], 'positiveWheelCount': 0, 'keyboard': []}
+    record['analysisAnswerRows'] = audit
+    def snapshot():
+        return driver.js(ANALYSIS_ANSWER_ROWS_SNAPSHOT_JS)
+    initial = snapshot(); audit['initial'] = initial; save()
+    check_analysis_answer_rows(initial, expected)
+    def wheel(delta):
+        before = driver.js(SCROLL_FIXTURE_SNAPSHOT_JS)
+        after = native_scroll(driver, audit, save, 'reader', int(delta), 'original-analysis-answer-scroll')
+        check_scroll_fixture_source(before, after)
+        if before['tree'] != after['tree'] or before['treeState'] != after['treeState'] or before['historyIdentity'] != after['historyIdentity']:
+            raise RuntimeError('Answer scan native wheel moved the source tree or history')
+        check_scroll_metrics(after['reader'])
+        if (after['reader']['top'] - before['reader']['top']) * delta <= 0:
+            raise RuntimeError('Answer scan wheel produced no actual effective progress')
+        if delta > 0:
+            check_native_wheel_progress(before, after, 'reader')
+        return snapshot()
+    def scroll_to(target):
+        current = snapshot()
+        if target != int(target):
+            raise RuntimeError('Original analysis reader offset is not exactly reachable by integer native wheel')
+        while current['reader']['top'] != target:
+            current = wheel(target - current['reader']['top'])
+        return current
+    current = scroll_to(0)
+    audit['frames'].append(current); save()
+    while current['reader']['top'] < current['reader']['maxTop']:
+        current = wheel(max(1, int(current['reader']['clientHeight'] / 2)))
+        audit['positiveWheelCount'] += 1; audit['frames'].append(current); save()
+    audit['bottom'] = current
+    for source in expected['rows']:
+        frame_index = next((i for i, frame in enumerate(audit['frames']) if analysis_answer_visible(
+            next(row for row in frame['rows'] if row['id'] == source['id']), frame, source['label'])), None)
+        audit['visibleRows'].append({'id': source['id'], 'frame': frame_index, 'label': source['label']})
+    save(); check_analysis_answer_scan(audit, expected)
+    for index, target in enumerate(expected['keyboardTargets']):
+        row = next(row for row in current['rows'] if row['id'] == target)
+        current = scroll_to(int(max(0, min(current['reader']['maxTop'], row['contentRect']['y'] - 16))))
+        element = driver.selector('[data-analysis-answer-position="' + target + '"]')
+        driver.js("arguments[0].focus({preventScroll:true});", element)
+        before = snapshot(); source = next(row for row in expected['rows'] if row['id'] == target)
+        key = 'Enter' if index == 0 else ' '
+        item = {'target': target, 'key': key, 'before': before, 'expectedRoute': analysis_answer_route(before['route'], source)}
+        audit['keyboard'].append(item); save()
+        driver.js("window.__npAnswerKeyProbe={events:[],handler:function(e){this.events.push({type:e.type,key:e.key,trusted:e.isTrusted,target:e.target.dataset.analysisAnswerPosition||null});}};var p=window.__npAnswerKeyProbe;p.listener=p.handler.bind(p);document.addEventListener('keydown',p.listener,true);document.addEventListener('keyup',p.listener,true);")
+        try:
+            code = '\ue007' if index == 0 else ' '
+            driver.call('POST', '/actions', {'actions': [{'type': 'key', 'id': 'original-analysis-answer-keyboard', 'actions': [
+                {'type': 'keyDown', 'value': code}, {'type': 'keyUp', 'value': code}]}]})
+            wait_for(lambda: driver.js(ANALYSIS_EXACT_ROUTE_READY_JS, item['expectedRoute']))
+            driver.settle(); item['selected'] = snapshot()
+        finally:
+            item['events'] = driver.js("var p=window.__npAnswerKeyProbe;document.removeEventListener('keydown',p.listener,true);document.removeEventListener('keyup',p.listener,true);delete window.__npAnswerKeyProbe;return p.events;")
+            save()
+        driver.call('POST', '/back', {})
+        wait_for(lambda: driver.js(ANALYSIS_EXACT_ROUTE_READY_JS, before['route']) and
+                 driver.js("return document.getElementById('np-detail-scroll').scrollTop") == before['reader']['top'])
+        driver.settle(); item['after'] = current = snapshot(); save()
+        check_analysis_answer_keyboard(item, expected, index)
+    final = scroll_to(initial['reader']['top']); audit['final'] = final; save()
+    check_analysis_answer_rows(final, expected)
+    if (not exact_analysis_route(final['route'], initial['route']) or final['reader'] != initial['reader'] or
+            final['tree'] != initial['tree'] or final['expanded'] != initial['expanded'] or final['focus'] != initial['focus']):
+        raise RuntimeError('Analysis evidence pass did not restore the original root capture state')
+
+
 def exploration_state_checks(driver, report, save, capture, prefix, base, science):
     """Independent per-view scroll/focus, source A, old links and cold identity."""
     record = {'viewport': prefix, 'scenes': [], 'deepLinks': []}
@@ -3247,6 +3750,7 @@ def exploration_state_checks(driver, report, save, capture, prefix, base, scienc
         raise RuntimeError('Explicit analysis root lost original topology, chapter coverage or structural role')
     if root_coverage['route']['node'] != entry['roots'][0] or root_coverage['route']['template'] is not None:
         raise RuntimeError('Explicit source root no longer opens the version coverage view')
+    analysis_answer_rows_checks(driver, record, save, science, entry['roots'][0])
     record['scenes'].append({'name': prefix + '-30-analysis-root-coverage', 'state': root_coverage})
     save()
     capture(prefix + '-30-analysis-root-coverage')
@@ -3337,6 +3841,8 @@ def main():
               'visualAcceptance': 'pending_human_review', 'captures': [], 'status': 'starting',
               'reviewScope': 'user_requested_desktop_only_2026-10-10',
               'browserFullscreenRequested': False, 'displayContractMigrations': DISPLAY_CONTRACT_MIGRATIONS,
+              's0FooterScope': {'sceneSuffixes': list(S0_FOOTER_SCENES), 'relations': 'all selections, per-source scrolling, native wheel, close, reload and endpoint Back',
+                                'directoryReturn': 'Original -12 scene keeps its native glossary open; full-height/outer0 and all original gates remain, without requiring uncovered footer beneath that intentional overlay'},
               'capturePlan': [str(w) + 'x' + str(h) + suffix for w, h in VIEWPORTS for suffix in SCENE_NAMES]}
     report['frontendSources'] = {name: sha(name) for name in ('assets/navigation-product.js', 'assets/navigation-product-model.js', 'assets/navigation-product.css', 'scripts/navigation_product.py')}
     report['captureSources'] = {name: sha(name) for name in ('scripts/navigation_screenshots.py', 'tests/test_navigation_screenshots.py')}
@@ -3349,6 +3855,7 @@ def main():
     from navigation_research_map import build_research_map
     method_positions = dict(science['positions'])
     method_positions.update(build_research_map(science)['positions'])
+    footer_expected = s0_footer_expected(science)
     relation_expected = []
     for number in range(88, 95):
         rel = science['relations']['tasks:relation:' + str(number)]
@@ -3360,7 +3867,7 @@ def main():
                     continue
                 seen.add(sid)
                 ref = science['sources'][sid]
-                refs.append({'sourceId': sid, 'url': ref['url'], 'versionId': ref['versionId'], 'versionStatus': ref['versionStatus']})
+                refs.append({'sourceId': sid, 'url': ref['url'], 'versionId': ref['versionId'], 'versionStatus': ref['versionStatus'], 'descriptor': ref.get('descriptor')})
         relation_expected.append({'id': rel['id'], 'from': rel['from'], 'to': rel['to'], 'relationType': rel['relationType'], 'locators': rel['detail']['locators'], 'sourceRefs': refs})
     driver = None
     process = None
@@ -3381,6 +3888,10 @@ def main():
           nodeCount:document.querySelectorAll('#np-tree [role=treeitem]').length,
           focus:document.activeElement?.id, bodyWidth:document.body.scrollWidth};''', CAPTURE_BOUNDS_SELECTOR)
         data['desktopShell'] = driver.js(DESKTOP_SHELL_SNAPSHOT_JS)
+        requires_s0_footer = s0_footer_required(name)
+        data['s0FooterRequired'] = requires_s0_footer
+        if data['desktopShell']['home'] and requires_s0_footer:
+            data['desktopShell']['s0Footer'] = s0_footer_check(name)
         if data['desktopShell'].get('methodReading') == 'true' and not data['desktopShell']['collapsed']:
             data['methodReading'] = driver.js(METHOD_READING_SNAPSHOT_JS)
         data['screenKind'] = 'default_reading_overview' if require_home else 'tree_or_reader'
@@ -3426,7 +3937,7 @@ def main():
                 data['networkFailures'].append({'status': response['status'], 'path': urllib.parse.urlsplit(response['url']).path})
         report['captures'].append(data)
         save()
-        check_desktop_shell(data['desktopShell'])
+        check_desktop_shell(data['desktopShell'], require_s0_footer=requires_s0_footer)
         if 'methodReading' in data:
             method_expected = method_reading_expected(science, method_positions[data['route']['node']], method_positions)
             check_method_reading(data['methodReading'], method_expected, method_positions,
@@ -3457,6 +3968,13 @@ def main():
             visible_flow = [item for item in data['readingVisibility']['flow'] if item['text'].strip() and item['uncovered'] and rect_inside(item['rect'], viewport) and rect_inside(item['rect'], reader)]
             if not visible_flow:
                 raise RuntimeError('Method screenshot does not show any complete actual mechanism field inside the reader')
+
+    def s0_footer_check(phase):
+        data = driver.js(S0_FOOTER_SNAPSHOT_JS, footer_expected)
+        report.setdefault('s0FooterChecks', []).append({'phase': phase, 'snapshot': data})
+        save()
+        check_s0_footer(data)
+        return data
 
     def reading_home(relation_mode='default'):
         driver.settle()
@@ -3508,6 +4026,7 @@ def main():
         driver.click(driver.selector('#np-task-relations > summary'))
 
         def evidence(expected, expected_focus=None):
+            before_footer = s0_footer_check('relation-evidence-before-' + expected['id'])
             data = driver.js("""var id=arguments[0],e=[...document.querySelectorAll('[data-task-relation]')].find(n=>n.dataset.taskRelation===id);return {id:e.dataset.taskRelation,type:e.dataset.relationType,from:e.dataset.fromEntity,to:e.dataset.toEntity,open:!e.hidden&&!document.getElementById('np-overview-relation-panel').hidden,selectorOpen:document.getElementById('np-task-relations').open,focus:document.activeElement.id,route:NavigationProductApp.getState().route,text:e.textContent,sources:[...e.querySelectorAll('[data-task-relation-source]')].map(n=>({id:n.dataset.taskRelationSource,url:n.href,version:n.dataset.sourceVersion,status:n.dataset.sourceStatus}))};""", expected['id'])
             data['beforeRoute'] = before_route
             if expected_focus is not None:
@@ -3520,8 +4039,17 @@ def main():
                     raise RuntimeError('Exact relationship visible source element is missing')
                 driver.js("arguments[0].scrollIntoView({block:'center'});", element)
                 driver.settle()
-                proof = driver.js(VISUAL_GEOMETRY + "var e=arguments[0],b=box(e),rs=[...e.getClientRects()].filter(r=>r.width>0&&r.height>0);if(getComputedStyle(e).display==='inline'){b.visible=b.opaque&&rs.length>0&&rs.every(r=>[[.5,.5],[.1,.1],[.9,.1],[.1,.9],[.9,.9]].every(([x,y])=>{var hit=document.elementFromPoint(r.x+r.width*x,r.y+r.height*y);return hit===e||e.contains(hit);}));b.clipped=false;}b.clientRects=rs.map(r=>({x:r.x,y:r.y,width:r.width,height:r.height}));return Object.assign(b,{viewport:{x:0,y:0,width:innerWidth,height:innerHeight}});", element)
+                proof = driver.js(RELATION_EVIDENCE_PROOF_JS, element)
+                after_footer = s0_footer_check('relation-fragment-' + expected['id'] + '-' + spec['kind'])
+                check_s0_stability(before_footer, after_footer)
                 proof['kind'] = spec['kind']
+                if spec['kind'] == 'heading':
+                    proof['expectedText'] = S0_RELATION_LABELS[expected['id']]
+                elif spec['kind'] == 'locator':
+                    proof['expectedText'] = spec['text']
+                if spec['kind'] == 'source':
+                    ref = next(ref for ref in expected['sourceRefs'] if ref['sourceId'] == spec['id'])
+                    proof['expectedText'] = '原文来源 · ' + (ref.get('descriptor') or ref['sourceId'])
                 if spec['kind'] == 'status':
                     status = next(ref['versionStatus'] for ref in expected['sourceRefs'] if ref['sourceId'] == spec['id'])
                     proof['expectedText'] = ' · ' + {'snapshot_not_version_pinned':'未固定全文快照','fixed_arxiv_version_url':'来源URL限定版本'}.get(status,status)
@@ -3541,8 +4069,11 @@ def main():
             native = driver.js(VISUAL_GEOMETRY + "return {tag:arguments[0].tagName,type:arguments[0].type,disabled:arguments[0].disabled,tabIndex:arguments[0].tabIndex,target:arguments[0].getAttribute('aria-controls'),box:box(arguments[0])};", control)
             if native['tag'] != 'BUTTON' or native['type'] != 'button' or native['disabled'] or native['tabIndex'] != 0 or native['target'] != 'np-map-relation-evidence-' + expected['id'] or not native['box']['visible'] or native['box']['clipped']:
                 raise RuntimeError('Relationship text selection is not a usable exact native button')
+            before_selection = s0_footer_check('before-selection-' + expected['id'])
             driver.click(control)
             driver.settle()
+            selected_footer = s0_footer_check('selected-' + expected['id'])
+            check_s0_stability(before_selection, selected_footer)
             evidence(expected)
             selected_lines = driver.js("return [...document.querySelectorAll('path[data-map-relation]')].filter(e=>{var s=getComputedStyle(e);return s.display!=='none'&&s.visibility==='visible'&&Number(s.opacity)>0;}).map(e=>e.dataset.mapRelation);")
             if selected_lines != [expected['id']]:
@@ -3551,6 +4082,37 @@ def main():
                 driver.js("document.getElementById(arguments[0]).scrollIntoView({block:'start'});", 'np-map-relation-evidence-' + expected['id'])
                 driver.settle()
                 capture(prefix + '-13-relation-' + expected['id'].split(':')[-1], require_home=True)
+                # Wheel only a genuinely overflowing current source. No padding,
+                # scale change or assigned scrollTop manufactures the fixture.
+                wheel_before = s0_footer_check('native-wheel-before-' + expected['id'])
+                wheel_record = {'relation': expected['id'], 'before': wheel_before,
+                                'positive': wheel_before['panel']['maxTop'] > 0}
+                report.setdefault('s0PanelWheelChecks', []).append(wheel_record)
+                save()
+                if wheel_record['positive']:
+                    delta = 137 if wheel_before['panel']['top'] < wheel_before['panel']['maxTop'] else -137
+                    wheel_record['delta'] = delta
+                    try:
+                        driver.call('POST', '/actions', {'actions': [{'type': 'wheel', 'id': 's0-source-scroll', 'actions': [
+                            {'type': 'scroll', 'origin': driver.selector('#np-overview-relation-panel'), 'x': 0, 'y': 0, 'deltaX': 0, 'deltaY': delta, 'duration': 100}]}]})
+                        wait_for(lambda: driver.js("var a=NavigationProductApp,m=NavigationProductModel,s=a.getState(),p=document.getElementById('np-overview-relation-panel'),h=history.state&&history.state[m.KEY];return p.scrollTop!==arguments[0]&&h&&m.getBucket(h).overviewView.relationScrollTop===p.scrollTop&&m.getBucket(s).overviewView.relationScrollTop===p.scrollTop;", wheel_before['panel']['top']))
+                        driver.settle()
+                    finally:
+                        wheel_record['after'] = s0_footer_check('native-wheel-after-' + expected['id'])
+                        save()
+                    check_s0_wheel(wheel_before, wheel_record['after'], delta)
+                else:
+                    # Fitting source is reported as zero-range, never positive.
+                    if wheel_before['panel']['scrollHeight'] > wheel_before['panel']['clientHeight']:
+                        raise RuntimeError('S0 fitting-source report contradicts actual scroll metrics')
+                before_close = s0_footer_check('before-close-' + expected['id'])
+                driver.click(driver.selector('#np-overview-relation-close'))
+                driver.settle()
+                closed = s0_footer_check('closed-' + expected['id'])
+                check_s0_stability(before_close, closed)
+                if (closed['selectedRelation'] is not None or not closed['selectorOpen'] or
+                        closed['focus'] != 'np-relation-select-' + expected['id']):
+                    raise RuntimeError('S0 close lost exact native relation-selection focus')
         # Exercise native keyboard activation, not a script-generated click event.
         expected = relation_expected[2]
         if not driver.js("return document.getElementById('np-task-relations').open"):
@@ -3560,6 +4122,7 @@ def main():
         driver.call('POST', '/element/' + control[ELEMENT] + '/value', {'text': '\ue007', 'value': ['\ue007']})
         driver.settle()
         evidence(expected)
+        footer_before_reload = s0_footer_check('before-relation-reload')
         before_snapshot = driver.js(COLD_RESTORE_SNAPSHOT_JS)
         stored = before_snapshot['view']
         driver.call('POST', '/refresh', {})
@@ -3567,6 +4130,8 @@ def main():
         driver.settle()
         after_snapshot = driver.js(COLD_RESTORE_SNAPSHOT_JS)
         restored = after_snapshot['view']
+        footer_after_reload = s0_footer_check('after-relation-reload')
+        check_s0_stability(footer_before_reload, footer_after_reload, restore=True)
         report.setdefault('relationColdRestoreChecks', []).append({'before':stored,'after':restored,
             'differentFields':sorted(key for key in set(stored) | set(restored) if stored.get(key) != restored.get(key)),
             'beforeDiagnostic':before_snapshot['diagnostic'],'afterDiagnostic':after_snapshot['diagnostic']})
@@ -3578,6 +4143,7 @@ def main():
         control = driver.js("return document.getElementById(arguments[0]);", 'np-relation-entry-' + expected['id'] + '-' + expected['to'])
         driver.js("arguments[0].scrollIntoView({block:'center'});arguments[0].focus({preventScroll:true});", control)
         driver.settle()
+        footer_before_endpoint = s0_footer_check('before-relation-endpoint')
         endpoint_origin = driver.js("return {focus:document.activeElement.id,window:scrollY,landing:document.getElementById('np-reading-landing').scrollTop,relationPanel:document.getElementById('np-overview-relation-panel').scrollTop};")
         driver.click(control)
         driver.settle()
@@ -3588,6 +4154,8 @@ def main():
         if driver.js('return NavigationProductApp.getState().route') != before_route or not driver.js("return !document.getElementById('np-overview-relation-panel').hidden"):
             raise RuntimeError('Relationship Back lost the original route or evidence disclosure')
         back_origin = driver.js("return {focus:document.activeElement.id,window:scrollY,landing:document.getElementById('np-reading-landing').scrollTop,relationPanel:document.getElementById('np-overview-relation-panel').scrollTop};")
+        footer_after_back = s0_footer_check('after-relation-endpoint-back')
+        check_s0_stability(footer_before_endpoint, footer_after_back, restore=True)
         if back_origin != endpoint_origin:
             raise RuntimeError('Relationship endpoint Back lost exact saved focus or reading scroll')
         evidence(expected, expected_focus=endpoint_origin['focus'])

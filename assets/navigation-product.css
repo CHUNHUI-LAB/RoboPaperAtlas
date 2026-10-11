@@ -489,11 +489,16 @@ body{font-size:16px;line-height:1.65;background:#f7f9fa}header.np-header{max-wid
  #np-task-relations .np-relation-selectors{grid-template-columns:1fr;margin:0;gap:0}
  #np-task-relations .np-relation-selector{border:0;border-bottom:1px solid #dce8e3;padding:6px;min-height:36px}
  #np-task-relations>p{font-size:15px}
- .np-overview-relation-panel{position:absolute;z-index:4;background:#fff;border:1px solid #b7a5ca;border-radius:8px;padding:10px 16px;overflow:auto;box-shadow:0 10px 30px #20343f18;font-size:15px;line-height:1.55}
+ .np-overview-relation-panel{position:absolute;z-index:4;background:#fff;border:1px solid #b7a5ca;border-radius:8px;padding:10px 16px;overflow:auto;box-shadow:none;font-size:15px;line-height:1.55}
  .np-overview-relation-panel article{padding-top:12px;font-size:15px}
  .np-overview-relation-panel p,.np-overview-relation-panel button{font-size:15px;line-height:1.55}
  .np-overview-map[data-selected-relation]:not([data-selected-relation=""]) .np-map-challenge{visibility:hidden}
  .np-map-coverage{position:absolute;left:0;margin:0;padding:0;border:0;font-size:15px;line-height:1.45;z-index:2}
+ /* Source legend and coverage reserve their own desktop space below the graph. */
+ #navigation-product .np-graphical-home>.np-overview-map{min-height:0}
+ #navigation-product .np-overview-footer{position:static;display:flex;flex-direction:column;flex:0 0 auto;gap:4px;margin-top:12px;min-width:0;overflow:visible}
+ #navigation-product .np-overview-footer>.np-map-legend{position:static;left:auto;z-index:auto;margin:0}
+ #navigation-product .np-overview-footer>.np-map-coverage{position:static;left:auto;z-index:auto;margin:0;padding:0}
 }
 /* Exact generated identity duplicates share the fixed header only on desktop.
    Real answer sections and distinct scientific fields never receive this marker. */

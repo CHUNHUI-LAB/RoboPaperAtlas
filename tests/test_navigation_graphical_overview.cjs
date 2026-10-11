@@ -1351,7 +1351,8 @@ test('review: computed normal and selected connector contrast stays at least 3 t
   assert.equal(numericOpacity(x.w.getComputedStyle(selected).opacity), 1);
   assert.ok(result.ratio >= 3, 'selected relation composited contrast is at least 3:1');
   minimum.active = result.ratio;
-  const texts = [...map(x).querySelectorAll('.np-task-reading-contract,.np-task-reading-name,.np-map-challenge-label,.np-map-layout-note,.np-map-editorial-note,.np-map-legend span,.np-overview-goal h2,.np-overview-goal p,[data-reading-branch] h3,.np-map-task-root'), ...x.d.querySelectorAll('nav.np-relation-selectors button')];
+  const texts = [...map(x).querySelectorAll('.np-task-reading-contract,.np-task-reading-name,.np-map-challenge-label,.np-map-layout-note,.np-map-editorial-note,.np-overview-goal h2,.np-overview-goal p,[data-reading-branch] h3,.np-map-task-root'), ...x.d.querySelectorAll('#np-reading-landing .np-map-legend span'), ...x.d.querySelectorAll('nav.np-relation-selectors button')];
+  assert.equal(x.d.querySelectorAll('#np-reading-landing .np-map-legend span').length, 3, 'moving the footer cannot silently omit legend typography coverage');
   assert.ok(texts.length >= 70, 'task, CI, branch, legend and independent selection labels are checked');
   for (const node of texts) {
     const size = inheritedComputedValue(x, node, 'font-size');

@@ -203,6 +203,14 @@ run(start+'<em>wrong sibling</em><span> · 未固定全文快照</span></p></art
               'route':{'scope':'scope:all'},'beforeRoute':{'scope':'scope:all'},'text':'Section 3',
               'sources':[{'id':'s','url':'https://example.org/v1','version':'v1','status':'fixed'}],
               'visibleProofs':[{'visible':True,'opaque':True,'unscaled':True,'fontSize':15,'clipped':False,'foreground':[20,30,40],'background':[255,255,255],'rect':{'x':20,'y':20,'width':300,'height':40},'viewport':{'x':0,'y':0,'width':1440,'height':900}} for _ in range(4)]}
+        # Full text-run and actual panel-client geometry supplement the old box gate.
+        for kind, proof in zip(('heading', 'locator', 'source', 'status'), data['visibleProofs']):
+            proof.update(S0FooterCaptureChecks.proof('原文来源 · s' if kind == 'source' else ' · fixed' if kind == 'status' else 'Section 3', proof['rect']))
+            proof.update(kind=kind, sourceRecord=data['sources'][0].copy() if kind in ('source', 'status') else None)
+            if kind == 'source':
+                proof.update(elementTag='A', accessibilitySuffix=dict(tag='SPAN', className='np-sr', text='（新标签页）'), accessibleText=proof['text'] + '（新标签页）')
+            proof.update(panelId='np-overview-relation-panel', panelContains=True, relationId='r',
+                         panelClientRect=dict(x=10, y=10, width=400, height=500))
         MODULE.check_relation_evidence(data,expected)
         mutations=[lambda x:x.__setitem__('id','other'),lambda x:x.__setitem__('type','inheritance'),lambda x:x.__setitem__('from','wrong'),
                    lambda x:x.__setitem__('open',False),lambda x:x.__setitem__('focus','BODY'),lambda x:x['route'].__setitem__('scope','task:goat'),
@@ -2819,7 +2827,8 @@ d.querySelector('.np-return-previous').click();await ready(()=>a.getState().rout
 
     def test_new_state_capture_mapping_keeps_original_90_scenes_and_historical_diagnostics(self):
         import inspect
-        self.assertEqual(len(MODULE.DISPLAY_CONTRACT_MIGRATIONS), 12)
+        self.assertEqual(len(MODULE.DISPLAY_CONTRACT_MIGRATIONS), 13)
+        self.assertIn('s0_footer', MODULE.DISPLAY_CONTRACT_MIGRATIONS)
         self.assertEqual(len(MODULE.SCENE_NAMES), 49)
         for name in ('-31-s0-reading-hierarchy', '-32-s1-relation-90', '-33-s2-first-answer', '-30-analysis-root-coverage'):
             self.assertIn(name, MODULE.SCENE_NAMES)
@@ -3808,6 +3817,512 @@ try{const w=dom.window,d=w.document,tree=d.getElementById('np-tree-scroll'),item
             for forbidden in ('style.', 'scrollTop=', 'scrollTop =', '.navigate(', 'dispatchEvent(', 'replaceState(', 'pushState('):
                 self.assertNotIn(forbidden,code)
         self.assertEqual(len(MODULE.SCENE_NAMES)*len(MODULE.VIEWPORTS),98)
+
+
+class S0FooterCaptureChecks(unittest.TestCase):
+    @staticmethod
+    def source():
+        import gzip
+        return json.loads(gzip.decompress((Path(__file__).parents[1] / 'data/navigation-product/model.json.gz').read_bytes()))
+
+    @staticmethod
+    def expected(science=None):
+        import sys
+        with patch.object(sys, 'path', [str(Path(__file__).parents[1] / 'scripts'), *sys.path]):
+            return MODULE.s0_footer_expected(science or S0FooterCaptureChecks.source())
+
+    @staticmethod
+    def proof(text, area):
+        import copy
+        fragment = dict(area, visible=True)
+        return dict(text=text, renderedText=text, rect=copy.deepcopy(area), visible=True, opaque=True, unscaled=True,
+                    fontSize=15, clipped=False, foreground=[32, 52, 63], background=[255, 255, 255],
+                    clipAreas=[], fragments=[fragment], textRuns=[dict(text=text, opaque=True, unscaled=True,
+                    fontSize=15, foreground=[32, 52, 63], background=[255, 255, 255], clipAreas=[], fragments=[copy.deepcopy(fragment)])])
+
+    @classmethod
+    def fixture(cls, width=1440, selected=None):
+        import copy
+        height = 900 if width == 1440 else 1080
+        def rect(x, y, w, h): return dict(x=x, y=y, width=w, height=h)
+        def frame(identity, area, parent='', **kwargs):
+            return dict(id=identity, tag='DIV', className='', parent=parent, rect=area, clientRect=copy.deepcopy(area),
+                        position='static', display='block', flexDirection='row', flexGrow='0', flexShrink='1', flexBasis='auto',
+                        rowGap=0, marginTop=0, marginBottom=0, paddingTop=0, paddingBottom=0, borderTop=0, borderBottom=0,
+                        minHeight='0px', maxHeight='none', overflowX='visible', overflowY='visible',
+                        top=0, left=0, scrollHeight=area['height'], clientHeight=area['height'], scrollWidth=area['width'], clientWidth=area['width'],
+                        maxTop=0, inline=dict(top='', left='', width='', height='')) | kwargs
+        expected = cls.expected(); viewport = rect(0, 0, width, height)
+        map_box = rect(41, 149, width - 82, height - 241.5)
+        footer_rect = rect(41, height - 80.5, width - 82, 47.5)
+        landing = frame('np-reading-landing', rect(16, 132, width - 32, height - 148), paddingTop=17, paddingBottom=17, display='flex', flexDirection='column')
+        footer = frame('np-overview-footer', footer_rect, 'np-reading-landing', className='np-overview-footer',
+                       display='flex', flexDirection='column', flexShrink='0', rowGap=4, marginTop=12,
+                       afterMap=True, insideMap=False, children=[dict(id='', className='np-map-legend'), dict(id='', className='np-overview-coverage np-map-coverage')])
+        legend = frame('', rect(41, footer_rect['y'], width - 82, 21.75), 'np-overview-footer', inFooter=True, labels=[])
+        coverage = frame('', rect(41, footer_rect['y'] + 25.75, width - 82, 21.75), 'np-overview-footer', inFooter=True)
+        texts = expected['legend'] + [expected['readouts'][selected] if selected else expected['defaultReadout']]
+        x = 41
+        for i, text in enumerate(texts):
+            label_rect = rect(x, footer_rect['y'], [190, 210, 720][i], 21.75); x += [190, 210, 720][i] + 18
+            legend['labels'].append(dict(id='np-map-relation-readout' if i == 2 else '', className=['np-map-parent-key', 'np-map-relation-key', ''][i], proof=cls.proof(text, label_rect)))
+        coverage['proof'] = cls.proof(expected['coverage'], coverage['rect'])
+        footer['proof'] = cls.proof(''.join(texts) + expected['coverage'], footer_rect)
+        # A genuinely wrapped original run is included; final fragments are gated.
+        footer['proof']['fragments'] = [dict(legend['rect'], visible=True), dict(coverage['rect'], visible=True)]
+        footer['proof']['textRuns'][0]['fragments'] = copy.deepcopy(footer['proof']['fragments'])
+        cw = 408 if width == 1440 else 520; cx = map_box['x'] + map_box['width'] - cw
+        nodes = []; task_by_id = {row['id']: row['scope'] for row in expected['tasks']}
+        task_index = 0; challenge_index = 0
+        for i, node in enumerate(expected['nodes']):
+            if node['id'] in task_by_id:
+                area = rect(49 + (task_index % 4) * 190, 307 + (task_index // 4) * 76, 174, 56); task_index += 1
+            elif node['id'] == expected['challenge']:
+                area = rect(cx, 209, cw, 36)
+            elif i >= 4:
+                area = rect(cx, 257 + challenge_index * 42, cw, 37); challenge_index += 1
+            else:
+                area = rect(49, 149 + i * 40, 130, 24)
+            replaced = selected is not None and node['id'] in expected['challengeIds']
+            node_proof = cls.proof(node['entity'], area)
+            node_proof.update(opaque=not replaced, visible=not replaced)
+            nodes.append(dict(node, scope=task_by_id.get(node['id']), visibility='hidden' if replaced else 'visible', display='block', opacity='1', proof=node_proof))
+        panel = frame('np-overview-relation-panel', rect(cx, 257, cw, map_box['height'] - 120), 'np-overview-map',
+                      position='absolute', overflowX='auto', overflowY='auto', count=1, hidden=selected is None,
+                      articles=[selected] if selected else [])
+        panel['clientRect'] = rect(cx + 1, 258, cw - 17, panel['rect']['height'] - 2)
+        panel.update(clientWidth=panel['clientRect']['width'], scrollWidth=panel['clientRect']['width'], clientHeight=panel['clientRect']['height'])
+        panel.update(scrollHeight=panel['clientHeight'] + (211 if selected else 0), maxTop=211 if selected else 0)
+        route = dict(scope='scope:all', tree='g', node=expected['root'], paper=None, version=None)
+        view = dict(selectedRelation=selected, relationScrollTop=0, scrollTop=0, relationsOpen=False, linesVisible=False)
+        return dict(expected=expected, viewport=viewport, ready='ready', home=True, scale=1, window=dict(x=0, y=0),
+                    route=route, historyRoute=copy.deepcopy(route), focus='np-map-relation-evidence-' + selected if selected else 'BODY',
+                    selectedRelation=selected, relationsVisible='false', selectorOpen=False, runtimeOverview=copy.deepcopy(view), historyOverview=copy.deepcopy(view),
+                    landing=landing, map=frame('np-overview-map', map_box, 'np-reading-landing', position='relative', flexGrow='1'), footerCount=1, legendCount=1, coverageCount=1,
+                    footer=footer, legend=legend, coverage=coverage, nodes=nodes, panel=panel, scrollRegionCandidates=[],
+                    scrollIds=['np-overview-relation-panel'] if selected else [])
+
+    def test_source_bound_complete_footer_and_original_nodes_fit_both_desktops(self):
+        for width in (1440, 1920):
+            for selected in (None, 'tasks:relation:88', 'tasks:relation:90', 'tasks:relation:94'):
+                data = self.fixture(width, selected)
+                MODULE.check_s0_footer(data)
+                self.assertEqual([row['id'] for row in data['nodes']], [row['id'] for row in data['expected']['nodes']])
+                self.assertIn('选段覆盖，不代表全文精读或领域穷尽。', data['coverage']['proof']['renderedText'])
+                self.assertEqual(len(data['footer']['proof']['fragments']), 2)
+        source = self.source(); original = self.expected(source)
+        scope = next(row for row in source['scopes'] if row['id'] == 'task:pointnav')
+        scope['coverage']['direct']['methodCount'] = 5
+        changed = self.expected(source)
+        self.assertNotEqual(original['coverage'], changed['coverage'])
+        self.assertEqual(original['nodes'], changed['nodes'])
+
+    def test_footer_rejects_legacy_absolute_map_child_missing_duplicate_and_extra_scroll(self):
+        import copy
+        good = self.fixture()
+        mutations = [lambda d: d.update(footer=None), lambda d: d.update(footerCount=0), lambda d: d.update(footerCount=2),
+                     lambda d: d.update(legendCount=2), lambda d: d.update(coverageCount=0),
+                     lambda d: d['footer'].update(parent='np-overview-map', insideMap=True),
+                     lambda d: d['footer'].update(afterMap=False), lambda d: d['legend'].update(inFooter=False),
+                     lambda d: d['coverage'].update(inFooter=False), lambda d: d['footer']['children'].pop(),
+                     lambda d: d['footer'].update(position='absolute'), lambda d: d['legend'].update(position='absolute'),
+                     lambda d: d['coverage'].update(position='fixed'), lambda d: d['legend']['inline'].update(top='666px'),
+                     lambda d: d['footer'].update(flexShrink='1'), lambda d: d['footer'].update(flexGrow='1'),
+                     lambda d: d['footer'].update(flexBasis='48px'), lambda d: d['footer'].update(maxHeight='48px'),
+                     lambda d: d['footer'].update(rowGap=0), lambda d: d['coverage'].update(overflowY='auto'),
+                     lambda d: d['footer'].update(overflowX='hidden'), lambda d: d['footer'].update(top=1),
+                     lambda d: d['landing'].update(top=1), lambda d: d['map'].update(left=1), lambda d: d['map'].update(flexGrow='0'),
+                     lambda d: d['map'].update(minHeight='704px'), lambda d: d['map'].update(parent='wrong'),
+                     lambda d: d['map'].update(scrollHeight=d['map']['clientHeight'] + 9),
+                     lambda d: d['scrollIds'].append('third-scroll'), lambda d: d['landing']['rect'].update(height=550),
+                     lambda d: d['window'].update(y=1), lambda d: d.update(scale=.8)]
+        for i, mutate in enumerate(mutations):
+            bad = copy.deepcopy(good); mutate(bad)
+            with self.subTest(mutation=i), self.assertRaises(RuntimeError): MODULE.check_s0_footer(bad)
+
+    def test_complete_text_rejects_shortening_bad_alpha_font_contrast_scale_and_final_fragment(self):
+        import copy
+        good = self.fixture(selected='tasks:relation:88')
+        for target in ('coverage', 'footer', 'readout'):
+            def proof(data): return data['legend']['labels'][2]['proof'] if target == 'readout' else data[target]['proof']
+            mutations = [lambda p: p.update(text='简称'), lambda p: p.update(renderedText='简称'),
+                         lambda p: p.update(visible=False), lambda p: p.update(opaque=False), lambda p: p.update(unscaled=False),
+                         lambda p: p.update(fontSize=14), lambda p: p.update(foreground=[]), lambda p: p.update(foreground=[220, 220, 220]),
+                         lambda p: p.update(clipped=True), lambda p: p.update(textRuns=[]), lambda p: p.update(fragments=[]),
+                         lambda p: p['textRuns'][0].update(text='少字'), lambda p: p['textRuns'][0].update(opaque=False),
+                         lambda p: p['textRuns'][0].update(unscaled=False), lambda p: p['textRuns'][0].update(fontSize=14),
+                         lambda p: p['textRuns'][0].update(foreground=[]), lambda p: p['textRuns'][0].update(background=[]),
+                         lambda p: p['textRuns'][0].update(foreground=[200, 200, 200]),
+                         lambda p: p['fragments'][-1].update(visible=False), lambda p: p['fragments'][-1].update(y=901),
+                         lambda p: p['textRuns'][0]['fragments'][-1].update(visible=False),
+                         lambda p: p['textRuns'][0]['fragments'][-1].update(x=-10),
+                         lambda p: p['textRuns'][0].update(clipAreas=[dict(x=0, y=0, width=1440, height=820)])]
+            for i, mutate in enumerate(mutations):
+                bad = copy.deepcopy(good); mutate(proof(bad))
+                with self.subTest(target=target, mutation=i), self.assertRaises(RuntimeError): MODULE.check_s0_footer(bad)
+
+    def test_panel_footer_map_nodes_and_source_identity_are_independently_bounded(self):
+        import copy
+        good = self.fixture(selected='tasks:relation:90')
+        mutations = [lambda d: d['panel'].update(parent='np-reading-landing'), lambda d: d['panel'].update(count=2),
+                     lambda d: d['panel'].update(hidden=True), lambda d: d['panel'].update(articles=['tasks:relation:88']),
+                     lambda d: d['panel'].update(overflowY='hidden'), lambda d: d['panel'].update(overflowY='scroll'),
+                     lambda d: d['panel']['rect'].update(height=d['map']['rect']['height']),
+                     lambda d: d['panel']['rect'].update(x=41), lambda d: d['panel']['rect'].update(y=300),
+                     lambda d: d['panel']['clientRect'].update(width=900), lambda d: d['panel'].update(left=1),
+                     lambda d: d['panel'].update(top=500), lambda d: d['scrollIds'].append('nested-source-scroll'),
+                     lambda d: d['map']['rect'].update(height=d['map']['rect']['height'] + 20),
+                     lambda d: d['footer']['rect'].update(y=d['footer']['rect']['y'] - 12),
+                     lambda d: d['nodes'][-1]['proof']['rect'].update(y=d['footer']['rect']['y']),
+                     lambda d: d['nodes'][4]['proof']['rect'].update(x=d['panel']['rect']['x']),
+                     lambda d: d['nodes'][0].update(id='wrong'), lambda d: d['nodes'][1].update(parent='wrong'),
+                     lambda d: d['nodes'][4].update(scope='wrong'), lambda d: d['nodes'][0].update(entity='wrong'),
+                     lambda d: d['nodes'][0]['proof'].update(unscaled=False), lambda d: d['nodes'].pop(),
+                     lambda d: d['route'].update(version='borrowed-version'), lambda d: d['historyRoute'].update(node='wrong'),
+                     lambda d: d.update(selectedRelation='wrong-source')]
+        for i, mutate in enumerate(mutations):
+            bad = copy.deepcopy(good); mutate(bad)
+            with self.subTest(mutation=i), self.assertRaises(RuntimeError): MODULE.check_s0_footer(bad)
+
+    def test_only_exact_source_challenges_are_temporarily_hidden_and_close_restores_all(self):
+        import copy
+        opened = self.fixture(selected='tasks:relation:90'); closed = self.fixture()
+        MODULE.check_s0_stability(opened, closed)
+        self.assertEqual([r['id'] for r in opened['nodes'] if r['visibility'] == 'hidden'], opened['expected']['challengeIds'])
+        self.assertTrue(all(r['proof']['opaque'] for r in closed['nodes']))
+        for index in (0, 1, 2, 4):
+            bad = copy.deepcopy(opened); bad['nodes'][index].update(visibility='hidden'); bad['nodes'][index]['proof'].update(opaque=False, visible=False)
+            with self.subTest(non_challenge=index), self.assertRaises(RuntimeError): MODULE.check_s0_footer(bad)
+        for initial in (opened, closed):
+            bad = copy.deepcopy(initial); node = next(r for r in bad['nodes'] if r['id'] == bad['expected']['challengeIds'][0])
+            node.update(visibility='visible' if initial is opened else 'hidden'); node['proof'].update(opaque=initial is opened, visible=initial is opened)
+            with self.assertRaises(RuntimeError): MODULE.check_s0_footer(bad)
+        for update in (dict(display='none'), dict(opacity='0')):
+            bad = copy.deepcopy(opened); bad['nodes'][-1].update(update)
+            with self.assertRaises(RuntimeError): MODULE.check_s0_footer(bad)
+
+    def test_native_scroll_stability_requires_positive_actual_movement_and_exact_saved_offsets(self):
+        import copy
+        before = self.fixture(selected='tasks:relation:90'); after = copy.deepcopy(before)
+        after['panel']['top'] = 137
+        for key in ('runtimeOverview', 'historyOverview'): after[key]['relationScrollTop'] = 137
+        MODULE.check_s0_wheel(before, after, 137)
+        MODULE.check_s0_stability(after, copy.deepcopy(after), restore=True)
+        mutations = [lambda d: d['nodes'][4]['proof']['rect'].update(y=d['nodes'][4]['proof']['rect']['y'] + 2),
+                     lambda d: d['footer']['rect'].update(y=d['footer']['rect']['y'] + 2),
+                     lambda d: d['landing'].update(left=1), lambda d: d['window'].update(y=1),
+                     lambda d: d['panel'].update(top=0), lambda d: d['panel'].update(maxTop=0),
+                     lambda d: d['historyOverview'].update(relationScrollTop=136),
+                     lambda d: d['runtimeOverview'].update(relationScrollTop=0),
+                     lambda d: d['historyOverview'].update(selectedRelation='tasks:relation:88'), lambda d: d.update(focus='BODY')]
+        for i, mutate in enumerate(mutations):
+            bad = copy.deepcopy(after); mutate(bad)
+            with self.subTest(mutation=i), self.assertRaises(RuntimeError): MODULE.check_s0_wheel(before, bad, 137)
+        for delta in (0, -137):
+            with self.assertRaises(RuntimeError): MODULE.check_s0_wheel(before, after, delta)
+        zero = copy.deepcopy(before); zero['panel'].update(maxTop=0, scrollHeight=zero['panel']['clientHeight'])
+        with self.assertRaisesRegex(RuntimeError, 'real source overflow'): MODULE.check_s0_wheel(zero, zero, 137)
+        restored = copy.deepcopy(after); restored['panel']['top'] = 138
+        for key in ('runtimeOverview', 'historyOverview'): restored[key]['relationScrollTop'] = 138
+        with self.assertRaisesRegex(RuntimeError, 'exact effective'): MODULE.check_s0_stability(after, restored, restore=True)
+        for key in ('focus', 'selectorOpen', 'relationsVisible'):
+            bad = copy.deepcopy(after); bad[key] = {'focus': 'BODY', 'selectorOpen': True, 'relationsVisible': 'true'}[key]
+            with self.assertRaises(RuntimeError): MODULE.check_s0_stability(after, bad, restore=True)
+
+    def test_relationship_text_must_fit_real_panel_client_region_not_only_viewport(self):
+        import copy
+        area = dict(x=1000, y=280, width=370, height=30)
+        proof = self.proof('Section 3', area)
+        proof.update(panelId='np-overview-relation-panel', panelContains=True, relationId='r',
+                     panelClientRect=dict(x=992, y=258, width=391, height=536), viewport=dict(x=0, y=0, width=1440, height=900))
+        expected = dict(id='r', relationType='composition', **{'from': 'a', 'to': 'b'}, locators=[dict(locator='Section 3')], sourceRefs=[dict(sourceId='s', url='https://example.org/v1', versionId='v1', versionStatus='fixed', descriptor='完整来源版本描述')])
+        data = dict(id='r', type='composition', **{'from': 'a', 'to': 'b'}, open=True, focus='np-map-relation-evidence-r', route={}, beforeRoute={}, text='Section 3',
+                    sources=[dict(id='s', url='https://example.org/v1', version='v1', status='fixed')], visibleProofs=[copy.deepcopy(proof) for _ in range(4)])
+        for kind, proof in zip(('heading', 'locator', 'source', 'status'), data['visibleProofs']):
+            proof.update(self.proof('原文来源 · 完整来源版本描述' if kind == 'source' else ' · fixed' if kind == 'status' else 'Section 3', proof['rect']))
+            proof.update(kind=kind, sourceRecord=data['sources'][0].copy() if kind in ('source', 'status') else None)
+            if kind == 'source':
+                proof.update(elementTag='A', accessibilitySuffix=dict(tag='SPAN', className='np-sr', text='（新标签页）'), accessibleText=proof['text'] + '（新标签页）')
+        MODULE.check_relation_evidence(data, expected)
+        for label in ('原文来源 · 完整来源', '原文来源 · 另一版本描述'):
+            bad = copy.deepcopy(data); proof = bad['visibleProofs'][2]
+            proof.update(self.proof(label, proof['rect']), accessibleText=label + '（新标签页）')
+            proof.pop('expectedText', None)
+            with self.assertRaisesRegex(RuntimeError, 'another source'): MODULE.check_relation_evidence(bad, expected)
+        for mutate in (lambda p: p.pop('accessibilitySuffix'), lambda p: p.update(elementTag='SPAN'), lambda p: p.update(accessibleText=p['text']),
+                       lambda p: p['accessibilitySuffix'].update(text='隐藏科学条件'), lambda p: p['accessibilitySuffix'].update(className='np-hidden')):
+            bad = copy.deepcopy(data); mutate(bad['visibleProofs'][2])
+            with self.assertRaisesRegex(RuntimeError, 'screen-reader suffix'): MODULE.check_relation_evidence(bad, expected)
+        bad = copy.deepcopy(data); bad['visibleProofs'][0]['accessibilitySuffix'] = dict(tag='SPAN', className='np-sr', text='（新标签页）')
+        with self.assertRaisesRegex(RuntimeError, 'Only an exact source anchor'): MODULE.check_relation_evidence(bad, expected)
+        for key, value in (('id', 'wrong-source'), ('version', 'v2'), ('url', 'https://example.org/v2'), ('status', 'snapshot')):
+            bad = copy.deepcopy(data); bad['visibleProofs'][2]['sourceRecord'][key] = value
+            with self.assertRaisesRegex(RuntimeError, 'another source'): MODULE.check_relation_evidence(bad, expected)
+        for mutate in (lambda p: p.update(panelContains=False), lambda p: p.update(panelId='other'), lambda p: p.update(relationId='other'),
+                       lambda p: p['panelClientRect'].update(height=25), lambda p: p['fragments'][-1].update(y=795),
+                       lambda p: p['textRuns'][0]['fragments'][-1].update(y=795), lambda p: p.update(renderedText='hidden'),
+                       lambda p: p['textRuns'][0].update(opaque=False)):
+            bad = copy.deepcopy(data); mutate(bad['visibleProofs'][0])
+            with self.assertRaises(RuntimeError): MODULE.check_relation_evidence(bad, expected)
+
+    def test_source_fragment_snapshot_excludes_only_exact_original_accessibility_suffix(self):
+        science = self.source()
+        body = r"""
+d.elementFromPoint=()=>d.body;w.Range.prototype.getClientRects=function(){return [];};
+d.querySelector('[data-relation-select="tasks:relation:90"]').click();await wait(20);
+const source=d.querySelector('[data-task-relation="tasks:relation:90"] [data-task-relation-source]'),sourceProof=new w.Function(input.sourceProof),actual=sourceProof(source);
+assert.equal(actual.accessibilitySuffix.text,'（新标签页）');assert.equal(actual.accessibleText,actual.renderedText+'（新标签页）');assert.equal(actual.text,actual.renderedText);assert.ok(!actual.textRuns.some(run=>run.text==='（新标签页）'));assert.equal(actual.sourceRecord.id,source.dataset.taskRelationSource);states.push(actual);
+const suffix=source.lastChild;suffix.remove();assert.throws(()=>sourceProof(source),/suffix/);source.appendChild(suffix);suffix.textContent='隐藏科学条件';assert.throws(()=>sourceProof(source),/suffix/);suffix.textContent='（新标签页）';source.appendChild(suffix.cloneNode(true));assert.throws(()=>sourceProof(source),/suffix/);source.lastChild.remove();
+const hidden=d.createElement('span');hidden.style.display='none';hidden.textContent='不得跳过科学限定';source.insertBefore(hidden,suffix);const bad=sourceProof(source);assert.equal(bad.textRuns.at(-1).text,hidden.textContent);assert.equal(bad.textRuns.at(-1).opaque,false);
+"""
+        states = run_product_capture_script(self, body, dict(science=science, expected=MODULE.task_route_expected(science),
+            sourceProof=MODULE.RELATION_EVIDENCE_PROOF_JS, viewport=dict(width=1440, height=900)))
+        self.assertEqual(states[0]['accessibilitySuffix'], dict(tag='SPAN', className='np-sr', text='（新标签页）'))
+        self.assertNotIn('ignoredTextParent', MODULE.S0_FOOTER_SNAPSHOT_JS.split('var a=NavigationProductApp', 1)[-1])
+
+    def test_production_snapshot_has_exact_footer_identity_source_text_and_no_state_mutation(self):
+        science = self.source(); expected = self.expected(science)
+        body = r"""
+// DOM identity only; no synthetic rectangle is claimed as browser evidence.
+d.elementFromPoint=()=>d.body;w.Range.prototype.getClientRects=function(){return [];};
+const footerSnapshot=new w.Function(input.footerSnapshot),state=JSON.stringify(a.getState()),initial=footerSnapshot(input.footerExpected);
+assert.equal(JSON.stringify(a.getState()),state);assert.equal(initial.footerCount,1);assert.equal(initial.footer.id,'np-overview-footer');assert.equal(initial.footer.parent,'np-reading-landing');assert.equal(initial.footer.afterMap,true);assert.equal(initial.footer.insideMap,false);assert.equal(initial.legend.inFooter,true);assert.equal(initial.coverage.inFooter,true);
+assert.equal(initial.coverage.proof.renderedText,input.footerExpected.coverage);assert.equal(initial.legend.labels[2].proof.renderedText,input.footerExpected.defaultReadout);
+assert.deepEqual(JSON.parse(JSON.stringify(initial.nodes.map(({id,parent,entity})=>({id,parent,entity})))),input.footerExpected.nodes);states.push(initial);
+d.querySelector('[data-relation-select="tasks:relation:90"]').click();await wait(35);const selectedState=JSON.stringify(a.getState()),selected=footerSnapshot(input.footerExpected);assert.equal(JSON.stringify(a.getState()),selectedState);assert.equal(selected.legend.labels[2].proof.renderedText,input.footerExpected.readouts['tasks:relation:90']);assert.equal(selected.panel.parent,'np-overview-map');assert.deepEqual(JSON.parse(JSON.stringify(selected.panel.articles)),['tasks:relation:90']);states.push(selected);
+for(const id of Object.keys(input.footerExpected.readouts)){d.querySelector('[data-relation-select="'+id+'"]').click();await wait(10);assert.equal(footerSnapshot(input.footerExpected).legend.labels[2].proof.renderedText,input.footerExpected.readouts[id]);}
+const span=d.createElement('span');span.style.opacity='0';span.textContent='隐藏尾注';d.querySelector('.np-map-coverage').appendChild(span);assert.equal(footerSnapshot(input.footerExpected).coverage.proof.textRuns.at(-1).opaque,false);span.remove();
+"""
+        states = run_product_capture_script(self, body, {'science': science, 'expected': MODULE.task_route_expected(science),
+            'footerSnapshot': MODULE.S0_FOOTER_SNAPSHOT_JS, 'footerExpected': expected, 'viewport': dict(width=1440, height=900)})
+        self.assertEqual(states[0]['footer']['children'], [dict(id='', className='np-map-legend'), dict(id='', className='np-overview-coverage np-map-coverage')])
+        self.assertEqual(states[1]['selectedRelation'], 'tasks:relation:90')
+
+    def test_designated_s0_scenes_cannot_omit_footer_but_glossary_keeps_original_overlay_contract(self):
+        import copy, inspect
+        s0 = self.fixture(); shell = DesktopHierarchyContractChecks.shell()
+        shell.update(home=True, position=None, landing=s0['landing']['rect'], landingOffsets=dict(top=0, left=0), s0Footer=s0)
+        for viewport in MODULE.VIEWPORTS:
+            for suffix in MODULE.S0_FOOTER_SCENES:
+                self.assertTrue(MODULE.s0_footer_required(str(viewport[0]) + 'x' + str(viewport[1]) + suffix))
+                MODULE.check_desktop_shell(shell, require_s0_footer=True)
+                omitted = copy.deepcopy(shell); omitted.pop('s0Footer')
+                with self.assertRaisesRegex(RuntimeError, 'omitted'): MODULE.check_desktop_shell(omitted, require_s0_footer=True)
+                bad = copy.deepcopy(shell); bad['s0Footer']['coverage']['proof']['visible'] = False
+                with self.assertRaises(RuntimeError): MODULE.check_desktop_shell(bad, require_s0_footer=True)
+        self.assertFalse(MODULE.s0_footer_required('1440x900-12-directory-return'))
+        glossary = copy.deepcopy(shell); glossary.pop('s0Footer')
+        MODULE.check_desktop_shell(glossary)
+        for mutate in (lambda d: d['window'].update(y=1), lambda d: d['landing'].update(height=500), lambda d: d['landingOffsets'].update(top=1)):
+            bad = copy.deepcopy(glossary); mutate(bad)
+            with self.assertRaises(RuntimeError): MODULE.check_desktop_shell(bad)
+        code = inspect.getsource(MODULE.main)
+        self.assertIn("capture(prefix + '-12-directory-return', require_home=True)", code)
+        self.assertIn('require_s0_footer=requires_s0_footer', code)
+        self.assertEqual(sum(MODULE.s0_footer_required('1440x900' + name) for name in MODULE.SCENE_NAMES), 5)
+
+    def test_snapshot_javascript_syntax_and_existing_scene_wiring_remain_strict(self):
+        import inspect
+        syntax = subprocess.run(['node', '-e', "new Function(JSON.parse(require('fs').readFileSync(0,'utf8')));"],
+                                input=json.dumps(MODULE.S0_FOOTER_SNAPSHOT_JS), text=True, capture_output=True)
+        self.assertEqual(syntax.returncode, 0, syntax.stdout + syntax.stderr)
+        source = inspect.getsource(MODULE.main)
+        self.assertIn("report.setdefault('s0FooterChecks', [])", source)
+        self.assertIn("data['desktopShell']['s0Footer'] = s0_footer_check(name)", source)
+        self.assertIn("check_s0_stability(footer_before_reload, footer_after_reload, restore=True)", source)
+        self.assertIn("check_s0_stability(footer_before_endpoint, footer_after_back, restore=True)", source)
+        self.assertIn("check_s0_wheel(wheel_before, wheel_record['after'], delta)", source)
+        self.assertIn("closed['focus'] != 'np-relation-select-' + expected['id']", source)
+        self.assertIn("'type': 'wheel', 'id': 's0-source-scroll'", source)
+        self.assertIn("check_s0_footer(data['s0Footer'])", inspect.getsource(MODULE.check_desktop_shell))
+        self.assertIn('RELATION_EVIDENCE_PROOF_JS', source)
+        self.assertEqual(len(MODULE.SCENE_NAMES) * len(MODULE.VIEWPORTS), 98)
+        for required in ('-00-default-reading-overview', '-31-s0-reading-hierarchy', '-13-relation-88', '-13-relation-90', '-13-relation-94'):
+            self.assertIn(required, MODULE.SCENE_NAMES)
+        snapshot = MODULE.S0_FOOTER_SNAPSHOT_JS
+        for forbidden in ('scrollTop=', 'scrollTop =', 'replaceState(', 'pushState(', '.navigate(', 'dispatchEvent('):
+            self.assertNotIn(forbidden, snapshot)
+        self.assertNotRegex(snapshot, r'\.style\.[A-Za-z]+\s*=')
+
+
+class AnalysisAnswerRowsCaptureChecks(unittest.TestCase):
+    @classmethod
+    def source_expected(cls):
+        science = S0FooterCaptureChecks.source()
+        entry = next(iter(science['analyses']['poni'].values()))
+        return science, entry, MODULE.analysis_answer_rows_expected(science, entry['roots'][0])
+
+    @classmethod
+    def frame(cls, top=0):
+        import copy
+        _, _, expected = cls.source_expected()
+        client = dict(x=450, y=270, width=950, height=500)
+        route = dict(nav='1', scope='task:category-objectnav', tree='a', node=expected['root'], paper=expected['paper'],
+                     version=expected['version'], bench=None, protocol=None, template=None, claim=None, mode='tree')
+        data = dict(ready='ready', route=route, historyRoute=copy.deepcopy(route), window=dict(x=0, y=0),
+                    viewport=dict(x=0, y=0, width=1440, height=900),
+                    stationaryAncestors=[dict(selector=selector, top=0, left=0) for selector in MODULE.STATIONARY_SHELL_SELECTORS],
+                    reader=dict(top=top, left=0, scrollHeight=1260, clientHeight=500, maxTop=760), readerClient=client, readerRect=client.copy(),
+                    tree=dict(top=0, left=0, scrollHeight=600, clientHeight=500, maxTop=100), expanded=dict(a=[expected['root']]),
+                    runtimeReader=top, historyReader=top, focus=dict(id='np-node-' + expected['root'], answer=None),
+                    fixedIdentity=dict(position=expected['root'], paper=expected['paper'], version=expected['version']),
+                    answerBodyCount=0, coverageCount=1, root=expected['root'], chapters=expected['chapters'].copy(), rows=[])
+        for i, source in enumerate(expected['rows']):
+            area = dict(x=460, y=client['y'] + 100 + i * 50 - top, width=920, height=44)
+            proof = S0FooterCaptureChecks.proof(source['label'], area)
+            visible = MODULE.rect_inside(area, client)
+            proof['visible'] = visible
+            proof['fragments'][0]['visible'] = visible
+            proof['textRuns'][0]['fragments'][0]['visible'] = visible
+            data['rows'].append({key: source[key] for key in ('id', 'parent', 'entity', 'chapter', 'paper', 'version', 'scope')} |
+                dict(tag='BUTTON', type='button', disabled=False, hidden=False, role=None, tabIndex=0,
+                     itemTag='LI', itemChildren=1, listTag='UL', listClass='np-analysis-answer-index', listRole=None,
+                     itemRect=area.copy(), contentRect=dict(x=10, y=100 + i * 50, width=920, height=44), proof=proof))
+        return data, expected
+
+    @classmethod
+    def scan(cls):
+        frames = [cls.frame(top)[0] for top in (0, 250, 500, 750, 760)]
+        expected = cls.frame()[1]
+        visible = []
+        for source in expected['rows']:
+            index = next(i for i, frame in enumerate(frames) if MODULE.analysis_answer_visible(
+                next(row for row in frame['rows'] if row['id'] == source['id']), frame, source['label']))
+            visible.append(dict(id=source['id'], frame=index, label=source['label']))
+        return dict(frames=frames, visibleRows=visible, bottom=frames[-1], positiveWheelCount=len(frames) - 1), expected
+
+    @classmethod
+    def keyboard(cls, index=0):
+        import copy
+        before, expected = cls.frame(500)
+        target = expected['keyboardTargets'][index]
+        source = next(row for row in expected['rows'] if row['id'] == target)
+        before['focus'] = dict(id='', answer=target)
+        route = MODULE.analysis_answer_route(before['route'], source)
+        selected = copy.deepcopy(before)
+        selected.update(route=copy.deepcopy(route), historyRoute=copy.deepcopy(route), answerBodyCount=1, coverageCount=0,
+                        fixedIdentity=dict(position=target, paper=source['paper'], version=source['version']))
+        after = copy.deepcopy(before); after['focus'] = dict(id='np-node-' + expected['root'], answer=None)
+        key = 'Enter' if index == 0 else ' '
+        return dict(target=target, key=key, before=before, selected=selected, after=after, expectedRoute=route,
+                    events=[dict(type=kind, key=key, trusted=True, target=target) for kind in ('keydown', 'keyup')]), expected
+
+    def test_source_preorder_keeps_all_answers_full_labels_and_same_named_distinct_destinations(self):
+        science, entry, expected = self.source_expected()
+        self.assertEqual(len(expected['rows']), entry['answeredOriginalCount'])
+        self.assertEqual(len({row['id'] for row in expected['rows']}), entry['answeredOriginalCount'])
+        self.assertEqual(expected['keyboardSelection'], 'same-label-distinct-original-IDs')
+        left, right = [next(row for row in expected['rows'] if row['id'] == target) for target in expected['keyboardTargets']]
+        self.assertNotEqual(left['id'], right['id']); self.assertEqual(left['label'], right['label'])
+        self.assertEqual(left['label'], '具体怎么做的')
+        self.assertTrue(all(not science['positions'][row['id']]['isPaperSpecificInstantiation'] for row in expected['rows']))
+        for source in expected['rows']:
+            science['entities'][source['entity']]['label'] = source['id']
+        distinct = MODULE.analysis_answer_rows_expected(science, expected['root'])
+        self.assertEqual(distinct['keyboardSelection'], 'two-distinct-original-IDs-no-repeated-source-label')
+        self.assertEqual(distinct['keyboardTargets'], [distinct['rows'][0]['id'], distinct['rows'][-1]['id']])
+
+    def test_actual_positive_scan_proves_every_complete_original_row_through_content_bottom(self):
+        record, expected = self.scan()
+        MODULE.check_analysis_answer_scan(record, expected)
+        self.assertEqual(record['bottom']['reader']['top'], record['bottom']['reader']['maxTop'])
+        self.assertEqual([row['id'] for row in record['visibleRows']], [row['id'] for row in expected['rows']])
+        self.assertGreater(record['visibleRows'][-1]['frame'], 0)
+        self.assertFalse(MODULE.analysis_answer_visible(record['frames'][0]['rows'][-1], record['frames'][0], expected['rows'][-1]['label']))
+
+    def test_answer_rows_reject_missing_reordered_merged_inline_clipped_and_wrong_version(self):
+        import copy
+        good, expected = self.frame()
+        mutations = [lambda d: d['rows'].pop(), lambda d: d['rows'].reverse(),
+                     lambda d: d['rows'][1].update(id=d['rows'][0]['id']),
+                     lambda d: d['rows'][1]['proof'].update(text=d['rows'][0]['proof']['text'] + d['rows'][1]['proof']['text']),
+                     lambda d: d['rows'][1]['contentRect'].update(y=d['rows'][0]['contentRect']['y']),
+                     lambda d: d['rows'][1]['contentRect'].update(y=d['rows'][0]['contentRect']['y'] + 43),
+                     lambda d: d['rows'][0]['proof'].update(clipped=True), lambda d: d['rows'][0]['proof'].update(renderedText='简称'),
+                     lambda d: d['rows'][0].update(itemTag='SPAN'), lambda d: d['rows'][0].update(itemChildren=2),
+                     lambda d: d['rows'][0].update(tag='A'), lambda d: d['rows'][0].update(role='treeitem'),
+                     lambda d: d['rows'][0].update(disabled=True), lambda d: d['rows'][0].update(tabIndex=-1),
+                     lambda d: d['rows'][0].update(version='other-version'), lambda d: d['rows'][0].update(paper='other-paper'),
+                     lambda d: d['rows'][0].update(parent='wrong-parent'), lambda d: d['rows'][0].update(chapter='wrong-chapter'),
+                     lambda d: d['chapters'].reverse(), lambda d: d['route'].update(version='wrong'),
+                     lambda d: d['historyRoute'].pop('claim'), lambda d: d.update(coverageCount=2),
+                     lambda d: d['rows'][0]['itemRect'].update(width=100), lambda d: d['readerClient'].update(x=1440)]
+        for i, mutate in enumerate(mutations):
+            bad = copy.deepcopy(good); mutate(bad)
+            with self.subTest(mutation=i), self.assertRaises(RuntimeError): MODULE.check_analysis_answer_rows(bad, expected)
+
+    def test_scan_rejects_zero_actual_scroll_missing_bottom_covered_clipped_and_offreader_fragments(self):
+        import copy
+        good, expected = self.scan()
+        mutations = [lambda d: d.update(positiveWheelCount=0), lambda d: d['frames'].__setitem__(1, copy.deepcopy(d['frames'][0])),
+                     lambda d: d.update(bottom=d['frames'][0]), lambda d: d['visibleRows'].pop(),
+                     lambda d: d['visibleRows'].reverse(), lambda d: d['frames'][-1]['reader'].update(top=759),
+                     lambda d: d['frames'][1]['tree'].update(top=5), lambda d: d['frames'][1]['rows'][4]['contentRect'].update(x=15)]
+        for i, mutate in enumerate(mutations):
+            bad = copy.deepcopy(good); mutate(bad)
+            with self.subTest(mutation=i), self.assertRaises(RuntimeError): MODULE.check_analysis_answer_scan(bad, expected)
+        for property, value in (('visible', False), ('fontSize', 14), ('foreground', []), ('background', []), ('unscaled', False)):
+            bad = copy.deepcopy(good)
+            for frame in bad['frames']: frame['rows'][-1]['proof'][property] = value
+            with self.subTest(property=property), self.assertRaises(RuntimeError): MODULE.check_analysis_answer_scan(bad, expected)
+        for target in ('fragment', 'run-fragment', 'reader'):
+            bad = copy.deepcopy(good)
+            for frame in bad['frames']:
+                proof = frame['rows'][-1]['proof']
+                if target == 'fragment': proof['fragments'][-1]['y'] = 880
+                elif target == 'run-fragment': proof['textRuns'][0]['fragments'][-1]['y'] = 880
+                else: frame['readerClient']['height'] = 100
+            with self.subTest(target=target), self.assertRaises(RuntimeError): MODULE.check_analysis_answer_scan(bad, expected)
+
+    def test_two_native_keys_require_exact_full_route_version_and_back_effective_offset(self):
+        import copy
+        for index in (0, 1):
+            good, expected = self.keyboard(index)
+            MODULE.check_analysis_answer_keyboard(good, expected, index)
+            mutations = [lambda d: d.update(key='Escape'), lambda d: d.update(target=expected['keyboardTargets'][1 - index]),
+                         lambda d: d['events'][0].update(trusted=False), lambda d: d['events'][0].update(target='wrong'),
+                         lambda d: d['events'][0].update(key='Escape'), lambda d: d['events'].pop(),
+                         lambda d: d['before']['reader'].update(top=0),
+                         lambda d: d['selected']['route'].pop('protocol'), lambda d: d['selected']['route'].update(nav=True),
+                         lambda d: d['selected']['route'].update(version='other-version'), lambda d: d['selected']['route'].update(claim='borrowed-claim'),
+                         lambda d: d['selected']['historyRoute'].update(node='other'), lambda d: d['selected']['fixedIdentity'].update(position='other'),
+                         lambda d: d['selected'].update(answerBodyCount=0), lambda d: d['after']['reader'].update(top=499),
+                         lambda d: d['after'].update(runtimeReader=0), lambda d: d['after'].update(historyReader=0),
+                         lambda d: d['after']['route'].update(node='other'), lambda d: d['before']['focus'].update(answer=None)]
+            for i, mutate in enumerate(mutations):
+                bad = copy.deepcopy(good); mutate(bad)
+                with self.subTest(key=index, mutation=i), self.assertRaises(RuntimeError): MODULE.check_analysis_answer_keyboard(bad, expected, index)
+
+    def test_production_answer_snapshot_records_order_and_complete_multiline_source_labels(self):
+        science, entry, expected = self.source_expected()
+        body = r"""
+d.elementFromPoint=()=>d.body;w.Range.prototype.getClientRects=function(){return [];};
+await scope('task:category-objectnav');await select(e.poni.id);d.getElementById('np-open-analysis-structure').click();await ready(()=>a.getState().route.node===input.answers.root&&a.getContent().ready(a.getBundle().positions[input.answers.root].entityId));
+const snap=new w.Function(input.answerSnapshot),before=JSON.stringify(a.getState()),actual=snap();assert.equal(JSON.stringify(a.getState()),before);assert.equal(actual.root,input.answers.root);assert.equal(actual.coverageCount,1);assert.equal(actual.answerBodyCount,0);
+assert.deepEqual(JSON.parse(JSON.stringify(actual.chapters)),input.answers.chapters);
+assert.deepEqual(JSON.parse(JSON.stringify(actual.rows.map(row=>row.id))),input.answers.rows.map(row=>row.id));
+for(let i=0;i<actual.rows.length;i++){assert.equal(actual.rows[i].proof.text,input.answers.rows[i].label);assert.equal(actual.rows[i].proof.renderedText,input.answers.rows[i].label);assert.equal(actual.rows[i].itemTag,'LI');assert.equal(actual.rows[i].tag,'BUTTON');assert.equal(actual.rows[i].itemChildren,1);assert.equal(actual.rows[i].version,input.answers.version);}
+states.push(actual);
+"""
+        states = run_product_capture_script(self, body, dict(science=science, expected=MODULE.task_route_expected(science),
+            answers=expected, answerSnapshot=MODULE.ANALYSIS_ANSWER_ROWS_SNAPSHOT_JS, viewport=dict(width=1440, height=900)))
+        self.assertEqual(len(states[0]['rows']), entry['answeredOriginalCount'])
+        self.assertTrue(any('\n' in row['proof']['text'] for row in states[0]['rows']))
+
+    def test_answer_scripts_compile_and_existing_root_scene_uses_native_scan_keys_back_without_injection(self):
+        import inspect
+        for script in (MODULE.ANALYSIS_ANSWER_ROWS_SNAPSHOT_JS, MODULE.ANALYSIS_EXACT_ROUTE_READY_JS):
+            result = subprocess.run(['node', '-e', "new Function(JSON.parse(require('fs').readFileSync(0,'utf8')));"], input=json.dumps(script), text=True, capture_output=True)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        code = inspect.getsource(MODULE.analysis_answer_rows_checks)
+        for required in ('native_scroll(', "'type': 'keyDown'", "'type': 'keyUp'", "'/back'", "'keydown'", "'keyup'", 'e.isTrusted',
+                         'check_native_wheel_progress(', "audit['bottom'] = current", 'check_analysis_answer_keyboard(', "scroll_to(initial['reader']['top'])"):
+            self.assertIn(required, code)
+        for forbidden in ('scrollTop=', 'scrollTop =', '.style.', '.navigate(', 'dispatchEvent(', 'replaceState(', 'pushState(', 'scrollIntoView('):
+            self.assertNotIn(forbidden, code)
+        flow = inspect.getsource(MODULE.exploration_state_checks)
+        self.assertLess(flow.index('analysis_answer_rows_checks('), flow.index("capture(prefix + '-30-analysis-root-coverage')"))
+        self.assertEqual(len(MODULE.SCENE_NAMES) * len(MODULE.VIEWPORTS), 98)
 
 
 if __name__ == '__main__':
