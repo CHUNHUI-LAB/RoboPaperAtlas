@@ -908,6 +908,140 @@ def transition_record(driver, record, save, kind, action, ready=None):
     return phase
 
 
+# Diagnostic instrumentation only. Geometry reads can force layout and therefore
+# perturb browser scroll anchoring; they are not evidence of an unobserved run.
+COLD_GEOMETRY_PROBE_JS = r"""
+(function(){
+'use strict';
+var name='__captureColdGeometryProbe',events=[],bytes=0,seq=0,frames=0,raf=null,observer=null,stopped=false,truncated=false,
+    limits={events:128,bytes:65536,frames:8},restorers=[],capabilities={},errors=[],last=null;
+function err(stage,error){if(errors.length<8)errors.push({stage:stage,name:error&&error.name||'Error'});}
+function safely(fn){try{fn();}catch(e){err('observation',e);}}
+function element(id){return document.getElementById(id);}
+function inside(node){try{return !!(node&&node.nodeType===1&&node.closest('#navigation-product'));}catch(_){return false;}}
+function identity(node){return node&&node.nodeType===1?{id:(node.id||'').slice(0,180),tag:node.tagName}:null;}
+function box(node){if(!node)return null;var r=node.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};}
+function scroll(node){return node?{top:node.scrollTop,left:node.scrollLeft,height:node.scrollHeight,client:node.clientHeight,rect:box(node)}:null;}
+function geometry(){var tree=element('np-tree-scroll'),reader=element('np-detail-scroll'),canvas=element('np-task-route-canvas'),
+    relation=document.querySelector('#np-reader-summary [data-selected-task-relation]'),selected=document.querySelector('#np-tree [aria-selected="true"]');
+  return {tree:scroll(tree),reader:scroll(reader),canvas:box(canvas),relation:relation?{id:relation.dataset.selectedTaskRelation,rect:box(relation)}:null,
+    selected:selected?{id:selected.dataset.position,rect:box(selected)}:null,active:inside(document.activeElement)?identity(document.activeElement):null};}
+function stack(){var page=location.pathname,allowPage=/^\/research\/navigation\/(?:index\.html)?$/.test(page);
+  return (new Error().stack||'').split('\n').map(function(line){var m=line.match(/^\s*at (?:(.*?) \()?((?:https?):\/\/[^\s)]+):(\d+):(\d+)\)?$/);if(!m)return null;
+    try{var url=new URL(m[2]);if(url.origin!==location.origin||!((allowPage&&url.pathname===page)||url.pathname==='/assets/navigation-product.js'))return null;
+      return 'at '+(m[1]?m[1].replace(/[^\w.$ <>\[\]-]/g,'?').slice(0,80)+' ':'')+url.pathname+':'+m[3]+':'+m[4];
+    }catch(_){return null;}}).filter(Boolean).slice(0,6);}
+function record(kind,extra){if(stopped||truncated)return;try{var row={seq:++seq,time:performance.now(),kind:kind,geometry:geometry()};
+  if(extra)Object.assign(row,extra);var size=new TextEncoder().encode(JSON.stringify(row)).byteLength;
+  if(events.length>=limits.events||bytes+size>limits.bytes){truncated=true;return;}
+  events.push(row);bytes+=size;last={seq:row.seq,time:row.time,geometry:row.geometry};
+}catch(e){err('record',e);}}
+function frame(){if(stopped||truncated||raf!==null||frames>=limits.frames)return;raf=requestAnimationFrame(function(time){raf=null;frames++;record('animation-frame',{frameTime:time,frame:frames});});}
+function observeCall(kind,target,args,call){var watch=!stopped&&!truncated&&inside(target);
+  if(watch)safely(function(){record(kind+'-before',{target:identity(target),argumentCount:args.length,stack:stack()});});
+  try{return call();}finally{if(watch)safely(function(){record(kind+'-after',{target:identity(target)});frame();});}}
+function wrapMethod(proto,key){var descriptor=Object.getOwnPropertyDescriptor(proto,key);if(!descriptor||typeof descriptor.value!=='function'){capabilities[key]=false;return;}
+  var original=descriptor.value,wrapper=function(){var target=this,args=arguments;return observeCall(key,target,args,function(){return Reflect.apply(original,target,args);});};
+  Object.defineProperty(proto,key,Object.assign({},descriptor,{value:wrapper}));capabilities[key]=true;
+  restorers.push(function(){if(Object.getOwnPropertyDescriptor(proto,key)?.value!==wrapper)throw Error('Changed method descriptor');Object.defineProperty(proto,key,descriptor);});}
+function install(){
+  var proto=Element.prototype,descriptor;while(proto&&!(descriptor=Object.getOwnPropertyDescriptor(proto,'scrollTop')))proto=Object.getPrototypeOf(proto);
+  if(proto&&descriptor&&descriptor.set){var original=descriptor.set,wrapper=function(value){var target=this,args=arguments,watch=!stopped&&!truncated&&target===element('np-tree-scroll');
+      if(watch)safely(function(){record('tree-scrollTop-before',{value:typeof value==='number'&&Number.isFinite(value)?value:null,valueType:typeof value,stack:stack()});});
+      try{return Reflect.apply(original,target,args);}finally{if(watch)safely(function(){record('tree-scrollTop-after');frame();});}};
+    Object.defineProperty(proto,'scrollTop',Object.assign({},descriptor,{set:wrapper}));capabilities.scrollTop=true;
+    restorers.push(function(){if(Object.getOwnPropertyDescriptor(proto,'scrollTop')?.set!==wrapper)throw Error('Changed scroll descriptor');Object.defineProperty(proto,'scrollTop',descriptor);});
+  }else capabilities.scrollTop=false;
+  wrapMethod(HTMLElement.prototype,'focus');wrapMethod(Element.prototype,'scrollIntoView');
+  observer=new MutationObserver(function(records){safely(function(){if(stopped||truncated)return;var relevant=records.some(function(m){return inside(m.target)||[...m.addedNodes,...m.removedNodes].some(function(n){return n.nodeType===1&&(n.id==='navigation-product'||inside(n));});});
+    if(relevant){var previous=last;record('ui-dom-observed',{mutationCount:records.length,lastObserved:previous,preMeaning:'previous observation, not synchronous install-before'});frame();}});});
+  observer.observe(document,{childList:true,subtree:true,attributes:true,attributeFilter:['open','hidden','aria-selected','data-selected-task-relation','data-relation-state']});
+  document.addEventListener('scroll',onScroll,true);
+}
+function onScroll(event){safely(function(){if(event.target===element('np-tree-scroll')||event.target===element('np-detail-scroll')){record('scroll-event',{target:identity(event.target),trusted:event.isTrusted});frame();}});}
+function offsets(){return {window:[window.scrollX,window.scrollY],panes:['np-tree-scroll','np-detail-scroll'].map(function(id){var e=element(id);return e?[e.scrollTop,e.scrollLeft]:null;})};}
+function liveState(){return JSON.stringify({history:history.state,url:location.href,length:history.length,entry:window.navigation?.currentEntry?.key||null,
+  model:window.NavigationProductApp?NavigationProductApp.getState():null});}
+function stop(){if(stopped)return null;stopped=true;var cleanup={descriptors:true,observer:true,listener:true,raf:true,container:true,integrityObserver:true,
+    liveStateUnchanged:false,domUnchanged:false,focusUnchanged:false,scrollUnchanged:false},guard=null,guardStarted=false,baseline=null,active=null,scrollBefore=null;
+  try{active=document.activeElement;scrollBefore=JSON.stringify(offsets());baseline=liveState();guard=new MutationObserver(function(){});var root=element('navigation-product');if(root){guard.observe(root,{subtree:true,childList:true,attributes:true,characterData:true});guardStarted=true;}}catch(e){err('cleanup-baseline',e);} 
+  try{if(observer)observer.disconnect();}catch(e){cleanup.observer=false;err('disconnect',e);}
+  try{document.removeEventListener('scroll',onScroll,true);}catch(e){cleanup.listener=false;err('remove-listener',e);}
+  try{if(raf!==null)cancelAnimationFrame(raf);raf=null;}catch(e){cleanup.raf=false;err('cancel-frame',e);}
+  restorers.reverse().forEach(function(restore){try{restore();}catch(e){cleanup.descriptors=false;err('restore-descriptor',e);}});
+  try{delete window[name];}catch(e){cleanup.container=false;err('remove-container',e);}
+  try{cleanup.liveStateUnchanged=baseline!==null&&baseline===liveState();cleanup.domUnchanged=guardStarted&&guard.takeRecords().length===0;
+    cleanup.focusUnchanged=active!==null&&document.activeElement===active;cleanup.scrollUnchanged=scrollBefore!==null&&JSON.stringify(offsets())===scrollBefore;
+  }catch(e){err('cleanup-integrity',e);}finally{try{if(guard)guard.disconnect();}catch(e){cleanup.integrityObserver=false;err('cleanup-integrity-observer',e);}}
+  return {schema:1,limits:limits,eventBytes:bytes,truncated:truncated,events:events,capabilities:capabilities,errors:errors,cleanup:cleanup,
+    privateEpoch:{available:false,reason:'Controller epochs are private closures; no product debug API is added.'},
+    limitations:['Geometry reads may force layout and affect browser scroll anchoring or timing.','Mutation observations occur after DOM work; lastObserved is not a synchronous install-before sample.','No causal attribution to browser anchoring follows from an unpaired scroll event.']};
+}
+Object.defineProperty(window,name,{value:{stop:stop},configurable:true});
+try{install();record('probe-installed');}catch(e){err('install',e);}
+})();
+"""
+
+COLD_GEOMETRY_STOP_JS = "return window.__captureColdGeometryProbe ? window.__captureColdGeometryProbe.stop() : null;"
+COLD_GEOMETRY_ABSENT_JS = "return !('__captureColdGeometryProbe' in window);"
+
+
+def cold_relation_refresh(driver, record, save, ready):
+    """Observe only this cold refresh; preserve native calls and original errors."""
+    diagnostic = {'scope': 'cold-selected-relation', 'instrumented': True,
+                  'limitation': 'Synchronous geometry reads can affect layout, anchoring and timing.'}
+    record['coldGeometryDiagnostic'] = diagnostic
+    save()
+    identifier, completed, diagnostic_error = None, False, None
+    try:
+        result = driver.cdp('Page.addScriptToEvaluateOnNewDocument', {'source': COLD_GEOMETRY_PROBE_JS})
+        identifier = result['identifier']
+        phase = transition_record(driver, record, save, 'cold-selected-relation',
+                                  lambda: driver.call('POST', '/refresh', {}), ready)
+        completed = True
+        return phase
+    finally:
+        # Remove current-document hooks as well as the script for future documents.
+        for name, action in (('observation', lambda: driver.js(COLD_GEOMETRY_STOP_JS)),
+                             ('removeScript', lambda: driver.cdp('Page.removeScriptToEvaluateOnNewDocument', {'identifier': identifier}) if identifier else None)):
+            try:
+                diagnostic[name] = action()
+                if name == 'removeScript' and identifier:
+                    diagnostic['futureScriptRemoved'] = True
+            except Exception as exc:
+                diagnostic[name + 'Error'] = str(exc)[:2000]
+                diagnostic_error = diagnostic_error or exc
+        observation = diagnostic.get('observation')
+        if completed and (not observation or not all(observation.get('cleanup', {}).get(k) is True for k in ('descriptors', 'observer', 'listener', 'raf', 'container', 'integrityObserver', 'liveStateUnchanged', 'domUnchanged', 'focusUnchanged', 'scrollUnchanged'))):
+            diagnostic['cleanupIncomplete'] = True
+            diagnostic_error = diagnostic_error or RuntimeError('Cold geometry diagnostic did not fully clean up the current document')
+        try:
+            save()
+        except Exception as exc:
+            diagnostic['saveError'] = str(exc)[:2000]
+            diagnostic_error = diagnostic_error or exc
+        if completed and diagnostic_error:
+            raise diagnostic_error
+
+
+def cold_relation_refresh_comparison(driver, record, save, expected, ready):
+    """Retain the same strict gate on instrumented and then uninstrumented refresh."""
+    observed = cold_relation_refresh(driver, record, save, ready)
+    check_exploration_restore(expected, observed['after'])
+    clearance = {'currentProbeAbsent': driver.js(COLD_GEOMETRY_ABSENT_JS),
+                 'futureScriptRemoved': record['coldGeometryDiagnostic'].get('futureScriptRemoved') is True}
+    record['coldGeometryDiagnostic']['nativeComparisonClearance'] = clearance
+    save()
+    if not all(value is True for value in clearance.values()):
+        raise RuntimeError('Cold refresh comparison still has diagnostic hooks registered')
+    # cold_relation_refresh asserts current-page cleanup and removes the early
+    # script before this original refresh path. No probe is registered again.
+    native = transition_record(driver, record, save, 'cold-selected-relation-uninstrumented',
+                               lambda: driver.call('POST', '/refresh', {}), ready)
+    check_exploration_restore(expected, native['after'])
+    return native
+
+
 def tree_label_selector(position):
     return '[id="np-node-' + position + '"] > .np-node-row > .np-node-label'
 
@@ -1166,9 +1300,8 @@ def task_route_checks(driver, report, save, capture, prefix, base, science, serv
     transition_record(driver, record, save, 'browser-forward-to-relation', lambda: driver.call('POST', '/forward', {}),
         lambda: driver.js(TASK_ROUTE_RETURN_WAIT_JS, before['route'], before['activatedControl']))
     check_exploration_restore(restored_relation, snapshot())
-    phase = transition_record(driver, record, save, 'cold-selected-relation', lambda: driver.call('POST', '/refresh', {}),
+    cold_relation_refresh_comparison(driver, record, save, restored_relation,
         lambda: driver.js("return !!window.NavigationProductApp&&document.querySelector('[data-selected-task-relation=\"methods:relation:90\"]')&&document.querySelector('[data-relation-state]')?.dataset.relationState==='ready'"))
-    check_exploration_restore(restored_relation, phase['after'])
     transition_record(driver, record, save, 'relation-to-task', lambda: driver.click(driver.selector('#np-task-route-return')),
         lambda: driver.js("return !document.querySelector('[data-selected-task-relation]')&&document.activeElement.id===arguments[0]", 'np-task-change-task:category-objectnav-methods:relation:90'))
     scene('-26-return-objectnav-task', [{'selector': selector, 'region': 'canvas'}], scroll=False)

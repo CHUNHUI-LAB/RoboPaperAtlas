@@ -1416,7 +1416,7 @@ class ExplorationCaptureChecks(unittest.TestCase):
         import ast
         import inspect
         scripts = []
-        for function in (MODULE.exploration_state_checks, MODULE.expose_source_position, MODULE.reveal_control, MODULE.task_route_checks):
+        for function in (MODULE.exploration_state_checks, MODULE.expose_source_position, MODULE.reveal_control, MODULE.task_route_checks, MODULE.cold_relation_refresh, MODULE.cold_relation_refresh_comparison):
             source = inspect.getsource(function)
             for forbidden in ('.navigate(', 'history.replaceState(', 'history.pushState(', '.dispatchEvent(', '.style.'):
                 self.assertNotIn(forbidden, source)
@@ -1427,8 +1427,10 @@ class ExplorationCaptureChecks(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         source = inspect.getsource(MODULE.task_route_checks)
         self.assertLess(source.index('open-method-relationship-disclosure'), source.index('select-methods-relation-90'))
+        self.assertIn('cold_relation_refresh_comparison(driver, record, save,', source)
+        self.assertIn('cold_relation_refresh(driver, record, save,', inspect.getsource(MODULE.cold_relation_refresh_comparison))
         for event in ('pin-exact-method-claim', 'browser-back-to-claim', 'browser-forward-to-relation', 'cold-selected-relation', 'relation-to-task', 'task-to-global'):
-            self.assertIn(event, source)
+            self.assertIn(event, inspect.getsource(MODULE.cold_relation_refresh) if event == 'cold-selected-relation' else source)
 
     def test_packet_hold_accepts_only_existing_pinned_loopback_content(self):
         import hashlib
@@ -1645,6 +1647,199 @@ assert.deepEqual(await traverse('forward'),selected);
 """
         result = subprocess.run(['node', '-e', script], cwd=Path(__file__).parents[1], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+
+class ColdGeometryDiagnosticChecks(unittest.TestCase):
+    def test_probe_captures_real_generated_inline_controller_frames_without_source_url(self):
+        import gzip
+        science = json.loads(gzip.decompress((Path(__file__).parents[1] / 'data/navigation-product/model.json.gz').read_bytes()))
+        body = r"""
+assert.ok([...d.scripts].some(s=>s.textContent.includes('function selectTaskRelation(')), 'the actual generator embeds the controller inline');
+assert.ok(![...d.scripts].some(s=>/sourceURL=.*navigation-product/.test(s.textContent)), 'do not add a fake sourceURL to production');
+w.eval(input.probe);await scope('task:category-objectnav');await select(e.poni.id);
+const report=new w.Function(input.stop)(),frames=report.events.filter(e=>e.kind==='tree-scrollTop-before').flatMap(e=>e.stack);
+assert.ok(frames.some(s=>s.includes('/research/navigation/:')),JSON.stringify(frames));
+assert.ok(frames.every(s=>!s.includes('https:')&&!s.includes('example.org')&&!s.includes('?')&&!s.includes('#')));
+assert.equal(Object.values(report.cleanup).every(Boolean),true);states.push(report);
+"""
+        reports = run_product_capture_script(self, body, {'science': science, 'expected': MODULE.task_route_expected(science),
+                                                          'probe': MODULE.COLD_GEOMETRY_PROBE_JS, 'stop': MODULE.COLD_GEOMETRY_STOP_JS})
+        self.assertTrue(reports[0]['capabilities']['scrollTop'])
+
+    def test_cleanup_integrity_detects_dom_history_changes_without_exporting_live_state(self):
+        script = r"""
+const {JSDOM}=require('jsdom'),assert=require('node:assert/strict'),input=JSON.parse(require('fs').readFileSync(0,'utf8'));
+for(const mode of ['dom-history','window-only']){const dom=new JSDOM('<main id="navigation-product"><div id="np-tree-scroll"></div><div id="np-detail-scroll"></div></main>',{url:'https://example.org/research/navigation/',runScripts:'outside-only'});
+try{const w=dom.window,d=w.document;w.TextEncoder=TextEncoder;w.requestAnimationFrame=()=>1;w.cancelAnimationFrame=()=>{};
+w.Element.prototype.scrollIntoView=function(){};w.history.replaceState({testOnlyPrivateMarker:'DO_NOT_EXPORT_LIVE_STATE'},'');
+const originalDefine=w.Object.defineProperty,originalFocus=w.HTMLElement.prototype.focus;w.eval(input.probe);
+w.Object.defineProperty=function(target,key,descriptor){const result=originalDefine.call(this,target,key,descriptor);if(key==='focus'&&descriptor.value===originalFocus){if(mode==='window-only')originalDefine.call(w.Object,w,'scrollY',{value:42,configurable:true});else{d.getElementById('navigation-product').appendChild(d.createElement('i'));w.history.replaceState({changed:true},'');}}return result;};
+const report=new w.Function(input.stop)();assert.equal(report.cleanup.descriptors,true);assert.equal(report.cleanup.domUnchanged,mode==='window-only');assert.equal(report.cleanup.liveStateUnchanged,mode==='window-only');assert.equal(report.cleanup.scrollUnchanged,mode!=='window-only');
+assert.ok(!JSON.stringify(report).includes('DO_NOT_EXPORT_LIVE_STATE'));assert.equal(w.__captureColdGeometryProbe,undefined);
+}finally{dom.window.close();}}
+"""
+        result = subprocess.run(['node', '-e', script], input=json.dumps({'probe': MODULE.COLD_GEOMETRY_PROBE_JS, 'stop': MODULE.COLD_GEOMETRY_STOP_JS}),
+                                cwd=Path(__file__).parents[1], text=True, capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_uninstrumented_refresh_uses_original_baseline_and_cannot_hide_native_failure(self):
+        import copy
+        expected = ExplorationCaptureChecks().restore_fixture()
+        cleanup_keys = ('descriptors', 'observer', 'listener', 'raf', 'container', 'integrityObserver',
+                        'liveStateUnchanged', 'domUnchanged', 'focusUnchanged', 'scrollUnchanged')
+        for failure in (None, 'observed-scroll', 'native-scroll', 'native-wait', 'native-wait-and-save', 'cleanup', 'probe-remains', 'remove'):
+            events, saved, record = [], [], {}
+            original = TimeoutError('original native wait failure')
+            class Driver:
+                def __init__(self): self.refreshes = 0; self.probe = False; self.state = copy.deepcopy(expected)
+                def cdp(self, command, params):
+                    events.append(command)
+                    if command == 'Page.addScriptToEvaluateOnNewDocument': return {'identifier': 'only-one-probe'}
+                    if failure == 'remove': raise RuntimeError('script removal failed')
+                    return {}
+                def call(self, method, path, body):
+                    self.refreshes += 1; events.append(path)
+                    if self.refreshes == 1: self.probe = True
+                    self.state = copy.deepcopy(expected)
+                    if (failure == 'observed-scroll' and self.refreshes == 1) or (failure == 'native-scroll' and self.refreshes == 2): self.state['treeScroll']['top'] += 5
+                def settle(self): pass
+                def js(self, script, *args):
+                    if script == MODULE.COLD_GEOMETRY_STOP_JS:
+                        self.probe = failure == 'probe-remains'; events.append('cleanup')
+                        return {'cleanup': {k: not (failure == 'cleanup' and k == 'domUnchanged') for k in cleanup_keys}}
+                    if script == MODULE.COLD_GEOMETRY_ABSENT_JS: return not self.probe
+                    if script == MODULE.TASK_ROUTE_SNAPSHOT_JS: return copy.deepcopy(self.state)
+                    return {'origin': 'diagnostic'}
+            driver = Driver()
+            ready = lambda: True
+            def wait(predicate):
+                self.assertIs(predicate, ready)
+                if driver.refreshes == 2 and failure in ('native-wait', 'native-wait-and-save'): raise original
+                return predicate()
+            def save():
+                saved.append(copy.deepcopy(record))
+                if failure == 'native-wait-and-save' and len(record.get('transitions', [])) == 2 and 'after' in record['transitions'][-1]: raise RuntimeError('secondary save failure')
+            with self.subTest(failure=failure), patch.object(MODULE, 'wait_for', side_effect=wait):
+                if failure:
+                    with self.assertRaises((RuntimeError, TimeoutError)) as caught:
+                        MODULE.cold_relation_refresh_comparison(driver, record, save, expected, ready)
+                    if failure in ('native-wait', 'native-wait-and-save'): self.assertIs(caught.exception, original)
+                else:
+                    result = MODULE.cold_relation_refresh_comparison(driver, record, save, expected, ready)
+                    self.assertEqual(result['kind'], 'cold-selected-relation-uninstrumented')
+                    self.assertEqual(result['after'], expected)
+            self.assertEqual(events.count('Page.addScriptToEvaluateOnNewDocument'), 1)
+            self.assertEqual(events.count('Page.removeScriptToEvaluateOnNewDocument'), 1)
+            second_expected = failure in (None, 'native-scroll', 'native-wait', 'native-wait-and-save')
+            self.assertEqual(driver.refreshes, 2 if second_expected else 1)
+            if second_expected:
+                self.assertLess(events.index('Page.removeScriptToEvaluateOnNewDocument'), len(events) - 1)
+                self.assertEqual(saved[-1]['transitions'][-1]['kind'], 'cold-selected-relation-uninstrumented')
+                self.assertIn('before', saved[-1]['transitions'][-1]); self.assertIn('after', saved[-1]['transitions'][-1])
+                self.assertEqual(saved[-1]['coldGeometryDiagnostic']['nativeComparisonClearance'], {'currentProbeAbsent': True, 'futureScriptRemoved': True})
+
+    def test_early_probe_preserves_native_calls_bounds_data_and_restores_current_document(self):
+        script = r"""
+const {JSDOM}=require('jsdom'),assert=require('node:assert/strict'),input=JSON.parse(require('fs').readFileSync(0,'utf8'));
+(async()=>{for(const overflow of [false,true]){const dom=new JSDOM('<main id="navigation-product"><div id="np-tree-scroll"><div id="np-task-route-canvas"></div><div id="np-tree"><li id="node" aria-selected="true" data-position="root"></li></div></div><aside id="np-detail-scroll"><div id="np-reader-summary"></div></aside><button id="focus-target"></button><input value="DO_NOT_READ_PRIVATE_VALUE"></main><div id="outside"></div>',{url:'https://example.org/',runScripts:'outside-only'});
+try{const w=dom.window,d=w.document;w.TextEncoder=TextEncoder;
+let next=0,frames=new Map(),nativeCalls=[],tops=new WeakMap(),sentinel=new Error('native sentinel');
+w.requestAnimationFrame=fn=>{frames.set(++next,fn);return next;};w.cancelAnimationFrame=id=>frames.delete(id);
+const proto=w.Element.prototype,originalDescriptor=Object.getOwnPropertyDescriptor(proto,'scrollTop');
+const getter=function(){return tops.get(this)||0;},setter=function(value){nativeCalls.push({kind:'set',target:this,value});if(value===-999)throw sentinel;tops.set(this,value);};
+Object.defineProperty(proto,'scrollTop',{...originalDescriptor,get:getter,set:setter});
+const focus=function(){nativeCalls.push({kind:'focus',target:this,args:[...arguments]});if(arguments[0]==='throw')throw sentinel;return 'focus-result';};
+const into=function(){nativeCalls.push({kind:'into',target:this,args:[...arguments]});if(arguments[0]==='throw')throw sentinel;return 'into-result';};
+Object.defineProperty(w.HTMLElement.prototype,'focus',{value:focus,writable:true,configurable:true});Object.defineProperty(proto,'scrollIntoView',{value:into,writable:true,configurable:true});
+const originalFocus=Object.getOwnPropertyDescriptor(w.HTMLElement.prototype,'focus'),originalInto=Object.getOwnPropertyDescriptor(proto,'scrollIntoView'),tree=d.getElementById('np-tree-scroll'),button=d.getElementById('focus-target');
+w.eval(input.probe);
+assert.equal(Object.getOwnPropertyDescriptor(proto,'scrollTop').get,getter,'original getter remains untouched');
+const options={get preventScroll(){throw Error('diagnostic must not inspect call options');}};
+assert.equal(button.focus(options),'focus-result');assert.equal(nativeCalls.at(-1).args[0],options);assert.equal(nativeCalls.at(-1).target,button);
+assert.equal(button.scrollIntoView(options),'into-result');assert.equal(nativeCalls.at(-1).args[0],options);
+for(const action of [()=>button.focus('throw'),()=>button.scrollIntoView('throw'),()=>{tree.scrollTop=-999;}])assert.throws(action,e=>e===sentinel,'the original exception identity is preserved');
+w.eval('document.getElementById("np-tree-scroll").scrollTop=534;\n//# sourceURL=https://example.org/assets/navigation-product.js');assert.equal(tree.scrollTop,534);
+const relation=d.createElement('section');relation.dataset.selectedTaskRelation='methods:relation:90';d.getElementById('np-reader-summary').appendChild(relation);await Promise.resolve();
+tree.dispatchEvent(new w.Event('scroll',{bubbles:false}));
+if(frames.size){const [id,fn]=frames.entries().next().value;frames.delete(id);fn(123.5);}
+if(overflow)for(let i=0;i<300;i++)tree.scrollTop=i;
+const result=new w.Function(input.stop)();assert.equal(w.__captureColdGeometryProbe,undefined);assert.equal(frames.size,0);
+assert.equal(Object.getOwnPropertyDescriptor(proto,'scrollTop').get,getter);assert.equal(Object.getOwnPropertyDescriptor(proto,'scrollTop').set,setter);
+assert.deepEqual(Object.getOwnPropertyDescriptor(w.HTMLElement.prototype,'focus'),originalFocus);assert.deepEqual(Object.getOwnPropertyDescriptor(proto,'scrollIntoView'),originalInto);
+assert.equal(Object.values(result.cleanup).every(Boolean),true);assert.equal(result.privateEpoch.available,false);
+assert.ok(result.events.length<=result.limits.events);assert.ok(result.eventBytes<=result.limits.bytes);assert.equal(result.truncated,overflow);
+assert.ok(result.events.some(e=>e.kind==='tree-scrollTop-before'&&e.value===534&&e.stack.some(s=>s.includes('/assets/navigation-product.js'))));
+assert.ok(result.events.some(e=>e.kind==='tree-scrollTop-after'&&e.geometry.tree.top===534));
+assert.ok(result.events.some(e=>e.kind==='ui-dom-observed'&&e.preMeaning.includes('not synchronous')));
+assert.ok(result.events.some(e=>e.kind==='scroll-event'));assert.ok(result.events.some(e=>e.kind==='animation-frame'&&e.frameTime===123.5));
+assert.ok(!JSON.stringify(result).includes('DO_NOT_READ_PRIVATE_VALUE'));assert.ok(result.limitations.some(x=>x.includes('force layout')));
+const frozen=JSON.stringify(result);tree.scrollTop=10;button.focus();relation.remove();tree.dispatchEvent(new w.Event('scroll'));await Promise.resolve();assert.equal(JSON.stringify(result),frozen,'current-document hooks and observer are gone');
+}finally{dom.window.close();}}})().catch(error=>{console.error(error);process.exitCode=1;});
+"""
+        result = subprocess.run(['node', '-e', script], input=json.dumps({'probe': MODULE.COLD_GEOMETRY_PROBE_JS, 'stop': MODULE.COLD_GEOMETRY_STOP_JS}),
+                                cwd=Path(__file__).parents[1], text=True, capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_probe_geometry_failure_cannot_change_native_return_or_exception(self):
+        script = r"""
+const {JSDOM}=require('jsdom'),assert=require('node:assert/strict'),input=JSON.parse(require('fs').readFileSync(0,'utf8'));
+const dom=new JSDOM('<main id="navigation-product"><div id="np-tree-scroll"></div><button id="button"></button></main>',{runScripts:'outside-only'});
+try{const w=dom.window,d=w.document;w.TextEncoder=TextEncoder;w.requestAnimationFrame=()=>{throw Error('probe frame failure');};w.cancelAnimationFrame=()=>{};
+const button=d.getElementById('button'),tree=d.getElementById('np-tree-scroll'),sentinel=new Error('native failure');let calls=0;
+w.HTMLElement.prototype.focus=function(value){calls++;if(value==='throw')throw sentinel;return 37;};w.Element.prototype.scrollIntoView=function(){return 41;};
+tree.getBoundingClientRect=()=>{throw Error('geometry unavailable');};w.eval(input.probe);
+assert.equal(button.focus('value'),37);assert.throws(()=>button.focus('throw'),e=>e===sentinel);assert.equal(calls,2);
+const report=new w.Function(input.stop)();assert.ok(report.errors.length);assert.equal(Object.values(report.cleanup).every(Boolean),true);assert.equal(w.__captureColdGeometryProbe,undefined);
+}finally{dom.window.close();}
+"""
+        result = subprocess.run(['node', '-e', script], input=json.dumps({'probe': MODULE.COLD_GEOMETRY_PROBE_JS, 'stop': MODULE.COLD_GEOMETRY_STOP_JS}),
+                                cwd=Path(__file__).parents[1], text=True, capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_cold_refresh_keeps_original_action_wait_and_cleans_on_every_failure(self):
+        import copy
+        for failure in (None, 'refresh', 'wait', 'stop', 'remove', 'cleanup', 'save', 'refresh-and-stop'):
+            events, saved, record = [], [], {}
+            original = RuntimeError('original refresh failure')
+            class Driver:
+                def cdp(self, command, params):
+                    events.append((command, params))
+                    if command == 'Page.addScriptToEvaluateOnNewDocument': return {'identifier': 'probe-1'}
+                    if failure == 'remove': raise RuntimeError('remove failed')
+                    return {}
+                def call(self, method, path, data):
+                    events.append((method, path, data))
+                    if failure in ('refresh', 'refresh-and-stop'): raise original
+                def settle(self): events.append(('settle',))
+                def js(self, script, *args):
+                    if script == MODULE.COLD_GEOMETRY_STOP_JS:
+                        events.append(('stop-current-document',))
+                        if failure in ('stop', 'refresh-and-stop'): raise RuntimeError('stop failed')
+                        return {'cleanup': {k: not (failure == 'cleanup' and k == 'descriptors') for k in ('descriptors', 'observer', 'listener', 'raf', 'container', 'integrityObserver', 'liveStateUnchanged', 'domUnchanged', 'focusUnchanged', 'scrollUnchanged')}}
+                    if script == MODULE.TASK_ROUTE_SNAPSHOT_JS: return {'snapshot': 'before-or-after'}
+                    return {'origin': 'retained'}
+            ready = lambda: True
+            def wait(predicate):
+                self.assertIs(predicate, ready)
+                if failure == 'wait': raise original
+                self.assertTrue(predicate())
+            def save():
+                saved.append(copy.deepcopy(record))
+                if failure == 'save' and 'observation' in record.get('coldGeometryDiagnostic', {}): raise RuntimeError('save failed')
+            with self.subTest(failure=failure), patch.object(MODULE, 'wait_for', side_effect=wait):
+                if failure:
+                    with self.assertRaises(RuntimeError) as caught:
+                        MODULE.cold_relation_refresh(Driver(), record, save, ready)
+                    if failure in ('refresh', 'wait', 'refresh-and-stop'): self.assertIs(caught.exception, original)
+                else:
+                    phase = MODULE.cold_relation_refresh(Driver(), record, save, ready)
+                    self.assertEqual(phase['kind'], 'cold-selected-relation')
+            self.assertEqual(events[0][0], 'Page.addScriptToEvaluateOnNewDocument')
+            self.assertEqual(sum(x[:2] == ('POST', '/refresh') for x in events), 1)
+            self.assertLess(events.index(('stop-current-document',)), next(i for i, x in enumerate(events) if x[0] == 'Page.removeScriptToEvaluateOnNewDocument'))
+            self.assertIn('after', saved[-1]['transitions'][0])
+            self.assertTrue(saved[-1]['coldGeometryDiagnostic']['instrumented'])
+
 
 
 if __name__ == '__main__':

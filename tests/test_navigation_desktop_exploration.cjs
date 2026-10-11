@@ -5,7 +5,7 @@ cp.execFileSync('python3',['-c',"import sys;from pathlib import Path;sys.path.in
 const output=path.join(temp,'research/navigation'),html=fs.readFileSync(path.join(output,'index.html'),'utf8'),wait=ms=>new Promise(r=>setTimeout(r,ms));
 test.after(()=>fs.rmSync(temp,{recursive:true,force:true}));
 async function frames(w){await new Promise(r=>w.requestAnimationFrame(()=>w.requestAnimationFrame(r)));}
-async function page(hash='',saved=null,options={}){const errors=[];class NoNetwork extends ResourceLoader{fetch(url){throw new Error('Unexpected network '+url);}}const vc=new VirtualConsole();vc.on('jsdomError',e=>errors.push(e.message));const d=new JSDOM(html,{url:'https://example.org/research/navigation/'+hash,resources:new NoNetwork(),runScripts:'dangerously',pretendToBeVisual:true,virtualConsole:vc,beforeParse(w){w.TextEncoder=TextEncoder;w.TextDecoder=TextDecoder;Object.defineProperty(w.crypto,'subtle',{value:crypto.webcrypto.subtle});w.scrollTo=(x,y)=>Object.defineProperty(w,'scrollY',{value:y,configurable:true});w.HTMLElement.prototype.scrollIntoView=function(){};if(saved)w.history.replaceState(saved,'',w.location.href);w.fetch=url=>options.fetch?options.fetch(url):Promise.resolve({ok:true,arrayBuffer:async()=>fs.readFileSync(path.join(output,url))});}});for(let i=0;i<300&&!d.window.NavigationProductApp;i++)await wait(10);const w=d.window;assert.ok(w.NavigationProductApp,d.window.document.getElementById('np-loading')?.textContent);await frames(w);return {w,d:w.document,a:w.NavigationProductApp,M:w.NavigationProductModel,errors};}
+async function page(hash='',saved=null,options={}){const errors=[];class NoNetwork extends ResourceLoader{fetch(url){throw new Error('Unexpected network '+url);}}const vc=new VirtualConsole();vc.on('jsdomError',e=>errors.push(e.message));const d=new JSDOM(html,{url:'https://example.org/research/navigation/'+hash,resources:new NoNetwork(),runScripts:'dangerously',pretendToBeVisual:true,virtualConsole:vc,beforeParse(w){w.TextEncoder=TextEncoder;w.TextDecoder=TextDecoder;Object.defineProperty(w.crypto,'subtle',{value:crypto.webcrypto.subtle});w.scrollTo=(x,y)=>Object.defineProperty(w,'scrollY',{value:y,configurable:true});w.HTMLElement.prototype.scrollIntoView=function(){};if(saved)w.history.replaceState(saved,'',w.location.href);w.fetch=url=>options.fetch?options.fetch(url):Promise.resolve({ok:true,arrayBuffer:async()=>fs.readFileSync(path.join(output,url))});if(options.beforeParse)options.beforeParse(w);}});for(let i=0;i<300&&!d.window.NavigationProductApp;i++)await wait(10);const w=d.window;assert.ok(w.NavigationProductApp,d.window.document.getElementById('np-loading')?.textContent);if(options.beforeFrames)await options.beforeFrames(w);await frames(w);return {w,d:w.document,a:w.NavigationProductApp,M:w.NavigationProductModel,errors};}
 async function ready(x){const content=x.a.getContent();for(let i=0;i<300;i++){if(!Object.keys(x.a.getBundle().delivery.packets).some(id=>content.status(id)==='loading')){await frames(x.w);return;}await wait(10);}throw Error('content timeout');}
 async function close(x){await ready(x);assert.deepEqual(x.errors,[]);x.w.close();}
 async function point(x,id,options={cross:true}){x.a.navigate(x.M.routeForPosition(x.a.getBundle(),x.a.getState().route,id),options);await ready(x);}
@@ -66,4 +66,61 @@ test('local source-version text preserves 15px and 4.5 contrast on its actual ca
  assert.equal(checked,24);assert.equal(x.w.getComputedStyle(x.d.documentElement).colorScheme,'light','the app explicitly supports the light color scheme');assert.doesNotMatch(css,/prefers-color-scheme|data-theme|color-scheme:\s*dark/,'a new dark theme needs its own contrast coverage');
  // The old color passes white and fails the measured canvas, so a white-only test cannot protect this regression.
  assert.ok(ratio([104,121,131],[255,255,255])>=4.5);assert.ok(ratio([104,121,131],[251,252,253])<4.5);t.diagnostic(JSON.stringify({checked,minimumActual:Math.min(...evidence.map(row=>row.contrast)),evidence}));
+});
+async function coldRelationScrollFixture(){
+ const x=await page();await task(x);openRelations(x);x.d.querySelector('[data-task-change="methods:relation:90"]').click();await ready(x);
+ const endpoint=x.d.querySelector('[data-change-target="pos:l:98bc421b8bfd17d6699922"]');assert.ok(endpoint);endpoint.focus();
+ x.d.getElementById('np-tree-scroll').scrollLeft=36;x.d.getElementById('np-detail-scroll').scrollTop=53;x.w.scrollTo(0,88);x.w.dispatchEvent(new x.w.Event('pagehide'));
+ const fixture={saved:JSON.parse(JSON.stringify(x.w.history.state)),hash:x.w.location.hash,focus:endpoint.id};await close(x);return fixture;
+}
+async function heldColdRelation(fixture,top,delta){
+ const saved=structuredClone(fixture.saved),state=saved.navigationProductV1,key=JSON.stringify([state.route.scope,state.route.bench,state.route.protocol,state.route.paper,state.route.version,state.route.template]);state.contexts[key].treeScrollByTree.l=top;
+ const pending=[],x=await page(fixture.hash,saved,{fetch:url=>new Promise(resolve=>pending.push(()=>resolve({ok:true,arrayBuffer:async()=>fs.readFileSync(path.join(output,url))})))});
+ const tree=x.d.getElementById('np-tree-scroll'),rootNode=x.d.getElementById('np-node-'+state.route.node),overview=x.d.getElementById('np-task-route-relations');
+ assert.equal(x.d.getElementById(fixture.focus),null);assert.equal(x.d.activeElement,rootNode);assert.equal(tree.scrollTop,top);assert.equal(overview.open,true);
+ // JSDOM has no layout: model only the independently variable height added before the tree.
+ rootNode.getBoundingClientRect=()=>({top:100+(overview.dataset.taskRouteState==='ready'?delta:0)});
+ return {x,tree,rootNode,overview,route:state.route,savedState:state,key,release:()=>{for(const resolve of pending.splice(0))resolve();}};
+}
+test('cold selected relation keeps exact tree offset while its temporary tree focus waits for the endpoint',async()=>{
+ const fixture=await coldRelationScrollFixture();
+ for(const [top,delta] of [[0,61],[0,217],[0,534],[119,217]]){
+  const {x,tree,overview,route,savedState,key,release}=await heldColdRelation(fixture,top,delta);release();await ready(x);
+  assert.equal(tree.scrollLeft,36);assert.equal(tree.scrollTop,top,'pending endpoint must not anchor its temporary tree focus by '+delta);
+  assert.equal(x.d.activeElement.id,fixture.focus);assert.equal(x.d.getElementById('np-detail-scroll').scrollTop,53);assert.equal(x.w.scrollY,88);assert.equal(overview.open,true);
+  assert.equal(JSON.stringify(x.a.getState().route),JSON.stringify(route));assert.equal(x.M.getBucket(x.a.getState()).treeScrollByTree.l,top);assert.equal(x.M.getBucket(x.w.history.state[x.M.KEY]).treeScrollByTree.l,top);
+  assert.equal(x.d.querySelector('[data-selected-task-relation]').dataset.selectedTaskRelation,'methods:relation:90');const restored=x.a.getState();for(const context of Object.keys(savedState.contexts))if(context!==key)assert.equal(JSON.stringify(restored.contexts[context]),JSON.stringify(savedState.contexts[context]));for(const treeId of ['g','c','a'])for(const field of ['treeScrollByTree','treeScrollLeftByTree','detailScrollByTree','expandedByTree','selectedByTree'])assert.equal(JSON.stringify(restored.contexts[key][field][treeId]),JSON.stringify(savedState.contexts[key][field][treeId]));x.M.validateState(x.a.getBundle(),restored);await close(x);
+ }
+});
+test('new wheel or explicit tree focus cancels cold relation intent and preserves the current user anchor',async()=>{
+ const fixture=await coldRelationScrollFixture();
+ for(const interaction of ['wheel','focus','click']){
+  const {x,tree,rootNode,release}=await heldColdRelation(fixture,0,217);
+  if(interaction==='wheel')tree.dispatchEvent(new x.w.WheelEvent('wheel',{bubbles:true}));
+  else if(interaction==='click')rootNode.dispatchEvent(new x.w.MouseEvent('click',{bubbles:true}));
+  else{x.d.getElementById('np-tree-heading').focus();rootNode.focus();}
+  const expected=294,newFocus=x.d.activeElement;tree.scrollTop=77;release();await ready(x);
+  assert.equal(tree.scrollLeft,36);assert.equal(tree.scrollTop,expected,'later user interaction retains the established anchor compensation');assert.equal(x.d.activeElement,newFocus);assert.notEqual(x.d.activeElement.id,fixture.focus);
+  tree.dispatchEvent(new x.w.Event('scroll'));x.w.dispatchEvent(new x.w.Event('pagehide'));assert.equal(x.M.getBucket(x.a.getState()).treeScrollByTree.l,expected);assert.equal(x.M.getBucket(x.w.history.state[x.M.KEY]).treeScrollByTree.l,expected);await close(x);
+ }
+});
+test('old held relation batch cannot alter tree scroll or focus after newer scope or method and reader navigation',async()=>{
+ const fixture=await coldRelationScrollFixture();
+ for(const scenario of ['scope','method-reader']){
+  const {x,tree,overview,release}=await heldColdRelation(fixture,0,217);
+  const route=scenario==='scope'?x.M.initialState(x.a.getBundle(),{scope:'task:imagenav',tree:'c'}).route:x.M.routeForPosition(x.a.getBundle(),x.a.getState().route,'pos:l:98bc421b8bfd17d6699922');x.a.navigate(route,{cross:true,initialExpand:true});await frames(x.w);
+  if(scenario==='method-reader'){Object.defineProperty(x.w,'innerWidth',{value:1440,configurable:true});x.w.dispatchEvent(new x.w.Event('resize'));await frames(x.w);const toggle=x.d.getElementById('np-reader-toggle');assert.equal(toggle.hidden,false);toggle.click();assert.equal(x.d.getElementById('np-detail-scroll').hidden,true);}
+  tree.scrollTop=83;const focus=x.d.activeElement,selected=x.a.getState().route;assert.equal(overview.isConnected,false);release();await ready(x);
+  assert.equal(tree.scrollTop,83);assert.equal(x.d.activeElement,focus);assert.equal(JSON.stringify(x.a.getState().route),JSON.stringify(selected));assert.equal(x.d.querySelector('[data-selected-task-relation]'),null);if(scenario==='method-reader'){assert.equal(focus.id,'np-reader-toggle');assert.equal(x.d.getElementById('np-detail-scroll').hidden,true);}await close(x);
+ }
+});
+test('cold relation content installed before the first restore frame retains the saved offsets and endpoint',async()=>{
+ const fixture=await coldRelationScrollFixture(),saved=structuredClone(fixture.saved),state=saved.navigationProductV1,key=JSON.stringify([state.route.scope,state.route.bench,state.route.protocol,state.route.paper,state.route.version,state.route.template]);state.contexts[key].treeScrollByTree.l=119;
+ const pending=[],queued=[];let nativeFrame,installedBeforeFrame=false;
+ const x=await page(fixture.hash,saved,{fetch:url=>new Promise(resolve=>pending.push(()=>resolve({ok:true,arrayBuffer:async()=>fs.readFileSync(path.join(output,url))}))),beforeParse(w){nativeFrame=w.requestAnimationFrame.bind(w);w.requestAnimationFrame=fn=>{queued.push(fn);return queued.length;};},async beforeFrames(w){
+  assert.ok(queued.length,'the first restore frame is held');assert.equal(w.document.getElementById(fixture.focus),null);
+  for(const release of pending.splice(0))release();
+  for(let i=0;i<300&&w.document.getElementById('np-task-route-relations')?.dataset.taskRouteState!=='ready';i++)await wait(10);
+  assert.ok(w.document.getElementById(fixture.focus));installedBeforeFrame=true;w.requestAnimationFrame=nativeFrame;for(const fn of queued.splice(0))fn(0);
+ }});await ready(x);assert.equal(installedBeforeFrame,true);assert.equal(x.d.activeElement.id,fixture.focus);assert.equal(x.d.getElementById('np-tree-scroll').scrollTop,119);assert.equal(x.d.getElementById('np-tree-scroll').scrollLeft,36);assert.equal(x.d.getElementById('np-detail-scroll').scrollTop,53);assert.equal(x.w.scrollY,88);await close(x);
 });
