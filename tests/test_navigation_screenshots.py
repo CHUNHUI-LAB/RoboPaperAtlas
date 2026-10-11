@@ -4635,5 +4635,104 @@ class AtomicReceiptPersistenceChecks(unittest.TestCase):
             self.assertEqual(len(MODULE.SCENE_NAMES) * len(MODULE.VIEWPORTS), 98)
 
 
+class S0SelectorOcclusionChecks(unittest.TestCase):
+    @staticmethod
+    def fixture(width=1440, selected=None):
+        data = S0FooterCaptureChecks.fixture(width, selected)
+        row = next(row for row in data['nodes'] if row['id'] == data['expected']['challenge'])
+        label = row['labels']['title']; r = label['rect']
+        # The native popup covers only the right half: some probes still hit label.
+        popup_rect = dict(x=r['x'] + r['width'] / 2, y=120, width=data['viewport']['width'] - r['x'] - r['width'] / 2 - 16, height=330)
+        popup = S0FooterCaptureChecks.proof('Existing native selector', popup_rect)
+        popup['clipped'] = True  # The existing popup itself may scroll.
+        data.update(selectorOpen=True, relationSelector=dict(id='np-task-relations', tag='DETAILS', open=True, inToolbar=True, count=1, proof=popup))
+        label['visible'] = False
+        label['hitProbes'] = []
+        for fx, fy in ((.5, .5), (.1, .1), (.9, .1), (.1, .9), (.9, .9)):
+            x, y = r['x'] + r['width'] * fx, r['y'] + r['height'] * fy
+            covered = x >= popup_rect['x']
+            label['hitProbes'].append(dict(x=x, y=y, label=not covered, selector=covered,
+                ancestorIds=['np-relation-select-tasks:relation:88', 'np-task-relations', 'navigation-product'] if covered else ['navigation-product'],
+                hitId='np-relation-select-tasks:relation:88' if covered else '', hitTag='BUTTON' if covered else 'H3'))
+        return data, label
+
+    def test_exact_open_native_popup_may_occlude_samples_without_claiming_label_exposure(self):
+        for width in (1440, 1920):
+            for selected in (None, *S0FooterCaptureChecks.expected()['readouts']):
+                data, label = self.fixture(width, selected)
+                self.assertFalse(label['visible'])
+                self.assertTrue(MODULE.s0_label_exposed(label, data))
+                MODULE.check_s0_footer(data)
+                # This is still an actual covered label, not mutated exposure data.
+                self.assertFalse(label['visible'])
+                self.assertTrue(data['relationSelector']['proof']['clipped'])
+
+    def test_closed_state_missing_popup_wrong_identity_and_foreign_cover_fail(self):
+        import copy
+        good, _ = self.fixture()
+        def label(data): return next(row for row in data['nodes'] if row['id'] == data['expected']['challenge'])['labels']['title']
+        mutations = [lambda d: d.update(selectorOpen=False), lambda d: d.pop('relationSelector'),
+            lambda d: d['relationSelector'].update(open=False), lambda d: d['relationSelector'].update(id='foreign-overlay'),
+            lambda d: d['relationSelector'].update(tag='DIV'), lambda d: d['relationSelector'].update(count=2),
+            lambda d: d['relationSelector'].update(inToolbar=False),
+            lambda d: d['relationSelector']['proof'].update(visible=False), lambda d: d['relationSelector']['proof'].update(opaque=False),
+            lambda d: d['relationSelector']['proof'].update(unscaled=False),
+            lambda d: d['relationSelector']['proof']['rect'].update(x=-1),
+            lambda d: d['relationSelector']['proof']['rect'].update(y=500),
+            lambda d: label(d)['hitProbes'][0].update(selector=False, ancestorIds=['foreign-cover']),
+            lambda d: label(d)['hitProbes'][0].update(ancestorIds=['np-task-relations-wrong']),
+            lambda d: label(d)['hitProbes'][0].update(label=True),
+            lambda d: label(d)['hitProbes'][0].update(x=label(d)['hitProbes'][0]['x'] + 1),
+            lambda d: label(d)['hitProbes'][0].update(y=0),
+            lambda d: label(d)['hitProbes'][0].update(selector='true'),
+            lambda d: label(d)['hitProbes'].pop(), lambda d: label(d).pop('hitProbes')]
+        for index, mutate in enumerate(mutations):
+            bad = copy.deepcopy(good); mutate(bad)
+            with self.subTest(mutation=index), self.assertRaises(RuntimeError): MODULE.check_s0_adaptive_spacing(bad)
+        MODULE.check_s0_footer(good)
+
+    def test_popup_exception_never_relaxes_text_style_identity_clipping_or_geometry(self):
+        import copy
+        good, _ = self.fixture()
+        def label(data): return next(row for row in data['nodes'] if row['id'] == data['expected']['challenge'])['labels']['title']
+        for change in (dict(opaque=False), dict(unscaled=False), dict(clipped=True), dict(fontSize=14), dict(foreground=[180, 180, 180]), dict(background=[])):
+            bad = copy.deepcopy(good); label(bad).update(change)
+            with self.subTest(change=change), self.assertRaises(RuntimeError): MODULE.check_s0_adaptive_spacing(bad)
+        bad = copy.deepcopy(good); label(bad)['rect']['x'] -= 50
+        with self.assertRaises(RuntimeError): MODULE.check_s0_adaptive_spacing(bad)
+        bad = copy.deepcopy(good); bad['nodes'][0]['id'] = 'invented-source'
+        with self.assertRaises(RuntimeError): MODULE.check_s0_adaptive_spacing(bad)
+        # A different label covered by an unrelated element is still a failure.
+        bad = copy.deepcopy(good); bad['nodes'][0]['labels']['title']['visible'] = False
+        with self.assertRaises(RuntimeError): MODULE.check_s0_adaptive_spacing(bad)
+
+    def test_same_view_stability_and_close_focus_contracts_still_include_open_picker(self):
+        import copy
+        before, _ = self.fixture(); after, _ = self.fixture(selected='tasks:relation:88')
+        after.update(selectorOpen=False)
+        after['relationSelector']['open'] = False
+        title = next(row for row in after['nodes'] if row['id'] == after['expected']['challenge'])['labels']['title']; title['visible'] = True
+        MODULE.check_s0_stability(before, after)
+        for field in ('x', 'y'):
+            bad = copy.deepcopy(after); bad['map']['rect'][field] += 1
+            with self.subTest(field=field), self.assertRaises(RuntimeError): MODULE.check_s0_stability(before, bad)
+        closed, label = self.fixture(); closed.update(selectorOpen=False); closed['relationSelector']['open'] = False
+        with self.assertRaises(RuntimeError): MODULE.check_s0_footer(closed)
+        label['visible'] = True
+        MODULE.check_s0_footer(closed)
+
+    def test_capture_records_actual_hit_ancestry_and_keeps_all_original_native_checkpoints(self):
+        import inspect, ast
+        js = MODULE.S0_FOOTER_SNAPSHOT_JS
+        for text in ('document.elementFromPoint(x,y)', 'e.contains(hit)', 'selector.contains(hit)', 'ancestorIds:ids', "selector.tagName", "selector.open", "querySelectorAll('#np-task-relations').length", 'proof:box(selector)', 'proof.hitProbes=', "selector.matches('#np-reading-landing>.np-overview-map-toolbar>#np-task-relations')"):
+            self.assertIn(text, js)
+        main = inspect.getsource(MODULE.main)
+        for text in ("s0_footer_check('before-selection-'", "s0_footer_check('closed-'", "check_s0_stability(before_selection, selected_footer)", "closed['focus'] != 'np-relation-select-'", 'check_s0_stability(footer_before_reload, footer_after_reload, restore=True)'):
+            self.assertIn(text, main)
+        saves = [n for n in ast.walk(ast.parse(inspect.getsource(MODULE))) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']
+        self.assertEqual(len(saves), 96)
+        self.assertEqual(len(MODULE.SCENE_NAMES) * len(MODULE.VIEWPORTS), 98)
+
+
 if __name__ == '__main__':
     unittest.main()

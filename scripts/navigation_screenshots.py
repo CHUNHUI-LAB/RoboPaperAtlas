@@ -802,7 +802,7 @@ DISPLAY_CONTRACT_MIGRATIONS = {
     'context_path': 'one compact row; original global links and real local parent chain remain distinct',
     'outer_scroll': 'ready desktop window is zero; exact effective tree/reader offsets and other buckets retained',
     's0_footer': 'unchanged legend/readout and source-derived coverage in one natural-flow footer after the original map; only the in-map C-column evidence panel scrolls',
-    's0_adaptive_spacing': 'compact editorial task rows and source-ordered C cards now receive bounded extra vertical gaps from actual positive desktop map client height: reserve 12px, cap task-row extra at 24px and C-gap extra at 7px; unchanged card dimensions, x positions, typography, headers, task bus, footer and source paths; 12px is an extra-allocation reserve, not a new compact-map bottom-clearance rule',
+    's0_adaptive_spacing': 'compact editorial task rows and source-ordered C cards now receive bounded extra vertical gaps from actual positive desktop map client height: reserve 12px, cap task-row extra at 24px and C-gap extra at 7px; unchanged card dimensions, x positions, typography, headers, task bus, footer and source paths; 12px is an extra-allocation reserve, not a new compact-map bottom-clearance rule; closed-state labels remain uncovered, while exact native open-selector occlusion is proved by actual hit ancestry and popup bounds',
     'overview_relations': 'all seven paths and controls retained; selected-only default plus explicit show-all',
     'analysis_entry': 'first actual version answer; explicit legacy root remains coverage and full original topology',
     'active_forest_heading': 'same active source forest and roots; visible #np-tree-heading plus exact root-label proofs replace the deliberately hidden duplicate forest h3',
@@ -942,13 +942,15 @@ function frame(e){if(!e)return null;var cs=getComputedStyle(e),r=rect(e);return 
   top:e.scrollTop,left:e.scrollLeft,scrollHeight:e.scrollHeight,clientHeight:e.clientHeight,scrollWidth:e.scrollWidth,clientWidth:e.clientWidth,
   maxTop:Math.max(0,e.scrollHeight-e.clientHeight),inline:{top:e.style.top,left:e.style.left,width:e.style.width,height:e.style.height}};}
 function overview(value){return value&&value.contexts?.[m.contextKey(value.route)]?.overviewView||null;}
-function nodeLabels(e){var result={};[['name','.np-task-reading-name'],['contract','.np-task-reading-contract'],['challenge','.np-map-challenge-label'],['title','h2,h3'],['subtitle','.np-overview-goal p']].forEach(([key,selector])=>{var n=e.querySelector(selector);if(n)result[key]=box(n);});if(e.matches('.np-map-task-root'))result.title=box(e);return result;}
+function labelBox(e){var proof=box(e),r=proof.rect;if(proof.visible||!proof.opaque)return proof;proof.hitProbes=[[.5,.5],[.1,.1],[.9,.1],[.1,.9],[.9,.9]].map(([fx,fy])=>{var x=r.x+r.width*fx,y=r.y+r.height*fy,hit=document.elementFromPoint(x,y),ids=[];for(var n=hit;n;n=n.parentElement)if(n.id)ids.push(n.id);return {x:x,y:y,label:!!hit&&(hit===e||e.contains(hit)),selector:!!hit&&(hit===selector||selector.contains(hit)),ancestorIds:ids,hitId:hit?.id||'',hitTag:hit?.tagName||null};});return proof;}
+var selector=document.getElementById('np-task-relations');
+function nodeLabels(e){var result={};[['name','.np-task-reading-name'],['contract','.np-task-reading-contract'],['challenge','.np-map-challenge-label'],['title','h2,h3'],['subtitle','.np-overview-goal p']].forEach(([key,selector])=>{var n=e.querySelector(selector);if(n)result[key]=labelBox(n);});if(e.matches('.np-map-task-root'))result.title=labelBox(e);return result;}
 var candidates=[landing,...landing.querySelectorAll('*')].filter(e=>!e.closest('.np-overview-map-toolbar')).map(scrollRegionCandidate).filter(Boolean),
     selected=map.dataset.selectedRelation||null;
 return {expected:expected,ready:document.getElementById('navigation-product').dataset.loadState,home:!landing.hidden,
   viewport:{x:0,y:0,width:innerWidth,height:innerHeight},window:{x:scrollX,y:scrollY},scale:m.getBucket(s).graphScale,
   route:s.route,historyRoute:persisted?.route||null,focus:document.activeElement.id,selectedRelation:selected,relationsVisible:map.dataset.relationsVisible,
-  selectorOpen:document.getElementById('np-task-relations').open,runtimeOverview:overview(s),historyOverview:overview(persisted),
+  selectorOpen:selector.open,relationSelector:{id:selector.id,tag:selector.tagName,open:selector.open,inToolbar:selector.matches('#np-reading-landing>.np-overview-map-toolbar>#np-task-relations'),count:document.querySelectorAll('#np-task-relations').length,proof:box(selector)},runtimeOverview:overview(s),historyOverview:overview(persisted),
   landing:frame(landing),map:frame(map),footerCount:footers.length,legendCount:legends.length,coverageCount:coverages.length,
   footer:footer?Object.assign(frame(footer),{afterMap:map.nextElementSibling===footer,insideMap:map.contains(footer),children:[...footer.children].map(e=>({id:e.id,className:e.className})),proof:fixedTextProof(footer)}):null,
   legend:legend?Object.assign(frame(legend),{inFooter:legend.parentElement===footer,labels:[...legend.children].map(e=>({id:e.id,className:e.className,proof:fixedTextProof(e)}))}):null,
@@ -975,6 +977,41 @@ def check_s0_text(proof, text, *areas):
             raise RuntimeError('S0 original wrapped text is covered, scaled or clipped by its actual client region')
     if any(not fragment['visible'] or not all(rect_inside(fragment, area) for area in areas) for fragment in proof['fragments']):
         raise RuntimeError('S0 final text fragment is covered or clipped')
+
+
+def s0_label_exposed(proof, data):
+    """A closed selector requires exposure; only exact open-popup hits may cover it."""
+    if proof.get('visible') is True:
+        return True
+    selector = data.get('relationSelector') or {}
+    popup = selector.get('proof') or {}
+    if (data.get('selectorOpen') is not True or selector.get('open') is not True or
+            selector.get('id') != 'np-task-relations' or selector.get('tag') != 'DETAILS' or
+            selector.get('count') != 1 or selector.get('inToolbar') is not True or not all(popup.get(key) is True for key in ('visible', 'opaque', 'unscaled')) or
+            not popup.get('rect') or not rect_inside(popup['rect'], data['viewport'])):
+        return False
+    probes = proof.get('hitProbes', [])
+    fractions = ((.5, .5), (.1, .1), (.9, .1), (.1, .9), (.9, .9))
+    if len(probes) != len(fractions):
+        return False
+    label_rect, popup_rect = proof['rect'], popup['rect']
+    covered = False
+    for probe, (fx, fy) in zip(probes, fractions):
+        x, y = label_rect['x'] + label_rect['width'] * fx, label_rect['y'] + label_rect['height'] * fy
+        if (any(not isinstance(probe.get(key), (int, float)) or not math.isfinite(probe[key]) or
+                abs(probe[key] - wanted) > S0_SPACING_TOLERANCE for key, wanted in (('x', x), ('y', y))) or
+                type(probe.get('label')) is not bool or type(probe.get('selector')) is not bool):
+            return False
+        if probe['label']:
+            if probe['selector']:
+                return False
+            continue
+        if (not probe['selector'] or 'np-task-relations' not in probe.get('ancestorIds', []) or
+                not popup_rect['x'] <= x <= popup_rect['x'] + popup_rect['width'] or
+                not popup_rect['y'] <= y <= popup_rect['y'] + popup_rect['height']):
+            return False
+        covered = True
+    return covered
 
 
 def check_s0_adaptive_spacing(data):
@@ -1080,7 +1117,7 @@ def check_s0_adaptive_spacing(data):
             if (not close(label['fontSize'], font) or text is not None and label['text'] != text or
                     label['clipped'] or not label['unscaled'] or not rect_inside(label['rect'], r) or
                     (replaced and (label['opaque'] or label['visible'])) or
-                    (not replaced and not _reader_proof(label, r, client, data['viewport'], font_size=font))):
+                    (not replaced and not _reader_proof(dict(label, visible=s0_label_exposed(label, data)), r, client, data['viewport'], font_size=font))):
                 raise RuntimeError('S0 adaptive spacing reduced, substituted, covered or clipped original node text')
     for index, row in enumerate(rows):
         if any(rects_intersect(row['proof']['rect'], other['proof']['rect']) for other in rows[index + 1:]):
