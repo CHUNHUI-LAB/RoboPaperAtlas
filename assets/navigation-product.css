@@ -194,7 +194,7 @@ body{font-size:16px;line-height:1.65;background:#f7f9fa}header.np-header{max-wid
 /* Desktop reading shell: a fixed object identity and two permanent scroll regions.
    Science routes and original hierarchy are unchanged by these presentation sizes. */
 @media(min-width:1200px){
- html:has(#navigation-product[data-load-state=ready]),body:has(#navigation-product[data-load-state=ready]){height:100%;overflow:hidden}
+ html:has(#navigation-product[data-load-state=ready]),body:has(#navigation-product[data-load-state=ready]){height:100%;overflow:clip}
  header.np-header{min-height:48px;height:48px;padding:8px 16px}
  main#navigation-product{padding:0 16px 16px;max-width:none}
  #navigation-product .np-global-start{top:-36px}

@@ -2661,7 +2661,8 @@ class DesktopHierarchyContractChecks(unittest.TestCase):
         tw = (400 if width == 1440 else 448) if tree == 'a' else (768 if width == 1440 else 1056)
         gap = 24 if tree == 'a' else 16
         pane = rect(16 + tw + gap, 132, width - 32 - tw - gap, height - 148)
-        return {'ready': 'ready', 'route': {'tree': tree}, 'methodReading': 'false', 'readingLayout': 'browse', 'position': None, 'window': {'x': 0, 'y': 0},
+        return {'stationaryAncestors': [{'selector': selector, 'top': 0, 'left': 0} for selector in MODULE.STATIONARY_SHELL_SELECTORS],
+                'ready': 'ready', 'route': {'tree': tree}, 'methodReading': 'false', 'readingLayout': 'browse', 'position': None, 'window': {'x': 0, 'y': 0},
                 'viewport': rect(0, 0, width, height), 'home': False, 'collapsed': False,
                 'panels': rect(16, 132, width - 32, height - 148), 'treePane': rect(16, 132, tw, height - 148),
                 'tree': rect(17, 176, tw - 2, height - 217), 'pane': pane,
@@ -2695,6 +2696,39 @@ class DesktopHierarchyContractChecks(unittest.TestCase):
                     bad = copy.deepcopy(good); mutate(bad)
                     with self.subTest(width=width, tree=tree, mutation=index), self.assertRaises(RuntimeError):
                         MODULE.check_desktop_shell(bad)
+
+    def test_stationary_ancestor_offsets_cannot_hide_behind_window_zero_or_correct_panel_bounds(self):
+        import copy
+        for width in (1440,1920):
+            good=self.shell(width=width);MODULE.check_desktop_shell(good)
+            for selector in MODULE.STATIONARY_SHELL_SELECTORS:
+                for axis in ('top','left'):
+                    for value in (117,1,-1,float('nan'),True):
+                        bad=copy.deepcopy(good);next(r for r in bad['stationaryAncestors'] if r['selector']==selector)[axis]=value
+                        self.assertEqual(bad['window'],{'x':0,'y':0});self.assertEqual(bad['panels']['y'],132)
+                        with self.subTest(width=width,selector=selector,axis=axis,value=value),self.assertRaisesRegex(RuntimeError,'hidden scroll offset'):
+                            MODULE.check_desktop_shell(bad)
+            for rows in (None,[],good['stationaryAncestors'][:-1],list(reversed(good['stationaryAncestors'])),good['stationaryAncestors']*2):
+                bad=copy.deepcopy(good);bad['stationaryAncestors']=rows
+                with self.assertRaises(RuntimeError):MODULE.check_desktop_shell(bad)
+            shifted=copy.deepcopy(good);shifted['panels']['y']=15
+            with self.assertRaisesRegex(RuntimeError,'viewport-filling'):MODULE.check_desktop_shell(shifted)
+
+    def test_stationary_ancestor_snapshot_records_actual_hidden_offsets_without_mutating_them(self):
+        script=r"""
+const {JSDOM}=require('jsdom'),assert=require('node:assert/strict'),input=JSON.parse(require('fs').readFileSync(0,'utf8'));
+const dom=new JSDOM('<!doctype html><main id="navigation-product"><section id="np-workspace"><div class="np-panels"><section class="np-tree-pane"><div id="np-tree-scroll"></div></section><aside class="np-reading-pane"><div id="np-detail-scroll"></div></aside></div></section></main>',{runScripts:'outside-only'});
+try{const w=dom.window,d=w.document;d.body.style.overflow='hidden';d.body.scrollTop=117;d.body.scrollLeft=9;d.getElementById('np-detail-scroll').scrollTop=1169;const snap=new w.Function(input.script+';return stationaryShellAncestors();'),rows=snap();assert.equal(w.scrollY,0);assert.equal(rows.find(r=>r.selector==='body').top,117);assert.equal(rows.find(r=>r.selector==='body').left,9);assert.equal(d.body.scrollTop,117);assert.equal(d.getElementById('np-detail-scroll').scrollTop,1169);assert.ok(!rows.some(r=>r.id==='np-tree-scroll'||r.id==='np-detail-scroll'));process.stdout.write(JSON.stringify(rows));}finally{dom.window.close();}
+"""
+        result=subprocess.run(['node','-e',script],input=json.dumps({'script':MODULE.STATIONARY_SHELL_ANCESTORS_JS}),cwd=Path(__file__).parents[1],text=True,capture_output=True)
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        rows=json.loads(result.stdout)
+        with self.assertRaisesRegex(RuntimeError,'hidden scroll offset'):MODULE.check_stationary_shell_ancestors(rows)
+        self.assertIn('stationaryAncestors:stationaryShellAncestors()',MODULE.DESKTOP_SHELL_SNAPSHOT_JS)
+        self.assertIn('stationaryAncestors:stationaryShellAncestors()',MODULE.TASK_ROUTE_DIAGNOSTIC_JS)
+        for forbidden in ('scrollTop=', 'scrollTop =', 'scrollLeft=', '.scrollTo(', '.scrollIntoView(', '.focus('):
+            self.assertNotIn(forbidden,MODULE.STATIONARY_SHELL_ANCESTORS_JS)
+        self.assertEqual(len(MODULE.SCENE_NAMES)*len(MODULE.VIEWPORTS),98)
 
     def test_selector_overlay_cannot_displace_root_or_hide_either_original_relation_endpoint(self):
         import copy

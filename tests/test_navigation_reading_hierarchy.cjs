@@ -376,3 +376,16 @@ test('desktop method footer repair: full labels grow in reserved natural height 
   style.textContent=entries.filter(({media,rule})=>methodMediaActive(media,width)&&!(rule.selectorText.includes('[data-method-reading=true]')&&rule.selectorText.includes('.np-canvas-footer'))).map(({rule})=>rule.cssText).join('\n');assert.equal(x.w.getComputedStyle(footer).height,'24px');assert.throws(()=>assertMethodFooterFlow(x),'negative legacy fixed24px footer is rejected');style.textContent=entries.filter(({media})=>methodMediaActive(media,width)).map(({rule})=>rule.cssText).join('\n');assertMethodFooterFlow(x);
  }finally{await close(x);}}
 });
+
+
+// Declaration/cascade proof only: real focus/claim geometry remains in Chrome CI.
+test('ready desktop outer clip forbids hidden ancestor scrolling without changing inner or narrow scrollers',()=>{
+ const dom=new JSDOM('<!doctype html><style></style>');try{
+  const {entries}=methodCSS(dom.window.document),selector='html:has(#navigation-product[data-load-state=ready]),body:has(#navigation-product[data-load-state=ready])',rows=entries.filter(({rule})=>rule.selectorText===selector);
+  function check(){assert.equal(rows.length,1);const {rule,media}=rows[0];assert.deepEqual(media,['(min-width:1200px)']);assert.equal(rule.style.getPropertyValue('height'),'100%');assert.equal(rule.style.getPropertyValue('overflow'),'clip','stationary outer wrappers must not be hidden scroll containers');assert.equal(rule.style.getPropertyValue('overflow-x'),'');assert.equal(rule.style.getPropertyValue('overflow-y'),'');}
+  check();for(const value of ['hidden','auto','scroll','visible','']){const old=rows[0].rule.style.cssText;try{rows[0].rule.style.setProperty('overflow',value);assert.throws(check,/stationary outer wrappers/);}finally{rows[0].rule.style.cssText=old;}check();}
+  for(const width of [760,1199])assert.equal(entries.filter(({rule,media})=>methodMediaActive(media,width)&&rule.selectorText===selector).length,0,'non-desktop document scrolling is unchanged');
+  for(const width of [1200,1440,1920]){const active=entries.filter(({media})=>methodMediaActive(media,width));assert.equal(active.filter(({rule})=>rule.selectorText===selector).length,1);for(const scroller of ['#navigation-product .np-tree-scroll','#navigation-product .np-reader-body']){const rules=active.filter(({rule})=>rule.selectorText.split(',').map(s=>s.trim()).includes(scroller)&&rule.style.getPropertyValue('overflow'));assert.ok(rules.length,scroller);assert.equal(rules.at(-1).rule.style.getPropertyValue('overflow'),'auto','actual inner native scrolling remains');}}
+  assert.equal(entries.filter(({rule})=>rule.style.getPropertyValue('overflow')==='clip').length,1,'no scientific region or text gains clipping');
+ }finally{dom.window.close();}
+});

@@ -810,7 +810,27 @@ function fixedTextProof(e){
 """
 
 
-DESKTOP_SHELL_SNAPSHOT_JS = VISUAL_GEOMETRY + SCROLL_REGION_VISIBILITY_JS + FIXED_TEXT_PROOF_JS + r"""
+# Hidden overflow can still scroll through focus/scrollIntoView. Record every
+# stationary shell ancestor separately from the two legitimate inner scrollers.
+STATIONARY_SHELL_SELECTORS = ('html', 'body', '#navigation-product', '#np-workspace', '.np-panels', '.np-tree-pane', '.np-reading-pane')
+STATIONARY_SHELL_ANCESTORS_JS = r"""
+function stationaryShellAncestors(){return ['html','body','#navigation-product','#np-workspace','.np-panels','.np-tree-pane','.np-reading-pane'].map(selector=>{
+  var e=document.querySelector(selector);if(!e)return {selector:selector,missing:true};var r=e.getBoundingClientRect(),cs=getComputedStyle(e);
+  return {selector:selector,id:e.id||null,tag:e.tagName,top:e.scrollTop,left:e.scrollLeft,
+    scrollHeight:e.scrollHeight,clientHeight:e.clientHeight,scrollWidth:e.scrollWidth,clientWidth:e.clientWidth,
+    overflowX:cs.overflowX,overflowY:cs.overflowY,rect:{x:r.x,y:r.y,width:r.width,height:r.height}};
+});}
+"""
+
+
+def check_stationary_shell_ancestors(rows):
+    if (not isinstance(rows, list) or [r.get('selector') for r in rows] != list(STATIONARY_SHELL_SELECTORS) or
+            any(r.get('missing') or any(type(r.get(axis)) not in (int, float) or not math.isfinite(r[axis]) or r[axis] != 0
+                                     for axis in ('top', 'left')) for r in rows)):
+        raise RuntimeError('A stationary desktop shell ancestor is missing or has a hidden scroll offset')
+
+
+DESKTOP_SHELL_SNAPSHOT_JS = VISUAL_GEOMETRY + SCROLL_REGION_VISIBILITY_JS + FIXED_TEXT_PROOF_JS + STATIONARY_SHELL_ANCESTORS_JS + r"""
 var a=NavigationProductApp,m=NavigationProductModel,s=a.getState(),app=document.getElementById('navigation-product'),
     tree=document.getElementById('np-tree-scroll'),reader=document.getElementById('np-detail-scroll'),
     pane=document.querySelector('.np-reading-pane'),header=document.getElementById('np-reader-heading'),
@@ -823,7 +843,7 @@ function scroll(e){return {top:e.scrollTop,left:e.scrollLeft};}
 function metrics(e){return {top:e.scrollTop,left:e.scrollLeft,scrollHeight:e.scrollHeight,clientHeight:e.clientHeight,maxTop:Math.max(0,e.scrollHeight-e.clientHeight)};}
 var roots=host.querySelectorAll('[data-parallel-tree] > [role=tree] > [role=treeitem]'),b=a.getBundle(),
     scrollCandidates=[tree,reader,...tree.querySelectorAll('*'),...reader.querySelectorAll('*'),...(footer?[footer,...footer.querySelectorAll('*')]:[])].map(scrollRegionCandidate).filter(Boolean);
-return {ready:app.dataset.loadState,route:s.route,methodReading:app.dataset.methodReading,readingLayout:app.dataset.readingLayout,window:{x:scrollX,y:scrollY},
+return {stationaryAncestors:stationaryShellAncestors(),ready:app.dataset.loadState,route:s.route,methodReading:app.dataset.methodReading,readingLayout:app.dataset.readingLayout,window:{x:scrollX,y:scrollY},
   viewport:{x:0,y:0,width:innerWidth,height:innerHeight},home:!document.getElementById('np-reading-landing').hidden,
   collapsed:app.dataset.readerCollapsed==='true',sourceOverview:app.dataset.activeTree==='g'&&app.dataset.globalFocus==='overview',panels:rect(document.querySelector('.np-panels')),
   tree:rect(tree),treePane:rect(document.querySelector('.np-tree-pane')),reader:rect(reader),pane:rect(pane),
@@ -915,6 +935,7 @@ def check_desktop_shell(data):
     if ((viewport['width'], viewport['height']) not in VIEWPORTS or data['ready'] != 'ready' or
             data['window'] != {'x': 0, 'y': 0}):
         raise RuntimeError('Ready desktop shell is unready or has outer window scroll')
+    check_stationary_shell_ancestors(data.get('stationaryAncestors'))
     position = data.get('position')
     method = bool(position and position['kind'] in ('pipeline_recipe', 'versioned_method_card') and
                   data['route']['tree'] in ('g', 'l') and not data.get('relation') and not data['home'])
@@ -1674,7 +1695,7 @@ if(window.navigation?.currentEntry?.key!==wanted.historyEntryKey||current.revisi
 """ + TASK_ROUTE_RETURN_WAIT_JS
 
 
-TASK_ROUTE_DIAGNOSTIC_JS = r"""
+TASK_ROUTE_DIAGNOSTIC_JS = STATIONARY_SHELL_ANCESTORS_JS + r"""
 function relationReturnClickDiagnostic(){
   var nodes=document.querySelectorAll('#np-task-route-return'),button=nodes[0],reader=document.getElementById('np-detail-scroll'),
       header=reader&&document.getElementById('np-reader-heading'),tree=document.getElementById('np-tree-scroll');
@@ -1748,7 +1769,7 @@ function taskRouteDiagnostic(api,model,state,reader,panel){
   var runtime=stateRecord(state),persisted=stateRecord(history.state&&history.state[model.KEY]),heading=document.getElementById('np-reader-heading'),
       rr=reader.getBoundingClientRect(),hr=heading&&heading.getBoundingClientRect(),active=document.activeElement,
       focusId=model.getBucket(state).focusTarget,focus=focusId&&(document.getElementById(focusId)||document.getElementById('np-node-'+focusId));
-  return {reader:geometry(reader),readerHeading:geometry(heading),
+  return {stationaryAncestors:stationaryShellAncestors(),reader:geometry(reader),readerHeading:geometry(heading),
     availableContent:{x:rr.x+reader.clientLeft,y:Math.max(rr.y+reader.clientTop,hr?hr.y+hr.height:rr.y+reader.clientTop),
       bottom:rr.y+reader.clientTop+reader.clientHeight,width:reader.clientWidth},
     activeElement:active?target(active):null,runtimeFocusTarget:{value:focusId,element:focus?target(focus):null},
