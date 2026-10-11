@@ -802,6 +802,7 @@ DISPLAY_CONTRACT_MIGRATIONS = {
     'context_path': 'one compact row; original global links and real local parent chain remain distinct',
     'outer_scroll': 'ready desktop window is zero; exact effective tree/reader offsets and other buckets retained',
     's0_footer': 'unchanged legend/readout and source-derived coverage in one natural-flow footer after the original map; only the in-map C-column evidence panel scrolls',
+    's0_adaptive_spacing': 'compact editorial task rows and source-ordered C cards now receive bounded extra vertical gaps from actual positive desktop map client height: reserve 12px, cap task-row extra at 24px and C-gap extra at 7px; unchanged card dimensions, x positions, typography, headers, task bus, footer and source paths; 12px is an extra-allocation reserve, not a new compact-map bottom-clearance rule',
     'overview_relations': 'all seven paths and controls retained; selected-only default plus explicit show-all',
     'analysis_entry': 'first actual version answer; explicit legacy root remains coverage and full original topology',
     'active_forest_heading': 'same active source forest and roots; visible #np-tree-heading plus exact root-label proofs replace the deliberately hidden duplicate forest h3',
@@ -884,6 +885,19 @@ S0_RELATION_LABELS = {
 }
 
 
+# Reviewed display arrangement, independent of controller coordinates/metadata.
+# This is not scientific parentage; source IDs/parents still come from science.
+S0_TASK_ROWS = (
+    ('task:pointnav', 'task:ddn', 'task:vln', 'task:multion'),
+    ('task:imagenav', 'task:instanceimagenav', 'task:ivln', 'task:goat'),
+    ('task:roomnav', 'task:category-objectnav', 'task:ndh', 'task:lamon'),
+    ('task:audiogoal', 'task:language-objectnav', 'task:remote-referent-navigation', 'task:comon'),
+    ('task:audiopointgoal', 'task:hieranav', 'task:soon'),
+    ('task:aerial-visual-object-search', 'task:person-finding-following', 'task:namo'),
+)
+S0_SPACING_TOLERANCE = 1 / 16  # CSS pixel rounding only; never a whole-pixel drift.
+
+
 def s0_footer_expected(science):
     from navigation_research_map import build_research_map, NATIVE_RELATION_LABELS
     graph = build_research_map(science)
@@ -904,7 +918,8 @@ def s0_footer_expected(science):
     coverage = ('当前方法：{direct}个入口直接关联、{condition}个仅条件关联、{gap}个未整理；'.format(**method) +
                 'CI：{direct}个直接关联、{condition}个仅条件关联、{gap}个未整理。'.format(**ci) +
                 '选段覆盖，不代表全文精读或领域穷尽。')
-    return {'root': root, 'challenge': challenge, 'challengeIds': list(positions[challenge]['childIds']), 'tasks': tasks,
+    return {'root': root, 'literature': literature, 'directory': directory,
+            'challenge': challenge, 'challengeIds': list(positions[challenge]['childIds']), 'tasks': tasks,
             'nodes': [{'id': pid, 'parent': positions[pid]['parentId'], 'entity': positions[pid]['entityId']} for pid in ids],
             'coverage': coverage, 'legend': ['实线：原目录父子', '虚线：有据对照／组合'],
             'defaultReadout': '按需选择关系核对来源',
@@ -927,6 +942,7 @@ function frame(e){if(!e)return null;var cs=getComputedStyle(e),r=rect(e);return 
   top:e.scrollTop,left:e.scrollLeft,scrollHeight:e.scrollHeight,clientHeight:e.clientHeight,scrollWidth:e.scrollWidth,clientWidth:e.clientWidth,
   maxTop:Math.max(0,e.scrollHeight-e.clientHeight),inline:{top:e.style.top,left:e.style.left,width:e.style.width,height:e.style.height}};}
 function overview(value){return value&&value.contexts?.[m.contextKey(value.route)]?.overviewView||null;}
+function nodeLabels(e){var result={};[['name','.np-task-reading-name'],['contract','.np-task-reading-contract'],['challenge','.np-map-challenge-label'],['title','h2,h3'],['subtitle','.np-overview-goal p']].forEach(([key,selector])=>{var n=e.querySelector(selector);if(n)result[key]=box(n);});if(e.matches('.np-map-task-root'))result.title=box(e);return result;}
 var candidates=[landing,...landing.querySelectorAll('*')].filter(e=>!e.closest('.np-overview-map-toolbar')).map(scrollRegionCandidate).filter(Boolean),
     selected=map.dataset.selectedRelation||null;
 return {expected:expected,ready:document.getElementById('navigation-product').dataset.loadState,home:!landing.hidden,
@@ -938,7 +954,8 @@ return {expected:expected,ready:document.getElementById('navigation-product').da
   legend:legend?Object.assign(frame(legend),{inFooter:legend.parentElement===footer,labels:[...legend.children].map(e=>({id:e.id,className:e.className,proof:fixedTextProof(e)}))}):null,
   coverage:coverage?Object.assign(frame(coverage),{inFooter:coverage.parentElement===footer,proof:fixedTextProof(coverage)}):null,
   nodes:[...map.querySelectorAll('[data-map-position]')].map(e=>({id:e.dataset.mapPosition,parent:b.positions[e.dataset.mapPosition]?.parentId,
-    entity:b.positions[e.dataset.mapPosition]?.entityId,scope:e.dataset.taskOpen||null,visibility:getComputedStyle(e).visibility,display:getComputedStyle(e).display,opacity:getComputedStyle(e).opacity,proof:box(e)})),
+    entity:b.positions[e.dataset.mapPosition]?.entityId,scope:e.dataset.taskOpen||null,visibility:getComputedStyle(e).visibility,display:getComputedStyle(e).display,opacity:getComputedStyle(e).opacity,proof:box(e),labels:nodeLabels(e)})),
+  layoutNotes:[...map.querySelectorAll('[data-layout-note]')].map(e=>({key:e.dataset.layoutNote,hidden:e.hidden,proof:box(e)})),
   panel:Object.assign(frame(panel),{count:panels.length,hidden:panel.hidden,articles:[...panel.querySelectorAll('[data-task-relation]')].filter(e=>!e.hidden).map(e=>e.dataset.taskRelation)}),
   scrollRegionCandidates:candidates,scrollIds:candidates.filter(e=>e.rendered).map(e=>e.id)};
 """
@@ -958,6 +975,118 @@ def check_s0_text(proof, text, *areas):
             raise RuntimeError('S0 original wrapped text is covered, scaled or clipped by its actual client region')
     if any(not fragment['visible'] or not all(rect_inside(fragment, area) for area in areas) for fragment in proof['fragments']):
         raise RuntimeError('S0 final text fragment is covered or clipped')
+
+
+def check_s0_adaptive_spacing(data):
+    """Reconstruct the compact baseline from source membership and DOM measures.
+
+    No product-computed spacing data or final y positions establish the baseline.
+    Only actual row heights affect compactBottom; the reviewed compact arrangement
+    plus measured header-note height establishes each baseline y independently.
+    """
+    expected, map_box = data['expected'], data['map']
+    mr, client = map_box['rect'], map_box['clientRect']
+    close = lambda a, b: (isinstance(a, (int, float)) and math.isfinite(a) and
+                          abs(a - b) <= S0_SPACING_TOLERANCE)
+    if (data['viewport']['width'] < 1200 or map_box['clientHeight'] <= 0 or map_box['clientWidth'] <= 0 or
+            not close(client['height'], map_box['clientHeight']) or not close(client['width'], map_box['clientWidth']) or
+            abs(mr['height'] - map_box['clientHeight']) > .5 or abs(mr['width'] - map_box['clientWidth']) > .5):
+        raise RuntimeError('S0 adaptive spacing requires actual positive desktop map client dimensions')
+    rows = data['nodes']; by_id = {row['id']: row for row in rows}
+    if (len(rows) != len(expected['nodes']) or len(by_id) != len(expected['nodes']) or
+            [{key: row[key] for key in ('id', 'parent', 'entity')} for row in rows] != expected['nodes'] or
+            [{'scope': row['scope'], 'id': row['id']} for row in rows if row['scope'] is not None] != expected['tasks']):
+        raise RuntimeError('S0 adaptive spacing lost exact source node/task identity or count')
+    tasks = {row['scope']: row for row in rows if row['scope'] is not None}
+    if set(tasks) != {scope for group in S0_TASK_ROWS for scope in group}:
+        raise RuntimeError('S0 adaptive spacing lost an original editorial task row')
+    challenge_ids = expected['challengeIds']
+    if (len(set(challenge_ids)) != len(challenge_ids) or
+            [row['id'] for row in expected['nodes'] if row['parent'] == expected['challenge']] != challenge_ids or
+            [row['id'] for row in rows if row['parent'] == expected['challenge']] != challenge_ids):
+        raise RuntimeError('S0 adaptive spacing changed original C-child order or count')
+    width = map_box['clientWidth']
+    cw = min(520, max(408, 408 + (width - 1360) * 112 / 480))
+    lw, cx = width - cw - 24, width - cw
+    tw = (lw - 8 - 3 * 16) / 4
+    notes = data.get('layoutNotes', [])
+    if [note['key'] for note in notes] != ['0', '1', '2', '3', 'editorial', 'process']:
+        raise RuntimeError('S0 adaptive spacing lost original measured header notes')
+    notes_bottom = 0
+    for note in notes:
+        key, proof = note['key'], note['proof']
+        if key == 'process':
+            if not note['hidden']:
+                raise RuntimeError('S0 adaptive spacing exposed the original hidden process note')
+            continue
+        nr = proof['rect']; editorial = key == 'editorial'
+        x = max(5, lw / 2 - 130) if editorial else 8 + int(key) * (tw + 16)
+        # Decorative notes have pointer-events:none, so their box hit test is
+        # intentionally not an uncovered-text predicate. Measure actual layout.
+        if (note['hidden'] or not proof['opaque'] or not proof['unscaled'] or proof['clipped'] or
+                not rect_inside(nr, client) or not rect_inside(nr, data['viewport']) or
+                not close(proof['fontSize'], 15) or not close(nr['x'] - mr['x'], x) or
+                not close(nr['y'] - mr['y'], 104 if editorial else 124) or
+                not close(nr['width'], 260 if editorial else tw)):
+            raise RuntimeError('S0 adaptive spacing moved, reduced or covered original header notes')
+        if not editorial:
+            notes_bottom = max(notes_bottom, nr['y'] - mr['y'] + nr['height'])
+    task_start = max(150, notes_bottom + 5) + 8
+    baseline = {expected['root']: (math.floor((width - 540) / 2 + .5), 0, 540),
+                expected['literature']: (0, 60, lw), expected['challenge']: (cx, 60, cw),
+                expected['directory']: (8, 104, 130)}
+    task_ranks = {}
+    for rank, group in enumerate(S0_TASK_ROWS):
+        for column, scope in enumerate(group):
+            row = tasks[scope]; task_ranks[row['id']] = rank
+            baseline[row['id']] = (8 + column * (tw + 16), task_start + rank * 76, tw)
+    challenge_y = 108
+    for identity in challenge_ids:
+        baseline[identity] = (cx, challenge_y, cw)
+        challenge_y += by_id[identity]['proof']['rect']['height'] + 5
+    compact_bottom = max(baseline[row['id']][1] + row['proof']['rect']['height'] for row in rows)
+    available = max(0, map_box['clientHeight'] - compact_bottom - 12)
+    row_count = len(set(task_ranks.values()))
+    task_extra = min(24, available / (row_count - 1)) if row_count > 1 else 0
+    c_extra = min(7, available / (len(challenge_ids) - 1)) if len(challenge_ids) > 1 else 0
+    challenge_ranks = {identity: index for index, identity in enumerate(challenge_ids)}
+    contracts = {scope: (name, contract) for scope, name, contract in TASK_INDEX}
+    for row in rows:
+        identity, proof = row['id'], row['proof']; r = proof['rect']
+        x, y, w = baseline[identity]
+        y += task_ranks.get(identity, 0) * task_extra + challenge_ranks.get(identity, 0) * c_extra
+        if any(not close(actual, wanted) for actual, wanted in ((r['x'] - mr['x'], x), (r['y'] - mr['y'], y), (r['width'], w))):
+            raise RuntimeError('S0 adaptive spacing differs from bounded measured source-row placement')
+        is_task, is_c = identity in task_ranks, identity in challenge_ranks
+        if (is_task and not close(r['height'], 52) or is_c and not close(r['height'], 37) or
+                not rect_inside(r, client, S0_SPACING_TOLERANCE) or
+                data['footer']['rect']['y'] - r['y'] - r['height'] < 12 - S0_SPACING_TOLERANCE):
+            raise RuntimeError('S0 adaptive spacing stretched a card, overflowed the map or lost footer clearance')
+        labels = row.get('labels', {})
+        if is_task:
+            name, contract = contracts[row['scope']]
+            wanted = {'name': (15, name), 'contract': (16, contract)}
+        elif is_c:
+            wanted = {'challenge': (15, CHALLENGE_LABELS[row['entity']])}
+        elif identity == expected['root']:
+            wanted = {'title': (20, None), 'subtitle': (15, None)}
+        else:
+            wanted = {'title': (15 if identity == expected['directory'] else 18, None)}
+        if set(labels) != set(wanted):
+            raise RuntimeError('S0 adaptive spacing lost original node text proofs')
+        replaced = is_c and data['selectedRelation'] is not None
+        for key, (font, text) in wanted.items():
+            label = labels[key]
+            if (not close(label['fontSize'], font) or text is not None and label['text'] != text or
+                    label['clipped'] or not label['unscaled'] or not rect_inside(label['rect'], r) or
+                    (replaced and (label['opaque'] or label['visible'])) or
+                    (not replaced and not _reader_proof(label, r, client, data['viewport'], font_size=font))):
+                raise RuntimeError('S0 adaptive spacing reduced, substituted, covered or clipped original node text')
+    for index, row in enumerate(rows):
+        if any(rects_intersect(row['proof']['rect'], other['proof']['rect']) for other in rows[index + 1:]):
+            raise RuntimeError('S0 adaptive spacing overlaps original map nodes')
+    return dict(compactBottom=compact_bottom, availableExtra=available, taskRowCount=row_count,
+                challengeCount=len(challenge_ids), taskExtra=task_extra, challengeExtra=c_extra)
 
 
 def check_s0_footer(data):
@@ -1019,6 +1148,7 @@ def check_s0_footer(data):
     tasks = [{'scope': row['scope'], 'id': row['id']} for row in data['nodes'] if row['scope'] is not None]
     if tasks != expected['tasks']:
         raise RuntimeError('S0 footer repair changed original task identities')
+    check_s0_adaptive_spacing(data)
     for row in data['nodes']:
         proof = row['proof']
         replaced_challenge = selected is not None and row['id'] in expected['challengeIds']
@@ -3859,6 +3989,7 @@ def main():
               'reviewScope': 'user_requested_desktop_only_2026-10-10',
               'browserFullscreenRequested': False, 'displayContractMigrations': DISPLAY_CONTRACT_MIGRATIONS,
               's0FooterScope': {'sceneSuffixes': list(S0_FOOTER_SCENES), 'relations': 'all selections, per-source scrolling, native wheel, close, reload and endpoint Back',
+                                'adaptiveSpacing': 'independent DOM/source reconstruction in designated S0 scenes, default/show-all and every existing S0 lifecycle check; actual map client dimensions and label/card proofs, with no controller spacing metadata',
                                 'directoryReturn': 'Original -12 scene keeps its native glossary open; full-height/outer0 and all original gates remain, without requiring uncovered footer beneath that intentional overlay'},
               'capturePlan': [str(w) + 'x' + str(h) + suffix for w, h in VIEWPORTS for suffix in SCENE_NAMES]}
     report['frontendSources'] = {name: sha(name) for name in ('assets/navigation-product.js', 'assets/navigation-product-model.js', 'assets/navigation-product.css', 'scripts/navigation_product.py')}
@@ -4020,6 +4151,7 @@ def main():
             challenges:[...m.querySelectorAll('[data-challenge-open]')].map(n=>{var q=p[n.dataset.mapPosition];return {position:n.dataset.mapPosition,challengeOpen:n.dataset.challengeOpen,entity:q.entityId,expectedEntity:p[n.dataset.challengeOpen].entityId,title:n.title,aria:n.getAttribute('aria-label')||'',expectedTitle:arguments[3][q.entityId],label:box(n.querySelector('.np-map-challenge-label'))};}),
             relations:[...m.querySelectorAll('path[data-map-relation]')].map(e=>Object.assign({id:e.dataset.mapRelation,from:e.dataset.fromEntity,to:e.dataset.toEntity,type:e.dataset.relationType,endpointsMatch:(()=>{var from=[...m.querySelectorAll('[data-task-open]')].find(n=>n.dataset.taskOpen===e.dataset.fromEntity),to=[...m.querySelectorAll('[data-task-open]')].find(n=>n.dataset.taskOpen===e.dataset.toEntity);return !!from&&!!to&&touches(endpoint(e,false),rect(from))&&touches(endpoint(e,true),rect(to));})()},edge(e)))};
         """, [x[0] for x in TASK_INDEX], CHALLENGE_LABELS, [[r['id'],r['from'],r['to'],r['relationType']] for r in relation_expected], {entity:science['entities'][entity]['label'] for entity in CHALLENGE_LABELS})
+        graph['s0AdaptiveSpacing'] = driver.js(S0_FOOTER_SNAPSHOT_JS, footer_expected)
         report.setdefault('graphicalOverviewChecks', []).append(graph)
         save()
         if (graph['relationsVisible'] != ('true' if relation_mode == 'all' else 'false') or
@@ -4027,6 +4159,7 @@ def main():
             raise RuntimeError('Initial/show-all overview relationship mode differs from its explicit display contract')
         graph['checkedRelationMode'] = relation_mode
         check_graphical_map(graph)
+        check_s0_footer(graph['s0AdaptiveSpacing'])
 
 
     def relationship_checks(prefix, base):

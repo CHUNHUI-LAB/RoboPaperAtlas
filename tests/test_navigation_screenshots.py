@@ -2827,7 +2827,7 @@ d.querySelector('.np-return-previous').click();await ready(()=>a.getState().rout
 
     def test_new_state_capture_mapping_keeps_original_90_scenes_and_historical_diagnostics(self):
         import inspect
-        self.assertEqual(len(MODULE.DISPLAY_CONTRACT_MIGRATIONS), 13)
+        self.assertEqual(len(MODULE.DISPLAY_CONTRACT_MIGRATIONS), 14)
         self.assertIn('s0_footer', MODULE.DISPLAY_CONTRACT_MIGRATIONS)
         self.assertEqual(len(MODULE.SCENE_NAMES), 49)
         for name in ('-31-s0-reading-hierarchy', '-32-s1-relation-90', '-33-s2-first-answer', '-30-analysis-root-coverage'):
@@ -3871,22 +3871,57 @@ class S0FooterCaptureChecks(unittest.TestCase):
         # A genuinely wrapped original run is included; final fragments are gated.
         footer['proof']['fragments'] = [dict(legend['rect'], visible=True), dict(coverage['rect'], visible=True)]
         footer['proof']['textRuns'][0]['fragments'] = copy.deepcopy(footer['proof']['fragments'])
-        cw = 408 if width == 1440 else 520; cx = map_box['x'] + map_box['width'] - cw
+        cw = min(520, max(408, 408 + (map_box['width'] - 1360) * 112 / 480))
+        lw = map_box['width'] - cw - 24; cx = map_box['x'] + lw + 24; tw = (lw - 8 - 48) / 4
+        layout_notes = []
+        for key in ('0', '1', '2', '3', 'editorial', 'process'):
+            editorial = key == 'editorial'; hidden = key == 'process'
+            x = max(5, lw / 2 - 130) if editorial else 10 if hidden else 8 + int(key) * (tw + 16)
+            note = cls.proof('Reviewed editorial note', rect(map_box['x'] + x, map_box['y'] + (104 if editorial else 124), 260 if editorial else tw, 20.25))
+            note.update(visible=False, opaque=not hidden)  # Original notes use pointer-events:none.
+            layout_notes.append(dict(key=key, hidden=hidden, proof=note))
+        task_places = {scope: (column, rank) for rank, group in enumerate(MODULE.S0_TASK_ROWS) for column, scope in enumerate(group)}
+        task_labels = {scope: (name, contract) for scope, name, contract in MODULE.TASK_INDEX}
+        # Actual map client height is integer-rounded while its rect is fractional.
+        map_frame = frame('np-overview-map', map_box, 'np-reading-landing', position='relative', flexGrow='1')
+        map_frame.update(clientHeight=round(map_box['height'] + .01), scrollHeight=round(map_box['height'] + .01))
+        map_frame['clientRect']['height'] = map_frame['clientHeight']
+        extra = max(0, map_frame['clientHeight'] - (108 + 12 * (37 + 5) + 37) - 12)
+        task_extra, c_extra = min(24, extra / 5), min(7, extra / 12)
         nodes = []; task_by_id = {row['id']: row['scope'] for row in expected['tasks']}
-        task_index = 0; challenge_index = 0
+        challenge_index = 0
         for i, node in enumerate(expected['nodes']):
             if node['id'] in task_by_id:
-                area = rect(49 + (task_index % 4) * 190, 307 + (task_index // 4) * 76, 174, 56); task_index += 1
+                scope = task_by_id[node['id']]; column, rank = task_places[scope]
+                area = rect(49 + column * (tw + 16), 307 + rank * (76 + task_extra), tw, 52)
+                name, contract = task_labels[scope]
+                labels = dict(name=cls.proof(name, rect(area['x'] + 10, area['y'] + 26, tw - 20, 21)),
+                              contract=cls.proof(contract, rect(area['x'] + 10, area['y'] + 4, tw - 20, 20.8)))
+                labels['contract']['fontSize'] = 16
             elif node['id'] == expected['challenge']:
-                area = rect(cx, 209, cw, 36)
+                area = rect(cx, 209, cw, 37.390625)
+                labels = dict(title=cls.proof('C', rect(cx + 12, 216, cw - 24, 23.390625)))
+                labels['title']['fontSize'] = 18
             elif i >= 4:
-                area = rect(cx, 257 + challenge_index * 42, cw, 37); challenge_index += 1
+                area = rect(cx, 257 + challenge_index * (42 + c_extra), cw, 37); challenge_index += 1
+                labels = dict(challenge=cls.proof(MODULE.CHALLENGE_LABELS[node['entity']], rect(cx + 8, area['y'] + 7, cw - 35, 21.75)))
+            elif node['id'] == expected['root']:
+                area = rect(map_box['x'] + (map_box['width'] - 540) / 2, 149, 540, 42.390625)
+                labels = dict(title=cls.proof('General goal', rect(area['x'] + 12, 156, 170, 26)),
+                              subtitle=cls.proof('Original goal', rect(area['x'] + 198, 160, 300, 21.75)))
+                labels['title']['fontSize'] = 20
+            elif node['id'] == expected['literature']:
+                area = rect(41, 209, lw, 37.390625)
+                labels = dict(title=cls.proof('L', rect(53, 216, lw - 24, 23.390625)))
+                labels['title']['fontSize'] = 18
             else:
-                area = rect(49, 149 + i * 40, 130, 24)
+                area = rect(49, 253, 130, 26.5)
+                labels = dict(title=cls.proof('任务入口', area))
             replaced = selected is not None and node['id'] in expected['challengeIds']
             node_proof = cls.proof(node['entity'], area)
             node_proof.update(opaque=not replaced, visible=not replaced)
-            nodes.append(dict(node, scope=task_by_id.get(node['id']), visibility='hidden' if replaced else 'visible', display='block', opacity='1', proof=node_proof))
+            for label in labels.values(): label.update(opaque=not replaced, visible=not replaced)
+            nodes.append(dict(node, scope=task_by_id.get(node['id']), visibility='hidden' if replaced else 'visible', display='block', opacity='1', proof=node_proof, labels=labels))
         panel = frame('np-overview-relation-panel', rect(cx, 257, cw, map_box['height'] - 120), 'np-overview-map',
                       position='absolute', overflowX='auto', overflowY='auto', count=1, hidden=selected is None,
                       articles=[selected] if selected else [])
@@ -3898,8 +3933,8 @@ class S0FooterCaptureChecks(unittest.TestCase):
         return dict(expected=expected, viewport=viewport, ready='ready', home=True, scale=1, window=dict(x=0, y=0),
                     route=route, historyRoute=copy.deepcopy(route), focus='np-map-relation-evidence-' + selected if selected else 'BODY',
                     selectedRelation=selected, relationsVisible='false', selectorOpen=False, runtimeOverview=copy.deepcopy(view), historyOverview=copy.deepcopy(view),
-                    landing=landing, map=frame('np-overview-map', map_box, 'np-reading-landing', position='relative', flexGrow='1'), footerCount=1, legendCount=1, coverageCount=1,
-                    footer=footer, legend=legend, coverage=coverage, nodes=nodes, panel=panel, scrollRegionCandidates=[],
+                    landing=landing, map=map_frame, footerCount=1, legendCount=1, coverageCount=1,
+                    footer=footer, legend=legend, coverage=coverage, nodes=nodes, layoutNotes=layout_notes, panel=panel, scrollRegionCandidates=[],
                     scrollIds=['np-overview-relation-panel'] if selected else [])
 
     def test_source_bound_complete_footer_and_original_nodes_fit_both_desktops(self):
@@ -3916,6 +3951,109 @@ class S0FooterCaptureChecks(unittest.TestCase):
         changed = self.expected(source)
         self.assertNotEqual(original['coverage'], changed['coverage'])
         self.assertEqual(original['nodes'], changed['nodes'])
+
+    def test_adaptive_spacing_uses_actual_client_height_and_preserves_compact_map_gap(self):
+        for width, task_extra, c_extra in ((1440, 0, 0), (1920, 24, 7)):
+            for selected in (None, *self.expected()['readouts']):
+                for mode in ('false', 'true'):
+                    data = self.fixture(width, selected); data['relationsVisible'] = mode
+                    result = MODULE.check_s0_adaptive_spacing(data)
+                    MODULE.check_s0_footer(data)
+                    self.assertEqual(result, dict(compactBottom=649, availableExtra=0 if width == 1440 else 178,
+                        taskRowCount=6, challengeCount=13, taskExtra=task_extra, challengeExtra=c_extra))
+                    last = data['nodes'][-1]['proof']['rect']; map_rect = data['map']['rect']
+                    self.assertAlmostEqual(last['y'] + last['height'] - map_rect['y'], 649 if width == 1440 else 733)
+                    self.assertAlmostEqual(map_rect['y'] + map_rect['height'] - last['y'] - last['height'], 9.5 if width == 1440 else 105.5)
+                    tasks = [n['proof']['rect'] for n in data['nodes'] if n['scope']]
+                    self.assertAlmostEqual(max(r['y'] + r['height'] for r in tasks) - map_rect['y'], 590 if width == 1440 else 710)
+                    self.assertTrue(all(data['footer']['rect']['y'] - r['y'] - r['height'] >= 12 for r in tasks + [last]))
+
+    def test_adaptive_spacing_rejects_stale_large_layout_compact_drift_and_invented_metadata(self):
+        import copy
+        small = self.fixture(); large = self.fixture(1920)
+        # Copy final y from the compact layout while retaining genuine large-map x/width.
+        stale = copy.deepcopy(large)
+        for old, new in zip(small['nodes'], stale['nodes']): new['proof']['rect']['y'] = old['proof']['rect']['y']
+        stale['adaptiveSpacing'] = dict(compactBottom=649, taskExtra=24, challengeExtra=7, passed=True)
+        with self.assertRaisesRegex(RuntimeError, 'bounded measured'): MODULE.check_s0_adaptive_spacing(stale)
+        for width, good in ((1440, small), (1920, large)):
+            for identity in (good['expected']['root'], good['expected']['literature'], good['expected']['directory'],
+                             good['expected']['tasks'][0]['id'], good['expected']['challengeIds'][0], good['expected']['challengeIds'][-1]):
+                for delta in (-1, 1, 120):
+                    bad = copy.deepcopy(good); next(n for n in bad['nodes'] if n['id'] == identity)['proof']['rect']['y'] += delta
+                    with self.subTest(width=width, identity=identity, delta=delta), self.assertRaises(RuntimeError):
+                        MODULE.check_s0_adaptive_spacing(bad)
+
+    def test_adaptive_spacing_reconstructs_task_start_from_measured_notes(self):
+        import copy
+        data = self.fixture(1920)
+        for note in data['layoutNotes'][:4]: note['proof']['rect']['height'] += 30
+        with self.assertRaisesRegex(RuntimeError, 'bounded measured'): MODULE.check_s0_adaptive_spacing(data)
+        # New notes bottom is 174.25, so bus is 179.25 and task start is 187.25.
+        for node in data['nodes']:
+            if node['scope']:
+                node['proof']['rect']['y'] += 29.25
+                for label in node['labels'].values(): label['rect']['y'] += 29.25
+        result = MODULE.check_s0_adaptive_spacing(data)
+        self.assertEqual(result['compactBottom'], 649)
+        self.assertEqual((result['taskExtra'], result['challengeExtra']), (24, 7))
+        smaller = copy.deepcopy(data); smaller['map']['clientHeight'] = 659
+        smaller['map']['clientRect']['height'] = 659; smaller['map']['rect']['height'] = 658.5
+        with self.assertRaises(RuntimeError): MODULE.check_s0_adaptive_spacing(smaller)
+
+    def test_adaptive_spacing_rejects_wrong_rows_order_count_x_sizes_fonts_overlap_and_footer(self):
+        import copy
+        good = self.fixture(1920)
+        task = lambda d: next(n for n in d['nodes'] if n['scope'] == 'task:pointnav')
+        c = lambda d: next(n for n in d['nodes'] if n['id'] == d['expected']['challengeIds'][0])
+        mutations = [lambda d: d['nodes'].pop(), lambda d: d['nodes'].append(copy.deepcopy(d['nodes'][0])),
+                     lambda d: d['nodes'].__setitem__(slice(-2, None), list(reversed(d['nodes'][-2:]))),
+                     lambda d: task(d).update(scope='task:invented'),
+                     lambda d: task(d)['proof']['rect'].update(y=407),
+                     lambda d: task(d)['proof']['rect'].update(x=50),
+                     lambda d: c(d)['proof']['rect'].update(x=c(d)['proof']['rect']['x'] - 1),
+                     lambda d: task(d)['proof']['rect'].update(width=task(d)['proof']['rect']['width'] + 1),
+                     lambda d: task(d)['proof']['rect'].update(height=53),
+                     lambda d: c(d)['proof']['rect'].update(height=38),
+                     lambda d: c(d)['proof']['rect'].update(height=36),
+                     lambda d: task(d)['labels']['contract'].update(fontSize=15),
+                     lambda d: task(d)['labels']['name'].update(fontSize=14),
+                     lambda d: c(d)['labels']['challenge'].update(fontSize=14),
+                     lambda d: c(d)['labels']['challenge'].update(visible=False),
+                     lambda d: task(d)['labels']['name'].update(clipped=True),
+                     lambda d: task(d)['labels'].pop('name'),
+                     lambda d: task(d)['proof']['rect'].update(y=c(d)['proof']['rect']['y'], x=c(d)['proof']['rect']['x']),
+                     lambda d: d['footer']['rect'].update(y=d['nodes'][-1]['proof']['rect']['y'] + 40),
+                     lambda d: d['layoutNotes'].pop(), lambda d: d['layoutNotes'][0]['proof']['rect'].update(y=274),
+                     lambda d: d['layoutNotes'][0]['proof'].update(fontSize=14),
+                     lambda d: d['map'].update(clientHeight=0), lambda d: d['map'].update(clientWidth=0),
+                     lambda d: d['map'].update(clientHeight=840), lambda d: d['map']['clientRect'].update(height=838.5)]
+        for index, mutate in enumerate(mutations):
+            bad = copy.deepcopy(good); mutate(bad)
+            with self.subTest(mutation=index), self.assertRaises(RuntimeError): MODULE.check_s0_adaptive_spacing(bad)
+
+    def test_adaptive_spacing_gate_is_independent_and_wired_to_original_capture_saves(self):
+        import inspect, ast
+        self.assertEqual(MODULE.S0_TASK_ROWS[0], ('task:pointnav', 'task:ddn', 'task:vln', 'task:multion'))
+        self.assertEqual(MODULE.S0_TASK_ROWS[-1], ('task:aerial-visual-object-search', 'task:person-finding-following', 'task:namo'))
+        self.assertEqual(sorted(scope for group in MODULE.S0_TASK_ROWS for scope in group), sorted(row[0] for row in MODULE.TASK_INDEX))
+        gate = inspect.getsource(MODULE.check_s0_adaptive_spacing)
+        for evidence in ("map_box['clientHeight']", "map_box['clientWidth']", "data.get('layoutNotes'", 'S0_TASK_ROWS', "expected['challengeIds']", "row['proof']['rect']['height']"):
+            self.assertIn(evidence, gate)
+        self.assertNotIn('OVERVIEW_TASK_PLACEMENT', gate)
+        self.assertNotIn("data['adaptiveSpacing']", gate)
+        self.assertIn("len(expected['nodes'])", gate)
+        self.assertNotIn('!= 39', gate)
+        self.assertNotIn('!= 13', gate)
+        self.assertIn('check_s0_adaptive_spacing(data)', inspect.getsource(MODULE.check_s0_footer))
+        main = inspect.getsource(MODULE.main)
+        self.assertIn("graph['s0AdaptiveSpacing'] = driver.js(S0_FOOTER_SNAPSHOT_JS, footer_expected)", main)
+        self.assertIn("check_s0_footer(graph['s0AdaptiveSpacing'])", main)
+        self.assertIn("reading_home(relation_mode='all')", main)
+        saves = [n for n in ast.walk(ast.parse(inspect.getsource(MODULE))) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']
+        self.assertEqual(len(saves), 96)
+        self.assertEqual(len(MODULE.SCENE_NAMES) * len(MODULE.VIEWPORTS), 98)
+        self.assertIn('s0_adaptive_spacing', MODULE.DISPLAY_CONTRACT_MIGRATIONS)
 
     def test_footer_rejects_legacy_absolute_map_child_missing_duplicate_and_extra_scroll(self):
         import copy
