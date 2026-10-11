@@ -1,5 +1,6 @@
 import copy,hashlib,json,shutil,sys,tempfile,unittest
 from html.parser import HTMLParser
+from datetime import datetime,timedelta
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT/'scripts'))
 from weekly_briefs import load_archive,validate_weekly,validate_snapshot,render,navigation,record_failed_attempt,home_overview
@@ -45,7 +46,11 @@ class WeeklyTests(unittest.TestCase):
     with self.assertRaises(ValueError):load_archive(root)
  def test_next_week_zero_candidates_does_not_break_history(self):
   with tempfile.TemporaryDirectory() as tmp:
-   root=Path(tmp);(root/'data').mkdir();shutil.copytree(ROOT/'data/weekly',root/'data/weekly');base=root/'data/weekly';date='2026-10-11';d=copy.deepcopy(self.record);d.update(id='arxiv-weekly-'+date,date=date,status='no_material_update',generated_at='2026-10-11T13:00:00Z',candidate_manifest=date+'/manifest.json');d['window'].update(start='2026-10-04T12:41:03Z',end='2026-10-11T12:41:03Z');d['source_snapshot'].update(coverage_start=d['window']['start'],coverage_end=d['window']['end'],generated_at='2026-10-11T12:43:00Z',fetched_at='2026-10-11T12:42:00Z',sha256='a'*64);d['counts']={k:0 for k in d['counts']};o=d['research_overview'];o['coverage'].update(candidate_metadata_screened=0,complete_abstracts_checked=0,count_denominator=0);o.update(evidence_sources=[],themes=[],keyword_caveats=[],executive_summary='本周没有新增研究主线。')
+   root=Path(tmp);(root/'data').mkdir();shutil.copytree(ROOT/'data/weekly',root/'data/weekly');base=root/'data/weekly'
+   # Derive a genuinely new week even after the archive gains later issues.
+   start=max(datetime.fromisoformat(r['window']['end'].replace('Z','+00:00')) for r in self.records.values());end=start+timedelta(days=7)
+   iso=lambda value:value.isoformat().replace('+00:00','Z')
+   date=end.date().isoformat();d=copy.deepcopy(self.record);d.update(id='arxiv-weekly-'+date,date=date,status='no_material_update',generated_at=iso(end+timedelta(minutes=3)),candidate_manifest=date+'/manifest.json');d['window'].update(start=iso(start),end=iso(end));d['source_snapshot'].update(coverage_start=d['window']['start'],coverage_end=d['window']['end'],generated_at=iso(end+timedelta(minutes=2)),fetched_at=iso(end+timedelta(minutes=1)),sha256='a'*64);d['counts']={k:0 for k in d['counts']};o=d['research_overview'];o['coverage'].update(candidate_metadata_screened=0,complete_abstracts_checked=0,count_denominator=0);o.update(evidence_sources=[],themes=[],keyword_caveats=[],executive_summary='本周没有新增研究主线。')
    for t in o['topic_distribution']:t.update(count=0,new=0,revisions=0,candidate_ids=[])
    (base/date).mkdir();m=dict(schema_version='weekly-candidates-1.0',sha256=hashlib.sha256(b'[]').hexdigest(),count=0,parts=[]);mr=(json.dumps(m)+'\n').encode();(base/date/'manifest.json').write_bytes(mr);raw=(json.dumps(d,ensure_ascii=False)+'\n').encode();(base/(date+'.json')).write_bytes(raw);i=json.loads((base/'index.json').read_text());i['latest']=date;i['weeks'].append(dict(date=date,path=date+'.json',title=d['title'],status=d['status'],sha256=hashlib.sha256(raw).hexdigest(),candidate_manifest_sha256=hashlib.sha256(mr).hexdigest()));(base/'index.json').write_text(json.dumps(i));index,records=load_archive(root);self.assertEqual(records[index['latest']]['counts']['window_candidates'],0);self.assertEqual(records['2026-10-04']['counts']['window_candidates'],238);self.assertIn('本周没有新增研究主线',render(records[date],index,'../../'))
  def test_failed_attempt_preserves_success_hashes(self):

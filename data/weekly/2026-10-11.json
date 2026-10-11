@@ -1,0 +1,828 @@
+{
+  "schema_version": "weekly-1.0",
+  "id": "arxiv-weekly-2026-10-11",
+  "date": "2026-10-11",
+  "title": "Radar 周报｜预测可信度、导航信念与执行接口",
+  "status": "ready",
+  "generated_at": "2026-10-11T14:42:00Z",
+  "language": "zh-CN",
+  "window": {
+    "start": "2026-10-04T08:14:00Z",
+    "end": "2026-10-11T08:14:00Z",
+    "timezone": "UTC",
+    "date_field": "updated_at",
+    "inclusive": true,
+    "duration_hours": 168
+  },
+  "source_snapshot": {
+    "name": "frontier.json",
+    "sha256": "ad0e9b5dcb5186f05245c5374e51824891c9766bb7c7827052e3f76f2558c90b",
+    "generated_at": "2026-10-11T08:16:21Z",
+    "fetched_at": "2026-10-11T08:16:21Z",
+    "status": "ok",
+    "query": "(cat:cs.RO OR cat:cs.CV OR cat:cs.AI OR cat:cs.LG OR cat:cs.CL) AND (all:\"vision-language navigation\" OR all:\"vision language navigation\" OR all:VLN OR all:ObjectNav OR all:\"object-goal\" OR all:\"object goal\" OR ((ti:navigation OR abs:navigation) AND (all:agent OR all:memory OR all:feedback OR all:harness OR all:reflection)) OR all:\"spatial memory\" OR all:\"episodic memory\" OR all:\"mobile manipulation\" OR all:\"mobile manipulator\" OR all:quadruped OR all:\"whole-body\" OR all:\"whole body\" OR all:\"end-effector\" OR all:\"end effector\" OR all:\"vision-language-action\" OR all:\"vision language action\" OR all:\"world-action model\" OR all:\"world action model\" OR ((all:VLA OR all:MoE OR all:\"mixture of experts\" OR all:\"mixture-of-experts\" OR all:\"world model\" OR all:\"world models\") AND (all:robot OR all:robotic OR all:robotics OR all:manipulation OR all:navigation OR all:embodied)))",
+    "rule_version": "2026-09-30.3",
+    "coverage_complete": true,
+    "coverage_truncated": false,
+    "coverage_start": "2026-10-04T08:14:00Z",
+    "coverage_end": "2026-10-11T08:14:00Z"
+  },
+  "counts": {
+    "window_candidates": 184,
+    "new": 113,
+    "revisions": 71,
+    "source_seven_day_candidates": 184
+  },
+  "candidate_manifest": "2026-10-11/manifest.json",
+  "research_overview": {
+    "headline": "从可信预测到可执行闭环：五个窗口内研究问题",
+    "executive_summary": "本期保留 2026-10-04 08:14 至 2026-10-11 08:14 UTC 的完整七天更新时间窗口：184 条候选，113 条首版、71 条修订。已逐条筛阅标题与摘要片段，并核对 17 篇固定版本的官方完整摘要。五条主线分别讨论预测可信度、预测成本、导航信念、全身执行以及视角与在线修正；优先选读写在各主题的后续核查问题中。它们是本窗口的编辑归纳，不是七份日报拼接，也不代表全部候选均已完整阅读。",
+    "coverage": {
+      "candidate_metadata_screened": 184,
+      "complete_abstracts_checked": 17,
+      "full_papers_read": 0,
+      "revision_diffs_checked": 0,
+      "comparison_window_available": false,
+      "topic_count_method": "existing_title_abstract_keyword_heuristic_multilabel",
+      "count_denominator": 184
+    },
+    "topic_distribution": [
+      {
+        "topic": "vln_objectnav",
+        "label": "VLN / ObjectNav",
+        "count": 12,
+        "new": 8,
+        "revisions": 4,
+        "candidate_ids": [
+          "2603.13833v2",
+          "2603.09163v2",
+          "2609.35965v2",
+          "2610.10421v1",
+          "2608.09196v2",
+          "2610.10125v1",
+          "2610.10635v1",
+          "2610.07558v1",
+          "2610.07396v1",
+          "2610.07192v1",
+          "2610.06510v1",
+          "2610.05664v1"
+        ]
+      },
+      {
+        "topic": "navigation_agents",
+        "label": "Navigation agents / harnesses",
+        "count": 15,
+        "new": 10,
+        "revisions": 5,
+        "candidate_ids": [
+          "2610.12126v1",
+          "2508.12087v3",
+          "2609.39166v3",
+          "2610.10787v1",
+          "2609.35965v2",
+          "2610.10421v1",
+          "2608.09196v2",
+          "2610.10125v1",
+          "2610.10635v1",
+          "2610.09438v1",
+          "2609.40245v3",
+          "2610.08941v1",
+          "2610.08110v1",
+          "2610.06487v1",
+          "2610.06400v1"
+        ]
+      },
+      {
+        "topic": "spatial_episodic_memory",
+        "label": "Spatial / episodic memory and feedback",
+        "count": 2,
+        "new": 1,
+        "revisions": 1,
+        "candidate_ids": [
+          "2609.39166v3",
+          "2610.09358v1"
+        ]
+      },
+      {
+        "topic": "mobile_manipulation",
+        "label": "Quadruped-arm / mobile manipulation",
+        "count": 29,
+        "new": 24,
+        "revisions": 5,
+        "candidate_ids": [
+          "2610.12465v1",
+          "2610.12424v1",
+          "2609.23997v2",
+          "2610.12089v1",
+          "2610.11283v1",
+          "2610.11248v1",
+          "2610.10409v1",
+          "2610.10388v1",
+          "2610.09967v1",
+          "2607.11119v2",
+          "2610.09291v1",
+          "2607.19479v2",
+          "2610.09254v1",
+          "2610.09117v1",
+          "2610.08970v1",
+          "2610.08441v1",
+          "2610.08320v1",
+          "2610.08220v1",
+          "2509.04094v3",
+          "2610.08003v1",
+          "2610.07969v1",
+          "2610.07511v1",
+          "2604.00055v2",
+          "2610.06850v1",
+          "2610.06641v1",
+          "2610.06215v1",
+          "2610.06129v1",
+          "2610.05678v1",
+          "2610.05414v1"
+        ]
+      },
+      {
+        "topic": "whole_body_control",
+        "label": "Whole-body control",
+        "count": 15,
+        "new": 12,
+        "revisions": 3,
+        "candidate_ids": [
+          "2610.12026v1",
+          "2603.13228v3",
+          "2610.11283v1",
+          "2610.10465v1",
+          "2610.04238v2",
+          "2610.09479v1",
+          "2610.09291v1",
+          "2610.08970v1",
+          "2610.08653v1",
+          "2610.08120v1",
+          "2509.04094v3",
+          "2610.06850v1",
+          "2610.06641v1",
+          "2610.06129v1",
+          "2610.05678v1"
+        ]
+      },
+      {
+        "topic": "end_effector_trajectories",
+        "label": "End-effector trajectories",
+        "count": 14,
+        "new": 9,
+        "revisions": 5,
+        "candidate_ids": [
+          "2609.19142v3",
+          "2608.13422v2",
+          "2610.10748v1",
+          "2610.10637v1",
+          "2610.09857v1",
+          "2610.09479v1",
+          "2607.11119v2",
+          "2610.08220v1",
+          "2602.10013v2",
+          "2610.07621v1",
+          "2610.07511v1",
+          "2503.14753v3",
+          "2610.06215v1",
+          "2610.07052v1"
+        ]
+      },
+      {
+        "topic": "robot_vla",
+        "label": "Robot VLA",
+        "count": 84,
+        "new": 49,
+        "revisions": 35,
+        "candidate_ids": [
+          "2610.12451v1",
+          "2610.12435v1",
+          "2610.12386v1",
+          "2610.12369v1",
+          "2610.12231v1",
+          "2610.12185v1",
+          "2610.04681v3",
+          "2610.12090v1",
+          "2610.12089v1",
+          "2606.17924v2",
+          "2610.12026v1",
+          "2610.12007v1",
+          "2610.11952v1",
+          "2610.02626v2",
+          "2609.20659v2",
+          "2610.11771v1",
+          "2610.11508v1",
+          "2610.11480v1",
+          "2608.25757v5",
+          "2610.11416v1",
+          "2610.08133v2",
+          "2603.08260v2",
+          "2603.12717v3",
+          "2609.25562v2",
+          "2610.11248v1",
+          "2609.26467v2",
+          "2607.12659v6",
+          "2610.10912v1",
+          "2610.10787v1",
+          "2610.07756v2",
+          "2608.25585v2",
+          "2606.16253v2",
+          "2610.10384v1",
+          "2606.09499v2",
+          "2610.09718v1",
+          "2505.12224v5",
+          "2610.09696v1",
+          "2610.01083v2",
+          "2610.09496v1",
+          "2610.09451v1",
+          "2509.19571v2",
+          "2609.14156v2",
+          "2610.09228v1",
+          "2606.30988v4",
+          "2610.09170v1",
+          "2610.05755v2",
+          "2606.15568v2",
+          "2610.09016v1",
+          "2610.08726v1",
+          "2610.08526v1",
+          "2610.08444v1",
+          "2610.08425v1",
+          "2607.02092v4",
+          "2610.08220v1",
+          "2609.15012v3",
+          "2610.08150v1",
+          "2606.03240v2",
+          "2610.07946v1",
+          "2610.07652v1",
+          "2608.27550v2",
+          "2610.07594v1",
+          "2610.07558v1",
+          "2609.36416v3",
+          "2607.09042v2",
+          "2610.06843v1",
+          "2610.06598v1",
+          "2608.21031v2",
+          "2610.06271v1",
+          "2610.06235v1",
+          "2607.09701v2",
+          "2605.12160v2",
+          "2607.03751v2",
+          "2610.05994v1",
+          "2602.14174v2",
+          "2610.05818v1",
+          "2610.00575v2",
+          "2610.05719v1",
+          "2610.05492v1",
+          "2610.05418v1",
+          "2603.07904v3",
+          "2610.05273v1",
+          "2610.05230v1",
+          "2610.05062v1",
+          "2610.06999v1"
+        ]
+      },
+      {
+        "topic": "robot_moe",
+        "label": "Robot mixture-of-experts",
+        "count": 3,
+        "new": 2,
+        "revisions": 1,
+        "candidate_ids": [
+          "2605.19957v2",
+          "2610.11508v1",
+          "2610.07774v1"
+        ]
+      },
+      {
+        "topic": "robot_world_models",
+        "label": "Robot world models",
+        "count": 49,
+        "new": 25,
+        "revisions": 24,
+        "candidate_ids": [
+          "2610.12468v1",
+          "2608.06332v2",
+          "2610.12368v1",
+          "2610.12194v1",
+          "2610.04681v3",
+          "2610.12099v1",
+          "2609.19142v3",
+          "2605.19957v2",
+          "2610.12026v1",
+          "2607.02403v2",
+          "2610.11591v1",
+          "2610.11416v1",
+          "2610.11401v1",
+          "2605.25077v2",
+          "2610.10270v2",
+          "2610.11283v1",
+          "2609.25562v2",
+          "2607.00148v2",
+          "2610.10846v1",
+          "2610.10528v1",
+          "2610.10515v1",
+          "2610.04432v2",
+          "2606.09499v2",
+          "2606.08775v2",
+          "2610.10079v1",
+          "2610.03797v3",
+          "2610.09734v1",
+          "2610.04913v2",
+          "2609.27314v2",
+          "2609.32336v2",
+          "2610.09309v1",
+          "2606.30988v4",
+          "2606.00267v2",
+          "2610.09134v1",
+          "2608.02365v2",
+          "2610.08941v1",
+          "2610.08780v1",
+          "2610.06814v2",
+          "2610.08119v1",
+          "2610.07922v1",
+          "2610.01559v2",
+          "2610.07599v1",
+          "2609.30247v2",
+          "2610.06598v1",
+          "2610.06349v1",
+          "2610.06280v1",
+          "2610.06235v1",
+          "2610.00575v2",
+          "2607.04546v3"
+        ]
+      }
+    ],
+    "themes": [
+      {
+        "id": "action-faithful-worlds",
+        "title": "预测可信度：让世界模型区分可执行动作与失败",
+        "summary": "本窗口的三条路线分别改造训练反馈、失败数据和规划代价。共同目标是让预测对动作变化与失败后果敏感；视觉逼真或接近目标本身不足以证明可执行性。",
+        "shared_problem": "当预测看似成功、实际执行却偏离时，如何定位模型的动作不敏感，并把一致性要求加入训练或决策？",
+        "method_routes": [
+          {
+            "text": "DreamTrue 作者将动作轨迹渲染为空间条件，以离线几何校准改善动作对齐；再通过反事实轨迹及人类标注视频训练的奖励模型指导后训练，针对交互缺陷提供反馈。",
+            "evidence_ids": [
+              "2610.12468v1"
+            ]
+          },
+          {
+            "text": "CureWM 作者从成功演示构造不同程度的替代动作，通过仿真或硬件执行验证结果，再用失败及保留成功样本微调已有模型；摘要同时强调降低乐观预测和保持成功—失败区分能力。",
+            "evidence_ids": [
+              "2610.09134v1"
+            ]
+          },
+          {
+            "text": "ACID 作者不只评价预测终点，而以逆动力学从中间状态转移反推动作，将其与输入动作的循环一致性残差纳入规划代价。它处理的是决策时筛选，与前两篇的数据或后训练路线不同。",
+            "evidence_ids": [
+              "2607.02403v2"
+            ]
+          }
+        ],
+        "open_question": "优先对照 DreamTrue 与 CureWM 的失败反馈来源，再看 ACID 的决策时约束。需进一步核查真实失败覆盖、逆模型误差和统一闭环评测；摘要不能支持跨论文性能排名。",
+        "evidence_ids": [
+          "2610.12468v1",
+          "2610.09134v1",
+          "2607.02403v2"
+        ],
+        "related_topics": [
+          "robot_world_models"
+        ],
+        "attribution": "curator_synthesis",
+        "comparison_scope": "within_window_no_temporal_trend"
+      },
+      {
+        "id": "compact-predictive-control",
+        "title": "预测成本：压缩未来表示，保留有用历史",
+        "summary": "三篇摘要分别把成本问题放在候选轨迹评价、未来监督目标和历史上下文处理上。它们减少或组织计算的位置不同，不能把训练加速与部署延迟直接比较。",
+        "shared_problem": "在有限计算预算下，哪些未来和历史信息真正支持控制，哪些表示与重复计算可以简化？",
+        "method_routes": [
+          {
+            "text": "LiteNWM 作者共享候选轨迹的视觉编码，并联合预测多个时间尺度的动作条件潜在表示，再由学习得到的评分器选轨迹；这是导航的候选评价接口。",
+            "evidence_ids": [
+              "2610.12368v1"
+            ]
+          },
+          {
+            "text": "MiniWAM 作者以逆动力学监督和特征重建学习 PRISM 紧凑未来目标，冻结目标编码器后联合训练动作与未来预测，主要针对世界—动作联合训练的高维监督成本。",
+            "evidence_ids": [
+              "2610.12194v1"
+            ]
+          },
+          {
+            "text": "Long-WAM 作者先进行自回归视频预训练，再保留历史到未来的因果结构用于动作学习；流式编码、异步执行和硬件相关加速服务于长历史的实时控制，而非简单删除未来预测。",
+            "evidence_ids": [
+              "2610.10528v1"
+            ]
+          }
+        ],
+        "open_question": "优先阅读 LiteNWM 与 MiniWAM 以区分推理评价和训练目标，再读 Long-WAM 的历史使用条件。需核查统一硬件、任务成功率、延迟尾部及信息压缩造成的失效情形。",
+        "evidence_ids": [
+          "2610.12368v1",
+          "2610.12194v1",
+          "2610.10528v1"
+        ],
+        "related_topics": [
+          "robot_world_models"
+        ],
+        "attribution": "curator_synthesis",
+        "comparison_scope": "within_window_no_temporal_trend"
+      },
+      {
+        "id": "navigation-belief-and-runtime",
+        "title": "导航闭环：记忆何时可信，何时重新观察",
+        "summary": "本窗口将导航中的旧观测、隐蔽变化和突发事件分成信念更新、记忆呈现和运行时调度几个问题。以下是同一观察窗口内的方法对照，并非时间趋势判断。",
+        "shared_problem": "机器人离开已观察区域后，怎样防止旧记忆被当作当前事实，并在需要时获取新证据或切换行动？",
+        "method_routes": [
+          {
+            "text": "EvolvingNav 作者从带时间戳的三维目标历史构建持续／迁移信念，预测检查时刻的位置，并以可见性相关的负观测更新概率；ALONE 则传播几何空间信念，在可靠性不足且新观测有望补足信息时请求深度观测。前者侧重目标隐蔽移动，后者侧重感知间歇。",
+            "evidence_ids": [
+              "2609.39166v3",
+              "2610.11591v1"
+            ]
+          },
+          {
+            "text": "MarvisNav 作者把拓扑候选节点及探索状态投影到当前视图，使目标相关性和探索进度在视觉路线选项中共同呈现，减少让 VLM 从分离记忆中重新建立对应关系的需求。",
+            "evidence_ids": [
+              "2610.06510v1"
+            ]
+          },
+          {
+            "text": "NavGPT-3 作者把推理、行动和监控置于各自的上下文与工具线程中，由运行时调度、中断和切换机器人运动控制权；这属于推理—低层动作之间的执行接口，而非目标位置概率模型。",
+            "evidence_ids": [
+              "2610.10787v1"
+            ]
+          }
+        ],
+        "open_question": "优先对照 EvolvingNav 与 ALONE 对不确定性和再观察条件的定义。继续核查变化模式失配、漏检校准、重复证据和调度延迟；各文任务设定不同，不能据摘要断言通用导航能力。",
+        "evidence_ids": [
+          "2609.39166v3",
+          "2610.11591v1",
+          "2610.06510v1",
+          "2610.10787v1"
+        ],
+        "related_topics": [
+          "vln_objectnav",
+          "navigation_agents",
+          "spatial_episodic_memory",
+          "robot_world_models"
+        ],
+        "attribution": "curator_synthesis",
+        "comparison_scope": "within_window_no_temporal_trend"
+      },
+      {
+        "id": "whole-body-execution",
+        "title": "全身执行：从人类动作表示到末端精度与负载平衡",
+        "summary": "VioLA、ResGAC 与 HULK 分别处理示范接口、运动耦合和重载动力学。它们位于不同控制层，适合按接口依赖来阅读，而不是作为同一基准上的替代方案排序。",
+        "shared_problem": "高层动作意图怎样变成在浮动基座、平衡和接触约束下可执行的全身运动？",
+        "method_routes": [
+          {
+            "text": "VioLA 作者让通用策略预测身体与手部运动潜变量，再由预训练控制器执行；相应编码器把人类和机器人动作映射到共享空间，使人类记录进入策略的动作监督接口。",
+            "evidence_ids": [
+              "2610.12435v1"
+            ]
+          },
+          {
+            "text": "ResGAC 作者结合几何导纳控制与残差强化学习：前者给出末端任务空间反馈和名义关节目标，后者补偿动力学并协调平衡；地面附着航向参考系用于减少骨盆运动传到期望末端姿态。",
+            "evidence_ids": [
+              "2610.09479v1"
+            ]
+          },
+          {
+            "text": "HULK 作者以 MPC 对负载动力学的预测指导两个强化学习教师，分别覆盖腕部受力运动与抱持大物体行走；训练中加入捕获点控制障碍函数，并将教师蒸馏为一个策略。",
+            "evidence_ids": [
+              "2610.08970v1"
+            ]
+          }
+        ],
+        "open_question": "优先读 ResGAC 的参考系与反馈接口，再与 VioLA 的潜变量执行及 HULK 的受力教师对照。需核查控制频率、接触变化、负载边界与同一硬件上的端到端误差传播；作者实验未独立复现。",
+        "evidence_ids": [
+          "2610.12435v1",
+          "2610.09479v1",
+          "2610.08970v1"
+        ],
+        "related_topics": [
+          "robot_vla",
+          "whole_body_control",
+          "end_effector_trajectories",
+          "mobile_manipulation"
+        ],
+        "attribution": "curator_synthesis",
+        "comparison_scope": "within_window_no_temporal_trend"
+      },
+      {
+        "id": "view-and-feedback-robustness",
+        "title": "部署鲁棒性：视角接口与在线动作修正",
+        "summary": "视角变化与执行中偏离需要不同干预点：前者改变视觉条件，后者更新动作缓冲或触发恢复。本主题仅比较摘要中明确提出的接口，不把模块兼容性视为已验证的组合系统。",
+        "shared_problem": "模型跨相机布置部署或执行时偏离计划后，怎样在保持控制响应的同时恢复有效动作？",
+        "method_routes": [
+          {
+            "text": "VersaCamVLA 作者把带位姿的可变 RGB 相机集合转换为固定大小场景 token，并作为基础 VLA 的补充条件；WARP-VLA 作者则用视角特定专家和基于隐式视角信息的路由进行特征变换，部署不额外输入相机外参。两者的输入假设不同。",
+            "evidence_ids": [
+              "2610.12451v1",
+              "2610.11508v1"
+            ]
+          },
+          {
+            "text": "REACT 作者维护带错位去噪时间步的持久动作缓冲，每步用新观测精炼、执行最干净的动作块并移动未来块；同时解耦感知、VLM 编码、去噪和执行，以协调反应与轨迹连贯性。",
+            "evidence_ids": [
+              "2610.12007v1"
+            ]
+          },
+          {
+            "text": "RESETTLE 作者在同一条件下两次采样的动作提案持续分歧时触发恢复，检索同任务演示，用状态伺服先验与受约束视觉残差执行一次修正，再把控制权交还冻结策略。",
+            "evidence_ids": [
+              "2610.12185v1"
+            ]
+          }
+        ],
+        "open_question": "优先对照 VersaCamVLA 与 WARP-VLA 的位姿输入要求；若关注在线恢复，再看 REACT 与 RESETTLE。需核查不可恢复偏离、错误触发、相机失效及延迟预算，不能从独立摘要推定组合后的安全性。",
+        "evidence_ids": [
+          "2610.12451v1",
+          "2610.11508v1",
+          "2610.12007v1",
+          "2610.12185v1"
+        ],
+        "related_topics": [
+          "robot_vla",
+          "robot_moe"
+        ],
+        "attribution": "curator_synthesis",
+        "comparison_scope": "within_window_no_temporal_trend"
+      }
+    ],
+    "evidence_sources": [
+      {
+        "versioned_id": "2610.12468v1",
+        "version_url": "https://arxiv.org/abs/2610.12468v1",
+        "source_url": "https://arxiv.org/abs/2610.12468v1",
+        "title": "DreamTrue: Action-Faithful Robot World Model with Counterfactual Post-Training",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-11T14:41:19Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1403,
+        "abstract_sha256": "71554a3f2cb85016fe813b9adaf29f2a4b76b62da9716cec25baac25894ff8c9"
+      },
+      {
+        "versioned_id": "2607.02403v2",
+        "version_url": "https://arxiv.org/abs/2607.02403v2",
+        "source_url": "https://arxiv.org/abs/2607.02403v2",
+        "title": "ACID: Action Consistency via Inverse Dynamics for Planning with World Models",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-11T14:41:19Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1026,
+        "abstract_sha256": "edd7bb4b161985d01c44ce9e1d423cadf414ab1ba1ebe3a6987f998706a40037"
+      },
+      {
+        "versioned_id": "2610.09134v1",
+        "version_url": "https://arxiv.org/abs/2610.09134v1",
+        "source_url": "https://arxiv.org/abs/2610.09134v1",
+        "title": "World Models Dream of Success: Diagnosing and Repairing Failure Insensitivity in Robot World Models",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-11T14:41:19Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1791,
+        "abstract_sha256": "0454452bec2a08eea89b58b6b02a63f6996866013f5a7927d5f08194e715b383"
+      },
+      {
+        "versioned_id": "2610.12368v1",
+        "version_url": "https://arxiv.org/abs/2610.12368v1",
+        "source_url": "https://arxiv.org/abs/2610.12368v1",
+        "title": "LiteNWM: Efficient Latent World Models for Onboard Visual Navigation in the Wild",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-11T14:41:19Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1135,
+        "abstract_sha256": "4c3db0d7abba0a25c99c1a5586466de6cb3e57ffd718470dac924940494b882b"
+      },
+      {
+        "versioned_id": "2610.12194v1",
+        "version_url": "https://arxiv.org/abs/2610.12194v1",
+        "source_url": "https://arxiv.org/abs/2610.12194v1",
+        "title": "MiniWAM: Learning Compact Future Targets for Efficient World-Action Modeling",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-11T14:41:19Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1707,
+        "abstract_sha256": "5883f5edf46aadc16530f411726b93825dbe720fa65a59bef618674dd3932918"
+      },
+      {
+        "versioned_id": "2610.10528v1",
+        "version_url": "https://arxiv.org/abs/2610.10528v1",
+        "source_url": "https://arxiv.org/abs/2610.10528v1",
+        "title": "Long-WAM: Scaling the Context of World-Action Models",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-11T14:41:19Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1537,
+        "abstract_sha256": "1d5ae13d97573f51a7acbf6cf0567a2bd7df4bbd6a4930a0adb8692d76171d72"
+      },
+      {
+        "versioned_id": "2609.39166v3",
+        "version_url": "https://arxiv.org/abs/2609.39166v3",
+        "source_url": "https://arxiv.org/abs/2609.39166v3",
+        "title": "Beyond the Remembered World: Predictive 4D Belief for Persistent Navigation in Evolving Worlds",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-11T14:41:19Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1892,
+        "abstract_sha256": "82a4278e720e7823b686a92d6aa1d7167a68cc7a7c0027b60cba5580db54f442"
+      },
+      {
+        "versioned_id": "2610.11591v1",
+        "version_url": "https://arxiv.org/abs/2610.11591v1",
+        "source_url": "https://arxiv.org/abs/2610.11591v1",
+        "title": "Acting from Belief, Looking When Needed: A Bayesian Spatial World Model for Navigation under Intermittent Perception",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-11T14:41:19Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1689,
+        "abstract_sha256": "6b8ccf7c5ea9e717a0bd7ec724c45d3402c3e691e8e0e4ca29311ad2ffc24ebc"
+      },
+      {
+        "versioned_id": "2610.10787v1",
+        "version_url": "https://arxiv.org/abs/2610.10787v1",
+        "source_url": "https://arxiv.org/abs/2610.10787v1",
+        "title": "NavGPT-3: Harnessing Context in a Hierarchical Navigation Runtime",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-11T14:41:19Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1890,
+        "abstract_sha256": "3b9b03afd0cc57504a88d145d6fd1f127fa0f15b7e232f8aaf9f4187bd63fa7c"
+      },
+      {
+        "versioned_id": "2610.06510v1",
+        "version_url": "https://arxiv.org/abs/2610.06510v1",
+        "source_url": "https://arxiv.org/abs/2610.06510v1",
+        "title": "MarvisNav: Making Memory Visible on Route Choices for Zero-Shot Object Navigation",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-11T14:41:19Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1843,
+        "abstract_sha256": "6ea2dd4601c85d50e1b060f93c079fbad353507fd2ee146b7e229df2f6e0cdcd"
+      },
+      {
+        "versioned_id": "2610.12435v1",
+        "version_url": "https://arxiv.org/abs/2610.12435v1",
+        "source_url": "https://arxiv.org/abs/2610.12435v1",
+        "title": "VioLA: Learning Generalist Humanoid Control Policies from Human Data",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-11T14:41:19Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1585,
+        "abstract_sha256": "cb7d545c55c89c3187107f822e7f78ff59817a44fe1020ed224ac9678c37c8c2"
+      },
+      {
+        "versioned_id": "2610.09479v1",
+        "version_url": "https://arxiv.org/abs/2610.09479v1",
+        "source_url": "https://arxiv.org/abs/2610.09479v1",
+        "title": "Precise SE(3) End-Effector Tracking in Whole-Body Humanoid Control",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-11T14:41:19Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1672,
+        "abstract_sha256": "c7da0786645b24f7e04f7db1e0506a807ba11c27689e94b15894fa246e16272c"
+      },
+      {
+        "versioned_id": "2610.08970v1",
+        "version_url": "https://arxiv.org/abs/2610.08970v1",
+        "source_url": "https://arxiv.org/abs/2610.08970v1",
+        "title": "HULK: Learning Whole-Body Forceful Loco-Manipulation for Humanoids",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-11T14:41:19Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1172,
+        "abstract_sha256": "b879d80fc99aea228a5e6433e53d311ff41bd2f4c11a7e153c9dc84dbc9fa9cf"
+      },
+      {
+        "versioned_id": "2610.12451v1",
+        "version_url": "https://arxiv.org/abs/2610.12451v1",
+        "source_url": "https://arxiv.org/abs/2610.12451v1",
+        "title": "VersaCamVLA: Camera-Configurable VLA Policies for Robotic Manipulation",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-11T14:41:19Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1150,
+        "abstract_sha256": "f2517b7b9c2ec5745778e9ec6e63ff568a4d2a16fa6782af2c09426c6eed02e8"
+      },
+      {
+        "versioned_id": "2610.11508v1",
+        "version_url": "https://arxiv.org/abs/2610.11508v1",
+        "source_url": "https://arxiv.org/abs/2610.11508v1",
+        "title": "WARP-VLA: Wrist-Camera Adaptation for View-Robust Policy Execution in Vision-Language-Action Models",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-11T14:41:19Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1316,
+        "abstract_sha256": "a5faedece1cd6d984d22f9607f81f26d7ebcf98e249fe9ad170690c60028c66b"
+      },
+      {
+        "versioned_id": "2610.12007v1",
+        "version_url": "https://arxiv.org/abs/2610.12007v1",
+        "source_url": "https://arxiv.org/abs/2610.12007v1",
+        "title": "REACT: Rolling Denoising and Dual Decoupling for Reactive Robot Control with VLA Models",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-11T14:41:19Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1420,
+        "abstract_sha256": "46cda73903eebe0b0c27601a4acc1ad0cb648682927fd230d0a6cca2b0a753c2"
+      },
+      {
+        "versioned_id": "2610.12185v1",
+        "version_url": "https://arxiv.org/abs/2610.12185v1",
+        "source_url": "https://arxiv.org/abs/2610.12185v1",
+        "title": "RESETTLE: Robotic Recovery through Disagreement-Triggered Retrieval and Efficient Corrective Control",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-11T14:41:19Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1627,
+        "abstract_sha256": "2bb84e7a6841abc80bc9d7975924180dc704d61688df58383c607c78a4803f5b"
+      }
+    ],
+    "revision_note": "本窗口 71 条 revision 仅表示固定 arXiv 版本号大于 1，113 条 new 仅表示首版；未比较旧版与新版全文，不把版本更新解释为贡献变化或首次发现。",
+    "limitations": [
+      "完整覆盖只针对既有 arXiv 查询、类别和更新时间窗口；索引延迟、术语差异及关键词规则仍可能漏检，不等于全领域覆盖。",
+      "184 条候选均已筛阅标题与摘要片段；完整摘要证据仅覆盖其中 17 篇。未阅读全文、核查代码、独立复现实验或逐版本比较；所有实验与性能陈述均来自作者摘要。",
+      "九类分布原样使用快照中的多标签关键词匹配，可重叠、误分或漏分；数量不是热度、质量或人工学科分类。",
+      "本期复核的是 2026-10-11 官方 API 采集时保存的完整摘要，固定到对应版本；checked_at 是本期阅读核查时间。未逐篇重新打开网页核验撤回提示、正式发表信息或资源可用性。",
+      "不作跨期趋势、全领域共识、跨论文性能排名或模块组合安全性判断；正式精读应另核实并优先正式发表版本。"
+    ],
+    "keyword_caveats": [
+      {
+        "versioned_id": "2610.07774v1",
+        "topic": "robot_moe",
+        "issue": "false_positive",
+        "explanation": "该候选标题和片段讨论 MoE 视觉语言模型的多模态安全与路由 logits，没有在片段中建立机器人控制任务；保留原标签用于复现分布，不作为机器人 MoE 主线证据。",
+        "evidence_basis": "snapshot_excerpt"
+      }
+    ]
+  }
+}
