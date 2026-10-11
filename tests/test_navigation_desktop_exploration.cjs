@@ -124,3 +124,52 @@ test('cold relation content installed before the first restore frame retains the
   assert.ok(w.document.getElementById(fixture.focus));installedBeforeFrame=true;w.requestAnimationFrame=nativeFrame;for(const fn of queued.splice(0))fn(0);
  }});await ready(x);assert.equal(installedBeforeFrame,true);assert.equal(x.d.activeElement.id,fixture.focus);assert.equal(x.d.getElementById('np-tree-scroll').scrollTop,119);assert.equal(x.d.getElementById('np-tree-scroll').scrollLeft,36);assert.equal(x.d.getElementById('np-detail-scroll').scrollTop,53);assert.equal(x.w.scrollY,88);await close(x);
 });
+
+// DOM/CSS and state contracts only. Native browser hit-testing and restored
+// scroll geometry remain the unchanged desktop screenshot workflow's gate.
+function stickyRelationReturn(x){
+ const controls=x.d.querySelectorAll('#np-task-route-return');assert.equal(controls.length,1,'one existing relation return');
+ const control=controls[0],heading=x.d.querySelector('#np-detail-scroll>.np-reader-heading');
+ assert.equal(control.parentElement,heading,'the return belongs to the sticky reader surface, not the scrolling summary');
+ assert.equal(x.d.querySelector('#np-reader-summary #np-task-route-return'),null);assert.equal(control.tagName,'BUTTON');assert.equal(control.type,'button');assert.equal(control.textContent,'返回路线概览');assert.equal(control.disabled,false);assert.equal(control.hidden,false);assert.equal(control.tabIndex,0);
+ const h=x.w.getComputedStyle(heading),c=x.w.getComputedStyle(control);assert.equal(h.position,'sticky');assert.equal(h.flexWrap,'wrap');assert.equal(h.rowGap,'0');assert.equal(c.flexBasis,'100%');assert.equal(c.order,'1');assert.equal(c.marginTop,'20px');assert.equal(c.fontSize,'15px');assert.equal(c.lineHeight,'1.55');assert.equal(c.letterSpacing,'normal');
+ assert.deepEqual([...heading.querySelectorAll(':scope>span')].map(n=>n.textContent),['READING DESK','所选节点']);assert.equal(heading.lastElementChild.tagName,'SPAN','retain the existing last span styles');
+ return control;
+}
+function noRelationReturn(x){assert.equal(x.d.querySelectorAll('#np-task-route-return').length,0);assert.equal(x.d.querySelector('[data-selected-task-relation]'),null);}
+test('sticky relation return stays in the heading and returns to the exact origin after reader scrolling',async t=>{
+ const x=await page();t.after(()=>close(x));await task(x);const route=x.a.getState().route,hash=x.w.location.hash;openRelations(x);const selector=x.d.querySelector('[data-task-change="methods:relation:90"]');selector.click();await ready(x);
+ const back=stickyRelationReturn(x),reader=x.d.getElementById('np-detail-scroll');reader.scrollTop=53;x.w.scrollTo(0,88);back.focus();assert.equal(x.d.activeElement,back);assert.equal(reader.scrollTop,53);assert.equal(x.w.scrollY,88);
+ back.click();await ready(x);noRelationReturn(x);assert.equal(x.d.activeElement.id,selector.id);assert.deepEqual(x.a.getState().route,route);assert.equal(x.w.location.hash,hash);assert.equal(x.d.getElementById('np-task-route-relations').open,true);
+ x.w.history.back();await wait(60);await ready(x);const restored=stickyRelationReturn(x);assert.equal(x.d.activeElement,restored);assert.equal(reader.scrollTop,53);assert.equal(x.w.scrollY,88);restored.click();await ready(x);noRelationReturn(x);assert.equal(x.d.activeElement.id,selector.id);
+});
+test('sticky relation return restores its own saved focus and survives a pending relation body replacement',async()=>{
+ const fixture=await coldRelationScrollFixture(),saved=structuredClone(fixture.saved),state=saved.navigationProductV1,key=JSON.stringify([state.route.scope,state.route.bench,state.route.protocol,state.route.paper,state.route.version,state.route.template]);state.contexts[key].focusTarget='np-task-route-return';
+ const pending=[],x=await page(fixture.hash,saved,{fetch:url=>new Promise(resolve=>pending.push(()=>resolve({ok:true,arrayBuffer:async()=>fs.readFileSync(path.join(output,url))})))});
+ try{
+  const back=stickyRelationReturn(x),body=x.d.querySelector('.np-task-relation-reading'),reader=x.d.getElementById('np-detail-scroll');assert.equal(body.dataset.relationState,'loading');assert.equal(x.d.activeElement,back);assert.equal(reader.scrollTop,53);
+  for(const release of pending.splice(0))release();await ready(x);assert.equal(stickyRelationReturn(x),back,'async content preserves the same real button and focused DOM node');assert.equal(body.isConnected,false);assert.equal(x.d.activeElement,back);assert.equal(reader.scrollTop,53);assert.equal(x.w.scrollY,88);assert.equal(x.d.getElementById('np-tree-scroll').scrollTop,0);assert.equal(x.d.querySelector('[data-selected-task-relation]').dataset.selectedTaskRelation,'methods:relation:90');
+  back.click();await ready(x);noRelationReturn(x);assert.equal(x.d.activeElement.id,'np-task-change-task:category-objectnav-methods:relation:90');
+ }finally{for(const release of pending.splice(0))release();await close(x);}
+});
+test('sticky relation return is removed on method, claim, analysis and task navigation before old content settles',async()=>{
+ const fixture=await coldRelationScrollFixture();
+ for(const scenario of ['method','claim','analysis','task']){
+  const pending=[],x=await page(fixture.hash,fixture.saved,{fetch:url=>new Promise(resolve=>pending.push(()=>resolve({ok:true,arrayBuffer:async()=>fs.readFileSync(path.join(output,url))})))});
+  try{
+   const old=stickyRelationReturn(x),method=x.M.routeForPosition(x.a.getBundle(),x.a.getState().route,'pos:l:98bc421b8bfd17d6699922');
+   const route=scenario==='task'?x.M.initialState(x.a.getBundle(),{scope:'task:imagenav',tree:'c'}).route:scenario==='claim'?Object.assign({},method,{claim:'recipe:pipeline-poni'}):scenario==='analysis'?Object.assign({},method,{tree:'a',node:null,claim:null}):method;
+   x.a.navigate(route,{cross:true,initialExpand:true});await frames(x.w);assert.equal(x.d.getElementById('np-navigation-error').hidden,true,scenario+': '+x.d.getElementById('np-navigation-error').textContent);noRelationReturn(x);assert.equal(old.isConnected,false);
+   if(scenario==='method'){Object.defineProperty(x.w,'innerWidth',{value:1440,configurable:true});x.w.dispatchEvent(new x.w.Event('resize'));await frames(x.w);const toggle=x.d.getElementById('np-reader-toggle');assert.equal(toggle.hidden,false);toggle.click();assert.equal(x.d.getElementById('np-detail-scroll').hidden,true);}
+   const chosen=x.d.activeElement,current=JSON.stringify(x.a.getState().route);for(const release of pending.splice(0))release();await ready(x);noRelationReturn(x);assert.equal(JSON.stringify(x.a.getState().route),current);assert.equal(x.d.activeElement,chosen);
+   if(scenario==='method'){assert.equal(x.d.getElementById('np-detail-scroll').hidden,true);x.d.getElementById('np-reader-toggle').click();assert.equal(x.d.getElementById('np-detail-scroll').hidden,false);noRelationReturn(x);}
+  }finally{for(const release of pending.splice(0))release();await close(x);}
+ }
+});
+test('sticky relation return can dismiss a loading relation without its old batch restoring the control',async()=>{
+ const fixture=await coldRelationScrollFixture(),pending=[],x=await page(fixture.hash,fixture.saved,{fetch:url=>new Promise(resolve=>pending.push(()=>resolve({ok:true,arrayBuffer:async()=>fs.readFileSync(path.join(output,url))})))});
+ try{
+  const back=stickyRelationReturn(x),route=JSON.stringify(x.a.getState().route);back.focus();back.click();await frames(x.w);noRelationReturn(x);assert.equal(back.isConnected,false);
+  for(const release of pending.splice(0))release();await ready(x);noRelationReturn(x);assert.equal(JSON.stringify(x.a.getState().route),route);assert.equal(x.d.activeElement.id,'np-task-change-task:category-objectnav-methods:relation:90');assert.equal(x.d.getElementById('np-task-route-relations').open,true);
+ }finally{for(const release of pending.splice(0))release();await close(x);}
+});

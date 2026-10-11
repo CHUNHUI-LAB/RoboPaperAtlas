@@ -434,6 +434,9 @@ body{font-size:16px;line-height:1.65;background:#f7f9fa}header.np-header{max-wid
 #navigation-product #np-detail-scroll .np-method-flow dd{font-size:16px}
 #navigation-product #np-detail-scroll .np-scientific-changes h3,
 #navigation-product #np-detail-scroll .np-scientific-changes article strong{font-size:15px}
+/* Keep the existing relation return in the reader's sticky surface while scrolling. */
+#navigation-product .np-reader-heading:has(>#np-task-route-return){flex-wrap:wrap;row-gap:0}
+#navigation-product .np-reader-heading>#np-task-route-return{order:1;flex-basis:100%;letter-spacing:normal}
 /* Task-root reading text keeps the 15px floor, including inherited legacy notes. */
 #navigation-product .np-task-route-overview,
 #navigation-product .np-task-route-overview p,
