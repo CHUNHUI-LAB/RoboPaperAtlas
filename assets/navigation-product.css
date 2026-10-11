@@ -493,6 +493,21 @@ body{font-size:16px;line-height:1.65;background:#f7f9fa}header.np-header{max-wid
  .np-overview-map[data-selected-relation]:not([data-selected-relation=""]) .np-map-challenge{visibility:hidden}
  .np-map-coverage{position:absolute;left:0;margin:0;padding:0;border:0;font-size:15px;line-height:1.45;z-index:2}
 }
+/* Exact generated identity duplicates share the fixed header only on desktop.
+   Real answer sections and distinct scientific fields never receive this marker. */
+#np-reader-object-meta .np-reader-field-role{display:none}
+#navigation-product #np-detail-scroll .np-method-identity-prefix{font:inherit}
+@media(min-width:1200px){
+ #np-reader-summary .np-reader-identity-duplicate{display:none}
+ #np-reader-object-meta .np-reader-field-role{display:inline}
+}
+
+/* Optional peer context uses the existing reader scroller, never a nested strip. */
+@media(min-width:1200px){
+ #navigation-product .np-peer-strip{flex-wrap:wrap;overflow:visible;white-space:normal;min-width:0}
+ #navigation-product .np-peer-strip button{flex:0 1 auto;max-width:100%;min-width:0;white-space:normal;overflow-wrap:anywhere}
+}
+
 /* Task-root reading text keeps the 15px floor, including inherited legacy notes. */
 #navigation-product .np-task-route-overview,
 #navigation-product .np-task-route-overview p,
@@ -514,3 +529,4 @@ body{font-size:16px;line-height:1.65;background:#f7f9fa}header.np-header{max-wid
 #navigation-product .np-task-route-overview .np-route-group-condition{font-size:15px;line-height:1.55}
 #navigation-product .np-task-route-overview h2,
 #navigation-product .np-task-route-overview h3{line-height:1.55}
+

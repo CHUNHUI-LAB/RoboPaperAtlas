@@ -2572,5 +2572,205 @@ d.querySelector('.np-return-previous').click();await ready(()=>a.getState().rout
         self.assertEqual(result.returncode, 0, result.stderr)
 
 
+class OriginalChallengeCaptureChecks(unittest.TestCase):
+    @staticmethod
+    def fixture():
+        def rect(x, y, width, height): return dict(x=x, y=y, width=width, height=height)
+        viewport = rect(0, 0, 1440, 900)
+        def proof(text, y=260, region=None):
+            box = rect(870, y, 500, 24)
+            fragment = dict(box, visible=True)
+            return dict(text=text, renderedText=text, rect=box, visible=True, opaque=True, unscaled=True,
+                        fontSize=15, clipped=False, foreground=[20, 30, 40], background=[255, 255, 255],
+                        viewport=viewport, readerContent=region or rect(850, 230, 574, 650), clipAreas=[],
+                        fragments=[fragment], textRuns=[dict(fontSize=15, opaque=True, unscaled=True,
+                        foreground=[20, 30, 40], background=[255, 255, 255], clipAreas=[], fragments=[fragment])])
+        position = dict(id='original-position', entityId='original-challenge', tree='g', scopeId='scope:all', paperId='paper', versionId='version')
+        original = dict(id=position['entityId'], label='完整的原始研究问题？', detail=dict(plain_language_question='完整的原始研究问题？',
+                        condition_scope=dict(condition='原适用条件', tasks=['ObjectNav', 'zero-shot ObjectNav'], remaining_limit='原剩余限制')))
+        header = rect(850, 132, 574, 96)
+        title = proof(original['label'], 144, header)
+        role = proof(' · 研究问题', 185, header)
+        def duplicate(tag, field=None):
+            return dict(tag=tag, marked=True, position=position['id'], owner=position['id'],
+                        directChild=True, field=field, text=original['label'],
+                        rendering=dict(rendered=False, display='none',
+                                       blockedBy=dict(reason='display-none', tag=tag, id=None)))
+        heading_duplicate = duplicate('H3')
+        question_duplicate = duplicate('SECTION', 'plain_language_question')
+        data = dict(route=dict(node=position['id'], tree='g', scope='scope:all', paper='paper', version='version'),
+                    summaryCount=1, summaryPosition=position['id'], titleCount=1, title=title,
+                    titleIdentity=dict(position=position['id'], entity=position['entityId'], paper='paper', version='version'),
+                    identityHeadingCount=1, identityHeading=heading_duplicate, questionDuplicate=question_duplicate,
+                    markedDuplicates=[heading_duplicate, question_duplicate],
+                    roleCount=1, questionRole=role, questionCount=1, questionText=original['label'], question=None,
+                    scopeCount=1, scopeEntity=original['id'], scope=proof('完整范围', 260),
+                    scopeParagraphs=[proof('适用条件：原适用条件', 270), proof('任务范围：ObjectNav；zero-shot ObjectNav', 305), proof('仍未解决：原剩余限制', 340)],
+                    viewport=viewport)
+        return data, position, original
+
+    def test_fixed_title_requires_exact_identity_original_label_and_all_existing_visibility_gates(self):
+        import copy
+        data, position, original = self.fixture()
+        MODULE.check_original_challenge_reading(data, position, original)
+        mutations = [lambda d: d.update(titleCount=0), lambda d: d.update(titleCount=2), lambda d: d.update(title=None),
+                     lambda d: d.update(summaryPosition='other-position'), lambda d: d.update(summaryCount=2),
+                     lambda d: d.update(scopeCount=0), lambda d: d.update(scopeEntity='other-challenge'),
+                     lambda d: d['title'].update(renderedText='简称'), lambda d: d['title'].update(visible=False),
+                     lambda d: d['title'].update(opaque=False), lambda d: d['title'].update(unscaled=False),
+                     lambda d: d['title'].update(clipped=True), lambda d: d['title'].update(fontSize=14),
+                     lambda d: d['title'].update(foreground=[250, 250, 250]), lambda d: d['title']['rect'].update(y=950),
+                     lambda d: d['title']['textRuns'][0].update(opaque=False), lambda d: d['title']['fragments'][0].update(visible=False),
+                     lambda d: d.update(roleCount=0), lambda d: d['questionRole'].update(renderedText=' · 来源'),
+                     lambda d: d['questionRole'].update(visible=False), lambda d: d.update(questionText='删除了原字段')]
+        for field in ('position', 'entity', 'paper', 'version'):
+            mutations.append(lambda d, f=field: d['titleIdentity'].__setitem__(f, 'different'))
+        for field in ('node', 'tree', 'scope', 'paper', 'version'):
+            mutations.append(lambda d, f=field: d['route'].__setitem__(f, 'different'))
+            mutations.append(lambda d, f=field: d['route'].pop(f))
+        for index, mutate in enumerate(mutations):
+            bad = copy.deepcopy(data); mutate(bad)
+            bad['text'] = original['label']  # Hidden/other section text must never substitute for the fixed title.
+            with self.subTest(mutation=index), self.assertRaises(RuntimeError):
+                MODULE.check_original_challenge_reading(bad, position, original)
+
+    def test_approved_duplicates_must_be_actually_hidden_and_exactly_owned(self):
+        import copy
+        data, position, original = self.fixture()
+        mutations = [lambda d: d.update(identityHeadingCount=0), lambda d: d.update(identityHeadingCount=2),
+                     lambda d: d['identityHeading'].update(text='其他生成标题'),
+                     lambda d: d['markedDuplicates'].pop(),
+                     lambda d: d['markedDuplicates'].append(dict(d['questionDuplicate'], field='evidence'))]
+        for key in ('identityHeading', 'questionDuplicate'):
+            mutations += [lambda d, k=key: d[k]['rendering'].update(rendered=True, display='block', blockedBy=None),
+                          lambda d, k=key: d[k]['rendering'].update(blockedBy=dict(reason='empty-bounds')),
+                          lambda d, k=key: d[k]['rendering'].update(display='block', visibility='hidden',
+                              rect=dict(x=870, y=270, width=500, height=24), blockedBy=dict(reason='visibility')),
+                          lambda d, k=key: d[k]['rendering'].update(display='block', opacity='0',
+                              rect=dict(x=870, y=270, width=500, height=24), blockedBy=dict(reason='opacity-zero')),
+                          lambda d, k=key: d[k].update(marked=False),
+                          lambda d, k=key: d[k].update(position='other-position'),
+                          lambda d, k=key: d[k].update(owner='other-summary'),
+                          lambda d, k=key: d[k].update(directChild=False)]
+        for index, mutate in enumerate(mutations):
+            bad = copy.deepcopy(data); mutate(bad)
+            with self.subTest(mutation=index), self.assertRaises(RuntimeError):
+                MODULE.check_original_challenge_reading(bad, position, original)
+
+    def test_each_original_scope_field_must_remain_in_an_actually_visible_paragraph(self):
+        import copy
+        data, position, original = self.fixture()
+        mutations = [lambda d: d['scopeParagraphs'].pop(), lambda d: d['scope'].update(visible=False)]
+        for index in range(3):
+            mutations += [lambda d, i=index: d['scopeParagraphs'][i].update(renderedText='被替换的字段'),
+                          lambda d, i=index: d['scopeParagraphs'][i].update(visible=False),
+                          lambda d, i=index: d['scopeParagraphs'][i].update(fontSize=14),
+                          lambda d, i=index: d['scopeParagraphs'][i].update(unscaled=False),
+                          lambda d, i=index: d['scopeParagraphs'][i].update(clipped=True),
+                          lambda d, i=index: d['scopeParagraphs'][i]['rect'].update(y=950),
+                          lambda d, i=index: d['scopeParagraphs'][i]['textRuns'][0].update(opaque=False)]
+        for index, mutate in enumerate(mutations):
+            bad = copy.deepcopy(data); mutate(bad)
+            bad['text'] = '原适用条件 ObjectNav zero-shot ObjectNav 原剩余限制'
+            with self.subTest(mutation=index), self.assertRaises(RuntimeError):
+                MODULE.check_original_challenge_reading(bad, position, original)
+
+    def test_different_question_including_whitespace_cannot_be_represented_by_fixed_title(self):
+        import copy
+        for question in ('不同的原始问题？', ' 完整的原始研究问题？'):
+            data, position, original = self.fixture()
+            original['detail']['plain_language_question'] = question
+            data.update(questionText=question, roleCount=0, questionRole=None)
+            data['markedDuplicates'] = [data['identityHeading']]
+            data['questionDuplicate'].update(marked=False, field=None)
+            data['questionDuplicate']['rendering'].update(rendered=True, display='block', blockedBy=None)
+            data['question'] = copy.deepcopy(data['scopeParagraphs'][0]); data['question'].update(text=question, renderedText=question)
+            MODULE.check_original_challenge_reading(data, position, original)
+            for mutate in (lambda d: d.update(question=None), lambda d: d.update(roleCount=1), lambda d: d['question'].update(visible=False)):
+                bad = copy.deepcopy(data); mutate(bad)
+                with self.assertRaises(RuntimeError): MODULE.check_original_challenge_reading(bad, position, original)
+
+    def test_production_original_challenge_binds_fixed_selector_role_and_retained_raw_field(self):
+        import gzip
+        science = json.loads(gzip.decompress((Path(__file__).parents[1] / 'data/navigation-product/model.json.gz').read_bytes()))
+        body = r"""
+const p=Object.values(a.getBundle().researchMap.positions).find(p=>p.entityId==='legacy:ci_search_unknown_target');
+d.querySelector('[data-challenge-open="'+p.id+'"]').click();await ready(()=>a.getState().route.node===p.id&&a.getContent().ready(p.entityId)&&d.querySelector('[data-reading-node="'+p.id+'"]'));
+const original=s.entities[p.entityId],header=d.getElementById('np-reader-object-title'),titles=d.querySelectorAll(input.titleSelector),roles=d.querySelectorAll(input.roleSelector),summary=d.querySelector('#np-reader-summary [data-reading-node="'+p.id+'"]');
+assert.equal(titles.length,1);assert.equal(titles[0].textContent,original.label);assert.deepEqual([header.dataset.objectPosition,header.dataset.objectEntity,header.dataset.objectPaper,header.dataset.objectVersion],[p.id,p.entityId,p.paperId||'',p.versionId||'']);
+assert.equal(roles.length,1);assert.equal(roles[0].textContent,' · 研究问题');const raw=summary.querySelector('[data-reader-duplicate-field="plain_language_question"] > p');assert.ok(raw);assert.equal(raw.textContent,original.detail.plain_language_question);assert.equal(summary.querySelector('[data-challenge-scope]').dataset.challengeScope,original.id);states.push(snapshot());
+"""
+        states = run_product_capture_script(self, body, {'science': science, 'expected': MODULE.task_route_expected(science),
+                                            'titleSelector': MODULE.ORIGINAL_CHALLENGE_TITLE_SELECTOR,
+                                            'roleSelector': MODULE.ORIGINAL_CHALLENGE_ROLE_SELECTOR})
+        self.assertEqual(states[0]['position']['entity'], 'legacy:ci_search_unknown_target')
+
+    def test_snapshot_uses_only_exact_fixed_h2_and_measures_actual_text_fragments(self):
+        script = r"""
+const {JSDOM}=require('jsdom'),assert=require('node:assert/strict'),input=JSON.parse(require('fs').readFileSync(0,'utf8'));
+const dom=new JSDOM(`<!doctype html><style>*{opacity:1;visibility:visible;transform:none;zoom:1;color:rgb(20,30,40);background-color:rgb(255,255,255);font-size:15px}span{display:inline}</style>
+<div id="np-reader-heading"><div id="np-reader-object-title" data-object-position="p" data-object-entity="e" data-object-paper="paper" data-object-version="v"><h2><span id="actual-title">完整原问题？</span></h2></div><p id="np-reader-object-meta"><span class="np-reader-field-role" data-reader-field-role="plain_language_question"> · 研究问题</span></p></div>
+<div id="np-detail-scroll"><div id="np-reader-summary"><section data-reading-node="p"><h3 id="summary-decoy" class="np-reader-identity-duplicate" data-reader-duplicate-position="p" style="display:none">完整原问题？</h3><aside data-challenge-scope="e"><p>条件</p><p>任务</p><p>限制</p></aside><section class="np-detail-block np-reader-identity-duplicate" data-reader-duplicate-position="p" data-reader-duplicate-field="plain_language_question" style="display:none"><h3>研究问题</h3><p>完整原问题？</p></section></section></div></div>`,{runScripts:'outside-only'});
+try{const w=dom.window,d=w.document,rect=(x,y,width,height)=>({x,y,width,height,left:x,top:y,right:x+width,bottom:y+height});
+w.NavigationProductApp={getState:()=>({route:{node:'p',tree:'g',scope:'scope:all',paper:'paper',version:'v'}})};
+Object.defineProperties(w,{innerWidth:{value:1440},innerHeight:{value:900}});const style=w.getComputedStyle.bind(w);w.getComputedStyle=e=>new Proxy(style(e),{get:(t,k)=>k==='zoom'?(t.zoom||'1'):Reflect.get(t,k)});
+for(const e of d.querySelectorAll('*')){e.getBoundingClientRect=()=>e.id==='np-reader-heading'?rect(850,132,574,96):e.id==='np-detail-scroll'?rect(850,230,574,650):e.closest('#np-reader-heading')?rect(870,e.closest('#np-reader-object-meta')?185:144,500,24):rect(870,270,500,24);for(const [k,v] of Object.entries({clientLeft:0,clientTop:0,clientWidth:e.id==='np-reader-heading'||e.id==='np-detail-scroll'?574:500,clientHeight:e.id==='np-reader-heading'?96:e.id==='np-detail-scroll'?650:24,scrollWidth:500,scrollHeight:24}))Object.defineProperty(e,k,{value:v,configurable:true});}
+w.Range.prototype.getClientRects=function(){return [this.startContainer.parentElement.getBoundingClientRect()];};
+d.elementFromPoint=(x,y)=>y<175?d.getElementById('actual-title'):y<228?d.querySelector('.np-reader-field-role'):d.querySelector('[data-challenge-scope] > p');
+const snap=new w.Function(input.script),position={id:'p',entityId:'e'},run=()=>snap(position,'完整原问题？',input.title,input.role),good=run();
+assert.equal(good.title.tag,'H2');assert.equal(good.title.renderedText,'完整原问题？');assert.equal(good.titleIdentity.entity,'e');assert.equal(good.questionRole.renderedText,' · 研究问题');assert.equal(good.questionCount,1);assert.equal(good.question,null);assert.equal(good.scopeParagraphs.length,3);assert.equal(good.title.textRuns[0].opaque,true);
+assert.equal(good.identityHeading.rendering.rendered,false);assert.equal(good.identityHeading.rendering.blockedBy.reason,'display-none');assert.equal(good.questionDuplicate.rendering.rendered,false);assert.deepEqual(JSON.parse(JSON.stringify(good.markedDuplicates.map(e=>[e.tag,e.field,e.owner,e.directChild]))),[['H3',null,'p',true],['SECTION','plain_language_question','p',true]]);
+for(const e of [d.getElementById('summary-decoy'),d.querySelector('[data-reader-duplicate-field]')]){e.style.display='block';const shown=run(),record=e.tagName==='H3'?shown.identityHeading:shown.questionDuplicate;assert.equal(record.rendering.rendered,true);e.style.display='none';}
+const answer=d.createElement('section');answer.className='np-analysis-answer np-reader-identity-duplicate';answer.textContent='A原回答';d.getElementById('np-detail-scroll').appendChild(answer);assert.equal(run().markedDuplicates.length,2,'A answers outside the exact summary are never deduplication evidence');
+d.getElementById('actual-title').style.display='none';const hidden=run();assert.equal(hidden.title.textRuns[0].opaque,false);d.getElementById('actual-title').style.display='';
+const header=d.getElementById('np-reader-object-title'),duplicate=header.querySelector('h2').cloneNode(true);header.appendChild(duplicate);assert.equal(run().titleCount,2);assert.equal(run().title,null);duplicate.remove();header.querySelector('h2').remove();assert.equal(run().titleCount,0);assert.equal(run().title,null);assert.equal(d.getElementById('summary-decoy').textContent,'完整原问题？');
+}finally{dom.window.close();}
+"""
+        result = subprocess.run(['node', '-e', script], input=json.dumps({'script': MODULE.ORIGINAL_CHALLENGE_SNAPSHOT_JS,
+                                'title': MODULE.ORIGINAL_CHALLENGE_TITLE_SELECTOR, 'role': MODULE.ORIGINAL_CHALLENGE_ROLE_SELECTOR}),
+                                text=True, capture_output=True, cwd=Path(__file__).parents[1])
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+
+class ScrollRegionVisibilityChecks(unittest.TestCase):
+    def test_closed_details_body_is_excluded_but_summary_and_open_offscreen_scroll_remain(self):
+        script = r"""
+const {JSDOM}=require('jsdom'),assert=require('node:assert/strict'),input=JSON.parse(require('fs').readFileSync(0,'utf8'));
+const dom=new JSDOM('<style>*{opacity:1}.scroll{overflow-x:auto;overflow-y:auto}</style><div id="ancestor"><details id="disclosure"><summary id="first-summary" class="scroll"><span id="summary-child" class="scroll">Summary</span></summary><summary id="second-summary" class="scroll">Hidden second summary</summary><div id="np-peer-strip" class="np-peer-strip scroll">Body</div></details></div>',{runScripts:'outside-only'});
+try{const w=dom.window,d=w.document,ancestor=d.getElementById('ancestor'),details=d.getElementById('disclosure'),candidate=d.getElementById('np-peer-strip');let y=200;
+for(const e of d.querySelectorAll('*'))e.getBoundingClientRect=()=>({x:20,y,width:300,height:120});
+d.elementFromPoint=()=>{throw Error('Occlusion is not a scroll-container exemption');};
+const read=new w.Function(input.script+';return scrollRegionCandidate(arguments[0]);'),closed=read(candidate);
+assert.equal(closed.rendered,false);assert.deepEqual(JSON.parse(JSON.stringify(closed.blockedBy)),{reason:'closed-details',tag:'DETAILS',id:'disclosure'});assert.equal(closed.rect.height,120,'positive stale bounds must not defeat closed-details semantics');
+assert.equal(read(d.getElementById('first-summary')).rendered,true);assert.equal(read(d.getElementById('summary-child')).rendered,true);assert.equal(read(d.getElementById('second-summary')).rendered,false);
+details.open=true;assert.equal(read(candidate).rendered,true);y=5000;assert.equal(read(candidate).rendered,true,'open content below the viewport still supplies a third persistent scroll region');ancestor.style.overflow='hidden';assert.equal(read(candidate).rendered,true,'ancestor clipping is not an exemption');
+const records=[closed,read(candidate)];
+const nested=d.createElement('details'),nestedSummary=d.createElement('summary');nested.id='nested-disclosure';nestedSummary.textContent='Nested summary';nested.appendChild(nestedSummary);details.appendChild(nested);nested.appendChild(candidate);assert.equal(read(candidate).rendered,false);assert.equal(read(candidate).blockedBy.id,'nested-disclosure');nested.open=true;assert.equal(read(candidate).rendered,true);details.open=false;assert.equal(read(candidate).rendered,false);assert.equal(read(candidate).blockedBy.id,'disclosure');details.open=true;details.appendChild(candidate);nested.remove();
+for(const [property,value,reason] of [['display','none','display-none'],['opacity','0','opacity-zero']]){ancestor.style[property]=value;const hidden=read(candidate);assert.equal(hidden.rendered,false);assert.equal(hidden.blockedBy.reason,reason);ancestor.style[property]='';}
+ancestor.hidden=true;assert.equal(read(candidate).rendered,false);ancestor.hidden=false;
+for(const value of ['hidden','collapse']){candidate.style.visibility=value;assert.equal(read(candidate).rendered,false);}candidate.style.visibility='visible';ancestor.style.visibility='hidden';assert.equal(read(candidate).rendered,true,'a visible child may override inherited visibility');ancestor.style.visibility='';
+candidate.getBoundingClientRect=()=>({x:20,y,width:0,height:0});assert.equal(read(candidate).rendered,false);
+process.stdout.write(JSON.stringify(records));}finally{dom.window.close();}
+"""
+        result = subprocess.run(['node', '-e', script], input=json.dumps({'script': MODULE.VISUAL_GEOMETRY + MODULE.SCROLL_REGION_VISIBILITY_JS}),
+                                text=True, capture_output=True, cwd=Path(__file__).parents[1])
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        closed, opened_offscreen = json.loads(result.stdout)
+        data = DesktopHierarchyContractChecks.shell()
+        data['permanentScrollIds'] += [closed['id']] if closed['rendered'] else []
+        MODULE.check_desktop_shell(data)
+        data['permanentScrollIds'] += [opened_offscreen['id']] if opened_offscreen['rendered'] else []
+        with self.assertRaisesRegex(RuntimeError, 'exactly the tree and reader'):
+            MODULE.check_desktop_shell(data)
+
+    def test_actual_snapshot_keeps_generic_candidate_diagnostics_and_strict_two_region_gate(self):
+        source = MODULE.DESKTOP_SHELL_SNAPSHOT_JS
+        self.assertIn('scrollRegionCandidates:scrollCandidates', source)
+        self.assertIn('scrollCandidates.filter(candidate=>candidate.rendered)', source)
+        for forbidden in ('np-peer-strip', 'innerWidth', 'innerHeight', 'elementFromPoint', 'IntersectionObserver'):
+            self.assertNotIn(forbidden, MODULE.SCROLL_REGION_VISIBILITY_JS)
+        self.assertIn("['np-tree-scroll', 'np-detail-scroll']", __import__('inspect').getsource(MODULE.check_desktop_shell))
+
+
 if __name__ == '__main__':
     unittest.main()

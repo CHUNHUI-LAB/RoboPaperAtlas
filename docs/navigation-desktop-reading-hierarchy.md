@@ -16,6 +16,8 @@ The ready desktop document has no outer-page scrolling. `#np-tree-scroll` and `#
 
 An old saved outer-page offset displays as zero in ready desktop mode. Capture records zero for the active page offset. This does not clear old history, other context buckets, origin snapshots, effective tree/reader offsets, focus, expansion, zoom or the independent L/C task views. Same-hash relation history entries remain distinct. Narrow-width legacy offset behavior is unchanged.
 
+On desktop, generated copies of the selected object identity in the summary share its fixed heading only when the active route and heading match the exact position, entity, paper and version. A raw `plain_language_question` that exactly equals the complete fixed title is represented there once with the explicit “研究问题” field role. Different questions, punctuation, qualifiers, source/version notes, scope boundaries and all actual A answers remain. The original source field and evidence body are retained. Narrow layouts keep the original summary headings and question block. Optional peer context wraps within the existing pane on desktop; it does not create another scrolling strip. Screenshot scroll enumeration respects closed disclosure ancestors while still rejecting a genuinely visible third scroll region.
+
 Toolbar disclosures and supporting sheets are temporary. Closing a sheet restores its actual trigger, including Escape. Full original ancestry labels wrap in an on-demand path disclosure rather than being truncated into a compact scientific label.
 
 ## Verification

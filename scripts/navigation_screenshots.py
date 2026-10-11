@@ -644,7 +644,29 @@ DISPLAY_CONTRACT_MIGRATIONS = {
 }
 
 
-DESKTOP_SHELL_SNAPSHOT_JS = VISUAL_GEOMETRY + r"""
+# Count open scroll containers even below the current viewport. Only actual
+# non-rendering states suppress a candidate; clipping and occlusion are not exemptions.
+SCROLL_REGION_VISIBILITY_JS = r"""
+function renderedElementState(e){
+  var cs=getComputedStyle(e),r=rect(e),blocked=null,ancestors=[];
+  function block(reason,n){if(!blocked)blocked={reason:reason,tag:n.tagName,id:n.id||null};}
+  if(cs.visibility==='hidden'||cs.visibility==='collapse')block('visibility',e);
+  for(var n=e;n&&n.nodeType===1;n=n.parentElement){var style=getComputedStyle(n),opacity=Number(style.opacity);
+    ancestors.push({tag:n.tagName,id:n.id||null,hidden:!!n.hidden,display:style.display,visibility:style.visibility,opacity:style.opacity,closedDetails:n.tagName==='DETAILS'&&!n.open});
+    if(n.hidden)block('hidden',n);
+    if(style.display==='none')block('display-none',n);
+    if(Number.isFinite(opacity)&&opacity===0)block('opacity-zero',n);
+    if(n.tagName==='DETAILS'&&!n.open&&n!==e){var summary=[...n.children].find(child=>child.tagName==='SUMMARY');
+      if(!summary||!(summary===e||summary.contains(e)))block('closed-details',n);}
+  }
+  if(!(r.width>0&&r.height>0))block('empty-bounds',e);
+  return {id:e.id||e.className,rect:r,display:cs.display,visibility:cs.visibility,opacity:cs.opacity,overflowX:cs.overflowX,overflowY:cs.overflowY,rendered:!blocked,blockedBy:blocked,ancestors:ancestors};
+}
+function scrollRegionCandidate(e){var cs=getComputedStyle(e);return /auto|scroll/.test(cs.overflowY+' '+cs.overflowX)?renderedElementState(e):null;}
+"""
+
+
+DESKTOP_SHELL_SNAPSHOT_JS = VISUAL_GEOMETRY + SCROLL_REGION_VISIBILITY_JS + r"""
 var a=NavigationProductApp,m=NavigationProductModel,s=a.getState(),app=document.getElementById('navigation-product'),
     tree=document.getElementById('np-tree-scroll'),reader=document.getElementById('np-detail-scroll'),
     pane=document.querySelector('.np-reading-pane'),header=document.getElementById('np-reader-heading'),
@@ -652,8 +674,8 @@ var a=NavigationProductApp,m=NavigationProductModel,s=a.getState(),app=document.
     picker=document.getElementById('np-task-route-canvas'),host=document.getElementById('np-tree'),p=a.getBundle().positions[s.route.node];
 function proof(e){return e?box(e):null;}
 function scroll(e){return {top:e.scrollTop,left:e.scrollLeft};}
-function permanentScroll(e){var cs=getComputedStyle(e),r=rect(e);return r.width>0&&r.height>0&&/auto|scroll/.test(cs.overflowY+' '+cs.overflowX);}
-var roots=host.querySelectorAll('[data-parallel-tree] > [role=tree] > [role=treeitem]'),b=a.getBundle();
+var roots=host.querySelectorAll('[data-parallel-tree] > [role=tree] > [role=treeitem]'),b=a.getBundle(),
+    scrollCandidates=[tree,reader,...tree.querySelectorAll('*'),...reader.querySelectorAll('*')].map(scrollRegionCandidate).filter(Boolean);
 return {ready:app.dataset.loadState,route:s.route,window:{x:scrollX,y:scrollY},
   viewport:{x:0,y:0,width:innerWidth,height:innerHeight},home:!document.getElementById('np-reading-landing').hidden,
   collapsed:app.dataset.readerCollapsed==='true',sourceOverview:app.dataset.activeTree==='g'&&app.dataset.globalFocus==='overview',panels:rect(document.querySelector('.np-panels')),
@@ -662,7 +684,7 @@ return {ready:app.dataset.loadState,route:s.route,window:{x:scrollX,y:scrollY},
   offsets:{tree:scroll(tree),reader:scroll(reader)},heading:proof(header),title:proof(title),meta:proof(meta),
   pickerDisclosure:document.getElementById('np-task-route-relations')?{open:document.getElementById('np-task-route-relations').open,rect:rect(document.getElementById('np-task-route-relations')),position:getComputedStyle(document.getElementById('np-task-route-relations')).position}:null,
   headingInsideScroll:!!header&&reader.contains(header),pickerInsideTree:tree.contains(picker),pickerInToolbar:!!picker.closest('.np-workspace-bar'),
-  permanentScrollIds:[tree,reader,...tree.querySelectorAll('*'),...reader.querySelectorAll('*')].filter(permanentScroll).map(e=>e.id||e.className),
+  permanentScrollIds:scrollCandidates.filter(candidate=>candidate.rendered).map(candidate=>candidate.id),scrollRegionCandidates:scrollCandidates,
   rootRows:[...roots].map(e=>({id:e.dataset.position,proof:proof(e.querySelector(':scope > .np-node-row'))})),
   routeRows:[...host.querySelectorAll('[role=treeitem]')].map(e=>({id:e.dataset.position,entity:e.dataset.entity,proof:proof(e.querySelector(':scope > .np-node-row'))})),
   position:p?{id:p.id,kind:p.kind,paper:p.paperId,version:p.versionId,parent:p.parentId}:null,
@@ -1959,6 +1981,93 @@ TASK_DENSITY_PROOFS_JS = 'return arguments[0].map(spec=>{try{return {spec:spec,a
 """
 
 
+ORIGINAL_CHALLENGE_TITLE_SELECTOR = '#np-reader-object-title h2'
+ORIGINAL_CHALLENGE_ROLE_SELECTOR = '#np-reader-object-meta .np-reader-field-role[data-reader-field-role="plain_language_question"]'
+ORIGINAL_CHALLENGE_SNAPSHOT_JS = VISUAL_GEOMETRY + SCROLL_REGION_VISIBILITY_JS + r"""
+function measured(spec){return (function(){
+""" + TASK_ROUTE_PROOF_JS + r"""
+}).call(null,spec);}
+var expected=arguments[0],questionText=arguments[1],titleSelector=arguments[2],roleSelector=arguments[3],
+    summarySelector='#np-reader-summary [data-reading-node="'+expected.id+'"]',summaries=document.querySelectorAll(summarySelector),
+    summary=summaries.length===1?summaries[0]:null,header=document.getElementById('np-reader-object-title'),
+    titles=document.querySelectorAll(titleSelector),roles=document.querySelectorAll(roleSelector),
+    scopeSelector=summarySelector+' [data-challenge-scope]',scopes=document.querySelectorAll(scopeSelector),scope=scopes.length===1?scopes[0]:null,
+    questions=summary?[...summary.querySelectorAll(':scope > .np-detail-block')].filter(e=>e.querySelector(':scope > h3')?.textContent==='研究问题'):[],question=questions.length===1?questions[0]:null,
+    questionSelector=question?summarySelector+' > .np-detail-block:nth-child('+([...summary.children].indexOf(question)+1)+') > p':null,
+    generatedHeadings=summary?summary.querySelectorAll(':scope > h3'):[];
+function duplicate(e){return {tag:e.tagName,marked:e.classList.contains('np-reader-identity-duplicate'),position:e.dataset.readerDuplicatePosition||null,field:e.dataset.readerDuplicateField||null,owner:e.closest('[data-reading-node]')?.dataset.readingNode||null,directChild:e.parentElement===summary,text:e.textContent,rendering:renderedElementState(e)};}
+return {route:NavigationProductApp.getState().route,summaryCount:summaries.length,summaryPosition:summary?.dataset.readingNode||null,
+  titleCount:titles.length,title:titles.length===1?measured({selector:titleSelector,region:'heading'}):null,
+  titleIdentity:header?{position:header.dataset.objectPosition||null,entity:header.dataset.objectEntity||null,paper:header.dataset.objectPaper||null,version:header.dataset.objectVersion||null}:null,
+  identityHeadingCount:generatedHeadings.length,identityHeading:generatedHeadings.length===1?duplicate(generatedHeadings[0]):null,
+  questionDuplicate:question?duplicate(question):null,markedDuplicates:summary?[...summary.querySelectorAll('.np-reader-identity-duplicate')].map(duplicate):[],
+  roleCount:roles.length,questionRole:roles.length===1?measured({selector:roleSelector,region:'heading'}):null,
+  questionCount:questions.length,questionText:question?.querySelector(':scope > p')?.textContent||null,
+  question:question&&questionText!==titles[0]?.textContent?measured({selector:questionSelector,region:'reader'}):null,
+  scopeCount:scopes.length,scopeEntity:scope?.dataset.challengeScope||null,scope:scope?box(scope):null,
+  scopeParagraphs:scope?[...scope.querySelectorAll(':scope > p')].map((p,i)=>measured({selector:scopeSelector+' > p:nth-of-type('+(i+1)+')',region:'reader'})):[],
+  viewport:{x:0,y:0,width:innerWidth,height:innerHeight}};
+"""
+
+
+def check_original_challenge_reading(data, position, original):
+    """Fixed identity may represent an identical question, never another source field."""
+    identity = {'position': position['id'], 'entity': position['entityId'],
+                'paper': position.get('paperId'), 'version': position.get('versionId')}
+    if (position['entityId'] != original['id'] or data['titleIdentity'] != identity or
+            data['titleCount'] != 1 or data['summaryCount'] != 1 or data['summaryPosition'] != position['id'] or
+            data['scopeCount'] != 1 or data['scopeEntity'] != original['id'] or
+            any(key not in data['route'] or data['route'][key] != position.get(field) for key, field in
+                (('node', 'id'), ('tree', 'tree'), ('scope', 'scopeId'), ('paper', 'paperId'), ('version', 'versionId')))):
+        raise RuntimeError('Challenge fixed title or scope belongs to another source position, entity, paper or version')
+    for key in ('title', 'scope'):
+        proof = data[key]
+        if (proof is None or not proof['visible'] or not proof['opaque'] or not proof['unscaled'] or
+                proof['fontSize'] < 15 or proof['clipped'] or len(proof['foreground']) != 3 or len(proof['background']) != 3 or
+                contrast_ratio(proof['foreground'], proof['background']) < 4.5 or not rect_inside(proof['rect'], data['viewport'])):
+            raise RuntimeError('Challenge original question and scope are not visible together')
+    check_task_route_proof(data['title'], original['label'])
+    def hidden_duplicate(record, tag, field=None):
+        if (record is None or record['tag'] != tag or record['field'] != field or record['marked'] is not True or
+                record['owner'] != position['id'] or record['position'] != position['id'] or record['directChild'] is not True or
+                record['rendering']['display'] != 'none' or
+                record['rendering']['rendered'] is not False or not record['rendering']['blockedBy'] or
+                record['rendering']['blockedBy']['reason'] not in ('hidden', 'display-none', 'visibility', 'opacity-zero', 'closed-details')):
+            raise RuntimeError('Challenge generated identity duplicate is not actually hidden for the exact current object')
+    if data['identityHeadingCount'] != 1 or data['identityHeading'] is None or data['identityHeading']['text'] != original['label']:
+        raise RuntimeError('Challenge generated identity heading changed or lost its exact source label')
+    hidden_duplicate(data['identityHeading'], 'H3')
+    question = original['detail'].get('plain_language_question')
+    expected_duplicates = [('H3', None)] + ([('SECTION', 'plain_language_question')] if question == original['label'] else [])
+    actual_duplicates = [(item['tag'], item['field']) for item in data['markedDuplicates']]
+    if actual_duplicates != expected_duplicates:
+        raise RuntimeError('Challenge deduplication marked another field or omitted an approved duplicate')
+    for item in data['markedDuplicates']:
+        hidden_duplicate(item, item['tag'], item['field'])
+    if question:
+        if data['questionCount'] != 1 or data['questionText'] != question:
+            raise RuntimeError('Challenge original research-question field was removed or changed')
+        if question == original['label']:
+            hidden_duplicate(data['questionDuplicate'], 'SECTION', 'plain_language_question')
+            if data['roleCount'] != 1 or data['questionRole'] is None:
+                raise RuntimeError('Identical fixed question lacks its explicit research-question field role')
+            check_task_route_proof(data['questionRole'], ' · 研究问题')
+        else:
+            if data['roleCount'] or data['question'] is None:
+                raise RuntimeError('Different research-question text cannot be represented by the fixed title')
+            check_task_route_proof(data['question'], question)
+    if len(data['scopeParagraphs']) < 3:
+        raise RuntimeError('Challenge applicability paragraphs are incomplete')
+    for proof in data['scopeParagraphs']:
+        if not _reader_proof(proof, data['viewport'], font_size=15):
+            raise RuntimeError('Challenge applicability paragraph is not visibly readable')
+        check_task_route_proof(proof)
+    scope = original['detail']['condition_scope']
+    required = [scope['condition'], *scope['tasks'], scope['remaining_limit']]
+    if any(not any(text in proof['renderedText'] for proof in data['scopeParagraphs']) for text in required):
+        raise RuntimeError('Challenge reader omitted an original visible condition, task or remaining limit')
+
+
 def task_density_expected(science):
     """Four bounded natural main-canvas entries; details are checked after selection."""
     original = task_route_expected(science)
@@ -2671,20 +2780,11 @@ def main():
         wait_for(lambda: driver.js("var a=NavigationProductApp,r=a.getState().route,q=arguments[0];return r.node===q.id&&r.tree===q.tree&&r.scope===q.scopeId&&r.paper===(q.paperId||null)&&r.version===(q.versionId||null)&&a.getContent().ready(q.entityId)&&!!document.querySelector('[data-reading-node=\"'+q.id+'\"]');", q))
         driver.settle()
         original = science['entities'][q['entityId']]
-        challenge_reading = driver.js(VISUAL_GEOMETRY + "var e=document.querySelector('[data-reading-node=\"'+arguments[0]+'\"]'),h=e.querySelector('h3'),scope=e.querySelector('[data-challenge-scope]');return {route:NavigationProductApp.getState().route,title:box(h),text:e.textContent,scope:scope?box(scope):null,scopeParagraphs:scope?[...scope.querySelectorAll('p')].map(box):[],viewport:{x:0,y:0,width:innerWidth,height:innerHeight}};",q['id'])
-        required = [original['label'],original['detail']['condition_scope']['condition'],*original['detail']['condition_scope']['tasks'],original['detail']['condition_scope']['remaining_limit']]
-        if any(text not in challenge_reading['text'] for text in required):
-            raise RuntimeError('Challenge reader omitted the original question or applicability')
-        for key in ('title','scope'):
-            proof = challenge_reading[key]
-            if proof is None or not proof['visible'] or not proof['opaque'] or not proof['unscaled'] or proof['fontSize'] < 15 or proof['clipped'] or len(proof['foreground']) != 3 or len(proof['background']) != 3 or contrast_ratio(proof['foreground'],proof['background']) < 4.5 or not rect_inside(proof['rect'],challenge_reading['viewport']):
-                raise RuntimeError('Challenge original question and scope are not visible together')
-        if len(challenge_reading['scopeParagraphs']) < 3:
-            raise RuntimeError('Challenge applicability paragraphs are incomplete')
-        for proof in challenge_reading['scopeParagraphs']:
-            if not proof['visible'] or not proof['opaque'] or not proof['unscaled'] or proof['fontSize'] < 15 or proof['clipped'] or len(proof['foreground']) != 3 or len(proof['background']) != 3 or contrast_ratio(proof['foreground'],proof['background']) < 4.5 or not rect_inside(proof['rect'],challenge_reading['viewport']):
-                raise RuntimeError('Challenge applicability paragraph is not visibly readable')
+        challenge_reading = driver.js(ORIGINAL_CHALLENGE_SNAPSHOT_JS, q, original['detail'].get('plain_language_question'),
+                                      ORIGINAL_CHALLENGE_TITLE_SELECTOR, ORIGINAL_CHALLENGE_ROLE_SELECTOR)
         report.setdefault('graphChallengeReadingChecks', []).append(challenge_reading)
+        save()
+        check_original_challenge_reading(challenge_reading, q, original)
         capture(prefix + '-14-original-challenge-reader')
         driver.click(driver.selector('.np-return-previous'))
         driver.settle()
