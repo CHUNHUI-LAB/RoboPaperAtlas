@@ -365,6 +365,12 @@ class QuietHandler(http.server.SimpleHTTPRequestHandler):
     def log_message(self, *_):
         pass
 
+    def send_response(self, code, message=None):
+        hold = getattr(self, '_capture_packet_hold', None)
+        if hold is not None:
+            hold.note('response', status=code, request=self._capture_packet_request)
+        super().send_response(code, message)
+
     def do_GET(self):
         if self.path == '/favicon.ico':
             self.send_response(204)
@@ -372,10 +378,23 @@ class QuietHandler(http.server.SimpleHTTPRequestHandler):
             return
         hold = getattr(self.server, 'packet_hold', None)
         if hold and urllib.parse.urlsplit(self.path).path == hold.path:
+            self._capture_packet_hold = hold
+            request = self._capture_packet_request = hold.start_request()
+            hold.note('seen', request=request)
             hold.seen.set()
+            hold.note('held', request=request)
             if not hold.released.wait(8):
                 hold.expired = True
-        super().do_GET()
+                hold.note('expired', request=request)
+            else:
+                hold.note('release-observed', request=request)
+            try:
+                super().do_GET()
+            finally:
+                hold.note('request-finished', request=request)
+                self._capture_packet_hold = None
+        else:
+            super().do_GET()
 
 
 class PacketHold:
@@ -389,16 +408,114 @@ class PacketHold:
         self.server, self.path = server, path
         self.seen, self.released = threading.Event(), threading.Event()
         self.expired = False
+        self.events, self.truncated, self.lock = [], False, threading.Lock()
+        self.started = time.monotonic()
+        self.request_count = 0
+
+    def start_request(self):
+        with self.lock:
+            self.request_count += 1
+            return self.request_count
+
+    def note(self, event, status=None, request=None):
+        with self.lock:
+            if len(self.events) >= 32:
+                self.truncated = True
+                return
+            row = {'event': event, 'elapsedMs': round((time.monotonic() - self.started) * 1000, 3)}
+            if isinstance(status, int) and not isinstance(status, bool):
+                row['status'] = int(status)
+            if type(request) is int:
+                row['request'] = request
+            self.events.append(row)
+
+    def diagnostic(self):
+        with self.lock:
+            return {'path': self.path, 'seen': self.seen.is_set(), 'released': self.released.is_set(),
+                    'expired': self.expired, 'requestCount': self.request_count, 'events': list(self.events),
+                    'eventLimit': 32, 'truncated': self.truncated}
 
     def __enter__(self):
         if getattr(self.server, 'packet_hold', None) is not None:
             raise RuntimeError('Only one bounded packet hold is allowed')
         self.server.packet_hold = self
+        self.note('armed')
         return self
 
     def __exit__(self, *_):
         self.released.set()
         self.server.packet_hold = None
+        self.note('disarmed')
+
+
+class DelayedRequestCacheControl:
+    """Test-owned fresh requests only; normal-cache cold scenarios stay separate."""
+    def __init__(self, driver, record, save, hold):
+        self.driver, self.record, self.save = driver, record, save
+        self.hold = hold
+        self.state = record['cacheControl'] = {
+            'scope': 'this delayedRestore case only; all resources on this browser target',
+            'normalCacheColdChecksSeparate': True, 'disableAttempted': False,
+            'disableAcknowledged': False, 'restoreAttempted': False, 'restoreAcknowledged': False}
+
+    def __enter__(self):
+        self.state['disableAttempted'] = True
+        try:
+            self.driver.cdp('Network.setCacheDisabled', {'cacheDisabled': True})
+            self.state['disableAcknowledged'] = True
+            self.save()
+        except Exception as exc:
+            self._restore(exc)
+            raise
+        return self
+
+    def _restore(self, original=None):
+        failure = None
+        self.state['restoreAttempted'] = True
+        try:
+            self.driver.cdp('Network.setCacheDisabled', {'cacheDisabled': False})
+            self.state['restoreAcknowledged'] = True
+        except Exception as exc:
+            self.state['restoreErrorType'] = type(exc).__name__
+            failure = exc
+        try:
+            self.record['hold'] = self.hold.diagnostic()
+        except Exception as exc:
+            self.state['holdDiagnosticErrorType'] = type(exc).__name__
+            if failure is None:
+                failure = exc
+        try:
+            self.save()
+        except Exception as exc:
+            self.state['saveErrorType'] = type(exc).__name__
+            if failure is None:
+                failure = exc
+        if original is None and failure is not None:
+            raise failure
+
+    def __exit__(self, kind, value, traceback):
+        self._restore(value)
+        return False
+
+
+DELAYED_PACKET_DIAGNOSTIC_JS = r"""
+var sha=arguments[0],owner=arguments[1],path='/research/navigation/content/'+sha+'.json',a=window.NavigationProductApp;
+if(!/^[a-f0-9]{64}$/.test(sha))throw Error('Unexpected diagnostic packet identity');
+var all=performance.getEntriesByType('resource').filter(function(e){try{var u=new URL(e.name,location.href);return u.origin===location.origin&&u.pathname===path;}catch(_){return false;}});
+function number(v){return typeof v==='number'&&Number.isFinite(v)?v:null;}
+var content=a&&a.getContent(),info=content&&content.diagnostics(owner),packet=a&&a.getBundle().delivery.packets[owner],nav=performance.getEntriesByType('navigation')[0];
+return {packetSha256:sha,timeOriginMs:performance.timeOrigin,relativeTimeMs:performance.now(),documentReadyState:document.readyState,
+  navigationType:nav&&['navigate','reload','back_forward','prerender'].includes(nav.type)?nav.type:null,
+  ownerPacketMatches:!!packet&&packet.sha256===sha,contentReady:!!content&&content.ready(owner),
+  contentStatus:content&&['ready','loading','failed','idle'].includes(content.status(owner))?content.status(owner):null,
+  progress:info?{phase:['fetch','body','hash','parse','identity','ready'].includes(info.phase)?info.phase:null,
+    elapsedMs:number(info.elapsedMs),receivedBytes:number(info.receivedBytes),expectedBytes:number(info.expectedBytes),attempt:number(info.attempt)}:null,
+  resourceEntryCount:all.length,resourceEntryLimit:8,resourceEntriesTruncated:all.length>8,
+  resources:all.slice(-8).map(function(e){return {initiatorType:['fetch','xmlhttprequest','other'].includes(e.initiatorType)?e.initiatorType:'other',
+    startTime:number(e.startTime),duration:number(e.duration),transferSize:number(e.transferSize),encodedBodySize:number(e.encodedBodySize),decodedBodySize:number(e.decodedBodySize),
+    responseStatus:number(e.responseStatus),deliveryType:['cache','navigational-prefetch',''].includes(e.deliveryType)?e.deliveryType:null,
+    workerStart:number(e.workerStart)};})};
+"""
 
 
 COLD_RESTORE_SNAPSHOT_JS = r"""
@@ -1600,15 +1717,24 @@ def task_route_checks(driver, report, save, capture, prefix, base, science, serv
             transition_record(driver, record, save, 'select-delayed-relation', lambda: driver.click(reveal_control(driver, {'selector': selector})),
                 lambda: driver.js("return document.querySelector('[data-selected-task-relation=\"methods:relation:90\"]')&&document.querySelector('[data-relation-state]')?.dataset.relationState==='ready'"))
             packet = driver.js('return NavigationProductApp.getBundle().delivery.packets[arguments[0]]', poni['entityId'])
-            delayed = {'interrupt': interrupt, 'before': snapshot(), 'packetSha256': packet['sha256']}
+            delayed = {'interrupt': interrupt, 'before': snapshot(), 'packetSha256': packet['sha256'],
+                       'resourceBefore': driver.js(DELAYED_PACKET_DIAGNOSTIC_JS, packet['sha256'], poni['entityId'])}
             record.setdefault('delayedRestore', []).append(delayed)
             save()
             completed = False
-            with PacketHold(server, '/research/navigation/content/' + packet['sha256'] + '.json', dist, packet['sha256']) as hold:
+            with PacketHold(server, '/research/navigation/content/' + packet['sha256'] + '.json', dist, packet['sha256']) as hold, DelayedRequestCacheControl(driver, delayed, save, hold):
                 try:
+                    delayed['stage'] = 'native-refresh'
+                    hold.note('refresh-start')
                     driver.call('POST', '/refresh', {})
+                    hold.note('refresh-return')
+                    delayed['stage'] = 'waiting-for-server-request'
                     wait_for(lambda: hold.seen.is_set(), timeout=5)
+                    hold.note('seen-confirmed')
+                    delayed['stage'] = 'waiting-for-relation-loading'
                     wait_for(lambda: driver.js("return !!window.NavigationProductApp&&document.querySelector('[data-relation-state]')?.dataset.relationState==='loading'"), timeout=5)
+                    hold.note('loading-confirmed')
+                    delayed['stage'] = 'pending-user-action'
                     delayed['pending'] = snapshot()
                     save()
                     if interrupt == 'wheel':
@@ -1624,7 +1750,9 @@ def task_route_checks(driver, report, save, capture, prefix, base, science, serv
                         wait_for(lambda: driver.js("return NavigationProductApp.getState().route.scope==='task:imagenav'&&document.querySelector('[data-task-route-state=ready]')"))
                         driver.settle()
                         delayed['newer'] = snapshot()
+                    hold.note('planned-release')
                     hold.released.set()
+                    delayed['stage'] = 'waiting-for-ready-after-release'
                     wait_for(lambda: driver.js('return NavigationProductApp.getContent().ready(arguments[0])', poni['entityId']))
                     driver.settle()
                     delayed['after'] = snapshot()
@@ -1639,8 +1767,15 @@ def task_route_checks(driver, report, save, capture, prefix, base, science, serv
                             if delayed['newer'][key] != delayed['after'][key]:
                                 raise RuntimeError('Delayed old content overrode newer ' + interrupt + ': ' + key)
                     completed = True
+                    delayed['stage'] = 'completed'
                 finally:
+                    hold.note('finally-release')
                     hold.released.set()
+                    delayed['hold'] = hold.diagnostic()
+                    try:
+                        delayed['resourceFinal'] = driver.js(DELAYED_PACKET_DIAGNOSTIC_JS, packet['sha256'], poni['entityId'])
+                    except Exception as exc:
+                        delayed['resourceDiagnosticErrorType'] = type(exc).__name__
                     try:
                         delayed['final'] = snapshot()
                         save()

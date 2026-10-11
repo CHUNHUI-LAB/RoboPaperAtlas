@@ -2298,5 +2298,111 @@ class DefaultOverviewMaterializationChecks(unittest.TestCase):
             self.assertEqual(evidence['actualOriginOverview'], f['origin']['bucket']['relationOverviewByTree'])
 
 
+class DelayedRequestFixtureChecks(unittest.TestCase):
+    def test_cache_control_restores_default_on_every_failure_and_preserves_original(self):
+        import copy
+        for failure in (None, 'enable', 'refresh', 'wait', 'disable', 'refresh-disable', 'entry-save', 'exit-save', 'hold-diagnostic'):
+            calls, saved, record = [], [], {}
+            primary = RuntimeError('original failure'); cleanup = RuntimeError('cleanup failure')
+            class Driver:
+                def cdp(self, command, params):
+                    calls.append((command, params))
+                    if params['cacheDisabled'] and failure == 'enable': raise primary
+                    if not params['cacheDisabled'] and failure in ('disable', 'refresh-disable'): raise cleanup
+            class Hold:
+                def diagnostic(self):
+                    if failure == 'hold-diagnostic': raise cleanup
+                    return {'seen': True, 'events': [{'event': 'armed', 'elapsedMs': 0}]}
+            def save():
+                saved.append(copy.deepcopy(record))
+                if failure == 'entry-save' and not record['cacheControl']['restoreAttempted']: raise primary
+                if failure == 'exit-save' and record['cacheControl']['restoreAttempted']: raise cleanup
+            def run():
+                with MODULE.DelayedRequestCacheControl(Driver(), record, save, Hold()):
+                    calls.append(('refresh', {}))
+                    if failure in ('refresh', 'wait', 'refresh-disable'): raise primary
+            with self.subTest(failure=failure):
+                if failure:
+                    with self.assertRaises(RuntimeError) as caught: run()
+                    self.assertIs(caught.exception, primary if failure in ('enable', 'refresh', 'wait', 'refresh-disable', 'entry-save') else cleanup)
+                else: run()
+            self.assertEqual(calls[0], ('Network.setCacheDisabled', {'cacheDisabled': True}))
+            self.assertEqual(calls[-1], ('Network.setCacheDisabled', {'cacheDisabled': False}))
+            if failure in ('enable', 'entry-save'): self.assertNotIn(('refresh', {}), calls)
+            state = record['cacheControl']; self.assertTrue(state['disableAttempted']); self.assertTrue(state['restoreAttempted'])
+            self.assertEqual(state['restoreAcknowledged'], failure not in ('disable', 'refresh-disable'))
+            self.assertTrue(saved)
+
+    def test_real_loopback_hold_records_exact_get_and_conditional304_before_release(self):
+        import concurrent.futures, functools, hashlib, http.server, tempfile, threading, urllib.request, urllib.error
+        with tempfile.TemporaryDirectory() as directory:
+            dist = Path(directory); raw = b'{"public":"pinned request fixture"}'; digest = hashlib.sha256(raw).hexdigest()
+            path = '/research/navigation/content/' + digest + '.json'; packet = dist / path.lstrip('/')
+            packet.parent.mkdir(parents=True); packet.write_bytes(raw)
+            server = http.server.ThreadingHTTPServer(('127.0.0.1', 0), functools.partial(MODULE.QuietHandler, directory=str(dist)))
+            thread = threading.Thread(target=server.serve_forever, daemon=True); thread.start()
+            def get(requested, headers=None):
+                try: response = urllib.request.urlopen(urllib.request.Request('http://127.0.0.1:' + str(server.server_port) + requested, headers=headers or {}), timeout=2)
+                except urllib.error.HTTPError as exc: response = exc
+                with response: return response.status, response.headers.get('Last-Modified'), response.read()
+            try:
+                status, modified, body = get(path); self.assertEqual((status, body), (200, raw))
+                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+                    for requested, headers, wanted in ((path, {}, 200), (path + '?not-recorded=private', {}, 200), (path, {'If-Modified-Since': modified}, 304)):
+                        with MODULE.PacketHold(server, path, dist, digest) as hold:
+                            task = pool.submit(get, requested, headers)
+                            self.assertTrue(hold.seen.wait(1)); self.assertFalse(task.done())
+                            hold.note('planned-release'); hold.released.set(); self.assertEqual(task.result(timeout=2)[0], wanted)
+                            MODULE.wait_for(lambda: any(e['event'] == 'request-finished' for e in hold.diagnostic()['events']), timeout=1)
+                        diagnostic = hold.diagnostic(); events = diagnostic['events']; names = [row['event'] for row in events]
+                        self.assertLess(names.index('armed'), names.index('seen')); self.assertLess(names.index('seen'), names.index('held'))
+                        self.assertLess(names.index('planned-release'), names.index('response')); self.assertIn('release-observed', names)
+                        self.assertIn('request-finished', names); self.assertEqual(next(e['status'] for e in events if e['event'] == 'response'), wanted)
+                        self.assertEqual(diagnostic['requestCount'], 1)
+                        self.assertTrue(all(e['request'] == 1 for e in events if e['event'] in ('seen', 'held', 'release-observed', 'response', 'request-finished')))
+                        self.assertEqual([e['elapsedMs'] for e in events], sorted(e['elapsedMs'] for e in events))
+                        self.assertFalse(diagnostic['expired']); self.assertEqual(diagnostic['path'], path)
+                        self.assertNotIn('private', json.dumps(diagnostic)); self.assertNotIn('headers', json.dumps(diagnostic))
+                with MODULE.PacketHold(server, path, dist, digest) as hold:
+                    for _ in range(40): hold.note('unit-event')
+                    self.assertEqual(len(hold.diagnostic()['events']), 32); self.assertTrue(hold.diagnostic()['truncated'])
+            finally:
+                server.shutdown(); server.server_close(); thread.join(timeout=2)
+
+    def test_target_resource_diagnostic_is_read_only_bounded_and_omits_other_urls(self):
+        script = r"""
+const assert=require('node:assert/strict'),input=JSON.parse(require('fs').readFileSync(0,'utf8')),sha='a'.repeat(64),origin='http://127.0.0.1:1000';
+global.window=global;global.location={href:origin+'/research/navigation/#PRIVATE_HASH',origin};global.document={readyState:'complete'};
+const target={name:origin+'/research/navigation/content/'+sha+'.json?PRIVATE_QUERY',initiatorType:'fetch',startTime:3,duration:12,transferSize:0,encodedBodySize:16084,decodedBodySize:16084,responseStatus:200,deliveryType:'cache',workerStart:0,PRIVATE_FIELD:'PRIVATE_DATA'};
+const entries=Array.from({length:10},()=>({...target}));entries.push({...target,name:'https://outside.test/'+sha+'.json?PRIVATE_OTHER'});entries.push({...target,name:origin+'/other/PRIVATE_ROUTE'});
+global.performance={timeOrigin:1000,now:()=>17,getEntriesByType:k=>k==='navigation'?[{type:'reload'}]:entries,clearResourceTimings:()=>{throw Error('must not clear');}};
+global.NavigationProductApp={getBundle:()=>({delivery:{packets:{poni:{sha256:sha}}}}),getContent:()=>({ready:()=>true,status:()=> 'ready',diagnostics:()=>({phase:'ready',elapsedMs:7,receivedBytes:16084,expectedBytes:16084,attempt:1,PRIVATE_FIELD:'PRIVATE_DATA'})})};
+const result=new Function(input.script)(sha,'poni');assert.equal(result.resources.length,8);assert.equal(result.resourceEntryCount,10);assert.equal(result.resourceEntriesTruncated,true);assert.equal(result.ownerPacketMatches,true);assert.equal(result.resources[0].deliveryType,'cache');assert.equal(result.resources[0].transferSize,0);assert.equal(result.navigationType,'reload');
+assert.ok(!JSON.stringify(result).includes('PRIVATE'));assert.ok(!JSON.stringify(result).includes('http'));assert.throws(()=>new Function(input.script)('wrong','poni'),/identity/);
+"""
+        result = subprocess.run(['node', '-e', script], input=json.dumps({'script': MODULE.DELAYED_PACKET_DIAGNOSTIC_JS}), text=True, capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_delay_keeps_original_bounds_actions_and_separate_normal_cache_cold_checks(self):
+        import ast, inspect
+        source = inspect.getsource(MODULE.task_route_checks)
+        self.assertIn("for interrupt in ('none', 'wheel', 'scope'):", source)
+        self.assertIn("as hold, DelayedRequestCacheControl(driver, delayed, save, hold):", source)
+        self.assertIn("driver.call('POST', '/refresh', {})", source)
+        self.assertIn("wait_for(lambda: hold.seen.is_set(), timeout=5)", source)
+        self.assertIn("dataset.relationState==='loading'\"), timeout=5)", source)
+        self.assertIn("if hold.expired:", source); self.assertIn("check_exploration_restore(delayed['before'], delayed['after'])", source)
+        self.assertIn("for key in ('route', 'treeScroll', 'readerScroll', 'window', 'focus', 'taskView'):", source)
+        self.assertIn('hold.released.wait(8)', inspect.getsource(MODULE.QuietHandler.do_GET))
+        for name in ('cold_relation_refresh', 'cold_relation_refresh_comparison'):
+            self.assertNotIn('CacheControl', inspect.getsource(getattr(MODULE, name)))
+            self.assertNotIn('setCacheDisabled', inspect.getsource(getattr(MODULE, name)))
+        stages = ('refresh-start', 'refresh-return', 'seen-confirmed', 'loading-confirmed', 'planned-release')
+        for stage in stages: self.assertIn("hold.note('" + stage + "')", source)
+        tree = ast.parse(source)
+        contexts = [n for n in ast.walk(tree) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'DelayedRequestCacheControl']
+        self.assertEqual(len(contexts), 1)
+
+
 if __name__ == '__main__':
     unittest.main()
