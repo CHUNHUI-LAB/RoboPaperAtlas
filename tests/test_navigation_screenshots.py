@@ -3683,6 +3683,110 @@ d.querySelector('.np-return-previous').click();await ready(()=>a.getState().rout
         states=run_product_capture_script(self,body,{'science':science,'expected':expected,'child':child,'claim':MODULE.task_route_claims(science,expected['poni'])[0],'measurement':MODULE.SCROLL_FIXTURE_SNAPSHOT_JS})
         self.assertEqual(states[0]['route']['paper'],'vlfm')
 
+    def end_state(self, row_y=994.5, row_height=42):
+        state=self.state(maximum=42)
+        state['tree'].update(clientHeight=863,scrollHeight=905,maxTop=42)
+        state['treeEndTarget']={'position':'source-poni','scope':state['route']['scope'],'tree':state['route']['tree'],
+            'isFirstNodeRow':True,'row':{'x':53,'y':row_y,'width':996,'height':row_height},
+            'viewport':{'x':17,'y':176,'width':1054,'height':863}}
+        return state
+
+    def test_end_readiness_rejects_padding_only_overflow_wrong_target_and_oversized_noop(self):
+        import copy
+        padding=self.end_state();MODULE.check_scroll_metrics(padding['tree'],headroom=True)
+        self.assertFalse(MODULE.end_target_below_viewport(padding),'42px of annotation/padding overflow does not move the visible row')
+        self.assertFalse(MODULE.end_target_below_viewport(self.end_state(row_y=997,row_height=42)),'a row ending exactly at the viewport edge is visible')
+        self.assertTrue(MODULE.end_target_below_viewport(self.end_state(row_y=1050)))
+        self.assertTrue(MODULE.end_target_below_viewport(self.end_state(row_y=1010)))
+        for y,h in ((100,1000),(176,900)):
+            self.assertFalse(MODULE.end_target_below_viewport(self.end_state(row_y=y,row_height=h)),'nearest is a no-op for a row spanning both viewport edges')
+        for mutate in (lambda d:d.update(treeEndTarget=None),lambda d:d['treeEndTarget'].update(position='wrong-last'),
+                       lambda d:d['treeEndTarget'].update(scope='wrong-scope'),lambda d:d['treeEndTarget'].update(tree='c'),
+                       lambda d:d['treeEndTarget'].update(isFirstNodeRow=False),lambda d:d['tree'].update(top=1),
+                       lambda d:d['treeEndTarget']['row'].update(height=0),lambda d:d['treeEndTarget']['viewport'].update(height=float('nan'))):
+            bad=copy.deepcopy(padding);mutate(bad)
+            with self.assertRaises(RuntimeError):MODULE.end_target_below_viewport(bad)
+
+    def test_end_preparation_expands_real_branches_past_padding_overflow_but_wheel_does_not(self):
+        import copy,inspect
+        owner=self
+        class Driver:
+            def __init__(self,exhausted=False):self.clicks=0;self.exhausted=exhausted;self.native=[]
+            def js(self,script,*args):
+                if script==MODULE.SCROLL_FIXTURE_SNAPSHOT_JS:
+                    state=owner.end_state(row_y=1050 if self.clicks else 994.5)
+                    if self.clicks:state['tree'].update(scrollHeight=1000,maxTop=137)
+                    state['branches']=[] if self.exhausted or self.clicks else [{'id':'original-branch','scope':state['route']['scope'],'tree':'l','children':['original-child'],'control':'np-node-original-branch','label':'Original source branch'}]
+                    return state
+                if 'Exact visible control absent' in script:self.native.append(args[0]);return {'original':'branch-toggle'}
+                if 'scrollIntoView' in script:return None
+                raise AssertionError(script)
+            def click(self,element):self.clicks+=1
+            def settle(self):pass
+        record,driver={},Driver();actual=MODULE.prepare_scroll_fixture(driver,record,lambda:None,'tree',require_end_target=True)
+        self.assertEqual(driver.clicks,1);self.assertEqual(record['scrollPreparations'][0]['scenario'],'native_original_end_row_below_viewport')
+        self.assertEqual(driver.native,[{'selector':'[id="np-node-original-branch"] > .np-node-row > .np-node-toggle'}])
+        self.assertTrue(MODULE.end_target_below_viewport(actual));self.assertEqual(actual['tree']['top'],0)
+        wheel=Driver();MODULE.prepare_scroll_fixture(wheel,{},lambda:None,'tree');self.assertEqual(wheel.clicks,0,'wheel can use real padding overflow')
+        with self.assertRaisesRegex(RuntimeError,'already visible'):MODULE.prepare_scroll_fixture(Driver(exhausted=True),{},lambda:None,'tree',require_end_target=True)
+        code=inspect.getsource(MODULE.exploration_state_checks)
+        self.assertIn("prepare_scroll_fixture(driver, record, save, 'tree', require_end_target=True)",code)
+        self.assertIn("check_native_wheel_progress(before, after, 'tree')",code)
+        self.assertIn("after['focusPosition'] != before['treeState']['positions'][-1]['id']",code)
+        self.assertGreaterEqual(code.count('nonzero=True'),4)
+
+    def test_end_preparation_natively_resets_and_remeasures_after_each_branch_reveal(self):
+        owner=self
+        class Driver:
+            def __init__(self,stuck=False):self.phase=0;self.top=30;self.stuck=stuck;self.wheels=[]
+            def js(self,script,*args):
+                if script==MODULE.SCROLL_FIXTURE_SNAPSHOT_JS:
+                    state=owner.end_state(row_y=(1050 if self.phase else 994.5)-self.top)
+                    state['tree']['top']=self.top
+                    if self.phase:state['tree'].update(scrollHeight=1000,maxTop=137)
+                    state['branches']=[] if self.phase else [{'id':'original-branch','scope':state['route']['scope'],'tree':'l','children':['original-child'],'control':'np-node-original-branch','label':'Original branch'}]
+                    return state
+                if 'Exact visible control absent' in script:return {'original':'branch-toggle'}
+                if 'scrollIntoView' in script:return None
+                raise AssertionError(script)
+            def selector(self,selector):return {'selector':selector}
+            def click(self,element):self.phase=1;self.top=80
+            def call(self,method,path,payload):
+                self.wheels.append(payload['actions'][0]['actions'][0])
+                if not self.stuck:self.top=0
+            def settle(self):pass
+        driver,record=Driver(),{}
+        ready=MODULE.prepare_scroll_fixture(driver,record,lambda:None,'tree',require_end_target=True)
+        self.assertEqual([action['deltaY'] for action in driver.wheels],[-905,-1000])
+        self.assertTrue(all(action['type']=='scroll' and action['origin']=={'selector':'#np-tree-scroll'} for action in driver.wheels))
+        preparation=record['scrollPreparations'][0]
+        self.assertEqual([row['tree']['top'] for row in preparation['endStartResets']],[0,0])
+        self.assertEqual(preparation['steps'][0]['after']['tree']['top'],80)
+        self.assertEqual(ready['treeEndTarget']['row']['y'],1050)
+        self.assertEqual(ready['tree']['top'],0);self.assertTrue(MODULE.end_target_below_viewport(ready))
+        failed={}
+        with self.assertRaisesRegex(RuntimeError,'at zero scroll'):
+            MODULE.prepare_scroll_fixture(Driver(stuck=True),failed,lambda:None,'tree',require_end_target=True)
+        self.assertEqual(failed['nativeScrollActions'][0]['after']['tree']['top'],30)
+
+    def test_end_snapshot_measures_original_first_row_not_overflowing_item(self):
+        script=r"""
+const {JSDOM}=require('jsdom'),assert=require('node:assert/strict'),input=JSON.parse(require('fs').readFileSync(0,'utf8'));
+const dom=new JSDOM('<!doctype html><div id="np-tree-scroll"><div id="np-tree"><section data-parallel-tree="c"><ul role="tree"><li role="treeitem" data-position="last"><div class="np-node-row">Exact last source row</div><span>Original annotation below row</span></li></ul></section></div></div>',{runScripts:'outside-only'});
+try{const w=dom.window,d=w.document,tree=d.getElementById('np-tree-scroll'),item=d.querySelector('[role=treeitem]'),row=item.firstElementChild;
+ w.NavigationProductApp={getBundle:()=>({positions:{last:{id:'last',tree:'c',scopeId:'original-scope'}}}),getState:()=>({route:{tree:'c',scope:'original-scope'}})};
+ tree.getBoundingClientRect=()=>({x:16,y:175,width:1056,height:865});for(const [key,value] of Object.entries({clientLeft:1,clientTop:1,clientWidth:1054,clientHeight:863,scrollHeight:905}))Object.defineProperty(tree,key,{value});
+ item.getBoundingClientRect=()=>({x:53,y:994.5,width:996,height:70});row.getBoundingClientRect=()=>({x:53,y:994.5,width:996,height:42});
+ const snap=new w.Function(input.script+';return actualTreeEndTarget();'),out=snap();assert.equal(out.position,'last');assert.equal(out.row.height,42);assert.equal(out.viewport.y+out.viewport.height,1039);assert.ok(out.row.y+out.row.height<1039);assert.ok(item.getBoundingClientRect().y+item.getBoundingClientRect().height>1039);assert.equal(tree.scrollTop,0);
+ row.className='not-the-source-row';assert.equal(snap().isFirstNodeRow,false);process.stdout.write(JSON.stringify(out));
+}finally{dom.window.close();}
+"""
+        result=subprocess.run(['node','-e',script],input=json.dumps({'script':MODULE.END_TARGET_SNAPSHOT_JS}),cwd=Path(__file__).parents[1],capture_output=True,text=True)
+        self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+        target=json.loads(result.stdout);self.assertEqual(target['tree'],'c');self.assertEqual(target['scope'],'original-scope')
+        for forbidden in ('scrollTop=', 'scrollTop =', '.scrollTo(', '.scrollIntoView(', '.focus(', '.click('):self.assertNotIn(forbidden,MODULE.END_TARGET_SNAPSHOT_JS)
+        self.assertEqual(len(MODULE.SCENE_NAMES)*len(MODULE.VIEWPORTS),98)
+
     def test_all_shortened_fixture_sites_keep_native_positive_gates_and_98_scenes(self):
         import inspect
         desktop=inspect.getsource(MODULE.desktop_hierarchy_checks)

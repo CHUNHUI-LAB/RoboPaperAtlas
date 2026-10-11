@@ -763,7 +763,7 @@ DISPLAY_CONTRACT_MIGRATIONS = {
     'method_geometry': 'actual desktop g/L method only: 400/448px real-path pane, 16px gap, 992/1424px reader; task/relation/A unchanged',
     'method_ancestry': 'original root-to-selection parent edges and children; real-parent siblings in native navigation disclosure, never tree nodes',
     'method_introduction': 'desktop selected method hides only repeated interface introduction; original mechanism and source boundaries remain natural flow',
-    'source_scroll_fixtures': 'S1 fitting body proves stationary identity only; mandatory positive wheel uses measured genuine PONI content; L/C nonzero history uses same-version original technical child, then real pipeline ancestor for A and claim links',
+    'source_scroll_fixtures': 'S1 fitting body proves stationary identity only; mandatory positive wheel uses measured genuine PONI content; L/C nonzero history uses same-version original technical child, measured offscreen last-row End target, then real pipeline ancestor for A and claim links',
     'method_analysis_controls': 'full fixed title/version/warning and genuine analysis controls in a compact status row; no cropped identity',
 }
 
@@ -1152,7 +1152,19 @@ def check_reader_toggle_transition(before, after, original, collapsed):
 
 
 # Read-only measurements bind every positive-scroll fixture to actual source state.
-SCROLL_FIXTURE_SNAPSHOT_JS = r"""
+END_TARGET_SNAPSHOT_JS = r"""
+function actualTreeEndTarget(){
+  var a=NavigationProductApp,b=a.getBundle(),s=a.getState(),tree=document.getElementById('np-tree-scroll'),
+      rows=[...document.querySelectorAll('#np-tree [data-parallel-tree] [role=treeitem]')],last=rows.at(-1),p=last&&b.positions[last.dataset.position],row=last?.firstElementChild;
+  if(!tree||!p||!row)return null;var tr=tree.getBoundingClientRect(),rr=row.getBoundingClientRect();
+  return {position:p.id,scope:p.scopeId,tree:p.tree,isFirstNodeRow:row.matches('.np-node-row'),
+    row:{x:rr.x,y:rr.y,width:rr.width,height:rr.height},
+    viewport:{x:tr.x+tree.clientLeft,y:tr.y+tree.clientTop,width:tree.clientWidth,height:tree.clientHeight}};
+}
+"""
+
+
+SCROLL_FIXTURE_SNAPSHOT_JS = END_TARGET_SNAPSHOT_JS + r"""
 var a=NavigationProductApp,b=a.getBundle(),s=a.getState(),p=b.positions[s.route.node];
 function metrics(id){var e=document.getElementById(id);return {id:id,top:e.scrollTop,left:e.scrollLeft,scrollHeight:e.scrollHeight,clientHeight:e.clientHeight,maxTop:Math.max(0,e.scrollHeight-e.clientHeight)};}
 return {route:s.route,position:p?{id:p.id,entity:p.entityId,scope:p.scopeId,tree:p.tree,paper:p.paperId,version:p.versionId}:null,
@@ -1160,7 +1172,7 @@ return {route:s.route,position:p?{id:p.id,entity:p.entityId,scope:p.scopeId,tree
  historyIdentity:{url:location.href,length:history.length,entryKey:window.navigation?.currentEntry?.key||null,revision:s.revision,originTrail:s.originTrail},
  treeState:{expanded:NavigationProductModel.getBucket(s).expandedByTree,positions:[...document.querySelectorAll('#np-tree [role=treeitem]')].map(e=>({id:e.dataset.position,selected:e.getAttribute('aria-selected')}))},
  focusPosition:document.activeElement.closest('#np-tree [data-parallel-tree] [role=treeitem]')?.dataset.position||null,
- tree:metrics('np-tree-scroll'),reader:metrics('np-detail-scroll'),
+ tree:metrics('np-tree-scroll'),reader:metrics('np-detail-scroll'),treeEndTarget:actualTreeEndTarget(),
  disclosures:[...document.querySelectorAll('#np-detail-scroll details')].map(e=>({id:e.id,classes:e.className,open:e.open,hidden:e.hidden,summary:e.querySelector(':scope > summary')?.textContent||null,claims:[...e.querySelectorAll('[data-claim-id]')].map(c=>c.dataset.claimId)})),
  branches:[...document.querySelectorAll('#np-tree [data-parallel-tree] [role=treeitem][aria-expanded="false"]')].map(e=>{var p=b.positions[e.dataset.position];return {id:p.id,tree:p.tree,scope:p.scopeId,children:p.childIds,control:e.id,label:e.querySelector(':scope > .np-node-row > .np-node-label').textContent};})};
 """
@@ -1225,13 +1237,42 @@ def native_scroll(driver, record, save, region, delta, action_id='source-bound-s
              'x': 0, 'y': 0, 'deltaX': 0, 'deltaY': delta, 'duration': 100}]}]}))
 
 
-def prepare_scroll_fixture(driver, record, save, region):
+def end_target_below_viewport(snapshot):
+    """End reveals the last firstElementChild row, not trailing LI text/padding."""
+    target = snapshot.get('treeEndTarget')
+    positions = snapshot['treeState']['positions']
+    if (not target or not positions or not target.get('isFirstNodeRow') or
+            target.get('position') != positions[-1]['id'] or
+            target.get('scope') != snapshot['route']['scope'] or target.get('tree') != snapshot['route']['tree'] or
+            snapshot['tree']['top'] != 0):
+        raise RuntimeError('End fixture lacks the exact original last-row target at zero scroll')
+    for key in ('row', 'viewport'):
+        rect = target.get(key, {})
+        if (not all(type(rect.get(axis)) in (int, float) and math.isfinite(rect[axis]) for axis in ('x', 'y', 'width', 'height')) or
+                rect['width'] <= 0 or rect['height'] <= 0):
+            raise RuntimeError('End fixture lacks actual last-row and tree-viewport geometry')
+    # Nearest can also be a no-op when an oversized target spans both edges.
+    return (target['row']['y'] > target['viewport']['y'] and
+            target['row']['y'] + target['row']['height'] > target['viewport']['y'] + target['viewport']['height'])
+
+
+def prepare_scroll_fixture(driver, record, save, region, *, require_end_target=False):
     """Only native existing disclosures/real tree branches may supply overflow."""
+    if require_end_target and region != 'tree':
+        raise RuntimeError('Only the original tree keyboard fixture has an End target')
     initial = driver.js(SCROLL_FIXTURE_SNAPSHOT_JS)
-    item = {'region': region, 'initial': initial, 'steps': [], 'scenario': 'native_original_content_overflow'}
+    item = {'region': region, 'initial': initial, 'steps': [], 'scenario': 'native_original_end_row_below_viewport' if require_end_target else 'native_original_content_overflow'}
     record.setdefault('scrollPreparations', []).append(item)
     save()
-    current = initial
+    def reset_end_start(current):
+        if current['tree']['top'] > 0:
+            current = native_scroll(driver, record, save, 'tree', -current['tree']['scrollHeight'], 'end-fixture-start')
+            item.setdefault('endStartResets', []).append(current)
+            save()
+            check_scroll_fixture_source(initial, current)
+        return current
+
+    current = reset_end_start(initial) if require_end_target else initial
     if region == 'reader':
         # Original detail and claim/source disclosures, never generated padding.
         for selector in ('#np-evidence-panel', '#np-detail-content .np-evidence', '#np-detail-content .np-source-disclosure', '#np-reading-context-wrap'):
@@ -1246,7 +1287,7 @@ def prepare_scroll_fixture(driver, record, save, region):
                 check_scroll_fixture_source(initial, current)
     else:
         expanded = set()
-        while current[region]['maxTop'] <= 0:
+        while current[region]['maxTop'] <= 0 or (require_end_target and not end_target_below_viewport(current)):
             candidates = [row for row in current['branches'] if row['id'] not in expanded and row['children'] and
                           row['tree'] == initial['route']['tree'] and row['scope'] == initial['route']['scope']]
             if not candidates:
@@ -1258,6 +1299,8 @@ def prepare_scroll_fixture(driver, record, save, region):
             item['steps'].append({'nativeSourceBranch': branch, 'after': current})
             save()
             check_scroll_fixture_source(initial, current)
+            if require_end_target:
+                current = reset_end_start(current)
     check_scroll_metrics(current[region])
     # A disclosure may reveal itself at the end. Establish real upward headroom
     # through native input, before the positive wheel/End/history fixture begins.
@@ -1270,6 +1313,8 @@ def prepare_scroll_fixture(driver, record, save, region):
     check_scroll_metrics(current[region], headroom=True)
     if current[region]['top'] != 0:
         raise RuntimeError('Native fixture setup did not reach the measured scroll start')
+    if require_end_target and not end_target_below_viewport(current):
+        raise RuntimeError('Original End target is already visible; positive total overflow alone is insufficient')
     item['ready'] = current
     save()
     return current
@@ -3091,7 +3136,7 @@ def exploration_state_checks(driver, report, save, capture, prefix, base, scienc
         return transition_record(driver, record, save, 'select-state-fixture', lambda: driver.click(element), lambda: ready_node(pid))['after']
 
     def actual_end_scroll():
-        before = prepare_scroll_fixture(driver, record, save, 'tree')
+        before = prepare_scroll_fixture(driver, record, save, 'tree', require_end_target=True)
         if before['focusPosition'] not in [p['id'] for p in before['treeState']['positions']]:
             raise RuntimeError('Native End must begin inside the original active tree')
         item = {'before': before}
