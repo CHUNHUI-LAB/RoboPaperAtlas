@@ -24,3 +24,20 @@ test('temporary support overlays close back to their actual visible trigger on E
 test('cold method to S0 keeps source-return and original-map controls in distinct desktop toolbar slots',async()=>{const p=Object.values(science.positions).find(p=>p.tree==='l'&&p.scopeId==='task:category-objectnav'&&p.paperId==='poni'&&p.kind==='pipeline_recipe'),M=require('../assets/navigation-product-model.js'),hash=M.encodeRoute(M.routeForPosition(science,{scope:p.scopeId},p.id)),x=await page({hash});try{x.d.querySelector('[data-tree-tab=g]').click();await ready(x);assert.equal(x.d.getElementById('navigation-product').dataset.readingHome,'true');assert.ok(x.a.getState().originTrail.length);assert.equal(x.d.getElementById('np-overview-toggle').hidden,false);assert.ok(x.d.querySelector('#np-origin-trail .np-return-previous'));const css=fs.readFileSync(path.join(root,'assets/navigation-product.css'),'utf8');assert.match(css,/#np-overview-toggle\{grid-column:3;grid-row:1;/);assert.match(css,/\.np-origin-trail\{grid-column:4;grid-row:1;/);x.d.querySelector('#np-origin-trail .np-return-previous').click();await ready(x);assert.equal(x.a.getState().route.node,p.id);}finally{await close(x);}});
 
 test('collapsed reader history never restores focus to a hidden fixed-header analysis action',async t=>{const x=await page();t.after(()=>close(x));const poni=await method(x,'poni',Object.keys(science.analyses.poni)[0]),origin=x.a.getState().route;const entry=x.d.getElementById('np-open-version-analysis');entry.focus();save(x);const other=Object.values(science.positions).find(p=>p.tree==='l'&&p.kind==='pipeline_recipe'&&p.paperId==='vlfm'&&p.scopeId===poni.scopeId);await go(x,x.M.routeForPosition(x.a.getBundle(),origin,other.id));x.d.getElementById('np-reader-toggle').click();assert.equal(x.d.getElementById('np-detail-scroll').hidden,true);x.w.history.back();await wait(60);await ready(x);assert.equal(x.a.getState().route.node,poni.id);assert.equal(x.d.getElementById('np-detail-scroll').hidden,true);assert.equal(x.d.activeElement.id,'np-reader-toggle');assert.equal(x.d.activeElement.closest('[hidden]'),null);});
+
+// CSSOM declaration regression only; actual 132px/752px geometry stays in Chrome CI.
+test('desktop panels explicitly remove the legacy five-pixel margin without changing narrow layout',()=>{
+ const css=fs.readFileSync(path.join(root,'assets/navigation-product.css'),'utf8'),dom=new JSDOM('<style></style>');
+ try {
+  const style=dom.window.document.querySelector('style');style.textContent=css;
+  const rules=[...style.sheet.cssRules],legacy=rules.find(r=>r.selectorText==='.np-panels'&&r.style.getPropertyValue('margin-top')==='5px');
+  assert.ok(legacy,'the existing non-desktop declaration is retained');
+  const desktop=rules.filter(r=>r.media&&/^\(min-width:\s*1200px\)$/.test(r.media.mediaText)).flatMap(r=>[...r.cssRules]);
+  const panels=desktop.filter(r=>r.selectorText==='#navigation-product .np-panels');assert.equal(panels.length,1,'one explicit desktop shell panel rule');
+  const assertDesktop=()=>{assert.match(panels[0].style.getPropertyValue('margin-top'),/^0(?:px)?$/,'desktop shell must neutralize the legacy margin');assert.equal(legacy.style.getPropertyValue('margin-top'),'5px');};
+  assertDesktop();
+  panels[0].style.removeProperty('margin-top');assert.throws(assertDesktop,/neutralize the legacy margin/,'omitting the override recreates the real five-pixel displacement');
+  panels[0].style.setProperty('margin-top','5px');assert.throws(assertDesktop,/neutralize the legacy margin/,'retaining five pixels cannot pass the approved zero-margin contract');
+  panels[0].style.setProperty('margin-top','0');assertDesktop();
+ } finally {dom.window.close();}
+});
