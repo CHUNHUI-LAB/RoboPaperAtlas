@@ -47,7 +47,8 @@ require("./test_navigation_loading.cjs");
 
 require('./test_navigation_tree_first.cjs');
 
-require('./test_navigation_sharded_startup.cjs');
+// Keep every startup assertion in a fresh heap, as for the large global DOM group.
+test('all sharded startup and delayed-content contracts pass in an isolated process',t=>{const env={...process.env};delete env.NODE_TEST_CONTEXT;const r=cp.spawnSync(process.execPath,['--test',path.join(__dirname,'test_navigation_sharded_startup.cjs')],{cwd:root,env,encoding:'utf8',maxBuffer:8*1024*1024});if(r.stdout)t.diagnostic(r.stdout);if(r.stderr)t.diagnostic(r.stderr);assert.ifError(r.error);assert.equal(r.signal,null);assert.equal(r.status,0,r.stdout+r.stderr);});
 
 require('./test_navigation_global_model.cjs');
 // The production-HTML group owns several large JSDOM documents. Run the complete
@@ -62,3 +63,21 @@ test('all production global DOM and published-history contracts pass in an isola
 test("reading clarity counterexamples",()=>{const env={...process.env};delete env.NODE_TEST_CONTEXT;const r=cp.spawnSync(process.execPath,["--test",path.join(__dirname,"test_navigation_reading_clarity.cjs")],{cwd:root,env,encoding:"utf8",maxBuffer:8*1024*1024});assert.ifError(r.error);assert.equal(r.signal,null);assert.equal(r.status,0,r.stdout+r.stderr);});
 
 test('scoped scientific additions retain visible protocol and version boundaries',()=>{const env={...process.env};delete env.NODE_TEST_CONTEXT;const r=cp.spawnSync(process.execPath,['--test',path.join(__dirname,'test_navigation_science_routes.cjs')],{cwd:root,env,encoding:'utf8',maxBuffer:8*1024*1024});assert.ifError(r.error);assert.equal(r.signal,null);assert.equal(r.status,0,r.stdout+r.stderr);});
+
+test('spatial canvas keeps complete coverage, readable default geometry and exact reading navigation',()=>{
+ const env={...process.env};delete env.NODE_TEST_CONTEXT;
+ const r=cp.spawnSync(process.execPath,['--test',path.join(__dirname,'test_navigation_spatial_canvas.cjs')],{cwd:root,env,encoding:'utf8',maxBuffer:8*1024*1024});
+ assert.ifError(r.error);assert.equal(r.signal,null);assert.equal(r.status,0,r.stdout+r.stderr);
+});
+
+// Original scope/identity regressions remain; paired reading adds complete route coverage.
+test('parallel scope forests and overview interaction regressions',()=>{const env={...process.env};delete env.NODE_TEST_CONTEXT;const r=cp.spawnSync(process.execPath,['--test',path.join(__dirname,'test_navigation_parallel_scopes.cjs'),path.join(__dirname,'test_navigation_parallel_state.cjs')],{cwd:root,env,encoding:'utf8',maxBuffer:8*1024*1024});assert.ifError(r.error);assert.equal(r.signal,null);assert.equal(r.status,0,r.stdout+r.stderr);});
+
+// S0 source-parent geometry and all typed edge interactions use an isolated fixture heap.
+test('graphical overview preserves all source parents, typed relationships and exact reading routes',t=>{const env={...process.env};delete env.NODE_TEST_CONTEXT;const r=cp.spawnSync(process.execPath,['--test',path.join(__dirname,'test_navigation_graphical_overview.cjs')],{cwd:root,env,encoding:'utf8',maxBuffer:8*1024*1024});if(r.stdout)t.diagnostic(r.stdout);if(r.stderr)t.diagnostic(r.stderr);assert.ifError(r.error);assert.equal(r.signal,null);assert.equal(r.status,0,r.stdout+r.stderr);});
+
+// Route summaries exercise real lazy packets in a separate heap.
+test('selected task route summaries preserve exact scope, evidence and async navigation',t=>{const env={...process.env};delete env.NODE_TEST_CONTEXT;const r=cp.spawnSync(process.execPath,['--test',path.join(__dirname,'test_navigation_task_routes.cjs')],{cwd:root,env,encoding:'utf8',maxBuffer:8*1024*1024});if(r.stdout)t.diagnostic(r.stdout);if(r.stderr)t.diagnostic(r.stderr);assert.ifError(r.error);assert.equal(r.signal,null);assert.equal(r.status,0,r.stdout+r.stderr);});
+
+// Desktop exploration preserves optional history schema, exact L/C contexts and single-relation reading.
+test('desktop exploration state and active-view reader contracts',t=>{const env={...process.env};delete env.NODE_TEST_CONTEXT;const r=cp.spawnSync(process.execPath,['--test',path.join(__dirname,'test_navigation_desktop_state.cjs'),path.join(__dirname,'test_navigation_desktop_exploration.cjs')],{cwd:root,env,encoding:'utf8',maxBuffer:8*1024*1024});if(r.stdout)t.diagnostic(r.stdout);if(r.stderr)t.diagnostic(r.stderr);assert.ifError(r.error);assert.equal(r.signal,null);assert.equal(r.status,0,r.stdout+r.stderr);});
