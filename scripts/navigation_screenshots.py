@@ -789,22 +789,49 @@ function scrollRegionCandidate(e){var cs=getComputedStyle(e);return /auto|scroll
 """
 
 
-DESKTOP_SHELL_SNAPSHOT_JS = VISUAL_GEOMETRY + SCROLL_REGION_VISIBILITY_JS + r"""
+# Fixed footer labels use actual text-node ranges, including every wrapped line.
+# This adds evidence; it never replaces the fixed title's original five-point box hit test.
+FIXED_TEXT_PROOF_JS = r"""
+function fixedTextProof(e){
+  var result=box(e),fragments=[],textRuns=[],walker=document.createTreeWalker(e,NodeFilter.SHOW_TEXT),n;
+  function clips(element){var areas=[];for(var a=element;a;a=a.parentElement){var cs=getComputedStyle(a);
+    if(/auto|scroll|hidden|clip/.test(cs.overflowX+' '+cs.overflowY)){var r=rect(a);areas.push({x:r.x+a.clientLeft,y:r.y+a.clientTop,width:a.clientWidth,height:a.clientHeight});}}
+    return areas;}
+  while(n=walker.nextNode()){if(!n.textContent.trim())continue;var parent=n.parentElement,style=box(parent),range=document.createRange();range.selectNodeContents(n);
+    var run={text:n.textContent,opaque:style.opaque,unscaled:style.unscaled,fontSize:style.fontSize,foreground:style.foreground,background:style.background,clipAreas:clips(parent),fragments:[]};
+    [...range.getClientRects()].filter(r=>r.width>0&&r.height>0).forEach(r=>{var f={x:r.x,y:r.y,width:r.width,height:r.height,
+      visible:style.opaque&&style.unscaled&&[[.5,.5],[.1,.1],[.9,.1],[.1,.9],[.9,.9]].every(([x,y])=>{var hit=document.elementFromPoint(r.x+r.width*x,r.y+r.height*y);return !!hit&&(hit===parent||parent.contains(hit));})};
+      fragments.push(f);run.fragments.push(f);});textRuns.push(run);}
+  // Inline text has no client box; its real fragments still must pass every gate.
+  if(getComputedStyle(e).display==='inline'){result.visible=result.opaque&&fragments.length>0&&fragments.every(f=>f.visible);result.clipped=false;}
+  return Object.assign(result,{renderedText:textRuns.map(run=>run.text).join(''),fragments:fragments,textRuns:textRuns,clipAreas:clips(e)});
+}
+"""
+
+
+DESKTOP_SHELL_SNAPSHOT_JS = VISUAL_GEOMETRY + SCROLL_REGION_VISIBILITY_JS + FIXED_TEXT_PROOF_JS + r"""
 var a=NavigationProductApp,m=NavigationProductModel,s=a.getState(),app=document.getElementById('navigation-product'),
     tree=document.getElementById('np-tree-scroll'),reader=document.getElementById('np-detail-scroll'),
     pane=document.querySelector('.np-reading-pane'),header=document.getElementById('np-reader-heading'),
     title=document.getElementById('np-reader-object-title'),meta=document.getElementById('np-reader-object-meta'),
-    picker=document.getElementById('np-task-route-canvas'),host=document.getElementById('np-tree'),p=a.getBundle().positions[s.route.node];
+    picker=document.getElementById('np-task-route-canvas'),host=document.getElementById('np-tree'),p=a.getBundle().positions[s.route.node],
+    returns=document.querySelectorAll('#np-task-route-return'),back=returns.length===1?returns[0]:null,
+    treePane=document.querySelector('.np-tree-pane'),footers=document.querySelectorAll('.np-canvas-footer'),footer=footers.length===1?footers[0]:null;
 function proof(e){return e?box(e):null;}
 function scroll(e){return {top:e.scrollTop,left:e.scrollLeft};}
 var roots=host.querySelectorAll('[data-parallel-tree] > [role=tree] > [role=treeitem]'),b=a.getBundle(),
-    scrollCandidates=[tree,reader,...tree.querySelectorAll('*'),...reader.querySelectorAll('*')].map(scrollRegionCandidate).filter(Boolean);
+    scrollCandidates=[tree,reader,...tree.querySelectorAll('*'),...reader.querySelectorAll('*'),...(footer?[footer,...footer.querySelectorAll('*')]:[])].map(scrollRegionCandidate).filter(Boolean);
 return {ready:app.dataset.loadState,route:s.route,methodReading:app.dataset.methodReading,readingLayout:app.dataset.readingLayout,window:{x:scrollX,y:scrollY},
   viewport:{x:0,y:0,width:innerWidth,height:innerHeight},home:!document.getElementById('np-reading-landing').hidden,
   collapsed:app.dataset.readerCollapsed==='true',sourceOverview:app.dataset.activeTree==='g'&&app.dataset.globalFocus==='overview',panels:rect(document.querySelector('.np-panels')),
   tree:rect(tree),treePane:rect(document.querySelector('.np-tree-pane')),reader:rect(reader),pane:rect(pane),
   fixedIdentity:title?{position:title.dataset.objectPosition||null,paper:title.dataset.objectPaper||null,version:title.dataset.objectVersion||null}:null,
   offsets:{tree:scroll(tree),reader:scroll(reader)},heading:proof(header),title:proof(title),meta:proof(meta),
+  titleRelation:title?.dataset.objectRelation||null,returnControlCount:returns.length,
+  returnControl:back?{tag:back.tagName,disabled:back.disabled,inHeading:back.parentElement===header,insideScroll:reader.contains(back),proof:proof(back)}:null,
+  treeFooter:app.dataset.methodReading==='true'?{count:footers.length,proof:proof(footer),inPane:!!footer&&footer.parentElement===treePane,insideTree:!!footer&&tree.contains(footer),
+    sourcePosition:p?.id||null,sourceChildCount:p?.childIds.length,
+    labels:footer?[...footer.children].map(e=>({id:e.id,tag:e.tagName,proof:fixedTextProof(e)})):[]}:null,
   pickerDisclosure:document.getElementById('np-task-route-relations')?{open:document.getElementById('np-task-route-relations').open,rect:rect(document.getElementById('np-task-route-relations')),position:getComputedStyle(document.getElementById('np-task-route-relations')).position}:null,
   headingInsideScroll:!!header&&reader.contains(header),pickerInsideTree:tree.contains(picker),pickerInToolbar:!!picker.closest('.np-workspace-bar'),
   permanentScrollIds:scrollCandidates.filter(candidate=>candidate.rendered).map(candidate=>candidate.id),scrollRegionCandidates:scrollCandidates,
@@ -817,6 +844,67 @@ return {ready:app.dataset.loadState,route:s.route,methodReading:app.dataset.meth
   analysisStatus:proof(document.querySelector('#np-reader-analysis-entry [data-analysis-state] > p')),
   answer:proof(document.querySelector('#np-detail-content .np-analysis-answer > p'))};
 """
+
+
+def rects_intersect(left, right):
+    """Any positive-area intersection is overlap; shared box edges are allowed."""
+    return (min(left['x'] + left['width'], right['x'] + right['width']) > max(left['x'], right['x']) and
+            min(left['y'] + left['height'], right['y'] + right['height']) > max(left['y'], right['y']))
+
+
+def check_desktop_return_control(data):
+    control = data.get('returnControl')
+    if (data.get('returnControlCount') != 1 or not control or control['tag'] != 'BUTTON' or control['disabled'] or
+            not control['inHeading'] or control['insideScroll'] or
+            not _reader_proof(control['proof'], data['heading']['rect'], data['viewport'], font_size=15) or
+            control['proof']['text'] != '返回路线概览'):
+        raise RuntimeError('Fixed relationship return action is hidden, clipped, duplicated or outside its heading')
+    if any(rects_intersect(control['proof']['rect'], data[key]['rect']) for key in ('title', 'meta')):
+        raise RuntimeError('Fixed relationship title/version overlaps its return action')
+
+
+def check_method_footer(data):
+    """Method footer keeps both complete metadata labels in its own fixed space."""
+    footer, viewport, pane = data.get('treeFooter'), data['viewport'], data['treePane']
+    if (not footer or footer['count'] != 1 or not footer['inPane'] or footer['insideTree'] or
+            not _reader_proof(footer['proof'], pane, viewport, font_size=12) or
+            rects_intersect(footer['proof']['rect'], data['tree']) or
+            data['tree']['y'] + data['tree']['height'] > footer['proof']['rect']['y'] + 1):
+        raise RuntimeError('Method footer is clipped, covered, outside its fixed pane or overlapping the tree viewport')
+    labels = footer['labels']
+    if (footer['sourcePosition'] != data['route']['node'] or not isinstance(footer['sourceChildCount'], int) or
+            footer['sourceChildCount'] < 0 or len(labels) != 2 or
+            [(label['tag'], label['id']) for label in labels] != [('SPAN', 'np-canvas-count'), ('SPAN', '')]):
+        raise RuntimeError('Method footer lost its exact source count or both original labels')
+    expected = [str(len(data['routeRows'])) + ' 个来路与分枝节点 · ' + str(footer['sourceChildCount']) + ' 个直接子节点',
+                '选择节点深入 · ＋展开 · 拖动空白平移']
+    if footer['proof']['text'] != ''.join(expected):
+        raise RuntimeError('Method footer shortened or substituted its complete original metadata')
+    for label, text in zip(labels, expected):
+        proof = label['proof']
+        areas = [proof['rect'], footer['proof']['rect'], pane, viewport] + proof['clipAreas']
+        if (proof['text'] != text or proof['renderedText'] != text or
+                ''.join(run['text'] for run in proof['textRuns']) != text or
+                not _reader_proof(proof, *areas, font_size=12) or not proof['fragments'] or not proof['textRuns']):
+            raise RuntimeError('Method footer original label is hidden, shortened, clipped or unreadable')
+        for run in proof['textRuns']:
+            if (not run['opaque'] or not run['unscaled'] or run['fontSize'] < 12 or
+                    len(run['foreground']) != 3 or len(run['background']) != 3 or
+                    contrast_ratio(run['foreground'], run['background']) < 4.5 or not run['fragments'] or
+                    any(not f['visible'] or not all(rect_inside(f, area) for area in areas + run['clipAreas']) for f in run['fragments'])):
+                raise RuntimeError('Method footer original text is hidden, covered or clipped by an ancestor')
+        if any(not f['visible'] or not all(rect_inside(f, area) for area in areas) for f in proof['fragments']):
+            raise RuntimeError('Method footer wrapped text is covered or outside its full fixed bounds')
+    if rects_intersect(labels[0]['proof']['rect'], labels[1]['proof']['rect']):
+        raise RuntimeError('Method footer labels overlap each other')
+
+
+def check_desktop_relation_heading(data, expected):
+    check_desktop_shell(data)
+    if (data['relation'] != expected['relation']['id'] or data.get('titleRelation') != expected['relation']['id'] or
+            data['title']['text'] != 'SemExp → PONI · 复用组件并替换策略' or
+            data['meta']['text'] != '当前范围关系' + expected['claimSourceStatus']):
+        raise RuntimeError('Fixed relationship heading changed its exact title, relation or source version')
 
 
 def check_desktop_shell(data):
@@ -842,6 +930,8 @@ def check_desktop_shell(data):
         raise RuntimeError('Relationship picker or fixed object title still belongs to scrolling content')
     if not rect_inside(data['tree'], data['treePane']) or not rect_inside(data['treePane'], expected):
         raise RuntimeError('Desktop tree viewport is outside its fixed pane')
+    if method:
+        check_method_footer(data)
     if data['collapsed'] or data.get('sourceOverview', False):
         if data['permanentScrollIds'] != ['np-tree-scroll'] or not _reader_close(data['treePane']['width'], expected['width']):
             raise RuntimeError('Collapsed reading pane left another permanent scrolling region')
@@ -855,6 +945,8 @@ def check_desktop_shell(data):
             not data['title']['text'].strip() or not data['meta']['text'].strip() or
             data['heading']['rect']['y'] + data['heading']['rect']['height'] > data['reader']['y'] + 1):
         raise RuntimeError('Current object title/version or natural reader content is hidden, clipped or scrolling')
+    if data.get('relation') or data.get('returnControlCount', 0):
+        check_desktop_return_control(data)
     analysis = data['route']['tree'] == 'a'
     tree_width = (400 if viewport['width'] == 1440 else 448) if analysis or method else (768 if viewport['width'] == 1440 else 1056)
     gap = 24 if analysis else 16
@@ -2656,8 +2748,7 @@ def desktop_hierarchy_checks(driver, report, save, capture, prefix, base, scienc
     first_group = expected['scopes'][poni['scopeId']]['groups'][0]
     semexp = next(p for p in science['positions'].values() if p['scopeId'] == poni['scopeId'] and p['tree'] == 'l' and p['entityId'] == 'methods:pipeline-semexp')
     check_relation_canvas_stability(record['taskBeforePicker'], record['taskWithPicker'], record['relation'], [roots[0], first_group, semexp['id'], poni['id']])
-    if record['relation']['title']['text'] != 'SemExp → PONI · 复用组件并替换策略':
-        raise RuntimeError('Fixed relationship heading changed exact scientific identity')
+    check_desktop_relation_heading(record['relation'], expected)
     capture(prefix + '-32-s1-relation-90')
 
     # This is a real reader scroll. Fixed title/version must keep the same pixels.
@@ -2665,7 +2756,7 @@ def desktop_hierarchy_checks(driver, report, save, capture, prefix, base, scienc
     driver.settle()
     record['relationScrolled'] = shell()
     save()
-    check_desktop_shell(record['relationScrolled'])
+    check_desktop_relation_heading(record['relationScrolled'], expected)
     if (record['relationScrolled']['title'] != record['relation']['title'] or
             record['relationScrolled']['meta'] != record['relation']['meta'] or
             record['relationScrolled']['offsets']['tree'] != record['relation']['offsets']['tree'] or

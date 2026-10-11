@@ -2672,7 +2672,8 @@ class DesktopHierarchyContractChecks(unittest.TestCase):
                 'headingInsideScroll': False, 'pickerInsideTree': False, 'pickerInToolbar': True,
                 'permanentScrollIds': ['np-tree-scroll', 'np-detail-scroll'],
                 'offsets': {'tree': {'top': 0, 'left': 0}, 'reader': {'top': 0, 'left': 0}},
-                'rootRows': [], 'routeRows': [], 'relation': None, 'visibleTaskDefinitions': 0}
+                'rootRows': [], 'routeRows': [], 'relation': None, 'visibleTaskDefinitions': 0,
+                'titleRelation': None, 'returnControlCount': 0, 'returnControl': None, 'treeFooter': None}
 
     def test_fixed_desktop_shell_rejects_outer_scroll_hidden_version_third_scroll_and_old_columns(self):
         import copy
@@ -2932,6 +2933,7 @@ class MethodReadingCaptureChecks(unittest.TestCase):
                     data[key]['x'] -= width_delta; data[key]['width'] += width_delta
                 for key in ('heading', 'title', 'meta'):
                     data[key]['rect']['x'] -= width_delta; data[key]['rect']['width'] += width_delta
+                HeaderFooterCaptureChecks.add_method_footer(data)
                 MODULE.check_desktop_shell(data)
                 self.assertEqual(data['pane']['width'], 992 if width == 1440 else 1424)
                 for mutate in (lambda d: d.update(methodReading='false'), lambda d: d.update(readingLayout='method'),
@@ -2985,6 +2987,7 @@ class MethodReadingCaptureChecks(unittest.TestCase):
         before = DesktopHierarchyContractChecks.shell()
         before['route'].update(node='original-task-root', scope='task:category-objectnav')
         before['relation'] = 'methods:relation:90'
+        HeaderFooterCaptureChecks.add_return_control(before)
         before['offsets'] = dict(tree=dict(top=90, left=17), reader=dict(top=211, left=0))
         MODULE.check_method_layout_return(before, copy.deepcopy(before))
         for mutate in (lambda d: d['offsets']['tree'].update(top=0), lambda d: d['offsets']['tree'].update(left=0),
@@ -3239,6 +3242,208 @@ const header=d.getElementById('np-reader-object-title'),duplicate=header.querySe
                                 'title': MODULE.ORIGINAL_CHALLENGE_TITLE_SELECTOR, 'role': MODULE.ORIGINAL_CHALLENGE_ROLE_SELECTOR}),
                                 text=True, capture_output=True, cwd=Path(__file__).parents[1])
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+
+class HeaderFooterCaptureChecks(unittest.TestCase):
+    @staticmethod
+    def add_return_control(data):
+        import copy
+        title = data['title']['rect']
+        data['titleRelation'] = data['relation']
+        button = copy.deepcopy(data['title'])
+        button['text'] = '返回路线概览'
+        button['rect'] = dict(x=title['x'] + title['width'] - 130, y=title['y'], width=130, height=28)
+        title['width'] -= 142
+        data['returnControlCount'] = 1
+        data['returnControl'] = dict(tag='BUTTON', disabled=False, inHeading=True, insideScroll=False, proof=button)
+
+    @staticmethod
+    def add_method_footer(data):
+        import copy
+        pane = data['treePane']; bottom = pane['y'] + pane['height'] - 1
+        footer_rect = dict(x=pane['x'] + 1, y=bottom - 46, width=pane['width'] - 2, height=46)
+        data['tree']['height'] = footer_rect['y'] - data['tree']['y']
+        data['routeRows'] = [dict(id='original-row-' + str(i)) for i in range(6)]
+        texts = ['6 个来路与分枝节点 · 2 个直接子节点', '选择节点深入 · ＋展开 · 拖动空白平移']
+        base = copy.deepcopy(data['title'])
+        base.update(rect=footer_rect, text=''.join(texts), fontSize=12, foreground=[87, 111, 120])
+        labels = []
+        for i, text in enumerate(texts):
+            proof = copy.deepcopy(base)
+            proof.update(text=text, renderedText=text, rect=dict(x=pane['x'] + 15 + i * 186, y=bottom - 41, width=174, height=36), clipAreas=[])
+            fragments = [dict(x=proof['rect']['x'], y=bottom - 41 + j * 18, width=170 if j == 0 else 100, height=14, visible=True) for j in range(2)]
+            proof.update(fragments=fragments, textRuns=[dict(text=text, opaque=True, unscaled=True, fontSize=12, foreground=[87, 111, 120], background=[255, 255, 255], clipAreas=[], fragments=copy.deepcopy(fragments))])
+            labels.append(dict(tag='SPAN', id='np-canvas-count' if i == 0 else '', proof=proof))
+        data['treeFooter'] = dict(count=1, proof=base, inPane=True, insideTree=False, sourcePosition=data['route']['node'], sourceChildCount=2, labels=labels)
+
+    @classmethod
+    def method_shell(cls, width=1440):
+        data = DesktopHierarchyContractChecks.shell('l', width)
+        data.update(methodReading='true', readingLayout='reading', position=dict(id='exact-method', kind='pipeline_recipe', paper='paper', version='version'))
+        data['route'].update(node='exact-method', paper='paper', version='version')
+        delta = data['treePane']['width'] - (400 if width == 1440 else 448)
+        data['treePane']['width'] -= delta; data['tree']['width'] -= delta
+        for key in ('pane', 'reader'):
+            data[key]['x'] -= delta; data[key]['width'] += delta
+        for key in ('heading', 'title', 'meta'):
+            data[key]['rect']['x'] -= delta; data[key]['rect']['width'] += delta
+        cls.add_method_footer(data)
+        return data
+
+    @classmethod
+    def relation_shell(cls, width=1440):
+        data = DesktopHierarchyContractChecks.shell('l', width)
+        data['relation'] = 'methods:relation:90'
+        data['title']['text'] = 'SemExp → PONI · 复用组件并替换策略'
+        data['meta']['text'] = '当前范围关系 · CVPR 2022 accepted proceedings'
+        cls.add_return_control(data)
+        return data
+
+    def test_relation_return_requires_disjoint_real_boxes_and_original_title_hit_gate(self):
+        import copy
+        for width in (1440, 1920):
+            good = self.relation_shell(width)
+            MODULE.check_desktop_shell(good)
+            # A wrapping title may take another line; no fixed title-height exemption.
+            wrapped = copy.deepcopy(good)
+            wrapped['title']['rect']['height'] = 40
+            MODULE.check_desktop_shell(wrapped)
+            mutations = [lambda d: d['title']['rect'].update(width=d['meta']['rect']['width']),
+                         lambda d: d['title'].update(visible=False), lambda d: d['title'].update(clipped=True),
+                         lambda d: d['title'].update(opaque=False), lambda d: d['meta'].update(visible=False),
+                         lambda d: d['returnControl']['proof'].update(visible=False), lambda d: d['returnControl']['proof'].update(clipped=True),
+                         lambda d: d['returnControl']['proof']['rect'].update(y=d['meta']['rect']['y']),
+                         lambda d: d['returnControl']['proof']['rect'].update(x=d['heading']['rect']['x'] + d['heading']['rect']['width']),
+                         lambda d: d['returnControl'].update(inHeading=False), lambda d: d['returnControl'].update(insideScroll=True),
+                         lambda d: d['returnControl'].update(disabled=True), lambda d: d['returnControl'].update(tag='SPAN'),
+                         lambda d: d['returnControl']['proof'].update(text='返回'), lambda d: d.update(returnControlCount=2),
+                         lambda d: d.update(returnControlCount=0, returnControl=None)]
+            for index, mutate in enumerate(mutations):
+                bad = copy.deepcopy(good); mutate(bad)
+                with self.subTest(width=width, mutation=index), self.assertRaises(RuntimeError):
+                    MODULE.check_desktop_shell(bad)
+
+    def test_fixed_relation_title_and_source_version_cannot_be_replaced_by_other_readable_text(self):
+        import copy, gzip
+        science = json.loads(gzip.decompress((Path(__file__).parents[1] / 'data/navigation-product/model.json.gz').read_bytes()))
+        expected = MODULE.task_route_expected(science)
+        good = self.relation_shell()
+        MODULE.check_desktop_relation_heading(good, expected)
+        for mutate in (lambda d: d['title'].update(text='PONI'), lambda d: d['meta'].update(text='当前范围关系 · arXiv v1'),
+                       lambda d: d.update(titleRelation='methods:relation:88'), lambda d: d.update(relation='methods:relation:88'),
+                       lambda d: d['title'].update(visible=False)):
+            bad = copy.deepcopy(good); mutate(bad)
+            with self.assertRaises(RuntimeError): MODULE.check_desktop_relation_heading(bad, expected)
+
+    def test_method_footer_preserves_complete_wrapped_labels_and_no_return_method_heading(self):
+        import copy
+        for width in (1440, 1920):
+            good = self.method_shell(width)
+            heading = copy.deepcopy({k: good[k] for k in ('heading', 'title', 'meta')})
+            MODULE.check_desktop_shell(good)
+            self.assertEqual(good['returnControlCount'], 0)
+            self.assertIsNone(good['returnControl'])
+            self.assertEqual({k: good[k] for k in heading}, heading)
+            self.assertEqual(len(good['treeFooter']['labels'][0]['proof']['fragments']), 2)
+            self.assertEqual(good['treeFooter']['labels'][0]['proof']['fontSize'], 12)
+            # Ordinary task/C/A footer sizing is not constrained by the method-only gate.
+            for tree in ('l', 'c', 'a'):
+                ordinary = DesktopHierarchyContractChecks.shell(tree, width)
+                ordinary['treeFooter'] = {'proof': {'rect': {'height': 24}}}
+                MODULE.check_desktop_shell(ordinary)
+
+    def test_method_footer_rejects_hidden_clipped_offpane_overlapping_or_shortened_text(self):
+        import copy
+        for width in (1440, 1920):
+            good = self.method_shell(width)
+            def label(d): return d['treeFooter']['labels'][1]['proof']
+            mutations = [lambda d: d['treeFooter']['proof'].update(clipped=True),
+                         lambda d: d['treeFooter']['proof'].update(visible=False),
+                         lambda d: d['treeFooter']['proof']['rect'].update(height=24),
+                         lambda d: d['treeFooter']['proof']['rect'].update(y=d['tree']['y'] + d['tree']['height'] - 8),
+                         lambda d: d['treeFooter']['proof']['rect'].update(y=d['treePane']['y'] + d['treePane']['height'] - 8),
+                         lambda d: d['tree'].update(height=d['tree']['height'] + 8),
+                         lambda d: d['treeFooter'].update(insideTree=True), lambda d: d['treeFooter'].update(inPane=False),
+                         lambda d: d['treeFooter'].update(count=2), lambda d: d.update(treeFooter=None),
+                         lambda d: label(d).update(text='选择节点深入'), lambda d: label(d).update(renderedText='选择节点深入'),
+                         lambda d: label(d).update(visible=False), lambda d: label(d).update(clipped=True),
+                         lambda d: label(d).update(fontSize=11), lambda d: label(d).update(foreground=[200, 200, 200]),
+                         lambda d: label(d)['textRuns'][0].update(opaque=False), lambda d: label(d)['textRuns'][0].update(unscaled=False),
+                         lambda d: label(d)['textRuns'][0].update(fragments=[]), lambda d: label(d)['textRuns'][0].update(text='选择节点深入'),
+                         lambda d: label(d)['fragments'][1].update(visible=False),
+                         lambda d: label(d)['fragments'][1].update(x=label(d)['rect']['x'] - 5),
+                         lambda d: label(d)['fragments'][1].update(y=d['treePane']['y'] + d['treePane']['height'] + 3),
+                         lambda d: label(d)['textRuns'][0]['fragments'][1].update(y=d['viewport']['height'] + 1),
+                         lambda d: label(d)['textRuns'][0].update(clipAreas=[dict(x=0, y=0, width=width, height=800)]),
+                         lambda d: label(d)['rect'].update(x=d['treeFooter']['labels'][0]['proof']['rect']['x']),
+                         lambda d: d['treeFooter']['labels'].pop(), lambda d: d['treeFooter'].update(sourcePosition='other-method'),
+                         lambda d: d['treeFooter'].update(sourceChildCount=1), lambda d: d['routeRows'].pop(),
+                         lambda d: d['permanentScrollIds'].append('footer-scroll')]
+            for index, mutate in enumerate(mutations):
+                bad = copy.deepcopy(good); mutate(bad)
+                with self.subTest(width=width, mutation=index), self.assertRaises(RuntimeError):
+                    MODULE.check_desktop_shell(bad)
+
+    def test_production_snapshot_measures_real_return_and_method_footer_without_changing_route(self):
+        import gzip
+        science = json.loads(gzip.decompress((Path(__file__).parents[1] / 'data/navigation-product/model.json.gz').read_bytes()))
+        body = r"""
+// DOM identity and text only; JSDOM is not browser layout evidence.
+d.elementFromPoint=()=>d.body;w.Range.prototype.getClientRects=function(){return [];};
+const shell=new w.Function(input.shellSnapshot);
+await scope('task:category-objectnav');const ordinary=shell();assert.equal(ordinary.returnControlCount,0);assert.equal(ordinary.returnControl,null);assert.equal(ordinary.treeFooter,null);
+d.getElementById('np-task-route-relations-summary').click();d.querySelector('[data-task-change="methods:relation:90"]').click();await ready(()=>d.querySelector('[data-selected-task-relation]')&&d.querySelector('[data-relation-state]')?.dataset.relationState==='ready');
+const before=JSON.stringify(a.getState()),relation=shell();assert.equal(JSON.stringify(a.getState()),before);assert.equal(relation.returnControlCount,1);assert.equal(relation.returnControl.tag,'BUTTON');assert.equal(relation.returnControl.inHeading,true);assert.equal(relation.returnControl.insideScroll,false);assert.equal(relation.titleRelation,'methods:relation:90');assert.equal(relation.treeFooter,null);states.push(relation);
+d.querySelector('[data-change-target="'+e.poni.id+'"]').click();await ready(()=>a.getState().route.node===e.poni.id&&a.getContent().ready(e.poni.entityId));
+const methodState=JSON.stringify(a.getState()),method=shell(),footer=method.treeFooter;assert.equal(JSON.stringify(a.getState()),methodState);assert.equal(method.returnControlCount,0);assert.equal(method.returnControl,null);assert.equal(footer.count,1);assert.equal(footer.inPane,true);assert.equal(footer.insideTree,false);assert.equal(footer.sourcePosition,e.poni.id);assert.equal(footer.sourceChildCount,e.poni.childIds.length);
+assert.deepEqual(JSON.parse(JSON.stringify(footer.labels.map(x=>[x.tag,x.id]))),[['SPAN','np-canvas-count'],['SPAN','']]);assert.equal(footer.labels[0].proof.renderedText,method.routeRows.length+' 个来路与分枝节点 · '+e.poni.childIds.length+' 个直接子节点');assert.equal(footer.labels[1].proof.renderedText,'选择节点深入 · ＋展开 · 拖动空白平移');states.push(method);
+const footerLabel=d.querySelector('.np-canvas-footer > span:last-child'),hidden=d.createElement('span');hidden.style.display='none';hidden.textContent='不能用隐藏文字冒充可见标签';footerLabel.appendChild(hidden);const hiddenProof=shell().treeFooter.labels[1].proof;assert.equal(hiddenProof.textRuns.at(-1).text,hidden.textContent);assert.equal(hiddenProof.textRuns.at(-1).opaque,false);hidden.remove();
+"""
+        states = run_product_capture_script(self, body, {'science': science, 'expected': MODULE.task_route_expected(science), 'shellSnapshot': MODULE.DESKTOP_SHELL_SNAPSHOT_JS, 'viewport': {'width': 1440, 'height': 900}})
+        self.assertEqual(states[0]['returnControl']['proof']['text'], '返回路线概览')
+        self.assertEqual(states[1]['treeFooter']['labels'][1]['proof']['text'], '选择节点深入 · ＋展开 · 拖动空白平移')
+
+    def test_fixed_text_snapshot_uses_every_wrapped_run_hit_and_clipping_ancestor(self):
+        import copy
+        good = self.method_shell()
+        label = good['treeFooter']['labels'][0]['proof']
+        script = r"""
+const {JSDOM}=require('jsdom'),assert=require('node:assert/strict'),input=JSON.parse(require('fs').readFileSync(0,'utf8'));
+const dom=new JSDOM('<style>*{opacity:1;visibility:visible;transform:none;zoom:1;color:rgb(87,111,120);background-color:rgb(255,255,255);font-size:12px}span,b{display:inline}</style><section id="pane"><div id="footer" style="overflow-x:hidden;overflow-y:hidden"><span id="label">6 个来路与分枝节点 · <b>2 个直接子节点</b></span></div></section><div id="cover"></div>',{runScripts:'outside-only'});
+try{const w=dom.window,d=w.document,span=d.getElementById('label'),nested=span.querySelector('b'),footer=d.getElementById('footer'),pane=d.getElementById('pane'),proof=input.proof;
+const style=w.getComputedStyle.bind(w);w.getComputedStyle=e=>new Proxy(style(e),{get:(t,k)=>k==='zoom'?(t.zoom||'1'):Reflect.get(t,k)});
+const fragments=proof.fragments,boxes=new Map([[pane,input.pane],[footer,input.footer],[span,proof.rect],[nested,fragments[1]]]);let clipHeight=input.footer.height,cover=false;
+for(const el of d.querySelectorAll('*')){el.getBoundingClientRect=()=>boxes.get(el)||input.viewport;for(const [key,value] of Object.entries({clientTop:0,clientLeft:0}))Object.defineProperty(el,key,{value});for(const key of ['clientWidth','scrollWidth'])Object.defineProperty(el,key,{get:()=>el.getBoundingClientRect().width});for(const key of ['clientHeight','scrollHeight'])Object.defineProperty(el,key,{get:()=>el===footer&&key==='clientHeight'?clipHeight:el.getBoundingClientRect().height});}
+w.Range.prototype.getClientRects=function(){return [this.startContainer.parentElement===nested?fragments[1]:fragments[0]];};
+d.elementFromPoint=(x,y)=>cover&&y>=fragments[1].y?d.getElementById('cover'):y>=fragments[1].y?nested:span;
+const read=new w.Function(input.script+';return fixedTextProof(arguments[0]);'),normal=read(span);
+assert.equal(normal.renderedText,proof.text);assert.equal(normal.textRuns.length,2);assert.equal(normal.fragments.length,2);assert.equal(normal.visible,true);assert.equal(normal.textRuns[1].fragments[0].visible,true);assert.equal(normal.clipAreas.length,1);
+nested.style.display='none';const hidden=read(span);assert.equal(hidden.textRuns[1].opaque,false);nested.style.display='';
+cover=true;const covered=read(span);assert.equal(covered.textRuns[1].fragments[0].visible,false);cover=false;
+clipHeight=24;const clipped=read(span);assert.equal(clipped.clipAreas[0].height,24);assert.equal(clipped.textRuns[1].clipAreas[0].height,24);
+process.stdout.write(JSON.stringify([normal,hidden,covered,clipped]));}finally{dom.window.close();}
+"""
+        result = subprocess.run(['node', '-e', script], input=json.dumps({'script': MODULE.VISUAL_GEOMETRY + MODULE.FIXED_TEXT_PROOF_JS,
+                                'proof': label, 'pane': good['treePane'], 'footer': good['treeFooter']['proof']['rect'], 'viewport': good['viewport']}),
+                                text=True, capture_output=True, cwd=Path(__file__).parents[1])
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        normal, *broken = json.loads(result.stdout)
+        good['treeFooter']['labels'][0]['proof'] = normal
+        MODULE.check_method_footer(good)
+        for index, proof in enumerate(broken):
+            bad = copy.deepcopy(good); bad['treeFooter']['labels'][0]['proof'] = proof
+            with self.subTest(index=index), self.assertRaises(RuntimeError): MODULE.check_method_footer(bad)
+
+    def test_snapshot_extension_preserves_five_point_title_proof_and_exact_scene_plan(self):
+        import inspect
+        self.assertEqual(len(MODULE.SCENE_NAMES), 49)
+        self.assertEqual(MODULE.VIEWPORTS, [(1440, 900), (1920, 1080)])
+        self.assertIn('heading:proof(header),title:proof(title),meta:proof(meta)', MODULE.DESKTOP_SHELL_SNAPSHOT_JS)
+        self.assertIn("[[.5,.5],[.1,.1],[.9,.1],[.1,.9],[.9,.9]]", MODULE.VISUAL_GEOMETRY)
+        self.assertIn("check_desktop_relation_heading(record['relation'], expected)", inspect.getsource(MODULE.desktop_hierarchy_checks))
+        self.assertIn("check_desktop_relation_heading(record['relationScrolled'], expected)", inspect.getsource(MODULE.desktop_hierarchy_checks))
+        self.assertIn("check_method_footer(data)", inspect.getsource(MODULE.check_desktop_shell))
+        self.assertIn("...(footer?[footer,...footer.querySelectorAll('*')]:[])", MODULE.DESKTOP_SHELL_SNAPSHOT_JS)
 
 
 class ScrollRegionVisibilityChecks(unittest.TestCase):

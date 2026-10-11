@@ -543,6 +543,17 @@ body{font-size:16px;line-height:1.65;background:#f7f9fa}header.np-header{max-wid
  #navigation-product[data-method-reading=true] #np-reader-summary .np-selection-intro{display:none}
 }
 
+/* Desktop fixed actions and method footer reserve real, non-overlapping layout space. */
+@media(min-width:1200px){
+ #navigation-product .np-reader-heading:has(> #np-task-route-return){display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:flex-start;gap:0 12px}
+ #navigation-product .np-reader-heading:has(> #np-task-route-return)>#np-reader-object-title{order:1;flex:1 1 260px;min-width:0;max-width:100%;overflow-wrap:anywhere}
+ #navigation-product .np-reader-heading:has(> #np-task-route-return)>#np-task-route-return{order:2;float:none;flex:0 1 auto;min-width:0;max-width:100%;margin:0 0 5px;white-space:normal;overflow-wrap:anywhere}
+ #navigation-product .np-reader-heading:has(> #np-task-route-return)>#np-reader-object-meta{order:3;flex:0 0 100%;min-width:0;max-width:100%}
+ #navigation-product .np-reader-heading:has(> #np-task-route-return)>#np-reader-analysis-entry{order:4;flex:0 0 100%;min-width:0;max-width:100%}
+ #navigation-product[data-method-reading=true] .np-canvas-footer{height:auto;min-height:24px;flex:0 0 auto;flex-wrap:wrap;align-items:flex-start;gap:2px 12px;padding:4px 14px;line-height:1.5}
+ #navigation-product[data-method-reading=true] .np-canvas-footer>span{flex:1 1 160px;min-width:0;max-width:100%;white-space:normal;overflow:visible;overflow-wrap:anywhere;text-overflow:clip}
+}
+
 /* Task-root reading text keeps the 15px floor, including inherited legacy notes. */
 #navigation-product .np-task-route-overview,
 #navigation-product .np-task-route-overview p,
