@@ -976,9 +976,52 @@ def check_task_route_relation(data, expected):
         raise RuntimeError('Task-route relation lost exact claim, version, source or PONI endpoint')
 
 
+def task_route_origin_overview(before, origin, source_roots):
+    """Prove only saveCurrent's absent-current -> explicit closed materialization."""
+    same = lambda a, b: json.dumps(a, sort_keys=True) == json.dumps(b, sort_keys=True)
+    if not isinstance(origin, dict) or not same(origin.get('route'), before['route']):
+        raise RuntimeError('Method origin overview lost its complete original route')
+    prior = before['relationOverview']
+    actual = origin.get('bucket', {}).get('relationOverviewByTree', {})
+    if not isinstance(prior, dict) or not isinstance(actual, dict):
+        raise RuntimeError('Method origin overview is not an exact per-tree map')
+    if same(prior, actual):
+        return json.loads(json.dumps(prior))
+    route, position, dom = before['route'], before.get('position'), before.get('relationDisclosure')
+    tree = route['tree']
+    roots = [p for p in source_roots if p['id'] == route['node']]
+    root = roots[0] if len(roots) == 1 else None
+    identity = ({'id': root['id'], 'entity': root['entityId'], 'scope': root['scopeId'], 'tree': root['tree'],
+                 'paper': root['paperId'], 'version': root['versionId'], 'kind': root['kind']} if root else None)
+    if (tree not in ('l', 'c') or tree in prior or root is None or root['parentId'] is not None or
+            root['scopeId'] != route['scope'] or root['tree'] != tree or
+            root['paperId'] != route['paper'] or root['versionId'] != route['version'] or
+            set(route) != {'nav', 'scope', 'tree', 'node', 'paper', 'version', 'bench', 'protocol', 'template', 'claim', 'mode'} or
+            any(route[k] is not None for k in ('paper', 'version', 'template', 'claim')) or
+            not same(position, identity) or before['panelScope'] != route['scope'] or before['selectedRelation'] is not None or
+            not isinstance(dom, dict) or dom.get('tag') != 'DETAILS' or dom.get('id') != 'np-task-route-relations' or
+            dom.get('summary') != 'np-task-route-relations-summary' or dom.get('open') is not False or
+            dom.get('beforeTree') is not True or dom.get('insideTree') is not False):
+        raise RuntimeError('Method origin overview is not a missing current closed task-root default')
+    expected = json.loads(json.dumps(prior))
+    expected[tree] = {'route': json.loads(json.dumps(route)), 'open': False}
+    if not same(expected, actual):
+        raise RuntimeError('Method origin overview changed a strict route, open flag or existing tree field')
+    return expected
+
+
 def check_task_route_return(before, after, expected_control):
+    expected_overview = before['relationOverview']
+    if 'expectedOverviewMaterialization' in before:
+        proof = before['expectedOverviewMaterialization']
+        expected_overview = task_route_origin_overview(before, before['actualOrigin'], proof['sourceRoots'])
+        if (json.dumps(expected_overview, sort_keys=True) != json.dumps(proof['overview'], sort_keys=True) or
+                json.dumps(before['relationDisclosure'], sort_keys=True) != json.dumps(after['relationDisclosure'], sort_keys=True)):
+            raise RuntimeError('Task-route return lost its proven closed overview materialization')
     for key in ('route', 'panelScope', 'scale', 'readerScroll', 'treeScroll', 'window', 'selectedRelation', 'expanded', 'relationOverview'):
-        if before[key] != after[key]:
+        expected = expected_overview if key == 'relationOverview' else before[key]
+        changed = (json.dumps(expected, sort_keys=True) != json.dumps(after[key], sort_keys=True)) if key == 'relationOverview' else expected != after[key]
+        if changed:
             raise RuntimeError('Task-route return lost saved context: ' + key)
     if before['activatedControl'] != expected_control or after['focus'] != expected_control:
         raise RuntimeError('Task-route return lost the exact activated control focus')
@@ -1438,6 +1481,22 @@ def task_route_checks(driver, report, save, capture, prefix, base, science, serv
         origin = phase['origin']
         if not origin or origin['route'] != before['route'] or origin['bucket']['focusTarget'] != before['originFocusTarget']:
             raise RuntimeError('Method click lost its exact original route/control')
+        roots = [science['positions'][pid] for pid in science['forests'][before['route']['scope']].get(before['route']['tree'], [])]
+        proposal = json.loads(json.dumps(before['relationOverview']))
+        tree = before['route']['tree']
+        if tree not in proposal:
+            proposal[tree] = {'route': before['route'], 'open': False}
+        phase['overviewMaterialization'] = {'reason': 'verify missing current closed task-root default or exact existing map',
+            'currentTree': tree, 'beforeOverview': before['relationOverview'], 'expectedOverview': proposal,
+            'actualOriginOverview': origin['bucket'].get('relationOverviewByTree', {}), 'sourceRoots': roots, 'validated': False}
+        save()
+        overview = task_route_origin_overview(before, origin, roots)
+        phase['overviewMaterialization']['expectedOverview'] = overview
+        phase['overviewMaterialization']['validated'] = True
+        if overview != before['relationOverview']:
+            before['expectedOverviewMaterialization'] = {'overview': overview, 'sourceRoots': roots}
+            before['actualOrigin'] = origin
+        save()
         return before
 
     def return_method(before):

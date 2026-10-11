@@ -2141,5 +2141,162 @@ w.history.forward();await ready(()=>new w.Function(input.returnWait)(before.rout
         MODULE.check_task_overview_return(before, collapsed)
 
 
+class DefaultOverviewMaterializationChecks(unittest.TestCase):
+    @staticmethod
+    def real_fixture():
+        import base64, gzip, hashlib
+        # b988 receipt SHA256 6dd0739e2d7d095192da3d0fc7653b2872f4deffbb1dc0cf3750c8df0be0b1f5.
+        # Unmodified projection of select transition 26 before/origin and return 27 after;
+        # source forest roots come from the pinned raw export. No invented browser measurement.
+        raw = gzip.decompress(base64.b64decode('H4sIAAAAAAACA+1WzW4TMRB+F58TaTfJbn5uoHKIVIHURFyqKvLas4lVZ73yetNGVS5woJx4gHLgzAG4IlW8TSi3vgJj726TQkIAcaBVL4m9nhnPfDPfeM4IjQ1o0jsjcJrShAO3a0p6h0c1wvCPpCrrsR40WBRFrMGCsBOx2O+G3RZtEBQaF7KykpU9v+l1At6OuxQiz4tbkR81WyGplcc8jPx2A+IwonEYQxuazTblN8chb3egAQH3vJB7LQianaDTJkeLGokVyzPSI0laTxSHeqHAOhxQtuV1oOt5QaPpQcA61h5NQA6YSgF1DM2Oe2JKx5DQWXGZMEIlLvTECDPfICQQjV1BHYuEl6ruztTCmeRS1ki25W6jwX6WuJyBzpwXVgND1EA56AHTSkrrmoTYkJ6HOirFfychqXV8T2RMqizXYOUiiJWGoTNsdA6YvFxrDAzv8atIEDfrSl2r3EC9MpTZ4yQTvFSPqcxQH11PVpvcWIHSWJZPp1TPt1usVxLoN8UCIXtPho/6+wOy5v8zDH0m4MRFaX9uXegMFoElbFIByiQV02ozVc4hB2aNWGQL75Li+65aXE9UqpVRTMmdiYNpit5DJbc1kYvFnQ/BmqASz3xcgQRmgB+UuVtX3larfogmTpAcyqX41J1gzfh+YNEpCvZON55fJOah8dyJxvPA0h0sVVqMhSvVKGfHYOyKg6FCFgYfz4vUOeZ6jrieY6bniGnLpqL3LdH/luRDqsc2TLJjthhrmk4GN9CnVFMpS9IfIJXmFRt+rLoVDPfy0atq8Fa2yziqxbhayF0eL2rOm+flmLCWoZV99rO1LVlDa5Jm5sCivFn/ziJvbUxgilj7i3XC7+CnY/9Keh9bw28wumgXVUexneIetNGHOvvTOnNZVwbnokMslixTTJTPDuFCYxdAdTYRkvd5tmrff9mfS5AKU7jjkJqJK8pihurzfzJFSRqBzW/fGnlKZ9eX58u3n65efF5efFm+fHN18eHru1fLj5ffzt9fX74m9oHkFm+vRN66UWJP7RC02lfvwHDuUuBSMbJDl0jGI5R0M4v7ujGUzFDjRlAnwkcimaGS0vMRzHA+ShhsHO+q+xdHi++6ovGW6w8AAA=='))
+        assert hashlib.sha256(raw).hexdigest() == 'ab1e3f12fe5f05b45c8e34f538500b256105139c95dafe16db34ec853b234d98'
+        data = json.loads(raw)
+        # The clicked label has no ID; the existing selector records its real treeitem ID.
+        data['before']['activatedControl'] = 'np-node-' + data['origin']['bucket']['focusTarget']
+        return data
+
+    def test_real_b988_closed_origin_materialization_preserves_original_evidence(self):
+        import copy
+        f = self.real_fixture(); before = f['before']; original = copy.deepcopy(before)
+        self.assertEqual(before['relationOverview'], {})
+        self.assertEqual(before['relationDisclosure'], f['after']['relationDisclosure'])
+        self.assertEqual(before['treeScroll'], {'left': 0, 'top': 16})
+        with self.assertRaisesRegex(RuntimeError, 'relationOverview'):
+            MODULE.check_task_route_return(before, f['after'], before['activatedControl'])
+        expected = MODULE.task_route_origin_overview(before, f['origin'], f['roots'])
+        self.assertEqual(expected, {'l': {'route': before['route'], 'open': False}})
+        self.assertEqual(before, original)
+        proof = copy.deepcopy(before)
+        proof['expectedOverviewMaterialization'] = {'overview': expected, 'sourceRoots': f['roots']}
+        proof['actualOrigin'] = f['origin']
+        MODULE.check_task_route_return(proof, f['after'], before['activatedControl'])
+        self.assertEqual(proof['relationOverview'], {})
+        self.assertEqual(f['after']['relationOverview'], f['origin']['bucket']['relationOverviewByTree'])
+
+    def test_materialization_rejects_wrong_route_open_existing_null_or_inactive_changes(self):
+        import copy
+        base = self.real_fixture()
+        mutations = [lambda f: f['before']['relationOverview'].update(l=None),
+                     lambda f: f['before']['relationOverview'].update(l={'route': f['before']['route'], 'open': True}),
+                     lambda f: f['before']['relationDisclosure'].update(open=True),
+                     lambda f: f['before']['relationDisclosure'].update(open=0),
+                     lambda f: f['before']['relationDisclosure'].update(tag='DIV'),
+                     lambda f: f['before']['relationDisclosure'].update(insideTree=True),
+                     lambda f: f['before'].update(selectedRelation='methods:relation:90'),
+                     lambda f: f['before']['position'].update(id='other-root'),
+                     lambda f: f['before']['position'].update(kind='pipeline_recipe'),
+                     lambda f: f.update(roots=[]),
+                     lambda f: f['origin']['bucket']['relationOverviewByTree']['l'].update(open=True),
+                     lambda f: f['origin']['bucket']['relationOverviewByTree']['l'].update(open=0),
+                     lambda f: f['origin']['bucket']['relationOverviewByTree'].update(c={'route': {}, 'open': False}),
+                     lambda f: f['before']['relationOverview'].update(c={'route': {'tree': 'c'}, 'open': True})]
+        for field in base['before']['route']:
+            mutations.append(lambda f, k=field: f['origin']['bucket']['relationOverviewByTree']['l']['route'].__setitem__(k, 'wrong'))
+            mutations.append(lambda f, k=field: f['origin']['route'].__setitem__(k, 'wrong'))
+        for index, mutate in enumerate(mutations):
+            f = copy.deepcopy(base); mutate(f)
+            with self.subTest(mutation=index), self.assertRaises(RuntimeError):
+                MODULE.task_route_origin_overview(f['before'], f['origin'], f['roots'])
+        f = copy.deepcopy(base)
+        inactive = {'route': {'scope': 'task:imagenav', 'tree': 'c', 'node': 'saved'}, 'open': True}
+        f['before']['relationOverview']['c'] = copy.deepcopy(inactive)
+        f['origin']['bucket']['relationOverviewByTree']['c'] = copy.deepcopy(inactive)
+        expected = MODULE.task_route_origin_overview(f['before'], f['origin'], f['roots'])
+        self.assertEqual(expected['c'], inactive)
+        for field in ('route', 'open'):
+            bad = copy.deepcopy(f); del bad['origin']['bucket']['relationOverviewByTree']['c'][field]
+            with self.assertRaises(RuntimeError): MODULE.task_route_origin_overview(bad['before'], bad['origin'], bad['roots'])
+        # An existing map has no default exception: exact fields are retained, including extension fields.
+        f['before']['relationOverview'] = copy.deepcopy(f['origin']['bucket']['relationOverviewByTree'])
+        f['before']['relationOverview']['l']['existingField'] = 'retained'
+        f['origin']['bucket']['relationOverviewByTree']['l']['existingField'] = 'retained'
+        self.assertEqual(MODULE.task_route_origin_overview(f['before'], f['origin'], f['roots']), f['before']['relationOverview'])
+        del f['origin']['bucket']['relationOverviewByTree']['l']['existingField']
+        with self.assertRaises(RuntimeError): MODULE.task_route_origin_overview(f['before'], f['origin'], f['roots'])
+
+    def test_return_rechecks_proven_origin_and_retains_all_old_strict_fields(self):
+        import copy
+        f = self.real_fixture(); before = f['before']; control = before['activatedControl']
+        before['expectedOverviewMaterialization'] = {'overview': MODULE.task_route_origin_overview(before, f['origin'], f['roots']), 'sourceRoots': f['roots']}
+        before['actualOrigin'] = f['origin']
+        for field in ('route', 'panelScope', 'scale', 'readerScroll', 'treeScroll', 'window', 'selectedRelation', 'expanded', 'relationOverview', 'focus'):
+            bad = copy.deepcopy(f['after']); bad[field] = 'wrong-relation' if field == 'selectedRelation' else None
+            with self.subTest(field=field), self.assertRaises(RuntimeError): MODULE.check_task_route_return(before, bad, control)
+        bad = copy.deepcopy(f['after']); bad['relationDisclosure']['open'] = True
+        with self.assertRaises(RuntimeError): MODULE.check_task_route_return(before, bad, control)
+        for mutate in (lambda b: b['expectedOverviewMaterialization']['overview']['l'].update(open=True),
+                       lambda b: b['actualOrigin']['bucket']['relationOverviewByTree']['l'].update(open=True),
+                       lambda b: b['expectedOverviewMaterialization'].update(sourceRoots=[])):
+            bad = copy.deepcopy(before); mutate(bad)
+            with self.assertRaises(RuntimeError): MODULE.check_task_route_return(bad, f['after'], control)
+
+    def test_raw_portable_setting_root_is_exact_and_nonroot_setting_is_rejected(self):
+        import copy, gzip
+        science = json.loads(gzip.decompress((Path(__file__).parents[1] / 'data/navigation-product/model.json.gz').read_bytes()))
+        sid = 'setting:portable-objectnav'
+        roots = [science['positions'][pid] for pid in science['forests'][sid]['l']]
+        self.assertEqual(len(roots), 1); root = roots[0]
+        self.assertEqual(root['kind'], 'setting'); self.assertIsNone(root['parentId'])
+        # Real immutable raw root identity in a unit disclosure fixture, not a new browser screenshot.
+        f = self.real_fixture(); before = f['before']
+        before['route'].update(scope=sid, node=root['id']); before['panelScope'] = sid
+        before['position'] = {key: root[value] for key, value in
+            {'id': 'id', 'entity': 'entityId', 'scope': 'scopeId', 'tree': 'tree', 'paper': 'paperId', 'version': 'versionId', 'kind': 'kind'}.items()}
+        origin = {'route': copy.deepcopy(before['route']), 'bucket': {'relationOverviewByTree': {
+            'l': {'route': copy.deepcopy(before['route']), 'open': False}}}}
+        expected = MODULE.task_route_origin_overview(before, origin, roots)
+        self.assertEqual(expected, origin['bucket']['relationOverviewByTree'])
+        for field in ('entity', 'kind'):
+            bad = copy.deepcopy(before); bad['position'][field] = 'wrong'
+            with self.subTest(field=field), self.assertRaises(RuntimeError):
+                MODULE.task_route_origin_overview(bad, origin, roots)
+        child = science['positions'][root['childIds'][0]]
+        bad = copy.deepcopy(before); bad['route']['node'] = child['id']
+        bad['position'].update(id=child['id'], entity=child['entityId'], kind='setting')
+        bad_origin = copy.deepcopy(origin); bad_origin['route'] = copy.deepcopy(bad['route'])
+        bad_origin['bucket']['relationOverviewByTree']['l']['route'] = copy.deepcopy(bad['route'])
+        with self.assertRaises(RuntimeError): MODULE.task_route_origin_overview(bad, bad_origin, roots)
+        forged_root = copy.deepcopy(child); forged_root['kind'] = 'setting'
+        with self.assertRaises(RuntimeError): MODULE.task_route_origin_overview(bad, bad_origin, [forged_root])
+
+    def test_select_records_unmodified_origin_and_proposal_before_rejecting_bad_materialization(self):
+        import ast, copy, inspect
+        source = inspect.getsource(MODULE.task_route_checks); function = ast.parse(source).body[0]
+        select = next(n for n in function.body if isinstance(n, ast.FunctionDef) and n.name == 'select_method')
+        returned = next(n for n in function.body if isinstance(n, ast.FunctionDef) and n.name == 'return_method')
+        # Only post-click proof is new: native action and original exact ready/wait/scroll path remain.
+        self.assertIn('lambda: driver.click(element)', ast.unparse(select))
+        self.assertIn('a.getContent().ready(p.entityId)', ast.unparse(select))
+        self.assertIn("lambda: driver.click(driver.selector('.np-return-previous'))", ast.unparse(returned))
+        self.assertIn('TASK_ROUTE_RETURN_WAIT_JS', ast.unparse(returned))
+        for bad_origin in (False, True):
+            f = self.real_fixture(); before = f['before']; original = copy.deepcopy(before)
+            if bad_origin: f['origin']['bucket']['relationOverviewByTree']['l']['open'] = True
+            phase, saved = {'origin': f['origin'], 'before': copy.deepcopy(before)}, []
+            class Driver:
+                def js(self, script, element):
+                    return before['activatedControl'] if "[role=treeitem]" in script else f['origin']['bucket']['focusTarget']
+            env = dict(driver=Driver(), snapshot=lambda: before, reveal_control=lambda *args: 'element',
+                       expose_source_position=lambda *args: 'element', record={}, save=lambda: saved.append(copy.deepcopy(phase)),
+                       transition_record=lambda *args: phase, json=json, MODULE=MODULE,
+                       task_route_origin_overview=MODULE.task_route_origin_overview,
+                       science={'forests': {before['route']['scope']: {'l': [p['id'] for p in f['roots']]}},
+                                'positions': {p['id']: p for p in f['roots']}})
+            exec(compile(ast.Module(body=[select], type_ignores=[]), '<actual-select-method>', 'exec'), env)
+            if bad_origin:
+                with self.assertRaises(RuntimeError): env['select_method']({'id': 'target'})
+                self.assertFalse(saved[-1]['overviewMaterialization']['validated'])
+            else:
+                result = env['select_method']({'id': 'target'})
+                self.assertTrue(saved[-1]['overviewMaterialization']['validated'])
+                MODULE.check_task_route_return(result, f['after'], result['activatedControl'])
+            self.assertEqual(phase['before'], original)
+            self.assertEqual(before['relationOverview'], {})
+            evidence = saved[0]['overviewMaterialization']
+            self.assertEqual(evidence['beforeOverview'], {})
+            self.assertEqual(evidence['expectedOverview'], {'l': {'route': original['route'], 'open': False}})
+            self.assertEqual(evidence['actualOriginOverview'], f['origin']['bucket']['relationOverviewByTree'])
+
+
 if __name__ == '__main__':
     unittest.main()
