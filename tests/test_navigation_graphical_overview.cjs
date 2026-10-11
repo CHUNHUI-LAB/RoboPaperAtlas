@@ -36,7 +36,7 @@ if (!graphicalGroup) {
   const originalPattern = '^(?:' + originalNames.map(name => Array.from(name, ch => '\\^$.*+?()[]{}|'.includes(ch) ? '\\' + ch : ch).join('')).join('|') + ')$';
   for (const [group, pattern, expectedPasses] of [
     ['original22', originalPattern, 22],
-    ['review8', '^review: ', 8],
+    ['review10', '^review: ', 10],
     ['nohash4', '^nohash: ', 4],
   ]) {
     test('graphical overview isolated group: ' + group, t => {
@@ -57,7 +57,7 @@ if (!graphicalGroup) {
     });
   }
 } else {
-  require('node:assert/strict').ok(['original22', 'review8', 'nohash4'].includes(graphicalGroup), 'unknown graphical test group');
+  require('node:assert/strict').ok(['original22', 'review8', 'review10', 'nohash4'].includes(graphicalGroup), 'unknown graphical test group');
 // S0 graphical-overview behavioral and identity regression only.
 // JSDOM does not establish real-browser 1440-pixel readability or visual acceptance.
 // The fixture renders production code unchanged and serves exact generated packets
@@ -1129,6 +1129,123 @@ test('review: all seven relations have independent native text buttons with exac
   visible(reload, reload.d.activeElement);
   healthy(x); healthy(reload);
 });
+
+// Receipt-backed height inputs, independent of the candidate's minHeight values.
+// Chrome 154.0.8037.97 S0 receipt for b28546e: map 1358x718 at (41,149), actual goal
+// 42.390625, L/C 37.390625, directory 26.5, task rows 52 and CI rows 37.
+// These are controlled JSDOM layout inputs, not a replacement for browser QA.
+const PARENT_CORRIDOR_HEIGHTS = {goal:42.390625, branch:37.390625, directory:26.5, task:52, challenge:37};
+async function measuredParentCorridorPage(viewportWidth, noteHeight = 20.25) {
+  const x = await page(), graph = map(x), viewportHeight = viewportWidth === 1440 ? 900 : 1080;
+  const width = viewportWidth - 82, height = viewportHeight - 182;
+  Object.defineProperty(graph, 'clientWidth', {configurable:true, get:() => width});
+  Object.defineProperty(graph, 'clientHeight', {configurable:true, get:() => height});
+  function measured(node, h) {
+    Object.defineProperty(node, 'offsetHeight', {configurable:true, get:() => Math.round(h)});
+    node.getBoundingClientRect = () => {
+      const left = 41 + parseFloat(node.style.left || 0), top = 149 + parseFloat(node.style.top || 0), w = parseFloat(node.style.width || 0);
+      return {x:left, y:top, left, top, width:w, height:h, right:left+w, bottom:top+h};
+    };
+  }
+  for (const node of graph.querySelectorAll('[data-map-position]')) {
+    const kind = node.matches('[data-overview-entity]') ? 'goal' : node.matches('[data-reading-branch]') ? 'branch' : node.matches('.np-map-task-root') ? 'directory' : node.matches('[data-task-open]') ? 'task' : 'challenge';
+    measured(node, PARENT_CORRIDOR_HEIGHTS[kind]);
+  }
+  // 15px x 1.35 is the current one-line note box. A measured two-line
+  // counterexample must move the bus rather than allowing it through prose.
+  for (const note of graph.querySelectorAll('[data-layout-note]')) measured(note, note.dataset.layoutNote === 'editorial' ? 20.25 : noteHeight);
+  x.w.innerWidth = viewportWidth; x.w.innerHeight = viewportHeight;
+  x.w.dispatchEvent(new x.w.Event('resize')); await frames(x.w);
+  return {x, graph, width, height};
+}
+function parentCorridorBox(node) {
+  const box = {x:parseFloat(node.style.left), y:parseFloat(node.style.top), w:parseFloat(node.style.width), h:node.getBoundingClientRect().height};
+  assert.ok(Object.values(box).every(Number.isFinite)); assert.ok(box.w > 0 && box.h > 0);
+  return box;
+}
+function parentPolyline(path) {
+  const tokens = path.getAttribute('d').match(/[a-zA-Z]|[-+]?(?:\d*\.)?\d+(?:e[-+]?\d+)?/g) || [], points = [];
+  let current = [0, 0];
+  while (tokens.length) {
+    const command = tokens.shift(); assert.ok(['M','L','H','V'].includes(command), 'parent path uses an explicitly checked straight-segment command');
+    assert.equal(command === 'M', points.length === 0, 'one complete parent polyline begins with M');
+    if (command === 'M' || command === 'L') current = [Number(tokens.shift()), Number(tokens.shift())];
+    else if (command === 'H') current = [Number(tokens.shift()), current[1]];
+    else current = [current[0], Number(tokens.shift())];
+    assert.ok(current.every(Number.isFinite)); points.push(current);
+  }
+  assert.ok(points.length >= 2);
+  return {points, segments:points.slice(1).map((to,index) => {
+    const from = points[index]; assert.ok(Math.abs(from[0]-to[0]) < 0.001 || Math.abs(from[1]-to[1]) < 0.001, 'parent route segments are axis-aligned');
+    return {from, to};
+  })};
+}
+function segmentCrossesInterior({from, to}, box) {
+  const epsilon = 0.001, [x1,y1] = from, [x2,y2] = to;
+  if (Math.abs(y1-y2) < epsilon) return y1 > box.y+epsilon && y1 < box.y+box.h-epsilon && Math.min(Math.max(x1,x2),box.x+box.w)-Math.max(Math.min(x1,x2),box.x) > epsilon;
+  return x1 > box.x+epsilon && x1 < box.x+box.w-epsilon && Math.min(Math.max(y1,y2),box.y+box.h)-Math.max(Math.min(y1,y2),box.y) > epsilon;
+}
+function assertParentCorridors({x, graph, width, height}) {
+  const nodes = [...graph.querySelectorAll('[data-map-position]')], boxes = new Map(nodes.map(node => [node.dataset.mapPosition,parentCorridorBox(node)]));
+  const paths = [...graph.querySelectorAll('path[data-map-parent][data-map-child]')], bundle = x.a.getBundle();
+  assert.equal(nodes.length,39); assert.equal(boxes.size,39); assert.equal(paths.length,38);
+  const expected = nodes.filter(node => boxes.has(bundle.positions[node.dataset.mapPosition].parentId)).map(node => [bundle.positions[node.dataset.mapPosition].parentId,node.dataset.mapPosition].join('|')).sort();
+  assert.deepEqual(paths.map(path => [path.dataset.mapParent,path.dataset.mapChild].join('|')).sort(),expected,'every exact original parent edge appears once');
+  const obstacles = nodes.map(node => ({name:'node '+node.dataset.mapPosition,box:boxes.get(node.dataset.mapPosition)})).concat([...graph.querySelectorAll('[data-layout-note]:not([hidden])')].map(note => ({name:'note '+note.dataset.layoutNote,box:parentCorridorBox(note)})));
+  const directory = graph.querySelector('.np-map-task-root'), directoryId = directory.dataset.mapPosition, litId = graph.querySelector('[data-reading-branch="l"]').dataset.mapPosition;
+  const directoryBox = boxes.get(directoryId), litBox = boxes.get(litId), noteBoxes = obstacles.filter(row => row.name.startsWith('note ')).map(row => row.box);
+  for (const path of paths) {
+    const {mapParent:parent,mapChild:child} = path.dataset, label = parent+' → '+child, {points,segments} = parentPolyline(path);
+    assert.equal(bundle.positions[child].parentId,parent,label+': immutable source parent');
+    assert.ok(onBoundary(points[0],boxes.get(parent)),label+': starts on actual measured parent boundary');
+    assert.ok(onBoundary(points.at(-1),boxes.get(child)),label+': ends on actual measured child boundary');
+    const halfStroke = parseFloat(x.w.getComputedStyle(path).getPropertyValue('stroke-width'))/2;
+    assert.ok(Number.isFinite(halfStroke) && halfStroke > 0);
+    for (const [px,py] of points) assert.ok(px >= halfStroke && px <= width-halfStroke && py >= halfStroke && py <= height-halfStroke,label+': complete stroke stays inside map, including its gutter');
+    for (const segment of segments) for (const obstacle of obstacles) assert.equal(segmentCrossesInterior(segment,obstacle.box),false,label+': parent corridor crosses '+obstacle.name);
+    if (parent === litId && child === directoryId) {
+      const bends = segments.filter(segment => Math.abs(segment.from[1]-segment.to[1]) < 0.001 && Math.abs(segment.from[0]-segment.to[0]) > 0.001);
+      assert.equal(bends.length,1);assert.ok(bends[0].from[1] > litBox.y+litBox.h && bends[0].from[1] < directoryBox.y,'L-to-directory elbow lies in the measured gap, never inside the L card');
+    }
+    if (parent === directoryId) {
+      const target = boxes.get(child), incoming = segments.at(-1);
+      assert.equal(points[0][0],directoryBox.x,'task parents leave the directory toward its in-map left gutter');
+      assert.equal(incoming.to[0],target.x,'task parent enters the exact task left boundary');
+      assert.ok(incoming.from[0] < target.x && incoming.from[0] >= halfStroke,'the task inlet has an in-canvas lane');
+      const bus = segments.filter(segment => Math.abs(segment.from[1]-segment.to[1]) < 0.001 && Math.abs(segment.from[0]-segment.to[0]) > 0.001 && segment.from[1] > directoryBox.y+directoryBox.h && segment.from[1] < target.y);
+      // First-column paths share the vertical gutter and need no horizontal bus.
+      if (target.x > directoryBox.x+0.001) {assert.ok(bus.length);for (const segment of bus) assert.ok(noteBoxes.every(box => segment.from[1] >= box.y+box.h+4.99),'task bus is below every explanatory label, with a five-pixel gap');}
+    }
+  }
+  return paths;
+}
+test('review: all 38 measured parent corridors stay inside both desktop canvases and avoid node and note interiors',async()=>{
+  for (const width of [1440,1920]) for (const noteHeight of [20.25,40.5]) {
+    const fixture = await measuredParentCorridorPage(width,noteHeight), {x} = fixture;
+    try {const route = clean(x.a.getState().route), scientific = snapshotGraph(x);assertParentCorridors(fixture);assert.deepEqual(clean(x.a.getState().route),route);assert.deepEqual(snapshotGraph(x),scientific);healthy(x);} finally {x.w.close();}
+  }
+});
+test('review: parent corridor guard rejects the former negative-six gutter and 92px elbow plus a bus through note text',async()=>{
+  for (const width of [1440,1920]) {
+    const fixture = await measuredParentCorridorPage(width), {x,graph} = fixture;
+    try {
+      assertParentCorridors(fixture);
+      const directory = graph.querySelector('.np-map-task-root'), dir = parentCorridorBox(directory), lit = graph.querySelector('[data-reading-branch="l"]'), l = parentCorridorBox(lit), first = graphTask(x,'task:pointnav'), firstBox = parentCorridorBox(first), later = graphTask(x,'task:vln'), laterBox = parentCorridorBox(later);
+      const cases = [
+        {child:first.dataset.mapPosition,d:'M '+dir.x+' '+(dir.y+dir.h/2)+' H -6 V 150 H -6 V '+(firstBox.y+firstBox.h/2)+' H '+firstBox.x,reason:/complete stroke stays inside map/},
+        {child:directory.dataset.mapPosition,d:'M '+(l.x+l.w/2)+' '+(l.y+l.h)+' V 92 H '+(dir.x+dir.w/2)+' V '+dir.y,reason:/parent corridor crosses node|L-to-directory elbow/},
+        {child:later.dataset.mapPosition,d:'M '+dir.x+' '+(dir.y+dir.h/2)+' H 2 V 134 H '+(laterBox.x-6)+' V '+(laterBox.y+laterBox.h/2)+' H '+laterBox.x,reason:/parent corridor crosses node|parent corridor crosses note|task bus is below/},
+      ];
+      for (const invalid of cases) {
+        const path = graph.querySelector('path[data-map-child="'+invalid.child+'"]'), original = path.getAttribute('d');
+        try {path.setAttribute('d',invalid.d);assert.throws(()=>assertParentCorridors(fixture),invalid.reason,'independent validator must reject the exact former geometry');} finally {path.setAttribute('d',original);}
+        assertParentCorridors(fixture);
+      }
+      healthy(x);
+    } finally {x.w.close();}
+  }
+});
+
 
 function inheritedComputedValue(x, node, property) {
   for (let current = node; current; current = current.parentElement) {
