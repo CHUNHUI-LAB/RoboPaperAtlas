@@ -4325,5 +4325,177 @@ states.push(actual);
         self.assertEqual(len(MODULE.SCENE_NAMES) * len(MODULE.VIEWPORTS), 98)
 
 
+class AtomicReceiptPersistenceChecks(unittest.TestCase):
+    """The same checkpoints retain all JSON evidence and survive failed writes."""
+
+    @staticmethod
+    def report():
+        return {'head': 'fixture-head', 'complete': False, 'nullable': None, 'count': 0,
+                'route': {'nav': '1', 'scope': 'scope:all', 'bench': None, 'protocol': None,
+                          'tree': 'a', 'node': 'fixture:answer', 'paper': 'fixture:paper',
+                          'version': 'fixture:version', 'claim': None, 'mode': 'read', 'template': None},
+                'proofs': [{'text': '完整来源 · 研究问题\n第二行🙂', 'rect': {'x': 0.125, 'y': -2.5, 'width': 840, 'height': 36},
+                            'visible': True, 'missing': None, 'fragments': [], 'events': ['keydown', 'keyup']}],
+                'sameLabelDistinctIds': ['fixture:first', 'fixture:second'], 'empty': {}, 'offsets': [0, 12.75, 900]}
+
+    def assert_only_receipt(self, directory, expected):
+        self.assertEqual([path.name for path in directory.iterdir()], ['receipt.json'])
+        self.assertEqual(json.loads((directory / 'receipt.json').read_text(encoding='utf-8')), expected)
+
+    @staticmethod
+    def failed_writer(real_factory):
+        from contextlib import contextmanager
+        from types import SimpleNamespace
+        @contextmanager
+        def factory(*args, **kwargs):
+            with real_factory(*args, **kwargs) as stream:
+                def write(payload):
+                    stream.write(payload[:len(payload) // 2])
+                    stream.flush()
+                    raise OSError('injected partial temporary write')
+                yield SimpleNamespace(name=stream.name, write=write)
+        return factory
+
+    def test_compact_unicode_roundtrip_keeps_every_field_type_order_and_checkpoint(self):
+        import copy
+        import tempfile
+        report = self.report(); pristine = copy.deepcopy(report)
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / 'receipt.json'
+            MODULE.write_receipt(target, report)
+            raw = target.read_bytes()
+            self.assertEqual(raw, (json.dumps(report, ensure_ascii=False, separators=(',', ':')) + '\n').encode('utf-8'))
+            self.assertLess(len(raw), len((json.dumps(report, ensure_ascii=False, indent=2) + '\n').encode('utf-8')))
+            self.assertEqual(list(json.loads(raw)), list(report))
+            self.assertEqual(json.loads(raw), pristine)
+            self.assertEqual(report, pristine)
+            self.assert_only_receipt(Path(directory), pristine)
+
+    def test_same_directory_atomic_replace_observes_complete_closed_temp_and_prior_target(self):
+        import tempfile
+        prior = {'previous': '完整检查点'}; report = self.report(); real_replace = MODULE.os.replace
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / 'receipt.json'; target.write_text(json.dumps(prior), encoding='utf-8')
+            original = target.read_bytes(); replacements = []
+            def replace(source, destination):
+                source = Path(source); destination = Path(destination)
+                self.assertEqual(source.parent, target.parent)
+                self.assertNotEqual(source, target)
+                self.assertEqual(destination, target)
+                self.assertTrue(source.name.startswith('.receipt.json.'))
+                self.assertTrue(source.name.endswith('.tmp'))
+                self.assertEqual(target.read_bytes(), original)
+                self.assertEqual(json.loads(source.read_text(encoding='utf-8')), report)
+                replacements.append((source, destination))
+                real_replace(source, destination)
+            with patch.object(MODULE.os, 'replace', side_effect=replace):
+                MODULE.write_receipt(target, report)
+            self.assertEqual(len(replacements), 1)
+            self.assert_only_receipt(Path(directory), report)
+            self.assertFalse(replacements[0][0].exists())
+
+    def test_partial_temporary_write_failure_preserves_previous_receipt_and_cleans_temp(self):
+        import tempfile
+        real_factory = MODULE.tempfile.NamedTemporaryFile
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / 'receipt.json'; prior = {'checkpoint': 'previous'}
+            target.write_text(json.dumps(prior), encoding='utf-8'); original = target.read_bytes()
+            with patch.object(MODULE.tempfile, 'NamedTemporaryFile', side_effect=self.failed_writer(real_factory)):
+                with self.assertRaisesRegex(OSError, 'partial temporary write'):
+                    MODULE.write_receipt(target, self.report())
+            self.assertEqual(target.read_bytes(), original)
+            self.assert_only_receipt(Path(directory), prior)
+
+    def test_temporary_close_failure_never_replaces_prior_receipt_and_cleans_temp(self):
+        from contextlib import contextmanager
+        import tempfile
+        real_factory = MODULE.tempfile.NamedTemporaryFile
+        @contextmanager
+        def failed_close(*args, **kwargs):
+            with real_factory(*args, **kwargs) as stream:
+                yield stream
+            raise OSError('injected temporary close failure')
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / 'receipt.json'; prior = {'checkpoint': 'previous'}
+            target.write_text(json.dumps(prior), encoding='utf-8'); original = target.read_bytes()
+            with patch.object(MODULE.tempfile, 'NamedTemporaryFile', side_effect=failed_close):
+                with patch.object(MODULE.os, 'replace') as replace:
+                    with self.assertRaisesRegex(OSError, 'temporary close failure'):
+                        MODULE.write_receipt(target, self.report())
+            replace.assert_not_called()
+            self.assertEqual(target.read_bytes(), original)
+            self.assert_only_receipt(Path(directory), prior)
+
+    def test_replace_failure_preserves_previous_receipt_and_cleans_complete_temp(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / 'receipt.json'; prior = {'checkpoint': 'previous'}
+            target.write_text(json.dumps(prior), encoding='utf-8'); original = target.read_bytes()
+            with patch.object(MODULE.os, 'replace', side_effect=OSError('injected replace failure')) as replace:
+                with self.assertRaisesRegex(OSError, 'replace failure'):
+                    MODULE.write_receipt(target, self.report())
+            self.assertEqual(replace.call_count, 1)
+            self.assertEqual(target.read_bytes(), original)
+            self.assert_only_receipt(Path(directory), prior)
+
+    def test_serialization_failure_never_creates_temp_or_changes_prior_receipt(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / 'receipt.json'; prior = {'checkpoint': 'previous'}
+            target.write_text(json.dumps(prior), encoding='utf-8'); original = target.read_bytes()
+            report = self.report(); report['notJSON'] = {1, 2}
+            with patch.object(MODULE.tempfile, 'NamedTemporaryFile') as create:
+                with self.assertRaises(TypeError):
+                    MODULE.write_receipt(target, report)
+            create.assert_not_called()
+            self.assertEqual(target.read_bytes(), original)
+            self.assert_only_receipt(Path(directory), prior)
+
+    def test_temporary_creation_failure_leaves_previous_receipt_untouched(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / 'receipt.json'; prior = {'checkpoint': 'previous'}
+            target.write_text(json.dumps(prior), encoding='utf-8'); original = target.read_bytes()
+            with patch.object(MODULE.tempfile, 'NamedTemporaryFile', side_effect=OSError('injected create failure')):
+                with self.assertRaisesRegex(OSError, 'create failure'):
+                    MODULE.write_receipt(target, self.report())
+            self.assertEqual(target.read_bytes(), original)
+            self.assert_only_receipt(Path(directory), prior)
+
+    def test_failed_initial_write_cannot_publish_a_partial_first_receipt(self):
+        import tempfile
+        real_factory = MODULE.tempfile.NamedTemporaryFile
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / 'receipt.json'
+            with patch.object(MODULE.tempfile, 'NamedTemporaryFile', side_effect=self.failed_writer(real_factory)):
+                with self.assertRaises(OSError):
+                    MODULE.write_receipt(target, self.report())
+            self.assertFalse(target.exists())
+            self.assertEqual(list(Path(directory).iterdir()), [])
+
+    def test_original_save_wrapper_writes_each_call_immediately_with_all_96_call_sites(self):
+        import ast
+        import tempfile
+        source = Path(MODULE.__file__).read_text(encoding='utf-8'); tree = ast.parse(source)
+        calls = [node for node in ast.walk(tree) if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == 'save']
+        self.assertEqual(len(calls), 96)
+        saves = [node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef) and node.name == 'save']
+        self.assertEqual(len(saves), 1)
+        self.assertEqual(ast.dump(saves[0].body[0].value.func), "Name(id='write_receipt', ctx=Load())")
+        self.assertEqual(len(saves[0].body), 1)
+        compiled = compile(ast.fix_missing_locations(ast.Module(body=[saves[0]], type_ignores=[])), '<original-save>', 'exec')
+        with tempfile.TemporaryDirectory() as directory:
+            report = self.report(); namespace = {'out': Path(directory), 'report': report}
+            with patch.object(MODULE, 'write_receipt', wraps=MODULE.write_receipt) as writer:
+                namespace['write_receipt'] = writer
+                exec(compiled, namespace)
+                for count in range(3):
+                    report['count'] = count; report['complete'] = count == 2
+                    namespace['save']()
+                    self.assertEqual(writer.call_count, count + 1)
+                    self.assert_only_receipt(Path(directory), report)
+            self.assertEqual(len(MODULE.SCENE_NAMES) * len(MODULE.VIEWPORTS), 98)
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -20,6 +20,7 @@ import socket
 import struct
 import subprocess
 import threading
+import tempfile
 import time
 import urllib.request
 import urllib.error
@@ -401,6 +402,22 @@ def png_has_visible_variation(image):
 
 def command(*args):
     return subprocess.check_output(args, text=True).strip()
+
+
+
+def write_receipt(path, report):
+    """Preserve every checkpoint, without pretty-print cost or partial targets."""
+    payload = json.dumps(report, ensure_ascii=False, separators=(',', ':')) + '\n'
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', dir=path.parent,
+                                         prefix='.' + path.name + '.', suffix='.tmp', delete=False) as stream:
+            temporary = Path(stream.name)
+            stream.write(payload)
+        os.replace(temporary, path)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
 
 
 def wait_for(check, timeout=45):
@@ -3875,7 +3892,7 @@ def main():
     logs = (out / 'chromedriver.log').open('w')
 
     def save():
-        (out / 'receipt.json').write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n')
+        write_receipt(out / 'receipt.json', report)
 
     def capture(name, require_tree=True, require_overview=False, require_flow=False, require_home=False):
         driver.settle()
