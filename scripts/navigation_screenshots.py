@@ -763,6 +763,7 @@ DISPLAY_CONTRACT_MIGRATIONS = {
     'method_geometry': 'actual desktop g/L method only: 400/448px real-path pane, 16px gap, 992/1424px reader; task/relation/A unchanged',
     'method_ancestry': 'original root-to-selection parent edges and children; real-parent siblings in native navigation disclosure, never tree nodes',
     'method_introduction': 'desktop selected method hides only repeated interface introduction; original mechanism and source boundaries remain natural flow',
+    'source_scroll_fixtures': 'S1 fitting body proves stationary identity only; mandatory positive wheel uses measured genuine PONI content; L/C nonzero history uses same-version original technical child, then real pipeline ancestor for A and claim links',
     'method_analysis_controls': 'full fixed title/version/warning and genuine analysis controls in a compact status row; no cropped identity',
 }
 
@@ -819,6 +820,7 @@ var a=NavigationProductApp,m=NavigationProductModel,s=a.getState(),app=document.
     treePane=document.querySelector('.np-tree-pane'),footers=document.querySelectorAll('.np-canvas-footer'),footer=footers.length===1?footers[0]:null;
 function proof(e){return e?box(e):null;}
 function scroll(e){return {top:e.scrollTop,left:e.scrollLeft};}
+function metrics(e){return {top:e.scrollTop,left:e.scrollLeft,scrollHeight:e.scrollHeight,clientHeight:e.clientHeight,maxTop:Math.max(0,e.scrollHeight-e.clientHeight)};}
 var roots=host.querySelectorAll('[data-parallel-tree] > [role=tree] > [role=treeitem]'),b=a.getBundle(),
     scrollCandidates=[tree,reader,...tree.querySelectorAll('*'),...reader.querySelectorAll('*'),...(footer?[footer,...footer.querySelectorAll('*')]:[])].map(scrollRegionCandidate).filter(Boolean);
 return {ready:app.dataset.loadState,route:s.route,methodReading:app.dataset.methodReading,readingLayout:app.dataset.readingLayout,window:{x:scrollX,y:scrollY},
@@ -826,7 +828,7 @@ return {ready:app.dataset.loadState,route:s.route,methodReading:app.dataset.meth
   collapsed:app.dataset.readerCollapsed==='true',sourceOverview:app.dataset.activeTree==='g'&&app.dataset.globalFocus==='overview',panels:rect(document.querySelector('.np-panels')),
   tree:rect(tree),treePane:rect(document.querySelector('.np-tree-pane')),reader:rect(reader),pane:rect(pane),
   fixedIdentity:title?{position:title.dataset.objectPosition||null,paper:title.dataset.objectPaper||null,version:title.dataset.objectVersion||null}:null,
-  offsets:{tree:scroll(tree),reader:scroll(reader)},heading:proof(header),title:proof(title),meta:proof(meta),
+  offsets:{tree:scroll(tree),reader:scroll(reader)},scrollMetrics:{tree:metrics(tree),reader:metrics(reader)},heading:proof(header),title:proof(title),meta:proof(meta),
   titleRelation:title?.dataset.objectRelation||null,returnControlCount:returns.length,
   returnControl:back?{tag:back.tagName,disabled:back.disabled,inHeading:back.parentElement===header,insideScroll:reader.contains(back),proof:proof(back)}:null,
   treeFooter:app.dataset.methodReading==='true'?{count:footers.length,proof:proof(footer),inPane:!!footer&&footer.parentElement===treePane,insideTree:!!footer&&tree.contains(footer),
@@ -1128,6 +1130,192 @@ def check_reader_toggle_transition(before, after, original, collapsed):
         raise RuntimeError('Reader toggle lost the nonzero reader scroll in current/history snapshots')
 
 
+# Read-only measurements bind every positive-scroll fixture to actual source state.
+SCROLL_FIXTURE_SNAPSHOT_JS = r"""
+var a=NavigationProductApp,b=a.getBundle(),s=a.getState(),p=b.positions[s.route.node];
+function metrics(id){var e=document.getElementById(id);return {id:id,top:e.scrollTop,left:e.scrollLeft,scrollHeight:e.scrollHeight,clientHeight:e.clientHeight,maxTop:Math.max(0,e.scrollHeight-e.clientHeight)};}
+return {route:s.route,position:p?{id:p.id,entity:p.entityId,scope:p.scopeId,tree:p.tree,paper:p.paperId,version:p.versionId}:null,
+ relation:document.querySelector('[data-selected-task-relation]')?.dataset.selectedTaskRelation||null,window:{x:scrollX,y:scrollY},
+ historyIdentity:{url:location.href,length:history.length,entryKey:window.navigation?.currentEntry?.key||null,revision:s.revision,originTrail:s.originTrail},
+ treeState:{expanded:NavigationProductModel.getBucket(s).expandedByTree,positions:[...document.querySelectorAll('#np-tree [role=treeitem]')].map(e=>({id:e.dataset.position,selected:e.getAttribute('aria-selected')}))},
+ focusPosition:document.activeElement.closest('#np-tree [data-parallel-tree] [role=treeitem]')?.dataset.position||null,
+ tree:metrics('np-tree-scroll'),reader:metrics('np-detail-scroll'),
+ disclosures:[...document.querySelectorAll('#np-detail-scroll details')].map(e=>({id:e.id,classes:e.className,open:e.open,hidden:e.hidden,summary:e.querySelector(':scope > summary')?.textContent||null,claims:[...e.querySelectorAll('[data-claim-id]')].map(c=>c.dataset.claimId)})),
+ branches:[...document.querySelectorAll('#np-tree [data-parallel-tree] [role=treeitem][aria-expanded="false"]')].map(e=>{var p=b.positions[e.dataset.position];return {id:p.id,tree:p.tree,scope:p.scopeId,children:p.childIds,control:e.id,label:e.querySelector(':scope > .np-node-row > .np-node-label').textContent};})};
+"""
+
+
+def check_scroll_fixture_source(before, after):
+    for key in ('route', 'position', 'relation', 'window'):
+        if before[key] != after[key]:
+            raise RuntimeError('Native scroll fixture changed exact source identity or outer position: ' + key)
+
+
+def check_scroll_metrics(metrics, *, headroom=False, require_overflow=True):
+    values = [metrics.get(k) for k in ('top', 'left', 'scrollHeight', 'clientHeight', 'maxTop')]
+    if (not all(isinstance(n, (int, float)) and not isinstance(n, bool) and math.isfinite(n) for n in values) or metrics['clientHeight'] <= 0 or
+            metrics['top'] < 0 or metrics['maxTop'] != max(0, metrics['scrollHeight'] - metrics['clientHeight']) or
+            metrics['top'] > metrics['maxTop']):
+        raise RuntimeError('Scroll fixture lacks consistent actual scrollHeight/clientHeight measurements')
+    if (require_overflow and metrics['maxTop'] <= 0) or (headroom and metrics['maxTop'] - metrics['top'] <= 0):
+        raise RuntimeError('Positive-scroll fixture has no measured overflow or remaining headroom')
+
+
+def check_native_wheel_progress(before, after, region):
+    check_scroll_fixture_source(before, after)
+    for key in ('historyIdentity', 'treeState'):
+        if before[key] != after[key]:
+            raise RuntimeError('Native wheel changed history/origin or actual tree state: ' + key)
+    check_scroll_metrics(before[region], headroom=True)
+    check_scroll_metrics(after[region])
+    if after[region]['top'] <= before[region]['top'] or after[region]['top'] <= 0:
+        raise RuntimeError('Native wheel did not produce a positive actual internal scroll')
+    other = 'tree' if region == 'reader' else 'reader'
+    if any(before[other][key] != after[other][key] for key in ('top', 'left')):
+        raise RuntimeError('Native wheel moved the other permanent scroll region')
+
+
+def measured_fixture_action(driver, record, save, description, action):
+    item = dict(description, before=driver.js(SCROLL_FIXTURE_SNAPSHOT_JS))
+    record.setdefault('nativeScrollActions', []).append(item)
+    save()
+    try:
+        action()
+        driver.settle()
+    except Exception as exc:
+        item['actionError'] = str(exc)[:2000]
+        raise
+    finally:
+        try:
+            item['after'] = driver.js(SCROLL_FIXTURE_SNAPSHOT_JS)
+            save()
+        except Exception as exc:
+            item['diagnosticError'] = str(exc)[:2000]
+            save()
+            if 'actionError' not in item:
+                raise
+    return item['after']
+
+
+def native_scroll(driver, record, save, region, delta, action_id='source-bound-scroll'):
+    return measured_fixture_action(driver, record, save, {'kind': 'wheel', 'region': region, 'delta': delta, 'actionId': action_id},
+        lambda: driver.call('POST', '/actions', {'actions': [{'type': 'wheel', 'id': action_id, 'actions': [
+            {'type': 'scroll', 'origin': driver.selector('#np-detail-scroll' if region == 'reader' else '#np-tree-scroll'),
+             'x': 0, 'y': 0, 'deltaX': 0, 'deltaY': delta, 'duration': 100}]}]}))
+
+
+def prepare_scroll_fixture(driver, record, save, region):
+    """Only native existing disclosures/real tree branches may supply overflow."""
+    initial = driver.js(SCROLL_FIXTURE_SNAPSHOT_JS)
+    item = {'region': region, 'initial': initial, 'steps': [], 'scenario': 'native_original_content_overflow'}
+    record.setdefault('scrollPreparations', []).append(item)
+    save()
+    current = initial
+    if region == 'reader':
+        # Original detail and claim/source disclosures, never generated padding.
+        for selector in ('#np-evidence-panel', '#np-detail-content .np-evidence', '#np-detail-content .np-source-disclosure', '#np-reading-context-wrap'):
+            if current[region]['maxTop'] > 0:
+                break
+            control = driver.js("var all=[...document.querySelectorAll(arguments[0])].filter(e=>!e.open&&!e.hidden&&!e.closest('[hidden]'));if(all.length>1)throw Error('Ambiguous original content disclosure');var e=all[0];return e?{selector:arguments[0]+' > summary',text:e.querySelector(':scope > summary').textContent}:null;", selector)
+            if control:
+                current = measured_fixture_action(driver, record, save, {'kind': 'original-disclosure', 'control': control},
+                    lambda: driver.click(reveal_control(driver, control)))
+                item['steps'].append({'nativeDisclosure': control, 'after': current})
+                save()
+                check_scroll_fixture_source(initial, current)
+    else:
+        expanded = set()
+        while current[region]['maxTop'] <= 0:
+            candidates = [row for row in current['branches'] if row['id'] not in expanded and row['children'] and
+                          row['tree'] == initial['route']['tree'] and row['scope'] == initial['route']['scope']]
+            if not candidates:
+                break
+            branch = candidates[0]
+            expanded.add(branch['id'])
+            current = measured_fixture_action(driver, record, save, {'kind': 'original-source-branch', 'branch': branch},
+                lambda: driver.click(reveal_control(driver, {'selector': '[id="' + branch['control'] + '"] > .np-node-row > .np-node-toggle'})))
+            item['steps'].append({'nativeSourceBranch': branch, 'after': current})
+            save()
+            check_scroll_fixture_source(initial, current)
+    check_scroll_metrics(current[region])
+    # A disclosure may reveal itself at the end. Establish real upward headroom
+    # through native input, before the positive wheel/End/history fixture begins.
+    if current[region]['top'] > 0:
+        native_scroll(driver, record, save, region, -current[region]['scrollHeight'], 'source-fixture-start')
+        current = driver.js(SCROLL_FIXTURE_SNAPSHOT_JS)
+        item['resetByNativeWheel'] = current
+        save()
+        check_scroll_fixture_source(initial, current)
+    check_scroll_metrics(current[region], headroom=True)
+    if current[region]['top'] != 0:
+        raise RuntimeError('Native fixture setup did not reach the measured scroll start')
+    item['ready'] = current
+    save()
+    return current
+
+
+def check_fixed_reader_scroll(before, after, *, positive):
+    for key in ('route', 'position', 'fixedIdentity', 'relation', 'title', 'meta', 'window'):
+        if before[key] != after[key]:
+            raise RuntimeError('Reader input moved fixed identity or changed its source: ' + key)
+    if before['offsets']['tree'] != after['offsets']['tree']:
+        raise RuntimeError('Reader input moved the tree')
+    check_scroll_metrics(before['scrollMetrics']['reader'], require_overflow=positive)
+    check_scroll_metrics(after['scrollMetrics']['reader'], require_overflow=positive)
+    if positive:
+        check_scroll_metrics(before['scrollMetrics']['reader'], headroom=True)
+        if after['offsets']['reader']['top'] <= before['offsets']['reader']['top']:
+            raise RuntimeError('Fixed reader proof did not exercise positive actual scrolling')
+    elif (before['scrollMetrics']['reader']['maxTop'] != 0 or
+          before['offsets']['reader'] != after['offsets']['reader']):
+        raise RuntimeError('Short reader proof must explicitly measure no overflow and no movement')
+
+
+SELECTED_TREE_FOCUS_JS = r"""
+var id='np-node-'+NavigationProductApp.getState().route.node,e=document.getElementById(id),active=document.activeElement;
+return {target:id,active:active.id,valid:!!e&&e.tabIndex===0&&e.getAttribute('aria-selected')==='true'&&!!e.closest('#np-tree [data-parallel-tree]'),
+ bound:[...document.querySelectorAll('a[href],button,input,select,textarea,summary,[tabindex]')].filter(n=>n.tabIndex>=0&&!n.disabled&&n.getClientRects().length).length+1};
+"""
+
+
+def restore_selected_tree_focus(driver, record, save):
+    """Native reverse Tab, without activating/rebuilding the selected source."""
+    before = driver.js(SCROLL_FIXTURE_SNAPSHOT_JS)
+    elements = driver.js(READER_DOM_ELEMENTS_JS)
+    focus = driver.js(SELECTED_TREE_FOCUS_JS)
+    item = {'before': before, 'focusPath': [focus]}
+    record['nativeSelectedFocus'] = item
+    save()
+    if not focus['valid']:
+        raise RuntimeError('Selected original tree position is not a native roving focus stop')
+    for _ in range(focus['bound']):
+        if focus['active'] == focus['target']:
+            break
+        driver.call('POST', '/actions', {'actions': [{'type': 'key', 'id': 'selected-tree-focus', 'actions': [
+            {'type': 'keyDown', 'value': '\ue008'}, {'type': 'keyDown', 'value': '\ue004'},
+            {'type': 'keyUp', 'value': '\ue004'}, {'type': 'keyUp', 'value': '\ue008'}]}]})
+        driver.settle()
+        focus = driver.js(SELECTED_TREE_FOCUS_JS)
+        item['focusPath'].append(focus)
+        save()
+        if not focus['valid'] or focus['target'] != item['focusPath'][0]['target']:
+            raise RuntimeError('Native focus traversal changed the selected source target')
+    item['afterFocus'] = driver.js(SCROLL_FIXTURE_SNAPSHOT_JS)
+    save()
+    if item['afterFocus']['reader']['top'] > 0:
+        native_scroll(driver, record, save, 'reader', -item['afterFocus']['reader']['scrollHeight'], 'selected-focus-reader-start')
+    item['after'] = driver.js(SCROLL_FIXTURE_SNAPSHOT_JS)
+    item['domIdentity'] = driver.js(READER_DOM_IDENTITY_JS, elements)
+    save()
+    if focus['active'] != focus['target']:
+        raise RuntimeError('Native reverse Tab could not reach the selected original tree position')
+    check_scroll_fixture_source(before, item['after'])
+    check_reader_dom_identity(item['domIdentity'])
+    for key in ('historyIdentity', 'treeState', 'reader', 'tree'):
+        if before[key] != item['after'][key]:
+            raise RuntimeError('Native focus traversal changed source state or prepared offsets: ' + key)
+
+
 def reader_toggle_checks(driver, report, save, capture, prefix):
     """Append two real-control scenes; keep diagnostics even when a new gate fails."""
     driver.settle()
@@ -1136,6 +1324,16 @@ def reader_toggle_checks(driver, report, save, capture, prefix):
     report.setdefault('readerToggleChecks', []).append(record)
     save()
     check_reader_toggle_snapshot(initial, False)
+    if initial['reader']['scroll']['maxTop'] <= 0:
+        preparation_elements = driver.js(READER_DOM_ELEMENTS_JS)
+        prepare_scroll_fixture(driver, record, save, 'reader')
+        # Disclosure focus is legitimate setup, not the collapse fixture origin.
+        # Restore the existing selected roving item before the positive wheel
+        # persists its exact current-tree neutral focus. Do not reselect/rebuild.
+        restore_selected_tree_focus(driver, record, save)
+        record['preparationDomIdentity'] = driver.js(READER_DOM_IDENTITY_JS, preparation_elements)
+        save()
+        check_reader_dom_identity(record['preparationDomIdentity'])
     # Exercise a genuine nonzero reading offset using a WebDriver wheel action.
     # Do not call navigate(), write model/history/DOM state, or assign scrollTop.
     if initial['reader']['scroll']['top'] <= 0:
@@ -2204,7 +2402,12 @@ def task_route_checks(driver, report, save, capture, prefix, base, science, serv
                     if bottom - top > area['height'] or not delta:
                         break
                     region = '#np-tree-scroll' if scrolling_specs[0].get('region') == 'canvas' else '#np-detail-scroll'
+                    alignment = {'region': region, 'delta': delta, 'before': driver.js(SCROLL_FIXTURE_SNAPSHOT_JS)}
+                    item.setdefault('alignmentScrollMetrics', []).append(alignment)
+                    save()
                     transition_record(driver, record, save, 'align-selected-object-with-wheel', lambda: driver.call('POST', '/actions', {'actions': [{'type': 'wheel', 'id': 'selected-object-scroll', 'actions': [{'type': 'scroll', 'origin': driver.selector(region), 'x': 0, 'y': 0, 'deltaX': 0, 'deltaY': delta, 'duration': 100}]}]}))
+                    alignment['after'] = driver.js(SCROLL_FIXTURE_SNAPSHOT_JS)
+                    save()
             item['state'] = snapshot()
             item['proofs'] = driver.js(TASK_DENSITY_PROOFS_JS, specs)
             save()
@@ -2395,6 +2598,8 @@ def task_route_checks(driver, report, save, capture, prefix, base, science, serv
             transition_record(driver, record, save, 'open-delayed-relation-disclosure', lambda: driver.click(driver.selector('#np-task-route-relations-summary')))
             transition_record(driver, record, save, 'select-delayed-relation', lambda: driver.click(reveal_control(driver, {'selector': selector})),
                 lambda: driver.js("return document.querySelector('[data-selected-task-relation=\"methods:relation:90\"]')&&document.querySelector('[data-relation-state]')?.dataset.relationState==='ready'"))
+            if interrupt == 'wheel':
+                prepare_scroll_fixture(driver, record, save, 'tree')
             packet = driver.js('return NavigationProductApp.getBundle().delivery.packets[arguments[0]]', poni['entityId'])
             delayed = {'interrupt': interrupt, 'before': snapshot(), 'packetSha256': packet['sha256'],
                        'resourceBefore': driver.js(DELAYED_PACKET_DIAGNOSTIC_JS, packet['sha256'], poni['entityId'])}
@@ -2417,9 +2622,15 @@ def task_route_checks(driver, report, save, capture, prefix, base, science, serv
                     delayed['pending'] = snapshot()
                     save()
                     if interrupt == 'wheel':
+                        delayed['pendingScrollMetrics'] = driver.js(SCROLL_FIXTURE_SNAPSHOT_JS)
+                        save()
+                        check_scroll_metrics(delayed['pendingScrollMetrics']['tree'], headroom=True)
                         driver.call('POST', '/actions', {'actions': [{'type': 'wheel', 'id': 'newer-reader-input', 'actions': [{'type': 'scroll', 'origin': driver.selector('#np-tree-scroll'), 'x': 0, 'y': 0, 'deltaX': 0, 'deltaY': 160, 'duration': 80}]}]})
                         driver.settle()
                         delayed['newer'] = snapshot()
+                        delayed['newerScrollMetrics'] = driver.js(SCROLL_FIXTURE_SNAPSHOT_JS)
+                        save()
+                        check_native_wheel_progress(delayed['pendingScrollMetrics'], delayed['newerScrollMetrics'], 'tree')
                         if delayed['newer']['treeScroll'] == delayed['pending']['treeScroll']:
                             raise RuntimeError('Interrupted cold restore was not exercised by an actual scroll')
                     elif interrupt == 'scope':
@@ -2435,6 +2646,7 @@ def task_route_checks(driver, report, save, capture, prefix, base, science, serv
                     wait_for(lambda: driver.js('return NavigationProductApp.getContent().ready(arguments[0])', poni['entityId']))
                     driver.settle()
                     delayed['after'] = snapshot()
+                    delayed['afterScrollMetrics'] = driver.js(SCROLL_FIXTURE_SNAPSHOT_JS)
                     delayed['holdExpired'] = hold.expired
                     save()
                     if hold.expired:
@@ -2751,17 +2963,14 @@ def desktop_hierarchy_checks(driver, report, save, capture, prefix, base, scienc
     check_desktop_relation_heading(record['relation'], expected)
     capture(prefix + '-32-s1-relation-90')
 
-    # This is a real reader scroll. Fixed title/version must keep the same pixels.
-    driver.call('POST', '/actions', {'actions': [{'type': 'wheel', 'id': 'fixed-reader-identity', 'actions': [{'type': 'scroll', 'origin': driver.selector('#np-detail-scroll'), 'x': 0, 'y': 0, 'deltaX': 0, 'deltaY': 180, 'duration': 100}]}]})
-    driver.settle()
+    # Deduplicated S1 can genuinely fit without overflow. Keep its native input
+    # invariance proof, but do not mislabel zero movement as a positive scroll.
+    native_scroll(driver, record, save, 'reader', 180, 'fixed-relation-identity')
     record['relationScrolled'] = shell()
+    record['relationScrollScenario'] = ('original_relation_positive_scroll' if record['relation']['scrollMetrics']['reader']['maxTop'] > 0 else 'original_relation_short_no_overflow')
     save()
     check_desktop_relation_heading(record['relationScrolled'], expected)
-    if (record['relationScrolled']['title'] != record['relation']['title'] or
-            record['relationScrolled']['meta'] != record['relation']['meta'] or
-            record['relationScrolled']['offsets']['tree'] != record['relation']['offsets']['tree'] or
-            record['relationScrolled']['offsets']['reader']['top'] <= 0):
-        raise RuntimeError('Actual reader scroll moved fixed identity, altered the tree or did not scroll its content')
+    check_fixed_reader_scroll(record['relation'], record['relationScrolled'], positive=record['relation']['scrollMetrics']['reader']['maxTop'] > 0)
     endpoint = reveal_control(driver, {'selector': '[data-selected-task-relation="methods:relation:90"] [data-change-target="' + poni['id'] + '"]'})
     driver.click(endpoint)
     wait_for(lambda: ready(poni['id']))
@@ -2775,6 +2984,20 @@ def desktop_hierarchy_checks(driver, report, save, capture, prefix, base, scienc
     entry_box = record['method']['analysisEntry']['rect']
     if entry_box['y'] + entry_box['height'] > 320:
         raise RuntimeError('Version analysis main action is below its fixed first-screen entry')
+    # The mandatory positive-wheel proof uses this existing exact PONI source.
+    # Measure first; expand original evidence only if the natural body fits.
+    prepared = prepare_scroll_fixture(driver, record, save, 'reader')
+    if prepared['position']['id'] != poni['id'] or prepared['position']['paper'] != poni['paperId'] or prepared['position']['version'] != poni['versionId']:
+        raise RuntimeError('Positive reader fixture is not the exact original PONI version')
+    record['positiveWheelSource'] = 'original_poni_method_with_native_evidence_if_needed'
+    record['methodBeforeWheel'] = shell()
+    native_scroll(driver, record, save, 'reader', 180, 'fixed-method-identity')
+    record['methodScrolled'] = shell()
+    record['methodWheelMetrics'] = driver.js(SCROLL_FIXTURE_SNAPSHOT_JS)
+    save()
+    check_native_wheel_progress(prepared, record['methodWheelMetrics'], 'reader')
+    check_desktop_shell(record['methodScrolled'])
+    check_fixed_reader_scroll(record['methodBeforeWheel'], record['methodScrolled'], positive=True)
     driver.click(driver.selector('#np-open-version-analysis'))
     entry = science['analyses'][poni['paperId']][poni['versionId']]
     answer = first_analysis_answer(science, entry)
@@ -2788,6 +3011,16 @@ def desktop_hierarchy_checks(driver, report, save, capture, prefix, base, scienc
     capture(prefix + '-33-s2-first-answer')
     record['status'] = 'captured_for_human_review'
     save()
+
+
+def literature_scroll_position(science, pipeline):
+    """Retain the exact original same-version child while the full forest scrolls."""
+    rows = [science['positions'][pid] for pid in pipeline['childIds']]
+    rows = [p for p in rows if p['kind'] == 'technical_improvement' and p['parentId'] == pipeline['id'] and
+            all(p[key] == pipeline[key] for key in ('scopeId', 'tree', 'paperId', 'versionId'))]
+    if len(rows) != 1:
+        raise RuntimeError('Original PONI same-version retention child is missing or ambiguous')
+    return rows[0]
 
 
 def exploration_state_checks(driver, report, save, capture, prefix, base, science):
@@ -2837,9 +3070,23 @@ def exploration_state_checks(driver, report, save, capture, prefix, base, scienc
         return transition_record(driver, record, save, 'select-state-fixture', lambda: driver.click(element), lambda: ready_node(pid))['after']
 
     def actual_end_scroll():
-        # End is handled by the product's one actual tree keyboard scope.
-        transition_record(driver, record, save, 'keyboard-end-in-active-tree', lambda: driver.call('POST', '/actions', {'actions': [{'type': 'key', 'id': 'active-tree-keyboard', 'actions': [{'type': 'keyDown', 'value': '\ue010'}, {'type': 'keyUp', 'value': '\ue010'}]}]}),
-            lambda: driver.js("var a=NavigationProductApp,m=NavigationProductModel,s=a.getState(),t=document.getElementById('np-tree-scroll'),stored=history.state&&history.state[m.KEY],k=m.contextKey(s.route);return t.scrollTop>0&&stored&&stored.contexts[k].treeScrollByTree[s.route.tree]===t.scrollTop&&document.activeElement.closest('#np-tree [data-parallel-tree]');"))
+        before = prepare_scroll_fixture(driver, record, save, 'tree')
+        if before['focusPosition'] not in [p['id'] for p in before['treeState']['positions']]:
+            raise RuntimeError('Native End must begin inside the original active tree')
+        item = {'before': before}
+        record.setdefault('nativeEndProofs', []).append(item)
+        save()
+        try:
+            # End is handled by the product's one actual tree keyboard scope.
+            transition_record(driver, record, save, 'keyboard-end-in-active-tree', lambda: driver.call('POST', '/actions', {'actions': [{'type': 'key', 'id': 'active-tree-keyboard', 'actions': [{'type': 'keyDown', 'value': '\ue010'}, {'type': 'keyUp', 'value': '\ue010'}]}]}),
+                lambda: driver.js("var a=NavigationProductApp,m=NavigationProductModel,s=a.getState(),t=document.getElementById('np-tree-scroll'),stored=history.state&&history.state[m.KEY],k=m.contextKey(s.route);return t.scrollTop>0&&stored&&stored.contexts[k].treeScrollByTree[s.route.tree]===t.scrollTop&&document.activeElement.closest('#np-tree [data-parallel-tree]');"))
+        finally:
+            item['after'] = driver.js(SCROLL_FIXTURE_SNAPSHOT_JS)
+            save()
+        after = item['after']
+        check_native_wheel_progress(before, after, 'tree')
+        if after['focusPosition'] != before['treeState']['positions'][-1]['id']:
+            raise RuntimeError('Native End did not focus the last original active-tree position')
 
     def state_scene(name):
         state = snapshot()
@@ -2856,7 +3103,9 @@ def exploration_state_checks(driver, report, save, capture, prefix, base, scienc
     wait_for(lambda: driver.js('return !!window.NavigationProductApp'))
     transition_record(driver, record, save, 'open-objectnav-for-view-retention', lambda: driver.click(driver.selector('[data-task-open="task:category-objectnav"]')),
         lambda: driver.js("return document.querySelector('#np-task-route-canvas [data-task-route-state=ready]')"))
-    select(expected['poni']['id'])
+    retention = literature_scroll_position(science, expected['poni'])
+    record['literatureScrollSource'] = {'scenario': 'original_poni_technical_child_full_forest', 'position': retention}
+    select(retention['id'])
     actual_end_scroll()
     literature = state_scene('-29-literature-before-switch')
     transition_record(driver, record, save, 'switch-literature-to-challenge', lambda: driver.click(driver.selector('[data-tree-tab="c"]')),
@@ -2890,8 +3139,11 @@ def exploration_state_checks(driver, report, save, capture, prefix, base, scienc
             raise RuntimeError('Desktop resize changed source identity, selection or expansion')
 
     # Imported A belongs to PONI's exact source version and is partial (22/59).
-    transition_record(driver, record, save, 'return-literature-for-analysis', lambda: driver.click(driver.selector('[data-tree-tab="l"]')), lambda: ready_node(expected['poni']['id']))
-    imported = snapshot()['analysisEntry']
+    transition_record(driver, record, save, 'return-literature-for-analysis', lambda: driver.click(driver.selector('[data-tree-tab="l"]')), lambda: ready_node(literature['route']['node']))
+    select(expected['poni']['id'])  # The real source ancestor, not a remapped child route.
+    pipeline = snapshot()
+    record['pipelineAnalysisSource'] = pipeline
+    imported = pipeline['analysisEntry']
     if imported != {'state': 'imported', 'paper': 'poni', 'version': expected['poni']['versionId']}:
         raise RuntimeError('PONI imported-analysis entry belongs to another source version')
     entry = science['analyses']['poni'][expected['poni']['versionId']]
@@ -2934,6 +3186,7 @@ def exploration_state_checks(driver, report, save, capture, prefix, base, scienc
     capture(prefix + '-30-analysis-root-coverage')
     transition_record(driver, record, save, 'return-from-analysis-root-coverage', lambda: driver.click(driver.selector('.np-return-previous')), lambda: ready_node(expected['poni']['id']))
     vlfm = next(p for p in science['positions'].values() if p['scopeId'] == 'task:category-objectnav' and p['tree'] == 'l' and p['paperId'] == 'vlfm' and p['kind'] == 'pipeline_recipe')
+    select(expected['scopes'][expected['poni']['scopeId']]['roots'][0])
     select(vlfm['id'])
     missing_spec = {'selector': '[data-analysis-state="not-imported"] > p', 'region': 'analysis-entry', 'text': '本版本未导入逐节点解析；未填状态保留。'}
     missing = snapshot()
@@ -2962,10 +3215,10 @@ def exploration_state_checks(driver, report, save, capture, prefix, base, scienc
         {'selector': '#np-detail-content .np-detail-block > p', 'text': '这是通用模板问题，当前论文版本未填答；不表示原论文没有讨论，也不借用其他论文的答案。'}])
 
     # Legacy routes are real cold URL loads, not injected application state.
-    routes = [literature['route'], challenge['route'], analysis['route'], root_coverage['route']]
+    routes = [literature['route'], pipeline['route'], challenge['route'], analysis['route'], root_coverage['route']]
     global_route = driver.js('var a=NavigationProductApp;return NavigationProductModel.routeForPosition(a.getBundle(),a.getState().route,a.getBundle().researchMap.roots[0]);')
     routes.append(global_route)
-    claim_route = dict(literature['route'], claim=task_route_claims(science, expected['poni'])[0]['id'])
+    claim_route = dict(pipeline['route'], claim=task_route_claims(science, expected['poni'])[0]['id'])
     routes.append(claim_route)
     for route in routes:
         encoded = driver.js('return NavigationProductModel.encodeRoute(arguments[0])', route)

@@ -2785,7 +2785,7 @@ d.querySelector('.np-return-previous').click();await ready(()=>a.getState().rout
 
     def test_new_state_capture_mapping_keeps_original_90_scenes_and_historical_diagnostics(self):
         import inspect
-        self.assertEqual(len(MODULE.DISPLAY_CONTRACT_MIGRATIONS), 11)
+        self.assertEqual(len(MODULE.DISPLAY_CONTRACT_MIGRATIONS), 12)
         self.assertEqual(len(MODULE.SCENE_NAMES), 49)
         for name in ('-31-s0-reading-hierarchy', '-32-s1-relation-90', '-33-s2-first-answer', '-30-analysis-root-coverage'):
             self.assertIn(name, MODULE.SCENE_NAMES)
@@ -3484,6 +3484,192 @@ process.stdout.write(JSON.stringify(records));}finally{dom.window.close();}
         for forbidden in ('np-peer-strip', 'innerWidth', 'innerHeight', 'elementFromPoint', 'IntersectionObserver'):
             self.assertNotIn(forbidden, MODULE.SCROLL_REGION_VISIBILITY_JS)
         self.assertIn("['np-tree-scroll', 'np-detail-scroll']", __import__('inspect').getsource(MODULE.check_desktop_shell))
+
+
+class SourceBoundScrollFixtureChecks(unittest.TestCase):
+    def state(self, top=0, maximum=300):
+        import copy
+        metrics = {'id': 'np-detail-scroll', 'top': top, 'left': 0, 'scrollHeight': 600 + maximum, 'clientHeight': 600, 'maxTop': maximum}
+        return {'route': {'scope': 'task:category-objectnav', 'tree': 'l', 'node': 'source-poni', 'paper': 'poni', 'version': 'original-version'},
+                'position': {'id': 'source-poni', 'paper': 'poni', 'version': 'original-version'}, 'relation': None,
+                'window': {'x': 0, 'y': 0}, 'historyIdentity': {'url':'exact-route','length':3,'entryKey':'entry','revision':2,'originTrail':[]},
+                'treeState': {'positions':[{'id':'source-poni','selected':'true'}],'expanded':{'l':['root']}}, 'focusPosition':'source-poni', 'reader': metrics,
+                'tree': dict(copy.deepcopy(metrics), id='np-tree-scroll', top=0), 'branches': []}
+
+    def test_positive_wheel_requires_actual_overflow_headroom_delta_and_exact_source(self):
+        import copy
+        before, after = self.state(), self.state(top=180)
+        MODULE.check_native_wheel_progress(before, after, 'reader')
+        for mutate in (lambda b, a: b['reader'].update(scrollHeight=600, maxTop=0),
+                       lambda b, a: b['reader'].update(top=300),
+                       lambda b, a: a['reader'].update(top=0),
+                       lambda b, a: a['route'].update(version='wrong-version'),
+                       lambda b, a: a['position'].update(id='wrong-source'),
+                       lambda b, a: a.update(relation='other-relation'),
+                       lambda b, a: a['tree'].update(top=20),
+                       lambda b, a: a['historyIdentity'].update(revision=3),
+                       lambda b, a: a['historyIdentity']['originTrail'].append({'route':'wrong'}),
+                       lambda b, a: a['treeState']['expanded']['l'].append('wrong'),
+                       lambda b, a: a['window'].update(y=10),
+                       lambda b, a: b['reader'].update(maxTop=float('nan')),
+                       lambda b, a: b['reader'].update(clientHeight=0),
+                       lambda b, a: b['reader'].update(scrollHeight=600)):
+            b, a = copy.deepcopy(before), copy.deepcopy(after); mutate(b, a)
+            with self.subTest(before=b, after=a), self.assertRaises(RuntimeError):
+                MODULE.check_native_wheel_progress(b, a, 'reader')
+
+    def test_short_relation_input_is_explicitly_not_a_positive_scroll(self):
+        import copy
+        def shell(maximum, top):
+            d = self.state(top=top, maximum=maximum)
+            return {**{k:d[k] for k in ('route','position','relation','window')},
+                    'fixedIdentity': d['position'], 'title': {'text':'full source title','rect':{'x':20}},
+                    'meta': {'text':'full source version','rect':{'x':20}},
+                    'offsets': {'tree':{'top':0,'left':0},'reader':{'top':top,'left':0}},
+                    'scrollMetrics': {'reader':d['reader']}}
+        short = shell(0, 0)
+        MODULE.check_fixed_reader_scroll(short, copy.deepcopy(short), positive=False)
+        with self.assertRaises(RuntimeError): MODULE.check_fixed_reader_scroll(short, short, positive=True)
+        before, after = shell(300, 0), shell(300, 180)
+        MODULE.check_fixed_reader_scroll(before, after, positive=True)
+        with self.assertRaises(RuntimeError): MODULE.check_fixed_reader_scroll(before, before, positive=False)
+        for key, value in (('title', {'text':'shortened title'}), ('meta', {'text':'wrong version'}),
+                           ('fixedIdentity', {'position':'wrong'}), ('offsets', {'tree':{'top':1},'reader':{'top':180}})):
+            bad = copy.deepcopy(after); bad[key] = value
+            with self.subTest(key=key), self.assertRaises(RuntimeError): MODULE.check_fixed_reader_scroll(before, bad, positive=True)
+
+    def test_native_original_disclosure_preparation_records_metrics_and_rejects_no_overflow(self):
+        import copy
+        owner = self
+        class Driver:
+            def __init__(self, grows=True, wrong=False): self.open=False; self.calls=[]; self.grows=grows; self.wrong=wrong
+            def js(self, script, *args):
+                if script == MODULE.SCROLL_FIXTURE_SNAPSHOT_JS:
+                    state = owner.state(maximum=300 if self.open and self.grows else 0)
+                    if self.open and self.wrong: state['route']['version']='wrong'
+                    return state
+                if 'Ambiguous original content disclosure' in script:
+                    return {'selector':'#np-evidence-panel > summary','text':'原文证据'} if not self.open else None
+                return {'element':'original-summary'}
+            def click(self, element): self.calls.append(element); self.open=True
+            def settle(self): pass
+        for grows, wrong, success in ((True,False,True),(False,False,False),(True,True,False)):
+            record, driver = {}, Driver(grows,wrong)
+            if success:
+                actual = MODULE.prepare_scroll_fixture(driver, record, lambda:None, 'reader')
+                self.assertEqual(actual['reader']['maxTop'],300)
+                self.assertEqual(record['scrollPreparations'][0]['steps'][0]['nativeDisclosure']['text'],'原文证据')
+            else:
+                with self.assertRaises(RuntimeError): MODULE.prepare_scroll_fixture(driver, record, lambda:None, 'reader')
+            self.assertEqual(len(driver.calls),1)
+            self.assertEqual(record['scrollPreparations'][0]['initial']['reader']['maxTop'],0)
+
+    def test_native_selected_focus_restores_before_wheel_without_rebuilding_or_reselecting(self):
+        import copy, inspect
+        owner = self
+        class Driver:
+            def __init__(self, stuck=False, wrong=False, rebuilt=False): self.n=0; self.calls=[]; self.stuck=stuck; self.wrong=wrong; self.rebuilt=rebuilt
+            def js(self, script, *args):
+                if script == MODULE.SCROLL_FIXTURE_SNAPSHOT_JS:
+                    state=owner.state()
+                    if self.n and self.wrong: state['route']['node']='other'
+                    return state
+                if script == MODULE.READER_DOM_ELEMENTS_JS: return ['original']
+                if script == MODULE.READER_DOM_IDENTITY_JS:
+                    return [dict(name=name,same=not self.rebuilt) for name in ('tree','selected','row','reader','method')]
+                if script == MODULE.SELECTED_TREE_FOCUS_JS:
+                    return {'target':'np-node-source-poni','active':'np-node-source-poni' if self.n and not self.stuck else 'source-summary','valid':True,'bound':2}
+                raise AssertionError(script)
+            def call(self,*args): self.calls.append(args);self.n+=1
+            def settle(self): pass
+        driver,record=Driver(),{}
+        MODULE.restore_selected_tree_focus(driver,record,lambda:None)
+        self.assertEqual(len(driver.calls),1)
+        actions=driver.calls[0][2]['actions'][0]['actions']
+        self.assertEqual([a['value'] for a in actions],['\ue008','\ue004','\ue004','\ue008'])
+        self.assertEqual(record['nativeSelectedFocus']['focusPath'][-1]['active'],'np-node-source-poni')
+        for args in ((True,False,False),(False,True,False),(False,False,True)):
+            with self.subTest(args=args),self.assertRaises(RuntimeError):MODULE.restore_selected_tree_focus(Driver(*args),{},lambda:None)
+        code=inspect.getsource(MODULE.reader_toggle_checks)
+        self.assertLess(code.index('restore_selected_tree_focus('),code.index("'deltaY': 160"))
+        helper=inspect.getsource(MODULE.restore_selected_tree_focus)
+        for forbidden in ('.click(','.focus(','.navigate(','.scrollTop =','dispatchEvent'):
+            self.assertNotIn(forbidden,helper)
+
+    def test_native_action_failure_retains_after_metrics_and_original_error(self):
+        owner=self
+        class Driver:
+            def __init__(self, diagnostic_fails=False):self.n=0;self.diagnostic_fails=diagnostic_fails
+            def js(self,*args):
+                self.n+=1
+                if self.n>1 and self.diagnostic_fails:raise RuntimeError('diagnostic failed')
+                return owner.state(top=0 if self.n==1 else 20)
+            def settle(self):raise AssertionError('failed action must not settle')
+        def reject():raise RuntimeError('native input rejected')
+        for fail in (False,True):
+            record={}
+            with self.subTest(diagnostic_fails=fail),self.assertRaisesRegex(RuntimeError,'native input rejected'):
+                MODULE.measured_fixture_action(Driver(fail),record,lambda:None,{'kind':'wheel'},reject)
+            item=record['nativeScrollActions'][0]
+            self.assertEqual(item['actionError'],'native input rejected')
+            if fail:self.assertEqual(item['diagnosticError'],'diagnostic failed')
+            else:self.assertEqual(item['after']['reader']['top'],20)
+
+    def test_original_retention_child_rejects_wrong_parent_kind_version_and_ambiguity(self):
+        import copy, gzip
+        science=json.loads(gzip.decompress((Path(__file__).parents[1]/'data/navigation-product/model.json.gz').read_bytes()))
+        pipeline=MODULE.task_route_expected(science)['poni']
+        child=MODULE.literature_scroll_position(science,pipeline)
+        self.assertEqual(child['id'],'pos:l:fda854f4cc082325e119d5')
+        self.assertEqual(child['parentId'],pipeline['id'])
+        for field,value in (('parentId','wrong'),('kind','pipeline_recipe'),('versionId','wrong'),('paperId','wrong'),('tree','c'),('scopeId','wrong')):
+            bad=copy.deepcopy(science);bad['positions'][child['id']][field]=value
+            with self.subTest(field=field),self.assertRaises(RuntimeError): MODULE.literature_scroll_position(bad,pipeline)
+        bad=copy.deepcopy(pipeline);bad['childIds'].append(child['id'])
+        with self.assertRaises(RuntimeError): MODULE.literature_scroll_position(science,bad)
+
+    def test_source_native_child_ancestor_analysis_and_legacy_claim_routes(self):
+        import gzip
+        science=json.loads(gzip.decompress((Path(__file__).parents[1]/'data/navigation-product/model.json.gz').read_bytes()))
+        expected=MODULE.task_route_expected(science)
+        child=MODULE.literature_scroll_position(science,expected['poni'])
+        body=r"""
+await scope(e.poni.scopeId);await select(input.child.id);const saved=JSON.parse(JSON.stringify(a.getState().route));
+assert.equal(d.getElementById('navigation-product').dataset.methodReading,'false');assert.equal(d.querySelector('#np-reader-analysis-entry [data-analysis-state]'),null);
+const measurement=new w.Function(input.measurement);let measured=measurement();assert.equal(measured.position.id,input.child.id);assert.equal(measured.reader.clientHeight,0);assert.equal(measured.reader.maxTop,0);assert.ok(measured.branches.every(row=>row.children.length&&row.scope===saved.scope&&row.tree==='l'));
+d.querySelector('[data-tree-tab="c"]').click();await ready(()=>a.getState().route.tree==='c');await select('pos:c:6a8a9d2f7b1f3ab3a8ada5');
+d.querySelector('[data-tree-tab="l"]').click();await ready(()=>a.getState().route.node===input.child.id);assert.deepEqual(JSON.parse(JSON.stringify(a.getState().route)),saved);
+await select(e.poni.id);const pipeline=JSON.parse(JSON.stringify(a.getState().route));assert.equal(pipeline.version,saved.version);assert.equal(d.querySelector('#np-reader-analysis-entry [data-analysis-state]').dataset.analysisState,'imported');
+const claim=input.claim.id;assert.equal(m.validateRoute(a.getBundle(),{...pipeline,claim}).claim,claim);assert.throws(()=>m.validateRoute(a.getBundle(),{...saved,claim}),error=>error.code==='claim_mismatch');
+d.getElementById('np-evidence-panel').querySelector(':scope > summary').click();await wait(35);assert.equal(d.getElementById('np-evidence-panel').open,true);
+d.querySelector('#np-detail-content .np-evidence > summary').click();await wait(35);assert.ok(d.querySelector('[data-claim-id="'+claim+'"]'));assert.equal(a.getState().route.node,pipeline.node);assert.equal(a.getState().route.version,pipeline.version);
+d.getElementById('np-open-version-analysis').click();await ready(()=>a.getState().route.tree==='a'&&a.getContent().ready(a.getBundle().positions[a.getState().route.node].entityId));assert.equal(s.positions[a.getState().route.node].kind,'analysis_answer');assert.equal(a.getState().route.version,pipeline.version);
+d.querySelector('.np-return-previous').click();await ready(()=>a.getState().route.node===pipeline.node);await select(e.scopes[e.poni.scopeId].roots[0]);await select('pos:l:ff0298ffa17b4cfcf009bd');assert.equal(a.getState().route.version,'source:method-lineage:vlfm');states.push(snapshot());
+"""
+        states=run_product_capture_script(self,body,{'science':science,'expected':expected,'child':child,'claim':MODULE.task_route_claims(science,expected['poni'])[0],'measurement':MODULE.SCROLL_FIXTURE_SNAPSHOT_JS})
+        self.assertEqual(states[0]['route']['paper'],'vlfm')
+
+    def test_all_shortened_fixture_sites_keep_native_positive_gates_and_98_scenes(self):
+        import inspect
+        desktop=inspect.getsource(MODULE.desktop_hierarchy_checks)
+        self.assertIn("record['relationScrollScenario']",desktop)
+        self.assertIn("check_native_wheel_progress(prepared, record['methodWheelMetrics'], 'reader')",desktop)
+        self.assertIn("check_fixed_reader_scroll(record['methodBeforeWheel'], record['methodScrolled'], positive=True)",desktop)
+        self.assertLess(desktop.index("entry_box['y']"),desktop.index('prepared = prepare_scroll_fixture'))
+        exploration=inspect.getsource(MODULE.exploration_state_checks)
+        self.assertIn("routes = [literature['route'], pipeline['route']",exploration)
+        self.assertIn("claim_route = dict(pipeline['route']",exploration)
+        self.assertIn("lambda: ready_node(literature['route']['node'])",exploration)
+        self.assertIn("select(expected['scopes'][expected['poni']['scopeId']]['roots'][0])",exploration)
+        self.assertIn('nonzero=True',exploration)
+        delayed=inspect.getsource(MODULE.task_route_checks)
+        self.assertIn("check_scroll_metrics(delayed['pendingScrollMetrics']['tree'], headroom=True)",delayed)
+        self.assertIn("check_native_wheel_progress(delayed['pendingScrollMetrics'], delayed['newerScrollMetrics'], 'tree')",delayed)
+        for fn in (MODULE.prepare_scroll_fixture,MODULE.desktop_hierarchy_checks,MODULE.exploration_state_checks):
+            code=inspect.getsource(fn)
+            for forbidden in ('style.', 'scrollTop=', 'scrollTop =', '.navigate(', 'dispatchEvent(', 'replaceState(', 'pushState('):
+                self.assertNotIn(forbidden,code)
+        self.assertEqual(len(MODULE.SCENE_NAMES)*len(MODULE.VIEWPORTS),98)
 
 
 if __name__ == '__main__':
