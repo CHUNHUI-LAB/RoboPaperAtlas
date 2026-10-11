@@ -191,44 +191,71 @@ body{font-size:16px;line-height:1.65;background:#f7f9fa}header.np-header{max-wid
 /* Fullscreen retains the entire reading task, including the sibling reading desk. */
 .np-workspace:fullscreen{background:#f7f9fa;padding:20px;width:100vw;height:100dvh;display:flex;flex-direction:column;overflow:auto}.np-workspace:fullscreen .np-workspace-bar{flex:0 0 auto}.np-workspace:fullscreen .np-panels{flex:1 1 auto;min-height:0;align-items:stretch}.np-workspace:fullscreen .np-tree-pane{display:flex;flex-direction:column;min-height:0}.np-workspace:fullscreen .np-pane-top,.np-workspace:fullscreen .np-canvas-footer{flex:0 0 auto}.np-workspace:fullscreen .np-tree-scroll{flex:1 1 auto;height:auto!important;min-height:0!important;max-height:none!important;overflow:auto!important}.np-workspace:fullscreen .np-reading-pane{height:auto;min-height:0;max-height:none}.np-workspace:fullscreen .np-share{flex:0 0 auto}
 
-/* Desktop reading desk: default viewport workspace, measured overview and a compact
-   true-hierarchy rail. All scientific labels and source identities remain in DOM. */
+/* Desktop reading shell: a fixed object identity and two permanent scroll regions.
+   Science routes and original hierarchy are unchanged by these presentation sizes. */
 @media(min-width:1200px){
- header.np-header{min-height:52px;height:52px;padding:10px 22px}
- main#navigation-product{padding:10px 18px 28px}
- #navigation-product .np-global-start{top:-39px}
- #navigation-product[data-load-state=ready] .np-workspace{height:calc(100dvh - 76px);min-height:650px;display:flex;flex-direction:column;gap:0}
- #navigation-product .np-workspace-bar{flex:0 0 auto;padding:0 0 10px;gap:4px 16px}
- #navigation-product .np-global-context{margin:0;min-height:27px;flex-basis:75%}
- #navigation-product .np-origin-trail{margin:0 0 0 auto;min-height:27px}
- #navigation-product .np-panels{flex:1 1 auto;min-height:0;align-items:stretch;grid-template-columns:minmax(330px,.7fr) minmax(560px,1fr);gap:16px}
- #navigation-product[data-reading-layout=overview] .np-panels{grid-template-columns:minmax(0,1fr)}
- #navigation-product[data-reading-layout=reading] .np-panels{grid-template-columns:minmax(0,1fr) clamp(520px,38vw,720px)}
- #navigation-product[data-reading-layout=reading][data-reader-collapsed=true] .np-panels{grid-template-columns:minmax(0,1fr)}
- #navigation-product[data-reading-layout=reading] .np-reading-pane>*{max-width:42rem;margin-left:auto;margin-right:auto}
- #np-reader-toggle{font-size:14px;min-height:32px;padding:4px 10px;white-space:nowrap}
- #navigation-product .np-tree-pane{display:flex;flex-direction:column;min-height:0;border-radius:11px}
- #navigation-product .np-pane-top{flex:0 0 auto;min-height:43px;padding:7px 13px;gap:12px}
- #navigation-product .np-pane-top h2{font-size:13px;letter-spacing:0;white-space:normal;line-height:1.5;color:#29434c}
- #navigation-product .np-tree-scroll{flex:1 1 auto;height:auto;min-height:0;max-height:none;padding:12px;overflow:auto}
- #navigation-product .np-canvas-footer{height:29px;flex:0 0 auto;font-size:11px;color:#576f78}
- #navigation-product .np-canvas-footer>span:first-child{color:#576f78}
- #navigation-product .np-reading-pane{height:auto;min-height:0;max-height:none;margin:0;padding:0 30px 28px;border-radius:11px;overflow:auto}
- #navigation-product .np-reader-heading{padding:12px 0 10px;margin-bottom:17px;font-size:11px;color:#536d78;letter-spacing:.06em}
- #navigation-product .np-reader-heading span:last-child{color:#536d78}
- #navigation-product[data-reading-layout=reading] .np-tree-pane{align-self:start;max-height:100%}
- #navigation-product[data-reading-layout=reading] .np-tree-scroll{flex:0 1 auto;min-height:0;max-height:calc(100dvh - 290px);background-image:none;padding:12px 10px}
- #navigation-product[data-reading-layout=reading] .np-pane-top{flex-wrap:wrap;gap:7px}
- #navigation-product[data-reading-layout=reading] .np-pane-top h2{width:100%;font-size:14px;font-weight:700}
- #navigation-product[data-reading-layout=reading] .np-view-tools{margin-left:0;flex:1}
- #navigation-product[data-reading-layout=reading] .np-graph-zoom{flex-wrap:wrap;gap:1px}
- #navigation-product[data-reading-layout=reading] .np-graph-zoom button{padding:2px 6px;font-size:11px}
- #navigation-product[data-reading-layout=reading] .np-canvas-footer>span:last-child{display:none}
- #navigation-product .np-identity-controls[open]{position:absolute;right:18px;top:10px;width:600px;box-shadow:0 10px 45px #20343f20}
+ html:has(#navigation-product[data-load-state=ready]),body:has(#navigation-product[data-load-state=ready]){height:100%;overflow:hidden}
+ header.np-header{min-height:48px;height:48px;padding:8px 16px}
+ main#navigation-product{padding:0 16px 16px;max-width:none}
+ #navigation-product .np-global-start{top:-36px}
+ #navigation-product[data-load-state=ready] .np-workspace{position:relative;height:calc(100dvh - 64px);min-height:0;display:flex;flex-direction:column;gap:0;margin:0}
+ #navigation-product .np-workspace-bar{flex:0 0 84px;height:84px;padding:0 0 12px;gap:0 14px;display:grid;grid-template-columns:auto auto minmax(0,1fr) auto auto;grid-template-rows:36px 36px;align-items:center;border:0;position:relative;z-index:12}
+ #navigation-product .np-tabs{grid-column:1;grid-row:2;gap:4px}
+ #navigation-product .np-tabs button{font-size:15px;min-height:34px;padding:4px 10px;white-space:nowrap}
+ #navigation-product .np-global-context{grid-column:1/4;grid-row:1;margin:0;min-height:0;flex-basis:auto;white-space:nowrap}
+ #navigation-product .np-origin-trail{grid-column:4;grid-row:1;margin:0;min-height:0;white-space:nowrap}
+ #navigation-product .np-origin-trail button,#navigation-product .np-origin-trail summary{font-size:15px;min-height:30px;margin:0;padding:3px 7px}
+ #np-reader-toggle{grid-column:5;grid-row:1;font-size:15px;min-height:30px;padding:3px 8px;white-space:nowrap}
+ #np-graph-fullscreen{grid-column:5;grid-row:2;font-size:15px;min-height:34px}
+ #np-overview-toggle{grid-column:3;grid-row:1;justify-self:end;font-size:15px;min-height:30px}
+ #navigation-product .np-identity-controls{grid-column:4;grid-row:2;font-size:15px;position:relative}
+ #navigation-product .np-identity-controls>summary{font-size:15px;min-height:34px;padding:4px 8px}
+ #navigation-product .np-identity-controls[open]{position:absolute;right:0;top:36px;width:600px;z-index:30;box-shadow:0 10px 45px #20343f20;background:#fff;padding:12px;border:1px solid #c6d4d8;border-radius:8px}
  #navigation-product .np-identity-controls .np-share{padding:9px 0 0;margin:0}
  #navigation-product .np-identity-controls .np-share input{max-width:none;flex:1}
- #navigation-product .np-selection-intro{margin-top:24px;padding-top:16px;border-top:1px solid #dfe8e7}
+ #navigation-product .np-panels{flex:1 1 auto;min-height:0;align-items:stretch;grid-template-columns:minmax(0,calc(60% - 76.8px)) minmax(0,1fr);gap:16px}
+ #navigation-product[data-reading-layout=overview] .np-panels{grid-template-columns:minmax(0,1fr)}
+ #navigation-product[data-reading-layout=overview] .np-global-context{grid-column:1/3}
+ #navigation-product[data-active-tree=a] .np-panels{grid-template-columns:clamp(400px,calc(10vw + 256px),448px) minmax(0,1fr);gap:24px}
+ #navigation-product[data-reader-collapsed=true] .np-panels{grid-template-columns:minmax(0,1fr)}
+ #navigation-product .np-tree-pane{display:flex;flex-direction:column;min-height:0;height:100%;border-radius:10px;align-self:stretch;max-height:none}
+ #navigation-product .np-pane-top{flex:0 0 43px;height:43px;min-height:0;padding:5px 12px;gap:8px;flex-wrap:nowrap;overflow:visible}
+ #navigation-product .np-tree-fixed-identity{min-width:0;flex:1}
+ #navigation-product .np-pane-top h2{font-size:15px;letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.5;color:#29434c;margin:0;width:auto}
+ #navigation-product .np-view-tools{margin-left:auto;flex:0 0 auto}
+ #navigation-product .np-graph-zoom{flex-wrap:nowrap;gap:0}
+ #navigation-product .np-graph-zoom button,#navigation-product .np-graph-zoom span,#navigation-product .np-tree-options>summary{font-size:15px;min-height:30px;padding:2px 5px}
+ #navigation-product .np-tree-scroll,#navigation-product[data-reading-layout=reading] .np-tree-scroll{flex:1 1 auto;height:auto;min-height:0;max-height:none;padding:8px 12px;overflow:auto;background-image:none}
+ #navigation-product .np-canvas-footer{height:24px;flex:0 0 24px;font-size:12px;color:#576f78}
+ #navigation-product .np-canvas-footer>span:first-child{color:#576f78}
+ #navigation-product .np-reading-pane{display:flex;flex-direction:column;height:100%;min-height:0;max-height:none;margin:0;padding:0;border-radius:10px;overflow:hidden;scrollbar-gutter:auto}
+ #navigation-product .np-reader-heading{position:relative;top:auto;display:block;flex:0 0 auto;min-height:96px;padding:12px 20px;margin:0;border-bottom:1px solid #dfe8e7;font-size:15px;line-height:1.45;letter-spacing:0;color:#294550;z-index:3}
+ #np-reader-object-title h2{font-size:21px;line-height:1.35;margin:0 0 5px;color:#183d47;font-weight:700}
+ #np-reader-object-meta{font-size:15px;line-height:1.45;margin:0;color:#456170;overflow-wrap:anywhere}
+ #navigation-product .np-reader-body{flex:1 1 auto;min-height:0;height:auto;overflow:auto;padding:16px 22px 28px;overscroll-behavior:contain;scrollbar-gutter:stable;scrollbar-width:thin;scrollbar-color:#c8d5d9 transparent}
+ #navigation-product .np-detail-scroll{min-height:0;max-height:none;height:auto;overflow:visible;padding:0}
+ #navigation-product .np-reader-body>*{max-width:840px;margin-left:auto;margin-right:auto}
+ #navigation-product .np-reader-summary:empty{display:none}
+ #navigation-product .np-selection-intro{margin-top:20px;padding-top:14px;border-top:1px solid #dfe8e7}
  #navigation-product[data-reading-layout=browse] .np-selection-intro:first-child{margin:0;padding:0;border:0}
+ #navigation-product[data-active-tree=a] .np-pane-top{height:auto;min-height:72px;flex-basis:auto;display:block;padding:10px 14px}
+ #navigation-product[data-active-tree=a] .np-pane-top h2{white-space:normal}
+ #np-tree-analysis-meta{font-size:15px;line-height:1.4;margin:4px 0 0;color:#456170}
+ #navigation-product[data-active-tree=a] .np-view-tools{display:none}
+ #navigation-product[data-active-tree=a] .np-tree-options{position:absolute;right:8px;top:8px}
+ #navigation-product[data-active-tree=a] .np-tree-options:not([open])>summary{font-size:0}
+ #navigation-product[data-active-tree=a] .np-tree-options:not([open])>summary:after{content:'查找';font-size:15px}
+ #navigation-product[data-active-tree=a] .np-detail-pane{margin:0;border:0;padding:0}
+ #navigation-product[data-active-tree=a] .np-detail-pane>summary,#navigation-product[data-active-tree=a] .np-detail-title,#navigation-product[data-active-tree=a] .np-detail-identity{display:none}
+ #navigation-product[data-active-tree=a] .np-detail-body>.np-detail-block:first-child{margin-top:0}
+ #navigation-product[data-active-tree=a] .np-detail-body>.np-detail-block:first-child h3{margin-top:0}
+ #navigation-product .np-supporting:not([open]),#navigation-product[data-load-state=ready]>.np-footer,#navigation-product[data-load-state=ready]>.np-index-link{display:none}
+ #navigation-product .np-supporting[open]{position:fixed;inset:132px 32px 24px auto;width:min(1000px,calc(100vw - 64px));z-index:40;overflow:auto;padding:20px;background:#fff;box-shadow:0 18px 60px #20343f30}
+ #navigation-product .np-supporting[open]>summary{font-size:17px}
+ #navigation-product .np-reading-tools{grid-column:2;grid-row:2;position:relative;font-size:15px}
+ #navigation-product .np-reading-tools>summary{cursor:pointer;white-space:nowrap}
+ #navigation-product .np-reading-tools[open]>div{position:absolute;top:30px;left:0;min-width:260px;background:white;border:1px solid #c6d4d8;border-radius:8px;padding:12px;z-index:30;box-shadow:0 12px 32px #20343f20}
+ #navigation-product .np-reading-tools button{display:block;width:100%;font-size:15px;margin:4px 0}
  #navigation-product .np-node-meaning>h3,#navigation-product .np-method-mechanism>h3{font-size:26px;line-height:1.4;margin:0 0 9px;color:#183d47;font-weight:700;letter-spacing:-.02em}
  #navigation-product .np-method-mechanism>.np-note,#navigation-product .np-node-source-version{font-size:13px;line-height:1.6;color:#4e6973;margin:0 0 8px}
  #navigation-product .np-method-context{font-size:14px;line-height:1.6;margin:0 0 7px;color:#295f54}
@@ -261,7 +288,7 @@ body{font-size:16px;line-height:1.65;background:#f7f9fa}header.np-header{max-wid
 #navigation-product .np-tree[data-desktop-layout] .np-node-row[data-canvas-role=literature] .np-node-label,#navigation-product .np-tree[data-desktop-layout] .np-node-row[data-canvas-role=challenge] .np-node-label{font-size:calc(var(--np-label-size,15px) * 1.2)!important;font-weight:700!important;color:#20574d!important}
 #navigation-product .np-tree[data-desktop-layout] .np-node-row[data-canvas-role=challenge] .np-node-label{color:#594775!important}
 #navigation-product .np-tree[data-desktop-layout] .np-node-row[data-canvas-role=question] .np-node-label{color:#514561!important}
-#navigation-product .np-tree[data-desktop-layout] .np-node-row .np-child-count{color:#4f6a72;background:#eaf1f1}
+#navigation-product .np-tree[data-desktop-layout] .np-node-row .np-child-count{font-size:15px;line-height:1.4;color:#4f6a72;background:#eaf1f1}
 /* Focus rail is a natural, variable-depth tree, using exactly the original DOM parents. */
 #navigation-product .np-tree[data-desktop-layout=focus]{width:auto!important;height:auto!important;cursor:default;margin:0}
 #navigation-product .np-tree[data-desktop-layout=focus] ul,#navigation-product .np-tree[data-desktop-layout=focus] li{width:auto!important;height:auto!important;position:relative!important;display:block!important;overflow:visible!important}
@@ -270,22 +297,24 @@ body{font-size:16px;line-height:1.65;background:#f7f9fa}header.np-header{max-wid
 #navigation-product .np-tree[data-desktop-layout=focus] .np-node-row{position:relative!important;left:auto!important;top:auto!important;width:auto!important;height:auto!important;min-height:42px!important;padding:8px 7px!important;background:#f8fbfa!important;border-color:#deebe5!important}
 #navigation-product .np-tree[data-desktop-layout=focus] ul ul>li>.np-node-row:before{display:block!important;content:''!important;position:absolute!important;left:-15px!important;top:50%!important;width:14px!important;border-top:1px solid #b9cec7!important}
 #navigation-product .np-tree[data-desktop-layout=focus] li[aria-selected=true]>.np-node-row{background:#e8f3ed!important;border-color:#2a7968!important}
-#navigation-product .np-tree[data-desktop-layout=focus] .np-edge-label{display:block!important;font-size:11px;color:#56726e;margin:4px 2px 2px 26px}
+#navigation-product .np-tree[data-desktop-layout=focus] .np-edge-label{display:block!important;font-size:15px;color:#56726e;margin:4px 2px 2px 26px}
 #navigation-product .np-workspace:fullscreen{height:100dvh!important;min-height:0!important;padding:12px!important}
 
 #navigation-product .np-tree[data-desktop-layout=overview] .np-node-row[data-canvas-role=task]{padding:3px 8px!important}
 
 #navigation-product .np-reading-association{font-size:14px;line-height:1.7;margin:8px 0 12px;padding:8px 12px;color:#704513;background:#fff5e6}
 
-/* Global entry links are separate from the source model's local ancestor chain. */
-.np-global-context .np-context-group{display:inline-flex;align-items:center;gap:4px;flex:0 0 auto;min-width:0}
-#navigation-product .np-global-context[data-path-kind=local-context]{display:grid;grid-template-columns:minmax(0,1fr);gap:3px;flex-basis:100%;white-space:normal;overflow:visible}
-.np-global-context .np-context-local{overflow-x:auto;max-width:100%;padding-bottom:2px}
-.np-global-context .np-context-label{font-size:11px;line-height:1.5;font-weight:650;color:#4e6973;white-space:nowrap;margin-right:4px}
-.np-global-context .np-context-empty{font-size:12px;color:#536c76}
-
-/* The real local ancestry must remain fully readable, including long CI labels. */
-#navigation-product .np-global-context [data-path-kind=local-ancestry]{flex-wrap:wrap;overflow:visible;align-items:baseline;row-gap:4px}
+/* Navigation entry and true local ancestry share one row but retain separate semantics. */
+.np-global-context .np-context-group{display:inline-flex;align-items:center;gap:4px;min-width:0}
+#navigation-product .np-global-context[data-path-kind=local-context]{display:flex;align-items:center;gap:10px;flex-basis:auto;white-space:nowrap;overflow:visible}
+.np-global-context .np-context-entry{flex:0 1 auto;border-right:1px solid #c6d4d8;padding-right:10px}
+.np-global-context .np-context-local{flex:1 1 auto;min-width:0;flex-wrap:wrap;overflow:visible}
+.np-global-context .np-context-label,.np-global-context .np-context-empty{font-size:15px;line-height:1.5;color:#4e6973;white-space:nowrap}
+#navigation-product .np-global-context .np-crumb{font-size:15px;min-height:28px;padding:2px 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:26em;flex:0 1 auto}
+.np-global-context .np-context-local .np-crumb:last-child{font-weight:650}
+.np-ancestry-disclosure{position:relative;font-size:15px;flex:0 0 auto}
+.np-ancestry-disclosure>summary{cursor:pointer;min-height:28px;font-size:15px;line-height:1.5}
+.np-ancestry-disclosure[open]>.np-context-local{position:absolute;left:0;top:32px;width:min(820px,calc(100vw - 64px));padding:14px;background:#fff;border:1px solid #c6d4d8;border-radius:8px;box-shadow:0 12px 36px #20343f25;z-index:35;white-space:normal}
 #navigation-product .np-global-context [data-path-kind=local-ancestry] .np-crumb{max-width:100%;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;line-height:1.55;flex:0 1 auto}
 
 /* Reading overview and paired local forests. Editorial navigation, not new model parents. */
@@ -322,14 +351,14 @@ body{font-size:16px;line-height:1.65;background:#f7f9fa}header.np-header{max-wid
 #np-task-relations article{border-top:1px solid #dce8e3;padding:12px 0;font-size:15px}#np-task-relations article p{margin:5px 0;overflow-wrap:anywhere}
 
 /* Visible source-parent overview. Attribute neighborhoods are editorial placement only. */
-#navigation-product .np-reading-landing.np-graphical-home{display:flex;flex-direction:column;gap:6px;padding:8px 14px;min-height:0;overflow:auto;background:#fff}
+#navigation-product .np-reading-landing.np-graphical-home{display:flex;flex-direction:column;gap:0;padding:16px 24px;min-height:0;overflow:hidden;background:#fff}
 .np-overview-map-toolbar{display:flex;flex-wrap:wrap;align-items:baseline;gap:5px 22px;flex:0 0 auto;min-height:32px;padding:0 2px 5px;border-bottom:1px solid #e5ecee}
 .np-overview-map-toolbar>details{margin:0!important;font-size:15px;flex:0 0 auto;min-width:0}.np-overview-map-toolbar>details>summary{cursor:pointer;line-height:1.6;font-size:15px;font-weight:550;color:#3d626a}.np-overview-map-toolbar>details[open]{flex:1 0 100%;order:5;max-width:100%;padding:10px 12px;background:#f7faf9;border:1px solid #dbe7e3;border-radius:7px}.np-overview-map-toolbar>details[open]>summary{margin-bottom:10px}.np-overview-map-toolbar>.np-text-button{margin:0;font-size:15px;padding:1px 3px;min-height:28px}.np-overview-map-toolbar #np-overview-analysis{margin-left:auto}
 #np-overview-notes .np-field-reading{max-width:100%}#np-overview-notes .np-field-reading>h2{font-size:18px}#np-overview-notes .np-overview-question{margin:10px 0}#np-overview-notes .np-overview-question h3{font-size:16px}#np-overview-notes .np-overview-coverage{margin:12px 0;padding:8px 0}
-.np-overview-map{position:relative;flex:1 0 694px;min-height:694px;width:100%;isolation:isolate;overflow:visible}
+.np-overview-map{position:relative;flex:1 1 auto;min-height:704px;width:100%;isolation:isolate;overflow:visible}
 .np-overview-map .np-map-node{position:absolute!important;box-sizing:border-box;margin:0!important;z-index:2}
 .np-overview-map .np-overview-goal{background:#203e49!important;color:#fff!important;border:0!important;border-radius:8px;padding:7px 12px;text-align:center}
-.np-overview-map .np-overview-goal h2{font-size:22px;line-height:1.3;color:#fff!important;margin:0}.np-overview-map .np-overview-goal p{font-size:15px;line-height:1.45;color:#fff;margin:3px 0 0}
+.np-overview-map .np-overview-goal h2{display:inline;font-size:20px;line-height:1.3;color:#fff!important;margin:0}.np-overview-map .np-overview-goal p{display:inline;margin-left:16px!important;font-size:15px;line-height:1.45;color:#fff;margin:3px 0 0}
 .np-overview-map [data-reading-branch]{padding:6px 12px;text-align:center;background:#eef6f2;border:1px solid #92bbaa;border-radius:7px;color:#235c4d}.np-overview-map [data-reading-branch=c]{background:#f4f0f8;border-color:#b7a5ca;color:#614b7d}.np-overview-map [data-reading-branch] h3{font-size:18px;line-height:1.3;margin:0;font-weight:650}.np-overview-map [data-reading-branch] p{display:none}
 .np-overview-map .np-map-task-root{font-size:15px;line-height:1.5;text-align:center;background:#fff;color:#4f6d65;padding:2px 6px;font-weight:550}
 .np-overview-map .np-map-task{display:flex!important;flex-direction:column;align-items:flex-start;justify-content:center;gap:1px;min-height:52px!important;padding:4px 10px!important;border:0!important;border-radius:5px!important;background:#fff!important;color:#23434d;text-align:left;box-shadow:none!important}
@@ -337,7 +366,7 @@ body{font-size:16px;line-height:1.65;background:#f7f9fa}header.np-header{max-wid
 .np-overview-map .np-task-reading-contract{display:block;font-size:16px!important;line-height:1.3!important;font-weight:600;color:#274e47;white-space:normal}.np-overview-map .np-task-reading-name{display:block;font-size:15px!important;line-height:1.4!important;font-weight:500;color:#526775;white-space:nowrap;overflow-wrap:normal;word-break:normal}
 .np-map-layout-note,.np-map-editorial-note{position:absolute;z-index:2;display:block;font-size:15px;line-height:1.35;color:#6b7980;background:#fff;pointer-events:none}.np-map-editorial-note{text-align:center;color:#7b858b}.np-map-layout-note{padding-left:10px;font-style:normal}
 .np-overview-map .np-map-challenge{display:flex;gap:7px;align-items:center;justify-content:space-between;border:0;border-radius:5px;background:#fff;padding:4px 8px;min-height:32px;text-align:left;color:#65517e;font-size:15px;line-height:1.45}.np-overview-map .np-map-challenge:hover,.np-overview-map .np-map-challenge:focus-visible{background:#f0eaf7;outline:2px solid #8e72ad;outline-offset:1px}.np-map-open-mark{font-size:20px;line-height:1;color:#8b73a9}
-.np-overview-connectors{position:absolute;inset:0;z-index:1;overflow:visible;pointer-events:none}.np-overview-connectors .np-map-parent-edge{fill:none;stroke:#57767c;stroke-width:1.5;vector-effect:non-scaling-stroke}.np-overview-connectors .np-map-relation-edge{fill:none;stroke:#3c837d;stroke-width:2;stroke-dasharray:5 4;opacity:1;vector-effect:non-scaling-stroke;pointer-events:stroke;cursor:pointer}.np-overview-connectors .np-map-relation-edge:hover,.np-overview-connectors .np-map-relation-edge:focus,.np-overview-connectors .np-map-relation-active{stroke:#ab5a25;stroke-width:3.5;opacity:1;outline:none}.np-overview-map[data-relations-visible=false] .np-map-relation-edge{visibility:hidden;pointer-events:none}
+.np-overview-connectors{position:absolute;inset:0;z-index:1;overflow:visible;pointer-events:none}.np-overview-connectors .np-map-parent-edge{fill:none;stroke:#57767c;stroke-width:1.5;vector-effect:non-scaling-stroke}.np-overview-connectors .np-map-relation-edge{fill:none;stroke:#3c837d;stroke-width:2;stroke-dasharray:5 4;opacity:1;vector-effect:non-scaling-stroke;pointer-events:stroke;cursor:pointer}.np-overview-connectors .np-map-relation-edge:hover,.np-overview-connectors .np-map-relation-edge:focus,.np-overview-connectors .np-map-relation-active{stroke:#ab5a25;stroke-width:3.5;opacity:1;outline:none}.np-overview-map[data-relations-visible=false] .np-map-relation-edge:not(.np-map-relation-active){visibility:hidden;pointer-events:none}
 .np-map-legend{position:absolute;left:10px;z-index:2;display:flex;gap:10px 18px;flex-wrap:wrap;font-size:15px;line-height:1.45;color:#61777f;background:#fff}.np-map-parent-key:before,.np-map-relation-key:before{content:'';display:inline-block;vertical-align:middle;width:21px;border-top:2px solid #57767c;margin-right:6px}.np-map-relation-key:before{border-color:#3c837d;border-top-style:dashed}#np-map-relation-readout{color:#46706c}
 
 /* Original challenge applicability is visible before the explanatory body. */
@@ -407,19 +436,32 @@ body{font-size:16px;line-height:1.65;background:#f7f9fa}header.np-header{max-wid
 .np-route-retry-control[data-retry-state="ready"]>[data-retry-label="ready"],
 .np-route-retry-control[data-retry-state="applied"]>[data-retry-label="applied"],
 .np-route-retry-control[data-retry-state="exhausted"]>[data-retry-label="exhausted"]{visibility:visible}
-/* One active local forest retains the existing flexible desktop canvas width. */
-.np-task-route-canvas{padding:0 14px 8px;min-width:0}
-.np-task-route-canvas .np-task-route-overview{margin:0}
-.np-task-route-overview>summary{cursor:pointer;font-weight:650;padding:8px 0;line-height:1.55}
-.np-task-relation-select{display:block;width:100%;text-align:left;padding:10px 12px;margin:6px 0;border:1px solid var(--np-line,#dce4e8);border-radius:8px;background:#fff;color:inherit;font-size:15px;line-height:1.55;white-space:normal;overflow-wrap:anywhere;cursor:pointer}
-.np-task-relation-select[aria-pressed=true]{border-color:#287e6f;background:#eaf5f0}
-.np-task-relation-select .np-boundary{display:block;margin:4px 0 0;font-weight:400}
-.np-task-relation-detail{padding:8px 0;border:0}
+/* Relationships are temporary controls outside the tree scroll flow. */
+.np-task-route-canvas{padding:0;min-width:0;position:relative;grid-column:3;grid-row:2;justify-self:end;width:min(360px,100%)}
+.np-task-route-canvas .np-task-route-overview{margin:0;position:relative}
+.np-task-route-overview>summary{cursor:pointer;font-weight:650;padding:6px 9px;line-height:1.55;min-height:36px;font-size:15px}
+#np-task-route-relations[open]{position:fixed;top:120px;right:32px;width:360px;max-height:288px;overflow:auto;background:#fff;border:1px solid #b6ccc4;border-radius:8px;padding:0 10px 10px;z-index:30;box-shadow:0 12px 36px #20343f25}
+.np-task-route-changes{margin:0;padding:0;border-top:1px solid #dce4e8}
+.np-task-relation-select{display:block;width:100%;text-align:left;padding:7px 5px;margin:0;border:0;border-bottom:1px solid #e5eeea;border-radius:0;background:#fff;color:inherit;font-size:15px;line-height:1.45;white-space:normal;overflow-wrap:anywhere;cursor:pointer}
+.np-task-relation-select[aria-pressed=true]{background:#eaf5f0}
+.np-task-relation-select .np-boundary{display:inline;margin:0 0 0 8px;padding:1px 4px;border:0;font-weight:400;font-size:15px}
+.np-task-relation-detail{padding:0;border:0}
 .np-task-relation-detail h2{font-size:20px;line-height:1.55}
-.np-version-analysis-entry{margin-top:18px;padding-top:12px;border-top:1px solid var(--np-line,#dce4e8)}
-.np-version-analysis-entry .np-text-button{display:block;text-align:left;margin:6px 0;font-size:15px}
-.np-tree[data-active-task-tree] .np-route-stamp{margin:2px 0 8px 32px;font-size:15px;line-height:1.55}
+.np-version-analysis-entry{margin:10px 0 0;padding:9px 0 0;border-top:1px solid #dce4e8;display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px}
+.np-version-analysis-entry .np-analysis-status{flex:0 0 100%;margin:0;font-size:15px;line-height:1.4}
+.np-version-analysis-entry .np-text-button{display:inline-block;text-align:left;margin:0;font-size:15px;min-height:30px;padding:2px 0}
+.np-version-analysis-entry #np-open-version-analysis{font-weight:700}
+.np-analysis-reference{font-size:15px;position:relative}
+.np-analysis-reference>summary{cursor:pointer;font-size:15px}
+.np-analysis-reference[open]>.np-text-button{position:absolute;right:0;top:25px;min-width:300px;max-width:400px;background:#fff;border:1px solid #c6d4d8;padding:10px;z-index:10;box-shadow:0 8px 24px #20343f25}
+.np-tree[data-active-task-tree] .np-route-stamp{margin:2px 0 6px 30px;font-size:15px;line-height:1.55}
 #navigation-product .np-tree[data-active-task-tree] .np-route-stamp[data-route-version] > span:nth-child(2){color:#586674}
+#navigation-product .np-tree[data-parallel-scope] .np-node-kind{grid-column:3;grid-row:1;max-width:14em;font-size:15px!important;line-height:1.45}
+#navigation-product .np-tree[data-parallel-scope] .np-node-row{grid-template-rows:auto!important}
+#navigation-product .np-tree[data-parallel-scope][data-desktop-layout=focus] .np-node-row{grid-template-columns:18px minmax(0,1fr) auto auto!important}
+#navigation-product .np-tree[data-parallel-scope] .np-child-count{grid-column:4;grid-row:1}
+#navigation-product .np-parallel-forest>h3,#navigation-product .np-parallel-scope-label{display:none}
+.np-analysis-node-state{grid-column:2/-1;font-size:15px;line-height:1.4;color:#456170}
 /* Selected objects retain the content floor outside the former all-method roster. */
 #navigation-product #np-detail-scroll p,
 #navigation-product #np-detail-scroll li,
@@ -434,9 +476,23 @@ body{font-size:16px;line-height:1.65;background:#f7f9fa}header.np-header{max-wid
 #navigation-product #np-detail-scroll .np-method-flow dd{font-size:16px}
 #navigation-product #np-detail-scroll .np-scientific-changes h3,
 #navigation-product #np-detail-scroll .np-scientific-changes article strong{font-size:15px}
-/* Keep the existing relation return in the reader's sticky surface while scrolling. */
-#navigation-product .np-reader-heading:has(>#np-task-route-return){flex-wrap:wrap;row-gap:0}
-#navigation-product .np-reader-heading>#np-task-route-return{order:1;flex-basis:100%;letter-spacing:normal}
+/* Source-return is global; route-overview return is a separate fixed action. */
+#navigation-product .np-reader-heading>#np-task-route-return{float:right;width:auto;margin:0 0 5px 10px;padding:3px 7px;min-height:28px;font-size:15px;line-height:1.45;letter-spacing:normal}
+@media(min-width:1200px){
+ #navigation-product[data-reading-home=true] .np-workspace-bar>.np-tabs,#navigation-product[data-reading-home=true] .np-workspace-bar>.np-identity-controls,#navigation-product[data-reading-home=true] .np-workspace-bar>.np-reading-tools{visibility:hidden}
+ #navigation-product[data-reading-home=true] #np-graph-fullscreen{grid-row:1}
+ .np-overview-map-toolbar{position:absolute;left:0;right:0;top:36px;height:36px;min-height:0;z-index:20;padding:0;gap:16px;border:0;flex-wrap:nowrap;align-items:center}
+ .np-overview-map-toolbar>details[open]{position:absolute;top:36px;left:0;right:auto;width:min(1060px,calc(100vw - 64px));max-height:calc(100dvh - 148px);overflow:auto;z-index:25;box-shadow:0 12px 40px #20343f25}
+ .np-overview-map-toolbar>#np-task-relations[open]{left:auto;right:0;width:420px;max-height:324px}
+ #np-task-relations .np-relation-selectors{grid-template-columns:1fr;margin:0;gap:0}
+ #np-task-relations .np-relation-selector{border:0;border-bottom:1px solid #dce8e3;padding:6px;min-height:36px}
+ #np-task-relations>p{font-size:15px}
+ .np-overview-relation-panel{position:absolute;z-index:4;background:#fff;border:1px solid #b7a5ca;border-radius:8px;padding:10px 16px;overflow:auto;box-shadow:0 10px 30px #20343f18;font-size:15px;line-height:1.55}
+ .np-overview-relation-panel article{padding-top:12px;font-size:15px}
+ .np-overview-relation-panel p,.np-overview-relation-panel button{font-size:15px;line-height:1.55}
+ .np-overview-map[data-selected-relation]:not([data-selected-relation=""]) .np-map-challenge{visibility:hidden}
+ .np-map-coverage{position:absolute;left:0;margin:0;padding:0;border:0;font-size:15px;line-height:1.45;z-index:2}
+}
 /* Task-root reading text keeps the 15px floor, including inherited legacy notes. */
 #navigation-product .np-task-route-overview,
 #navigation-product .np-task-route-overview p,

@@ -72,12 +72,17 @@ test('actual AudioGoal challenge clicks and separated breadcrumb controls preser
  w.history.back();await settled(w);assert.equal(a.getState().route.node,p.id);assert.equal(a.getState().route.version,'arxiv:1912.11474v3');assert.equal(d.querySelector('#np-detail-scroll').scrollTop,173);assert.equal(d.activeElement.dataset.position,p.id);assertLocalAncestorContext(w,p);assert.deepEqual(x.errors,[]);
 });
 
-test('long local CI breadcrumb labels wrap without the legacy clipped one-line crumb style',async t=>{
+// Display migration: the prior permanently wrapped breadcrumb becomes one compact
+// disclosure. Opening it preserves the full original, non-clipped ancestor controls;
+// the fixed reader heading continuously names the complete current object.
+test('compact local CI path disclosure exposes every full non-clipped ancestor and restores its trigger focus',async t=>{
  const x=await page();t.after(()=>x.w.close());const w=x.w,a=w.NavigationProductApp,b=a.getBundle(),M=w.NavigationProductModel,p=b.positions['pos:c:6dcc2ce43c02d908266f20'];
- a.navigate(M.routeForPosition(b,{scope:p.scopeId},p.id),{cross:true});await settled(w);const {entry,local,ids}=assertLocalAncestorContext(w,p),groupStyle=w.getComputedStyle(local);
- assert.equal(groupStyle.flexWrap,'wrap');assert.equal(groupStyle.overflow,'visible');
- for(const control of local.querySelectorAll('button[data-context-position]')){const style=w.getComputedStyle(control);assert.equal(style.whiteSpace,'normal');assert.equal(style.overflow,'visible');assert.equal(style.textOverflow,'clip');assert.equal(style.maxWidth,'100%');assert.equal(control.textContent,control.getAttribute('aria-label'));}
- assert.deepEqual(ids,[...M.ancestors(b,p.id),p.id]);assert.ok(entry.querySelector('button'));assert.equal(w.getComputedStyle(entry.querySelector('button')).whiteSpace,'nowrap','global entry presentation is unchanged');assert.deepEqual(x.errors,[]);
+ a.navigate(M.routeForPosition(b,{scope:p.scopeId},p.id),{cross:true});await settled(w);const {entry,local,ids}=assertLocalAncestorContext(w,p),disclosure=local.closest('.np-ancestry-disclosure');
+ assert.ok(disclosure);assert.equal(disclosure.tagName,'DETAILS');assert.equal(disclosure.open,false);assert.equal(disclosure.closest('#np-tree-scroll'),null);const summary=disclosure.querySelector(':scope > summary');assert.ok(summary);summary.click();assert.equal(disclosure.open,true);
+ const groupStyle=w.getComputedStyle(local);assert.equal(groupStyle.flexWrap,'wrap');assert.equal(groupStyle.overflow,'visible');
+ for(const control of local.querySelectorAll('button[data-context-position]')){const style=w.getComputedStyle(control);assert.equal(style.whiteSpace,'normal');assert.equal(style.overflow,'visible');assert.equal(style.textOverflow,'clip');assert.equal(style.maxWidth,'100%');assert.equal(control.textContent,control.getAttribute('aria-label'));assert.equal(control.textContent,control.title);assert.ok(control.textContent.trim());}
+ const title=w.document.querySelector('#np-reader-object-title > h2'),current=local.querySelector('button[data-context-position="'+p.id+'"]');assert.ok(title);assert.equal(title.textContent,current.textContent);assert.equal(title.closest('#np-detail-scroll'),null,'the complete current object stays outside reader scrolling');
+ assert.deepEqual(ids,[...M.ancestors(b,p.id),p.id]);assert.ok(entry.querySelector('button'));assert.equal(entry.querySelector('button').textContent,'领域');assert.equal(w.getComputedStyle(entry.querySelector('button')).whiteSpace,'nowrap');current.focus();current.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));assert.equal(disclosure.open,false);assert.equal(w.document.activeElement,summary);assert.deepEqual(x.errors,[]);
 });
 
 // Readiness controls belong to the success fixture; existing timeout and delayed-body fixtures retain their original 250ms mapping.

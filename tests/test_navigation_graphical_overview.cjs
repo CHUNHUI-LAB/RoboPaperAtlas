@@ -1,4 +1,6 @@
 'use strict';
+// Display migration: seven original relations remain, with dropdown selectors outside
+// the graph and one selected evidence article in the C panel; all-lines is opt-in.
 // Keep the default invocation memory-bounded without raising Node's heap limit.
 // The parent only loads node:test and child_process. Each child owns its own
 // immutable fixture and source snapshot, and runs one complete named group.
@@ -15,7 +17,7 @@ if (!graphicalGroup) {
     "all 38 parent paths connect existing S0 positions using their exact preexisting g parents",
     "each of the 22 graphical task controls enters its own active S1 forest and switches between its original views",
     "each of the 13 CI controls opens its exact original g position and Back restores S0 focus",
-    "seven visible typed paths keep exact original endpoints/types and cannot acquire tree-parent semantics",
+    "seven selectable typed paths keep exact original endpoints/types and cannot acquire tree-parent semantics",
     "click and Enter on every typed graph edge expose its exact source while preserving route and scientific structure",
     "every source relation endpoint still enters its original S1 scope and Back retains endpoint focus",
     "auxiliary comparison, all 64 source scopes and reading notes remain available outside the default graph",
@@ -504,9 +506,13 @@ test('each of the 13 CI controls opens its exact original g position and Back re
   healthy(x);
 });
 
-test('seven visible typed paths keep exact original endpoints/types and cannot acquire tree-parent semantics', async t => {
+test('seven selectable typed paths keep exact original endpoints/types and cannot acquire tree-parent semantics', async t => {
   const x = await page(); t.after(() => x.w.close());
   const graph = map(x), paths = [...graph.querySelectorAll('path[data-map-relation]')];
+  assert.equal(graph.dataset.relationsVisible,'false','old default-all overlay becomes opt-in');
+  assert.equal(x.d.getElementById('np-overview-relation-panel').hidden,true);
+  for(const path of paths)assert.equal(x.w.getComputedStyle(path).visibility,'hidden');
+  x.d.querySelector('#np-map-relations-toggle').click();assert.equal(graph.dataset.relationsVisible,'true');
   assert.deepEqual(paths.map(n => n.dataset.mapRelation).sort(), TASK_RELATIONS.map(row => row[0]).sort());
   for (const [id, from, to, type] of TASK_RELATIONS) {
     const path = relationPath(x, id), source = originalRelation(id);
@@ -539,7 +545,8 @@ test('click and Enter on every typed graph edge expose its exact source while pr
     for (const action of ['click', 'Enter']) {
       const panel = x.d.querySelector('#np-task-relations');
       panel.open = false;
-      const path = relationPath(x, id), source = originalRelation(id);
+      if(map(x).dataset.relationsVisible!=='true')x.d.querySelector('#np-map-relations-toggle').click();
+      const path = relationPath(x, id), source = originalRelation(id);visible(x,path);
       x.w.__scrollTargets.length = 0;
       if (action === 'click') path.dispatchEvent(new x.w.MouseEvent('click', {bubbles:true}));
       else {
@@ -547,8 +554,8 @@ test('click and Enter on every typed graph edge expose its exact source while pr
         path.dispatchEvent(new x.w.KeyboardEvent('keydown', {key:'Enter', bubbles:true, cancelable:true}));
       }
       await frames(x.w);
-      assert.equal(panel.open, true, id + ': ' + action + ' opens source details');
-      const row = panel.querySelector('[data-task-relation="' + id + '"]');
+      assert.equal(panel.open, false, id + ': ' + action + ' dismisses the picker while opening its evidence');
+      const row = x.d.querySelector('#np-overview-relation-panel [data-task-relation="' + id + '"]');
       assert.ok(row);
       assert.ok(row === x.d.activeElement || row.contains(x.d.activeElement) || x.w.__scrollTargets.some(target => target === row || row.contains(target)), id + ': source action locates the exact relation, not only the shared disclosure');
       for (const loc of source.detail.locators) {
@@ -571,15 +578,16 @@ test('every source relation endpoint still enters its original S1 scope and Back
   const x = await page(); t.after(() => x.w.close());
   for (const [id, from, to] of TASK_RELATIONS) {
     for (const [index, sid] of [from, to].entries()) {
+      if(map(x).dataset.relationsVisible!=='true')x.d.querySelector('#np-map-relations-toggle').click();
       relationPath(x, id).dispatchEvent(new x.w.MouseEvent('click', {bubbles:true}));
-      const row = x.d.querySelector('#np-task-relations [data-task-relation="' + id + '"]');
+      const row = x.d.querySelector('#np-overview-relation-panel [data-task-relation="' + id + '"]');
       const control = row.querySelectorAll('button')[index];
       assert.ok(control.textContent.includes(scopeById.get(sid).label));
       control.focus(); control.click(); await frames(x.w);
       assert.equal(x.a.getState().route.scope, sid);
       await assertBothLocalForests(x, sid);
       await back(x);
-      assert.equal(x.d.querySelector('#np-task-relations').open, true);
+      assert.equal(x.d.querySelector('#np-task-relations').open, false);
       assert.equal(x.d.activeElement.id, 'np-relation-entry-' + id + '-' + sid);
     }
   }
@@ -714,8 +722,10 @@ for (const [name, fixture] of Object.entries(publishedHistory.states)) {
 test('relation visibility and notes disclosure survive a task round-trip and saved-history reload', async t => {
   const x = await page(); t.after(() => x.w.close());
   const initial = clean(x.a.getState().route);
-  assert.equal(map(x).dataset.relationsVisible, 'true');
-  assert.equal(x.d.querySelector('#np-map-relations-toggle').getAttribute('aria-pressed'), 'true');
+  assert.equal(map(x).dataset.relationsVisible, 'false');
+  assert.equal(x.d.querySelector('#np-map-relations-toggle').getAttribute('aria-pressed'), 'false');
+  x.d.querySelector('#np-map-relations-toggle').click();
+  assert.equal(map(x).dataset.relationsVisible, 'true','explicit all-lines control still works');
   x.d.querySelector('#np-map-relations-toggle').click();
   assert.equal(map(x).dataset.relationsVisible, 'false');
   assert.equal(x.d.querySelector('#np-map-relations-toggle').getAttribute('aria-pressed'), 'false');
@@ -751,7 +761,7 @@ test('relation visibility and notes disclosure survive a task round-trip and sav
     if (bucket.overviewView) { delete bucket.overviewView.notesOpen; delete bucket.overviewView.linesVisible; }
   }
   const backwards = await page({saved:old, hash}); t.after(() => backwards.w.close());
-  assert.equal(map(backwards).dataset.relationsVisible, 'true', 'old S0 snapshots get default visible relationships');
+  assert.equal(map(backwards).dataset.relationsVisible, 'false', 'old S0 snapshots without a preference get the new single-selection default');
   assert.equal(backwards.d.querySelector('#np-overview-notes').open, false, 'old S0 snapshots get default closed notes');
   healthy(x); healthy(reload); healthy(backwards);
 });
@@ -828,7 +838,7 @@ test('SVG parent and typed paths terminate on their advertised original node box
 test('typed relation source links are real original URLs without adjoining Chinese prose', async t => {
   const x = await page(); t.after(() => x.w.close());
   for (const [id] of TASK_RELATIONS) {
-    const row = x.d.querySelector('#np-task-relations [data-task-relation="' + id + '"]');
+    const row = x.d.querySelector('#np-overview-relation-panel [data-task-relation="' + id + '"]');
     const locators = originalRelation(id).detail.locators;
     const expected = [...new Set(locators.flatMap(loc => (String(loc.locator).match(/https:\/\/[^\s)；，、<>]+/g) || []).map(url => url.replace(/[.;。；，]+$/, ''))))];
     const allowed = new Set(expected.concat(relationSourceIds(id).map(sourceId => {
@@ -846,6 +856,7 @@ test('typed relation source links are real original URLs without adjoining Chine
 test('resizing the overview preserves the focused typed-relation identity and current scientific route', async t => {
   const x = await page(); t.after(() => x.w.close());
   const id = 'tasks:relation:90', path = relationPath(x, id), route = clean(x.a.getState().route);
+  x.d.querySelector('#np-map-relations-toggle').click();visible(x,path);
   path.focus();
   assert.equal(x.d.activeElement, path);
   x.w.innerWidth = 1440;
@@ -855,7 +866,7 @@ test('resizing the overview preserves the focused typed-relation identity and cu
   assert.deepEqual(clean(x.a.getState().route), route);
   x.d.activeElement.dispatchEvent(new x.w.KeyboardEvent('keydown', {key:'Enter', bubbles:true, cancelable:true}));
   await frames(x.w);
-  assert.equal(x.d.querySelector('#np-task-relations').open, true);
+  assert.equal(x.d.querySelector('#np-task-relations').open, false);
   assert.equal(x.d.activeElement.dataset.taskRelation, id);
   healthy(x);
 });
@@ -945,16 +956,17 @@ test('review: CI layout responds to injected measured heights without overlappin
 test('review: a clicked relation source article restores exact focus and open evidence after saved-history reload', async t => {
   const x = await page(); t.after(() => x.w.close());
   const id = 'tasks:relation:90';
+  if(map(x).dataset.relationsVisible!=='true')x.d.querySelector('#np-map-relations-toggle').click();
   relationPath(x, id).dispatchEvent(new x.w.MouseEvent('click', {bubbles:true}));
   await frames(x.w);
-  const row = x.d.querySelector('#np-task-relations [data-task-relation="' + id + '"]');
+  const row = x.d.querySelector('#np-overview-relation-panel [data-task-relation="' + id + '"]');
   assert.equal(x.d.activeElement, row);
   assert.equal(row.getAttribute('tabindex'), '-1');
   x.w.dispatchEvent(new x.w.Event('pagehide'));
   const saved = clean(x.w.history.state), hash = x.M.encodeRoute(x.a.getState().route);
   const reload = await page({saved, hash}); t.after(() => reload.w.close());
-  const restored = reload.d.querySelector('#np-task-relations [data-task-relation="' + id + '"]');
-  assert.equal(reload.d.querySelector('#np-task-relations').open, true);
+  const restored = reload.d.querySelector('#np-overview-relation-panel [data-task-relation="' + id + '"]');
+  assert.equal(reload.d.querySelector('#np-task-relations').open, false);
   assert.equal(restored.getAttribute('tabindex'), '-1', 'the article is focusable on its initial reconstruction, before any new relation click');
   assert.equal(reload.d.activeElement, restored, 'focus cannot fall back to BODY or a hidden original-map node');
   assert.equal(restored.id, row.id);
@@ -1031,8 +1043,9 @@ test('review: all nine legacy root challenges expose original conditions, tasks 
 test('review: every typed relation exposes all original source IDs with exact inventory URLs, versions and status', async t => {
   const x = await page(); t.after(() => x.w.close());
   for (const [id] of TASK_RELATIONS) {
+    if(map(x).dataset.relationsVisible!=='true')x.d.querySelector('#np-map-relations-toggle').click();
     relationPath(x, id).dispatchEvent(new x.w.MouseEvent('click', {bubbles:true})); await frames(x.w);
-    const row = x.d.querySelector('#np-task-relations [data-task-relation="' + id + '"]');
+    const row = x.d.querySelector('#np-overview-relation-panel [data-task-relation="' + id + '"]');
     const expected = relationSourceIds(id), anchors = [...row.querySelectorAll('[data-task-relation-source]')];
     assert.ok(expected.length > 0, id + ': an original source inventory exists');
     assert.ok(anchors.length > 0, id + ': source links cannot all be omitted');
@@ -1069,7 +1082,6 @@ const RELATION_TYPE_LABELS = {
 test('review: all seven relations have independent native text buttons with exact selection and saved focus while lines are hidden', async t => {
   const x = await page(); t.after(() => x.w.close());
   const route = clean(x.a.getState().route), scientific = snapshotGraph(x);
-  x.d.querySelector('#np-map-relations-toggle').click();
   assert.equal(map(x).dataset.relationsVisible, 'false');
   x.d.querySelector('#np-task-relations > summary').click();
   const selectors = x.d.querySelector('#np-task-relations nav.np-relation-selectors');
@@ -1084,10 +1096,11 @@ test('review: all seven relations have independent native text buttons with exac
     assert.equal(control.disabled, false);
     assert.equal(control.tabIndex, 0);
     assert.equal(control.dataset.relationType, type);
-    assert.equal(control.getAttribute('aria-controls'), x.d.querySelector('#np-task-relations [data-task-relation="' + id + '"]').id, id + ': accessible control target is the exact article');
+    assert.equal(control.getAttribute('aria-controls'), x.d.querySelector('#np-overview-relation-panel [data-task-relation="' + id + '"]').id, id + ': accessible control target is the exact article');
     assert.ok(control.textContent.includes(RELATION_DISPLAY_LABELS[id]), id + ': exact relation wording');
     assert.ok(control.textContent.includes(RELATION_TYPE_LABELS[type]), id + ': literal relation type');
     assert.equal(control.closest('[data-task-relation]'), null, 'selection controls do not replace or masquerade as the two scope endpoints');
+    if(!x.d.querySelector('#np-task-relations').open)x.d.querySelector('#np-task-relations > summary').click();
     visible(x, control);
     control.focus();
     assert.equal(x.d.activeElement, control, 'the native control is independently focusable');
@@ -1095,13 +1108,18 @@ test('review: all seven relations have independent native text buttons with exac
     // exercises the real click callback without inventing a production keydown
     // handler or claiming real-browser keyboard, pointer hit or pixel acceptance.
     control.click(); await frames(x.w);
-    const article = x.d.querySelector('#np-task-relations [data-task-relation="' + id + '"]');
+    const article = x.d.querySelector('#np-overview-relation-panel [data-task-relation="' + id + '"]');
     assert.equal(x.d.activeElement, article, id + ': exact source article receives focus');
-    assert.equal(x.d.querySelector('#np-task-relations').open, true);
+    assert.equal(map(x).dataset.selectedRelation,id);assert.equal(map(x).dataset.relationsVisible,'false','choosing one relationship never enables all-lines');
+    const evidencePanel=x.d.getElementById('np-overview-relation-panel');assert.equal(evidencePanel.parentElement,map(x));assert.equal(evidencePanel.hidden,false);
+    assert.deepEqual([...evidencePanel.querySelectorAll('[data-task-relation]:not([hidden])')].map(row=>row.dataset.taskRelation),[id]);
+    for(const [other] of TASK_RELATIONS){const path=relationPath(x,other);assert.equal(x.w.getComputedStyle(path).visibility,other===id?'visible':'hidden',other+': only selected scientific relation is visible');assert.equal(path.getAttribute('tabindex'),other===id?'0':'-1');}
+    assert.equal(x.d.querySelector('#np-task-relations').open, false);
     assert.deepEqual(clean(x.a.getState().route), route);
   }
   assert.deepEqual(snapshotGraph(x), scientific);
   const focusedId = 'np-relation-select-tasks:relation:90';
+  x.d.querySelector('#np-task-relations > summary').click();
   x.d.getElementById(focusedId).focus();
   x.w.dispatchEvent(new x.w.Event('pagehide'));
   const reload = await page({saved:clean(x.w.history.state), hash:x.M.encodeRoute(x.a.getState().route)}); t.after(() => reload.w.close());
@@ -1239,6 +1257,7 @@ test('review: computed normal and selected connector contrast stays at least 3 t
 test('nohash: saved relation focus and disclosure restore on the actual bare URL', async t => {
   const x = await page(); t.after(() => x.w.close());
   assert.equal(x.w.location.hash, '');
+  if(map(x).dataset.relationsVisible!=='true')x.d.querySelector('#np-map-relations-toggle').click();
   relationPath(x, 'tasks:relation:90').dispatchEvent(new x.w.MouseEvent('click', {bubbles:true}));
   await frames(x.w);
   home(x).scrollTop = 143;
@@ -1250,7 +1269,7 @@ test('nohash: saved relation focus and disclosure restore on the actual bare URL
   assert.equal(reload.w.location.hash, '', 'test the original bare URL, not a synthetic canonical hash');
   assert.equal(reload.d.activeElement.id, focus);
   assert.equal(reload.d.activeElement.tagName, 'ARTICLE');
-  assert.equal(reload.d.querySelector('#np-task-relations').open, true);
+  assert.equal(reload.d.querySelector('#np-task-relations').open, false);
   assert.equal(home(reload).scrollTop, 143);
   assert.equal(reload.w.scrollY, 211);
   assert.deepEqual(clean(reload.a.getState().route), clean(x.a.getState().route));
@@ -1276,6 +1295,7 @@ test('nohash: fresh and invalid-history bare entry do not force focus', async t 
 
 test('nohash: rapid task switches after restored relation keep the newest route and focus', async t => {
   const x = await page(); t.after(() => x.w.close());
+  if(map(x).dataset.relationsVisible!=='true')x.d.querySelector('#np-map-relations-toggle').click();
   relationPath(x, 'tasks:relation:90').dispatchEvent(new x.w.MouseEvent('click', {bubbles:true}));
   await frames(x.w);
   x.w.dispatchEvent(new x.w.Event('pagehide'));
@@ -1299,6 +1319,7 @@ test('nohash: rapid task switches after restored relation keep the newest route 
 
 test('nohash: unload saves the final scroll before the debounce without cancelling navigation', async t => {
   const x = await page(); t.after(() => x.w.close());
+  if(map(x).dataset.relationsVisible!=='true')x.d.querySelector('#np-map-relations-toggle').click();
   relationPath(x, 'tasks:relation:90').dispatchEvent(new x.w.MouseEvent('click', {bubbles:true}));
   await frames(x.w);
   home(x).scrollTop = 527;

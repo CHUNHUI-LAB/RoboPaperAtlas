@@ -41,6 +41,7 @@ SCENE_NAMES = (
     '-27-imagenav-zhu-route-condition', '-27-imagenav-zhu', '-27-imagenav-sptm-route-condition', '-27-imagenav-sptm', '-27-imagenav-ving',
     '-28-portable-rl', '-28-portable-llm', '-29-literature-before-switch', '-29-challenge-selected', '-29-literature-restored',
     '-30-analysis-imported-entry', '-30-analysis-imported', '-30-analysis-not-imported', '-30-analysis-template-explicit',
+    '-30-analysis-root-coverage', '-31-s0-reading-hierarchy', '-32-s1-relation-90', '-33-s2-first-answer',
 )
 
 
@@ -140,8 +141,20 @@ def check_graphical_map(data):
         raise RuntimeError('Task control is mapped to another source position')
     actual = sorted((e['id'], e['from'], e['to'], e['type']) for e in data['relations'])
     expected = sorted(tuple(e) for e in data['expectedRelations'])
-    if len(actual) != 7 or actual != expected or any(not e['visible'] or not math.isfinite(e['length']) or e['length'] <= 0 or not e['endpointsMatch'] or not e['inBounds'] or not e['uncovered'] or not e['ownHits'] or contrast_ratio(e['foreground'], e['background']) < 3 for e in data['relations']):
-        raise RuntimeError('Typed relationship lines lost their exact scientific identity or geometry')
+    if (len(actual) != 7 or actual != expected or
+            sorted(data['relationControls']) != sorted(e[0] for e in expected) or
+            data['relationsVisible'] not in ('true', 'false') or
+            data['selectedRelation'] is not None and data['selectedRelation'] not in data['relationControls']):
+        raise RuntimeError('Typed relationship paths or text controls lost their exact scientific identity')
+    for edge in data['relations']:
+        visible = data['relationsVisible'] == 'true' or edge['id'] == data['selectedRelation']
+        if (edge['visible'] is not visible or not math.isfinite(edge['length']) or edge['length'] <= 0 or
+                not edge['endpointsMatch'] or not edge['inBounds'] or
+                visible and (not edge['uncovered'] or not edge['ownHits'] or
+                             len(edge['foreground']) != 3 or len(edge['background']) != 3 or
+                             contrast_ratio(edge['foreground'], edge['background']) < 3)):
+            raise RuntimeError('Selected/all relationship display lost real path geometry or exposed an unselected line')
+
 
 
 def check_relation_evidence(data, expected):
@@ -172,10 +185,11 @@ def check_context_path(data):
         raise RuntimeError('Current challenge path differs from actual parent chain')
     if data['globalIds'] != data['expectedGlobalIds'] or data['globalSeparators'] != 0:
         raise RuntimeError('Global entry links imply a false ancestry chain')
-    if data['labels'] != ['全局入口', '挑战–思路树 · 当前路径']:
-        raise RuntimeError('Global entry and current path need distinct readable labels')
-    if len(data['rows']) != 2 or data['rows'][0]['y'] + data['rows'][0]['height'] > data['rows'][1]['y'] + 1:
-        raise RuntimeError('Context groups are not on separate lines')
+    if data['labels'] != ['领域', '挑战–思路树']:
+        raise RuntimeError('Compact global entry and actual local ancestry need distinct readable labels')
+    if (len(data['rows']) != 2 or abs(data['rows'][0]['y'] - data['rows'][1]['y']) > 1 or
+            data['rows'][0]['x'] + data['rows'][0]['width'] > data['rows'][1]['x'] + 1):
+        raise RuntimeError('Global links and local ancestry do not share the compact, non-overlapping context row')
     if not all(rect_inside(r, data['viewport']) for r in data['rows']):
         raise RuntimeError('Context rows are outside the screenshot')
     if not data['buttons'] or not all(x['uncovered'] and rect_inside(x['rect'], data['viewport']) and rect_inside(x['rect'], x['row']) and not x['clipped'] for x in data['buttons']):
@@ -533,11 +547,11 @@ function geometry(element){if(!element)return null;var r=element.getBoundingClie
   return {x:r.x,y:r.y,width:r.width,height:r.height,scrollTop:element.scrollTop,
     scrollHeight:element.scrollHeight,clientHeight:element.clientHeight};}
 var style=getComputedStyle(landing);
-return {view:{focus:active.id,window:scrollY,landing:landing.scrollTop,
+return {view:{focus:active.id,window:scrollY,landing:landing.scrollTop,relationPanel:document.getElementById('np-overview-relation-panel').scrollTop,selectedRelation:document.getElementById('np-overview-map').dataset.selectedRelation||null,
     open:document.getElementById('np-task-relations').open,
     lines:document.getElementById('np-overview-map').dataset.relationsVisible},
   diagnostic:{runtime:bucketRecord(runtime),persisted:bucketRecord(persisted),
-    landing:geometry(landing),active:geometry(active),map:geometry(document.getElementById('np-overview-map')),
+    landing:geometry(landing),relationPanel:geometry(document.getElementById('np-overview-relation-panel')),active:geometry(active),map:geometry(document.getElementById('np-overview-map')),
     document:geometry(document.scrollingElement),viewport:{width:innerWidth,height:innerHeight},
     scrollRestoration:history.scrollRestoration,readyState:document.readyState,
     fontsStatus:document.fonts.status,landingStyle:{overflowY:style.overflowY,scrollBehavior:style.scrollBehavior,
@@ -554,7 +568,7 @@ READER_TOGGLE_SNAPSHOT_JS = VISUAL_GEOMETRY + r"""
 var a=NavigationProductApp,m=NavigationProductModel,state=a.getState(),bucket=m.getBucket(state),
     app=document.getElementById('navigation-product'),p=a.getBundle().positions[state.route.node],
     tree=document.getElementById('np-tree-scroll'),reader=document.getElementById('np-detail-scroll'),
-    toggle=document.getElementById('np-reader-toggle'),selected=document.getElementById('np-node-'+state.route.node),
+    pane=document.querySelector('.np-reading-pane'),toggle=document.getElementById('np-reader-toggle'),selected=document.getElementById('np-node-'+state.route.node),
     row=selected&&selected.querySelector(':scope > .np-node-row'),label=row&&row.querySelector('.np-node-label'),
     mechanism=reader.querySelector('.np-method-mechanism'),context=m.contextKey(state.route);
 function proof(e){return e?box(e):null;}
@@ -586,8 +600,8 @@ return {route:state.route,taskContextKey:m.taskContextKey(state.route),position:
     scope:selected&&selected.closest('[data-parallel-tree]')?.dataset.scopeId,row:proof(row),label:proof(label),
     content:rr?{x:rr.x-ts.client.x+ts.left,y:rr.y-ts.client.y+ts.top}:null},
   toggle:{tag:toggle.tagName,hidden:toggle.hidden,disabled:toggle.disabled,controls:toggle.getAttribute('aria-controls'),expanded:toggle.getAttribute('aria-expanded'),proof:proof(toggle)},
-  reader:{hidden:reader.hidden,display:getComputedStyle(reader).display,tabIndex:reader.tabIndex,proof:proof(reader),scroll:scrollBox(reader),
-    heading:proof(reader.querySelector('.np-reader-heading')),entity:mechanism&&mechanism.dataset.mechanismEntity,
+  reader:{hidden:pane.hidden,display:getComputedStyle(pane).display,tabIndex:reader.tabIndex,proof:proof(pane),scroll:scrollBox(reader),
+    heading:proof(document.getElementById('np-reader-heading')),entity:mechanism&&mechanism.dataset.mechanismEntity,
     flowCount:mechanism?mechanism.querySelectorAll('.np-method-flow dd').length:0,
     savedScroll:bucket.detailScrollByTree[state.route.tree],persistedScroll:historyState&&historyState[m.KEY]?.contexts[context]?.detailScrollByTree[state.route.tree]}};
 """
@@ -618,6 +632,138 @@ def _reader_proof(proof, *areas, font_size=None):
                                 contrast_ratio(proof['foreground'], proof['background']) >= 4.5)
 
 
+# Display-only migrations are explicit. Original source, route, restoration,
+# diagnostic, content-delay and native-input predicates remain independent.
+DISPLAY_CONTRACT_MIGRATIONS = {
+    'relation_picker': 'same IDs, types, endpoints and controls; outside tree scroll in fixed toolbar',
+    'reader_identity': 'fixed current title and exact version replace generic sticky READING DESK',
+    'context_path': 'one compact row; original global links and real local parent chain remain distinct',
+    'outer_scroll': 'ready desktop window is zero; exact effective tree/reader offsets and other buckets retained',
+    'overview_relations': 'all seven paths and controls retained; selected-only default plus explicit show-all',
+    'analysis_entry': 'first actual version answer; explicit legacy root remains coverage and full original topology',
+}
+
+
+DESKTOP_SHELL_SNAPSHOT_JS = VISUAL_GEOMETRY + r"""
+var a=NavigationProductApp,m=NavigationProductModel,s=a.getState(),app=document.getElementById('navigation-product'),
+    tree=document.getElementById('np-tree-scroll'),reader=document.getElementById('np-detail-scroll'),
+    pane=document.querySelector('.np-reading-pane'),header=document.getElementById('np-reader-heading'),
+    title=document.getElementById('np-reader-object-title'),meta=document.getElementById('np-reader-object-meta'),
+    picker=document.getElementById('np-task-route-canvas'),host=document.getElementById('np-tree'),p=a.getBundle().positions[s.route.node];
+function proof(e){return e?box(e):null;}
+function scroll(e){return {top:e.scrollTop,left:e.scrollLeft};}
+function permanentScroll(e){var cs=getComputedStyle(e),r=rect(e);return r.width>0&&r.height>0&&/auto|scroll/.test(cs.overflowY+' '+cs.overflowX);}
+var roots=host.querySelectorAll('[data-parallel-tree] > [role=tree] > [role=treeitem]'),b=a.getBundle();
+return {ready:app.dataset.loadState,route:s.route,window:{x:scrollX,y:scrollY},
+  viewport:{x:0,y:0,width:innerWidth,height:innerHeight},home:!document.getElementById('np-reading-landing').hidden,
+  collapsed:app.dataset.readerCollapsed==='true',sourceOverview:app.dataset.activeTree==='g'&&app.dataset.globalFocus==='overview',panels:rect(document.querySelector('.np-panels')),
+  tree:rect(tree),treePane:rect(document.querySelector('.np-tree-pane')),reader:rect(reader),pane:rect(pane),
+  fixedIdentity:title?{position:title.dataset.objectPosition||null,paper:title.dataset.objectPaper||null,version:title.dataset.objectVersion||null}:null,
+  offsets:{tree:scroll(tree),reader:scroll(reader)},heading:proof(header),title:proof(title),meta:proof(meta),
+  pickerDisclosure:document.getElementById('np-task-route-relations')?{open:document.getElementById('np-task-route-relations').open,rect:rect(document.getElementById('np-task-route-relations')),position:getComputedStyle(document.getElementById('np-task-route-relations')).position}:null,
+  headingInsideScroll:!!header&&reader.contains(header),pickerInsideTree:tree.contains(picker),pickerInToolbar:!!picker.closest('.np-workspace-bar'),
+  permanentScrollIds:[tree,reader,...tree.querySelectorAll('*'),...reader.querySelectorAll('*')].filter(permanentScroll).map(e=>e.id||e.className),
+  rootRows:[...roots].map(e=>({id:e.dataset.position,proof:proof(e.querySelector(':scope > .np-node-row'))})),
+  routeRows:[...host.querySelectorAll('[role=treeitem]')].map(e=>({id:e.dataset.position,entity:e.dataset.entity,proof:proof(e.querySelector(':scope > .np-node-row'))})),
+  position:p?{id:p.id,kind:p.kind,paper:p.paperId,version:p.versionId,parent:p.parentId}:null,
+  relation:document.querySelector('[data-selected-task-relation]')?.dataset.selectedTaskRelation||null,
+  visibleTaskDefinitions:[...reader.querySelectorAll('p')].filter(e=>e.textContent===b.scopes.find(scope=>scope.id===s.route.scope)?.definition&&box(e).visible).length,
+  analysisEntry:proof(document.getElementById('np-open-version-analysis')),
+  analysisStatus:proof(document.querySelector('#np-reader-analysis-entry [data-analysis-state] > p')),
+  answer:proof(document.querySelector('#np-detail-content .np-analysis-answer > p'))};
+"""
+
+
+def check_desktop_shell(data):
+    """The ready desktop document is fixed; only the tree and reader scroll."""
+    viewport = data['viewport']
+    if ((viewport['width'], viewport['height']) not in VIEWPORTS or data['ready'] != 'ready' or
+            data['window'] != {'x': 0, 'y': 0}):
+        raise RuntimeError('Ready desktop shell is unready or has outer window scroll')
+    if data['home']:
+        return
+    expected = {'x': 16, 'y': 132, 'width': viewport['width'] - 32, 'height': viewport['height'] - 148}
+    if any(not _reader_close(data['panels'][k], v) for k, v in expected.items()):
+        raise RuntimeError('Desktop workspace differs from the viewport-filling reading contract')
+    if data['pickerInsideTree'] or not data['pickerInToolbar'] or data['headingInsideScroll']:
+        raise RuntimeError('Relationship picker or fixed object title still belongs to scrolling content')
+    if not rect_inside(data['tree'], data['treePane']) or not rect_inside(data['treePane'], expected):
+        raise RuntimeError('Desktop tree viewport is outside its fixed pane')
+    if data['collapsed'] or data.get('sourceOverview', False):
+        if data['permanentScrollIds'] != ['np-tree-scroll'] or not _reader_close(data['treePane']['width'], expected['width']):
+            raise RuntimeError('Collapsed reading pane left another permanent scrolling region')
+        return
+    if data['permanentScrollIds'] != ['np-tree-scroll', 'np-detail-scroll']:
+        raise RuntimeError('Desktop reading needs exactly the tree and reader permanent scroll regions')
+    if (not rect_inside(data['pane'], expected) or not rect_inside(data['reader'], data['pane']) or
+            not _reader_proof(data['heading'], data['pane'], viewport) or
+            not _reader_proof(data['title'], data['heading']['rect'], viewport, font_size=15) or
+            not _reader_proof(data['meta'], data['heading']['rect'], viewport, font_size=15) or
+            not data['title']['text'].strip() or not data['meta']['text'].strip() or
+            data['heading']['rect']['y'] + data['heading']['rect']['height'] > data['reader']['y'] + 1):
+        raise RuntimeError('Current object title/version or natural reader content is hidden, clipped or scrolling')
+    analysis = data['route']['tree'] == 'a'
+    tree_width = (400 if viewport['width'] == 1440 else 448) if analysis else (768 if viewport['width'] == 1440 else 1056)
+    gap = 24 if analysis else 16
+    if (not _reader_close(data['treePane']['width'], tree_width) or
+            not _reader_close(data['pane']['width'], expected['width'] - tree_width - gap) or
+            not _reader_close(data['pane']['x'], expected['x'] + tree_width + gap)):
+        raise RuntimeError('Tree/reader widths do not match the desktop task or single-paper reading state')
+
+
+def check_relation_canvas_stability(before, opened, selected, required_positions):
+    """Opening a selector and choosing a relation cannot push the actual tree down."""
+    for value in (before, opened, selected):
+        if value['window'] != {'x': 0, 'y': 0} or value['route'] != before['route']:
+            raise RuntimeError('Relation disclosure changed the science route or outer document position')
+        if (value['tree'] != before['tree'] or value['treePane'] != before['treePane'] or
+                value['offsets']['tree'] != before['offsets']['tree'] or value['rootRows'] != before['rootRows']):
+            raise RuntimeError('Relation selector displaced the tree viewport, original root or exact tree offsets')
+    overlay = opened['pickerDisclosure']
+    if (not overlay or overlay['open'] is not True or overlay['position'] not in ('absolute', 'fixed') or
+            not _reader_close(overlay['rect']['width'], 360) or overlay['rect']['height'] > 288 or
+            overlay['rect']['x'] < opened['pane']['x'] - 1 or not rect_inside(overlay['rect'], opened['viewport'])):
+        raise RuntimeError('Relationship dropdown is not a bounded 360px by at-most-288px overlay over the reader')
+    if selected['visibleTaskDefinitions'] != 0:
+        raise RuntimeError('Selected relationship repeats a task definition in its visible reader content')
+    if selected['relation'] != 'methods:relation:90':
+        raise RuntimeError('Reading hierarchy selected another relation')
+    for pid in required_positions:
+        rows = [r for r in selected['routeRows'] if r['id'] == pid]
+        if len(rows) != 1 or not _reader_proof(rows[0]['proof'], selected['tree'], selected['viewport']):
+            raise RuntimeError('Relation scene does not show its real root, route and endpoint methods together')
+    root = next(r['proof']['rect'] for r in selected['routeRows'] if r['id'] == required_positions[0])
+    poni = next(r['proof']['rect'] for r in selected['routeRows'] if r['id'] == required_positions[-1])
+    if root['y'] > 204 or poni['y'] + poni['height'] > 520:
+        raise RuntimeError('Relation scene spends the initial tree viewport on controls instead of its source route')
+
+
+def first_analysis_answer(science, entry):
+    """Original preorder, using source kinds rather than a label or hard-coded ID."""
+    def visit(pid):
+        p = science['positions'][pid]
+        yield p
+        for child in p['childIds']:
+            yield from visit(child)
+    return next((p for root in entry['roots'] for p in visit(root) if p['kind'] == 'analysis_answer'), None)
+
+
+def check_analysis_first_answer(data, answer, entry, answer_text, version_label):
+    check_desktop_shell(data)
+    if (answer is None or data['fixedIdentity'] != {'position': answer['id'], 'paper': answer['paperId'], 'version': answer['versionId']} or data['position'] != {k: answer[v] for k, v in
+            {'id': 'id', 'kind': 'kind', 'paper': 'paperId', 'version': 'versionId', 'parent': 'parentId'}.items()} or
+            data['route']['node'] != answer['id'] or data['route']['paper'] != answer['paperId'] or
+            data['route']['version'] != answer['versionId'] or data['route']['template'] is not None or
+            entry['answeredOriginalCount'] <= 0 or data['offsets']['reader'] != {'top': 0, 'left': 0}):
+        raise RuntimeError('Main analysis entry did not reach the first real answer in this exact version')
+    coverage = str(entry['answeredOriginalCount']) + '/' + str(entry['originalNodeCount']) + ' 原节点已填 · ' + str(entry['answeredInstanceCount']) + ' 个实例答案'
+    if version_label not in data['meta']['text'] or coverage not in data['meta']['text']:
+        raise RuntimeError('Fixed analysis heading omitted the exact source version or actual answer coverage')
+    if (not data['answer'] or data['answer']['text'] != answer_text or
+            not _reader_proof(data['answer'], data['reader'], data['viewport'], font_size=15) or data['answer']['rect']['y'] > 300):
+        raise RuntimeError('First source answer does not start visibly in the initial reader')
+
+
 def check_reader_toggle_snapshot(data, collapsed):
     """Measure the actual selected ObjectNav/VLFM reading UI, including occlusion."""
     route, position, selected = data['route'], data['position'], data['selected']
@@ -635,7 +781,7 @@ def check_reader_toggle_snapshot(data, collapsed):
     viewport, panels, tree = data['viewport'], data['panels'], data['tree']
     if (viewport['width'], viewport['height']) not in VIEWPORTS:
         raise RuntimeError('Reader toggle evidence is not a required desktop viewport')
-    if (not rect_inside(panels, viewport) or
+    if (data['window'] != {'x': 0, 'y': 0} or not rect_inside(panels, viewport) or
             not _reader_proof(data['treePane'], panels, viewport) or
             not _reader_proof(data['treeProof'], data['treePane']['rect'], viewport) or
             # Keep a readable forest column and several full node rows on screen.
@@ -665,12 +811,12 @@ def check_reader_toggle_snapshot(data, collapsed):
             raise RuntimeError('Collapsed tree does not recover the complete panel width')
     else:
         rr, tr = reader['proof']['rect'], data['treePane']['rect']
-        expected_reader_width = min(720, max(520, viewport['width'] * .38))
+        expected_reader_width = 624 if viewport['width'] == 1440 else 816
         if (reader['display'] == 'none' or reader['tabIndex'] != -1 or
                 not _reader_close(rr['width'], expected_reader_width) or
                 not _reader_close(tr['width'], panels['width'] - data['columnGap'] - expected_reader_width) or rr['height'] < 320 or
                 not _reader_proof(reader['proof'], panels, viewport) or
-                not _reader_proof(reader['heading'], reader['scroll']['client'], viewport, font_size=11) or
+                not _reader_proof(reader['heading'], rr, viewport, font_size=15) or
                 not _reader_close(rr['x'] - (tr['x'] + tr['width']), data['columnGap']) or
                 not _reader_close(tr['width'] + data['columnGap'] + rr['width'], panels['width'])):
             raise RuntimeError('Expanded reader, sticky heading or separate tree/reader boundaries are not visible')
@@ -792,7 +938,7 @@ def reader_toggle_checks(driver, report, save, capture, prefix):
 
 TASK_ROUTE_PROOF_JS = VISUAL_GEOMETRY + r"""
 var spec=arguments[0],matches=[...document.querySelectorAll(spec.selector)].filter(n=>spec.text===undefined||n.textContent===spec.text),
-    e=matches.length===1?matches[0]:null,reader=document.getElementById(spec.region==='canvas'?'np-tree-scroll':'np-detail-scroll');
+    e=matches.length===1?matches[0]:null,reader=spec.region==='toolbar'?document.querySelector('.np-workspace-bar'):document.getElementById(spec.region==='canvas'?'np-tree-scroll':spec.region==='heading'?'np-reader-heading':spec.region==='analysis-entry'?'np-reader-analysis-entry':'np-detail-scroll');
 if(!e||!reader.contains(e))throw Error('Exact task-route proof is missing, duplicated or outside its measured region: '+JSON.stringify(spec));
 var rr=rect(reader),heading=reader.querySelector('.np-reader-heading'),hr=heading?rect(heading):null,
     top=Math.max(rr.y+reader.clientTop,hr&&['sticky','fixed'].includes(getComputedStyle(heading).position)?hr.y+hr.height:rr.y+reader.clientTop),content={x:rr.x+reader.clientLeft,y:top,width:reader.clientWidth,height:Math.max(0,rr.y+reader.clientTop+reader.clientHeight-top)},b=box(e);
@@ -834,7 +980,7 @@ if(window.navigation?.currentEntry?.key!==wanted.historyEntryKey||current.revisi
 TASK_ROUTE_DIAGNOSTIC_JS = r"""
 function relationReturnClickDiagnostic(){
   var nodes=document.querySelectorAll('#np-task-route-return'),button=nodes[0],reader=document.getElementById('np-detail-scroll'),
-      header=reader&&reader.querySelector('.np-reader-heading'),tree=document.getElementById('np-tree-scroll');
+      header=reader&&document.getElementById('np-reader-heading'),tree=document.getElementById('np-tree-scroll');
   function rect(e){if(!e)return null;var r=e.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};}
   function intersect(a,b){var x=Math.max(a.x,b.x),y=Math.max(a.y,b.y);return {x:x,y:y,width:Math.max(0,Math.min(a.x+a.width,b.x+b.width)-x),height:Math.max(0,Math.min(a.y+a.height,b.y+b.height)-y)};}
   function identity(e){if(!e)return null;var id=e.id||'',cls=typeof e.className==='string'?e.className:'';return {tag:e.tagName,id:id.slice(0,256)||null,className:cls.slice(0,256)||null,identityTruncated:id.length>256||cls.length>256};}
@@ -845,6 +991,7 @@ function relationReturnClickDiagnostic(){
       headerVisible=!!(header&&hr.width>0&&hr.height>0&&hs.display!=='none'&&hs.visibility!=='hidden'&&parseFloat(hs.opacity)>0);
   if(effective&&headerVisible&&(hs.position==='sticky'||hs.position==='fixed')&&intersect(hr,visible).height>0){
     var bottom=effective.y+effective.height;effective.y=Math.max(effective.y,hr.y+hr.height);effective.height=Math.max(0,bottom-effective.y);}
+  var buttonRegion=button&&header&&header.contains(button)?'fixed-heading':'reader-content',effectiveTarget=buttonRegion==='fixed-heading'&&hr?intersect(hr,viewport):effective;
   var chain=[],computedVisible=!!(button&&br.width>0&&br.height>0),n=button;
   while(n&&n.nodeType===1&&chain.length<10){var cs=getComputedStyle(n);chain.push({element:identity(n),rect:rect(n),display:cs.display,visibility:cs.visibility,opacity:cs.opacity,pointerEvents:cs.pointerEvents,overflowX:cs.overflowX,overflowY:cs.overflowY});
     if(cs.display==='none'||cs.visibility==='hidden'||cs.visibility==='collapse'||parseFloat(cs.opacity)===0)computedVisible=false;
@@ -852,7 +999,7 @@ function relationReturnClickDiagnostic(){
   function contains(r,p){return !!r&&p.x>=r.x&&p.x<r.x+r.width&&p.y>=r.y&&p.y<r.y+r.height;}
   function hit(name,x,y){var point={x:x,y:y},inside=contains(viewport,point),top=inside?document.elementFromPoint(x,y):null,
       stack=inside&&typeof document.elementsFromPoint==='function'?document.elementsFromPoint(x,y).slice(0,5):[];
-    return {name:name,x:x,y:y,inViewport:inside,inReader:contains(visible,point),inEffectiveReader:contains(effective,point),
+    return {name:name,x:x,y:y,inViewport:inside,inReader:contains(visible,point),inEffectiveReader:contains(effective,point),inEffectiveTarget:contains(effectiveTarget,point),
       hitsTarget:!!(top&&button&&(top===button||button.contains(top))),top:identity(top),stack:stack.map(identity)};}
   var points=br?[hit('center',br.x+br.width/2,br.y+br.height/2),hit('upper-left',br.x+br.width*.2,br.y+br.height*.2),
     hit('upper-right',br.x+br.width*.8,br.y+br.height*.2),hit('lower-left',br.x+br.width*.2,br.y+br.height*.8),hit('lower-right',br.x+br.width*.8,br.y+br.height*.8)]:[];
@@ -860,7 +1007,7 @@ function relationReturnClickDiagnostic(){
   return {time:performance.now(),limitation:'Geometry reads can force layout; hit samples alone do not identify the WebDriver failure.',
     count:nodes.length,button:button?{element:identity(button),rect:br,computedVisible:computedVisible,disabled:button.disabled,hidden:button.hidden,
       clientRects:[...button.getClientRects()].slice(0,5).map(r=>({x:r.x,y:r.y,width:r.width,height:r.height}))}:null,
-    viewport:viewport,reader:rr,readerClient:client,readerVisible:visible,effectiveReader:effective,
+    viewport:viewport,reader:rr,readerClient:client,readerVisible:visible,effectiveReader:effective,buttonRegion:buttonRegion,effectiveTarget:effectiveTarget,
     sticky:header?{element:identity(header),rect:hr,position:hs.position,visible:headerVisible}:null,
     scroll:{window:{x:scrollX,y:scrollY},reader:position(reader),tree:position(tree)},ancestors:chain,ancestorLimitReached:!!n&&chain.length===10,
     points:points,inViewCenter:inView&&inView.width>0&&inView.height>0?hit('viewport-clipped-center',inView.x+inView.width/2,inView.y+inView.height/2):null};
@@ -901,19 +1048,19 @@ function taskRouteDiagnostic(api,model,state,reader,panel){
       textGeometryAvailable:rs!==null,textFragmentCount:nonempty?nonempty.length:null,textTop:top,textBottom:bottom,
       textHeight:top===null?null:bottom-top,ancestorDisclosures:ancestors(node)};
   }
-  var runtime=stateRecord(state),persisted=stateRecord(history.state&&history.state[model.KEY]),heading=reader.querySelector('.np-reader-heading'),
+  var runtime=stateRecord(state),persisted=stateRecord(history.state&&history.state[model.KEY]),heading=document.getElementById('np-reader-heading'),
       rr=reader.getBoundingClientRect(),hr=heading&&heading.getBoundingClientRect(),active=document.activeElement,
       focusId=model.getBucket(state).focusTarget,focus=focusId&&(document.getElementById(focusId)||document.getElementById('np-node-'+focusId));
   return {reader:geometry(reader),readerHeading:geometry(heading),
     availableContent:{x:rr.x+reader.clientLeft,y:Math.max(rr.y+reader.clientTop,hr?hr.y+hr.height:rr.y+reader.clientTop),
       bottom:rr.y+reader.clientTop+reader.clientHeight,width:reader.clientWidth},
     activeElement:active?target(active):null,runtimeFocusTarget:{value:focusId,element:focus?target(focus):null},
-    targetControls:panel?[...panel.querySelectorAll('[data-change-target],[data-route-method] > button')].map(target):[],
+    targetControls:[...new Set([...(panel?panel.querySelectorAll('[data-change-target],[data-route-method] > button'):[]),...reader.querySelectorAll('[data-change-target]')])].map(target),
     directReaderChildren:[...reader.children].map(geometry),taskOverview:geometry(panel),
     overviewBlocks:panel?[...panel.children].map(geometry):[],
     disclosures:[...reader.querySelectorAll('details')].map(e=>({id:e.id,summaryId:e.querySelector(':scope > summary')?.id,
       relation:e.dataset.taskChange||null,open:e.open,geometry:geometry(e),directChildren:[...e.children].map(geometry)})),
-    textBlocks:[...reader.querySelectorAll('[data-task-route-scope] h2,[data-task-route-scope] h3,[data-task-route-scope] p,[data-task-route-scope] summary')].map(textGeometry),
+    textBlocks:[...reader.querySelectorAll('[data-task-route-scope] h2,[data-task-route-scope] h3,[data-task-route-scope] p,[data-task-route-scope] summary,[data-selected-task-relation] h2,[data-selected-task-relation] h3,[data-selected-task-relation] p,[data-selected-task-relation] summary')].map(textGeometry),
     runtime:runtime,persisted:persisted,historyScrollRestoration:history.scrollRestoration,
     fonts:{status:document.fonts?document.fonts.status:null,faces:document.fonts?[...document.fonts].map(f=>({family:f.family,status:f.status,style:f.style,weight:f.weight,display:f.display})):[]},
     documentReadyState:document.readyState,timeOriginMs:performance.timeOrigin,relativeTimeMs:performance.now(),
@@ -933,7 +1080,7 @@ return {route:s.route,position:identity(p),ready:document.querySelector('[data-l
   home:!document.getElementById('np-reading-landing').hidden,scale:bucket.graphScale,
   viewport:{width:innerWidth,height:innerHeight},window:{x:scrollX,y:scrollY},readerScroll:{top:reader.scrollTop,left:reader.scrollLeft},
   treeScroll:{top:tree.scrollTop,left:tree.scrollLeft},focus:document.activeElement.id,
-  panelScope:panel&&panel.dataset.taskRouteScope,readerHidden:reader.hidden,canvasState:panel&&panel.dataset.taskRouteState,
+  panelScope:panel&&panel.dataset.taskRouteScope,readerHidden:document.querySelector('.np-reading-pane').hidden,canvasState:panel&&panel.dataset.taskRouteState,
   groups:all.filter(e=>groups.includes(e.dataset.position)).map(e=>e.dataset.position),
   groupReadiness:all.filter(e=>groups.includes(e.dataset.position)).map(e=>({position:e.dataset.position,entity:e.dataset.entity,ready:a.getContent().ready(e.dataset.entity)})),
   diagnostic:taskRouteDiagnostic(a,m,s,reader,panel),
@@ -945,14 +1092,14 @@ return {route:s.route,position:identity(p),ready:document.querySelector('[data-l
   relationEntries:panel?[...panel.querySelectorAll('[data-task-change]')].map(e=>({id:e.dataset.taskChange,type:e.dataset.relationType,renderAsTree:e.dataset.renderAsTree,scope:e.dataset.changeScope,from:e.dataset.fromEntity,to:e.dataset.toEntity,control:e.id,selected:e.getAttribute('aria-pressed')})):[],
   selectedRelation:selected&&selected.dataset.selectedTaskRelation,relationState:reader.querySelector('[data-relation-state]')?.dataset.relationState||null,
   relationOverview:bucket.relationOverviewByTree||{},
-  relationDisclosure:panel?{open:panel.open,tag:panel.tagName,id:panel.id,summary:panel.querySelector(':scope > summary')?.id,current:panel.dataset.currentRelationCount,outside:panel.dataset.outsideRelationCount,beforeTree:!!(panel.compareDocumentPosition(host)&Node.DOCUMENT_POSITION_FOLLOWING),insideTree:host.contains(panel)}:null,
+  relationDisclosure:panel?{open:panel.open,tag:panel.tagName,id:panel.id,summary:panel.querySelector(':scope > summary')?.id,current:panel.dataset.currentRelationCount,outside:panel.dataset.outsideRelationCount,beforeTree:!!(panel.compareDocumentPosition(host)&Node.DOCUMENT_POSITION_FOLLOWING),insideTree:host.contains(panel),insideTreeScroll:tree.contains(panel),toolbar:!!panel.closest('.np-workspace-bar')}:null,
   readerLists:reader.querySelectorAll('[data-route-method],[data-route-group],[data-task-route-scope]').length,
   activeTree:host.dataset.activeTaskTree||null,treeCount:host.querySelectorAll('[role=tree]').length,forestCount:host.querySelectorAll('[data-parallel-tree]').length,
   rovingCount:host.querySelectorAll('[role=treeitem][tabindex="0"]').length,inactiveItemCount:all.filter(e=>e.dataset.tree!==s.route.tree).length,
   selected:all.filter(e=>e.getAttribute('aria-selected')==='true').map(e=>e.dataset.position),expanded:bucket.expandedByTree,taskView:m.taskView(s),relationView:bucket.relationViewByTree||{},
   runtime:s,persisted:history.state&&history.state[m.KEY],historyLength:history.length,url:location.href,
   historyEntryKey:window.navigation?.currentEntry?.key||null,
-  analysisEntry:reader.querySelector('[data-analysis-state]')?{state:reader.querySelector('[data-analysis-state]').dataset.analysisState,paper:reader.querySelector('[data-analysis-state]').dataset.analysisPaper,version:reader.querySelector('[data-analysis-state]').dataset.analysisVersion}:null,
+  analysisEntry:document.querySelector('#np-reader-analysis-entry [data-analysis-state]')?{state:document.querySelector('#np-reader-analysis-entry [data-analysis-state]').dataset.analysisState,paper:document.querySelector('#np-reader-analysis-entry [data-analysis-state]').dataset.analysisPaper,version:document.querySelector('#np-reader-analysis-entry [data-analysis-state]').dataset.analysisVersion}:null,
   widths:{canvas:tree.getBoundingClientRect().width,tree:host.getBoundingClientRect().width,forest:host.querySelector('[data-parallel-tree]')?.getBoundingClientRect().width||0,reader:reader.getBoundingClientRect().width}};
 """
 
@@ -1118,7 +1265,7 @@ def task_route_origin_overview(before, origin, source_roots):
             not same(position, identity) or before['panelScope'] != route['scope'] or before['selectedRelation'] is not None or
             not isinstance(dom, dict) or dom.get('tag') != 'DETAILS' or dom.get('id') != 'np-task-route-relations' or
             dom.get('summary') != 'np-task-route-relations-summary' or dom.get('open') is not False or
-            dom.get('beforeTree') is not True or dom.get('insideTree') is not False):
+            dom.get('insideTree') is not False or dom.get('insideTreeScroll') is not False or dom.get('toolbar') is not True):
         raise RuntimeError('Method origin overview is not a missing current closed task-root default')
     expected = json.loads(json.dumps(prior))
     expected[tree] = {'route': json.loads(json.dumps(route)), 'open': False}
@@ -1135,7 +1282,9 @@ def check_task_route_return(before, after, expected_control):
         if (json.dumps(expected_overview, sort_keys=True) != json.dumps(proof['overview'], sort_keys=True) or
                 json.dumps(before['relationDisclosure'], sort_keys=True) != json.dumps(after['relationDisclosure'], sort_keys=True)):
             raise RuntimeError('Task-route return lost its proven closed overview materialization')
-    for key in ('route', 'panelScope', 'scale', 'readerScroll', 'treeScroll', 'window', 'selectedRelation', 'expanded', 'relationOverview'):
+    if after['window'] != {'x': 0, 'y': 0}:
+        raise RuntimeError('Task-route return retained forbidden ready-desktop outer scroll')
+    for key in ('route', 'panelScope', 'scale', 'readerScroll', 'treeScroll', 'selectedRelation', 'expanded', 'relationOverview'):
         expected = expected_overview if key == 'relationOverview' else before[key]
         changed = (json.dumps(expected, sort_keys=True) != json.dumps(after[key], sort_keys=True)) if key == 'relationOverview' else expected != after[key]
         if changed:
@@ -1336,7 +1485,9 @@ def expose_source_position(driver, position, record, save):
 
 
 def check_exploration_restore(before, after, focus=None, nonzero=False, inactive_before=None):
-    for key in ('route', 'selectedRelation', 'expanded', 'treeScroll', 'readerScroll', 'window', 'relationOverview', 'relationView', 'scale'):
+    if after['window'] != {'x': 0, 'y': 0}:
+        raise RuntimeError('Exploration restore retained forbidden ready-desktop outer scroll')
+    for key in ('route', 'selectedRelation', 'expanded', 'treeScroll', 'readerScroll', 'relationOverview', 'relationView', 'scale'):
         if before[key] != after[key]:
             raise RuntimeError('Exploration restore changed ' + key)
     if after['focus'] != (focus or before['focus']):
@@ -1360,6 +1511,11 @@ def check_exploration_restore(before, after, focus=None, nonzero=False, inactive
         if (persisted['contexts'].get(neutral) != after['runtime']['contexts'].get(neutral) or
                 after['runtime']['contexts'].get(neutral, {}).get('taskView') != view):
             raise RuntimeError('Restored neutral task pointer was not independently persisted')
+        source_contexts = (inactive_before or before)['runtime']['contexts']
+        preserved_keys = set(source_contexts) - {key, neutral}
+        if set(after['runtime']['contexts']) - {key, neutral} != preserved_keys or any(
+                after['runtime']['contexts'][saved] != source_contexts[saved] for saved in preserved_keys):
+            raise RuntimeError('Desktop restore erased or rewrote an unrelated saved context bucket')
         other = 'c' if tree == 'l' else 'l'
         inactive = (inactive_before or before)['taskView']
         if inactive and any(view[field][other] != inactive[field][other] for field in ('lastRouteByTree', 'focusTargetByTree')):
@@ -1438,8 +1594,8 @@ def check_task_overview_return(before, after):
     """Permit only the explicit relationship-to-overview presentation change."""
     same = lambda a, b: json.dumps(a, sort_keys=True) == json.dumps(b, sort_keys=True)
     tree = before['route']['tree']
-    if tree not in ('l', 'c') or before['selectedRelation'] != 'methods:relation:90' or before['relationDisclosure']['open'] is not True:
-        raise RuntimeError('Overview return did not begin at the selected open relation')
+    if tree not in ('l', 'c') or before['selectedRelation'] != 'methods:relation:90':
+        raise RuntimeError('Overview return did not begin at the selected relation')
     for value in (before, after):
         if (not isinstance(value['historyEntryKey'], str) or not value['historyEntryKey'] or
                 type(value['historyLength']) is not int or value['historyLength'] < 1 or
@@ -1636,8 +1792,7 @@ def task_route_checks(driver, report, save, capture, prefix, base, science, serv
     rel = '[data-selected-task-relation="methods:relation:90"]'
     claim = expected['claim']
     cs = rel + ' [data-task-change-claim="' + claim['id'] + '"]'
-    specs = [{'selector': rel + ' > h2', 'text': 'SemExp → PONI · 复用组件并替换策略'},
-             {'selector': cs + ' .np-change-claim', 'text': claim['statement']},
+    specs = [{'selector': cs + ' .np-change-claim', 'text': claim['statement']},
              {'selector': cs + ' > p', 'text': '原文定位：' + '；'.join(claim['locator'])},
              {'selector': cs + ' .np-source a', 'renderedText': '；'.join(claim['sourceRefs'][0]['locator']) + ' ↗', 'href': claim['sourceRefs'][0]['url']},
              {'selector': cs + ' .np-source > a + span', 'text': expected['claimSourceStatus']}]
@@ -1672,7 +1827,7 @@ def task_route_checks(driver, report, save, capture, prefix, base, science, serv
     returned = transition_record(driver, record, save, 'relation-to-task', lambda: driver.click(driver.selector('#np-task-route-return')),
         lambda: driver.js(TASK_OVERVIEW_RETURN_WAIT_JS, restored_relation['route'], 'np-task-route-relations-summary'))
     check_task_overview_return(returned['before'], returned['after'])
-    scene('-26-return-objectnav-task', [{'selector': '#np-task-route-relations-summary', 'region': 'canvas'},
+    scene('-26-return-objectnav-task', [{'selector': '#np-task-route-relations-summary', 'region': 'toolbar'},
         {'selector': tree_label_selector(restored_relation['route']['node']), 'region': 'canvas',
          'text': science['positions'][restored_relation['route']['node']]['label']}], scroll=False)
     task_overview_history_checks(driver, record, save, returned['before'], returned['after'])
@@ -1814,8 +1969,8 @@ def task_density_expected(science):
         expected = original['scopes'][sid]
         local_count = sum(r['scope'] == 'current-scope' for r in expected['relations'])
         outside_count = len(expected['relations']) - local_count
-        summary = '方法之间的已核关系（' + str(local_count) + '）' + (' · 范围外关联（' + str(outside_count) + '）' if outside_count else '')
-        proofs = [{'selector': '#np-task-route-relations-summary', 'region': 'canvas', 'text': summary}, label(expected['roots'][0])]
+        summary = '方法关系 ' + str(local_count) + (' · 范围外 ' + str(outside_count) if outside_count else '')
+        proofs = [{'selector': '#np-task-route-relations-summary', 'region': 'toolbar', 'text': summary}, label(expected['roots'][0])]
         if sid == 'task:category-objectnav':
             proofs += [label(expected['groups'][0]), {'selector': tree_label_selector(original['poni']['id']), 'region': 'canvas', 'text': 'PONI'}]
         elif sid == 'task:imagenav':
@@ -1829,7 +1984,7 @@ def task_density_expected(science):
     if any(science['positions'][pid]['childIds'] for pid in roots):
         raise RuntimeError('AVOS source inventory changed; review the natural-entry contract')
     cases.append({'scope': sid, 'name': 'avos-inventory-gap', 'expected': {'roots': roots, 'groups': [], 'methods': [], 'relations': []},
-                  'proofs': [{'selector': '#np-task-route-relations-summary', 'region': 'canvas', 'text': '方法之间的已核关系（0）'}, label(roots[0]), {'selector': '#np-tree .np-parallel-gap', 'region': 'canvas', 'text': '当前范围尚无已整理的方法分枝；保留任务定义和原文入口。'}], 'empty': True})
+                  'proofs': [{'selector': '#np-task-route-relations-summary', 'region': 'toolbar', 'text': '方法关系 0'}, label(roots[0]), {'selector': '#np-tree .np-parallel-gap', 'region': 'canvas', 'text': '当前范围尚无已整理的方法分枝；保留任务定义和原文入口。'}], 'empty': True})
     return cases
 
 
@@ -1843,7 +1998,7 @@ def check_task_density_snapshot(data, case):
             data['density']['state'] != 'ready' or not data['density']['selectedReady'] or
             data['activeTree'] != 'l' or data['treeCount'] != 1 or data['forestCount'] != 1 or
             data['rovingCount'] != 1 or data['inactiveItemCount'] or data['readerLists'] or data['selectedRelation'] or
-            data['readerScroll'] != {'top': 0, 'left': 0} or data['treeScroll'] != {'top': 0, 'left': 0} or
+            data['window'] != {'x': 0, 'y': 0} or data['readerScroll'] != {'top': 0, 'left': 0} or data['treeScroll'] != {'top': 0, 'left': 0} or
             any(p['top'] != 0 or p['left'] != 0 for p in data['density']['internalScroll'])):
         raise RuntimeError('Natural entry is not its ready, unscrolled, single-tree task root')
     known = {r['position']['id']: r for r in expected['methods']}
@@ -1856,7 +2011,7 @@ def check_task_density_snapshot(data, case):
     local_count = sum(r['scope'] == 'current-scope' for r in expected['relations'])
     if (not disclosure or disclosure['tag'] != 'DETAILS' or disclosure['open'] or
             disclosure['id'] != 'np-task-route-relations' or disclosure['summary'] != 'np-task-route-relations-summary' or
-            not disclosure['beforeTree'] or disclosure['insideTree'] or
+            disclosure['insideTree'] or disclosure['insideTreeScroll'] or not disclosure['toolbar'] or
             disclosure['current'] != str(local_count) or disclosure['outside'] != str(len(expected['relations']) - local_count)):
         raise RuntimeError('Natural relationship disclosure is misplaced, expanded or miscounts source relationships')
     actual_relations = [{k: r.get(k) for k in ('id', 'type', 'renderAsTree', 'scope', 'from', 'to', 'control')} for r in data['relationEntries']]
@@ -1870,7 +2025,7 @@ def task_density_checks(driver, report, save, capture, prefix, base, science):
     """Four natural entry viewports; no scroll, reveal, fit, focus or disclosure setup."""
     cases = task_density_expected(science)
     record = {'viewport': prefix, 'capturesExpected': 4, 'scenes': [],
-              'screenKind': 'natural_initial_task_workspace', 'documentTopClaimed': False}
+              'screenKind': 'natural_initial_task_workspace', 'documentTopClaimed': True}
     report.setdefault('taskDensityChecks', []).append(record)
     save()
     for case in cases:
@@ -1946,6 +2101,83 @@ def task_density_checks(driver, report, save, capture, prefix, base, science):
                 raise RuntimeError('Natural task-entry screenshot changed its initial view: ' + key)
         item['status'] = 'captured_for_human_review'
         save()
+
+
+def desktop_hierarchy_checks(driver, report, save, capture, prefix, base, science):
+    """Natural S1/S2 screens and fixed identity while real reader input scrolls."""
+    expected = task_route_expected(science)
+    poni = expected['poni']
+    record = {'viewport': prefix, 'status': 'checking', 'transitions': []}
+    report.setdefault('desktopHierarchyChecks', []).append(record)
+    save()
+
+    def shell():
+        return driver.js(DESKTOP_SHELL_SNAPSHOT_JS)
+
+    def ready(pid):
+        return driver.js("var a=window.NavigationProductApp,p=a&&a.getBundle().positions[arguments[0]];return p&&a.getState().route.node===p.id&&a.getContent().ready(p.entityId)&&document.querySelector('[data-load-state]')?.dataset.loadState==='ready';", pid)
+
+    driver.call('POST', '/url', {'url': base})
+    wait_for(lambda: driver.js("return !!window.NavigationProductApp&&document.querySelector('[data-load-state]')?.dataset.loadState==='ready'"))
+    driver.click(driver.selector('[data-task-open="task:category-objectnav"]'))
+    wait_for(lambda: driver.js("return document.querySelector('#np-task-route-canvas [data-task-route-state=ready]')"))
+    driver.settle()
+    record['taskBeforePicker'] = shell()
+    check_desktop_shell(record['taskBeforePicker'])
+    driver.click(driver.selector('#np-task-route-relations-summary'))
+    driver.settle()
+    record['taskWithPicker'] = shell()
+    driver.click(driver.selector('[data-task-change="methods:relation:90"]'))
+    wait_for(lambda: driver.js("return document.querySelector('[data-selected-task-relation=\"methods:relation:90\"]')&&document.querySelector('[data-relation-state]')?.dataset.relationState==='ready'"))
+    driver.settle()
+    record['relation'] = shell()
+    save()
+    check_desktop_shell(record['relation'])
+    roots = expected['scopes'][poni['scopeId']]['roots']
+    first_group = expected['scopes'][poni['scopeId']]['groups'][0]
+    semexp = next(p for p in science['positions'].values() if p['scopeId'] == poni['scopeId'] and p['tree'] == 'l' and p['entityId'] == 'methods:pipeline-semexp')
+    check_relation_canvas_stability(record['taskBeforePicker'], record['taskWithPicker'], record['relation'], [roots[0], first_group, semexp['id'], poni['id']])
+    if record['relation']['title']['text'] != 'SemExp → PONI · 复用组件并替换策略':
+        raise RuntimeError('Fixed relationship heading changed exact scientific identity')
+    capture(prefix + '-32-s1-relation-90')
+
+    # This is a real reader scroll. Fixed title/version must keep the same pixels.
+    driver.call('POST', '/actions', {'actions': [{'type': 'wheel', 'id': 'fixed-reader-identity', 'actions': [{'type': 'scroll', 'origin': driver.selector('#np-detail-scroll'), 'x': 0, 'y': 0, 'deltaX': 0, 'deltaY': 180, 'duration': 100}]}]})
+    driver.settle()
+    record['relationScrolled'] = shell()
+    save()
+    check_desktop_shell(record['relationScrolled'])
+    if (record['relationScrolled']['title'] != record['relation']['title'] or
+            record['relationScrolled']['meta'] != record['relation']['meta'] or
+            record['relationScrolled']['offsets']['tree'] != record['relation']['offsets']['tree'] or
+            record['relationScrolled']['offsets']['reader']['top'] <= 0):
+        raise RuntimeError('Actual reader scroll moved fixed identity, altered the tree or did not scroll its content')
+    endpoint = reveal_control(driver, {'selector': '[data-selected-task-relation="methods:relation:90"] [data-change-target="' + poni['id'] + '"]'})
+    driver.click(endpoint)
+    wait_for(lambda: ready(poni['id']))
+    driver.settle()
+    record['method'] = shell()
+    save()
+    check_desktop_shell(record['method'])
+    for key in ('analysisEntry', 'analysisStatus'):
+        if not _reader_proof(record['method'][key], record['method']['pane'], record['method']['viewport'], font_size=15):
+            raise RuntimeError('Imported version analysis status and main action are not immediately readable')
+    entry_box = record['method']['analysisEntry']['rect']
+    if entry_box['y'] + entry_box['height'] > 320:
+        raise RuntimeError('Version analysis main action is below its fixed first-screen entry')
+    driver.click(driver.selector('#np-open-version-analysis'))
+    entry = science['analyses'][poni['paperId']][poni['versionId']]
+    answer = first_analysis_answer(science, entry)
+    if answer is None:
+        raise RuntimeError('Reviewed imported version has no original analysis answer')
+    wait_for(lambda: ready(answer['id']))
+    driver.settle()
+    record['analysis'] = shell()
+    save()
+    check_analysis_first_answer(record['analysis'], answer, entry, science['entities'][answer['entityId']]['detail']['answer']['answer'], science['versions'][answer['versionId']]['label'])
+    capture(prefix + '-33-s2-first-answer')
+    record['status'] = 'captured_for_human_review'
+    save()
 
 
 def exploration_state_checks(driver, report, save, capture, prefix, base, science):
@@ -2052,24 +2284,48 @@ def exploration_state_checks(driver, report, save, capture, prefix, base, scienc
     imported = snapshot()['analysisEntry']
     if imported != {'state': 'imported', 'paper': 'poni', 'version': expected['poni']['versionId']}:
         raise RuntimeError('PONI imported-analysis entry belongs to another source version')
+    entry = science['analyses']['poni'][expected['poni']['versionId']]
+    first_answer = first_analysis_answer(science, entry)
+    if first_answer is None:
+        raise RuntimeError('Imported source version has no actual analysis answer')
     analysis_scene('-30-analysis-imported-entry', [
-        {'selector': '[data-analysis-state="imported"] > p', 'text': '本版本已导入：22 个原模板节点已填，0 个实例节点已填。'},
-        {'selector': '#np-open-version-analysis', 'text': '打开本版本解析'},
-        {'selector': '#np-open-analysis-template', 'text': '通用原59节点模板（未填答参考）'}])
+        {'selector': '[data-analysis-state="imported"] > p', 'region': 'analysis-entry', 'text': '本版本部分解析：' + str(entry['answeredOriginalCount']) + '/' + str(entry['originalNodeCount']) + ' 原节点已填 · ' + str(entry['answeredInstanceCount']) + ' 个实例答案'},
+        {'selector': '#np-open-version-analysis', 'region': 'analysis-entry', 'text': '阅读本版本已有回答'},
+        {'selector': '#np-open-analysis-structure', 'region': 'analysis-entry', 'text': '查看完整' + str(entry['originalNodeCount']) + '节点结构'}])
     transition_record(driver, record, save, 'open-imported-version-analysis', lambda: driver.click(reveal_control(driver, {'selector': '#np-open-version-analysis'})),
-        lambda: ready_node(science['analyses']['poni'][expected['poni']['versionId']]['roots'][0]))
+        lambda: ready_node(first_answer['id']))
     analysis = snapshot()
     entry = science['analyses']['poni'][expected['poni']['versionId']]
-    if (analysis['route']['node'] != entry['roots'][0] or analysis['route']['template'] is not None or
+    if (analysis['route']['node'] != first_answer['id'] or analysis['route']['template'] is not None or
             analysis['route']['paper'] != 'poni' or analysis['route']['version'] != expected['poni']['versionId'] or entry['answeredOriginalCount'] != 22):
         raise RuntimeError('Imported A was replaced with a generic template or another version')
     record['scenes'].append({'name': prefix + '-30-analysis-imported', 'state': analysis, 'sourceAnalysis': entry})
     save()
     capture(prefix + '-30-analysis-imported')
     transition_record(driver, record, save, 'return-from-imported-analysis', lambda: driver.click(driver.selector('.np-return-previous')), lambda: ready_node(expected['poni']['id']))
+    transition_record(driver, record, save, 'open-explicit-analysis-root-coverage', lambda: driver.click(driver.selector('#np-open-analysis-structure')),
+        lambda: ready_node(entry['roots'][0]))
+    root_coverage = snapshot()
+    root_contract = driver.js("var a=NavigationProductApp,b=a.getBundle(),r=a.getState().route,p=b.positions[r.node],ids=NavigationProductModel.descendants(b,arguments[0].roots);return {root:document.querySelector('[data-analysis-root]')?.dataset.analysisRoot,kind:p.kind,positions:ids.map(id=>({id:id,parent:b.positions[id].parentId})),chapters:[...document.querySelectorAll('[data-analysis-chapter]')].map(e=>e.dataset.analysisChapter)};", entry)
+    root_coverage['rootContract'] = root_contract
+    record['analysisRootCoverage'] = root_coverage
+    save()
+    def source_preorder(pid):
+        return [pid] + [item for child in science['positions'][pid]['childIds'] for item in source_preorder(child)]
+    original_positions = [pid for root in entry['roots'] for pid in source_preorder(root)]
+    if (root_contract['root'] != entry['roots'][0] or root_contract['kind'] == 'analysis_answer' or
+            root_contract['positions'] != [{'id': pid, 'parent': science['positions'][pid]['parentId']} for pid in original_positions] or
+            root_contract['chapters'] != science['positions'][entry['roots'][0]]['childIds']):
+        raise RuntimeError('Explicit analysis root lost original topology, chapter coverage or structural role')
+    if root_coverage['route']['node'] != entry['roots'][0] or root_coverage['route']['template'] is not None:
+        raise RuntimeError('Explicit source root no longer opens the version coverage view')
+    record['scenes'].append({'name': prefix + '-30-analysis-root-coverage', 'state': root_coverage})
+    save()
+    capture(prefix + '-30-analysis-root-coverage')
+    transition_record(driver, record, save, 'return-from-analysis-root-coverage', lambda: driver.click(driver.selector('.np-return-previous')), lambda: ready_node(expected['poni']['id']))
     vlfm = next(p for p in science['positions'].values() if p['scopeId'] == 'task:category-objectnav' and p['tree'] == 'l' and p['paperId'] == 'vlfm' and p['kind'] == 'pipeline_recipe')
     select(vlfm['id'])
-    missing_spec = {'selector': '[data-analysis-state="not-imported"] > p', 'text': '本版本尚未导入逐节点解析；未填状态保留。'}
+    missing_spec = {'selector': '[data-analysis-state="not-imported"] > p', 'region': 'analysis-entry', 'text': '本版本未导入逐节点解析；未填状态保留。'}
     missing = snapshot()
     if missing['analysisEntry'] != {'state': 'not-imported', 'paper': vlfm['paperId'], 'version': vlfm['versionId'] or ''}:
         raise RuntimeError('Missing A was presented as imported answers')
@@ -2080,6 +2336,8 @@ def exploration_state_checks(driver, report, save, capture, prefix, base, scienc
     if no_answer['route']['node'] is not None or no_answer['route']['template'] is not None or not driver.js("return document.querySelector('#np-tree .np-empty')?.textContent.includes('尚未导入原59节点解析')"):
         raise RuntimeError('Unimported version silently opened a template as its answers')
     transition_record(driver, record, save, 'return-missing-version-state', lambda: driver.click(driver.selector('.np-return-previous')), lambda: ready_node(vlfm['id']))
+    transition_record(driver, record, save, 'open-analysis-template-disclosure', lambda: driver.click(driver.selector('#np-reader-analysis-entry .np-analysis-reference > summary')),
+        lambda: driver.js("return document.querySelector('#np-reader-analysis-entry .np-analysis-reference').open"))
     transition_record(driver, record, save, 'open-explicit-reference-template', lambda: driver.click(reveal_control(driver, {'selector': '#np-open-analysis-template'})),
         lambda: driver.js("return NavigationProductApp.getState().route.template==='1'"))
     template_root = science['template']['roots'][0]
@@ -2094,7 +2352,7 @@ def exploration_state_checks(driver, report, save, capture, prefix, base, scienc
         {'selector': '#np-detail-content .np-detail-block > p', 'text': '这是通用模板问题，当前论文版本未填答；不表示原论文没有讨论，也不借用其他论文的答案。'}])
 
     # Legacy routes are real cold URL loads, not injected application state.
-    routes = [literature['route'], challenge['route'], analysis['route']]
+    routes = [literature['route'], challenge['route'], analysis['route'], root_coverage['route']]
     global_route = driver.js('var a=NavigationProductApp;return NavigationProductModel.routeForPosition(a.getBundle(),a.getState().route,a.getBundle().researchMap.roots[0]);')
     routes.append(global_route)
     claim_route = dict(literature['route'], claim=task_route_claims(science, expected['poni'])[0]['id'])
@@ -2136,7 +2394,7 @@ def main():
               'scienceSha256': sha(dist / 'research/navigation/product-data.json'),
               'visualAcceptance': 'pending_human_review', 'captures': [], 'status': 'starting',
               'reviewScope': 'user_requested_desktop_only_2026-10-10',
-              'browserFullscreenRequested': False,
+              'browserFullscreenRequested': False, 'displayContractMigrations': DISPLAY_CONTRACT_MIGRATIONS,
               'capturePlan': [str(w) + 'x' + str(h) + suffix for w, h in VIEWPORTS for suffix in SCENE_NAMES]}
     report['frontendSources'] = {name: sha(name) for name in ('assets/navigation-product.js', 'assets/navigation-product-model.js', 'assets/navigation-product.css', 'scripts/navigation_product.py')}
     report['captureSources'] = {name: sha(name) for name in ('scripts/navigation_screenshots.py', 'tests/test_navigation_screenshots.py')}
@@ -2177,6 +2435,7 @@ def main():
           bounds:[...document.querySelectorAll('#np-workspace,#np-tree-scroll,.np-reading-pane,#np-tree .np-node-row')].map(e=>{let r=e.getBoundingClientRect();return {id:e.id,position:e.closest('[data-position]')?.dataset.position,text:e.textContent.slice(0,180),x:r.x,y:r.y,width:r.width,height:r.height};}),
           nodeCount:document.querySelectorAll('#np-tree [role=treeitem]').length,
           focus:document.activeElement?.id, bodyWidth:document.body.scrollWidth};''')
+        data['desktopShell'] = driver.js(DESKTOP_SHELL_SNAPSHOT_JS)
         data['screenKind'] = 'default_reading_overview' if require_home else 'tree_or_reader'
         data['readingVisibility'] = driver.js('''function rect(e){if(!e)return null;let r=e.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};}
           let a=NavigationProductApp,b=a.getBundle(),root=b.researchMap.roots[0];
@@ -2184,7 +2443,7 @@ def main():
           function foreground(e){let c=color(getComputedStyle(e).color);return c&&c.alpha===1?c.rgb:[];}
           function background(e){while(e){let c=color(getComputedStyle(e).backgroundColor);if(!c)return [];if(c.alpha===1)return c.rgb;if(c.alpha!==0)return [];e=e.parentElement;}return [255,255,255];}
           function opaqueVisible(e){while(e){let s=getComputedStyle(e);if(Number(s.opacity)!==1||s.visibility!=='visible'||s.display==='none')return false;e=e.parentElement;}return true;}
-          let reader=document.getElementById('np-detail-scroll'),readerRect=rect(reader),heading=reader.querySelector('.np-reader-heading'),headingRect=rect(heading),contentTop=readerRect.y;
+          let reader=document.getElementById('np-detail-scroll'),readerRect=rect(reader),heading=document.getElementById('np-reader-heading'),headingRect=rect(heading),contentTop=readerRect.y;
           if(heading&&['sticky','fixed'].includes(getComputedStyle(heading).position)&&headingRect.height>0)contentTop=Math.max(contentTop,headingRect.y+headingRect.height);
           let contentRect={x:readerRect.x,y:contentTop,width:readerRect.width,height:Math.max(0,readerRect.y+readerRect.height-contentTop)};
           function uncovered(e){let r=e.getBoundingClientRect();return [[.5,.5],[.05,.05],[.95,.05],[.05,.95],[.95,.95]].every(([fx,fy])=>{let hit=document.elementFromPoint(r.x+r.width*fx,r.y+r.height*fy);return hit&&(hit===e||e.contains(hit));});}
@@ -2220,6 +2479,7 @@ def main():
                 data['networkFailures'].append({'status': response['status'], 'path': urllib.parse.urlsplit(response['url']).path})
         report['captures'].append(data)
         save()
+        check_desktop_shell(data['desktopShell'])
         if not data['ready'] or data['loadState'] != 'ready' or not data['fallbackHidden'] or (not require_home and not data['nodeCount']) or data['fonts'] != 'loaded':
             raise RuntimeError('Blank, unready, or font-pending capture')
         if not data['pixelVariation']:
@@ -2251,7 +2511,7 @@ def main():
             if not visible_flow:
                 raise RuntimeError('Method screenshot does not show any complete actual mechanism field inside the reader')
 
-    def reading_home():
+    def reading_home(relation_mode='default'):
         driver.settle()
         data = driver.js(VISUAL_GEOMETRY + """
           var a=NavigationProductApp,state=a.getState(),landing=document.getElementById('np-reading-landing');
@@ -2270,7 +2530,7 @@ def main():
           function touches(q,r){return q.x>=r.x-2&&q.x<=r.x+r.width+2&&q.y>=r.y-2&&q.y<=r.y+r.height+2&&Math.min(Math.abs(q.x-r.x),Math.abs(q.x-r.x-r.width),Math.abs(q.y-r.y),Math.abs(q.y-r.y-r.height))<=3;}
           function node(id){return [...m.querySelectorAll('[data-map-position]')].find(n=>n.dataset.mapPosition===id);}
           function edge(e){var cs=getComputedStyle(e),stroke=color(cs.stroke),alpha=stroke?stroke.alpha*Number(cs.strokeOpacity):0,display=true;for(var n=e;n;n=n.parentElement){var st=getComputedStyle(n);alpha*=Number(st.opacity);if(st.display==='none'||st.visibility!=='visible')display=false;}var background=bg(m),foreground=stroke&&background.length===3?stroke.rgb.map((v,i)=>v*alpha+background[i]*(1-alpha)):[],len=e.getTotalLength(),matrix=e.getScreenCTM(),mr=rect(m),inBounds=true,uncovered=0,ownHits=[];for(var i=1;i<20;i++){var q=e.getPointAtLength(len*i/20),z=new DOMPoint(q.x,q.y).matrixTransform(matrix);if(z.x<mr.x-1||z.y<mr.y-1||z.x>mr.x+mr.width+1||z.y>mr.y+mr.height+1||z.x<0||z.y<0||z.x>innerWidth||z.y>innerHeight)inBounds=false;var hit=document.elementFromPoint(z.x,z.y);if(hit&&(hit===e||hit===m||hit===e.closest('svg')))uncovered++;if(hit===e)ownHits.push({x:z.x,y:z.y,fraction:i/20});}return {visible:display&&alpha>0&&foreground.length===3&&parseFloat(cs.strokeWidth)>0,length:len,foreground:foreground,background:background,inBounds:inBounds,uncovered:uncovered>=3,ownHits:ownHits};}
-          return {viewport:{x:0,y:0,width:innerWidth,height:innerHeight},map:rect(m),mapVisible:!m.hidden&&opaque(m)&&m.clientWidth>0&&m.clientHeight>0,expectedIds:wanted,expectedEdges:wanted.filter(id=>p[id].parentId&&wanted.includes(p[id].parentId)).map(id=>[p[id].parentId,id]),expectedChallengeLabels:arguments[1],expectedRelations:arguments[2],
+          return {relationsVisible:m.dataset.relationsVisible,selectedRelation:m.dataset.selectedRelation||null,relationControls:[...document.querySelectorAll('[data-relation-select]')].map(e=>e.dataset.relationSelect),viewport:{x:0,y:0,width:innerWidth,height:innerHeight},map:rect(m),mapVisible:!m.hidden&&opaque(m)&&m.clientWidth>0&&m.clientHeight>0,expectedIds:wanted,expectedEdges:wanted.filter(id=>p[id].parentId&&wanted.includes(p[id].parentId)).map(id=>[p[id].parentId,id]),expectedChallengeLabels:arguments[1],expectedRelations:arguments[2],
             directoryTitle:box(node(td)),
             nodes:[...m.querySelectorAll('[data-map-position]')].map(n=>Object.assign({id:n.dataset.mapPosition},box(n))),
             edges:[...m.querySelectorAll('path[data-map-parent][data-map-child]')].map(e=>Object.assign({parent:e.dataset.mapParent,child:e.dataset.mapChild,endpointsMatch:!!node(e.dataset.mapParent)&&!!node(e.dataset.mapChild)&&touches(endpoint(e,false),rect(node(e.dataset.mapParent)))&&touches(endpoint(e,true),rect(node(e.dataset.mapChild)))},edge(e))),
@@ -2280,18 +2540,28 @@ def main():
         """, [x[0] for x in TASK_INDEX], CHALLENGE_LABELS, [[r['id'],r['from'],r['to'],r['relationType']] for r in relation_expected], {entity:science['entities'][entity]['label'] for entity in CHALLENGE_LABELS})
         report.setdefault('graphicalOverviewChecks', []).append(graph)
         save()
+        if (graph['relationsVisible'] != ('true' if relation_mode == 'all' else 'false') or
+                graph['selectedRelation'] is not None):
+            raise RuntimeError('Initial/show-all overview relationship mode differs from its explicit display contract')
+        graph['checkedRelationMode'] = relation_mode
         check_graphical_map(graph)
 
 
     def relationship_checks(prefix, base):
         before_route = driver.js('return NavigationProductApp.getState().route')
+        if driver.js("return document.getElementById('np-overview-map').dataset.relationsVisible") != 'false':
+            raise RuntimeError('Default overview must not expose every non-tree relationship')
+        driver.click(driver.selector('#np-map-relations-toggle'))
+        if driver.js("return document.getElementById('np-overview-map').dataset.relationsVisible") != 'true':
+            raise RuntimeError('Show-all relationship lines control failed')
+        reading_home(relation_mode='all')
         driver.click(driver.selector('#np-map-relations-toggle'))
         if driver.js("return document.getElementById('np-overview-map').dataset.relationsVisible") != 'false':
-            raise RuntimeError('Relationship lines visibility control failed')
+            raise RuntimeError('Single-selection relationship lines control failed')
         driver.click(driver.selector('#np-task-relations > summary'))
 
         def evidence(expected, expected_focus=None):
-            data = driver.js("""var id=arguments[0],e=[...document.querySelectorAll('[data-task-relation]')].find(n=>n.dataset.taskRelation===id);return {id:e.dataset.taskRelation,type:e.dataset.relationType,from:e.dataset.fromEntity,to:e.dataset.toEntity,open:document.getElementById('np-task-relations').open,focus:document.activeElement.id,route:NavigationProductApp.getState().route,text:e.textContent,sources:[...e.querySelectorAll('[data-task-relation-source]')].map(n=>({id:n.dataset.taskRelationSource,url:n.href,version:n.dataset.sourceVersion,status:n.dataset.sourceStatus}))};""", expected['id'])
+            data = driver.js("""var id=arguments[0],e=[...document.querySelectorAll('[data-task-relation]')].find(n=>n.dataset.taskRelation===id);return {id:e.dataset.taskRelation,type:e.dataset.relationType,from:e.dataset.fromEntity,to:e.dataset.toEntity,open:!e.hidden&&!document.getElementById('np-overview-relation-panel').hidden,selectorOpen:document.getElementById('np-task-relations').open,focus:document.activeElement.id,route:NavigationProductApp.getState().route,text:e.textContent,sources:[...e.querySelectorAll('[data-task-relation-source]')].map(n=>({id:n.dataset.taskRelationSource,url:n.href,version:n.dataset.sourceVersion,status:n.dataset.sourceStatus}))};""", expected['id'])
             data['beforeRoute'] = before_route
             if expected_focus is not None:
                 data['expectedFocus'] = expected_focus
@@ -2316,6 +2586,8 @@ def main():
             return data
 
         for i, expected in enumerate(relation_expected):
+            if not driver.js("return document.getElementById('np-task-relations').open"):
+                driver.click(driver.selector('#np-task-relations > summary'))
             control = driver.selector('[data-relation-select="' + expected['id'] + '"]')
             driver.js("arguments[0].scrollIntoView({block:'center'});", control)
             driver.settle()
@@ -2325,12 +2597,17 @@ def main():
             driver.click(control)
             driver.settle()
             evidence(expected)
+            selected_lines = driver.js("return [...document.querySelectorAll('path[data-map-relation]')].filter(e=>{var s=getComputedStyle(e);return s.display!=='none'&&s.visibility==='visible'&&Number(s.opacity)>0;}).map(e=>e.dataset.mapRelation);")
+            if selected_lines != [expected['id']]:
+                raise RuntimeError('Choosing one relationship must expose only its exact source path')
             if i in (0, 2, 6):
                 driver.js("document.getElementById(arguments[0]).scrollIntoView({block:'start'});", 'np-map-relation-evidence-' + expected['id'])
                 driver.settle()
                 capture(prefix + '-13-relation-' + expected['id'].split(':')[-1], require_home=True)
         # Exercise native keyboard activation, not a script-generated click event.
         expected = relation_expected[2]
+        if not driver.js("return document.getElementById('np-task-relations').open"):
+            driver.click(driver.selector('#np-task-relations > summary'))
         control = driver.selector('[data-relation-select="' + expected['id'] + '"]')
         driver.js("arguments[0].scrollIntoView({block:'center'});arguments[0].focus({preventScroll:true});", control)
         driver.call('POST', '/element/' + control[ELEMENT] + '/value', {'text': '\ue007', 'value': ['\ue007']})
@@ -2354,16 +2631,16 @@ def main():
         control = driver.js("return document.getElementById(arguments[0]);", 'np-relation-entry-' + expected['id'] + '-' + expected['to'])
         driver.js("arguments[0].scrollIntoView({block:'center'});arguments[0].focus({preventScroll:true});", control)
         driver.settle()
-        endpoint_origin = driver.js("return {focus:document.activeElement.id,window:scrollY,landing:document.getElementById('np-reading-landing').scrollTop};")
+        endpoint_origin = driver.js("return {focus:document.activeElement.id,window:scrollY,landing:document.getElementById('np-reading-landing').scrollTop,relationPanel:document.getElementById('np-overview-relation-panel').scrollTop};")
         driver.click(control)
         driver.settle()
         if driver.js('return NavigationProductApp.getState().route.scope') != expected['to']:
             raise RuntimeError('Relationship endpoint entered another scope')
         driver.call('POST', '/back', {})
         driver.settle()
-        if driver.js('return NavigationProductApp.getState().route') != before_route or not driver.js("return document.getElementById('np-task-relations').open"):
+        if driver.js('return NavigationProductApp.getState().route') != before_route or not driver.js("return !document.getElementById('np-overview-relation-panel').hidden"):
             raise RuntimeError('Relationship Back lost the original route or evidence disclosure')
-        back_origin = driver.js("return {focus:document.activeElement.id,window:scrollY,landing:document.getElementById('np-reading-landing').scrollTop};")
+        back_origin = driver.js("return {focus:document.activeElement.id,window:scrollY,landing:document.getElementById('np-reading-landing').scrollTop,relationPanel:document.getElementById('np-overview-relation-panel').scrollTop};")
         if back_origin != endpoint_origin:
             raise RuntimeError('Relationship endpoint Back lost exact saved focus or reading scroll')
         evidence(expected, expected_focus=endpoint_origin['focus'])
@@ -2372,6 +2649,8 @@ def main():
             driver.call('POST', '/url', {'url': 'about:blank'})
             driver.call('POST', '/url', {'url': base})
             wait_for(lambda: driver.js("return !!window.NavigationProductApp&&document.querySelector('[data-load-state]')?.dataset.loadState==='ready'"))
+            driver.settle()
+            driver.click(driver.selector('#np-map-relations-toggle'))
             driver.settle()
             point = driver.js("""var e=[...document.querySelectorAll('path[data-map-relation]')].find(n=>n.dataset.mapRelation===arguments[0]),len=e.getTotalLength(),matrix=e.getScreenCTM();for(var i=10;i<=90;i++){var q=e.getPointAtLength(len*i/100),p=new DOMPoint(q.x,q.y).matrixTransform(matrix),x=Math.round(p.x),y=Math.round(p.y);if(x<1||y<1||x>=innerWidth-1||y>=innerHeight-1)continue;if(document.elementFromPoint(x,y)===e)return {x:x,y:y,id:e.dataset.mapRelation,fraction:i/100};}return null;""",rid)
             if not point:
@@ -2512,6 +2791,7 @@ def main():
             prefix = f'{width}x{height}'
             reading_home()
             capture(prefix + '-00-default-reading-overview', require_home=True)
+            capture(prefix + '-31-s0-reading-hierarchy', require_home=True)
             relationship_checks(prefix, base)
             driver.click(driver.selector('#np-overview-toggle'))
             driver.settle()
@@ -2579,7 +2859,7 @@ def main():
                 function rect(n){var q=n.getBoundingClientRect();return {x:q.x,y:q.y,width:q.width,height:q.height};}
                 function ids(n){return Array.from(n.querySelectorAll('[data-context-position]'),x=>x.dataset.contextPosition);}
                 var root=b.researchMap.roots[0],scope=b.researchMap.canonicalScopePositionIds[r.scope];
-                return {route:r,expectedIds:expected,localIds:ids(local),localTrees:ids(local).map(id=>b.positions[id].tree),globalIds:ids(entry),expectedGlobalIds:scope&&scope!==root?[root,scope]:[root],globalSeparators:entry.querySelectorAll('.np-path-separator').length,labels:[entry,local].map(n=>n.querySelector('.np-context-label').textContent),rows:[entry,local].map(rect),viewport:{x:0,y:0,width:innerWidth,height:innerHeight},buttons:Array.from(host.querySelectorAll('[data-context-position]'),n=>{var q=rect(n),points=[[.5,.5],[.1,.1],[.9,.1],[.1,.9],[.9,.9]],uncovered=points.every(v=>{var hit=document.elementFromPoint(q.x+q.width*v[0],q.y+q.height*v[1]);return !!hit&&(hit===n||n.contains(hit));});return {id:n.dataset.contextPosition,text:n.textContent,rect:q,row:rect(n.closest('[data-path-kind]')),clipped:n.scrollWidth>n.clientWidth+1||n.scrollHeight>n.clientHeight+1,uncovered:uncovered};})};
+                return {route:r,expectedIds:expected,localIds:ids(local),localTrees:ids(local).map(id=>b.positions[id].tree),globalIds:ids(entry),expectedGlobalIds:scope&&scope!==root?[root,scope]:[root],globalSeparators:entry.querySelectorAll('.np-path-separator').length,labels:[entry.querySelector('[data-context-position]').textContent,local.querySelector('.np-context-label').textContent],rows:[entry,local].map(rect),viewport:{x:0,y:0,width:innerWidth,height:innerHeight},buttons:Array.from(host.querySelectorAll('[data-context-position]'),n=>{var q=rect(n),points=[[.5,.5],[.1,.1],[.9,.1],[.1,.9],[.9,.9]],uncovered=points.every(v=>{var hit=document.elementFromPoint(q.x+q.width*v[0],q.y+q.height*v[1]);return !!hit&&(hit===n||n.contains(hit));});return {id:n.dataset.contextPosition,text:n.textContent,rect:q,row:rect(n.closest('[data-path-kind]')),clipped:n.scrollWidth>n.clientWidth+1||n.scrollHeight>n.clientHeight+1,uncovered:uncovered};})};
             """)
             report.setdefault('contextPathChecks', []).append({'viewport': prefix, 'evidence': context})
             save()
@@ -2670,6 +2950,7 @@ def main():
                 report.setdefault('directoryReturnChecks', []).append({'scope': scope, 'before': before, 'after': after})
             capture(prefix + '-12-directory-return', require_home=True)
             task_density_checks(driver, report, save, capture, prefix, base, science)
+            desktop_hierarchy_checks(driver, report, save, capture, prefix, base, science)
             task_route_checks(driver, report, save, capture, prefix, base, science, server, dist)
             exploration_state_checks(driver, report, save, capture, prefix, base, science)
         planned = [str(w) + 'x' + str(h) + suffix for w, h in VIEWPORTS for suffix in SCENE_NAMES]

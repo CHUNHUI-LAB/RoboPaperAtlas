@@ -87,14 +87,22 @@ run(start+'<em>wrong sibling</em><span> · 未固定全文快照</span></p></art
         ids = ['p'+str(i) for i in range(39)]
         edges = [['p0',x] for x in ids[1:]]
         relations = [['r'+str(i),'a','b','typed'] for i in range(7)]
-        data = {'mapVisible':True,'viewport':{'x':0,'y':0,'width':1440,'height':900},'map':{'x':0,'y':0,'width':1440,'height':900},
+        data = {'relationsVisible':'false','selectedRelation':None,'relationControls':[r[0] for r in relations],'mapVisible':True,'viewport':{'x':0,'y':0,'width':1440,'height':900},'map':{'x':0,'y':0,'width':1440,'height':900},
                 'directoryTitle':copy.deepcopy(box),'tasks':[{'scope':'s'+str(i),'expectedScope':'s'+str(i),'position':'p'+str(i),'expectedPosition':'p'+str(i)} for i in range(22)],'expectedIds':ids,'expectedEdges':edges,'expectedChallengeLabels':{'e'+str(i):'question' for i in range(13)},'expectedRelations':relations,
                 'nodes':[dict(copy.deepcopy(box),id=x) for x in ids],
                 'edges':[{'parent':a,'child':b,'visible':True,'length':25,'endpointsMatch':True,'inBounds':True,'uncovered':True,'foreground':[50,90,100],'background':[255,255,255]} for a,b in edges],
                 'challenges':[{'entity':'e'+str(i),'expectedEntity':'e'+str(i),'position':'p'+str(i),'challengeOpen':'p'+str(i),'label':copy.deepcopy(box),'title':'Original question','expectedTitle':'Original question','aria':'Original question; open'} for i in range(13)],
-                'relations':[{'id':i,'from':a,'to':b,'type':t,'visible':True,'length':25,'endpointsMatch':True,'inBounds':True,'uncovered':True,'foreground':[50,90,100],'background':[255,255,255],'ownHits':[{'x':10,'y':10}]} for i,a,b,t in relations]}
+                'relations':[{'id':i,'from':a,'to':b,'type':t,'visible':False,'length':25,'endpointsMatch':True,'inBounds':True,'uncovered':True,'foreground':[50,90,100],'background':[255,255,255],'ownHits':[{'x':10,'y':10}]} for i,a,b,t in relations]}
         MODULE.check_graphical_map(data)
-        mutations = [lambda x:x.__setitem__('mapVisible',False),lambda x:x['nodes'].pop(),
+        all_lines = copy.deepcopy(data); all_lines['relationsVisible'] = 'true'
+        for edge in all_lines['relations']: edge['visible'] = True
+        MODULE.check_graphical_map(all_lines)
+        single = copy.deepcopy(data); single['selectedRelation'] = single['relations'][2]['id']; single['relations'][2]['visible'] = True
+        MODULE.check_graphical_map(single)
+        for value in (all_lines, single):
+            bad = copy.deepcopy(value); next(e for e in bad['relations'] if e['visible'])['visible'] = False
+            with self.assertRaises(RuntimeError): MODULE.check_graphical_map(bad)
+        mutations = [lambda x:x['relationControls'].pop(),lambda x:x.update(selectedRelation='invented'),lambda x:x.__setitem__('mapVisible',False),lambda x:x['nodes'].pop(),
                      lambda x:x['nodes'][0].__setitem__('id','invented'),lambda x:x['nodes'][0].__setitem__('opaque',False),
                      lambda x:x['nodes'][0].__setitem__('unscaled',False),lambda x:x['nodes'][0]['rect'].__setitem__('y',950),
                      lambda x:x['edges'][0].__setitem__('parent','invented'),lambda x:x['edges'][0].__setitem__('visible',False),
@@ -106,7 +114,7 @@ run(start+'<em>wrong sibling</em><span> · 未固定全文快照</span></p></art
                      lambda x:x['challenges'][0].__setitem__('title','Short substitute'),lambda x:x['challenges'][0]['label'].__setitem__('visible',False),
                      lambda x:x['challenges'][0]['label'].__setitem__('clipped',True),lambda x:x['challenges'][0]['label'].__setitem__('fontSize',9),
                      lambda x:x['relations'][0].__setitem__('type','inheritance'),lambda x:x['relations'][0].__setitem__('to','wrong'),
-                     lambda x:x['relations'][0].__setitem__('visible',False)]
+                     lambda x:x['relations'][0].__setitem__('visible',True)]
         for mutate in mutations:
             bad=copy.deepcopy(data);mutate(bad)
             with self.assertRaises(RuntimeError): MODULE.check_graphical_map(bad)
@@ -189,15 +197,15 @@ run(start+'<em>wrong sibling</em><span> · 未固定全文快照</span></p></art
                 'expectedIds': ['root-c', 'insight'], 'localIds': ['root-c', 'insight'],
                 'localTrees': ['c', 'c'], 'globalIds': ['goal', 'scope'],
                 'expectedGlobalIds': ['goal', 'scope'], 'globalSeparators': 0,
-                'labels': ['全局入口', '挑战–思路树 · 当前路径'],
-                'rows': [{'x': 20, 'y': 100, 'width': 900, 'height': 30}, {'x': 20, 'y': 134, 'width': 900, 'height': 30}],
+                'labels': ['领域', '挑战–思路树'],
+                'rows': [{'x': 20, 'y': 100, 'width': 300, 'height': 30}, {'x': 340, 'y': 100, 'width': 900, 'height': 30}],
                 'viewport': {'x': 0, 'y': 0, 'width': 1440, 'height': 900},
-                'buttons': [{'uncovered': True, 'clipped': False, 'row': {'x': 20, 'y': 134, 'width': 900, 'height': 30}, 'rect': {'x': 90, 'y': 135, 'width': 200, 'height': 25}}]}
+                'buttons': [{'uncovered': True, 'clipped': False, 'row': {'x': 340, 'y': 100, 'width': 900, 'height': 30}, 'rect': {'x': 360, 'y': 101, 'width': 200, 'height': 25}}]}
         MODULE.check_context_path(data)
         mutations = [lambda x: x['localIds'].insert(0, 'literature'),
                      lambda x: x['localTrees'].__setitem__(0, 'g'),
                      lambda x: x.__setitem__('globalSeparators', 1),
-                     lambda x: x['rows'][1].__setitem__('y', 100),
+                     lambda x: x['rows'][1].__setitem__('y', 134),
                      lambda x: x['buttons'][0].__setitem__('uncovered', False),
                      lambda x: x['buttons'][0].__setitem__('clipped', True),
                      lambda x: x['rows'][1].__setitem__('y', 950),
@@ -227,8 +235,8 @@ run(start+'<em>wrong sibling</em><span> · 未固定全文快照</span></p></art
 
     def test_required_viewports(self):
         self.assertEqual(MODULE.VIEWPORTS, [(1440, 900), (1920, 1080)])
-        self.assertEqual(len(MODULE.SCENE_NAMES), 45)
-        self.assertEqual(len(set(MODULE.SCENE_NAMES)), 45)
+        self.assertEqual(len(MODULE.SCENE_NAMES), 49)
+        self.assertEqual(len(set(MODULE.SCENE_NAMES)), 49)
 
     def test_webdriver_envelope_and_loopback(self):
         driver = MODULE.Driver(12345)
@@ -276,23 +284,23 @@ class ReaderToggleChecks(unittest.TestCase):
             'graphScale': 1, 'expanded': expanded, 'preservedState': preserved,
             'history': dict(length=17, url='http://127.0.0.1/#method-vlfm', modelKey='navigation', contextKey='context', entryKey='stable-entry', timeOrigin=1000, model=copy.deepcopy(preserved), unrelated={'otherApp': {'key': 'keep'}}),
             'viewport': rect(0, 0, 1440, 900), 'window': dict(x=0, y=0), 'layout': 'reading', 'collapsed': 'false', 'focus': 'np-node-method-vlfm',
-            'panels': rect(20, 140, 1400, 720), 'columnGap': 16,
-            'treePane': proof(rect(20, 140, 836.8, 700)), 'treeProof': proof(rect(21, 205, 834.8, 580)),
-            'tree': dict(rect=rect(21, 205, 834.8, 580), client=rect(22, 206, 833, 578), left=0, top=200, scrollWidth=833, scrollHeight=978, maxLeft=0, maxTop=400),
+            'panels': rect(16, 132, 1408, 752), 'columnGap': 16,
+            'treePane': proof(rect(16, 132, 768, 752)), 'treeProof': proof(rect(17, 205, 766, 580)),
+            'tree': dict(rect=rect(17, 205, 766, 580), client=rect(18, 206, 764, 578), left=0, top=200, scrollWidth=764, scrollHeight=978, maxLeft=0, maxTop=400),
             'title': proof(rect(34, 155, 700, 32), 'VLFM · 层级来路'),
             'selected': dict(count=1, id='method-vlfm', tree='l', entity='vlfm-recipe', aria='true', scope='task:category-objectnav',
-                             row=proof(rect(40, 360, 780, 65)), label=proof(rect(60, 370, 710, 30), 'VLFM'), content=dict(x=18, y=354)),
+                             row=proof(rect(40, 360, 720, 65)), label=proof(rect(60, 370, 680, 30), 'VLFM'), content=dict(x=22, y=354)),
             'toggle': dict(tag='BUTTON', hidden=False, disabled=False, controls='np-detail-scroll', expanded='true', proof=proof(rect(150, 90, 150, 32), '收起阅读栏')),
-            'reader': dict(hidden=False, display='block', tabIndex=-1, proof=proof(rect(872.8, 140, 547.2, 720)),
-                           scroll=dict(rect=rect(872.8, 140, 547.2, 720), client=rect(873.8, 141, 545, 718), top=160, left=0, maxTop=1000, maxLeft=0, scrollHeight=1718, scrollWidth=545),
-                           heading=proof(rect(900, 142, 490, 40), 'READING DESK 所选节点'), entity='vlfm-recipe', flowCount=5, savedScroll=160, persistedScroll=160)}
+            'reader': dict(hidden=False, display='block', tabIndex=-1, proof=proof(rect(800, 132, 624, 752)),
+                           scroll=dict(rect=rect(801, 228, 622, 655), client=rect(802, 229, 620, 653), top=160, left=0, maxTop=1000, maxLeft=0, scrollHeight=1718, scrollWidth=545),
+                           heading=proof(rect(801, 133, 622, 95), 'VLFM · v1'), entity='vlfm-recipe', flowCount=5, savedScroll=160, persistedScroll=160)}
         collapsed = copy.deepcopy(original)
         collapsed.update(collapsed='true', focus='np-reader-toggle')
         for state in (collapsed['preservedState'], collapsed['history']['model']):
             state['contexts'][task_key]['taskView']['focusTargetByTree']['l'] = 'np-reader-toggle'
-        collapsed['treePane']['rect']['width'] = 1400
-        collapsed['treeProof']['rect']['width'] = collapsed['tree']['rect']['width'] = 1398
-        collapsed['tree']['client']['width'] = collapsed['tree']['scrollWidth'] = 1396
+        collapsed['treePane']['rect']['width'] = 1408
+        collapsed['treeProof']['rect']['width'] = collapsed['tree']['rect']['width'] = 1406
+        collapsed['tree']['client']['width'] = collapsed['tree']['scrollWidth'] = 1404
         collapsed['tree']['scrollHeight'] = 878
         collapsed['tree']['maxTop'] = 300
         collapsed['selected']['row']['rect']['width'] = 1340
@@ -522,7 +530,11 @@ class ReaderToggleChecks(unittest.TestCase):
             snapshot['taskContextKey'] = key
         untouched = copy.deepcopy(recorded)
         MODULE.check_reader_dom_identity(recorded['domIdentity'])
-        MODULE.check_reader_toggle_transition(original, collapsed, original, True)
+        old = MODULE._reader_toggle_preserved(original, original['route']['node'])
+        new = MODULE._reader_toggle_preserved(collapsed, 'np-reader-toggle')
+        self.assertEqual(old, new, 'historical failure was only the neutral focus projection')
+        with self.assertRaises(RuntimeError):
+            MODULE.check_reader_toggle_snapshot(original, False)
         self.assertEqual(recorded, untouched, 'validation must not erase raw diagnostic state')
 
     def test_reader_toggle_rejects_wrong_neutral_focus_and_every_unrelated_state_change(self):
@@ -699,7 +711,7 @@ const dom=new JSDOM(`<!doctype html><style>*{opacity:1;visibility:visible;transf
 <main id="navigation-product" data-reading-layout="reading" data-reader-collapsed="false">
 <button id="np-reader-toggle" aria-controls="np-detail-scroll" aria-expanded="true">收起阅读栏</button>
 <div class="np-panels" style="column-gap:16px"><section class="np-tree-pane"><h2 id="np-tree-heading">Branch</h2><div id="np-tree-scroll"><div id="np-tree"><section data-parallel-tree="l" data-scope-id="task:category-objectnav"><ul><li id="np-node-method" data-position="method" data-tree="l" data-entity="recipe" aria-selected="true"><div class="np-node-row"><button class="np-node-label">VLFM</button></div><ul><li><div class="np-node-row" id="decoy">Other row</div></li></ul></li></ul></section></div></div></section>
-<aside id="np-detail-scroll" tabindex="-1"><div class="np-reader-heading">READING DESK</div><div class="np-method-mechanism" data-mechanism-entity="recipe"><dl class="np-method-flow">${'<dd>flow</dd>'.repeat(5)}</dl></div></aside></div></main>`,{url:'http://localhost/',runScripts:'outside-only'});
+<aside class="np-reading-pane"><div id="np-reader-heading" class="np-reader-heading">VLFM v1</div><div id="np-detail-scroll" tabindex="-1"><div class="np-method-mechanism" data-mechanism-entity="recipe"><dl class="np-method-flow">${'<dd>flow</dd>'.repeat(5)}</dl></div></div></aside></div></main>`,{url:'http://localhost/',runScripts:'outside-only'});
 try {
  const w=dom.window,d=w.document,route={scope:'task:category-objectnav',tree:'l',node:'method',paper:'vlfm',version:'v1'},key='context';
  const bucket={graphScale:1,expandedByTree:{l:['root'],c:['ci']},selectedByTree:{l:'method'},focusTarget:'old',windowScroll:0,treeScrollByTree:{l:200,c:33},treeScrollLeftByTree:{l:0,c:4},detailScrollByTree:{l:160,c:44}};
@@ -711,7 +723,7 @@ try {
  function setRect(e,x,y,width,height){const r={x,y,width,height,left:x,top:y,right:x+width,bottom:y+height};rects.set(e,r);e.getBoundingClientRect=()=>r;for(const [k,v] of Object.entries({clientLeft:0,clientTop:0,clientWidth:width,clientHeight:height,scrollWidth:width,scrollHeight:height}))Object.defineProperty(e,k,{configurable:true,value:v});}
  for(const e of d.querySelectorAll('*'))setRect(e,0,0,0,0);
  const toggle=d.getElementById('np-reader-toggle'),tree=d.getElementById('np-tree-scroll'),row=d.querySelector('#np-node-method > .np-node-row'),label=row.querySelector('button'),reader=d.getElementById('np-detail-scroll');
- setRect(toggle,20,20,150,32);setRect(tree,10,100,800,600);setRect(row,30,300,750,65);setRect(label,50,310,700,30);setRect(d.getElementById('decoy'),30,500,750,65);setRect(reader,830,100,550,700);
+ setRect(toggle,20,20,150,32);setRect(tree,10,100,800,600);setRect(row,30,300,750,65);setRect(label,50,310,700,30);setRect(d.getElementById('decoy'),30,500,750,65);setRect(reader,830,200,550,600);setRect(d.querySelector('.np-reading-pane'),830,100,550,700);
  tree.scrollTop=200;reader.scrollTop=160;Object.defineProperty(tree,'scrollHeight',{configurable:true,value:1000});
  let overlay=false;
  d.elementFromPoint=(x,y)=>{if(overlay&&x>=20&&x<=170&&y>=20&&y<=52)return d.body;return [...rects.entries()].reverse().find(([e,r])=>r.width&&r.height&&x>=r.x&&x<r.right&&y>=r.y&&y<r.bottom)?.[0]||d.body;};
@@ -724,7 +736,7 @@ try {
  overlay=true;assert.equal(snapshot().toggle.proof.visible,false,'an unrelated overlay must fail hit testing');overlay=false;
  d.getElementById('navigation-product').style.display='none';assert.equal(snapshot().toggle.proof.opaque,false,'hidden ancestor cannot pass');d.getElementById('navigation-product').style.display='';
  toggle.setAttribute('aria-controls','wrong');assert.equal(snapshot().toggle.controls,'wrong');
- reader.hidden=true;reader.style.display='none';setRect(reader,0,0,0,0);const hidden=snapshot();assert.equal(hidden.reader.hidden,true);assert.equal(hidden.reader.display,'none');assert.equal(hidden.reader.proof.opaque,false);
+ reader.hidden=true;reader.style.display='none';d.querySelector('.np-reading-pane').hidden=true;d.querySelector('.np-reading-pane').style.display='none';setRect(reader,0,0,0,0);setRect(d.querySelector('.np-reading-pane'),0,0,0,0);const hidden=snapshot();assert.equal(hidden.reader.hidden,true);assert.equal(hidden.reader.display,'none');assert.equal(hidden.reader.proof.opaque,false);
  const clone=row.cloneNode(true);row.replaceWith(clone);assert.equal(identity(elements).find(x=>x.name==='row').same,false,'same markup and source identity cannot substitute for the original row');
  clone.remove();assert.equal(snapshot().selected.row,null,'a nested descendant is not the selected row');
 } finally {dom.window.close();}
@@ -842,7 +854,7 @@ class TaskRouteScreenshotChecks(unittest.TestCase):
                 'relationEntries': [dict(row, selected='false') for row in expected['relations']], 'relationOverview': {},
                 'methods': [dict(copy.deepcopy(row), ready=True) for row in expected['methods']],
                 'readerScroll': {'top': 490, 'left': 0}, 'treeScroll': {'top': 0, 'left': 0},
-                'window': {'x': 0, 'y': 120}, 'focus': 'exact-endpoint', 'activatedControl': 'exact-endpoint'}
+                'window': {'x': 0, 'y': 0}, 'focus': 'exact-endpoint', 'activatedControl': 'exact-endpoint'}
 
     def test_task_route_original_source_expectations_keep_scope_variants_and_condition_fields(self):
         e, s = self.expected, self.science
@@ -934,7 +946,7 @@ class TaskRouteScreenshotChecks(unittest.TestCase):
         mutations = [lambda x: x['route'].update(scope='scope:all'), lambda x: x['route'].update(version='another'),
                      lambda x: x.update(focus='other-method-on-same-paper'), lambda x: x.update(panelScope='task:imagenav'),
                      lambda x: x['readerScroll'].update(top=489), lambda x: x['treeScroll'].update(left=1),
-                     lambda x: x['window'].update(y=0), lambda x: x.update(scale=.9)]
+                     lambda x: x['window'].update(y=88), lambda x: x.update(scale=.9)]
         for mutate in mutations:
             bad = copy.deepcopy(before)
             mutate(bad)
@@ -1119,7 +1131,7 @@ for(const entity of ['r']){pending=entity;assert.equal(predicate(wire,'exact-con
         self.assertEqual(ast.dump(snapshot, include_attributes=False), ast.dump(expected, include_attributes=False), 'diagnostics stay in the original single snapshot call')
         script = r"""
 const {JSDOM}=require('jsdom'),assert=require('node:assert/strict'),input=JSON.parse(require('fs').readFileSync(0,'utf8'));
-const dom=new JSDOM(`<!doctype html><style>#np-detail-scroll{overflow-anchor:none;overflow-y:auto;font-size:15px;line-height:24px}.np-reader-heading{position:sticky}</style><main id="navigation-product" data-reading-layout="browse"><aside id="np-detail-scroll"><div class="np-reader-heading">Reader</div><section data-task-route-scope="task:category-objectnav"><h2>已有路线与方法</h2><p id="intro">原记录</p><details data-task-change="methods:relation:90" open><summary id="relation-summary">SemExp → PONI</summary><article><p id="claim">原句第一行与第二行</p></article><nav><button id="endpoint" data-change-target="poni-position">PONI</button></nav></details></section></aside></main>`,{url:'https://example.org/',runScripts:'outside-only'});
+const dom=new JSDOM(`<!doctype html><style>#np-detail-scroll{overflow-anchor:none;overflow-y:auto;font-size:15px;line-height:24px}.np-reader-heading{position:sticky}</style><main id="navigation-product" data-reading-layout="browse"><aside id="np-detail-scroll"><div id="np-reader-heading" class="np-reader-heading">Reader</div><section data-task-route-scope="task:category-objectnav"><h2>已有路线与方法</h2><p id="intro">原记录</p><details data-task-change="methods:relation:90" open><summary id="relation-summary">SemExp → PONI</summary><article><p id="claim">原句第一行与第二行</p></article><nav><button id="endpoint" data-change-target="poni-position">PONI</button></nav></details></section></aside></main>`,{url:'https://example.org/',runScripts:'outside-only'});
 try{const w=dom.window,d=w.document,reader=d.getElementById('np-detail-scroll'),panel=d.querySelector('[data-task-route-scope]'),button=d.getElementById('endpoint');
 // Explicit geometry fixtures test collection only; they are not evidence of
 // Chrome layout, legal clamping, or the cause of the production 29px movement.
@@ -1162,8 +1174,8 @@ class TaskDensityScreenshotChecks(unittest.TestCase):
                 'readerLists': 0, 'canvasState': 'ready', 'selectedRelation': None,
                 'methods': [dict(copy.deepcopy(row), ready=True) for row in expected['methods']],
                 'readerScroll': {'top': 0, 'left': 0}, 'treeScroll': {'top': 0, 'left': 0},
-                'window': {'x': 0, 'y': 88}, 'focus': 'natural-entry-focus', 'changes': [], 'relationEntries': [dict(row, selected='false') for row in expected['relations']],
-                'relationDisclosure': {'open': False, 'tag': 'DETAILS', 'id': 'np-task-route-relations', 'summary': 'np-task-route-relations-summary', 'current': str(sum(r['scope'] == 'current-scope' for r in expected['relations'])), 'outside': str(sum(r['scope'] == 'outside-scope' for r in expected['relations'])), 'beforeTree': True, 'insideTree': False},
+                'window': {'x': 0, 'y': 0}, 'focus': 'natural-entry-focus', 'changes': [], 'relationEntries': [dict(row, selected='false') for row in expected['relations']],
+                'relationDisclosure': {'open': False, 'tag': 'DETAILS', 'id': 'np-task-route-relations', 'summary': 'np-task-route-relations-summary', 'current': str(sum(r['scope'] == 'current-scope' for r in expected['relations'])), 'outside': str(sum(r['scope'] == 'outside-scope' for r in expected['relations'])), 'beforeTree': True, 'insideTree': False, 'insideTreeScroll': False, 'toolbar': True},
                 'density': {'state': 'ready', 'selectedReady': True, 'internalScroll': [{'id': 'np-detail-scroll', 'top': 0, 'left': 0}],
                             'roots': expected['roots'], 'gap': 'original gap' if case.get('empty') else None}}
 
@@ -1171,7 +1183,8 @@ class TaskDensityScreenshotChecks(unittest.TestCase):
         self.assertEqual([c['scope'] for c in self.cases], ['task:category-objectnav', 'task:imagenav', 'setting:portable-objectnav', 'task:aerial-visual-object-search'])
         expected = MODULE.task_route_expected(self.science)
         for case in self.cases:
-            self.assertTrue(all(p['region'] == 'canvas' for p in case['proofs']))
+            self.assertEqual(case['proofs'][0]['region'], 'toolbar')
+            self.assertTrue(all(p['region'] == 'canvas' for p in case['proofs'][1:]))
             self.assertFalse(any(p['text'].startswith(('表示：', '决策：')) for p in case['proofs']))
         image_text = [p['text'] for p in self.cases[1]['proofs']]
         for gid in expected['scopes']['task:imagenav']['groups'][:2]:
@@ -1196,7 +1209,7 @@ class TaskDensityScreenshotChecks(unittest.TestCase):
                          lambda d: d.update(rovingCount=2), lambda d: d.update(inactiveItemCount=1),
                          lambda d: d.update(readerLists=1), lambda d: d.update(selectedRelation='methods:relation:90'),
                          lambda d: d['density'].update(roots=['wrong-root']), lambda d: d['relationDisclosure'].update(open=True),
-                         lambda d: d['relationDisclosure'].update(beforeTree=False), lambda d: d['relationDisclosure'].update(insideTree=True),
+                         lambda d: d['relationDisclosure'].update(insideTreeScroll=True), lambda d: d['relationDisclosure'].update(insideTree=True),
                          lambda d: d['relationDisclosure'].update(current='999'), lambda d: d['relationDisclosure'].update(tag='DIV')]
             if valid['methods']:
                 mutations += [lambda d: d['methods'][0].update(version='other-version'),
@@ -1279,9 +1292,9 @@ class TaskDensityScreenshotChecks(unittest.TestCase):
             MODULE.task_density_checks(driver, report, lambda: saved.append(copy.deepcopy(report)), lambda name, **kwargs: captured.append(name), '1440x900', 'http://localhost/research/navigation/', self.science)
         self.assertEqual(len(captured), 4)
         self.assertEqual(len([c for c in driver.calls if c[0] == 'click']), 5)
-        self.assertEqual(report['taskDensityChecks'][0]['documentTopClaimed'], False)
+        self.assertEqual(report['taskDensityChecks'][0]['documentTopClaimed'], True)
         for scene in report['taskDensityChecks'][0]['scenes']:
-            self.assertEqual(scene['naturalEntryWindow']['y'], 88)
+            self.assertEqual(scene['naturalEntryWindow']['y'], 0)
             self.assertEqual(scene['status'], 'captured_for_human_review')
             kinds = [a['kind'] for a in scene['actions']]
             self.assertEqual(kinds.count('click-task-entry'), 1)
@@ -1327,7 +1340,7 @@ class TaskDensityScreenshotChecks(unittest.TestCase):
     def test_density_production_roots_keep_source_fields_reachable_without_disclosure(self):
         body = r"""
 const natural=new w.Function(input.naturalSnapshot);
-for(const c of input.cases){await scope(c.scope);const canvas=d.getElementById('np-tree-scroll');for(const spec of c.proofs){const found=[...d.querySelectorAll(spec.selector)].filter(n=>n.textContent===spec.text);assert.equal(found.length,1,spec.selector+' '+spec.text);assert.ok(canvas.contains(found[0]));for(let p=found[0];p&&p!==canvas;p=p.parentElement)if(p.tagName==='DETAILS'&&!p.open)assert.ok(p.querySelector(':scope > summary').contains(found[0]),'natural field is behind a closed disclosure');}states.push(natural());}
+for(const c of input.cases){await scope(c.scope);const canvas=d.getElementById('np-tree-scroll');for(const spec of c.proofs){const found=[...d.querySelectorAll(spec.selector)].filter(n=>n.textContent===spec.text);assert.equal(found.length,1,spec.selector+' '+spec.text);const region=spec.region==='toolbar'?d.querySelector('.np-workspace-bar'):canvas;assert.ok(region.contains(found[0]));assert.equal(canvas.contains(d.getElementById('np-task-route-canvas')),false);for(let p=found[0];p&&p!==region;p=p.parentElement)if(p.tagName==='DETAILS'&&!p.open)assert.ok(p.querySelector(':scope > summary').contains(found[0]),'natural field is behind a closed disclosure');}states.push(natural());}
 """
         states = run_product_capture_script(self, body, {'science': self.science, 'expected': MODULE.task_route_expected(self.science), 'naturalSnapshot': MODULE.TASK_DENSITY_SNAPSHOT_JS, 'cases': self.cases})
         for data, case in zip(states, self.cases):
@@ -1344,7 +1357,7 @@ class ExplorationCaptureChecks(unittest.TestCase):
         view = {'schema': 1, 'lastRouteByTree': {'l': route, 'c': None}, 'focusTargetByTree': {'l': 'poni', 'c': None}}
         runtime = {'route': route, 'contexts': {key: {'expandedByTree': {'l': ['root', 'group']}}, neutral: {'taskView': view}}}
         return {'route': route, 'selectedRelation': None, 'expanded': {'l': ['root', 'group']}, 'relationOverview': {}, 'relationView': {}, 'scale': 1,
-                'treeScroll': {'top': 320, 'left': 0}, 'readerScroll': {'top': 65, 'left': 0}, 'window': {'x': 0, 'y': 80},
+                'treeScroll': {'top': 320, 'left': 0}, 'readerScroll': {'top': 65, 'left': 0}, 'window': {'x': 0, 'y': 0},
                 'focus': 'np-node-poni', 'taskView': view, 'treeCount': 1, 'forestCount': 1, 'rovingCount': 1,
                 'inactiveItemCount': 0, 'runtime': runtime, 'persisted': copy.deepcopy(runtime)}
 
@@ -1416,7 +1429,7 @@ class ExplorationCaptureChecks(unittest.TestCase):
         import ast
         import inspect
         scripts = []
-        for function in (MODULE.exploration_state_checks, MODULE.expose_source_position, MODULE.reveal_control, MODULE.task_route_checks, MODULE.cold_relation_refresh, MODULE.cold_relation_refresh_comparison):
+        for function in (MODULE.exploration_state_checks, MODULE.desktop_hierarchy_checks, MODULE.expose_source_position, MODULE.reveal_control, MODULE.task_route_checks, MODULE.cold_relation_refresh, MODULE.cold_relation_refresh_comparison):
             source = inspect.getsource(function)
             for forbidden in ('.navigate(', 'history.replaceState(', 'history.pushState(', '.dispatchEvent(', '.style.'):
                 self.assertNotIn(forbidden, source)
@@ -1464,11 +1477,11 @@ class ExplorationCaptureChecks(unittest.TestCase):
         expected = MODULE.task_route_expected(science)
         body = r"""
 await scope('task:category-objectnav');await select(e.poni.id);const lRoute=a.getState().route;
-assert.equal(d.querySelector('[data-analysis-state]').dataset.analysisState,'imported');assert.equal(d.querySelector('[data-analysis-state]').dataset.analysisVersion,e.poni.versionId);assert.equal(d.querySelector('[data-analysis-state=imported] > p').textContent,'本版本已导入：22 个原模板节点已填，0 个实例节点已填。');assert.equal(d.getElementById('np-open-analysis-template').textContent,'通用原59节点模板（未填答参考）');
+assert.equal(d.querySelector('[data-analysis-state]').dataset.analysisState,'imported');assert.equal(d.querySelector('[data-analysis-state]').dataset.analysisVersion,e.poni.versionId);assert.equal(d.querySelector('[data-analysis-state=imported] > p').textContent,'本版本部分解析：22/59 原节点已填 · 0 个实例答案');assert.equal(d.getElementById('np-open-analysis-template').textContent,'通用原59节点模板（未填答参考）');
 d.querySelector('[data-tree-tab="c"]').click();await ready(()=>a.getState().route.tree==='c');const ci='pos:c:6a8a9d2f7b1f3ab3a8ada5';await select(ci);const cRoute=a.getState().route;
 d.querySelector('[data-tree-tab="l"]').click();await ready(()=>a.getState().route.node===e.poni.id);assert.deepEqual(JSON.parse(JSON.stringify(a.getState().route)),JSON.parse(JSON.stringify(lRoute)));assert.equal(d.querySelectorAll('#np-tree [data-parallel-tree]').length,1);assert.equal(d.querySelectorAll('#np-tree [role=treeitem][tabindex="0"]').length,1);assert.equal(d.querySelector('#np-tree').dataset.activeTaskTree,'l');
 d.querySelector('[data-tree-tab="c"]').click();await ready(()=>a.getState().route.node===ci);assert.deepEqual(JSON.parse(JSON.stringify(a.getState().route)),JSON.parse(JSON.stringify(cRoute)));assert.equal(m.taskView(a.getState()).lastRouteByTree.l.node,e.poni.id);assert.equal(m.taskView(a.getState()).lastRouteByTree.c.node,ci);
-d.querySelector('[data-tree-tab="l"]').click();await ready(()=>a.getState().route.node===e.poni.id);d.getElementById('np-open-version-analysis').click();await ready(()=>a.getState().route.tree==='a');assert.equal(a.getState().route.node,s.analyses.poni[e.poni.versionId].roots[0]);assert.equal(a.getState().route.template,null);states.push(snapshot());
+d.querySelector('[data-tree-tab="l"]').click();await ready(()=>a.getState().route.node===e.poni.id);d.getElementById('np-open-version-analysis').click();await ready(()=>a.getState().route.tree==='a');const first=m.descendants(a.getBundle(),s.analyses.poni[e.poni.versionId].roots).find(id=>s.positions[id].kind==='analysis_answer');assert.equal(a.getState().route.node,first);assert.notEqual(first,s.analyses.poni[e.poni.versionId].roots[0]);assert.equal(a.getState().route.template,null);states.push(snapshot());
 d.querySelector('.np-return-previous').click();await ready(()=>a.getState().route.node===e.poni.id);const vlfm=Object.values(s.positions).find(p=>p.scopeId==='task:category-objectnav'&&p.tree==='l'&&p.paperId==='vlfm'&&p.kind==='pipeline_recipe');await select(vlfm.id);assert.equal(d.querySelector('[data-analysis-state]').dataset.analysisState,'not-imported');d.getElementById('np-open-version-analysis').click();await ready(()=>a.getState().route.tree==='a');assert.equal(a.getState().route.node,null);assert.equal(a.getState().route.template,null);assert.ok(d.querySelector('#np-tree .np-empty').textContent.includes('尚未导入原59节点解析'));d.querySelector('.np-return-previous').click();await ready(()=>a.getState().route.node===vlfm.id);d.getElementById('np-open-analysis-template').click();await ready(()=>a.getState().route.template==='1');assert.equal(a.getState().route.paper,vlfm.paperId);assert.equal(a.getState().route.version,vlfm.versionId);const templateRoot=s.template.roots[0];label(templateRoot).click();await ready(()=>a.getState().route.node===templateRoot);assert.equal(d.querySelector('#np-detail-content .np-detail-body > .np-boundary').textContent,'参考模式：原59节点模板，当前论文/版本未填答；0答案，不计入解析覆盖。');assert.ok([...d.querySelectorAll('#np-detail-content .np-detail-block > p')].some(n=>n.textContent==='这是通用模板问题，当前论文版本未填答；不表示原论文没有讨论，也不借用其他论文的答案。'));states.push(snapshot());
 """
         states = run_product_capture_script(self, body, {'science': science, 'expected': expected})
@@ -1924,7 +1937,7 @@ class ReturnClickDiagnosticChecks(unittest.TestCase):
     def test_return_button_geometry_reports_sticky_hit_without_actions_or_text(self):
         script = r"""
 const {JSDOM}=require('jsdom'),assert=require('node:assert/strict'),input=JSON.parse(require('fs').readFileSync(0,'utf8'));
-const dom=new JSDOM('<style>*{display:block;opacity:1;visibility:visible} .np-reader-heading{position:sticky}</style><main id="navigation-product"><div id="np-tree-scroll"></div><aside id="np-detail-scroll"><div class="np-reader-heading">PRIVATE_HEADER_TEXT</div><section><button id="np-task-route-return" class="np-return" value="PRIVATE_VALUE">PRIVATE_BUTTON_TEXT</button></section></aside></main>',{url:'https://example.org/',runScripts:'outside-only'});
+const dom=new JSDOM('<style>*{display:block;opacity:1;visibility:visible} .np-reader-heading{position:sticky}</style><main id="navigation-product"><div id="np-tree-scroll"></div><aside id="np-detail-scroll"><div id="np-reader-heading" class="np-reader-heading">PRIVATE_HEADER_TEXT</div><section><button id="np-task-route-return" class="np-return" value="PRIVATE_VALUE">PRIVATE_BUTTON_TEXT</button></section></aside></main>',{url:'https://example.org/',runScripts:'outside-only'});
 try{const w=dom.window,d=w.document,reader=d.getElementById('np-detail-scroll'),button=d.getElementById('np-task-route-return'),header=d.querySelector('.np-reader-heading');
 const rect=(x,y,width,height)=>({x,y,width,height,left:x,top:y,right:x+width,bottom:y+height});let headerHeight=45;
 for(const e of d.querySelectorAll('*')){e.getBoundingClientRect=()=>e===button?rect(620,145,300,38):e===header?rect(600,126,808,headerHeight):rect(600,126,808,672);e.getClientRects=()=>[e.getBoundingClientRect()];
@@ -1991,9 +2004,9 @@ class TaskOverviewReturnChecks(unittest.TestCase):
         before = {'route': route, 'position': {'id': route['node'], 'entity': route['scope'], 'kind': 'task'},
                   'selectedRelation': 'methods:relation:90', 'expanded': bucket['expandedByTree'], 'selected': [route['node']],
                   'relationOverview': overview, 'relationView': relation, 'scale': 1, 'treeScroll': {'top': 120, 'left': 17},
-                  'readerScroll': {'top': 70, 'left': 0}, 'window': {'x': 0, 'y': 88}, 'focus': focus,
+                  'readerScroll': {'top': 70, 'left': 0}, 'window': {'x': 0, 'y': 0}, 'focus': focus,
                   'relationDisclosure': {'id': 'np-task-route-relations', 'summary': 'np-task-route-relations-summary', 'open': True,
-                                         'beforeTree': True, 'insideTree': False, 'tag': 'DETAILS', 'current': '5', 'outside': '2'},
+                                         'beforeTree': True, 'insideTree': False, 'insideTreeScroll': False, 'toolbar': True, 'tag': 'DETAILS', 'current': '5', 'outside': '2'},
                   'readerHidden': False, 'readerLists': 0, 'taskView': view, 'treeCount': 1, 'forestCount': 1,
                   'rovingCount': 1, 'inactiveItemCount': 0, 'runtime': runtime, 'persisted': copy.deepcopy(runtime),
                   'historyEntryKey': 'native-relation-fixture', 'historyLength': 50}
@@ -2022,7 +2035,7 @@ class TaskOverviewReturnChecks(unittest.TestCase):
         mutations = [lambda x: x['relationDisclosure'].update(open=True), lambda x: x.update(focus='np-task-change-task:category-objectnav-methods:relation:90'),
                      lambda x: x.update(selectedRelation='methods:relation:90'), lambda x: x['treeScroll'].update(top=1),
                      lambda x: x['treeScroll'].update(left=1), lambda x: x['readerScroll'].update(top=70),
-                     lambda x: x['window'].update(y=0), lambda x: x.update(scale=.9), lambda x: x.update(readerHidden=True),
+                     lambda x: x['window'].update(y=88), lambda x: x.update(scale=.9), lambda x: x.update(readerHidden=True),
                      lambda x: x.update(readerLists=1), lambda x: x['expanded']['l'].clear(),
                      lambda x: x['relationOverview']['c'].update(open=False), lambda x: x['relationView'].update(c={'id': 'wrong'}),
                      lambda x: x['taskView']['focusTargetByTree'].update(c='stolen'),
@@ -2131,9 +2144,9 @@ w.history.forward();await ready(()=>new w.Function(input.returnWait)(before.rout
         before, collapsed, back, forward = run_product_capture_script(self, body, {'science': science, 'expected': MODULE.task_route_expected(science), 'returnWait': MODULE.TASK_OVERVIEW_RETURN_WAIT_JS})
         # JSDOM exercises actual product push/back/forward state, not native Navigation API keys or layout.
         self.assertIsNone(before['historyEntryKey']); self.assertIsNone(collapsed['historyEntryKey'])
-        self.assertTrue(before['relationDisclosure']['open']); self.assertFalse(collapsed['relationDisclosure']['open'])
+        self.assertFalse(before['relationDisclosure']['open']); self.assertFalse(collapsed['relationDisclosure']['open'])
         self.assertEqual(back['selectedRelation'], 'methods:relation:90'); self.assertEqual(back['focus'], 'np-task-route-return')
-        self.assertTrue(back['relationDisclosure']['open']); self.assertFalse(forward['relationDisclosure']['open'])
+        self.assertFalse(back['relationDisclosure']['open']); self.assertFalse(forward['relationDisclosure']['open'])
         for original, restored in ((before, back), (collapsed, forward)):
             MODULE.check_exploration_restore(original, restored, focus=restored['focus'])
         # Unit keys only let the same strict state validator inspect these real DOM/model snapshots.
@@ -2153,6 +2166,12 @@ class DefaultOverviewMaterializationChecks(unittest.TestCase):
         data = json.loads(raw)
         # The clicked label has no ID; the existing selector records its real treeitem ID.
         data['before']['activatedControl'] = 'np-node-' + data['origin']['bucket']['focusTarget']
+        # Raw receipt bytes remain pinned above. Only the explicitly superseded
+        # outer-scroll/placement display fields are projected to the new shell.
+        data['legacyDisplay'] = {phase: {'window': data[phase]['window'].copy(), 'disclosure': data[phase]['relationDisclosure'].copy()} for phase in ('before', 'after')}
+        for phase in ('before', 'after'):
+            data[phase]['window'] = {'x': 0, 'y': 0}
+            data[phase]['relationDisclosure'].update(insideTreeScroll=False, toolbar=True)
         return data
 
     def test_real_b988_closed_origin_materialization_preserves_original_evidence(self):
@@ -2402,6 +2421,155 @@ assert.ok(!JSON.stringify(result).includes('PRIVATE'));assert.ok(!JSON.stringify
         tree = ast.parse(source)
         contexts = [n for n in ast.walk(tree) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'DelayedRequestCacheControl']
         self.assertEqual(len(contexts), 1)
+
+
+
+class DesktopHierarchyContractChecks(unittest.TestCase):
+    @staticmethod
+    def shell(tree='l', width=1440):
+        import copy
+        height = 900 if width == 1440 else 1080
+        def rect(x, y, w, h): return dict(x=x, y=y, width=w, height=h)
+        def proof(r, text): return dict(rect=r, text=text, visible=True, opaque=True, unscaled=True, clipped=False,
+                                       fontSize=15, foreground=[20, 30, 40], background=[255, 255, 255])
+        tw = (400 if width == 1440 else 448) if tree == 'a' else (768 if width == 1440 else 1056)
+        gap = 24 if tree == 'a' else 16
+        pane = rect(16 + tw + gap, 132, width - 32 - tw - gap, height - 148)
+        return {'ready': 'ready', 'route': {'tree': tree}, 'window': {'x': 0, 'y': 0},
+                'viewport': rect(0, 0, width, height), 'home': False, 'collapsed': False,
+                'panels': rect(16, 132, width - 32, height - 148), 'treePane': rect(16, 132, tw, height - 148),
+                'tree': rect(17, 176, tw - 2, height - 217), 'pane': pane,
+                'reader': rect(pane['x'] + 1, 228, pane['width'] - 2, height - 245),
+                'heading': proof(rect(pane['x'] + 1, 133, pane['width'] - 2, 95), 'Object · version'),
+                'title': proof(rect(pane['x'] + 12, 144, pane['width'] - 24, 32), 'Object'),
+                'meta': proof(rect(pane['x'] + 12, 185, pane['width'] - 24, 22), 'Exact version'),
+                'headingInsideScroll': False, 'pickerInsideTree': False, 'pickerInToolbar': True,
+                'permanentScrollIds': ['np-tree-scroll', 'np-detail-scroll'],
+                'offsets': {'tree': {'top': 0, 'left': 0}, 'reader': {'top': 0, 'left': 0}},
+                'rootRows': [], 'routeRows': [], 'relation': None, 'visibleTaskDefinitions': 0}
+
+    def test_fixed_desktop_shell_rejects_outer_scroll_hidden_version_third_scroll_and_old_columns(self):
+        import copy
+        for width in (1440, 1920):
+            for tree in ('l', 'c', 'a'):
+                good = self.shell(tree, width)
+                MODULE.check_desktop_shell(good)
+                mutations = [lambda d: d['window'].update(y=88), lambda d: d['window'].update(x=1),
+                             lambda d: d['panels'].update(y=180), lambda d: d['panels'].update(height=200),
+                             lambda d: d.update(pickerInsideTree=True), lambda d: d.update(pickerInToolbar=False),
+                             lambda d: d.update(headingInsideScroll=True),
+                             lambda d: d['permanentScrollIds'].append('nested-detail-scroll'),
+                             lambda d: d['meta'].update(visible=False), lambda d: d['meta'].update(clipped=True),
+                             lambda d: d['meta'].update(fontSize=14), lambda d: d['meta'].update(text=''),
+                             lambda d: d['meta'].update(foreground=[250, 250, 250]),
+                             lambda d: d['title'].update(unscaled=False), lambda d: d['title']['rect'].update(y=-20),
+                             lambda d: d['treePane'].update(width=1100), lambda d: d['pane'].update(width=720)]
+                for index, mutate in enumerate(mutations):
+                    bad = copy.deepcopy(good); mutate(bad)
+                    with self.subTest(width=width, tree=tree, mutation=index), self.assertRaises(RuntimeError):
+                        MODULE.check_desktop_shell(bad)
+
+    def test_selector_overlay_cannot_displace_root_or_hide_either_original_relation_endpoint(self):
+        import copy
+        before = self.shell()
+        row = before['title'].copy()
+        ids = ['root', 'original-route', 'semexp', 'poni']
+        for i, pid in enumerate(ids):
+            proof = copy.deepcopy(row)
+            proof['rect'] = {'x': 40, 'y': 190 + i * 75, 'width': 680, 'height': 55}
+            before['routeRows'].append({'id': pid, 'proof': proof})
+        before['rootRows'] = copy.deepcopy(before['routeRows'][:1])
+        opened, selected = copy.deepcopy(before), copy.deepcopy(before)
+        opened['pickerDisclosure'] = {'open': True, 'position': 'absolute', 'rect': {'x': 800, 'y': 96, 'width': 360, 'height': 288}}
+        selected['relation'] = 'methods:relation:90'
+        MODULE.check_relation_canvas_stability(before, opened, selected, ids)
+        for field, value in (('x', 700), ('height', 324), ('width', 600)):
+            bad = copy.deepcopy(opened); bad['pickerDisclosure']['rect'][field] = value
+            with self.assertRaises(RuntimeError): MODULE.check_relation_canvas_stability(before, bad, selected, ids)
+        for mutate in (lambda d: d['tree'].update(y=500), lambda d: d['rootRows'][0]['proof']['rect'].update(y=600),
+                       lambda d: d['offsets']['tree'].update(top=1), lambda d: d['routeRows'].pop(),
+                       lambda d: d['routeRows'][-1]['proof'].update(visible=False),
+                       lambda d: d['routeRows'][-1]['proof']['rect'].update(y=510),
+                       lambda d: d.update(relation='methods:relation:88'), lambda d: d.update(visibleTaskDefinitions=1)):
+            bad = copy.deepcopy(selected); mutate(bad)
+            with self.assertRaises(RuntimeError): MODULE.check_relation_canvas_stability(before, opened, bad, ids)
+
+    def test_first_analysis_answer_uses_original_preorder_every_version_and_keeps_root_separate(self):
+        import copy, gzip
+        science = json.loads(gzip.decompress((Path(__file__).parents[1] / 'data/navigation-product/model.json.gz').read_bytes()))
+        for paper, versions in science['analyses'].items():
+            for version, entry in versions.items():
+                answer = MODULE.first_analysis_answer(science, entry)
+                self.assertEqual(answer['kind'], 'analysis_answer')
+                self.assertEqual((answer['paperId'], answer['versionId']), (paper, version))
+                self.assertNotIn(answer['id'], entry['roots'])
+        entry = science['analyses']['poni']['publication:poni:e83f98bb7132']
+        answer = MODULE.first_analysis_answer(science, entry)
+        self.assertEqual(answer['id'], 'pos:a:a0e29c6be7f62075654f7f')
+        data = self.shell('a')
+        data['route'].update(node=answer['id'], paper=answer['paperId'], version=answer['versionId'], template=None)
+        data['fixedIdentity'] = {'position': answer['id'], 'paper': answer['paperId'], 'version': answer['versionId']}
+        data['meta']['text'] = 'Exact version · 本版本部分解析：22/59 原节点已填 · 0 个实例答案'
+        data['position'] = {k: answer[v] for k, v in {'id': 'id', 'kind': 'kind', 'paper': 'paperId', 'version': 'versionId', 'parent': 'parentId'}.items()}
+        data['answer'] = copy.deepcopy(data['title']); data['answer']['rect'].update(x=460, y=250, width=800, height=80)
+        MODULE.check_analysis_first_answer(data, answer, entry, 'Object', 'Exact version')
+        for mutate in (lambda d: d['route'].update(node=entry['roots'][0]), lambda d: d['route'].update(template='1'),
+                       lambda d: d['route'].update(version='other'), lambda d: d['position'].update(kind='analysis_structure'),
+                       lambda d: d['fixedIdentity'].update(version='other'), lambda d: d['meta'].update(text='Exact version'),
+                       lambda d: d['answer'].update(visible=False), lambda d: d['answer'].update(text='invented answer'), lambda d: d['answer']['rect'].update(y=330),
+                       lambda d: d['offsets']['reader'].update(top=1)):
+            bad = copy.deepcopy(data); mutate(bad)
+            with self.assertRaises(RuntimeError): MODULE.check_analysis_first_answer(bad, answer, entry, 'Object', 'Exact version')
+
+    def test_ready_outer_scroll_migration_retains_exact_offsets_and_unrelated_buckets(self):
+        import copy
+        before = ExplorationCaptureChecks().restore_fixture()
+        before['window']['y'] = 150
+        before['runtime']['contexts']['unrelated'] = {'windowScroll': 88, 'treeScrollByTree': {'c': 333}, 'focusTarget': 'retain'}
+        before['persisted'] = copy.deepcopy(before['runtime'])
+        after = copy.deepcopy(before); after['window']['y'] = 0
+        MODULE.check_exploration_restore(before, after, nonzero=True)
+        for mutate in (lambda d: d['window'].update(y=150), lambda d: d['treeScroll'].update(top=0),
+                       lambda d: d['treeScroll'].update(left=1), lambda d: d['readerScroll'].update(top=64),
+                       lambda d: d['runtime']['contexts'].pop('unrelated'),
+                       lambda d: d['runtime']['contexts']['unrelated'].update(windowScroll=0)):
+            bad = copy.deepcopy(after); mutate(bad)
+            with self.assertRaises(RuntimeError): MODULE.check_exploration_restore(before, bad, nonzero=True)
+
+    def test_production_fixed_selectors_and_first_answer_keep_version_root_and_sources(self):
+        import gzip
+        science = json.loads(gzip.decompress((Path(__file__).parents[1] / 'data/navigation-product/model.json.gz').read_bytes()))
+        body = r"""
+await scope('task:category-objectnav');
+d.elementFromPoint=()=>d.body;const shellSnapshot=new w.Function(input.shellSnapshot);assert.equal(shellSnapshot().headingInsideScroll,false);
+const tree=d.getElementById('np-tree-scroll'),reader=d.getElementById('np-detail-scroll'),picker=d.getElementById('np-task-route-canvas'),heading=d.getElementById('np-reader-heading');
+assert.equal(tree.contains(picker),false);assert.ok(picker.closest('.np-workspace-bar'));assert.equal(reader.contains(heading),false);assert.ok(heading.closest('.np-reading-pane'));
+d.getElementById('np-task-route-relations-summary').click();d.querySelector('[data-task-change="methods:relation:90"]').click();await ready(()=>d.querySelector('[data-selected-task-relation]')&&d.querySelector('[data-relation-state]')?.dataset.relationState==='ready');
+assert.equal(d.getElementById('np-task-route-relations').open,false);assert.equal(d.getElementById('np-task-relation-title').closest('#np-reader-heading'),heading);assert.equal(d.getElementById('np-reader-object-title').textContent,'SemExp → PONI · 复用组件并替换策略');assert.ok(d.getElementById('np-reader-object-meta').textContent.includes(s.versions[e.poni.versionId].label));
+d.querySelector('[data-change-target="'+e.poni.id+'"]').click();await ready(()=>a.getState().route.node===e.poni.id&&a.getContent().ready(e.poni.entityId));
+const entry=d.getElementById('np-reader-analysis-entry');assert.equal(reader.contains(entry),false);assert.ok(entry.contains(d.getElementById('np-open-version-analysis')));assert.equal(entry.querySelector('.np-analysis-reference').open,false);
+d.getElementById('np-open-version-analysis').click();await ready(()=>a.getState().route.tree==='a'&&a.getContent().ready(a.getBundle().positions[a.getState().route.node].entityId));
+const analysis=s.analyses.poni[e.poni.versionId],answer=m.descendants(a.getBundle(),analysis.roots).map(id=>s.positions[id]).find(p=>p.kind==='analysis_answer');assert.equal(a.getState().route.node,answer.id);assert.equal(d.querySelector('.np-analysis-answer > p').textContent,s.entities[answer.entityId].detail.answer.answer);assert.equal(d.getElementById('np-reader-object-title').dataset.objectVersion,answer.versionId);assert.equal(d.querySelector('[data-analysis-root]'),null);states.push(snapshot());
+d.querySelector('.np-return-previous').click();await ready(()=>a.getState().route.node===e.poni.id);d.getElementById('np-open-analysis-structure').click();await ready(()=>a.getState().route.node===analysis.roots[0]&&d.querySelector('[data-analysis-root]'));const root=s.positions[analysis.roots[0]];assert.notEqual(root.kind,'analysis_answer');assert.deepEqual([...d.querySelectorAll('[data-analysis-chapter]')].map(el=>el.dataset.analysisChapter),root.childIds);assert.equal(m.descendants(a.getBundle(),analysis.roots).length,analysis.originalNodeCount+analysis.instanceCount);states.push(snapshot());
+"""
+        states = run_product_capture_script(self, body, {'science': science, 'expected': MODULE.task_route_expected(science), 'shellSnapshot': MODULE.DESKTOP_SHELL_SNAPSHOT_JS})
+        self.assertNotEqual(states[0]['route']['node'], states[1]['route']['node'])
+        self.assertEqual(states[0]['route']['version'], states[1]['route']['version'])
+
+    def test_new_state_capture_mapping_keeps_original_90_scenes_and_historical_diagnostics(self):
+        import inspect
+        self.assertEqual(len(MODULE.DISPLAY_CONTRACT_MIGRATIONS), 6)
+        self.assertEqual(len(MODULE.SCENE_NAMES), 49)
+        for name in ('-31-s0-reading-hierarchy', '-32-s1-relation-90', '-33-s2-first-answer', '-30-analysis-root-coverage'):
+            self.assertIn(name, MODULE.SCENE_NAMES)
+        source = inspect.getsource(MODULE.main)
+        self.assertIn('desktop_hierarchy_checks(', source)
+        self.assertIn('displayContractMigrations', source)
+        for script in (MODULE.TASK_ROUTE_DIAGNOSTIC_JS, MODULE.COLD_RESTORE_SNAPSHOT_JS, MODULE.READER_TOGGLE_SNAPSHOT_JS):
+            self.assertNotIn('window.scrollTo(', script)
+        result = subprocess.run(['node', '-e', "new Function(JSON.parse(require('fs').readFileSync(0,'utf8')));"],
+                                input=json.dumps(MODULE.DESKTOP_SHELL_SNAPSHOT_JS), text=True, capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
 
 
 if __name__ == '__main__':

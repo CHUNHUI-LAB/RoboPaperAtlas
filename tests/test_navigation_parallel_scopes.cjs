@@ -1,4 +1,6 @@
 'use strict';
+// Display migration: seven original relations remain, with dropdown selectors outside
+// the graph and one selected evidence article in the C panel; all-lines is opt-in.
 // Behavioral and identity regression only. JSDOM is not desktop visual acceptance.
 // The fixture renders production code unchanged and serves exact generated packets
 // from a test-owned temporary directory. It never contacts the network.
@@ -979,13 +981,14 @@ test('all seven audited task relations expose their exact endpoints without beco
   assert.ok(panel);
   panel.querySelector(':scope > summary').click();
   assert.equal(panel.open, true);
-  assert.deepEqual([...panel.querySelectorAll('[data-task-relation]')].map(row => row.dataset.taskRelation).sort(), TASK_RELATIONS.map(row => row.id).sort());
+  assert.deepEqual([...x.d.querySelectorAll('#np-overview-relation-panel [data-task-relation]')].map(row => row.dataset.taskRelation).sort(), TASK_RELATIONS.map(row => row.id).sort());
   assert.equal(panel.querySelectorAll('[role="treeitem"], [data-child][data-parent]').length, 0);
   assert.equal(panel.querySelector('[data-task-relation="tasks:relation:87"]'), null, 'the VLN execution setting is not promoted to a 23rd task relation');
   for (const expected of TASK_RELATIONS) {
     assert.equal(expected.renderAsTree, false);
     for (const index of [0, 1]) {
-      const row = x.d.querySelector('#np-task-relations [data-task-relation="' + expected.id + '"]');
+      const picker=x.d.querySelector('#np-task-relations');if(!picker.open)picker.querySelector(':scope > summary').click();x.d.querySelector('[data-relation-select="'+expected.id+'"]').click();
+      const row = x.d.querySelector('#np-overview-relation-panel [data-task-relation="' + expected.id + '"]');
       assert.equal(row.dataset.fromEntity, expected.from);
       assert.equal(row.dataset.toEntity, expected.to);
       assert.equal(row.dataset.relationType, expected.relationType);
@@ -997,8 +1000,8 @@ test('all seven audited task relations expose their exact endpoints without beco
       assert.equal(x.a.getState().route.scope, sid);
       await assertBothLocalForests(x, sid);
       x.w.history.back(); await wait(20); await frames(x.w);
-      assert.equal(x.d.querySelector('#np-task-relations').open, true);
-      const restoredControl = x.d.querySelectorAll('#np-task-relations [data-task-relation="' + expected.id + '"] button')[index];
+      assert.equal(x.d.querySelector('#np-task-relations').open, false);
+      const restoredControl = x.d.querySelectorAll('#np-overview-relation-panel [data-task-relation="' + expected.id + '"] button')[index];
       assert.equal(x.d.activeElement, restoredControl, expected.id + ': exact endpoint focus after Back');
       assert.equal(restoredControl.id, 'np-relation-entry-' + expected.id + '-' + sid);
     }
