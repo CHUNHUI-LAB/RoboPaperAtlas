@@ -1,0 +1,59 @@
+name: Navigation candidate screenshots
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+permissions:
+  contents: read
+jobs:
+  screenshots:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Install pinned Ubuntu Chinese screenshot font
+        run: |
+          python3 - <<'PY'
+          import hashlib, os, urllib.request
+          from pathlib import Path
+          # Ubuntu noble package; Noto CJK font software uses SIL OFL 1.1.
+          # https://packages.ubuntu.com/noble/all/fonts-noto-cjk/download
+          url = 'https://archive.ubuntu.com/ubuntu/pool/main/f/fonts-noto-cjk/fonts-noto-cjk_20230817+repack1-3_all.deb'
+          data = urllib.request.urlopen(url, timeout=120).read()
+          if len(data) != 61229778 or hashlib.sha256(data).hexdigest() != '7d64b985f6fe128c99eae5610d5c047338e572bdcfb2bb09736be01b824a7f6c':
+              raise RuntimeError('Ubuntu font package bytes do not match the official pinned checksum')
+          (Path(os.environ['RUNNER_TEMP']) / 'fonts-noto-cjk.deb').write_bytes(data)
+          PY
+          sudo apt-get install --yes --no-install-recommends "$RUNNER_TEMP/fonts-noto-cjk.deb"
+          test "$(dpkg-query -W -f='${Version}' fonts-noto-cjk)" = '1:20230817+repack1-3'
+      - name: Build the exact candidate
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run prepare:math
+          python3 scripts/assemble_frontier.py
+          python3 scripts/reports.py
+          python3 scripts/build_previews.py
+      - name: Capture candidate in preinstalled Chrome
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: python3 scripts/navigation_screenshots.py --dist dist --output navigation-screenshots
+      - name: Preserve screenshots and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: navigation-screenshots-${{ github.event.pull_request.head.sha }}
+          path: |
+            navigation-screenshots/*.png
+            navigation-screenshots/receipt.json
+          if-no-files-found: error
+          retention-days: 7
