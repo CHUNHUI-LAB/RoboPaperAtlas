@@ -2,7 +2,7 @@
 import copy
 import hashlib
 import json
-from navigation_research_map import build_research_map
+from navigation_research_map import build_research_map, _version_paper_title_entities
 
 OMIT = {
     'entities': ('detail', 'sourceRefs', 'directoryProjection'),
@@ -38,7 +38,12 @@ def compact_research_map(model, descriptor):
         elif p.get('labelSourcePaperId') == p.get('paperId') and p.get('paperId') in model['papers'] and p['label'] == model['papers'][p['paperId']]['title']:
             p['labelRef'] = 'labelSourcePaperId.title'
         else:
-            raise ValueError('Global title has no exact source reference')
+            matches = sorted(eid for eid, e in _version_paper_title_entities(model, p).items()
+                             if e['label'] == p['label'])
+            if p.get('labelSourcePaperId') != p.get('paperId') or not matches:
+                raise ValueError('Global title has no exact source reference')
+            p['labelRef'] = 'labelSourceEntityId.label'
+            p['labelSourceEntityId'] = matches[0]
         del p['label']
     restored = restore_research_map(model, compact)
     if restored != descriptor: raise ValueError('Global label reference projection is lossy')
@@ -52,9 +57,15 @@ def restore_research_map(model, compact):
     for p in result['positions'].values():
         ref = p.pop('labelRef', None)
         if 'label' in p: raise ValueError('Conflicting inline label and reference')
+        if ref != 'labelSourceEntityId.label' and 'labelSourceEntityId' in p:
+            raise ValueError('Conflicting global title source entity')
         if ref == 'entityId.label': p['label'] = entities[p['entityId']]['label']
         elif ref == 'labelSourcePaperId.title' and p.get('labelSourcePaperId') == p.get('paperId'):
             p['label'] = model['papers'][p['labelSourcePaperId']]['title']
+        elif ref == 'labelSourceEntityId.label' and p.get('labelSourcePaperId') == p.get('paperId'):
+            entity = _version_paper_title_entities(model, p).get(p.pop('labelSourceEntityId', None))
+            if entity is None: raise ValueError('Global title paper/version entity mismatch')
+            p['label'] = entity['label']
         else: raise ValueError('Unknown or mismatched global title reference')
     return result
 

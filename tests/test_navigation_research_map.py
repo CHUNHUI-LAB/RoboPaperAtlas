@@ -51,6 +51,107 @@ class ResearchMapTests(unittest.TestCase):
         self.assertTrue(any('status' in p for p in self.model['positions'].values()))
         self.assertTrue(any('order' in p for p in self.model['positions'].values()))
 
+    def test_recipe_display_title_uses_exact_langmap_v3_source(self):
+        p = self.map['positions']['pos:g:18a33fba17e8e92ee1ed5d']
+        title = 'LangMap: A Human-Verified Benchmark for Hierarchical Open-Vocabulary Goal Navigation'
+        self.assertEqual(p['sourcePositionId'], 'pos:l:a786031a24f0627d36943d')
+        self.assertEqual(p['versionId'], 'arxiv:2602.02220v3')
+        self.assertEqual(p['label'], title)
+        self.assertEqual(self.map['positions'][p['childIds'][0]]['label'], title)
+        self.assertEqual(p['sourceLabel'], 'planavid：输入到执行反馈')
+        self.assertNotEqual(p['label'], self.model['papers']['langmap26']['title'])
+        self.assertIn('>' + title + '<span', render_global_native(self.model, self.map))
+
+    def test_recipe_display_title_preserves_cow_publication_binding(self):
+        rows = [p for p in self.map['positions'].values()
+                if p.get('labelSourcePaperId') == 'cow']
+        self.assertEqual(len(rows), 3)
+        for p in rows:
+            self.assertEqual(p['versionId'], 'publication:cow:a7abf1e326e6')
+            self.assertEqual(p['label'], 'CoWs on PASTURE: Baselines and Benchmarks for Language-Driven Zero-Shot Object Navigation')
+            self.assertEqual(p['sourceLabel'], self.model['positions'][p['sourcePositionId']]['label'])
+        self.assertEqual(self.model['papers']['cow']['title'],
+                         'CLIP on Wheels: Zero-Shot Object Navigation as Object Localization and Exploration')
+
+    def test_recipe_display_title_uses_selected_older_version_not_latest(self):
+        model = copy.deepcopy(self.model)
+        source = model['positions']['pos:l:a786031a24f0627d36943d']
+        paper = model['papers']['langmap26']
+        older_id = 'arxiv:2602.02220v1'
+        model['versions'][older_id] = dict(model['versions'][source['versionId']],
+            id=older_id, sourceVersionIds=['test:langmap-v1'])
+        paper['versionIds'].append(older_id)
+        older_title = 'Earlier LangMap title for the v1 regression fixture'
+        paper['provenance'].append({'title': older_title, 'sourceVersionIds': ['test:langmap-v1']})
+        model['entities']['paper:test:langmap-v1'] = dict(model['entities']['methods:paper:langmap26'],
+            id='paper:test:langmap-v1', label=older_title, versionIds=[older_id])
+        source['versionId'] = older_id
+        source['versionIds'] = [older_id]
+        before = json.dumps(model, sort_keys=True)
+        p = build_research_map(model)['positions']['pos:g:18a33fba17e8e92ee1ed5d']
+        self.assertEqual(p['label'], older_title)
+        self.assertEqual(p['versionId'], older_id)
+        self.assertEqual(json.dumps(model, sort_keys=True), before)
+
+    def test_recipe_display_title_falls_back_without_unambiguous_version_provenance(self):
+        for case in ('historical-snapshot', 'missing-version', 'unknown-version',
+                     'other-paper', 'unregistered-version', 'no-source-ids',
+                     'unbound-provenance', 'ambiguous-title', 'blank-title',
+                     'missing-entity', 'other-entity-version', 'other-entity-paper', 'other-entity-kind'):
+            with self.subTest(case=case):
+                model = copy.deepcopy(self.model)
+                source = model['positions']['pos:l:a786031a24f0627d36943d']
+                paper = model['papers']['langmap26']
+                version = model['versions'][source['versionId']]
+                bound = next(r for r in paper['provenance'] if r.get('sourceVersionIds'))
+                if case == 'historical-snapshot': source['versionId'] = 'source:legacy:langmap26:0'
+                elif case == 'missing-version': source['versionId'] = None
+                elif case == 'unknown-version': source['versionId'] = 'not-imported'
+                elif case == 'other-paper': version['paperId'] = 'cow'
+                elif case == 'unregistered-version': paper['versionIds'].remove(source['versionId'])
+                elif case == 'no-source-ids': version['sourceVersionIds'] = []
+                elif case == 'unbound-provenance': bound['sourceVersionIds'] = ['test:other-version']
+                elif case == 'ambiguous-title': paper['provenance'].append(dict(bound, title='Conflicting title'))
+                elif case == 'blank-title': bound['title'] = ' '
+                elif case == 'missing-entity': del model['entities']['methods:paper:langmap26']
+                elif case == 'other-entity-version': model['entities']['methods:paper:langmap26']['versionIds'] = []
+                elif case == 'other-entity-paper': model['entities']['methods:paper:langmap26']['paperId'] = 'cow'
+                elif case == 'other-entity-kind': model['entities']['methods:paper:langmap26']['kind'] = 'pipeline_recipe'
+                before = json.dumps(model, sort_keys=True)
+                p = build_research_map(model)['positions']['pos:g:18a33fba17e8e92ee1ed5d']
+                self.assertEqual(p['label'], paper['title'])
+                self.assertEqual(p['versionId'], source['versionId'])
+                self.assertEqual(json.dumps(model, sort_keys=True), before)
+
+    def test_recipe_display_title_does_not_parse_descriptors_or_source_ref_text(self):
+        model = copy.deepcopy(self.model)
+        source = model['positions']['pos:l:a786031a24f0627d36943d']
+        paper = model['papers']['langmap26']
+        version = model['versions'][source['versionId']]
+        paper['provenance'] = []
+        version['label'] = 'arXiv v3 — Descriptor text is not title provenance'
+        version['sourceRefs'][0]['detail']['title'] = 'Unbound source-ref title'
+        p = build_research_map(model)['positions']['pos:g:18a33fba17e8e92ee1ed5d']
+        self.assertEqual(p['label'], paper['title'])
+
+    def test_recipe_version_title_is_escaped_and_duplicate_evidence_is_unambiguous(self):
+        model = copy.deepcopy(self.model)
+        paper = model['papers']['langmap26']
+        bound = next(r for r in paper['provenance'] if r.get('sourceVersionIds'))
+        bound['title'] = '<script>version title</script> & "quoted"'
+        model['entities']['methods:paper:langmap26']['label'] = bound['title']
+        paper['provenance'].append(copy.deepcopy(bound))
+        descriptor = build_research_map(model)
+        self.assertEqual(descriptor['positions']['pos:g:18a33fba17e8e92ee1ed5d']['label'], bound['title'])
+        rendered = render_global_native(model, descriptor)
+        self.assertIn('&lt;script&gt;version title&lt;/script&gt; &amp; &quot;quoted&quot;', rendered)
+        self.assertNotIn('<script>version title', rendered)
+
+    def test_recipe_version_title_keeps_unmatched_igibson_title_unchanged(self):
+        p = self.map['positions']['pos:g:24ecb6d36c4e5d1798cf90']
+        self.assertEqual(p['versionId'], 'arxiv:1910.14442v2')
+        self.assertEqual(p['label'], self.model['papers']['igibson19']['title'])
+
     def test_root_is_goal_and_two_real_branches_are_initially_expanded(self):
         p = self.map['positions']; self.assertEqual(len(self.map['roots']), 1)
         root = p[self.map['roots'][0]]

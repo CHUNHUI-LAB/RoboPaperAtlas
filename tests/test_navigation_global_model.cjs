@@ -26,3 +26,43 @@ test('source-reference labels reconstruct the exact global descriptor before ins
 for(const type of ['unknown','duplicate','wrong-paper'])test('invalid global title reference rejects atomically: '+type,()=>{const b=fixture(),m=b.delivery.researchMap;m.labelEncoding='source-reference/1';for(const p of Object.values(m.positions)){delete p.label;p.labelRef='entityId.label';}const p=m.positions[m.roots[0]];if(type==='unknown')p.labelRef='arbitrary.field';if(type==='duplicate')p.label='conflict';if(type==='wrong-paper'){p.labelRef='labelSourcePaperId.title';p.labelSourcePaperId='poni';p.paperId='semexp';}const old=JSON.stringify({positions:b.positions,entities:b.entities,forests:b.forests});assert.throws(()=>M.installResearchMap(b));assert.equal(JSON.stringify({positions:b.positions,entities:b.entities,forests:b.forests}),old);});
 
 for(const [name,value] of [['unknown',['pos:g:missing']],['old-tree',[Object.keys(source.positions)[0]]],['duplicate',['pos:g:fixture0','pos:g:fixture0']],['non-array','pos:g:fixture0']])test('initial expansion rejects '+name+' without partial installation',()=>{const b=fixture();b.delivery.researchMap.initialExpandedIds=value;const before=JSON.stringify({positions:b.positions,entities:b.entities,forests:b.forests});assert.throws(()=>M.installResearchMap(b));assert.equal(JSON.stringify({positions:b.positions,entities:b.entities,forests:b.forests}),before);});
+
+function versionTitleFixture(){
+ const b=fixture(),map=b.delivery.researchMap,sourcePosition=b.positions['pos:l:a786031a24f0627d36943d'],id='pos:g:versiontitle';
+ map.positions[id]={...M.clone(sourcePosition),id,tree:'g',scopeId:'scope:all',parentId:map.roots[0],childIds:[],labelSourcePaperId:sourcePosition.paperId};
+ map.positions[map.roots[0]].childIds.push(id);map.labelEncoding='source-reference/1';
+ for(const p of Object.values(map.positions)){delete p.label;p.labelRef='entityId.label';}
+ map.positions[id].labelRef='labelSourceEntityId.label';map.positions[id].labelSourceEntityId='methods:paper:langmap26';
+ return b;
+}
+test('version-bound paper entity title installs without changing historic science or source identity',()=>{
+ const b=versionTitleFixture(),before=M.clone(b),expected='LangMap: A Human-Verified Benchmark for Hierarchical Open-Vocabulary Goal Navigation';
+ M.installResearchMap(b);const p=b.positions['pos:g:versiontitle'];
+ assert.equal(p.label,expected);assert.equal(p.entityId,'methods:pipeline-planavid');assert.equal(p.paperId,'langmap26');assert.equal(p.versionId,'arxiv:2602.02220v3');
+ assert.equal(p.labelRef,undefined);assert.equal(p.labelSourceEntityId,undefined);
+ for(const [id,position] of Object.entries(before.positions))assert.deepEqual(b.positions[id],position);
+ for(const key of ['entities','papers','versions','analyses','template','statusGates'])assert.deepEqual(b[key],before[key]);
+ assert.equal(b.papers.langmap26.title,'LangMap: A Hierarchical Benchmark for Open-Vocabulary Goal Navigation');
+});
+for(const mutation of ['missing-entity','other-paper','other-version','missing-version','unknown-version','unregistered-version','wrong-version-owner','wrong-kind','wrong-position-kind','wrong-source-paper','conflicting-legacy-source'])test('version-bound global title rejects atomically: '+mutation,()=>{
+ const b=versionTitleFixture(),p=b.delivery.researchMap.positions['pos:g:versiontitle'];
+ if(mutation==='missing-entity')p.labelSourceEntityId='missing';
+ else if(mutation==='other-paper')p.labelSourceEntityId='methods:paper:cow';
+ else if(mutation==='other-version')b.entities['methods:paper:langmap26'].versionIds=[];
+ else if(mutation==='missing-version')p.versionId=null;
+ else if(mutation==='unknown-version')p.versionId='unknown';
+ else if(mutation==='unregistered-version')b.papers.langmap26.versionIds=b.papers.langmap26.versionIds.filter(v=>v!==p.versionId);
+ else if(mutation==='wrong-version-owner')b.versions[p.versionId].paperId='cow';
+ else if(mutation==='wrong-kind')b.entities['methods:paper:langmap26'].kind='pipeline_recipe';
+ else if(mutation==='wrong-position-kind')p.kind='paper';
+ else if(mutation==='wrong-source-paper')p.labelSourcePaperId='cow';
+ else if(mutation==='conflicting-legacy-source')p.labelRef='entityId.label';
+ const before=JSON.stringify(b);assert.throws(()=>M.installResearchMap(b));assert.equal(JSON.stringify(b),before);assert.equal(b.researchMap,undefined);
+});
+test('actual serialized version-title references roundtrip through the runtime decoder',()=>{
+ const output=require('node:child_process').execFileSync('python3',['-c',"import json,sys;from pathlib import Path;sys.path.insert(0,'scripts');import navigation_product as p;from navigation_transport import project;r=Path('.').resolve();data=project(p.payloads(r)[1],p.MODEL_SHA256);print(json.dumps({'index':data['index'],'map':data['researchMap']}))"],{cwd:root,encoding:'utf8',maxBuffer:14e6}),data=JSON.parse(output),b=data.index,before=M.clone(b.positions);
+ const refs=Object.values(b.delivery.researchMap.positions).filter(p=>p.labelRef==='labelSourceEntityId.label');assert.equal(refs.length,4);
+ M.installResearchMap(b);assert.deepEqual(b.researchMap,data.map);
+ for(const [id,p] of Object.entries(before))assert.deepEqual(b.positions[id],p);
+ for(const p of refs){assert.equal(b.positions[p.id].paperId,p.paperId);assert.equal(b.positions[p.id].versionId,p.versionId);assert.equal(b.positions[p.id].label,b.entities[p.labelSourceEntityId].label);}
+});

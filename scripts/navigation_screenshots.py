@@ -43,6 +43,8 @@ SCENE_NAMES = (
     '-28-portable-rl', '-28-portable-llm', '-29-literature-before-switch', '-29-challenge-selected', '-29-literature-restored',
     '-30-analysis-imported-entry', '-30-analysis-imported', '-30-analysis-not-imported', '-30-analysis-template-explicit',
     '-30-analysis-root-coverage', '-31-s0-reading-hierarchy', '-32-s1-relation-90', '-33-s2-first-answer',
+    '-34-version-title-langmap', '-34-version-title-cow-objectnav',
+    '-34-version-title-cow-language', '-34-version-title-cow-open-vocabulary',
 )
 
 
@@ -4005,6 +4007,191 @@ def check_capture_visible_regions(data, require_tree=True, require_home=False):
         raise RuntimeError('Reader is not visible in reader screenshot')
 
 
+# These four display occurrences were independently reviewed at 7d34188. Each
+# scene shows the real script-free full-title surface, not a short method label.
+VERSION_TITLE_CASES = (
+    ('-34-version-title-langmap', 'pos:g:18a33fba17e8e92ee1ed5d', 'langmap26', 'arxiv:2602.02220v3',
+     'LangMap: A Human-Verified Benchmark for Hierarchical Open-Vocabulary Goal Navigation'),
+    ('-34-version-title-cow-objectnav', 'pos:g:751e83079cd6d4ffeaf58a', 'cow', 'publication:cow:a7abf1e326e6',
+     'CoWs on PASTURE: Baselines and Benchmarks for Language-Driven Zero-Shot Object Navigation'),
+    ('-34-version-title-cow-language', 'pos:g:e45df86dddd9cb1b67463c', 'cow', 'publication:cow:a7abf1e326e6',
+     'CoWs on PASTURE: Baselines and Benchmarks for Language-Driven Zero-Shot Object Navigation'),
+    ('-34-version-title-cow-open-vocabulary', 'pos:g:31c6cd8857132fbe346c39', 'cow', 'publication:cow:a7abf1e326e6',
+     'CoWs on PASTURE: Baselines and Benchmarks for Language-Driven Zero-Shot Object Navigation'),
+)
+
+
+def version_title_expected(science):
+    from navigation_research_map import build_research_map, _node_name, _enhanced
+    positions = build_research_map(science)['positions']
+    rows = []
+    for suffix, pid, paper, version, title in VERSION_TITLE_CASES:
+        p = positions[pid]
+        old = science['positions'][p['sourcePositionId']]
+        if (p['paperId'], p['versionId'], p['label']) != (paper, version, title):
+            raise RuntimeError('Version-title capture target differs from the reviewed source')
+        if (p['kind'] != 'pipeline_recipe' or p['tree'] != 'g' or
+                old['paperId'] != paper or old['versionId'] != version or
+                old['entityId'] != p['entityId'] or p['sourceLabel'] != old['label'] or
+                science['versions'][version]['paperId'] != paper):
+            raise RuntimeError('Version-title source position or paper/version binding changed')
+        ancestors, cursor = [], p
+        while cursor:
+            if cursor['id'] in ancestors: raise RuntimeError('Version-title ancestry cycle')
+            ancestors.insert(0, cursor['id'])
+            cursor = positions.get(cursor['parentId'])
+        route = dict(nav='1', tree='g', node=pid, scope='scope:all', bench=None, protocol=None,
+                     paper=paper, version=version, claim=None, mode='tree', template=None)
+        rows.append(dict(suffix=suffix, position=pid, sourcePosition=p['sourcePositionId'],
+                         entity=p['entityId'], paper=paper, version=version, title=title,
+                         sourceScope=p['sourceScopeId'], sourceLabel=p['sourceLabel'], ancestors=ancestors,
+                         branch=_node_name(pid), enhancedHref=_enhanced(p), route=route))
+    if len(rows) != 4 or len({row['position'] for row in rows}) != 4:
+        raise RuntimeError('Version-title capture inventory is incomplete or duplicated')
+    return rows
+
+
+VERSION_TITLE_SNAPSHOT_JS = VISUAL_GEOMETRY + r"""
+var expected=arguments[0],matches=[...document.querySelectorAll('[data-native-position]')].filter(e=>e.dataset.nativePosition===expected.position);
+if(matches.length!==1)throw Error('Exact native title occurrence missing or duplicated');
+var node=matches[0],summary=node.querySelector(':scope > summary'),ancestors=[],open=[],cursor=node;
+while(cursor){ancestors.unshift(cursor.dataset.nativePosition);open.unshift(cursor.open);cursor=cursor.parentElement.closest('details[data-native-position]');}
+function clips(e){var areas=[];for(var n=e;n;n=n.parentElement){var cs=getComputedStyle(n);if(/auto|scroll|hidden|clip/.test(cs.overflowX+' '+cs.overflowY)){var r=rect(n);areas.push({x:r.x+n.clientLeft,y:r.y+n.clientTop,width:n.clientWidth,height:n.clientHeight});}}return areas;}
+var proof=box(summary),style=getComputedStyle(summary),runs=[],fragments=[];
+for(var text of [...summary.childNodes].filter(n=>n.nodeType===Node.TEXT_NODE&&n.textContent.trim())){
+ var range=document.createRange();range.selectNodeContents(text);var run={text:text.textContent,opaque:proof.opaque,unscaled:proof.unscaled,fontSize:proof.fontSize,foreground:proof.foreground,background:proof.background,clipAreas:clips(summary),fragments:[]};
+ for(var r of [...range.getClientRects()].filter(r=>r.width>0&&r.height>0)){
+  var visible=proof.opaque&&proof.unscaled&&[[.5,.5],[.1,.1],[.9,.1],[.1,.9],[.9,.9]].every(([x,y])=>{var hit=document.elementFromPoint(r.x+r.width*x,r.y+r.height*y);return !!hit&&(hit===summary||summary.contains(hit));});
+  var fragment={x:r.x,y:r.y,width:r.width,height:r.height,visible:visible};run.fragments.push(fragment);fragments.push(fragment);
+ }runs.push(run);
+}
+var viewport={x:0,y:0,width:innerWidth,height:innerHeight},main=rect(document.querySelector('main'));
+Object.assign(proof,{renderedText:runs.map(r=>r.text).join(''),textRuns:runs,fragments:fragments,clipAreas:clips(summary),viewport:viewport,readerContent:{x:main.x,y:0,width:main.width,height:innerHeight},textOverflow:style.textOverflow,lineClamp:style.webkitLineClamp});
+var links=[...node.querySelectorAll(':scope > .native-body > p > a')];
+return {screenKind:'native_version_title',position:node.dataset.nativePosition,ancestors:ancestors,ancestorOpen:open,
+        focusedSummary:document.activeElement===summary,
+        title:proof,linkCount:links.length,branchHref:links[0]?.getAttribute('href'),pagePath:location.pathname,
+        readyState:document.readyState,scriptCount:document.scripts.length,appPresent:!!window.NavigationProductApp,
+        fonts:document.fonts.status,viewport:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},
+        bodyWidth:document.body.scrollWidth,windowScroll:scrollY};
+"""
+
+
+def check_version_title_capture(data, expected, require_navigation=True):
+    if (data['screenKind'] != 'native_version_title' or data['position'] != expected['position'] or
+            data['ancestors'] != expected['ancestors'] or
+            data['ancestorOpen'] != [True] * len(expected['ancestors']) or
+            data['linkCount'] != 1 or data['branchHref'] != expected['branch'] or
+            data['pagePath'] != '/research/navigation/branches/index.html' or
+            data['readyState'] != 'complete' or data['scriptCount'] != 0 or data['appPresent'] or
+            data.get('sourceBinding') != expected or data.get('focusedSummary') is not True):
+        raise RuntimeError('Version-title native occurrence, ancestry or source link is incorrect')
+    actions = data.get('nativeActions', [])
+    if (len(actions) != len(expected['ancestors']) or
+            any(row['position'] != pid or type(row['beforeOpen']) is not bool or row['afterOpen'] is not True or
+                row['clicked'] is not (not row['beforeOpen']) for row, pid in zip(actions, expected['ancestors'])) or
+            actions[-1]['clicked'] is not True):
+        raise RuntimeError('Version-title path was not opened by the original native summary controls')
+    viewport = data['viewport']
+    if ((viewport['width'], viewport['height']) not in VIEWPORTS or viewport['dpr'] != 1 or
+            data['bodyWidth'] > viewport['width'] + 1 or data['windowScroll'] < 0 or data['fonts'] != 'loaded'):
+        raise RuntimeError('Version-title page bounds or actual font readiness failed')
+    proof = data['title']
+    area = dict(x=0, y=0, width=viewport['width'], height=viewport['height'])
+    if (proof['viewport'] != area or not rect_inside(proof['readerContent'], area) or
+            proof['fontSize'] < 16 or any(run['fontSize'] < 16 for run in proof['textRuns'])):
+        raise RuntimeError('Version-title full text must use unshrunk native 16px type inside the actual viewport')
+    if proof['textOverflow'] == 'ellipsis' or proof['lineClamp'] not in ('none', '0', ''):
+        raise RuntimeError('Version-title text was ellipsized or line-clamped')
+    check_task_route_proof(proof, expected['title'])
+    if (data.get('pngDimensions') != [viewport['width'], viewport['height']] or
+            not data.get('pixelVariation') or not re.fullmatch('[a-f0-9]{64}', data.get('screenshotSha256', '')) or
+            not any(font.get('glyphCount', 0) > 0 for font in data.get('renderedFonts', []))):
+        raise RuntimeError('Version-title screenshot or rendered-font evidence is incomplete')
+    if any(item.get('level') == 'SEVERE' for item in data['console']) or data['networkFailures']:
+        raise RuntimeError('Version-title page has browser or resource failures')
+    if require_navigation:
+        nav = data.get('enhancedNavigation', {})
+        if (nav.get('branchPath') != '/research/navigation/branches/' + expected['branch'] or
+                nav.get('branchTitle') != expected['title'] or nav.get('enhancedHref') != expected['enhancedHref'] or
+                nav.get('route') != expected['route'] or nav.get('ready') is not True or
+                nav.get('sourcePosition') != expected['sourcePosition'] or nav.get('entity') != expected['entity'] or
+                nav.get('label') != expected['title'] or nav.get('sourceScope') != expected['sourceScope'] or
+                nav.get('sourceLabel') != expected['sourceLabel']):
+            raise RuntimeError('Native version-title link did not select the exact enhanced source identity')
+        if any(item.get('level') == 'SEVERE' for item in nav['console']) or nav['networkFailures']:
+            raise RuntimeError('Version-title source navigation has browser or resource failures')
+
+
+def version_title_browser_logs(driver):
+    console = driver.call('POST', '/log', {'type': 'browser'})
+    failures = []
+    for entry in driver.call('POST', '/log', {'type': 'performance'}):
+        message = json.loads(entry['message'])['message']
+        if message['method'] == 'Network.loadingFailed':
+            p = message['params']
+            failures.append({'type': p.get('type'), 'error': p.get('errorText'), 'cancelled': p.get('canceled', False)})
+        elif message['method'] == 'Network.responseReceived' and message['params']['response']['status'] >= 400:
+            response = message['params']['response']
+            failures.append({'status': response['status'], 'path': urllib.parse.urlsplit(response['url']).path})
+    return console, failures
+
+
+def version_title_checks(driver, report, save, prefix, base, science, out):
+    cases = version_title_expected(science)
+    record = {'viewport': prefix, 'surface': 'script_free_native_global_tree', 'cases': []}
+    report.setdefault('versionTitleChecks', []).append(record)
+    save()
+    for expected in cases:
+        driver.call('POST', '/url', {'url': base + 'branches/index.html'})
+        driver.settle()
+        actions = []
+        for pid in expected['ancestors']:
+            selector = '[data-native-position="' + pid + '"]'
+            before = driver.js("var n=document.querySelectorAll(arguments[0]);if(n.length!==1)throw Error('Native position missing or duplicated');return n[0].open;", selector)
+            if not before:
+                driver.click(driver.selector(selector + ' > summary'))
+                driver.settle()
+            after = driver.js('return document.querySelector(arguments[0]).open;', selector)
+            if after is not True: raise RuntimeError('Native summary did not expand through its real control')
+            actions.append({'position': pid, 'beforeOpen': before, 'afterOpen': after, 'clicked': not before})
+        summary_selector = '[data-native-position="' + expected['position'] + '"] > summary'
+        driver.js("arguments[0].scrollIntoView({block:'center',inline:'nearest'});", driver.selector(summary_selector))
+        driver.settle()
+        data = driver.js(VERSION_TITLE_SNAPSHOT_JS, expected)
+        data.update(name=prefix + expected['suffix'], sourceBinding=expected, nativeActions=actions)
+        root_node = driver.cdp('DOM.getDocument', {'depth': 1})['root']['nodeId']
+        title_node = driver.cdp('DOM.querySelector', {'nodeId': root_node, 'selector': summary_selector})['nodeId']
+        data['renderedFonts'] = driver.cdp('CSS.getPlatformFontsForNode', {'nodeId': title_node})['fonts']
+        image = base64.b64decode(driver.call('GET', '/screenshot'), validate=True)
+        if not image.startswith(b'\x89PNG\r\n\x1a\n'): raise RuntimeError('Version-title screenshot is not PNG')
+        data['pngDimensions'] = list(struct.unpack('>II', image[16:24]))
+        data['screenshotSha256'] = hashlib.sha256(image).hexdigest()
+        data['pixelVariation'] = png_has_visible_variation(image)
+        data['console'], data['networkFailures'] = version_title_browser_logs(driver)
+        (out / (data['name'] + '.png')).write_bytes(image)
+        report['captures'].append(data)
+        record['cases'].append(data)
+        save()
+        check_version_title_capture(data, expected, require_navigation=False)
+        link_selector = '[data-native-position="' + expected['position'] + '"] > .native-body > p > a'
+        driver.click(driver.selector(link_selector))
+        driver.settle()
+        nav = driver.js("var links=[...document.querySelectorAll('main > p > a')].filter(a=>a.getAttribute('href')===arguments[0]);return {branchPath:location.pathname,branchTitle:document.querySelector('main > h1')?.textContent,enhancedHref:links.length===1?links[0].getAttribute('href'):null};", expected['enhancedHref'])
+        if (nav['branchPath'] != '/research/navigation/branches/' + expected['branch'] or
+                nav['branchTitle'] != expected['title'] or nav['enhancedHref'] != expected['enhancedHref']):
+            raise RuntimeError('Native title branch does not retain its exact reviewed title and source link')
+        control = driver.js("return [...document.querySelectorAll('main > p > a')].find(a=>a.getAttribute('href')===arguments[0]);", expected['enhancedHref'])
+        driver.click(control)
+        wait_for(lambda: driver.js("var a=window.NavigationProductApp;if(!a)return false;var r=a.getState().route;return r.node===arguments[0]&&document.querySelector('[data-load-state]')?.dataset.loadState==='ready'&&a.getContent().ready(a.getBundle().positions[r.node].entityId);", expected['position']))
+        driver.settle()
+        nav.update(driver.js("var a=NavigationProductApp,r=a.getState().route,p=a.getBundle().positions[r.node];return {route:r,ready:a.getContent().ready(p.entityId),sourcePosition:p.sourcePositionId,entity:p.entityId,label:p.label,sourceScope:p.sourceScopeId,sourceLabel:p.sourceLabel};"))
+        nav['console'], nav['networkFailures'] = version_title_browser_logs(driver)
+        data['enhancedNavigation'] = nav
+        check_version_title_capture(data, expected)
+        save()
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dist', type=Path, required=True)
@@ -4636,6 +4823,7 @@ def main():
             desktop_hierarchy_checks(driver, report, save, capture, prefix, base, science)
             task_route_checks(driver, report, save, capture, prefix, base, science, server, dist)
             exploration_state_checks(driver, report, save, capture, prefix, base, science)
+            version_title_checks(driver, report, save, prefix, base, science, out)
         planned = [str(w) + 'x' + str(h) + suffix for w, h in VIEWPORTS for suffix in SCENE_NAMES]
         report['capturePlan'] = planned
         if sorted(c['name'] for c in report['captures']) != sorted(planned):
