@@ -414,8 +414,8 @@ const root=e.scopes['task:imagenav'].roots[0],target=d.querySelector('[data-path
 
     def test_required_viewports(self):
         self.assertEqual(MODULE.VIEWPORTS, [(1440, 900), (1920, 1080)])
-        self.assertEqual(len(MODULE.SCENE_NAMES), 49)
-        self.assertEqual(len(set(MODULE.SCENE_NAMES)), 49)
+        self.assertEqual(len(MODULE.SCENE_NAMES), 53)
+        self.assertEqual(len(set(MODULE.SCENE_NAMES)), 53)
 
     def test_webdriver_envelope_and_loopback(self):
         driver = MODULE.Driver(12345)
@@ -2736,7 +2736,7 @@ try{const w=dom.window,d=w.document;d.body.style.overflow='hidden';d.body.scroll
         self.assertIn('stationaryAncestors:stationaryShellAncestors()',MODULE.TASK_ROUTE_DIAGNOSTIC_JS)
         for forbidden in ('scrollTop=', 'scrollTop =', 'scrollLeft=', '.scrollTo(', '.scrollIntoView(', '.focus('):
             self.assertNotIn(forbidden,MODULE.STATIONARY_SHELL_ANCESTORS_JS)
-        self.assertEqual(len(MODULE.SCENE_NAMES)*len(MODULE.VIEWPORTS),98)
+        self.assertEqual(len(MODULE.SCENE_NAMES)*len(MODULE.VIEWPORTS),106)
 
     def test_selector_overlay_cannot_displace_root_or_hide_either_original_relation_endpoint(self):
         import copy
@@ -2829,7 +2829,7 @@ d.querySelector('.np-return-previous').click();await ready(()=>a.getState().rout
         import inspect
         self.assertEqual(len(MODULE.DISPLAY_CONTRACT_MIGRATIONS), 14)
         self.assertIn('s0_footer', MODULE.DISPLAY_CONTRACT_MIGRATIONS)
-        self.assertEqual(len(MODULE.SCENE_NAMES), 49)
+        self.assertEqual(len(MODULE.SCENE_NAMES), 53)
         for name in ('-31-s0-reading-hierarchy', '-32-s1-relation-90', '-33-s2-first-answer', '-30-analysis-root-coverage'):
             self.assertIn(name, MODULE.SCENE_NAMES)
         source = inspect.getsource(MODULE.main)
@@ -2996,7 +2996,7 @@ class MethodReadingCaptureChecks(unittest.TestCase):
 
     def test_method_capture_reuses_all_98_scenes_and_is_read_only(self):
         import inspect
-        self.assertEqual(len(MODULE.SCENE_NAMES) * len(MODULE.VIEWPORTS), 98)
+        self.assertEqual(len(MODULE.SCENE_NAMES) * len(MODULE.VIEWPORTS), 106)
         for suffix in ('-03-method-reader', '-03b-reader-visible', '-11-active-method-reader', '-23-poni-method', '-27-imagenav-zhu', '-28-portable-llm'):
             self.assertIn(suffix, MODULE.SCENE_NAMES)
         source = inspect.getsource(MODULE.main)
@@ -3479,7 +3479,7 @@ process.stdout.write(JSON.stringify([normal,hidden,covered,clipped]));}finally{d
 
     def test_snapshot_extension_preserves_five_point_title_proof_and_exact_scene_plan(self):
         import inspect
-        self.assertEqual(len(MODULE.SCENE_NAMES), 49)
+        self.assertEqual(len(MODULE.SCENE_NAMES), 53)
         self.assertEqual(MODULE.VIEWPORTS, [(1440, 900), (1920, 1080)])
         self.assertIn('heading:proof(header),title:proof(title),meta:proof(meta)', MODULE.DESKTOP_SHELL_SNAPSHOT_JS)
         self.assertIn("[[.5,.5],[.1,.1],[.9,.1],[.1,.9],[.9,.9]]", MODULE.VISUAL_GEOMETRY)
@@ -3794,7 +3794,7 @@ try{const w=dom.window,d=w.document,tree=d.getElementById('np-tree-scroll'),item
         self.assertEqual(result.returncode,0,result.stdout+result.stderr)
         target=json.loads(result.stdout);self.assertEqual(target['tree'],'c');self.assertEqual(target['scope'],'original-scope')
         for forbidden in ('scrollTop=', 'scrollTop =', '.scrollTo(', '.scrollIntoView(', '.focus(', '.click('):self.assertNotIn(forbidden,MODULE.END_TARGET_SNAPSHOT_JS)
-        self.assertEqual(len(MODULE.SCENE_NAMES)*len(MODULE.VIEWPORTS),98)
+        self.assertEqual(len(MODULE.SCENE_NAMES)*len(MODULE.VIEWPORTS),106)
 
     def test_all_shortened_fixture_sites_keep_native_positive_gates_and_98_scenes(self):
         import inspect
@@ -3816,7 +3816,7 @@ try{const w=dom.window,d=w.document,tree=d.getElementById('np-tree-scroll'),item
             code=inspect.getsource(fn)
             for forbidden in ('style.', 'scrollTop=', 'scrollTop =', '.navigate(', 'dispatchEvent(', 'replaceState(', 'pushState('):
                 self.assertNotIn(forbidden,code)
-        self.assertEqual(len(MODULE.SCENE_NAMES)*len(MODULE.VIEWPORTS),98)
+        self.assertEqual(len(MODULE.SCENE_NAMES)*len(MODULE.VIEWPORTS),106)
 
 
 class S0FooterCaptureChecks(unittest.TestCase):
@@ -4051,8 +4051,8 @@ class S0FooterCaptureChecks(unittest.TestCase):
         self.assertIn("check_s0_footer(graph['s0AdaptiveSpacing'])", main)
         self.assertIn("reading_home(relation_mode='all')", main)
         saves = [n for n in ast.walk(ast.parse(inspect.getsource(MODULE))) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']
-        self.assertEqual(len(saves), 96)
-        self.assertEqual(len(MODULE.SCENE_NAMES) * len(MODULE.VIEWPORTS), 98)
+        self.assertEqual(len(saves), 99)
+        self.assertEqual(len(MODULE.SCENE_NAMES) * len(MODULE.VIEWPORTS), 106)
         self.assertIn('s0_adaptive_spacing', MODULE.DISPLAY_CONTRACT_MIGRATIONS)
 
     def test_footer_rejects_legacy_absolute_map_child_missing_duplicate_and_extra_scroll(self):
@@ -4274,7 +4274,7 @@ const span=d.createElement('span');span.style.opacity='0';span.textContent='隐�
         self.assertIn("'type': 'wheel', 'id': 's0-source-scroll'", source)
         self.assertIn("check_s0_footer(data['s0Footer'])", inspect.getsource(MODULE.check_desktop_shell))
         self.assertIn('RELATION_EVIDENCE_PROOF_JS', source)
-        self.assertEqual(len(MODULE.SCENE_NAMES) * len(MODULE.VIEWPORTS), 98)
+        self.assertEqual(len(MODULE.SCENE_NAMES) * len(MODULE.VIEWPORTS), 106)
         for required in ('-00-default-reading-overview', '-31-s0-reading-hierarchy', '-13-relation-88', '-13-relation-90', '-13-relation-94'):
             self.assertIn(required, MODULE.SCENE_NAMES)
         snapshot = MODULE.S0_FOOTER_SNAPSHOT_JS
@@ -4460,7 +4460,7 @@ states.push(actual);
             self.assertNotIn(forbidden, code)
         flow = inspect.getsource(MODULE.exploration_state_checks)
         self.assertLess(flow.index('analysis_answer_rows_checks('), flow.index("capture(prefix + '-30-analysis-root-coverage')"))
-        self.assertEqual(len(MODULE.SCENE_NAMES) * len(MODULE.VIEWPORTS), 98)
+        self.assertEqual(len(MODULE.SCENE_NAMES) * len(MODULE.VIEWPORTS), 106)
 
 
 class AtomicReceiptPersistenceChecks(unittest.TestCase):
@@ -4616,7 +4616,7 @@ class AtomicReceiptPersistenceChecks(unittest.TestCase):
         import tempfile
         source = Path(MODULE.__file__).read_text(encoding='utf-8'); tree = ast.parse(source)
         calls = [node for node in ast.walk(tree) if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == 'save']
-        self.assertEqual(len(calls), 96)
+        self.assertEqual(len(calls), 99)
         saves = [node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef) and node.name == 'save']
         self.assertEqual(len(saves), 1)
         self.assertEqual(ast.dump(saves[0].body[0].value.func), "Name(id='write_receipt', ctx=Load())")
@@ -4632,7 +4632,7 @@ class AtomicReceiptPersistenceChecks(unittest.TestCase):
                     namespace['save']()
                     self.assertEqual(writer.call_count, count + 1)
                     self.assert_only_receipt(Path(directory), report)
-            self.assertEqual(len(MODULE.SCENE_NAMES) * len(MODULE.VIEWPORTS), 98)
+            self.assertEqual(len(MODULE.SCENE_NAMES) * len(MODULE.VIEWPORTS), 106)
 
 
 class S0SelectorOcclusionChecks(unittest.TestCase):
@@ -4730,9 +4730,179 @@ class S0SelectorOcclusionChecks(unittest.TestCase):
         for text in ("s0_footer_check('before-selection-'", "s0_footer_check('closed-'", "check_s0_stability(before_selection, selected_footer)", "closed['focus'] != 'np-relation-select-'", 'check_s0_stability(footer_before_reload, footer_after_reload, restore=True)'):
             self.assertIn(text, main)
         saves = [n for n in ast.walk(ast.parse(inspect.getsource(MODULE))) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']
-        self.assertEqual(len(saves), 96)
-        self.assertEqual(len(MODULE.SCENE_NAMES) * len(MODULE.VIEWPORTS), 98)
+        self.assertEqual(len(saves), 99)
+        self.assertEqual(len(MODULE.SCENE_NAMES) * len(MODULE.VIEWPORTS), 106)
 
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class VersionTitleCaptureChecks(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        import gzip
+        import sys
+        paths = patch.object(sys, 'path', [str(Path(__file__).parents[1] / 'scripts'), *sys.path])
+        paths.start(); cls.addClassCleanup(paths.stop)
+        cls.science = json.loads(gzip.decompress((Path(__file__).parents[1] / 'data/navigation-product/model.json.gz').read_bytes()))
+        cls.expected = MODULE.version_title_expected(cls.science)
+
+    @classmethod
+    def fixture(cls, index=0, width=1440, height=900):
+        import copy
+        expected = copy.deepcopy(cls.expected[index])
+        area = dict(x=0, y=0, width=width, height=height)
+        rect = dict(x=160, y=350, width=1000, height=72)
+        fragment = dict(x=160, y=350, width=800, height=24, visible=True)
+        run = dict(text=expected['title'], opaque=True, unscaled=True, fontSize=16,
+                   foreground=[24,49,61], background=[251,252,249], clipAreas=[], fragments=[fragment.copy()])
+        proof = dict(text=expected['title']+'具体方法', renderedText=expected['title'], rect=rect,
+                     visible=True, opaque=True, unscaled=True, fontSize=16, foreground=[24,49,61],
+                     background=[251,252,249], clipped=False, fragments=[fragment.copy()], textRuns=[run],
+                     clipAreas=[], viewport=area, readerContent=dict(x=120,y=0,width=1200,height=height),
+                     textOverflow='clip', lineClamp='none')
+        nav = dict(branchPath='/research/navigation/branches/'+expected['branch'], branchTitle=expected['title'],
+                   enhancedHref=expected['enhancedHref'], route=copy.deepcopy(expected['route']), ready=True,
+                   sourcePosition=expected['sourcePosition'], entity=expected['entity'], label=expected['title'],
+                   sourceScope=expected['sourceScope'], sourceLabel=expected['sourceLabel'], console=[], networkFailures=[])
+        data = dict(screenKind='native_version_title', position=expected['position'], ancestors=expected['ancestors'].copy(),
+                    ancestorOpen=[True]*len(expected['ancestors']), focusedSummary=True, title=proof,
+                    linkCount=1, branchHref=expected['branch'], pagePath='/research/navigation/branches/index.html',
+                    readyState='complete', scriptCount=0, appPresent=False, sourceBinding=copy.deepcopy(expected),
+                    nativeActions=[dict(position=pid,beforeOpen=False,afterOpen=True,clicked=True) for pid in expected['ancestors']],
+                    fonts='loaded', viewport=dict(width=width,height=height,dpr=1), bodyWidth=width, windowScroll=400,
+                    pngDimensions=[width,height],pixelVariation=True,screenshotSha256='a'*64,
+                    renderedFonts=[dict(familyName='Noto Sans',glyphCount=80)],console=[],networkFailures=[],enhancedNavigation=nav)
+        return data, expected
+
+    def test_exact_four_version_titles_and_original_98_scenes_are_preserved(self):
+        self.assertEqual([x['position'] for x in self.expected], [
+            'pos:g:18a33fba17e8e92ee1ed5d','pos:g:751e83079cd6d4ffeaf58a',
+            'pos:g:e45df86dddd9cb1b67463c','pos:g:31c6cd8857132fbe346c39'])
+        self.assertEqual(len(MODULE.SCENE_NAMES[:-4])*len(MODULE.VIEWPORTS),98)
+        self.assertEqual(MODULE.SCENE_NAMES[-4:],tuple(row['suffix'] for row in self.expected))
+        self.assertEqual(len(MODULE.SCENE_NAMES)*len(MODULE.VIEWPORTS),106)
+        self.assertEqual(len(set(MODULE.SCENE_NAMES)),53)
+        for i in range(4):
+            for width,height in MODULE.VIEWPORTS:
+                data,expected=self.fixture(i,width,height);MODULE.check_version_title_capture(data,expected)
+        before=json.dumps(self.science,sort_keys=True);MODULE.version_title_expected(self.science)
+        self.assertEqual(json.dumps(self.science,sort_keys=True),before)
+
+    def test_version_title_source_inventory_rejects_wrong_or_duplicate_occurrences(self):
+        import copy
+        for mutation in ('title','paper','version','duplicate'):
+            rows=list(MODULE.VERSION_TITLE_CASES)
+            if mutation=='duplicate':rows[-1]=rows[0]
+            else:
+                first=list(rows[0]);first[{'title':4,'paper':2,'version':3}[mutation]]='wrong';rows[0]=tuple(first)
+            with self.subTest(mutation=mutation),patch.object(MODULE,'VERSION_TITLE_CASES',tuple(rows)),self.assertRaises(RuntimeError):
+                MODULE.version_title_expected(self.science)
+
+    def test_version_title_gate_rejects_identity_ancestry_selection_and_link_errors(self):
+        import copy
+        mutations=[lambda d:d.update(position='wrong'),lambda d:d['ancestors'].reverse(),
+                   lambda d:d['ancestorOpen'].__setitem__(0,False),lambda d:d.update(focusedSummary=False),
+                   lambda d:d.update(linkCount=2),lambda d:d.update(linkCount=0),lambda d:d.update(branchHref='wrong.html'),
+                   lambda d:d.update(pagePath='/research/navigation/index.html'),lambda d:d.update(scriptCount=1),
+                   lambda d:d.update(appPresent=True),lambda d:d['sourceBinding'].update(version='wrong'),
+                   lambda d:d['sourceBinding'].update(paper='wrong'),lambda d:d['nativeActions'].pop(),
+                   lambda d:d['nativeActions'][-1].update(clicked=False),lambda d:d['nativeActions'][0].update(position='wrong')]
+        for i,mutate in enumerate(mutations):
+            data,expected=self.fixture();mutate(data)
+            with self.subTest(mutation=i),self.assertRaises(RuntimeError):MODULE.check_version_title_capture(data,expected)
+
+    def test_version_title_gate_rejects_truncation_occlusion_scaling_and_fake_bounds(self):
+        mutations=[lambda d:d['title'].update(renderedText=d['title']['renderedText'][:-1]),
+                   lambda d:d['title'].update(clipped=True),lambda d:d['title'].update(visible=False),
+                   lambda d:d['title'].update(opaque=False),lambda d:d['title'].update(unscaled=False),
+                   lambda d:d['title'].update(fontSize=15),lambda d:d['title']['textRuns'][0].update(fontSize=15),
+                   lambda d:d['title'].update(textOverflow='ellipsis'),lambda d:d['title'].update(lineClamp='2'),
+                   lambda d:d['title']['fragments'][0].update(visible=False),
+                   lambda d:d['title']['textRuns'][0]['fragments'][0].update(visible=False),
+                   lambda d:d['title']['fragments'][0].update(y=899),lambda d:d['title'].update(textRuns=[]),
+                   lambda d:d['title'].update(fragments=[]),lambda d:d['title']['viewport'].update(width=2000),
+                   lambda d:d['title']['readerContent'].update(width=2000),lambda d:d.update(bodyWidth=1442),
+                   lambda d:d['title']['textRuns'][0].update(foreground=[230,230,230]),
+                   lambda d:d['title']['textRuns'][0]['clipAreas'].append(dict(x=0,y=0,width=20,height=20))]
+        for i,mutate in enumerate(mutations):
+            data,expected=self.fixture();mutate(data)
+            with self.subTest(mutation=i),self.assertRaises(RuntimeError):MODULE.check_version_title_capture(data,expected)
+
+    def test_version_title_gate_requires_actual_media_fonts_and_resource_health(self):
+        mutations=[lambda d:d.update(pngDimensions=[900,1440]),lambda d:d.update(pixelVariation=False),
+                   lambda d:d.update(screenshotSha256='wrong'),lambda d:d.update(renderedFonts=[]),
+                   lambda d:d['renderedFonts'][0].update(glyphCount=0),lambda d:d.update(fonts='loading'),
+                   lambda d:d['viewport'].update(dpr=2),lambda d:d.update(console=[dict(level='SEVERE')]),
+                   lambda d:d.update(networkFailures=[dict(status=404)]),lambda d:d.update(readyState='loading')]
+        for i,mutate in enumerate(mutations):
+            data,expected=self.fixture();mutate(data)
+            with self.subTest(mutation=i),self.assertRaises(RuntimeError):MODULE.check_version_title_capture(data,expected)
+
+    def test_version_title_navigation_must_retain_exact_actual_source(self):
+        mutations=[lambda n:n.update(branchPath='wrong'),lambda n:n.update(branchTitle='old title'),
+                   lambda n:n.update(enhancedHref='wrong'),lambda n:n['route'].update(paper='cow'),
+                   lambda n:n['route'].update(version='source:legacy:langmap26:0'),lambda n:n['route'].update(node='wrong'),
+                   lambda n:n.update(ready=False),lambda n:n.update(sourcePosition='wrong'),lambda n:n.update(entity='wrong'),
+                   lambda n:n.update(label='old title'),lambda n:n.update(sourceScope='wrong'),lambda n:n.update(sourceLabel='changed'),
+                   lambda n:n.update(console=[dict(level='SEVERE')]),lambda n:n.update(networkFailures=[dict(status=404)])]
+        data,expected=self.fixture();del data['enhancedNavigation']
+        MODULE.check_version_title_capture(data,expected,require_navigation=False)
+        with self.assertRaises(RuntimeError):MODULE.check_version_title_capture(data,expected)
+        for i,mutate in enumerate(mutations):
+            data,expected=self.fixture();mutate(data['enhancedNavigation'])
+            with self.subTest(mutation=i),self.assertRaises(RuntimeError):MODULE.check_version_title_capture(data,expected)
+
+    def test_version_title_flow_uses_native_controls_and_preserves_original_capture(self):
+        import inspect,ast
+        source=inspect.getsource(MODULE.version_title_checks)
+        self.assertIn('driver.click(driver.selector(selector + \' > summary\'))',source)
+        self.assertIn('driver.click(driver.selector(link_selector))',source)
+        self.assertIn('driver.click(control)',source)
+        self.assertIn('scrollIntoView',source)
+        for forbidden in ('.navigate(','.open =','.open=','.textContent=','.textContent =','innerHTML','style.'):
+            self.assertNotIn(forbidden,source)
+        tree=ast.parse(Path(MODULE.__file__).read_text());main=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=='main')
+        calls=[n for n in ast.walk(main) if isinstance(n,ast.Call) and isinstance(n.func,ast.Name) and n.func.id=='version_title_checks']
+        self.assertEqual(len(calls),1)
+        self.assertEqual([n.id for n in calls[0].args],['driver','report','save','prefix','base','science','out'])
+        result=subprocess.run(['node','-e','new Function(JSON.parse(require("fs").readFileSync(0,"utf8")));'],input=json.dumps(MODULE.VERSION_TITLE_SNAPSHOT_JS),text=True,capture_output=True)
+        self.assertEqual(result.returncode,0,result.stderr)
+
+    def test_snapshot_and_native_links_use_real_generated_full_titles(self):
+        import tempfile
+        root=Path(__file__).parents[1]
+        with tempfile.TemporaryDirectory(prefix='.version-title-native-',dir=root) as tmp:
+            result=subprocess.run(['python3','-c',"import sys;from pathlib import Path;sys.path.insert(0,'scripts');import navigation_product as p;p.write_preview(Path('.').resolve(),Path(sys.argv[1]))",tmp],cwd=root,text=True,capture_output=True)
+            self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+            script=r"""
+const fs=require('fs'),path=require('path'),assert=require('node:assert/strict'),{JSDOM}=require('jsdom'),input=JSON.parse(fs.readFileSync(0,'utf8'));
+const folder=path.join(input.root,'research/navigation/branches'),dom=new JSDOM(fs.readFileSync(path.join(folder,'index.html'),'utf8'),{url:'https://example.org/research/navigation/branches/index.html',runScripts:'outside-only'}),w=dom.window,d=w.document,states=[];
+try{
+Object.defineProperty(d,'readyState',{value:'complete'});Object.defineProperty(d,'fonts',{value:{status:'loaded'}});
+Object.defineProperty(w,'innerWidth',{value:1440});Object.defineProperty(w,'innerHeight',{value:900});Object.defineProperty(w,'devicePixelRatio',{value:1});Object.defineProperty(d.body,'scrollWidth',{value:1440});
+// JSDOM verifies the actual native markup/selectors and text, not Chrome layout.
+w.getComputedStyle=()=>({display:'block',visibility:'visible',opacity:'1',transform:'none',zoom:'1',fontSize:'16px',color:'rgb(24,49,61)',backgroundColor:'rgb(251,252,249)',overflowX:'visible',overflowY:'visible',textOverflow:'clip',webkitLineClamp:'none'});
+w.HTMLElement.prototype.getBoundingClientRect=function(){return this.tagName==='MAIN'?{x:120,y:0,width:1200,height:900}:{x:160,y:350,width:1000,height:72};};
+w.Range.prototype.getClientRects=function(){return [{x:160,y:350,width:800,height:24}];};
+const snapshot=new w.Function(input.snapshot);
+for(const expected of input.cases){
+ const actions=[];
+ for(const pid of expected.ancestors){const n=d.querySelector('[data-native-position="'+pid+'"]'),before=n.open;if(!before)n.querySelector(':scope > summary').click();assert.equal(n.open,true);actions.push({position:pid,beforeOpen:before,afterOpen:n.open,clicked:!before});}
+ const n=d.querySelector('[data-native-position="'+expected.position+'"]'),summary=n.querySelector(':scope > summary');summary.focus();d.elementFromPoint=()=>summary;
+ const data=snapshot(expected);assert.equal(data.title.renderedText,expected.title);assert.equal(data.title.textRuns.length,1);assert.ok(summary.querySelector('.native-depth'),'original badge still present but is not substituted for title');
+ assert.equal(data.branchHref,expected.branch);const branch=new JSDOM(fs.readFileSync(path.join(folder,data.branchHref),'utf8'),{url:'https://example.org/research/navigation/branches/'+data.branchHref});
+ try{assert.equal(branch.window.document.querySelector('main > h1').textContent,expected.title);const link=[...branch.window.document.querySelectorAll('main > p > a')].filter(a=>a.getAttribute('href')===expected.enhancedHref);assert.equal(link.length,1);const route=Object.fromEntries(new URL(link[0].href).hash.slice(1).split('&').map(s=>s.split('=').map(decodeURIComponent)));for(const key of ['node','paper','version','scope','tree'])assert.equal(route[key],expected.route[key]);}finally{branch.window.close();}
+ data.nativeActions=actions;states.push(data);
+}
+const expected=input.cases[0],target=d.querySelector('[data-native-position="'+expected.position+'"]');target.after(target.cloneNode(true));assert.throws(()=>snapshot(expected),/missing or duplicated/);
+process.stdout.write(JSON.stringify(states));
+}finally{dom.window.close();}
+"""
+            result=subprocess.run(['node','-e',script],cwd=root,input=json.dumps({'root':tmp,'cases':self.expected,'snapshot':MODULE.VERSION_TITLE_SNAPSHOT_JS}),text=True,capture_output=True,timeout=60)
+            self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+            states=json.loads(result.stdout);self.assertEqual(len(states),4)
+            for actual,expected in zip(states,self.expected):
+                good,_=self.fixture();actual.update(sourceBinding=expected,renderedFonts=good['renderedFonts'],pngDimensions=[1440,900],pixelVariation=True,screenshotSha256='a'*64,console=[],networkFailures=[])
+                MODULE.check_version_title_capture(actual,expected,require_navigation=False)
