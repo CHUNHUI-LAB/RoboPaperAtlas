@@ -51,7 +51,43 @@ class NavigationTransportTests(unittest.TestCase):
   self.assertEqual(len(actual['positions']),455)
   for position in actual['positions'].values():
    self.assertNotIn('label',position)
-   self.assertIn(position['labelRef'],('entityId.label','labelSourcePaperId.title'))
+   self.assertIn(position['labelRef'],('entityId.label','labelSourcePaperId.title','labelSourceEntityId.label'))
+ def test_version_title_references_preserve_exact_paper_version_and_legacy_forms(self):
+  from navigation_transport import restore_research_map
+  actual=json.loads(self.projected['inline'])['delivery']['researchMap']
+  corrected=[p for p in actual['positions'].values() if p['labelRef']=='labelSourceEntityId.label']
+  self.assertEqual(len(corrected),4)
+  self.assertEqual({p['labelSourceEntityId'] for p in corrected},{'methods:paper:langmap26','methods:paper:cow'})
+  self.assertEqual({p['labelRef'] for p in actual['positions'].values()},
+                   {'entityId.label','labelSourcePaperId.title','labelSourceEntityId.label'})
+  restored=restore_research_map(self.model,actual)
+  for p in corrected:
+   e=self.model['entities'][p['labelSourceEntityId']]
+   self.assertEqual(e['kind'],'paper');self.assertEqual(e['paperId'],p['paperId'])
+   self.assertIn(p['versionId'],e['versionIds'])
+   self.assertEqual(restored['positions'][p['id']]['label'],e['label'])
+   self.assertNotIn('labelSourceEntityId',restored['positions'][p['id']])
+ def test_version_title_references_reject_wrong_identity_without_mutation(self):
+  from navigation_transport import restore_research_map
+  import copy
+  for mutation in ('missing-entity','other-paper','other-version','missing-version','unknown-version',
+                   'unregistered-version','wrong-version-owner','wrong-kind','wrong-source-paper','conflicting-legacy-source'):
+   with self.subTest(mutation=mutation):
+    value=copy.deepcopy(self.projected['index']['delivery']['researchMap']);model=copy.deepcopy(self.model)
+    node=value['positions']['pos:g:18a33fba17e8e92ee1ed5d']
+    if mutation=='missing-entity':node['labelSourceEntityId']='missing'
+    elif mutation=='other-paper':node['labelSourceEntityId']='methods:paper:cow'
+    elif mutation=='other-version':model['entities']['methods:paper:langmap26']['versionIds']=[]
+    elif mutation=='missing-version':node['versionId']=None
+    elif mutation=='unknown-version':node['versionId']='unknown'
+    elif mutation=='unregistered-version':model['papers']['langmap26']['versionIds'].remove(node['versionId'])
+    elif mutation=='wrong-version-owner':model['versions'][node['versionId']]['paperId']='cow'
+    elif mutation=='wrong-kind':model['entities']['methods:paper:langmap26']['kind']='pipeline_recipe'
+    elif mutation=='wrong-source-paper':node['labelSourcePaperId']='cow'
+    elif mutation=='conflicting-legacy-source':node['labelRef']='entityId.label'
+    before=json.dumps({'model':model,'value':value},sort_keys=True)
+    with self.assertRaises(ValueError):restore_research_map(model,value)
+    self.assertEqual(json.dumps({'model':model,'value':value},sort_keys=True),before)
  def test_global_title_references_reject_ambiguous_or_unknown_sources(self):
   from navigation_transport import restore_research_map
   import copy

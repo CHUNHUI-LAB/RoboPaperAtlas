@@ -30,6 +30,38 @@ def _relations(model):
     return result
 
 
+def _version_paper_title_entities(model, position):
+    """Existing paper-label witnesses for this recipe's exact source identity."""
+    paper_id, version_id = position.get('paperId'), position.get('versionId')
+    paper = model['papers'].get(paper_id, {})
+    version = model['versions'].get(version_id, {})
+    if (position.get('kind') != 'pipeline_recipe' or not paper_id or not version_id
+            or version.get('paperId') != paper_id or version_id not in paper.get('versionIds', [])):
+        return {}
+    return {eid: e for eid, e in model['entities'].items()
+            if e.get('kind') == 'paper' and e.get('paperId') == paper_id
+            and version_id in e.get('versionIds', [])}
+
+
+def _recipe_display_title(model, position):
+    """Use only titles explicitly bound to the selected source version."""
+    paper = model['papers'][position['paperId']]
+    version_id = position.get('versionId')
+    version = model['versions'].get(version_id, {})
+    if version.get('paperId') == position['paperId'] and version_id in paper.get('versionIds', []):
+        source_ids = set(version.get('sourceVersionIds', []))
+        titles = {row['title'] for row in paper.get('provenance', [])
+                  if source_ids.intersection(row.get('sourceVersionIds', []))
+                  and isinstance(row.get('title'), str) and row['title'].strip()}
+        if len(titles) == 1:
+            title = next(iter(titles))
+            if any(e['label'] == title for e in _version_paper_title_entities(model, position).values()):
+                return title
+    # Missing or ambiguous bindings retain the existing bibliography fallback.
+    # Version labels/descriptors and free-form source text are not paper titles.
+    return paper['title']
+
+
 def build_research_map(model):
     """Project original global containment plus explicitly identified CI refinements.
 
@@ -502,7 +534,7 @@ def _extend_canonical_scopes(model, descriptor):
                   'sourceLabel': old['label']})
         if old['kind'] == 'pipeline_recipe' and old.get('paperId'):
             p['labelSourcePaperId'] = old['paperId']
-            p['label'] = model['papers'][old['paperId']]['title']
+            p['label'] = _recipe_display_title(model, old)
             if old['entityId'] in work_for_recipe:
                 p['annotationEntityIds'].append(work_for_recipe[old['entityId']])
         positions[nid] = p; positions[parent]['childIds'].append(nid)
