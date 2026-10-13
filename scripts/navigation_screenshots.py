@@ -1285,15 +1285,15 @@ def reveal_relation_selector(driver, control, relation, report, save):
     return data
 
 
-# The toolbar's 160ms hover colour transitions can outlive Driver.settle's two
+# The toolbars' 160ms hover/selection colour transitions can outlive Driver.settle's two
 # frames. Wait for their natural completion, not for a readability gate to pass.
 # This local wait never finishes/cancels animations or changes rendered styles.
 S0_TOOLBAR_PAINT_TIMEOUT_MS = 2000
-S0_TOOLBAR_PAINT_SETTLE_JS = r"""
+SCOPED_TOOLBAR_PAINT_SETTLE_JS = r"""
 var budget=arguments[0],done=arguments[arguments.length-1],start=performance.now();
 var toolbar=null,timer=null,frame=null,completed=false,quietFrames=0,observed=new Map();
-var result={status:'pending',timeoutMs:budget,elapsedMs:0,before:null,after:null,observedTransitions:[]};
-function identity(e){return {id:e.id||'',tag:e.tagName,className:e.getAttribute('class')||''};}
+var result={status:'pending',scopeSelector:paintScopeSelector,timeoutMs:budget,elapsedMs:0,before:null,after:null,observedTransitions:[]};
+function identity(e){return {id:e.id||'',tag:e.tagName,className:e.getAttribute('class')||'',treeTab:e.getAttribute('data-tree-tab'),selected:e.getAttribute('aria-selected')};}
 function paintProperty(p){return /^(?:color|background-color|border-(?:(?:top|right|bottom|left)-)?color)$/.test(p);}
 function metadata(a){var t=a.effect.getComputedTiming();return {target:identity(a.effect.target),property:a.transitionProperty,playState:a.playState,pending:a.pending,currentTime:a.currentTime,playbackRate:a.playbackRate,duration:t.duration,endTime:t.endTime};}
 function relevant(){return toolbar.getAnimations({subtree:true}).filter(a=>a instanceof CSSTransition&&paintProperty(a.transitionProperty));}
@@ -1311,7 +1311,7 @@ function finish(status,reason){
 }
 function inspect(){
   if(performance.now()-start>=budget){finish('timeout','Toolbar paint transitions did not settle within the fixed budget');return null;}
-  if(document.querySelectorAll('#np-reading-landing .np-overview-map-toolbar').length!==1||!toolbar.isConnected){finish('error','S0 toolbar changed or disappeared during paint settlement');return null;}
+  if(document.querySelectorAll(paintScopeSelector).length!==1||document.querySelectorAll(paintScopeSelector)[0]!==toolbar||!toolbar.isConnected){finish('error',paintScopeName+' changed or disappeared during paint settlement');return null;}
   var active=false;
   for(var a of relevant()){
     var m=metadata(a),elapsed=performance.now()-start;
@@ -1339,8 +1339,8 @@ function tick(){
 try{
   if(!Number.isFinite(budget)||budget<=0)throw Error('Invalid toolbar paint budget');
   timer=setTimeout(()=>finish('timeout','Toolbar paint settlement exceeded the fixed budget'),budget);
-  var roots=document.querySelectorAll('#np-reading-landing .np-overview-map-toolbar');
-  if(roots.length!==1)throw Error('Expected exactly one S0 toolbar');
+  var roots=document.querySelectorAll(paintScopeSelector);
+  if(roots.length!==1)throw Error('Expected exactly one '+paintScopeName);
   toolbar=roots[0];
   if(typeof CSSTransition!=='function'||typeof toolbar.getAnimations!=='function')throw Error('CSS transition inspection unavailable');
   result.before=snapshot();
@@ -1349,18 +1349,46 @@ try{
 """
 
 
+S0_TOOLBAR_PAINT_SELECTOR = '#np-reading-landing .np-overview-map-toolbar'
+DESKTOP_CHROME_PAINT_SELECTOR = '#np-workspace > .np-workspace-bar'
+S0_TOOLBAR_PAINT_SETTLE_JS = ('var paintScopeSelector=' + json.dumps(S0_TOOLBAR_PAINT_SELECTOR) +
+                            ',paintScopeName="S0 toolbar";\n' + SCOPED_TOOLBAR_PAINT_SETTLE_JS)
+DESKTOP_CHROME_PAINT_SETTLE_JS = ('var paintScopeSelector=' + json.dumps(DESKTOP_CHROME_PAINT_SELECTOR) +
+                                ',paintScopeName="Desktop workspace toolbar";\n' + SCOPED_TOOLBAR_PAINT_SETTLE_JS)
+
+
 def settle_s0_toolbar_paint(driver, report, save, phase):
     data = driver.call('POST', '/execute/async', {
         'script': S0_TOOLBAR_PAINT_SETTLE_JS, 'args': [S0_TOOLBAR_PAINT_TIMEOUT_MS]})
-    report.setdefault('s0ToolbarPaintSettles', []).append({'phase': phase, 'settle': data})
+    report.setdefault('s0ToolbarPaintSettles', []).append({'phase': phase, 'scope': 's0-map-toolbar', 'settle': data})
     save()  # Preserve even timeout/error diagnostics before raising.
     if (not isinstance(data, dict) or data.get('status') != 'settled' or
+            data.get('scopeSelector') != S0_TOOLBAR_PAINT_SELECTOR or
             data.get('timeoutMs') != S0_TOOLBAR_PAINT_TIMEOUT_MS or
             not isinstance(data.get('elapsedMs'), (int, float)) or
             not 0 <= data['elapsedMs'] < S0_TOOLBAR_PAINT_TIMEOUT_MS or
             not data.get('before') or not data.get('after')):
         raise RuntimeError('S0 toolbar paint transitions failed to settle within the fixed budget')
     return data
+
+
+def desktop_chrome_snapshot(driver, report, save, phase, script, *args):
+    """Settle only the audited workspace bar before either chrome-bearing snapshot."""
+    if script not in (DESKTOP_SHELL_SNAPSHOT_JS, S0_FOOTER_SNAPSHOT_JS):
+        raise RuntimeError('Desktop chrome paint wait requires an exact chrome-bearing snapshot')
+    data = driver.call('POST', '/execute/async', {
+        'script': DESKTOP_CHROME_PAINT_SETTLE_JS, 'args': [S0_TOOLBAR_PAINT_TIMEOUT_MS]})
+    report.setdefault('desktopChromePaintSettles', []).append({
+        'phase': phase, 'scope': 'desktop-workspace-toolbar', 'settle': data})
+    save()  # Preserve diagnostics on the new scope, including every timeout/error.
+    if (not isinstance(data, dict) or data.get('status') != 'settled' or
+            data.get('scopeSelector') != DESKTOP_CHROME_PAINT_SELECTOR or
+            data.get('timeoutMs') != S0_TOOLBAR_PAINT_TIMEOUT_MS or
+            not isinstance(data.get('elapsedMs'), (int, float)) or
+            not 0 <= data['elapsedMs'] < S0_TOOLBAR_PAINT_TIMEOUT_MS or
+            not data.get('before') or not data.get('after')):
+        raise RuntimeError('Desktop workspace paint transitions failed to settle within the fixed budget')
+    return driver.js(script, *args)
 
 
 S0_FOOTER_SNAPSHOT_JS = VISUAL_GEOMETRY + DESKTOP_CHROME_GEOMETRY_JS + FIXED_TEXT_PROOF_JS + SCROLL_REGION_VISIBILITY_JS + r"""
@@ -3444,7 +3472,7 @@ def task_route_checks(driver, report, save, capture, prefix, base, science, serv
     def select_method(position, selector=None):
         element = reveal_control(driver, {'selector': selector}) if selector else expose_source_position(driver, position['id'], record, save)
         before = snapshot()
-        before['desktopShell'] = driver.js(DESKTOP_SHELL_SNAPSHOT_JS)
+        before['desktopShell'] = desktop_chrome_snapshot(driver, report, save, prefix + '-method-origin', DESKTOP_SHELL_SNAPSHOT_JS)
         before['activatedControl'] = driver.js("return arguments[0].id||arguments[0].closest('[role=treeitem]').id;", element)
         before['originFocusTarget'] = driver.js("return arguments[0].closest('[data-position]')?.dataset.position||arguments[0].id;", element)
         phase = transition_record(driver, record, save, 'select-exact-method', lambda: driver.click(element),
@@ -3476,7 +3504,7 @@ def task_route_checks(driver, report, save, capture, prefix, base, science, serv
         phase = transition_record(driver, record, save, 'explicit-return-method-origin', lambda: driver.click(driver.selector('.np-return-previous')),
             lambda: driver.js(TASK_ROUTE_RETURN_WAIT_JS, before['route'], before['activatedControl']))
         check_task_route_return(before, phase['after'], before['activatedControl'])
-        phase['desktopShellAfter'] = driver.js(DESKTOP_SHELL_SNAPSHOT_JS)
+        phase['desktopShellAfter'] = desktop_chrome_snapshot(driver, report, save, prefix + '-method-return', DESKTOP_SHELL_SNAPSHOT_JS)
         save()
         check_method_layout_return(before['desktopShell'], phase['desktopShellAfter'])
 
@@ -3911,7 +3939,7 @@ def desktop_hierarchy_checks(driver, report, save, capture, prefix, base, scienc
     save()
 
     def shell():
-        return driver.js(DESKTOP_SHELL_SNAPSHOT_JS)
+        return desktop_chrome_snapshot(driver, report, save, prefix + '-hierarchy-shell', DESKTOP_SHELL_SNAPSHOT_JS)
 
     def ready(pid):
         return driver.js("var a=window.NavigationProductApp,p=a&&a.getBundle().positions[arguments[0]];return p&&a.getState().route.node===p.id&&a.getContent().ready(p.entityId)&&document.querySelector('[data-load-state]')?.dataset.loadState==='ready';", pid)
@@ -4722,7 +4750,7 @@ def main():
           bounds:[...document.querySelectorAll(arguments[0])].map(e=>{let r=e.getBoundingClientRect();return {id:e.id,position:e.closest('[data-position]')?.dataset.position,text:e.textContent.slice(0,180),x:r.x,y:r.y,width:r.width,height:r.height};}),
           nodeCount:document.querySelectorAll('#np-tree [role=treeitem]').length,
           focus:document.activeElement?.id, bodyWidth:document.body.scrollWidth};''', CAPTURE_BOUNDS_SELECTOR)
-        data['desktopShell'] = driver.js(DESKTOP_SHELL_SNAPSHOT_JS)
+        data['desktopShell'] = desktop_chrome_snapshot(driver, report, save, name, DESKTOP_SHELL_SNAPSHOT_JS)
         requires_s0_footer = s0_footer_required(name)
         data['s0FooterRequired'] = requires_s0_footer
         if data['desktopShell']['home'] and requires_s0_footer:
@@ -4806,7 +4834,7 @@ def main():
 
     def s0_footer_check(phase):
         settle_s0_toolbar_paint(driver, report, save, phase)
-        data = driver.js(S0_FOOTER_SNAPSHOT_JS, footer_expected)
+        data = desktop_chrome_snapshot(driver, report, save, phase, S0_FOOTER_SNAPSHOT_JS, footer_expected)
         report.setdefault('s0FooterChecks', []).append({'phase': phase, 'snapshot': data})
         save()
         check_s0_footer(data)
@@ -4839,7 +4867,7 @@ def main():
             challenges:[...m.querySelectorAll('[data-challenge-open]')].map(n=>{var q=p[n.dataset.mapPosition];return {position:n.dataset.mapPosition,challengeOpen:n.dataset.challengeOpen,entity:q.entityId,expectedEntity:p[n.dataset.challengeOpen].entityId,title:n.title,aria:n.getAttribute('aria-label')||'',expectedTitle:arguments[3][q.entityId],label:box(n.querySelector('.np-map-challenge-label'))};}),
             relations:[...m.querySelectorAll('path[data-map-relation]')].map(e=>Object.assign({id:e.dataset.mapRelation,from:e.dataset.fromEntity,to:e.dataset.toEntity,type:e.dataset.relationType,endpointsMatch:(()=>{var from=[...m.querySelectorAll('[data-task-open]')].find(n=>n.dataset.taskOpen===e.dataset.fromEntity),to=[...m.querySelectorAll('[data-task-open]')].find(n=>n.dataset.taskOpen===e.dataset.toEntity);return !!from&&!!to&&touches(endpoint(e,false),rect(from))&&touches(endpoint(e,true),rect(to));})()},edge(e)))};
         """, [x[0] for x in TASK_INDEX], CHALLENGE_LABELS, [[r['id'],r['from'],r['to'],r['relationType']] for r in relation_expected], {entity:science['entities'][entity]['label'] for entity in CHALLENGE_LABELS})
-        graph['s0AdaptiveSpacing'] = driver.js(S0_FOOTER_SNAPSHOT_JS, footer_expected)
+        graph['s0AdaptiveSpacing'] = desktop_chrome_snapshot(driver, report, save, 'reading-home-' + relation_mode, S0_FOOTER_SNAPSHOT_JS, footer_expected)
         report.setdefault('graphicalOverviewChecks', []).append(graph)
         save()
         if (graph['relationsVisible'] != ('true' if relation_mode == 'all' else 'false') or

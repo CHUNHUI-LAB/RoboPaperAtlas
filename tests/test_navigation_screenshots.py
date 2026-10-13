@@ -2812,13 +2812,21 @@ class DefaultOverviewMaterializationChecks(unittest.TestCase):
             f = self.real_fixture(); before = f['before']; original = copy.deepcopy(before)
             if bad_origin: f['origin']['bucket']['relationOverviewByTree']['l']['open'] = True
             phase, saved = {'origin': f['origin'], 'before': copy.deepcopy(before)}, []
+            paint_calls = []; test = self
             class Driver:
+                def call(self, method, path, data):
+                    test.assertEqual((method, path), ('POST', '/execute/async'))
+                    test.assertEqual(data, dict(script=MODULE.DESKTOP_CHROME_PAINT_SETTLE_JS, args=[2000]))
+                    paint_calls.append(data)
+                    return dict(status='settled', scopeSelector=MODULE.DESKTOP_CHROME_PAINT_SELECTOR,
+                                timeoutMs=2000, elapsedMs=32, before={'colors': []}, after={'colors': []})
                 def js(self, script, element=None):
                     if script == MODULE.DESKTOP_SHELL_SNAPSHOT_JS: return {'geometry': 'original-source-layout'}
                     return before['activatedControl'] if "[role=treeitem]" in script else f['origin']['bucket']['focusTarget']
             env = dict(driver=Driver(), snapshot=lambda: before, reveal_control=lambda *args: 'element',
                        expose_source_position=lambda *args: 'element', record={}, save=lambda: saved.append(copy.deepcopy(phase)),
-                       transition_record=lambda *args: phase, json=json, MODULE=MODULE,
+                       transition_record=lambda *args: phase, json=json, MODULE=MODULE, report={}, prefix='1440x900',
+                       desktop_chrome_snapshot=MODULE.desktop_chrome_snapshot,
                        DESKTOP_SHELL_SNAPSHOT_JS=MODULE.DESKTOP_SHELL_SNAPSHOT_JS,
                        task_route_origin_overview=MODULE.task_route_origin_overview,
                        science={'forests': {before['route']['scope']: {'l': [p['id'] for p in f['roots']]}},
@@ -2831,6 +2839,9 @@ class DefaultOverviewMaterializationChecks(unittest.TestCase):
                 result = env['select_method']({'id': 'target'})
                 self.assertTrue(saved[-1]['overviewMaterialization']['validated'])
                 MODULE.check_task_route_return(result, f['after'], result['activatedControl'])
+            self.assertEqual(len(paint_calls), 1)
+            self.assertEqual(env['report']['desktopChromePaintSettles'][0]['scope'], 'desktop-workspace-toolbar')
+            self.assertEqual(env['report']['desktopChromePaintSettles'][0]['phase'], '1440x900-method-origin')
             self.assertEqual(phase['before'], original)
             self.assertEqual(before['relationOverview'], {})
             self.assertEqual(saved[-1]['desktopShellBefore'], {'geometry': 'original-source-layout'})
@@ -4446,9 +4457,10 @@ class S0ToolbarPaintSettleChecks(unittest.TestCase):
     def probe(self, **case):
         fixture = r"""
 const {JSDOM}=require('jsdom'),input=JSON.parse(require('fs').readFileSync(0,'utf8')),c=input.case;
-const dom=new JSDOM('<div id="np-reading-landing"><div class="np-overview-map-toolbar"><button id="np-map-relations-toggle">显示全部关系</button></div></div>');
+const dom=new JSDOM('<div id="np-reading-landing"><div class="np-overview-map-toolbar"><button id="np-map-relations-toggle">显示全部关系</button></div></div><div id="np-workspace"><div class="np-workspace-bar"><div class="np-tabs"><button data-tree-tab="g" aria-selected="false">全景</button><button data-tree-tab="l" aria-selected="true">文献发展</button></div></div></div>');
 global.document=dom.window.document;
-const toolbar=document.querySelector('.np-overview-map-toolbar'),button=document.getElementById('np-map-relations-toggle');
+const toolbar=document.querySelector(c.workspace?'.np-workspace-bar':'.np-overview-map-toolbar'),button=c.workspace?document.querySelector('[data-tree-tab=g]'):document.getElementById('np-map-relations-toggle'),other=c.workspace?document.querySelector('[data-tree-tab=l]'):null;
+const outside=document.querySelector(c.workspace?'.np-overview-map-toolbar':'.np-workspace-bar');outside.getAnimations=()=>{throw Error('Unrelated toolbar was inspected');};
 let now=0,nextId=1,queue=[],answer=null,callbacks=0,inspections=0;
 global.performance={now:()=>now};
 global.setTimeout=(fn,delay)=>{const id=nextId++;queue.push({id,at:now+delay,fn});return id;};
@@ -4466,6 +4478,7 @@ class Transition{
 }
 global.CSSTransition=Transition;
 let transitions=c.none?[]:c.replacement?[new Transition(0,48,'background-color',true),new Transition(48,208,'background-color')]:[new Transition(0,160,c.property||'background-color')];
+if(c.workspace&&!c.none&&!c.replacement){for(const target of [button,other]){const a=new Transition(0,160,'color');a.effect.target=target;transitions.push(a);}const a=new Transition(0,160);a.effect.target=other;transitions.push(a);}
 // A forever-running CSS animation is not a colour CSSTransition, and must not
 // make this local wait depend on unrelated animation elsewhere in the app.
 const unrelated={transitionProperty:'background-color',playState:'running',pending:false,effect:{target:button,getComputedTiming:()=>({duration:Infinity,endTime:Infinity})}};
@@ -4473,21 +4486,29 @@ toolbar.getAnimations=opts=>{if(!opts.subtree)throw Error('Toolbar descendants w
  if(c.churn)transitions.push(new Transition(now,now+1));
  return [...transitions.filter(a=>a.start<=now&&(now<a.end||c.stuck||c.pending||c.paused||c.infinite||c.invalidTiming||c.reverse)),...(c.unrelated?[unrelated]:[])];};
 global.getComputedStyle=e=>{
+ if(c.workspace){const running=!c.none&&now<(c.replacement?208:160),isTab=e===button||e===other;
+  const bg=isTab&&(c.alpha||running)?'rgba(255, 255, 255, 0.4)':e===other?'rgb(255, 255, 255)':e===button?'rgba(0, 0, 0, 0)':'rgb(237, 241, 236)';
+  const fg=e===button?(running?'rgb(105, 121, 128)':'rgb(107, 122, 130)'):(running?'rgb(51, 93, 77)':'rgb(49, 92, 75)');
+  return {color:fg,backgroundColor:bg,borderTopColor:'rgb(49, 92, 75)',borderRightColor:'rgb(49, 92, 75)',borderBottomColor:'rgb(49, 92, 75)',borderLeftColor:'rgb(49, 92, 75)'};
+ }
  const end=c.replacement?208:160,alpha=e===button&&(c.alpha||(!c.none&&now<end))?'rgba(240, 244, 239, 0.6)':e===button?'rgba(0, 0, 0, 0)':'rgb(255, 255, 255)';
  return {color:c.lowContrast?'rgb(220, 220, 220)':'rgb(49, 92, 75)',backgroundColor:alpha,borderTopColor:'rgb(136, 161, 142)',borderRightColor:'rgb(136, 161, 142)',borderBottomColor:'rgb(136, 161, 142)',borderLeftColor:'rgb(136, 161, 142)'};
 };
 if(c.missing)toolbar.remove();
 if(c.unsupported)global.CSSTransition=undefined;
 if(c.disappear)setTimeout(()=>toolbar.remove(),48);
+if(c.replaceRoot)setTimeout(()=>{const replacement=toolbar.cloneNode(true);replacement.getAnimations=toolbar.getAnimations;toolbar.before(replacement);toolbar.className='detached-from-selector';},48);
+const backgrounds=()=>new Function(input.visual+'\nreturn arguments[0].map(e=>bg(e));')([button,...(other?[other]:[])]);
+const beforeBackgrounds=backgrounds();
 new Function(input.script)(2000,value=>{answer=value;callbacks++;});
 let steps=0;while(queue.length&&steps++<1000){queue.sort((a,b)=>a.at-b.at||a.id-b.id);const item=queue.shift();now=item.at;item.fn();}
 if(!answer||steps>=1000)throw Error('Unbounded paint settlement');
 const background=new Function(input.visual+'\nreturn bg(document.getElementById("np-map-relations-toggle"));')();
 const foreground=new Function(input.visual+'\nreturn color(getComputedStyle(document.body).color).rgb;')();
-process.stdout.write(JSON.stringify({answer,callbacks,inspections,background,foreground,steps}));
+process.stdout.write(JSON.stringify({answer,callbacks,inspections,background,foreground,steps,beforeBackgrounds,afterBackgrounds:backgrounds()}));
 """
         result = subprocess.run(['node', '-e', fixture], input=json.dumps(dict(
-            case=case, script=MODULE.S0_TOOLBAR_PAINT_SETTLE_JS, visual=MODULE.VISUAL_GEOMETRY)),
+            case=case, script=MODULE.DESKTOP_CHROME_PAINT_SETTLE_JS if case.get('workspace') else MODULE.S0_TOOLBAR_PAINT_SETTLE_JS, visual=MODULE.VISUAL_GEOMETRY)),
             text=True, capture_output=True, cwd=Path(__file__).parents[1], timeout=10)
         self.assertEqual(result.returncode, 0, result.stderr)
         return json.loads(result.stdout)
@@ -4611,8 +4632,117 @@ process.stdout.write(JSON.stringify({answer,callbacks,inspections,background,for
         selector_helper = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'reveal_relation_selector')
         self.assertEqual(len(save_calls(selector_helper)), 1)
         tree.body.remove(selector_helper)
+        chrome_helper = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'desktop_chrome_snapshot')
+        self.assertEqual(len(save_calls(chrome_helper)), 1)
+        tree.body.remove(chrome_helper)
         self.assertEqual(len(save_calls(tree)), 99)  # Every original save checkpoint remains.
-        self.assertIn('def s0_footer_check(phase):\n        settle_s0_toolbar_paint(driver, report, save, phase)\n        data = driver.js(S0_FOOTER_SNAPSHOT_JS, footer_expected)', source)
+        self.assertIn('def s0_footer_check(phase):\n        settle_s0_toolbar_paint(driver, report, save, phase)\n        data = desktop_chrome_snapshot(driver, report, save, phase, S0_FOOTER_SNAPSHOT_JS, footer_expected)', source)
+
+
+class DesktopChromePaintSettleChecks(unittest.TestCase):
+    """Actual receipt geometry/colours with synthetic animation clocks, not Chrome pixels."""
+
+    def probe(self, **case):
+        return S0ToolbarPaintSettleChecks.probe(self, workspace=True, **case)
+
+    def test_g_to_l_tabs_keep_actual_failure_colours_and_settle_to_css_endpoints(self):
+        data = self.probe(); result = data['answer']
+        self.assertEqual(result['scopeSelector'], '#np-workspace > .np-workspace-bar')
+        self.assertEqual((result['status'], result['elapsedMs'], data['callbacks']), ('settled', 176, 1))
+        self.assertEqual(data['beforeBackgrounds'], [[], []])
+        self.assertEqual(data['afterBackgrounds'], [[237, 241, 236], [255, 255, 255]])
+        tabs = {row['treeTab']: row for row in result['before']['colors'] if row['treeTab']}
+        # Foregrounds and selection are exact 9082001 receipt values; the 0.4
+        # alpha is synthetic because that old receipt did not retain raw RGBA.
+        self.assertEqual((tabs['g']['color'], tabs['g']['selected']), ('rgb(105, 121, 128)', 'false'))
+        self.assertEqual((tabs['l']['color'], tabs['l']['selected']), ('rgb(51, 93, 77)', 'true'))
+        self.assertEqual(len(result['observedTransitions']), 4)
+        self.assertEqual(result['after']['transitions'], [])
+        areas = [dict(x=0, y=0, width=1440, height=900)]
+        for i, (text, x, width, fg) in enumerate((('全景', 30, 30.015625, [105,121,128]),
+                                                ('文献发展', 84.015625, 60.015625, [51,93,77]))):
+            proof = chrome_text_fixture(text, 15, dict(x=x, y=250.015625, width=width, height=18), fg, data['beforeBackgrounds'][i])
+            with self.assertRaises(RuntimeError): MODULE.check_chrome_text(proof, text, 15, *areas)
+            for row in [proof, *proof['textRuns']]: row['background'] = data['afterBackgrounds'][i]
+            MODULE.check_chrome_text(proof, text, 15, *areas)
+
+    def test_scoped_wait_retains_replacement_timeout_and_nonending_failures(self):
+        self.assertEqual(self.probe(replacement=True)['answer']['elapsedMs'], 224)
+        for case in (dict(stuck=True), dict(pending=True), dict(frozenFrames=True)):
+            with self.subTest(case=case):
+                result = self.probe(**case)
+                self.assertEqual((result['answer']['status'], result['answer']['elapsedMs'], result['callbacks']), ('timeout', 2000, 1))
+        for case in (dict(paused=True), dict(infinite=True), dict(invalidTiming=True), dict(reverse=True),
+                     dict(missing=True), dict(disappear=True), dict(replaceRoot=True), dict(unsupported=True), dict(churn=True)):
+            with self.subTest(case=case):
+                result = self.probe(**case)
+                self.assertEqual(result['answer']['status'], 'error')
+                self.assertEqual(result['callbacks'], 1)
+                self.assertLessEqual(len(result['answer']['observedTransitions']), 64)
+
+    def test_stable_alpha_hidden_clipped_and_covered_text_still_fail_original_gate(self):
+        data = self.probe(none=True, alpha=True)
+        self.assertEqual(data['answer']['status'], 'settled')
+        area = dict(x=0, y=0, width=1440, height=900)
+        proof = chrome_text_fixture('全景', 15, dict(x=30,y=250.015625,width=30.015625,height=18), [107,122,130], data['afterBackgrounds'][0])
+        with self.assertRaises(RuntimeError): MODULE.check_chrome_text(proof, '全景', 15, area)
+        import copy
+        for mutate in (lambda p:p.update(visible=False), lambda p:p.update(opaque=False), lambda p:p.update(clipped=True),
+                       lambda p:p.update(fontSize=14), lambda p:p['fragments'][0].update(visible=False),
+                       lambda p:p['textRuns'][0]['fragments'][0].update(y=899)):
+            bad = copy.deepcopy(proof)
+            for row in [bad,*bad['textRuns']]: row['background']=[237,241,236]
+            mutate(bad)
+            with self.assertRaises(RuntimeError): MODULE.check_chrome_text(bad, '全景', 15, area)
+
+    def test_wrapper_saves_scope_then_takes_snapshot_only_after_bounded_success(self):
+        import copy
+        good = self.probe()['answer']; test = self
+        class Driver:
+            def __init__(self, result): self.result=result; self.events=[]
+            def call(self, method, path, data):
+                self.events.append('settle')
+                test.assertEqual((method,path), ('POST','/execute/async'))
+                test.assertEqual(data,dict(script=MODULE.DESKTOP_CHROME_PAINT_SETTLE_JS,args=[2000]))
+                return self.result
+            def js(self, script, *args):
+                self.events.append('snapshot')
+                return {'exactScript':script, 'args':args}
+        for snapshot, args in ((MODULE.DESKTOP_SHELL_SNAPSHOT_JS,()),(MODULE.S0_FOOTER_SNAPSHOT_JS,({'source':'exact'},))):
+            for result in (good,None,dict(good,status='timeout'),dict(good,status='error'),dict(good,elapsedMs=2000),
+                           dict(good,elapsedMs=float('nan')),dict(good,timeoutMs=4000),dict(good,before=None),dict(good,after=None),
+                           dict(good,scopeSelector=MODULE.S0_TOOLBAR_PAINT_SELECTOR)):
+                driver=Driver(result);report={};saved=[]
+                def save(): saved.append(copy.deepcopy(report));driver.events.append('save')
+                if result is good:
+                    value=MODULE.desktop_chrome_snapshot(driver,report,save,'1440x900-02-task-expanded',snapshot,*args)
+                    self.assertEqual(value,{'exactScript':snapshot,'args':args})
+                    self.assertEqual(driver.events,['settle','save','snapshot'])
+                else:
+                    with self.assertRaises(RuntimeError): MODULE.desktop_chrome_snapshot(driver,report,save,'bad',snapshot,*args)
+                    self.assertEqual(driver.events,['settle','save'])
+                self.assertEqual(len(saved),1)
+                record=saved[0]['desktopChromePaintSettles'][0]
+                self.assertEqual(record['scope'],'desktop-workspace-toolbar')
+                self.assertNotIn('s0ToolbarPaintSettles',report)
+        driver=Driver(good)
+        with self.assertRaises(RuntimeError): MODULE.desktop_chrome_snapshot(driver,{},lambda:None,'unsupported','return true;')
+        self.assertEqual(driver.events,[])
+
+    def test_all_six_chrome_snapshot_entries_use_one_scoped_wrapper_without_mutating_driver_settle(self):
+        import ast,inspect
+        tree=ast.parse((Path(__file__).parents[1]/'scripts/navigation_screenshots.py').read_text())
+        snapshots={'DESKTOP_SHELL_SNAPSHOT_JS','S0_FOOTER_SNAPSHOT_JS'}
+        calls=[n for n in ast.walk(tree) if isinstance(n,ast.Call)]
+        wrapped=[n for n in calls if isinstance(n.func,ast.Name) and n.func.id=='desktop_chrome_snapshot']
+        self.assertEqual(len(wrapped),6)
+        self.assertEqual([sum(isinstance(n.args[4],ast.Name) and n.args[4].id==name for n in wrapped) for name in sorted(snapshots)],[4,2])
+        raw=[n for n in calls if isinstance(n.func,ast.Attribute) and n.func.attr=='js' and n.args and isinstance(n.args[0],ast.Name) and n.args[0].id in snapshots]
+        self.assertEqual(raw,[])
+        self.assertEqual(MODULE.S0_TOOLBAR_PAINT_SETTLE_JS.split('\n',1)[1],MODULE.SCOPED_TOOLBAR_PAINT_SETTLE_JS)
+        self.assertEqual(MODULE.DESKTOP_CHROME_PAINT_SETTLE_JS.split('\n',1)[1],MODULE.SCOPED_TOOLBAR_PAINT_SETTLE_JS)
+        self.assertIn('document.fonts.ready.then(()=>requestAnimationFrame(()=>requestAnimationFrame(()=>done(true))))',inspect.getsource(MODULE.Driver.settle))
+        self.assertNotIn('paint',inspect.getsource(MODULE.Driver.settle))
 
 
 class S0FooterCaptureChecks(unittest.TestCase):
@@ -4928,11 +5058,11 @@ class S0FooterCaptureChecks(unittest.TestCase):
         self.assertNotIn('!= 13', gate)
         self.assertIn('check_s0_adaptive_spacing(data)', inspect.getsource(MODULE.check_s0_footer))
         main = inspect.getsource(MODULE.main)
-        self.assertIn("graph['s0AdaptiveSpacing'] = driver.js(S0_FOOTER_SNAPSHOT_JS, footer_expected)", main)
+        self.assertIn("graph['s0AdaptiveSpacing'] = desktop_chrome_snapshot(driver, report, save, 'reading-home-' + relation_mode, S0_FOOTER_SNAPSHOT_JS, footer_expected)", main)
         self.assertIn("check_s0_footer(graph['s0AdaptiveSpacing'])", main)
         self.assertIn("reading_home(relation_mode='all')", main)
         saves = [n for n in ast.walk(ast.parse(inspect.getsource(MODULE))) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']
-        self.assertEqual(len(saves), 101)  # 99 original + one paint-settle + one selector-reveal diagnostic save.
+        self.assertEqual(len(saves), 102)  # 99 original + S0 paint + selector reveal + desktop paint diagnostic saves.
         self.assertEqual(len(MODULE.SCENE_NAMES) * len(MODULE.VIEWPORTS), 106)
         self.assertIn('s0_adaptive_spacing', MODULE.DISPLAY_CONTRACT_MIGRATIONS)
 
@@ -5502,7 +5632,7 @@ class AtomicReceiptPersistenceChecks(unittest.TestCase):
         import tempfile
         source = Path(MODULE.__file__).read_text(encoding='utf-8'); tree = ast.parse(source)
         calls = [node for node in ast.walk(tree) if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == 'save']
-        self.assertEqual(len(calls), 101)  # 99 original + one paint-settle + one selector-reveal diagnostic save.
+        self.assertEqual(len(calls), 102)  # 99 original + S0 paint + selector reveal + desktop paint diagnostic saves.
         saves = [node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef) and node.name == 'save']
         self.assertEqual(len(saves), 1)
         self.assertEqual(ast.dump(saves[0].body[0].value.func), "Name(id='write_receipt', ctx=Load())")
@@ -5616,7 +5746,7 @@ class S0SelectorOcclusionChecks(unittest.TestCase):
         for text in ("s0_footer_check('before-selection-'", "s0_footer_check('closed-'", "check_s0_stability(before_selection, selected_footer)", "closed['focus'] != 'np-relation-select-'", 'check_s0_stability(footer_before_reload, footer_after_reload, restore=True)'):
             self.assertIn(text, main)
         saves = [n for n in ast.walk(ast.parse(inspect.getsource(MODULE))) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']
-        self.assertEqual(len(saves), 101)  # 99 original + one paint-settle + one selector-reveal diagnostic save.
+        self.assertEqual(len(saves), 102)  # 99 original + S0 paint + selector reveal + desktop paint diagnostic saves.
         self.assertEqual(len(MODULE.SCENE_NAMES) * len(MODULE.VIEWPORTS), 106)
 
 
