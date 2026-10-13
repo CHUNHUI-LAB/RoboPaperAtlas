@@ -22,8 +22,8 @@ python3 scripts/reports.py
 python3 -m unittest discover -s tests -v
 node tests/test_hero_atlas.cjs
 node tests/test_brief_reader.cjs
-node --test tests/test_site_chrome.cjs tests/test_reader_current.cjs tests/test_map_context.cjs tests/test_navigation_workspace.cjs
 python3 scripts/build.py
+node --test tests/test_site_chrome.cjs tests/test_reader_current.cjs tests/test_map_context.cjs tests/test_navigation_workspace.cjs
 python3 scripts/validate.py
 python3 -m http.server 8000 --directory dist
 ```
