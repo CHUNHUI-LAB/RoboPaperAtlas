@@ -121,6 +121,26 @@ function overviewVerticalSpacing(height,positions,taskRowCount,challengeCount){
 function syncDesktopWorkspaceHeight(){
  if(window.innerWidth>=1200)app.style.setProperty('--np-workspace-shell-height',Math.max(0,window.innerHeight-app.getBoundingClientRect().top)+'px');else app.style.removeProperty('--np-workspace-shell-height');
 }
+// Route every non-tree relationship through measured card gutters. The source
+// identities and endpoint ports stay unchanged; only empty-space bends move.
+function overviewRelationPath(boxes,relations,index,mapWidth,mapHeight){
+ var rel=relations[index],a=boxes[rel.from],b=boxes[rel.to],cards=Object.keys(boxes).map(function(id){return boxes[id];});if(!a||!b)return '';
+ function direct(s,t){return Math.abs(s.y-t.y)<2&&t.x>s.x&&!cards.some(function(n){return n.x>s.x+2&&n.x<t.x-2;});}
+ function gutter(r){var s=boxes[r.from],t=boxes[r.to];if(!s||!t||direct(s,t))return null;if(Math.abs(s.x-t.x)<2)return {left:s.x+s.w,right:Math.min.apply(null,[mapWidth].concat(cards.filter(function(n){return n.x>s.x+s.w;}).map(function(n){return n.x;})))};return {left:Math.max.apply(null,[0].concat(cards.filter(function(n){return n.x+n.w<t.x;}).map(function(n){return n.x+n.w;}))),right:t.x};}
+ function lane(r){var gap=gutter(r),peers=relations.filter(function(other){var q=gutter(other);return q&&Math.abs(q.left-gap.left)<0.01&&Math.abs(q.right-gap.right)<0.01;}),slots=[];
+  // Reserve the existing target-column parent spine (right-6), and give each
+  // relationship its own slot with 2px clearance for the 3.5px active stroke.
+  for(var j=0;j<=peers.length;j++)slots.push(gap.left+2+(gap.right-gap.left-4)*j/peers.length);
+  var reserved=0;slots.forEach(function(x,j){if(Math.abs(x-(gap.right-6))<Math.abs(slots[reserved]-(gap.right-6)))reserved=j;});slots.splice(reserved,1);return slots[peers.indexOf(r)];
+ }
+ var sourcePort=(index+1)/(relations.length*2+2),targetPort=(index+relations.length+1)/(relations.length*2+2),sourceY=a.y+a.h*sourcePort,targetY=b.y+b.h*targetPort;
+ if(direct(a,b))return 'M '+(a.x+a.w)+' '+sourceY+' H '+b.x;
+ var x=lane(rel);if(Math.abs(a.x-b.x)<2)return 'M '+(a.x+a.w)+' '+sourceY+' H '+x+' V '+targetY+' H '+(b.x+b.w);
+ // The full row band, not just the source card, bounds the horizontal run.
+ var bottom=Math.max.apply(null,cards.filter(function(n){return Math.abs(n.y-a.y)<2;}).map(function(n){return n.y+n.h;})),next=Math.min.apply(null,[mapHeight].concat(cards.filter(function(n){return n.y>a.y+2;}).map(function(n){return n.y;}))),rowPeers=relations.filter(function(r){var s=boxes[r.from],t=boxes[r.to];return s&&t&&Math.abs(s.y-a.y)<2&&Math.abs(s.x-t.x)>=2&&!direct(s,t);}),y=bottom+(next-bottom)*(rowPeers.indexOf(rel)+1)/(rowPeers.length+1);
+ return 'M '+(a.x+a.w*sourcePort)+' '+(a.y+a.h)+' V '+y+' H '+x+' V '+targetY+' H '+b.x;
+}
+
 function layoutReadingOverview(){
  var map=by('np-overview-map');if(!isReadingHome()||!map)return;
  // Desktop footer owns its natural height; keep the legacy narrow map placement.
@@ -147,7 +167,8 @@ function layoutReadingOverview(){
  var defs=svgElement('defs'),arrow=svgElement('marker',{id:'np-map-arrow',viewBox:'0 0 10 10',refX:9,refY:5,markerWidth:6,markerHeight:6,orient:'auto-start-reverse'});arrow.appendChild(svgElement('path',{d:'M 0 0 L 10 5 L 0 10 z',fill:'#3c837d'}));defs.appendChild(arrow);svg.appendChild(defs);
  function parentPath(parent,child){var a=positions[parent],b=positions[child];if(!a||!b)return;var p=bundle.positions[child];if(p.parentId!==parent)return;var d;if(p.kind==='task'){var lane=b.x-6,spine=taskInset-6;d='M '+a.x+' '+(a.y+a.h/2)+' H '+spine+' V '+taskBusY+' H '+lane+' V '+(b.y+b.h/2)+' H '+b.x;}else if(parent===ci.dataset.mapPosition){var lane=ciX-8;d='M '+(a.x+a.w/2)+' '+(a.y+a.h)+' V '+(102*spaceY)+' H '+lane+' V '+(b.y+b.h/2)+' H '+b.x;}else d='M '+(a.x+a.w/2)+' '+(a.y+a.h)+' V '+((a.y+a.h+b.y)/2)+' H '+(b.x+b.w/2)+' V '+b.y;svg.appendChild(svgElement('path',{d:d,class:'np-map-parent-edge','data-map-parent':parent,'data-map-child':child,'aria-hidden':'true'}));}
  Object.keys(positions).forEach(function(id){var p=bundle.positions[id];if(p&&p.parentId)parentPath(p.parentId,id);});
- TASK_READING_RELATIONS.forEach(function(rel,i){var f=map.querySelector('[data-task-open="'+rel.from+'"]'),t=map.querySelector('[data-task-open="'+rel.to+'"]'),a=f&&positions[f.dataset.mapPosition],b=t&&positions[t.dataset.mapPosition];if(!a||!b)return;var outgoing=TASK_READING_RELATIONS.filter(function(r){return r.from===rel.from;}),incoming=TASK_READING_RELATIONS.filter(function(r){return r.to===rel.to;}),sourcePort=(i+1)/(TASK_READING_RELATIONS.length*2+2),targetPort=(i+TASK_READING_RELATIONS.length+1)/(TASK_READING_RELATIONS.length*2+2),sourceY=a.y+a.h*sourcePort,targetY=b.y+b.h*targetPort,d;if(Math.abs(a.y-b.y)<2&&b.x>a.x&&b.x-a.x<colStep+2)d='M '+(a.x+a.w)+' '+sourceY+' H '+b.x;else if(Math.abs(a.x-b.x)<2){var lane=a.x+a.w+9;d='M '+(a.x+a.w)+' '+sourceY+' H '+lane+' V '+targetY+' H '+(b.x+b.w);}else{var y=a.y+a.h+5+i*3,lane=b.x-(10+i*4);d='M '+(a.x+a.w*sourcePort)+' '+(a.y+a.h)+' V '+y+' H '+lane+' V '+targetY+' H '+b.x;}
+ var relationBoxes={};map.querySelectorAll('[data-task-open]').forEach(function(n){relationBoxes[n.dataset.taskOpen]=positions[n.dataset.mapPosition];});
+ TASK_READING_RELATIONS.forEach(function(rel,i){var d=overviewRelationPath(relationBoxes,TASK_READING_RELATIONS,i,width,height);if(!d)return;
  var path=svgElement('path',{d:d,id:'np-map-relation-'+rel.id,class:'np-map-relation-edge','data-map-relation':rel.id,'data-relation-type':rel.relationType,'data-from-entity':rel.from,'data-to-entity':rel.to,role:'button',tabindex:'0','aria-label':rel.proposedLabel+'；'+relationLabel(rel.relationType)+'；核对来源','aria-controls':'np-map-relation-evidence-'+rel.id});if(rel.relationType!=='different_success_semantics')path.setAttribute('marker-end','url(#np-map-arrow)');var title=svgElement('title');title.textContent=rel.proposedLabel+' · '+relationLabel(rel.relationType);path.appendChild(title);path.addEventListener('click',function(){showOverviewRelation(rel.id);});path.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();showOverviewRelation(rel.id);}});svg.appendChild(path);
  });
  applyOverviewRelation(map.dataset.selectedRelation,false);if(focusedEdge&&by(focusedEdge)&&by(focusedEdge).focus)by(focusedEdge).focus({preventScroll:true});

@@ -159,7 +159,7 @@ test('identity dedup: desktop peer CSSOM rejects missing overrides and legacy ne
 test('desktop research-question role inherits readable metadata color instead of the legacy last-child tint',()=>{
  const css=fs.readFileSync(path.join(root,'assets/navigation-product.css'),'utf8'),selector='#np-reader-object-meta .np-reader-field-role';
  function contrast(rgb){const linear=rgb.map(v=>v/255).map(v=>v<=0.04045?v/12.92:((v+0.055)/1.055)**2.4);return 1.05/(linear[0]*0.2126+linear[1]*0.7152+linear[2]*0.0722+0.05);}
- for(const width of [1440,1920]){
+ for(const [width,height] of [[1440,900],[1440,950],[1440,951],[1920,1080]]){
   const dom=new JSDOM('<style></style><div id="navigation-product"><div class="np-reader-heading"><p id="np-reader-object-meta">困难 · 未固定论文版本<span class="np-reader-field-role" data-reader-field-role="plain_language_question"> · 研究问题</span></p></div></div>');
   try {
    const w=dom.window,style=w.document.querySelector('style'),role=w.document.querySelector('.np-reader-field-role');style.textContent=css;
@@ -168,8 +168,8 @@ test('desktop research-question role inherits readable metadata color instead of
    const legacy=entries.find(({rule})=>rule.selectorText==='.np-reader-heading span:last-child');assert.ok(legacy);assert.ok(role.matches(legacy.rule.selectorText),'the actual last-child span triggers the historical rule');assert.ok(role.matches(selector));assert.equal(legacy.rule.style.getPropertyValue('color'),'#6c838b');assert.ok(selector.startsWith('#np-reader-object-meta '));assert.equal(legacy.rule.selectorText.includes('#'),false,'the exact local ID selector outranks the legacy class/pseudo-class rule');
    // JSDOM does not apply viewport media queries. Materialize only the current
    // screen-width rules in their original order; this is not a pixel assertion.
-   function active(media){return media.every(query=>{const match=query.match(/^\((min|max)-width:\s*(\d+)px\)$/);if(match)return match[1]==='min'?width>=Number(match[2]):width<=Number(match[2]);assert.ok(['print','(prefers-reduced-motion:reduce)'].includes(query),'explicitly account for every other media condition');return false;});}
-   const flattened=entries.filter(({media})=>active(media)).map(({rule})=>rule.cssText).join('\n');
+
+   const flattened=entries.filter(({media})=>methodMediaActive(media,width,height)).map(({rule})=>rule.cssText).join('\n');
    function install(value){style.textContent=flattened;const rule=[...style.sheet.cssRules].find(rule=>rule.selectorText===selector&&rule.style.getPropertyValue('color'));if(value===null)rule.style.removeProperty('color');else rule.style.setProperty('color',value);style.textContent=[...style.sheet.cssRules].map(rule=>rule.cssText).join('\n');}
    // cssstyle returns the keyword for explicit inherit, so resolve it through
    // the actual parent's computed color rather than inventing a fallback color.
@@ -270,7 +270,7 @@ for(const kind of ['rich','conditional'])test('desktop method reading: '+kind+' 
 // CSSOM assertions below materialize media rules solely to inspect declarations
 // and accessible text styles. They deliberately do not assert rendered heights.
 function methodCSS(doc){const style=doc.createElement('style');style.textContent=fs.readFileSync(path.join(root,'assets/navigation-product.css'),'utf8');doc.head.appendChild(style);const entries=[];function collect(rules,media=[]){for(const rule of rules)if(rule.cssRules)collect(rule.cssRules,rule.media?media.concat(rule.media.mediaText):media);else if(rule.selectorText)entries.push({rule,media});}collect(style.sheet.cssRules);return {style,entries};}
-function methodMediaActive(media,width,height=1080){return media.every(query=>{if(['print','(prefers-reduced-motion:reduce)'].includes(query))return false;return query.split(/\s+and\s+/).every(part=>{const match=part.match(/^\((min|max)-(width|height):\s*(\d+)px\)$/);assert.ok(match,'unexpected media query '+query);const size=match[2]==='width'?width:height;return match[1]==='min'?size>=Number(match[3]):size<=Number(match[3]);});});}
+function methodMediaActive(media,width,height=1080){return media.map(query=>{if(['print','(prefers-reduced-motion:reduce)'].includes(query))return false;return query.split(/\s+and\s+/).map(part=>{const match=part.match(/^\((min|max)-(width|height):\s*(\d+)px\)$/);assert.ok(match,'unexpected media query '+query);const size=match[2]==='width'?width:height;return match[1]==='min'?size>=Number(match[3]):size<=Number(match[3]);}).every(Boolean);}).every(Boolean);}
 function materializeMethodCSS(x,width){const {style,entries}=methodCSS(x.d);style.textContent=entries.filter(({media})=>methodMediaActive(media,width,x.w.innerHeight)).map(({rule})=>rule.cssText).join('\n');return {style,entries};}
 function methodCSSVariable(x,node,value){const variable=value.match(/^var\((--[\w-]+)(?:,\s*([^)]*))?\)$/);if(!variable)return value;for(let at=node;at;at=at.parentElement){const resolved=x.w.getComputedStyle(at).getPropertyValue(variable[1]);if(resolved)return resolved.trim();}assert.ok(variable[2],'custom property is defined in the real cascade: '+value);return variable[2].trim();}
 function methodFontSize(x,node){for(let at=node;at;at=at.parentElement){const value=methodCSSVariable(x,at,x.w.getComputedStyle(at).fontSize);if(value&&value!=='inherit'&&value!=='normal'){if(value.endsWith('px'))return parseFloat(value);if(value.endsWith('rem'))return parseFloat(value)*16;}}return NaN;}
@@ -608,3 +608,53 @@ test('S0 adaptive spacing: relation focus, hidden source rows, same-view history
 // The repository's aggregate CI explicitly invokes this suite. Keep the new
 // shell-height/summary-cascade regressions on that same required path.
 require('./test_navigation_s0_height.cjs');
+
+// CI 38358176100 at head0f497eb: the 1343x649.609375 map has 56px
+// task cards, a 20px row gap and 16px column gaps. These are arithmetic
+// regressions from its receipt, not substitute browser hit/visual acceptance.
+function relationSegments(d){
+ const v=d.match(/[MHV]|-?\d+(?:\.\d+)?(?:e[+-]?\d+)?/gi)||[],points=[];let i=0,x,y;
+ while(i<v.length){const op=v[i++];if(op==='M'){x=Number(v[i++]);y=Number(v[i++]);}else if(op==='H')x=Number(v[i++]);else if(op==='V')y=Number(v[i++]);else throw Error('unexpected relation command '+op);assert.ok(Number.isFinite(x)&&Number.isFinite(y));points.push({x,y});}
+ assert.ok(points.length>=2);return points.slice(1).map((b,i)=>({a:points[i],b}));
+}
+function assertRelationGutters(d,nodes,from,to,width,height){
+ const segments=relationSegments(d);let length=0;
+ for(const {a,b}of segments){assert.ok(a.x===b.x||a.y===b.y);length+=Math.abs(a.x-b.x)+Math.abs(a.y-b.y);
+  for(const p of[a,b])assert.ok(p.x>=0&&p.y>=0&&p.x<=width&&p.y<=height,'entire relationship stays in map');
+  for(const n of nodes){const pad=n.scope===from||n.scope===to?0:1.75,l=n.x-pad,r=n.x+n.w+pad,t=n.y-pad,bot=n.y+n.h+pad;
+   const overlap=a.y===b.y?a.y>=t&&a.y<=bot&&Math.min(Math.max(a.x,b.x),r)-Math.max(Math.min(a.x,b.x),l)>1e-7:a.x>=l&&a.x<=r&&Math.min(Math.max(a.y,b.y),bot)-Math.max(Math.min(a.y,b.y),t)>1e-7;
+   assert.equal(overlap,false,'relationship crosses card '+n.scope);
+  }
+ }
+ assert.ok(length>0,'nonempty relationship');const endpoint=(p,n)=>{assert.ok(p.x>=n.x-1e-7&&p.x<=n.x+n.w+1e-7&&p.y>=n.y-1e-7&&p.y<=n.y+n.h+1e-7);assert.ok([p.x-n.x,p.x-n.x-n.w,p.y-n.y,p.y-n.y-n.h].some(v=>Math.abs(v)<1e-7));};endpoint(segments[0].a,nodes.find(n=>n.scope===from));endpoint(segments.at(-1).b,nodes.find(n=>n.scope===to));return length;
+}
+function legacyRelationPath(a,b,i,count,colStep){
+ const sp=(i+1)/(count*2+2),tp=(i+count+1)/(count*2+2),sy=a.y+a.h*sp,ty=b.y+b.h*tp;
+ if(Math.abs(a.y-b.y)<2&&b.x>a.x&&b.x-a.x<colStep+2)return `M ${a.x+a.w} ${sy} H ${b.x}`;
+ if(Math.abs(a.x-b.x)<2){const lane=a.x+a.w+9;return `M ${a.x+a.w} ${sy} H ${lane} V ${ty} H ${b.x+b.w}`;}
+ const y=a.y+a.h+5+i*3,lane=b.x-(10+i*4);return `M ${a.x+a.w*sp} ${a.y+a.h} V ${y} H ${lane} V ${ty} H ${b.x}`;
+}
+test('S0 relationship gutters: old CI card intersections are red and all seven real rebuilt routes clear every card',async t=>{
+ const x=await page();t.after(()=>close(x));const resize=spacingFixture(x);
+ for(const[width,mapWidth,height]of[[1440,1343,649.609375],[1920,1823,652.5],[1440,1343,839],[1920,1823,839],[1440,1343,649.609375]]){
+  const snapshot=await resize(width,height,mapWidth),nodes=snapshot.filter(n=>n.scope),map=x.d.getElementById('np-overview-map'),paths=[...map.querySelectorAll('[data-map-relation]')];assert.equal(paths.length,7);assertSpacingEdges(x,snapshot);
+  for(const p of paths)assertRelationGutters(p.getAttribute('d'),nodes,p.dataset.fromEntity,p.dataset.toEntity,mapWidth,height);
+  if(width===1440&&height===649.609375){
+   const byScope=Object.fromEntries(nodes.map(n=>[n.scope,n]));assert.equal(byScope['task:vln'].w,213.75);assert.equal(byScope['task:soon'].y,462);assert.equal(byScope['task:language-objectnav'].y+56,442);
+   for(const i of[2,3,4,5]){const p=paths[i],a=byScope[p.dataset.fromEntity],b=byScope[p.dataset.toEntity],old=legacyRelationPath(a,b,i,7,229.75);assert.throws(()=>assertRelationGutters(old,nodes,p.dataset.fromEntity,p.dataset.toEntity,mapWidth,height),/crosses card/,'original '+p.dataset.mapRelation+' must remain red');}
+   const p=paths[2],old=legacyRelationPath(byScope[p.dataset.fromEntity],byScope[p.dataset.toEntity],2,7,229.75),length=relationSegments(old).reduce((sum,s)=>sum+Math.abs(s.a.x-s.b.x)+Math.abs(s.a.y-s.b.y),0);assert.equal(length,538.421875,'same R90 length as real receipt');assert.ok(Array.from({length:19},(_,i)=>length*(i+1)/20%9).every(v=>v>5&&v<9),'all old equal-fraction samples alias into dash gaps');
+   assert.throws(()=>assertRelationGutters('',nodes,p.dataset.fromEntity,p.dataset.toEntity,mapWidth,height),'no path cannot pass');
+   const broken=p.getAttribute('d').replace(/H [-\d.]+ V/,`H ${byScope['task:ivln'].x+10} V`);assert.throws(()=>assertRelationGutters(broken,nodes,p.dataset.fromEntity,p.dataset.toEntity,mapWidth,height),/crosses card/,'moving a bend into a real card cannot pass');
+  }
+ }
+});
+
+test('desktop CSS fixture media conditions include exact height boundaries and reject unknown syntax',()=>{
+
+const shortQuery='(min-width:1200px) and (max-height:950px)';
+for(const[w,h,expected]of[[1199,949,false],[1200,949,true],[1200,950,true],[1200,951,false],[1440,900,true],[1920,1080,false]])assert.equal(methodMediaActive([shortQuery],w,h),expected,`${w}x${h}`);
+assert.equal(methodMediaActive(['(max-width:1200px) and (min-height:950px)'],1200,950),true);
+assert.equal(methodMediaActive(['print'],1440,900),false);assert.equal(methodMediaActive(['(prefers-reduced-motion:reduce)'],1440,900),false);
+for(const q of['(orientation:landscape)','(min-width:1200px) and (hover:hover)','(min-width:9999px) and (unknown:1)','(max-height:950px) trailing','(min-width:1200px) or (max-height:950px)'])assert.throws(()=>methodMediaActive([q],1440,900),/unexpected media query/);
+assert.throws(()=>methodMediaActive(['print','(unknown:1)'],1440,900),/unexpected media query/,'inactive media must not hide unknown syntax');
+});

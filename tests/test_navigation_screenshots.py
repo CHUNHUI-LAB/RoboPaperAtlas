@@ -227,6 +227,11 @@ run(start+'<em>wrong sibling</em><span> · 未固定全文快照</span></p></art
         for value in (all_lines, single):
             bad = copy.deepcopy(value); next(e for e in bad['relations'] if e['visible'])['visible'] = False
             with self.assertRaises(RuntimeError): MODULE.check_graphical_map(bad)
+            for mutation in (dict(ownHits=[]), dict(uncovered=False), dict(inBounds=False), dict(endpointsMatch=False),
+                             dict(length=0), dict(length=float('nan')), dict(foreground=[250,250,250]),
+                             dict(type='invented'), dict(to='wrong-target')):
+                bad = copy.deepcopy(value); next(e for e in bad['relations'] if e['visible']).update(mutation)
+                with self.assertRaises(RuntimeError): MODULE.check_graphical_map(bad)
         mutations = [lambda x:x['relationControls'].pop(),lambda x:x.update(selectedRelation='invented'),lambda x:x.__setitem__('mapVisible',False),lambda x:x['nodes'].pop(),
                      lambda x:x['nodes'][0].__setitem__('id','invented'),lambda x:x['nodes'][0].__setitem__('opaque',False),
                      lambda x:x['nodes'][0].__setitem__('unscaled',False),lambda x:x['nodes'][0]['rect'].__setitem__('y',950),
@@ -488,6 +493,180 @@ const root=e.scopes['task:imagenav'].roots[0],target=d.querySelector('[data-path
                 MODULE.wait_for(lambda: False, timeout=1)
         with self.assertRaisesRegex(ValueError, 'failed'):
             MODULE.wait_for(lambda: (_ for _ in ()).throw(ValueError('failed')))
+
+
+class RelationPathSamplingChecks(unittest.TestCase):
+    """Execute the production probe with deterministic SVG geometry/hit stacks.
+
+    These are counterexamples to the sampler, not substituted Chrome evidence.
+    Real browser captures remain the PR job's responsibility.
+    """
+
+    def probe(self, **case):
+        driver = r"""
+const {JSDOM}=require('jsdom'),input=JSON.parse(require('fs').readFileSync(0,'utf8'));
+const dom=new JSDOM('<div id="map"><svg><path id="edge" data-map-relation="tasks:relation:90" data-from-entity="from" data-to-entity="to"></path></svg></div>');
+const d=dom.window.document,m=d.getElementById('map'),svg=m.querySelector('svg'),e=d.getElementById('edge'),c=input.case;
+const identity={a:1,b:0,c:0,d:1,e:0,f:0},matrix=c.matrix||identity;
+global.DOMPoint=class{constructor(x,y){this.x=x;this.y=y;}matrixTransform(a){return {x:this.x*a.a+this.y*a.c+a.e,y:this.x*a.b+this.y*a.d+a.f};}};
+global.innerWidth=1440;global.innerHeight=900;global.document=d;
+global.rect=n=>n.area||{x:0,y:0,width:1440,height:900};
+global.color=()=>({rgb:[60,131,125],alpha:1});global.bg=()=>[255,255,255];
+const style={opacity:'1',strokeOpacity:'1',visibility:'visible',display:'block',stroke:'rgb(60, 131, 125)',strokeWidth:'2',strokeDasharray:'5px, 4px',vectorEffect:'non-scaling-stroke'};
+global.getComputedStyle=n=>Object.assign({},style,n.customStyle||{});
+function configure(path,points,styleChanges={}){
+  path.points=points;path.customStyle=styleChanges;path.setAttribute('d','M '+points.map(p=>p.join(' ')).join(' L '));path.getScreenCTM=()=>matrix;
+  path.parts=points.slice(1).map((p,i)=>({a:points[i],b:p,len:Math.hypot(p[0]-points[i][0],p[1]-points[i][1])}));
+  path.getTotalLength=()=>path.parts.reduce((sum,p)=>sum+p.len,0);
+  path.getPointAtLength=arc=>{let pos=arc;for(const p of path.parts){if(pos<=p.len)return {x:p.a[0]+(p.b[0]-p.a[0])*pos/p.len,y:p.a[1]+(p.b[1]-p.a[1])*pos/p.len};pos-=p.len;}const p=points.at(-1);return {x:p[0],y:p[1]};};
+  path.nearest=(x,y)=>{let arc=0,best={distance:Infinity};for(const p of path.parts){const dx=p.b[0]-p.a[0],dy=p.b[1]-p.a[1],t=Math.max(0,Math.min(1,((x-p.a[0])*dx+(y-p.a[1])*dy)/(p.len*p.len))),distance=Math.hypot(x-p.a[0]-t*dx,y-p.a[1]-t*dy);if(distance<best.distance)best={distance,arc:arc+t*p.len};arc+=p.len;}return best;};
+  path.isPointInStroke=q=>{const p=path.nearest(q.x,q.y),s=getComputedStyle(path),dash=s.strokeDasharray==='none'?null:s.strokeDasharray.split(/[ ,]+/).map(parseFloat),period=dash&&dash.reduce((a,b)=>a+b,0),phase=period&&((p.arc+(c.offset||0))%period+period)%period;return p.distance<=parseFloat(s.strokeWidth)/2+1e-8&&(!dash||phase<dash[0]);};
+}
+configure(e,c.points||[[30,100],[568.421875,100]],c.style||{});
+if(c.rawPath!==undefined)e.setAttribute('d',c.rawPath);
+if(c.pathLength!==undefined)e.setAttribute('pathLength',String(c.pathLength));
+const extras=[];for(const spec of c.crossingPaths||[]){const p=d.createElementNS('http://www.w3.org/2000/svg','path');if(spec.foreign)p.id='foreign-path';else if(spec.parent){p.dataset.mapParent='parent';p.dataset.mapChild='child';}else{p.dataset.mapRelation=spec.id||'tasks:relation:91';p.dataset.fromEntity='other-from';p.dataset.toEntity='other-to';}svg.append(p);configure(p,spec.points,{strokeDasharray:'none',strokeWidth:spec.width||'2'});extras.push(p);}
+const cards=[];for(const spec of c.cards||[]){const n=d.createElement('button');n.dataset.mapPosition=spec.id||'card';if(spec.task)n.dataset.taskOpen=spec.task;n.area=spec.rect;if(spec.hidden)n.customStyle={visibility:'hidden'};m.append(n);cards.push(n);}
+let calls=0,arcs=[];const original=e.getPointAtLength;e.getPointAtLength=arc=>{arcs.push(arc);return original(arc);};
+d.elementsFromPoint=(x,y)=>{
+  const q={x:(x-matrix.e)/matrix.a,y:(y-matrix.f)/matrix.d},stack=[];
+  if(!c.pointerlessCards)for(const n of cards){const r=n.area;if(!n.customStyle&&x>=r.x&&x<=r.x+r.width&&y>=r.y&&y<=r.y+r.height)stack.push(n);}
+  for(const p of extras)if(p.isPointInStroke(q))stack.push(p);
+  if(!c.missing&&!c.gapsOnly&&getComputedStyle(e).visibility==='visible'&&getComputedStyle(e).display!=='none'&&e.isPointInStroke(q))stack.push(e);
+  stack.push(c.gapSurface==='map'?m:svg,m);return stack;
+};
+d.elementFromPoint=(x,y)=>{calls++;return d.elementsFromPoint(x,y)[0];};
+const result=new Function('e','m',input.helper+'\n'+input.edge+'\nreturn edge(e);')(e,m);
+console.log(JSON.stringify({result,calls,arcs}));dom.window.close();
+"""
+        edge = next(line.strip() for line in Path(MODULE.__file__).read_text().splitlines() if line.strip().startswith('function edge(e)'))
+        run = subprocess.run(['node', '-e', driver], cwd=Path(__file__).parents[1],
+                             input=json.dumps(dict(helper=MODULE.RELATION_PATH_SAMPLES_JS, edge=edge, case=case)),
+                             text=True, capture_output=True, timeout=30)
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        return json.loads(run.stdout)
+
+    def assert_complete_sampling(self, record):
+        edge = record['result']; proof = edge['sampling']; count = proof['count']
+        self.assertTrue(proof['valid'])
+        self.assertEqual(record['calls'], count)
+        self.assertEqual(sum(proof['counts'].values()), count)
+        self.assertLessEqual(proof['maxScreenStep'], .5)
+        # The endpoint bounds probes precede every evenly spaced interior probe.
+        self.assertEqual(record['arcs'][:2], [0, edge['length']])
+        self.assertEqual(len(record['arcs']), count + 2)
+        for i, arc in enumerate(record['arcs'][2:]):
+            self.assertAlmostEqual(arc, edge['length'] * (i + .5) / count)
+        self.assertAlmostEqual(proof['firstArc'], record['arcs'][2])
+        self.assertAlmostEqual(proof['lastArc'], record['arcs'][-1])
+        self.assertLessEqual(len(edge['ownHits']), proof['diagnosticLimit'])
+        self.assertLessEqual(len(edge['blockedHits']), proof['diagnosticLimit'])
+        self.assertLessEqual(len(edge['crossings']), proof['diagnosticLimit'])
+
+    def test_original_r90_arc_length_alias_is_reproducible_without_chrome(self):
+        # 0f497e receipt: all 19 old probes occupy the 4px gap in a 5px/4px
+        # dash cycle. This unobscured fixture isolates aliasing from card overlap.
+        length = 538.421875
+        old_phases = [length * i / 20 % 9 for i in range(1, 20)]
+        self.assertTrue(all(5 <= value < 9 for value in old_phases))
+        self.assertAlmostEqual(old_phases[0], 8.92109375)
+        self.assertAlmostEqual(old_phases[-1], 7.50078125)
+        for surface in ('map', 'svg'):
+            record = self.probe(gapSurface=surface)
+            self.assert_complete_sampling(record)
+            edge = record['result']
+            self.assertTrue(edge['visible'] and edge['uncovered'] and edge['inBounds'])
+            self.assertTrue(edge['ownHits'])
+            self.assertGreater(edge['sampling']['counts']['gap'], 0)
+            self.assertEqual(edge['sampling']['counts']['blocked'], 0)
+
+    def test_original_r90_card_intersection_remains_a_failure_after_alias_fix(self):
+        # Rebuilt from the same receipt's node rectangles and production route.
+        points = [[318.828125, 547.890625], [318.828125, 558.890625],
+                  [720.25, 558.890625], [720.25, 450.890625], [738.25, 450.890625]]
+        cards = [dict(id='ivln', rect=dict(x=508.5, y=415.890625, width=213.75, height=56)),
+                 dict(id='ndh', rect=dict(x=508.5, y=491.890625, width=213.75, height=56))]
+        record = self.probe(points=points, cards=cards)
+        self.assert_complete_sampling(record)
+        edge = record['result']
+        self.assertEqual(edge['length'], 538.421875)
+        self.assertTrue(edge['ownHits'])
+        self.assertFalse(edge['uncovered'])
+        self.assertEqual({row['position'] for row in edge['cardIntersections']}, {'ivln', 'ndh'})
+        self.assertGreater(edge['sampling']['counts']['blocked'], 0)
+        # Pointer-events:none or another SVG stroke cannot conceal a real card.
+        concealed = self.probe(points=points, cards=cards, pointerlessCards=True)['result']
+        self.assertFalse(concealed['uncovered'])
+        self.assertEqual(concealed['sampling']['counts']['blocked'], 0)
+
+    def test_tiny_between_probe_card_is_rejected_by_complete_segment_geometry(self):
+        edge = self.probe(cards=[dict(rect=dict(x=31.001, y=99, width=.04, height=2))])['result']
+        self.assertFalse(edge['uncovered'])
+        self.assertTrue(edge['cardIntersections'])
+
+    def test_original_r93_along_card_top_borders_is_independently_rejected(self):
+        points = [[358.90625, 623.890625], [358.90625, 643.890625],
+                  [708.25, 643.890625], [708.25, 537.390625], [738.25, 537.390625]]
+        cards = [dict(id='hieranav', rect=dict(x=278.75, y=643.890625, width=213.75, height=56)),
+                 dict(id='soon', rect=dict(x=508.5, y=643.890625, width=213.75, height=56))]
+        for pointerless in (False, True):
+            edge = self.probe(points=points, cards=cards, pointerlessCards=pointerless)['result']
+            self.assertEqual(edge['length'], 505.84375)
+            self.assertFalse(edge['uncovered'])
+            self.assertEqual({row['position'] for row in edge['cardIntersections']}, {'hieranav', 'soon'})
+
+    def test_missing_hidden_empty_and_gap_only_paths_cannot_provide_visible_evidence(self):
+        for change in (dict(missing=True), dict(gapsOnly=True), dict(style=dict(strokeDasharray='0px, 4px')), dict(rawPath=''), dict(rawPath='M 30 100 C 40 100 500 100 568 100')):
+            with self.subTest(change=change):
+                edge = self.probe(**change)['result']
+                self.assertFalse(edge['uncovered'])
+                self.assertFalse(edge['ownHits'])
+        for style in (dict(visibility='hidden'), dict(display='none'), dict(opacity='0'), dict(strokeOpacity='0'), dict(strokeWidth='0')):
+            with self.subTest(style=style):
+                self.assertFalse(self.probe(style=style)['result']['visible'])
+
+    def test_only_geometric_registered_transverse_crossings_are_permitted(self):
+        for parent in (False, True):
+            for x, painted in ((100, False), (104, True)):
+                # At x=100 all covered samples lie in the gap; x=104 lies
+                # completely inside a painted dash. Both are real crossings.
+                record = self.probe(crossingPaths=[dict(points=[[x, 80], [x, 120]], parent=parent)])
+                self.assert_complete_sampling(record)
+                self.assertTrue(record['result']['uncovered'])
+                self.assertGreater(record['result']['sampling']['counts']['crossing'], 0)
+                self.assertTrue(all(row['sine'] == 1 for row in record['result']['crossings']))
+                self.assertTrue(all(row['painted'] is painted for row in record['result']['crossings']))
+        for spec in (dict(points=[[101, 80], [101, 120]], foreign=True),
+                     dict(points=[[100, 100], [120, 100]]),
+                     dict(points=[[100, 99.9], [120, 100.1]])):
+            with self.subTest(spec=spec):
+                edge = self.probe(crossingPaths=[spec])['result']
+                self.assertFalse(edge['uncovered'])
+                self.assertGreater(edge['sampling']['counts']['blocked'], 0)
+        edge = self.probe(crossingPaths=[dict(points=[[101, 80], [101, 120]])],
+                          cards=[dict(rect=dict(x=100, y=99, width=2, height=2))])['result']
+        self.assertFalse(edge['uncovered'])
+
+    def test_sampling_covers_small_dashes_short_paths_and_scaled_paths(self):
+        for change in (dict(points=[[30, 100], [46, 100]]),
+                       dict(points=[[30, 100], [46, 100]], style=dict(strokeDasharray='.2px, .1px')),
+                       dict(matrix=dict(a=2, b=0, c=0, d=2, e=0, f=0))):
+            with self.subTest(change=change):
+                record = self.probe(**change)
+                self.assert_complete_sampling(record)
+                self.assertTrue(record['result']['uncovered'])
+                self.assertTrue(record['result']['ownHits'])
+        # Oversized sample budgets fail rather than silently coarsening the scan.
+        self.assertFalse(self.probe(style=dict(strokeDasharray='.0001px, .0001px'))['result']['uncovered'])
+
+    def test_exact_endpoints_can_touch_their_own_cards_but_not_cross_their_interior(self):
+        cards = [dict(task='from', rect=dict(x=10, y=90, width=20, height=20)),
+                 dict(task='to', rect=dict(x=46, y=90, width=20, height=20))]
+        edge = self.probe(points=[[30, 100], [46, 100]], cards=cards)['result']
+        self.assertTrue(edge['uncovered'])
+        self.assertFalse(edge['cardIntersections'])
+        edge = self.probe(points=[[29.5, 100], [46, 100]], cards=cards)['result']
+        self.assertFalse(edge['uncovered'])
 
 
 class ReaderToggleChecks(unittest.TestCase):

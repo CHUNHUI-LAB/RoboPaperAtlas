@@ -88,6 +88,95 @@ return {text:e.textContent,rect:r,visible:visible,opaque:opaque,unscaled:unscale
 """
 
 
+# Every point is checked; only bounded diagnostics are returned in the receipt.
+# The source map uses straight M/L/H/V segments. Unknown geometry fails closed,
+# rather than granting an occlusion exception to arbitrary SVG descendants.
+RELATION_PATH_SAMPLES_JS = r"""
+function relationPathSamples(e,m,len,matrix){
+  var limit=24,svg=e.closest('svg'),cs=getComputedStyle(e),mr=rect(m),ownHits=[],blockedHits=[],crossings=[],counts={own:0,gap:0,crossing:0,endpoint:0,blocked:0};
+  function scale(a){return Math.sqrt(Math.max(Math.abs(a.a)+Math.abs(a.b),Math.abs(a.c)+Math.abs(a.d))*Math.max(Math.abs(a.a)+Math.abs(a.c),Math.abs(a.b)+Math.abs(a.d)));}
+  function point(a,x,y){var p=new DOMPoint(x,y).matrixTransform(a);return {x:p.x,y:p.y};}
+  function segments(path){
+    var d=path.getAttribute('d')||'',token=/[MLHV]|[-+]?(?:\d*\.\d+|\d+\.?\d*)(?:[eE][-+]?\d+)?/g,t=d.match(token)||[];
+    if(d.replace(token,'').replace(/[\s,]/g,'')||!t.length)return null;
+    var a=path.getScreenCTM(),out=[],i=0,cmd=null,x=0,y=0,started=false;
+    while(i<t.length){
+      if(/^[MLHV]$/.test(t[i]))cmd=t[i++];
+      if(!cmd||(!started&&cmd!=='M'))return null;
+      var n=cmd==='M'||cmd==='L'?2:1,v=t.slice(i,i+n);
+      if(v.length!==n||v.some(z=>/^[MLHV]$/.test(z)||!Number.isFinite(Number(z))))return null;
+      i+=n;var nx=cmd==='V'?x:Number(v[0]),ny=cmd==='H'?y:Number(v[cmd==='V'?0:1]);
+      if(cmd!=='M'){var from=point(a,x,y),to=point(a,nx,ny);if(from.x!==to.x||from.y!==to.y)out.push({from:from,to:to});}
+      x=nx;y=ny;started=true;if(cmd==='M')cmd='L';
+    }
+    return out.length?out:null;
+  }
+  function identity(n){return n?{tag:n.tagName,id:n.id||'',relation:n.dataset&&n.dataset.mapRelation||null,parent:n.dataset&&n.dataset.mapParent||null,child:n.dataset&&n.dataset.mapChild||null,position:n.dataset&&n.dataset.mapPosition||null}:null;}
+  function registered(n){return !!n&&n!==e&&n.closest('svg')===svg&&n.matches('path[data-map-relation][data-from-entity][data-to-entity],path[data-map-parent][data-map-child]');}
+  function opaque(n){for(;n;n=n.parentElement){var s=getComputedStyle(n);if(s.display==='none'||s.visibility!=='visible'||Number(s.opacity)===0)return false;}return true;}
+  function intersectsCard(s,r){
+    // Clip the complete centreline against the closed card. A point contact at
+    // an endpoint is valid; following a card border is a real partial overlap.
+    var lo=0,hi=1,dx=s.to.x-s.from.x,dy=s.to.y-s.from.y;
+    for(var row of [[s.from.x,dx,r.x,r.x+r.width],[s.from.y,dy,r.y,r.y+r.height]]){
+      if(row[1]===0){if(row[0]<row[2]||row[0]>row[3])return false;}
+      else{var a=(row[2]-row[0])/row[1],b=(row[3]-row[0])/row[1];lo=Math.max(lo,Math.min(a,b));hi=Math.min(hi,Math.max(a,b));}
+    }
+    return hi>lo&&Math.hypot(dx,dy)*(hi-lo)>.01;
+  }
+  var line=segments(e),cards=[...m.querySelectorAll('[data-map-position]')].filter(opaque),cardIntersections=[];
+  if(line)for(var card of cards){var r=rect(card);for(var k=0;k<line.length;k++)if(intersectsCard(line[k],r))cardIntersections.push({position:card.dataset.mapPosition,segment:k,rect:r});}
+  var factor=scale(matrix),dash=cs.strokeDasharray==='none'?[]:cs.strokeDasharray.split(/[ ,]+/).filter(Boolean).map(v=>/^\d*\.?\d+(?:px)?$/.test(v)?parseFloat(v):NaN);
+  var pathLength=e.getAttribute('pathLength'),calibration=pathLength===null?1:len/Number(pathLength),positive=dash.filter(n=>n>0);
+  var step=Math.min(.5/factor,positive.length?Math.min(...positive)*calibration/4:Infinity),count=Math.ceil(len/step);
+  var valid=!!line&&!!svg&&Number.isFinite(len)&&len>0&&Number.isFinite(step)&&step>0&&Number.isFinite(calibration)&&calibration>0&&dash.every(Number.isFinite)&&count>=1&&count<=20000&&typeof e.isPointInStroke==='function';
+  var inBounds=valid,cache=new Map();
+  function bounds(z){return Number.isFinite(z.x)&&Number.isFinite(z.y)&&z.x>=mr.x-1&&z.y>=mr.y-1&&z.x<=mr.x+mr.width+1&&z.y<=mr.y+mr.height+1&&z.x>=0&&z.y>=0&&z.x<=innerWidth&&z.y<=innerHeight;}
+  function crossing(hit,z){
+    if(!registered(hit)||!opaque(hit))return null;
+    if(!cache.has(hit))cache.set(hit,segments(hit));var other=cache.get(hit);if(!other)return null;
+    var style=getComputedStyle(hit),width=parseFloat(style.strokeWidth)*(style.vectorEffect==='non-scaling-stroke'?1:scale(hit.getScreenCTM()));
+    if(!Number.isFinite(width)||width<=0||style.stroke==='none'||Number(style.strokeOpacity)<=0)return null;
+    for(var a of line)for(var b of other){
+      var ax=a.to.x-a.from.x,ay=a.to.y-a.from.y,bx=b.to.x-b.from.x,by=b.to.y-b.from.y,al=Math.hypot(ax,ay),bl=Math.hypot(bx,by),cross=ax*by-ay*bx,sine=Math.abs(cross)/(al*bl);
+      if(sine<.5)continue; // No parallel/near-parallel/coincident-path exception.
+      var qx=b.from.x-a.from.x,qy=b.from.y-a.from.y,t=(qx*by-qy*bx)/cross,u=(qx*ay-qy*ax)/cross;
+      if(t<0||t>1||u<0||u>1)continue;
+      var at={x:a.from.x+t*ax,y:a.from.y+t*ay},along=((z.x-a.from.x)*ax+(z.y-a.from.y)*ay)/(al*al),distance=Math.abs((z.x-a.from.x)*ay-(z.y-a.from.y)*ax)/al;
+      if(along>=0&&along<=1&&distance<.01&&Math.hypot(z.x-at.x,z.y-at.y)<=width/(2*sine)+.01)return {hit:identity(hit),at:at,sine:sine};
+    }
+    return null;
+  }
+  function endpointContact(hit,arc){
+    if(!hit)return false;var id=arc*factor<=1?e.dataset.fromEntity:(len-arc)*factor<=1?e.dataset.toEntity:null;
+    var card=id&&cards.find(n=>n.dataset.taskOpen===id);return !!card&&(hit===card||card.contains(hit));
+  }
+  if(valid){
+    for(var end of [0,len]){var q=e.getPointAtLength(end);if(!bounds(point(matrix,q.x,q.y)))inBounds=false;}
+    for(var i=0;i<count;i++){
+      var arc=len*(i+.5)/count,q=e.getPointAtLength(arc),z=point(matrix,q.x,q.y),hit=document.elementFromPoint(z.x,z.y),painted=e.isPointInStroke(q),kind='blocked',proof=null;
+      if(!bounds(z))inBounds=false;
+      if(hit===e)kind='own';
+      else if((hit===m||hit===svg)&&!painted)kind='gap';
+      else if(endpointContact(hit,arc))kind='endpoint';
+      else if(registered(hit)){
+        proof=crossing(hit,z);
+        var stack=document.elementsFromPoint(z.x,z.y),index=stack.indexOf(e),above=index<0?[]:stack.slice(0,index);
+        if(proof&&(!painted||index>0&&above.every(n=>crossing(n,z))))kind='crossing';
+      }
+      counts[kind]++;var sample={x:z.x,y:z.y,fraction:arc/len,arc:arc};
+      if(kind==='own'&&ownHits.length<limit)ownHits.push(sample);
+      if(kind==='blocked'&&blockedHits.length<limit)blockedHits.push(Object.assign(sample,{hit:identity(hit),painted:painted}));
+      if(kind==='crossing'&&crossings.length<limit)crossings.push(Object.assign(sample,{painted:painted},proof));
+    }
+  }
+  return {inBounds:inBounds,uncovered:valid&&counts.own>0&&counts.own+counts.gap>=3&&counts.blocked===0&&cardIntersections.length===0,ownHits:ownHits,
+    sampling:{method:'uniform-full-arc',valid:valid,count:valid?count:0,firstArc:valid?len/(2*count):null,lastArc:valid?len-len/(2*count):null,maxArcStep:valid?len/count:null,maxScreenStep:valid?len/count*factor:null,counts:counts,diagnosticLimit:limit},
+    blockedHits:blockedHits,crossings:crossings,cardIntersections:cardIntersections};
+}
+"""
+
+
 def check_reading_home(data):
     if not data['home'] or not data['panelsHidden'] or data['route']['paper'] or data['route']['version']:
         raise RuntimeError('Default reading overview is hidden or implicitly selects paper evidence')
@@ -4541,7 +4630,7 @@ def main():
         save()
         check_reading_home(data)
 
-        graph = driver.js(VISUAL_GEOMETRY + """
+        graph = driver.js(VISUAL_GEOMETRY + RELATION_PATH_SAMPLES_JS + """
           var a=NavigationProductApp,b=a.getBundle(),m=document.getElementById('np-overview-map'),root=b.researchMap.roots[0],p=b.positions;
           var l=p[root].childIds.find(id=>p[id].entityId==='legacy:nav:l'),c=p[root].childIds.find(id=>p[id].entityId==='legacy:nav:c'),td=p[l].childIds.find(id=>p[id].sourceDirectoryGroupId==='task');
           var wanted=[root,l,c,td,...arguments[0].map(s=>b.researchMap.scopeEntries.find(e=>e.scopeId===s).canonicalPositionId),...p[c].childIds];
@@ -4549,7 +4638,7 @@ def main():
           function endpoint(e,end){var q=e.getPointAtLength(end?e.getTotalLength():0),r=new DOMPoint(q.x,q.y).matrixTransform(e.getScreenCTM());return {x:r.x,y:r.y};}
           function touches(q,r){return q.x>=r.x-2&&q.x<=r.x+r.width+2&&q.y>=r.y-2&&q.y<=r.y+r.height+2&&Math.min(Math.abs(q.x-r.x),Math.abs(q.x-r.x-r.width),Math.abs(q.y-r.y),Math.abs(q.y-r.y-r.height))<=3;}
           function node(id){return [...m.querySelectorAll('[data-map-position]')].find(n=>n.dataset.mapPosition===id);}
-          function edge(e){var cs=getComputedStyle(e),stroke=color(cs.stroke),alpha=stroke?stroke.alpha*Number(cs.strokeOpacity):0,display=true;for(var n=e;n;n=n.parentElement){var st=getComputedStyle(n);alpha*=Number(st.opacity);if(st.display==='none'||st.visibility!=='visible')display=false;}var background=bg(m),foreground=stroke&&background.length===3?stroke.rgb.map((v,i)=>v*alpha+background[i]*(1-alpha)):[],len=e.getTotalLength(),matrix=e.getScreenCTM(),mr=rect(m),inBounds=true,uncovered=0,ownHits=[];for(var i=1;i<20;i++){var q=e.getPointAtLength(len*i/20),z=new DOMPoint(q.x,q.y).matrixTransform(matrix);if(z.x<mr.x-1||z.y<mr.y-1||z.x>mr.x+mr.width+1||z.y>mr.y+mr.height+1||z.x<0||z.y<0||z.x>innerWidth||z.y>innerHeight)inBounds=false;var hit=document.elementFromPoint(z.x,z.y);if(hit&&(hit===e||hit===m||hit===e.closest('svg')))uncovered++;if(hit===e)ownHits.push({x:z.x,y:z.y,fraction:i/20});}return {visible:display&&alpha>0&&foreground.length===3&&parseFloat(cs.strokeWidth)>0,length:len,foreground:foreground,background:background,inBounds:inBounds,uncovered:uncovered>=3,ownHits:ownHits};}
+          function edge(e){var cs=getComputedStyle(e),stroke=color(cs.stroke),alpha=stroke?stroke.alpha*Number(cs.strokeOpacity):0,display=true;for(var n=e;n;n=n.parentElement){var st=getComputedStyle(n);alpha*=Number(st.opacity);if(st.display==='none'||st.visibility!=='visible')display=false;}var background=bg(m),foreground=stroke&&background.length===3?stroke.rgb.map((v,i)=>v*alpha+background[i]*(1-alpha)):[],len=e.getTotalLength(),matrix=e.getScreenCTM(),mr=rect(m),inBounds=true,uncovered=0,ownHits=[];if(e.dataset.mapRelation)return Object.assign({visible:display&&alpha>0&&foreground.length===3&&parseFloat(cs.strokeWidth)>0,length:len,foreground:foreground,background:background},relationPathSamples(e,m,len,matrix));for(var i=1;i<20;i++){var q=e.getPointAtLength(len*i/20),z=new DOMPoint(q.x,q.y).matrixTransform(matrix);if(z.x<mr.x-1||z.y<mr.y-1||z.x>mr.x+mr.width+1||z.y>mr.y+mr.height+1||z.x<0||z.y<0||z.x>innerWidth||z.y>innerHeight)inBounds=false;var hit=document.elementFromPoint(z.x,z.y);if(hit&&(hit===e||hit===m||hit===e.closest('svg')))uncovered++;if(hit===e)ownHits.push({x:z.x,y:z.y,fraction:i/20});}return {visible:display&&alpha>0&&foreground.length===3&&parseFloat(cs.strokeWidth)>0,length:len,foreground:foreground,background:background,inBounds:inBounds,uncovered:uncovered>=3,ownHits:ownHits};}
           return {relationsVisible:m.dataset.relationsVisible,selectedRelation:m.dataset.selectedRelation||null,relationControls:[...document.querySelectorAll('[data-relation-select]')].map(e=>e.dataset.relationSelect),viewport:{x:0,y:0,width:innerWidth,height:innerHeight},map:rect(m),mapVisible:!m.hidden&&opaque(m)&&m.clientWidth>0&&m.clientHeight>0,expectedIds:wanted,expectedEdges:wanted.filter(id=>p[id].parentId&&wanted.includes(p[id].parentId)).map(id=>[p[id].parentId,id]),expectedChallengeLabels:arguments[1],expectedRelations:arguments[2],
             directoryTitle:box(node(td)),
             nodes:[...m.querySelectorAll('[data-map-position]')].map(n=>Object.assign({id:n.dataset.mapPosition},box(n))),
