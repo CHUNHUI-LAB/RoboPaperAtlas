@@ -2609,6 +2609,71 @@ return {route:s.route,originTrail:s.originTrail,historyLength:history.length,exp
 """
 
 
+METHOD_KEY_TRACE_START_JS = r"""
+var source=arguments[0],root=arguments[1],target=arguments[2],key=arguments[3],slot='__npMethodKeyTrace';
+if(window[slot])throw Error('A method keyboard trace is already installed');
+var tree=document.getElementById('np-tree-scroll'),app=document.getElementById('navigation-product');
+if(!tree||app?.dataset.methodReading!=='true'||!['Home','ArrowDown'].includes(key))throw Error('Method keyboard trace lacks its exact method scope');
+function rect(e){if(!e)return null;var r=e.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};}
+function row(id){var e=document.getElementById('np-node-'+id),r=e?.firstElementChild;if(!e||!r)return null;var cs=getComputedStyle(e),rs=getComputedStyle(r);return {id:e.id,position:e.dataset.position,rect:rect(r),itemMarginTop:parseFloat(cs.marginTop),rowScrollMarginBlockStart:rs.scrollMarginBlockStart};}
+function snapshot(){var r=tree.getBoundingClientRect(),s=getComputedStyle(tree),a=window.NavigationProductApp;return {
+  route:Object.assign({},a.getState().route),methodReading:app.dataset.methodReading,window:{x:scrollX,y:scrollY},active:document.activeElement?.id||null,
+  tree:{id:tree.id,connected:tree.isConnected,top:tree.scrollTop,left:tree.scrollLeft,scrollHeight:tree.scrollHeight,scrollWidth:tree.scrollWidth,
+    rect:rect(tree),clientRect:{x:r.x+tree.clientLeft,y:r.y+tree.clientTop,width:tree.clientWidth,height:tree.clientHeight},paddingTop:parseFloat(s.paddingTop),scrollPaddingBlockStart:s.scrollPaddingBlockStart},
+  root:row(root),target:row(target)};}
+var state={scope:'method-tree-key',source:source,root:root,target:target,key:key,eventLimit:2,before:snapshot(),events:[],overflow:0,after:null,cleanedUp:false};
+if(!state.before.root||!state.before.target||state.before.route.node!==source)throw Error('Method keyboard trace lost an exact source row');
+function observe(phase,event){if(state.events.length>=2){state.overflow=Math.min(3,state.overflow+1);return;}
+  state.events.push({phase:phase,key:event.key,code:event.code,isTrusted:event.isTrusted,defaultPrevented:event.defaultPrevented,eventTarget:event.target.id||null,snapshot:snapshot()});}
+function capture(event){observe('capture',event);}
+function bubble(event){observe('bubble',event);}
+try{tree.addEventListener('keydown',capture,true);tree.addEventListener('keydown',bubble,false);
+  window[slot]={state:state,snapshot:snapshot,tree:tree,capture:capture,bubble:bubble};
+}catch(e){tree.removeEventListener('keydown',capture,true);tree.removeEventListener('keydown',bubble,false);delete window[slot];throw e;}
+return state;
+"""
+
+METHOD_KEY_TRACE_STOP_JS = r"""
+var slot='__npMethodKeyTrace',probe=window[slot];
+if(!probe)throw Error('Method keyboard trace cleanup lacks its installed probe');
+try{probe.state.after=probe.snapshot();return probe.state;}
+finally{probe.tree.removeEventListener('keydown',probe.capture,true);probe.tree.removeEventListener('keydown',probe.bubble,false);probe.state.cleanedUp=true;delete window[slot];}
+"""
+
+
+def check_method_key_trace(data, source, root, target, key):
+    """Trace proves native ordering and cleanup; the existing exact-scroll gate decides restoration."""
+    if (data.get('scope') != 'method-tree-key' or data.get('source') != source or data.get('root') != root or
+            data.get('target') != target or data.get('key') != key or data.get('eventLimit') != 2 or
+            data.get('overflow') != 0 or data.get('cleanedUp') is not True):
+        raise RuntimeError('Method keyboard trace lost its bounded exact-source lifecycle')
+    events = data.get('events', [])
+    if len(events) != 2 or [row.get('phase') for row in events] != ['capture', 'bubble']:
+        raise RuntimeError('Method keyboard trace omitted or duplicated a native keydown phase')
+    for row in events:
+        if row.get('key') != key or row.get('isTrusted') is not True or not row.get('eventTarget'):
+            raise RuntimeError('Method keyboard trace did not observe the exact native key')
+    if events[-1].get('defaultPrevented') is not True:
+        raise RuntimeError('Method keyboard handler did not consume its native navigation key')
+    frames = [data.get('before'), *(row.get('snapshot') for row in events), data.get('after')]
+    if any(not isinstance(frame, dict) for frame in frames):
+        raise RuntimeError('Method keyboard trace omitted a before, event or after snapshot')
+    for frame in frames:
+        tree = frame.get('tree') or {}
+        if (frame.get('route') != data['before']['route'] or frame['route'].get('node') != source or
+                frame.get('methodReading') != 'true' or frame.get('window') != {'x': 0, 'y': 0} or
+                tree.get('id') != 'np-tree-scroll' or tree.get('connected') is not True):
+            raise RuntimeError('Method keyboard trace changed its source or containing pane')
+        for name, identity in (('root', root), ('target', target)):
+            proof = frame.get(name) or {}
+            if proof.get('id') != 'np-node-' + identity or proof.get('position') != identity or not proof.get('rect'):
+                raise RuntimeError('Method keyboard trace lost a source row rectangle')
+        for box in (tree.get('rect'), tree.get('clientRect'), frame['root']['rect'], frame['target']['rect']):
+            if (not isinstance(box, dict) or any(type(box.get(k)) not in (int, float) or not math.isfinite(box[k]) for k in ('x', 'y', 'width', 'height')) or
+                    box['width'] <= 0 or box['height'] <= 0):
+                raise RuntimeError('Method keyboard trace lacks finite actual pane and row geometry')
+
+
 def check_method_navigation_transition(before, after, focus=None, exact_tree_scroll=False):
     for key in ('route', 'originTrail', 'historyLength', 'expanded', 'window', 'readerScroll', 'methodReading'):
         if before[key] != after[key]:
@@ -2627,17 +2692,24 @@ def method_navigation_checks(driver, report, save, prefix, expected, source_posi
     record = {'viewport': prefix, 'position': expected['position']['id'], 'before': before, 'steps': []}
     report.setdefault('methodNavigationChecks', []).append(record)
     save()
+    path = method_visible_source_ids(expected, source_positions, before['expanded'][expected['position']['tree']])
     def key(value, target):
         element = driver.selector('[id="' + ('np-node-' + expected['position']['id'] if not record['steps'] else record['steps'][-1]['after']['focus']) + '"]')
         step = {'input': value, 'expectedFocus': target}
         record['steps'].append(step); save()
+        installed = False
         try:
+            step['trace'] = driver.js(METHOD_KEY_TRACE_START_JS, expected['position']['id'], path[0], target, 'Home' if value == '\ue011' else 'ArrowDown')
+            installed = True
             driver.call('POST', '/element/' + element[ELEMENT] + '/value', {'text': value, 'value': [value]})
             driver.settle()
         finally:
-            step['after'] = driver.js(METHOD_NAVIGATION_STATE_JS); save()
+            try:
+                if installed: step['trace'] = driver.js(METHOD_KEY_TRACE_STOP_JS)
+            finally:
+                step['after'] = driver.js(METHOD_NAVIGATION_STATE_JS); save()
+        check_method_key_trace(step['trace'], expected['position']['id'], path[0], target, 'Home' if value == '\ue011' else 'ArrowDown')
         check_method_navigation_transition(before, step['after'], target)
-    path = method_visible_source_ids(expected, source_positions, before['expanded'][expected['position']['tree']])
     key('\ue011', path[0])  # Home
     for pid in path[1:]:
         key('\ue015', pid)  # ArrowDown

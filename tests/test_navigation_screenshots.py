@@ -3877,6 +3877,142 @@ process.stdout.write(JSON.stringify([normal,hidden,covered,clipped]));}finally{d
         self.assertIn("...(footer?[footer,...footer.querySelectorAll('*')]:[])", MODULE.DESKTOP_SHELL_SNAPSHOT_JS)
 
 
+class MethodKeyTraceChecks(unittest.TestCase):
+    """Reconstructed 0→145→12 receipt offsets; the next Chrome run owns actual geometry."""
+
+    @staticmethod
+    def fixture(source='method', root='root', target='root', key='Home', top=145):
+        import copy
+        def row(identity, y):
+            return dict(id='np-node-'+identity,position=identity,rect=dict(x=28,y=y,width=360,height=84),itemMarginTop=4,rowScrollMarginBlockStart='0px')
+        frame=dict(route=dict(tree='g',node=source),methodReading='true',window=dict(x=0,y=0),active='np-node-child',
+                   tree=dict(id='np-tree-scroll',connected=True,top=top,left=0,scrollHeight=601,scrollWidth=398,
+                             rect=dict(x=17,y=382,width=398,height=456),clientRect=dict(x=17,y=382,width=398,height=456),paddingTop=8,scrollPaddingBlockStart='12px'),
+                   root=row(root,382+12-top),target=row(target,382+12-top))
+        events=[dict(phase=phase,key=key,code=key,isTrusted=True,defaultPrevented=phase=='bubble',eventTarget='np-node-child',snapshot=copy.deepcopy(frame)) for phase in ('capture','bubble')]
+        return dict(scope='method-tree-key',source=source,root=root,target=target,key=key,eventLimit=2,before=frame,events=events,overflow=0,after=copy.deepcopy(frame),cleanedUp=True)
+
+    def probe(self, **case):
+        script=r"""
+const input=JSON.parse(require('fs').readFileSync(0,'utf8')),c=input.case;let top=145,throwRect=false;
+const rows={};for(const id of ['root','method','child']){const row={getBoundingClientRect:()=>({x:28,y:382+(id==='root'?12:id==='method'?375:540)-top,width:360,height:id==='root'?84:60})};rows[id]={id:'np-node-'+id,dataset:{position:id},firstElementChild:row};}
+const listeners=[];const tree={id:'np-tree-scroll',isConnected:true,scrollLeft:0,scrollHeight:601,scrollWidth:398,clientLeft:0,clientTop:0,clientWidth:398,clientHeight:456,
+ get scrollTop(){return top;},getBoundingClientRect(){if(throwRect)throw Error('snapshot failed');return {x:17,y:382,width:398,height:456};},
+ addEventListener:(type,fn,capture)=>listeners.push({type,fn,capture}),removeEventListener:(type,fn,capture)=>{const i=listeners.findIndex(x=>x.type===type&&x.fn===fn&&x.capture===capture);if(i>=0)listeners.splice(i,1);}};
+global.window=global;global.scrollX=0;global.scrollY=0;global.NavigationProductApp={getState:()=>({route:{tree:'g',node:'method'}})};
+const app={dataset:{methodReading:'true'}};global.document={activeElement:rows.child,getElementById:id=>id==='np-tree-scroll'?tree:id==='navigation-product'?app:c.missing&&id==='np-node-root'?null:rows[id.replace('np-node-','')]};
+global.getComputedStyle=e=>e===tree?{paddingTop:'8px',scrollPaddingBlockStart:(c.old?0:12)+'px'}:{marginTop:'4px',scrollMarginBlockStart:'0px'};
+let start=null,result=null,error=null,probe=null;
+try{start=new Function(input.start)('method','root','root','Home');probe=window.__npMethodKeyTrace;
+ if(c.preScroll)top=111;
+ const event={key:'Home',code:'Home',isTrusted:!c.untrusted,defaultPrevented:false,target:rows.child};
+ for(const l of listeners.filter(x=>x.capture))l.fn(event);
+ // Native nearest aligns the existing root offset against the scroll-padding
+ // edge. 12=8px pane padding+4px first-li margin, inferred from exact CSS.
+ const rootY=12-top,paddedTop=c.old?0:12;if(rootY<paddedTop)top=Math.max(0,top+rootY-paddedTop);
+ event.defaultPrevented=true;document.activeElement=rows.root;
+ for(const l of listeners.filter(x=>!x.capture))l.fn(event);
+ if(c.extra)for(let n=0;n<10;n++)for(const l of listeners)l.fn(event);
+ if(c.failSnapshot)throwRect=true;
+ result=new Function(input.stop)();
+}catch(e){error=String(e);if(window.__npMethodKeyTrace){try{result=new Function(input.stop)();}catch(_){} }}
+process.stdout.write(JSON.stringify({start,result,error,listeners:listeners.length,installed:!!window.__npMethodKeyTrace,top,cleanedUp:probe?.state.cleanedUp}));
+"""
+        result=subprocess.run(['node','-e',script],input=json.dumps(dict(case=case,start=MODULE.METHOD_KEY_TRACE_START_JS,stop=MODULE.METHOD_KEY_TRACE_STOP_JS)),
+                              text=True,capture_output=True,timeout=10)
+        self.assertEqual(result.returncode,0,result.stderr)
+        return json.loads(result.stdout)
+
+    def test_method_only_css_padding_matches_existing_8_plus_4_without_layout_changes(self):
+        import re
+        css=(Path(__file__).parents[1]/'assets/navigation-product.css').read_text()
+        rules=re.findall(r'#navigation-product\[data-method-reading=true\] \.np-tree-scroll\s*\{([^}]*)\}',css)
+        self.assertEqual(rules,['padding:8px 10px;scroll-padding-block-start:12px;'])
+        self.assertEqual(css.count('scroll-padding-block-start:'),1)
+        self.assertIn('#navigation-product[data-method-reading=true] .np-tree li {margin:4px 0;}',css)
+        # Method-only rule is nested in the existing desktop1200px media block.
+        index=css.index('#navigation-product[data-method-reading=true] .np-tree-scroll')
+        self.assertGreater(css.rfind('@media (min-width:1200px)',0,index),css.rfind('@media (max-width:',0,index))
+
+    def test_receipt_145_home12_old_red_and_scroll_padding12_zero_green(self):
+        old,new=self.probe(old=True),self.probe()
+        self.assertEqual((old['top'],new['top']),(12,0))
+        for data in (old,new):
+            self.assertIsNone(data['error']);self.assertFalse(data['installed']);self.assertEqual(data['listeners'],0)
+            trace=data['result'];MODULE.check_method_key_trace(trace,'method','root','root','Home')
+            self.assertEqual(trace['before']['tree']['top'],145)
+            self.assertEqual(trace['events'][0]['snapshot']['tree']['top'],145)
+            self.assertEqual(trace['events'][1]['snapshot']['tree']['top'],data['top'])
+            self.assertEqual(trace['after']['root']['rect']['y'],382+12-data['top'])
+        before=dict(route={},originTrail=[],historyLength=1,expanded={},window=dict(x=0,y=0),readerScroll=dict(top=0,left=0),methodReading='true',roving=['method'],treeScroll=dict(top=0,left=0))
+        for top in (12,1,145):
+            with self.assertRaises(RuntimeError): MODULE.check_method_navigation_transition(before,dict(before,treeScroll=dict(top=top,left=0)),exact_tree_scroll=True)
+        MODULE.check_method_navigation_transition(before,dict(before),exact_tree_scroll=True)
+
+    def test_pre_key_transport_scroll_is_distinct_from_product_handler_scroll(self):
+        trace=self.probe(preScroll=True)['result']
+        self.assertEqual([trace['before']['tree']['top'],trace['events'][0]['snapshot']['tree']['top'],trace['events'][1]['snapshot']['tree']['top'],trace['after']['tree']['top']],[145,111,0,0])
+        for forbidden in ('.focus(','.scrollIntoView(','.scrollTo(','.preventDefault(','.click(','scrollTop=','scrollLeft=','replaceState','pushState'):
+            self.assertNotIn(forbidden,MODULE.METHOD_KEY_TRACE_START_JS+MODULE.METHOD_KEY_TRACE_STOP_JS)
+
+    def test_trace_bound_missing_scope_and_finally_cleanup_are_fail_closed(self):
+        extra=self.probe(extra=True)
+        self.assertEqual(len(extra['result']['events']),2);self.assertEqual(extra['result']['overflow'],3)
+        with self.assertRaises(RuntimeError): MODULE.check_method_key_trace(extra['result'],'method','root','root','Home')
+        for case in (dict(failSnapshot=True),dict(missing=True)):
+            data=self.probe(**case);self.assertTrue(data['error']);self.assertFalse(data['installed']);self.assertEqual(data['listeners'],0)
+        self.assertTrue(self.probe(failSnapshot=True)['cleanedUp'])
+        with self.assertRaises(RuntimeError): MODULE.check_method_key_trace(self.probe(untrusted=True)['result'],'method','root','root','Home')
+
+    def test_trace_does_not_excuse_wrong_context_missing_phases_or_invalid_geometry(self):
+        import copy
+        good=self.fixture();MODULE.check_method_key_trace(good,'method','root','root','Home')
+        mutations=[lambda d:d.update(cleanedUp=False),lambda d:d.update(eventLimit=3),lambda d:d.update(after=None),lambda d:d['events'].pop(),
+                   lambda d:d['events'][0].update(phase='bubble'),lambda d:d['events'][1].update(defaultPrevented=False),
+                   lambda d:d['events'][0].update(key='End'),lambda d:d['after']['route'].update(node='other'),
+                   lambda d:d['after']['tree'].update(connected=False),lambda d:d['after']['root'].update(position='other'),
+                   lambda d:d['after']['target']['rect'].update(height=0),lambda d:d['after']['tree']['clientRect'].update(y=float('nan'))]
+        for mutate in mutations:
+            bad=copy.deepcopy(good);mutate(bad)
+            with self.assertRaises(RuntimeError): MODULE.check_method_key_trace(bad,'method','root','root','Home')
+
+    def test_actual_thirteen_key_orchestration_keeps_exact_gate_and_cleans_failed_input(self):
+        import copy
+        path=['root','literature','tasks','objectnav','route','method','child'];chain=path[:-1];test=self
+        before=dict(route=dict(tree='g',node='method'),originTrail=[],historyLength=15,expanded=dict(g=chain),window=dict(x=0,y=0),
+                    readerScroll=dict(top=0,left=0),treeScroll=dict(top=0,left=0),methodReading='true',focus='np-node-method',roving=['method'],siblings=[])
+        class Driver:
+            def __init__(self, old=False, fail=False):self.state=copy.deepcopy(before);self.old=old;self.fail=fail;self.live=False;self.keys=[];self.cleanups=0
+            def js(self, script,*args):
+                if script==MODULE.METHOD_NAVIGATION_STATE_JS:return copy.deepcopy(self.state)
+                if script==MODULE.METHOD_KEY_TRACE_START_JS:
+                    test.assertFalse(self.live);self.live=True;self.source,self.root,self.target,self.key=args
+                    return test.fixture(*args)
+                if script==MODULE.METHOD_KEY_TRACE_STOP_JS:
+                    test.assertTrue(self.live);self.live=False;self.cleanups+=1;return test.fixture(self.source,self.root,self.target,self.key)
+                raise AssertionError('unexpected script')
+            def selector(self,selector):return {MODULE.ELEMENT:'focused-node'}
+            def call(self,method,url,data):
+                self.keys.append(data['text'])
+                if self.fail:raise RuntimeError('native input failed')
+                if self.target=='child':self.state['treeScroll']['top']=145
+                elif self.target=='root' and self.state['treeScroll']['top']>0:self.state['treeScroll']['top']=12 if self.old else 0
+                self.state.update(focus='np-node-'+self.target,roving=[self.target])
+            def settle(self):pass
+        for old,fail in ((False,False),(True,False),(False,True)):
+            driver=Driver(old,fail);report={};saved=[]
+            with patch.object(MODULE,'method_visible_source_ids',return_value=path):
+                if old or fail:
+                    with self.assertRaisesRegex(RuntimeError,'exact tree scroll' if old else 'native input failed'):
+                        MODULE.method_navigation_checks(driver,report,lambda:saved.append(copy.deepcopy(report)),'1440x900',dict(position=dict(id='method',tree='g'),chain=chain),{})
+                else:MODULE.method_navigation_checks(driver,report,lambda:saved.append(copy.deepcopy(report)),'1440x900',dict(position=dict(id='method',tree='g'),chain=chain),{})
+            expected_keys=['\ue011']+['\ue015']*6+['\ue011']+['\ue015']*5
+            self.assertEqual(driver.keys,expected_keys[:1] if fail else expected_keys)
+            self.assertEqual(driver.cleanups,len(driver.keys));self.assertFalse(driver.live)
+            self.assertTrue(saved[-1]['methodNavigationChecks'][0]['steps'][-1]['trace']['cleanedUp'])
+            if not old and not fail:self.assertEqual(report['methodNavigationChecks'][0]['status'],'verified_native_keyboard')
+
+
 class ScrollRegionVisibilityChecks(unittest.TestCase):
     def test_closed_details_body_is_excluded_but_summary_and_open_offscreen_scroll_remain(self):
         script = r"""

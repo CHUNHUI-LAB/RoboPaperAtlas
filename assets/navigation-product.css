@@ -1010,7 +1010,8 @@ html:has(#navigation-product[data-load-state=ready]), body:has(#navigation-produ
 #navigation-product[data-method-reading=true] .np-tree-fixed-identity {flex:1 1 100%;}
 #navigation-product[data-method-reading=true] .np-pane-top h2 {white-space:normal;overflow:visible;text-overflow:clip;}
 #navigation-product[data-method-reading=true] .np-view-tools {margin-left:0;}
-#navigation-product[data-method-reading=true] .np-tree-scroll {padding:8px 10px;}
+/* Native Home retains the existing 8px pane padding + 4px first-item margin. */
+#navigation-product[data-method-reading=true] .np-tree-scroll {padding:8px 10px;scroll-padding-block-start:12px;}
 #navigation-product[data-method-reading=true] .np-tree {min-width:0;width:auto;height:auto;margin:0;cursor:default;}
 #navigation-product[data-method-reading=true] .np-tree ul {display:block;position:relative;width:auto;height:auto;max-width:100%;margin:0;padding:0;list-style:none;}
 #navigation-product[data-method-reading=true] .np-tree li {display:block;position:relative;width:auto;height:auto;max-width:100%;padding:0;list-style:none;}
