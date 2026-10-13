@@ -2628,6 +2628,22 @@ var a=NavigationProductApp,m=NavigationProductModel,tree=document.getElementById
 var refs=[host,tree,reader,document.getElementById('np-reader-object-title'),reader.querySelector('[data-mechanism-entity]'),...[...host.querySelectorAll('[role=treeitem]')].flatMap(e=>[e,e.querySelector(':scope > .np-node-row'),e.querySelector(':scope > .np-node-row > .np-node-label'),e.querySelector(':scope > .np-node-row > .np-node-kind')])],active=document.activeElement;
 if(!refs.every(n=>n&&n.isConnected)||!active||document.getElementById('navigation-product').dataset.methodReading!=='true')throw Error('Method child probe lacks its real method DOM');
 var p={refs:refs,active:active,originalFocus:{id:active.id||null,tag:active.tagName,tabIndex:active.tabIndex},hover:[...document.querySelectorAll(':hover')],events:[],overflow:0,lastScroll:performance.now(),lastFocus:performance.now(),started:performance.now()};
+// A Tab search limit is a baseline budget, not a live UI-state counter.
+// Keep every workspace candidate object (also hidden/-1) separately bound.
+p.workspace=document.getElementById('np-workspace');if(!p.workspace||!p.workspace.contains(host)||!p.workspace.contains(reader))throw Error('Method child workspace is unavailable');
+p.candidateSelector='a[href],button,input,select,textarea,summary,[tabindex]';p.candidateTokens=new WeakMap();p.nextCandidateToken=0;
+p.token=function(n){if(!p.candidateTokens.has(n))p.candidateTokens.set(n,'method-focus-'+(++p.nextCandidateToken));return p.candidateTokens.get(n);};
+p.describe=function(n){var ancestors=[],parent=n;while(parent){var css=getComputedStyle(parent);ancestors.push({token:p.token(parent),hidden:!!parent.hidden,inert:!!parent.inert,display:css.display,visibility:css.visibility,detailsOpen:parent.tagName==='DETAILS'?parent.open:null});if(parent===p.workspace)break;parent=parent.parentElement;}
+ return {token:p.token(n),id:n.id||null,tag:n.tagName,role:n.getAttribute('role'),type:n.getAttribute('type'),href:n.getAttribute('href'),name:n.getAttribute('name'),title:n.getAttribute('title'),ariaLabel:n.getAttribute('aria-label'),ariaControls:n.getAttribute('aria-controls'),
+  text:n.getAttribute('role')==='treeitem'?null:n.textContent,value:n.matches('input,select,textarea')?n.value:null,checked:n.tagName==='INPUT'?n.checked:null,attributes:[...n.attributes].map(a=>({name:a.name,value:a.value})),sourcePosition:p.sourceItems?.includes(n)?n.dataset.position:null,tabIndex:n.tabIndex,disabled:!!n.disabled,hidden:!!n.hidden,inert:!!n.inert,layout:n.getClientRects().length>0,ancestors:ancestors};};
+p.inventory=function(){var all=[...document.querySelectorAll(p.candidateSelector)],eligible=all.filter(n=>n.tabIndex>=0&&!n.disabled&&n.getClientRects().length);return {scopeRoot:p.token(p.workspace),candidateCount:all.length,eligibleCount:eligible.length,eligible:eligible.map(n=>Object.assign(p.describe(n),{inWorkspace:p.workspace.contains(n)}))};};
+p.bindCandidates=function(){if(document.getElementById('np-workspace')!==p.workspace)throw Error('Method child workspace was replaced before baseline');p.scopeCandidates=[...p.workspace.querySelectorAll(p.candidateSelector)];p.sourceItems=[...host.querySelectorAll('[role=treeitem]')];p.latestCandidates=p.inventory();p.tabBound=null;};
+p.scopeState=function(){var now=[...p.workspace.querySelectorAll(p.candidateSelector)],rootStyle=getComputedStyle(p.workspace);
+ return {same:document.getElementById('np-workspace')===p.workspace&&p.workspace.isConnected&&now.length===p.scopeCandidates.length&&now.every((n,i)=>n===p.scopeCandidates[i]&&n.isConnected),
+  root:{token:p.token(p.workspace),id:p.workspace.id,tag:p.workspace.tagName,hidden:!!p.workspace.hidden,inert:!!p.workspace.inert,display:rootStyle.display,visibility:rootStyle.visibility},
+  items:now.map(n=>{var item=p.describe(n);return p.sourceItems.includes(n)?Object.assign(item,{tabIndex:'native-tree-roving',attributes:item.attributes.map(a=>a.name==='tabindex'?{name:a.name,value:'native-tree-roving'}:a)}):item;}),
+  treeTabIndexes:p.sourceItems.map(n=>({position:n.dataset.position,tabIndex:n.tabIndex}))};};
+p.bindCandidates();
 p.listener=function(e){if(e.type==='scroll')p.lastScroll=performance.now();if(e.type==='focusin')p.lastFocus=performance.now();if(p.events.length>=24){p.overflow=Math.min(25,p.overflow+1);return;}p.events.push({type:e.type,key:e.key||null,trusted:e.isTrusted,target:e.target.id||null,originalTarget:e.target===p.active,readerTarget:e.target===reader});};
 p.types=['keydown','pointerdown','pointerup','click','focusin','scroll'];try{p.types.forEach(t=>document.addEventListener(t,p.listener,true));window.__npMethodChildProbe=p;}catch(e){p.types.forEach(t=>document.removeEventListener(t,p.listener,true));delete window.__npMethodChildProbe;throw e;}
 return true;
@@ -2638,18 +2654,21 @@ if(!p)throw Error('Method child state lacks probe');
 function rect(e){var r=e.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};}
 function scroll(e){var r=rect(e);return {top:e.scrollTop,left:e.scrollLeft,maxTop:Math.max(0,e.scrollHeight-e.clientHeight),maxLeft:Math.max(0,e.scrollWidth-e.clientWidth),client:{x:r.x+e.clientLeft,y:r.y+e.clientTop,width:e.clientWidth,height:e.clientHeight}};}
 var active=document.activeElement,current=[host,tree,reader,document.getElementById('np-reader-object-title'),reader.querySelector('[data-mechanism-entity]'),...[...host.querySelectorAll('[role=treeitem]')].flatMap(e=>[e,e.querySelector(':scope > .np-node-row'),e.querySelector(':scope > .np-node-row > .np-node-label'),e.querySelector(':scope > .np-node-row > .np-node-kind')])];
+// Freeze the budget and its matching inventory in the first baseline STATE,
+// so an external change between baseline setup and this read is not misbound.
+p.latestCandidates=p.inventory();if(p.tabBound===null)p.tabBound=Math.min(256,p.latestCandidates.eligibleCount+1);
 return {route:s.route,runtime:s,history:history.state,historyKey:m.KEY,contextKey:key,historyLength:history.length,
  viewport:{x:0,y:0,width:innerWidth,height:innerHeight,dpr:devicePixelRatio},window:{x:scrollX,y:scrollY},tree:scroll(tree),reader:scroll(reader),
  active:{id:active.id||null,tag:active.tagName,position:active.closest('[data-position]')?.dataset.position||null,tabIndex:active.tabIndex,original:active===p.active},
  roving:[...host.querySelectorAll('[role=treeitem][tabindex="0"]')].map(e=>e.dataset.position),
  hoverSame:(()=>{var h=[...document.querySelectorAll(':hover')];return h.length===p.hover.length&&h.every((n,i)=>n===p.hover[i]);})(),
  domSame:current.length===p.refs.length&&current.every((n,i)=>n===p.refs[i]&&n.isConnected)&&p.active.isConnected,
- originalFocus:p.originalFocus,
- tabBound:Math.min(256,[...document.querySelectorAll('a[href],button,input,select,textarea,summary,[tabindex]')].filter(n=>n.tabIndex>=0&&!n.disabled&&n.getClientRects().length).length+1)};
+ originalFocus:p.originalFocus,scopeCandidates:p.scopeState(),tabBound:p.tabBound};
 """
 METHOD_CHILD_ACTION_JS = r"""
 var p=window.__npMethodChildProbe;if(!p)throw Error('Method child action lacks probe');
-if(arguments[0]==='baseline'){p.active=document.activeElement;p.originalFocus={id:p.active.id||null,tag:p.active.tagName,tabIndex:p.active.tabIndex};p.hover=[...document.querySelectorAll(':hover')];return true;}
+if(arguments[0]==='baseline'){p.active=document.activeElement;p.originalFocus={id:p.active.id||null,tag:p.active.tagName,tabIndex:p.active.tabIndex};p.hover=[...document.querySelectorAll(':hover')];p.bindCandidates();return true;}
+if(arguments[0]==='candidates')return p.latestCandidates;
 if(arguments[0]==='reset'){p.events=[];p.overflow=0;return true;}
 return {events:p.events,overflow:p.overflow};
 """
@@ -2709,12 +2728,22 @@ def method_child_baseline_mode(before):
 def check_method_child_state(before, after, *, exact=False):
     if after.get('domSame') is not True or len(after.get('roving', [])) != 1:
         raise RuntimeError('Method child audit replaced its original DOM or one roving scope')
-    for key in ('route', 'viewport', 'window', 'historyLength', 'contextKey', 'historyKey', 'originalFocus'):
+    for key in ('route', 'viewport', 'window', 'historyLength', 'contextKey', 'historyKey', 'originalFocus', 'tabBound'):
         if before[key] != after[key]:
             raise RuntimeError('Method child audit changed its bound source/viewport/window: ' + key)
     for key in ('route', 'originTrail', 'revision'):
         if before['runtime'].get(key) != after['runtime'].get(key):
             raise RuntimeError('Method child keyboard audit navigated or rewrote source history: ' + key)
+    scope=after.get('scopeCandidates') or {}; original=before.get('scopeCandidates') or {}
+    if (original.get('same') is not True or scope.get('same') is not True or not scope.get('items') or
+            any(scope.get(k)!=original.get(k) for k in ('root','items'))):
+        raise RuntimeError('Method child audit changed its original workspace focus candidates')
+    tree_tabs=scope.get('treeTabIndexes',[])
+    if ([row.get('position') for row in tree_tabs]!=[row.get('position') for row in original.get('treeTabIndexes',[])] or
+            any(type(row.get('tabIndex')) is not int or row['tabIndex'] not in (-1,0) for row in tree_tabs+original.get('treeTabIndexes',[])) or
+            [row.get('position') for row in tree_tabs if row.get('tabIndex')==0]!=after['roving'] or
+            [row.get('position') for row in original.get('treeTabIndexes',[]) if row.get('tabIndex')==0]!=before['roving']):
+        raise RuntimeError('Method child audit changed its source-bound tree roving candidates')
     context = before['contextKey']
     for key in ('expandedByTree', 'selectedByTree'):
         if before['runtime']['contexts'][context][key] != after['runtime']['contexts'][context][key]:
@@ -2724,9 +2753,35 @@ def check_method_child_state(before, after, *, exact=False):
             if before[region][key]!=after[region][key]:
                 raise RuntimeError('Method child audit changed original scroll geometry: '+region+'/'+key)
     if exact:
-        for key in ('runtime', 'history', 'tree', 'reader', 'active', 'roving', 'hoverSame'):
+        for key in ('runtime', 'history', 'tree', 'reader', 'active', 'roving', 'hoverSame', 'scopeCandidates'):
             if before[key] != after[key]:
                 raise RuntimeError('Method child audit did not restore the exact original state: ' + key)
+
+
+def check_method_child_candidates(state, inventory):
+    """Keep dynamic external diagnostics separate from the frozen input budget."""
+    scope=state.get('scopeCandidates') or {}; items=scope.get('items',[])
+    if not isinstance(inventory,dict):raise RuntimeError('Method child audit lacks its actual focus candidate inventory')
+    eligible=inventory.get('eligible',[])
+    if (inventory.get('scopeRoot')!=scope.get('root',{}).get('token') or
+            type(inventory.get('candidateCount')) is not int or type(inventory.get('eligibleCount')) is not int or
+            inventory['candidateCount']<inventory['eligibleCount'] or inventory['eligibleCount']!=len(eligible) or
+            len({row.get('token') for row in eligible})!=len(eligible)):
+        raise RuntimeError('Method child focus candidate diagnostics lost their actual identities or counts')
+    indexes={row['position']:row['tabIndex'] for row in scope.get('treeTabIndexes',[])}
+    actual=[]
+    for item in items:
+        row=dict(item);row['tabIndex']=indexes.get(row['sourcePosition']) if row.get('sourcePosition') else row['tabIndex']
+        if type(row['tabIndex']) is not int:
+            raise RuntimeError('Method child candidate has no exact source-bound tabindex')
+        if row.get('sourcePosition') and 'attributes' in row:
+            row['attributes']=[dict(a,value=str(row['tabIndex'])) if a['name']=='tabindex' else a for a in row['attributes']]
+        if row['tabIndex']>=0 and not row['disabled'] and row['layout']:
+            actual.append(dict(row,inWorkspace=True))
+    if ([row for row in eligible if row.get('inWorkspace') is True]!=actual or
+            any(type(row.get('inWorkspace')) is not bool or not row.get('token') or
+                type(row.get('tabIndex')) is not int or row['tabIndex']<0 or row.get('disabled') is not False or row.get('layout') is not True for row in eligible)):
+        raise RuntimeError('Method child scope candidates were omitted or mislabeled as external')
 
 
 def check_method_child_audit(data, expected, source_positions):
@@ -2745,6 +2800,12 @@ def check_method_child_audit(data, expected, source_positions):
         raise RuntimeError('Method child audit omitted, duplicated or invented a rendered source child')
     if audit['before'].get('domSame') is not True or audit['before']['active'].get('original') is not True or audit['before'].get('hoverSame') is not True:
         raise RuntimeError('Method child audit did not bind its settled original DOM focus and hover')
+    check_method_child_candidates(audit['before'],audit.get('tabCandidatesBefore'))
+    check_method_child_candidates(audit['after'],audit.get('tabCandidatesAfter'))
+    if audit['before']['tabBound']!=min(256,audit['tabCandidatesBefore']['eligibleCount']+1):
+        raise RuntimeError('Method child audit changed its original bounded native Tab budget')
+    if [row['position'] for row in audit['before']['scopeCandidates']['treeTabIndexes']]!=path:
+        raise RuntimeError('Method child focus candidates are not the complete source-bound method tree')
     check_method_child_state(audit['before'], audit['after'], exact=True)
     if (audit['before']['runtime']['contexts'][audit['before']['contextKey']]['expandedByTree']!=data['expanded'] or
             audit['before']['route'] != data['route'] or audit['before']['viewport'] != dict(data['viewport'], dpr=1)):
@@ -2770,6 +2831,11 @@ def check_method_child_audit(data, expected, source_positions):
     for action in actions:
         if action.get('kind') not in ('tree-key','tab','reverse-tab','pointer-move-reader','pointer-return-reader','wheel-tree','wheel-reader','restore-original-hover') or action.get('before')!=prior:
             raise RuntimeError('Method child actions are unsupported or omit an intervening state')
+        if action['kind']!='tree-key' and (action['before']['roving']!=action['after']['roving'] or
+                action['before']['scopeCandidates']['treeTabIndexes']!=action['after']['scopeCandidates']['treeTabIndexes']):
+            raise RuntimeError('Non-tree-key method action changed its original tree roving candidates')
+        check_method_child_candidates(action['before'],action.get('tabCandidatesBefore'))
+        check_method_child_candidates(action['after'],action.get('tabCandidatesAfter'))
         prior=action['after']
         events=action.get('events',{}); rows=events.get('events',[])
         if events.get('overflow')!=0 or len(rows)>24 or any(e.get('trusted') is not True for e in rows):
@@ -2826,11 +2892,11 @@ def method_child_readability_checks(driver, report, save, name, data, expected, 
         if result.get('ok') is not True: raise RuntimeError('Method child native input did not naturally settle')
     def native(kind, actions):
         before=state(); driver.js(METHOD_CHILD_ACTION_JS,'reset')
-        item=dict(kind=kind,before=before); record['actions'].append(item); checkpoint()
+        item=dict(kind=kind,before=before,tabCandidatesBefore=driver.js(METHOD_CHILD_ACTION_JS,'candidates')); record['actions'].append(item); checkpoint()
         try:
             driver.call('POST','/actions',{'actions':actions}); idle()
         finally:
-            item['events']=driver.js(METHOD_CHILD_ACTION_JS,'read'); item['after']=state(); checkpoint()
+            item['events']=driver.js(METHOD_CHILD_ACTION_JS,'read'); item['after']=state(); item['tabCandidatesAfter']=driver.js(METHOD_CHILD_ACTION_JS,'candidates'); checkpoint()
         check_method_child_state(record['before'],item['after'])
         if item['events']['overflow'] or any(e['trusted'] is not True for e in item['events']['events']):
             raise RuntimeError('Method child native input lacks bounded trusted events')
@@ -2915,7 +2981,7 @@ def method_child_readability_checks(driver, report, save, name, data, expected, 
     try:
         idle();driver.js(METHOD_CHILD_ACTION_JS,'baseline');data.clear();data.update(driver.js(METHOD_READING_SNAPSHOT_JS));record['binding']=method_child_binding(name,data,expected)
         original_snapshot=copy.deepcopy(data)
-        before=record['before']=state();record['baselineMode']=method_child_baseline_mode(before)
+        before=record['before']=state();record['tabCandidatesBefore']=driver.js(METHOD_CHILD_ACTION_JS,'candidates');record['baselineMode']=method_child_baseline_mode(before)
         if before['domSame'] is not True or before['active']['original'] is not True or before['hoverSame'] is not True or len(before['roving'])!=1:raise RuntimeError('Method child baseline DOM or roving focus is invalid')
         path=method_visible_source_ids(expected,source_positions,data['expanded'][expected['position']['tree']])
         if not path or len(path)>256:raise RuntimeError('Method child traversal is not within its source bound')
@@ -2946,7 +3012,7 @@ def method_child_readability_checks(driver, report, save, name, data, expected, 
             idle()
         record['afterSnapshot']=driver.js(METHOD_READING_SNAPSHOT_JS)
         if record['afterSnapshot']!=original_snapshot:raise RuntimeError('Native method child audit changed original source text, geometry, paint or reader state')
-        record['after']=state();check_method_child_state(before,record['after'],exact=True)
+        record['after']=state();record['tabCandidatesAfter']=driver.js(METHOD_CHILD_ACTION_JS,'candidates');check_method_child_state(before,record['after'],exact=True)
         record['status']='inputs_returned'
     except Exception as exc:
         record['status']='failed';record['error']=str(exc)[:2000]

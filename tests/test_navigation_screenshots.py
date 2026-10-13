@@ -3218,6 +3218,22 @@ d.querySelector('.np-return-previous').click();await ready(()=>a.getState().rout
         self.assertEqual(result.returncode, 0, result.stderr)
 
 
+def method_candidate_scope_fixture(ids, roving, indexes=None):
+    """Synthetic focus metadata for receipt/transport tests, not browser evidence."""
+    root=dict(token='fixture-workspace',id='np-workspace',tag='SECTION',hidden=False,inert=False,display='block',visibility='visible')
+    items=[dict(token='fixture-'+pid,id='np-node-'+pid,tag='LI',sourcePosition=pid,tabIndex='native-tree-roving',disabled=False,hidden=False,layout=True) for pid in ids]
+    items += [dict(token='fixture-control-'+str(i),id='control-'+str(i),tag='BUTTON',sourcePosition=None,tabIndex=0,disabled=False,hidden=False,layout=True) for i in range(6)]
+    return dict(same=True,root=root,items=items,treeTabIndexes=[dict(position=pid,tabIndex=indexes[pid] if indexes else 0 if pid==roving else -1) for pid in ids])
+
+
+def method_candidate_inventory_fixture(state):
+    scope=state['scopeCandidates'];indexes={r['position']:r['tabIndex'] for r in scope['treeTabIndexes']};eligible=[]
+    for item in scope['items']:
+        row=dict(item);row['tabIndex']=indexes[row['sourcePosition']] if row['sourcePosition'] else row['tabIndex']
+        if row['tabIndex']>=0 and not row['disabled'] and row['layout']:eligible.append(dict(row,inWorkspace=True))
+    return dict(scopeRoot=scope['root']['token'],candidateCount=len(scope['items']),eligibleCount=len(eligible),eligible=eligible)
+
+
 def attach_method_child_fixture(data, expected):
     """Independent synthetic staged evidence; never a claim about Chrome pixels."""
     import copy
@@ -3232,10 +3248,12 @@ def attach_method_child_fixture(data, expected):
                 tree=dict(top=0,left=0,maxTop=145,maxLeft=0,client=copy.deepcopy(data['tree'])),
                 reader=dict(top=0,left=0,maxTop=200,maxLeft=0,client=copy.deepcopy(data['reader'])),
                 active=dict(id='np-node-'+selected,tag='LI',position=selected,tabIndex=0,original=True),
-                roving=[selected],domSame=True,hoverSame=True,originalFocus=dict(id='np-node-'+selected,tag='LI',tabIndex=0),tabBound=8)
+                roving=[selected],domSame=True,hoverSame=True,originalFocus=dict(id='np-node-'+selected,tag='LI',tabIndex=0),tabBound=8,
+                scopeCandidates=method_candidate_scope_fixture([r['id'] for r in data['rows']],selected))
     children=[r['id'] for r in data['rows'] if r['id'] in expected['children']]
     audit=dict(binding=MODULE.method_child_binding(data['captureName'],data,expected),status='verified_native_children',cleanedUp=True,
                before=before,after=copy.deepcopy(before),baselineMode='coherent',required=children,proofs=[],actions=[],keys=[])
+    audit['tabCandidatesBefore']=method_candidate_inventory_fixture(before);audit['tabCandidatesAfter']=method_candidate_inventory_fixture(audit['after'])
     audit['settles']=[dict(ok=True,elapsed=180,quietMs=160)]
     audit['afterSnapshot']=copy.deepcopy({k:v for k,v in data.items() if k not in ('captureName','childReadability')})
     current=copy.deepcopy(before)
@@ -3243,6 +3261,7 @@ def attach_method_child_fixture(data, expected):
         nonlocal current
         state=copy.deepcopy(current);state['active']=dict(id='np-node-'+pid,tag='LI',position=pid,tabIndex=0,original=pid==selected);state['roving']=[pid]
         state['runtime']['contexts'][key]['focusTarget']=pid
+        for row in state['scopeCandidates']['treeTabIndexes']:row['tabIndex']=0 if row['position']==pid else -1
         trace=MethodKeyTraceChecks.fixture(selected,expected['chain'][0],pid,key_name,top=0)
         for frame in [trace['before'],trace['after'],*(e['snapshot'] for e in trace['events'])]:
             frame['route']=copy.deepcopy(data['route']);frame['tree']['rect']=copy.deepcopy(data['tree']);frame['tree']['clientRect']=copy.deepcopy(data['tree'])
@@ -3250,7 +3269,7 @@ def attach_method_child_fixture(data, expected):
         for event in trace['events']:event['eventTarget']=current['active']['id']
         index=len(audit['actions'])
         audit['keys'].append(dict(input='\ue011' if key_name=='Home' else '\ue015',target=pid,trace=copy.deepcopy(trace),actionIndex=index))
-        audit['actions'].append(dict(kind='tree-key',before=copy.deepcopy(current),after=copy.deepcopy(state),events=dict(overflow=0,events=[dict(type='keydown',key=key_name,trusted=True,target=current['active']['id'])])))
+        audit['actions'].append(dict(kind='tree-key',before=copy.deepcopy(current),after=copy.deepcopy(state),tabCandidatesBefore=method_candidate_inventory_fixture(current),tabCandidatesAfter=method_candidate_inventory_fixture(state),events=dict(overflow=0,events=[dict(type='keydown',key=key_name,trusted=True,target=current['active']['id'])])))
         current=state
         return state,trace
     for pid in children:
@@ -6542,7 +6561,8 @@ class _MethodChildNativeDriver:
                     viewport=dict(self.base['viewport'],dpr=1),window=dict(x=0,y=0),tree=self.copy(self.tree),reader=self.copy(self.reader),
                     active=active,roving=[self.roving],hoverSame=self.hover is self.original_hover,
                     domSame=len(self.dom_refs)==len(self.original_dom_refs) and all(a is b for a,b in zip(self.dom_refs,self.original_dom_refs)),
-                    originalFocus=self.copy(self.original_focus),tabBound=8)
+                    originalFocus=self.copy(self.original_focus),tabBound=8,
+                    scopeCandidates=method_candidate_scope_fixture(self.path,self.roving,{pid:self.nodes[pid]['tabIndex'] for pid in self.path}))
 
     def snapshot_reading(self):
         snapshot=self.copy(self.base)
@@ -6589,6 +6609,7 @@ class _MethodChildNativeDriver:
                 self.original_active=self.active;self.original_hover=self.hover
                 self.original_focus={k:self.active[k] for k in ('id','tag','tabIndex')}
                 return True
+            if args==('candidates',):return method_candidate_inventory_fixture(self.snapshot_state())
             if args==('reset',):self.events=[];self.overflow=0;return True
             if args==('read',):return dict(events=self.copy(self.events),overflow=self.overflow)
             raise AssertionError('Unexpected event-recorder command')
@@ -6808,7 +6829,7 @@ class MethodChildObserverContractChecks(unittest.TestCase):
     def probe_dom(self, replacement=None, events=0, roving=False, rebind=False):
         code=r"""
 const input=JSON.parse(require('fs').readFileSync(0,'utf8')),{JSDOM}=require('jsdom');
-const dom=new JSDOM('<main id="navigation-product" data-method-reading="true"><div id="np-reader-object-title">method</div><div id="np-tree-scroll"><ul id="np-tree"><li id="np-node-method" role="treeitem" tabindex="0" data-position="method"><div class="np-node-row"><button class="np-node-label">method</button><span class="np-node-kind">具体方法</span></div></li><li id="np-node-child" role="treeitem" tabindex="-1" data-position="child"><div class="np-node-row"><button class="np-node-label">full scientific child</button><span class="np-node-kind">技术改进</span></div></li></ul></div><div id="np-detail-scroll" tabindex="-1"><section data-mechanism-entity="method">full original mechanism</section></div></main>',{runScripts:'outside-only'}),w=dom.window,d=w.document;
+const dom=new JSDOM('<main id="navigation-product" data-method-reading="true"><section id="np-workspace"><div id="np-reader-object-title">method</div><div id="np-tree-scroll"><ul id="np-tree"><li id="np-node-method" role="treeitem" tabindex="0" data-position="method"><div class="np-node-row"><button class="np-node-label">method</button><span class="np-node-kind">具体方法</span></div></li><li id="np-node-child" role="treeitem" tabindex="-1" data-position="child"><div class="np-node-row"><button class="np-node-label">full scientific child</button><span class="np-node-kind">技术改进</span></div></li></ul></div><div id="np-detail-scroll" tabindex="-1"><section data-mechanism-entity="method">full original mechanism</section></div></section></main>',{runScripts:'outside-only'}),w=dom.window,d=w.document;
 const s={route:{tree:'g',node:'method'},contexts:{k:{focusTarget:'method',expandedByTree:{g:['method']},selectedByTree:{g:'method'}}}},h={nav:s};
 w.NavigationProductApp={getState:()=>JSON.parse(JSON.stringify(s))};w.NavigationProductModel={KEY:'nav',contextKey:()=> 'k'};w.history.replaceState(h,'');
 for(const n of d.querySelectorAll('*')){n.getBoundingClientRect=()=>({x:17,y:382,width:398,height:456});for(const [k,v] of Object.entries({clientWidth:398,clientHeight:456,scrollWidth:398,scrollHeight:601}))Object.defineProperty(n,k,{value:v,configurable:true});}
@@ -6880,3 +6901,354 @@ process.stdout.write(JSON.stringify({answer,calls,now,reads}));
         for case in ('churn','hangFrames','slowFrames'):
             with self.subTest(case=case):
                 data=self.idle(**{case:True});self.assertFalse(data['answer']['ok']);self.assertEqual(data['calls'],1);self.assertEqual(data['answer']['elapsed'],2000)
+
+
+class MethodChildCandidateReceiptChecks(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        MethodReadingCaptureChecks.setUpClass()
+
+    def fixture(self):
+        import copy
+        data,expected=MethodChildReadabilityChecks().fixture()
+        audit=data['childReadability']
+        # Match the observed 171 baseline / 175 later global search counts.
+        outside=[dict(token='outside-'+str(i),id='outside-'+str(i),tag='BUTTON',sourcePosition=None,
+                      tabIndex=0,disabled=False,hidden=False,layout=True,inWorkspace=False) for i in range(167)]
+        snapshots=[audit['before'],audit['after'],*(a[k] for a in audit['actions'] for k in ('before','after')),*(p['state'] for p in audit['proofs'])]
+        for state in snapshots:state['tabBound']=171
+        inventories=[audit['tabCandidatesBefore'],audit['tabCandidatesAfter'],*(a[k] for a in audit['actions'] for k in ('tabCandidatesBefore','tabCandidatesAfter'))]
+        for i,inventory in enumerate(inventories):
+            additions=outside[:163] if i==0 else outside
+            inventory['eligible']+=copy.deepcopy(additions)
+            inventory['candidateCount']+=len(additions);inventory['eligibleCount']+=len(additions)
+        self.assertEqual(audit['tabCandidatesBefore']['eligibleCount']+1,171)
+        self.assertEqual(audit['actions'][0]['tabCandidatesBefore']['eligibleCount']+1,175)
+        return data,expected
+
+    def test_external_171_to_175_inventory_is_recorded_without_changing_baseline_budget(self):
+        data,expected=self.fixture();audit=data['childReadability']
+        MODULE.check_method_reading(data,expected,MethodReadingCaptureChecks.source_positions)
+        self.assertEqual(audit['before'],audit['actions'][0]['before'])
+        self.assertEqual(audit['before'],audit['after'])
+        self.assertNotEqual(audit['tabCandidatesBefore'],audit['tabCandidatesAfter'])
+
+    def test_dynamic_budget_or_actual_intervening_state_drift_remains_rejected(self):
+        import copy
+        data,expected=self.fixture()
+        for mutation in ('budget','runtime','history','tree','reader','scope'):
+            bad=copy.deepcopy(data);frame=bad['childReadability']['actions'][0]['before']
+            if mutation=='budget':frame['tabBound']=175
+            elif mutation=='runtime':frame['runtime']['revision']+=1
+            elif mutation=='history':frame['historyLength']+=1
+            elif mutation in ('tree','reader'):frame[mutation]['top']+=12
+            else:frame['scopeCandidates']['items'][0]['hidden']=True
+            with self.subTest(mutation=mutation),self.assertRaises(RuntimeError):
+                MODULE.check_method_child_audit(bad,expected,MethodReadingCaptureChecks.source_positions)
+
+    def test_tab_wheel_and_pointer_cannot_borrow_the_traced_tree_roving_exception(self):
+        import copy
+        data,expected=self.fixture()
+        for kind in ('tab','reverse-tab','wheel-tree','wheel-reader','pointer-move-reader','pointer-return-reader','restore-original-hover'):
+            bad=copy.deepcopy(data);audit=bad['childReadability'];action=audit['actions'][0]
+            action['kind']=kind
+            audit['keys']=[row for row in audit['keys'] if row['actionIndex']!=0]
+            with self.subTest(kind=kind),self.assertRaisesRegex(RuntimeError,'Non-tree-key method action changed'):
+                MODULE.check_method_child_audit(bad,expected,MethodReadingCaptureChecks.source_positions)
+
+    def test_scope_candidates_cannot_be_omitted_or_mislabeled_as_external(self):
+        import copy
+        data,expected=self.fixture()
+        for mutation in ('omit','external','invent-scope','count','duplicate','missing','budget','wrong-source-tree'):
+            bad=copy.deepcopy(data);audit=bad['childReadability'];inventory=audit['actions'][0]['tabCandidatesBefore']
+            if mutation=='omit':inventory['eligible'].pop(0);inventory['eligibleCount']-=1
+            elif mutation=='external':inventory['eligible'][0]['inWorkspace']=False
+            elif mutation=='invent-scope':inventory['eligible'][-1]['inWorkspace']=True
+            elif mutation=='count':inventory['eligibleCount']-=1
+            elif mutation=='duplicate':inventory['eligible'][-1]['token']=inventory['eligible'][0]['token']
+            elif mutation=='missing':del audit['tabCandidatesAfter']
+            elif mutation=='budget':audit['before']['tabBound']=256
+            else:audit['before']['scopeCandidates']['treeTabIndexes'][0]['position']='forged-source'
+            with self.subTest(mutation=mutation),self.assertRaises(RuntimeError):
+                MODULE.check_method_child_audit(bad,expected,MethodReadingCaptureChecks.source_positions)
+
+class MethodChildFrozenTabBudgetDOMChecks(unittest.TestCase):
+    """Execute production START/STATE/ACTION/STOP against real JSDOM nodes.
+
+    Geometry is explicitly stubbed because JSDOM has no layout. This tests actual
+    selector membership, DOM references, order, properties and observer output;
+    it is not native-keyboard, paint, hit-testing, or Chrome acceptance evidence.
+    """
+    @classmethod
+    def setUpClass(cls):
+        cls.cases = [
+            'unchanged', 'external-four', 'external-four-clones', 'before-baseline-four', 'baseline-gap-four',
+            'internal-four', 'internal-remove-four', 'internal-clone-four', 'internal-reorder-four',
+            'add-hidden', 'add-negative', 'remove-hidden', 'clone-hidden', 'remove-negative', 'clone-negative',
+            'disabled', 'hidden', 'display-none', 'visibility-hidden', 'ancestor-hidden', 'ancestor-display-none',
+            'details-open', 'empty-details-open', 'href', 'role', 'type', 'name', 'aria-label', 'aria-controls',
+            'raw-data-action', 'control-text', 'input-value', 'input-checked',
+            'tab-control-negative', 'label-positive', 'reader-fake-tree-positive', 'legal-roving', 'roving-positive',
+            'roving-negative-two', 'roving-two-zero', 'roving-no-zero', 'workspace-clone', 'workspace-hidden',
+        ]
+        code = r"""
+const input=JSON.parse(require('fs').readFileSync(0,'utf8')),{JSDOM}=require('jsdom');
+const clone=x=>JSON.parse(JSON.stringify(x));
+const selector='a[href],button,input,select,textarea,summary,[tabindex]';
+function runCase(name){
+ const dom=new JSDOM(`<!doctype html><html><body>
+ <main id="navigation-product" data-method-reading="true">
+  <section id="np-workspace">
+   <div id="np-reader-object-title">Original method title</div>
+   <div id="np-tree-scroll" tabindex="0"><ul id="np-tree">
+    <li id="np-node-method" role="treeitem" tabindex="0" data-position="method"><div class="np-node-row"><button id="method-label" class="np-node-label" tabindex="-1">method</button><span class="np-node-kind">具体方法</span></div></li>
+    <li id="np-node-child" role="treeitem" tabindex="-1" data-position="child"><div class="np-node-row"><button id="child-label" class="np-node-label" tabindex="-1">full scientific child</button><span class="np-node-kind">技术改进</span></div></li>
+   </ul></div>
+   <div id="np-detail-scroll" tabindex="-1">
+    <section data-mechanism-entity="method">Original scientific mechanism</section>
+    <div id="ordinary-controls"><button id="scope-a" type="button">A</button><button id="scope-b" type="button">B</button><button id="scope-c" type="button">C</button><button id="scope-d" type="button">D</button></div>
+    <a id="scope-link" href="/original">Original source</a>
+    <input id="scope-input" name="original-name" aria-label="Original label" aria-controls="original-target">
+    <select id="scope-select"><option>Original choice</option></select><textarea id="scope-textarea"></textarea>
+    <button id="scope-hidden" hidden>Hidden original control</button>
+    <button id="scope-negative" tabindex="-1">Non-tabstop original control</button>
+    <button id="scope-disabled" disabled>Disabled original control</button>
+    <div id="ancestor-wrapper"><button id="ancestor-control">Ancestor-sensitive control</button></div>
+    <details id="scope-details"><summary id="scope-summary">Original closed disclosure</summary><button id="details-child">Closed disclosure child</button></details>
+    <details id="empty-details"><summary id="empty-summary">Empty disclosure</summary><p>No interactive descendants</p></details>
+    <button id="reader-fake-tree" role="treeitem" data-position="reader-decoy" tabindex="-1">Outside scientific tree</button>
+   </div>
+  </section>
+ </main><footer id="external-controls"></footer></body></html>`,{runScripts:'outside-only',url:'https://example.org/navigation/'});
+ const w=dom.window,d=w.document,workspace=d.getElementById('np-workspace'),method=d.getElementById('np-node-method'),child=d.getElementById('np-node-child');
+ // Cache actual JSDOM computed styles within an immutable fixture phase.
+ // Each deliberate mutation phase invalidates this cache before observation.
+ const nativeStyle=w.getComputedStyle.bind(w);let styles=new WeakMap();
+ w.getComputedStyle=n=>{if(!styles.has(n))styles.set(n,nativeStyle(n));return styles.get(n);};
+ // A browser's layout is intentionally not asserted. Supply deterministic
+ // geometry while deriving hidden/details/display eligibility from real DOM.
+ w.HTMLElement.prototype.getBoundingClientRect=function(){return {x:17,y:382,width:398,height:456,left:17,right:415,top:382,bottom:838};};
+ w.HTMLElement.prototype.getClientRects=function(){
+  for(let n=this;n;n=n.parentElement){
+   if(n.hidden||w.getComputedStyle(n).display==='none')return [];
+   if(n.tagName==='DETAILS'&&!n.open){const summary=[...n.children].find(c=>c.tagName==='SUMMARY');if(this!==n&&this!==summary&&!summary?.contains(this))return [];}
+  }
+  return [this.getBoundingClientRect()];
+ };
+ for(const [key,value] of Object.entries({clientWidth:398,clientHeight:456,scrollWidth:398,scrollHeight:601}))Object.defineProperty(w.HTMLElement.prototype,key,{get(){return value;},configurable:true});
+ const eligible=()=>[...d.querySelectorAll(selector)].filter(n=>n.tabIndex>=0&&!n.disabled&&n.getClientRects().length);
+ const footer=d.getElementById('external-controls');
+ for(let i=eligible().length;i<170;i++){const b=d.createElement('button');b.id='outside-base-'+i;b.textContent='Existing outside control '+i;footer.appendChild(b);}
+ if(eligible().length!==170)throw Error('Fixture baseline must have exactly170 actual eligible DOM candidates');
+ const s={route:{nav:'1',tree:'g',node:'method',scope:'scope:all',paper:'p',version:'v',claim:null,bench:null,protocol:null,mode:'tree',template:null},
+  revision:3,originTrail:[],contexts:{k:{focusTarget:'method',expandedByTree:{g:['method']},selectedByTree:{g:'method'},treeScrollByTree:{g:0},treeScrollLeftByTree:{g:0},detailScrollByTree:{g:0},windowScroll:0}}};
+ w.NavigationProductApp={getState:()=>clone(s)};w.NavigationProductModel={KEY:'nav',contextKey:()=> 'k'};w.history.replaceState({nav:clone(s),otherOwner:{keep:'unchanged'}},'');
+ method.focus();
+ const observed=new Map(),add=d.addEventListener.bind(d),remove=d.removeEventListener.bind(d),types=['keydown','pointerdown','pointerup','click','focusin','scroll'];
+ d.addEventListener=(t,f,c)=>{if(types.includes(t)){if(!observed.has(t))observed.set(t,new Set());observed.get(t).add(f);}return add(t,f,c);};
+ d.removeEventListener=(t,f,c)=>{observed.get(t)?.delete(f);return remove(t,f,c);};
+ const start=new w.Function(input.start),state=new w.Function(input.state),action=new w.Function(input.action),stop=new w.Function(input.stop);
+ const addFour=(parent,prefix)=>{for(let i=0;i<4;i++){const b=d.createElement('button');b.id=prefix+i;b.textContent='New control '+i;parent.appendChild(b);}};
+ const replace=n=>n.replaceWith(n.cloneNode(true));
+ const read=()=>({state:clone(state()),inventory:clone(action('candidates'))});
+ let before,after,repeat,restored,startBudget,stopResult;
+ try{
+  start();startBudget=state().tabBound;
+  if(name==='before-baseline-four')addFour(footer,'external-added-');
+  action('baseline');
+  if(name==='baseline-gap-four')addFour(footer,'baseline-gap-added-');
+  before=read();action('reset');
+  if(name==='external-four')addFour(footer,'external-added-');
+  else if(name==='external-four-clones')[...footer.children].slice(0,4).forEach(replace);
+  else if(name==='internal-four')addFour(workspace,'internal-added-');
+  else if(name==='internal-remove-four')['a','b','c','d'].forEach(x=>d.getElementById('scope-'+x).remove());
+  else if(name==='internal-clone-four')['a','b','c','d'].forEach(x=>replace(d.getElementById('scope-'+x)));
+  else if(name==='internal-reorder-four'){const p=d.getElementById('ordinary-controls');for(const n of [...p.children].reverse())p.appendChild(n);}
+  else if(name==='add-hidden'){const b=d.createElement('button');b.id='hidden-added';b.hidden=true;workspace.appendChild(b);}
+  else if(name==='add-negative'){const b=d.createElement('button');b.id='negative-added';b.tabIndex=-1;workspace.appendChild(b);}
+  else if(name==='remove-hidden')d.getElementById('scope-hidden').remove();
+  else if(name==='clone-hidden')replace(d.getElementById('scope-hidden'));
+  else if(name==='remove-negative')d.getElementById('scope-negative').remove();
+  else if(name==='clone-negative')replace(d.getElementById('scope-negative'));
+  else if(name==='disabled')d.getElementById('scope-a').disabled=true;
+  else if(name==='hidden')d.getElementById('scope-a').hidden=true;
+  else if(name==='display-none')d.getElementById('scope-a').style.display='none';
+  else if(name==='visibility-hidden')d.getElementById('scope-a').style.visibility='hidden';
+  else if(name==='ancestor-hidden')d.getElementById('ancestor-wrapper').hidden=true;
+  else if(name==='ancestor-display-none')d.getElementById('ancestor-wrapper').style.display='none';
+  else if(name==='details-open')d.getElementById('scope-details').open=true;
+  else if(name==='empty-details-open')d.getElementById('empty-details').open=true;
+  else if(name==='href')d.getElementById('scope-link').setAttribute('href','/changed');
+  else if(name==='role')d.getElementById('scope-a').setAttribute('role','switch');
+  else if(name==='type')d.getElementById('scope-a').setAttribute('type','submit');
+  else if(name==='name')d.getElementById('scope-input').name='different-name';
+  else if(name==='aria-label')d.getElementById('scope-input').setAttribute('aria-label','Changed label');
+  else if(name==='aria-controls')d.getElementById('scope-input').setAttribute('aria-controls','different-target');
+  else if(name==='raw-data-action')d.getElementById('scope-a').setAttribute('data-action','unexpected');
+  else if(name==='control-text')d.getElementById('scope-a').textContent='Changed visible purpose';
+  else if(name==='input-value')d.getElementById('scope-input').value='Changed live value';
+  else if(name==='input-checked')d.getElementById('scope-input').checked=true;
+  else if(name==='tab-control-negative')d.getElementById('scope-a').tabIndex=-1;
+  else if(name==='label-positive')d.getElementById('method-label').tabIndex=0;
+  else if(name==='reader-fake-tree-positive')d.getElementById('reader-fake-tree').tabIndex=0;
+  else if(name==='legal-roving'){method.tabIndex=-1;child.tabIndex=0;child.focus();s.contexts.k.focusTarget='child';}
+  else if(name==='roving-positive'){method.tabIndex=1;}
+  else if(name==='roving-negative-two'){method.tabIndex=-2;child.tabIndex=0;child.focus();s.contexts.k.focusTarget='child';}
+  else if(name==='roving-two-zero'){child.tabIndex=0;}
+  else if(name==='roving-no-zero'){method.tabIndex=-1;}
+  else if(name==='workspace-clone')replace(workspace);
+  else if(name==='workspace-hidden')workspace.hidden=true;
+  styles=new WeakMap();after=read();repeat=read();
+  if(name==='legal-roving'){method.tabIndex=0;child.tabIndex=-1;method.focus();s.contexts.k.focusTarget='method';styles=new WeakMap();restored=read();}
+ }finally{if(w.__npMethodChildProbe)stopResult=stop();}
+ const result={name,startBudget,before,after,repeat,restored,stop:stopResult,
+  listeners:[...observed.values()].reduce((n,x)=>n+x.size,0),installed:!!w.__npMethodChildProbe};
+ dom.window.close();return result;
+}
+process.stdout.write(JSON.stringify(input.cases.map(runCase)));
+"""
+        result=subprocess.run(['node','-e',code],input=json.dumps(dict(cases=cls.cases,
+            start=MODULE.METHOD_CHILD_PROBE_START_JS,state=MODULE.METHOD_CHILD_STATE_JS,
+            action=MODULE.METHOD_CHILD_ACTION_JS,stop=MODULE.METHOD_CHILD_PROBE_STOP_JS)),
+            text=True,capture_output=True,timeout=90,cwd=Path(MODULE.__file__).parents[1])
+        if result.returncode:
+            raise AssertionError('Actual production observer JS failed in JSDOM:\n'+result.stderr)
+        cls.results={row['name']:row for row in json.loads(result.stdout)}
+
+    def assert_inventory(self, frame):
+        MODULE.check_method_child_candidates(frame['state'],frame['inventory'])
+        items=frame['inventory']['eligible']
+        self.assertEqual(len(items),frame['inventory']['eligibleCount'])
+        self.assertEqual(len({row['token'] for row in items}),len(items))
+        self.assertTrue(all(type(row['inWorkspace']) is bool for row in items))
+
+    def assert_rejected(self, case):
+        data=self.results[case]
+        with self.assertRaises(RuntimeError):
+            MODULE.check_method_child_state(data['before']['state'],data['after']['state'])
+        self.assertEqual(data['before']['state']['tabBound'],171)
+        self.assertEqual(data['after']['state']['tabBound'],171,'budget cannot be repurposed as a changing scope count')
+
+    def test_external_171_to_175_changes_only_separate_diagnostic_not_actual_state_bridge(self):
+        data=self.results['external-four'];before,after=data['before'],data['after']
+        self.assertEqual(data['startBudget'],171)
+        self.assertEqual(before['inventory']['eligibleCount'],170)
+        self.assertEqual(after['inventory']['eligibleCount'],174)
+        self.assertEqual(min(256,after['inventory']['eligibleCount']+1),175)
+        self.assertEqual(before['state']['tabBound'],171);self.assertEqual(after['state']['tabBound'],171)
+        self.assertEqual(before['state'],after['state'],'the full bridge remains exact; do not remove actual state fields')
+        MODULE.check_method_child_state(before['state'],after['state'],exact=True)
+        self.assert_inventory(before);self.assert_inventory(after)
+        added=[row for row in after['inventory']['eligible'] if row['id'] and row['id'].startswith('external-added-')]
+        self.assertEqual(len(added),4);self.assertTrue(all(row['inWorkspace'] is False for row in added))
+        old={row['id']:row['token'] for row in before['inventory']['eligible']}
+        for row in after['inventory']['eligible']:
+            if row['id'] in old:self.assertEqual(row['token'],old[row['id']])
+        self.assertEqual(after,data['repeat'],'stable tokens must survive repeated real STATE reads')
+
+    def test_outside_same_id_clones_have_new_diagnostic_tokens_but_no_workspace_changes(self):
+        data=self.results['external-four-clones'];before,after=data['before'],data['after']
+        self.assertEqual(before['state'],after['state'])
+        self.assert_inventory(before);self.assert_inventory(after)
+        old={row['id']:row for row in before['inventory']['eligible']}
+        changed=[row for row in after['inventory']['eligible'] if row['token']!=old[row['id']]['token']]
+        self.assertEqual(len(changed),4)
+        self.assertTrue(all(row['inWorkspace'] is False for row in changed))
+        self.assertEqual(after,data['repeat'])
+
+    def test_budget_is_frozen_at_settled_baseline_not_premature_probe_start(self):
+        data=self.results['before-baseline-four']
+        self.assertEqual(data['startBudget'],171)
+        self.assertEqual(data['before']['state']['tabBound'],175)
+        self.assertEqual(data['before']['inventory']['eligibleCount'],174)
+        self.assertEqual(data['before'],data['after'])
+        self.assert_inventory(data['before'])
+
+    def test_first_baseline_state_freezes_budget_and_inventory_in_the_same_observation(self):
+        data=self.results['baseline-gap-four']
+        self.assertEqual(data['startBudget'],171)
+        self.assertEqual(data['before']['inventory']['eligibleCount'],174)
+        self.assertEqual(data['before']['state']['tabBound'],175)
+        self.assertEqual(data['before'],data['after'])
+        self.assert_inventory(data['before'])
+        MODULE.check_method_child_state(data['before']['state'],data['after']['state'],exact=True)
+
+    def test_same_four_new_controls_inside_scope_are_explicitly_internal_and_rejected(self):
+        data=self.results['internal-four'];before,after=data['before'],data['after']
+        self.assertEqual(after['inventory']['eligibleCount']-before['inventory']['eligibleCount'],4)
+        new=[row for row in after['inventory']['eligible'] if row['id'] and row['id'].startswith('internal-added-')]
+        self.assertEqual(len(new),4);self.assertTrue(all(row['inWorkspace'] is True for row in new))
+        self.assertFalse(after['state']['scopeCandidates']['same'])
+        self.assert_rejected('internal-four')
+        self.assert_inventory(after)
+        # A count increase of four is not itself evidence of external controls.
+        import copy
+        forged=copy.deepcopy(after['inventory'])
+        for row in forged['eligible']:
+            if row['id'] and row['id'].startswith('internal-added-'):row['inWorkspace']=False
+        with self.assertRaises(RuntimeError):MODULE.check_method_child_candidates(after['state'],forged)
+
+    def test_scope_order_and_original_candidate_objects_cannot_be_replaced_by_equal_html(self):
+        for case in ('internal-remove-four','internal-clone-four','internal-reorder-four','workspace-clone'):
+            with self.subTest(case=case):
+                data=self.results[case];self.assert_rejected(case)
+                self.assertFalse(data['after']['state']['scopeCandidates']['same'])
+        clones=self.results['internal-clone-four']
+        old={row['id']:row for row in clones['before']['state']['scopeCandidates']['items']}
+        new={row['id']:row for row in clones['after']['state']['scopeCandidates']['items']}
+        for identity in ('scope-a','scope-b','scope-c','scope-d'):
+            self.assertNotEqual(old[identity]['token'],new[identity]['token'])
+            self.assertEqual(old[identity]['id'],new[identity]['id'])
+            self.assertEqual(old[identity]['tabIndex'],new[identity]['tabIndex'])
+
+    def test_hidden_and_minus_one_candidates_are_bound_even_when_tab_count_does_not_change(self):
+        baseline=self.results['unchanged']['before']
+        source={row['id']:row for row in baseline['state']['scopeCandidates']['items']}
+        for identity in ('scope-hidden','scope-negative','scope-disabled','details-child','child-label','np-detail-scroll'):
+            self.assertIn(identity,source)
+            self.assertNotIn(identity,[row['id'] for row in baseline['inventory']['eligible']])
+        for case in ('add-hidden','add-negative','remove-hidden','clone-hidden','remove-negative','clone-negative'):
+            with self.subTest(case=case):
+                self.assert_rejected(case)
+                data=self.results[case]
+                self.assertEqual(data['before']['inventory']['eligibleCount'],data['after']['inventory']['eligibleCount'])
+
+    def test_disabled_hidden_layout_ancestor_and_disclosure_changes_remain_hard_failures(self):
+        for case in ('disabled','hidden','display-none','visibility-hidden','ancestor-hidden','ancestor-display-none',
+                     'details-open','empty-details-open','workspace-hidden'):
+            with self.subTest(case=case):self.assert_rejected(case)
+        data=self.results['empty-details-open']
+        self.assertEqual(data['before']['inventory']['eligibleCount'],data['after']['inventory']['eligibleCount'])
+        self.assertTrue(data['after']['state']['scopeCandidates']['same'],'same node identities cannot hide changed details semantics')
+
+    def test_non_tree_candidate_semantics_are_not_masked_by_roving_exception(self):
+        for case in ('href','role','type','name','aria-label','aria-controls','raw-data-action','control-text','input-value','input-checked',
+                     'tab-control-negative','label-positive','reader-fake-tree-positive'):
+            with self.subTest(case=case):self.assert_rejected(case)
+        baseline=self.results['unchanged']['before']['state']['scopeCandidates']['items']
+        by_id={row['id']:row for row in baseline}
+        self.assertIsNone(by_id['method-label']['sourcePosition'])
+        self.assertIsNone(by_id['reader-fake-tree']['sourcePosition'])
+        self.assertEqual(by_id['np-node-method']['sourcePosition'],'method')
+
+    def test_only_real_treeitem_zero_minus_one_roving_is_allowed_and_exactly_returns(self):
+        data=self.results['legal-roving'];before,after,restored=data['before'],data['after'],data['restored']
+        MODULE.check_method_child_state(before['state'],after['state'])
+        self.assertEqual(before['state']['scopeCandidates']['items'],after['state']['scopeCandidates']['items'])
+        self.assertEqual(after['state']['scopeCandidates']['treeTabIndexes'],[dict(position='method',tabIndex=-1),dict(position='child',tabIndex=0)])
+        self.assertEqual(after['state']['roving'],['child'])
+        self.assertEqual(after['state']['active']['id'],'np-node-child')
+        self.assertEqual(after['state']['originalFocus'],dict(id='np-node-method',tag='LI',tabIndex=0))
+        self.assertEqual(before['state']['history'],after['state']['history'])
+        self.assertEqual(before['state'],restored['state'])
+        MODULE.check_method_child_state(before['state'],restored['state'],exact=True)
+        for frame in (before,after,restored):self.assert_inventory(frame)
+        for case in ('roving-positive','roving-negative-two','roving-two-zero','roving-no-zero'):
+            with self.subTest(case=case):self.assert_rejected(case)
+
+    def test_actual_observers_clean_up_every_fixture_including_invalid_scope_cases(self):
+        for case,data in self.results.items():
+            with self.subTest(case=case):
+                self.assertTrue(data['stop']['cleanedUp'])
+                self.assertEqual(data['listeners'],0)
+                self.assertFalse(data['installed'])
