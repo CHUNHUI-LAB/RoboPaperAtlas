@@ -4167,6 +4167,178 @@ try{const w=dom.window,d=w.document,tree=d.getElementById('np-tree-scroll'),item
         self.assertEqual(len(MODULE.SCENE_NAMES)*len(MODULE.VIEWPORTS),106)
 
 
+class S0ToolbarPaintSettleChecks(unittest.TestCase):
+    """Synthetic animation clocks test the protocol, not Chrome render evidence."""
+
+    def probe(self, **case):
+        fixture = r"""
+const {JSDOM}=require('jsdom'),input=JSON.parse(require('fs').readFileSync(0,'utf8')),c=input.case;
+const dom=new JSDOM('<div id="np-reading-landing"><div class="np-overview-map-toolbar"><button id="np-map-relations-toggle">显示全部关系</button></div></div>');
+global.document=dom.window.document;
+const toolbar=document.querySelector('.np-overview-map-toolbar'),button=document.getElementById('np-map-relations-toggle');
+let now=0,nextId=1,queue=[],answer=null,callbacks=0,inspections=0;
+global.performance={now:()=>now};
+global.setTimeout=(fn,delay)=>{const id=nextId++;queue.push({id,at:now+delay,fn});return id;};
+global.clearTimeout=id=>{queue=queue.filter(t=>t.id!==id);};
+global.requestAnimationFrame=fn=>c.frozenFrames?nextId++:setTimeout(fn,16);
+global.cancelAnimationFrame=clearTimeout;
+class Transition{
+ constructor(start,end,property='background-color',cancel=false){this.start=start;this.end=end;this.transitionProperty=property;this.cancelled=cancel;this.effect={target:button,getComputedTiming:()=>({duration:c.infinite?Infinity:c.invalidTiming?NaN:end-start,endTime:c.infinite?Infinity:end-start})};}
+ get playState(){return c.paused?'paused':now<this.end||c.stuck||c.pending?'running':this.cancelled?'idle':'finished';}
+ get pending(){return !!c.pending;}
+ get currentTime(){return c.pending?null:Math.min(now-this.start,this.end-this.start);}
+ get playbackRate(){return c.reverse?-1:1;}
+ finish(){throw Error('Must not force animation completion');}
+ cancel(){throw Error('Must not cancel an animation');}
+}
+global.CSSTransition=Transition;
+let transitions=c.none?[]:c.replacement?[new Transition(0,48,'background-color',true),new Transition(48,208,'background-color')]:[new Transition(0,160,c.property||'background-color')];
+// A forever-running CSS animation is not a colour CSSTransition, and must not
+// make this local wait depend on unrelated animation elsewhere in the app.
+const unrelated={transitionProperty:'background-color',playState:'running',pending:false,effect:{target:button,getComputedTiming:()=>({duration:Infinity,endTime:Infinity})}};
+toolbar.getAnimations=opts=>{if(!opts.subtree)throw Error('Toolbar descendants were not inspected');inspections++;
+ if(c.churn)transitions.push(new Transition(now,now+1));
+ return [...transitions.filter(a=>a.start<=now&&(now<a.end||c.stuck||c.pending||c.paused||c.infinite||c.invalidTiming||c.reverse)),...(c.unrelated?[unrelated]:[])];};
+global.getComputedStyle=e=>{
+ const end=c.replacement?208:160,alpha=e===button&&(c.alpha||(!c.none&&now<end))?'rgba(240, 244, 239, 0.6)':e===button?'rgba(0, 0, 0, 0)':'rgb(255, 255, 255)';
+ return {color:c.lowContrast?'rgb(220, 220, 220)':'rgb(49, 92, 75)',backgroundColor:alpha,borderTopColor:'rgb(136, 161, 142)',borderRightColor:'rgb(136, 161, 142)',borderBottomColor:'rgb(136, 161, 142)',borderLeftColor:'rgb(136, 161, 142)'};
+};
+if(c.missing)toolbar.remove();
+if(c.unsupported)global.CSSTransition=undefined;
+if(c.disappear)setTimeout(()=>toolbar.remove(),48);
+new Function(input.script)(2000,value=>{answer=value;callbacks++;});
+let steps=0;while(queue.length&&steps++<1000){queue.sort((a,b)=>a.at-b.at||a.id-b.id);const item=queue.shift();now=item.at;item.fn();}
+if(!answer||steps>=1000)throw Error('Unbounded paint settlement');
+const background=new Function(input.visual+'\nreturn bg(document.getElementById("np-map-relations-toggle"));')();
+const foreground=new Function(input.visual+'\nreturn color(getComputedStyle(document.body).color).rgb;')();
+process.stdout.write(JSON.stringify({answer,callbacks,inspections,background,foreground,steps}));
+"""
+        result = subprocess.run(['node', '-e', fixture], input=json.dumps(dict(
+            case=case, script=MODULE.S0_TOOLBAR_PAINT_SETTLE_JS, visual=MODULE.VISUAL_GEOMETRY)),
+            text=True, capture_output=True, cwd=Path(__file__).parents[1], timeout=10)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        return json.loads(result.stdout)
+
+    def test_finite_colour_transition_finishes_naturally_and_keeps_rgba_evidence(self):
+        data = self.probe(); result = data['answer']
+        self.assertEqual(result['status'], 'settled')
+        self.assertEqual(result['elapsedMs'], 176)
+        self.assertEqual(data['callbacks'], 1)
+        self.assertEqual(data['background'], [255, 255, 255])
+        self.assertEqual(result['before']['colors'][1]['backgroundColor'], 'rgba(240, 244, 239, 0.6)')
+        self.assertEqual(result['after']['colors'][1]['backgroundColor'], 'rgba(0, 0, 0, 0)')
+        animation = result['before']['transitions'][0]
+        self.assertEqual(animation['property'], 'background-color')
+        self.assertEqual(animation['playState'], 'running')
+        self.assertFalse(animation['pending'])
+        self.assertEqual((animation['duration'], animation['endTime']), (160, 160))
+        self.assertEqual(result['after']['transitions'], [])
+        self.assertEqual(len(result['observedTransitions']), 1)
+
+    def test_cancellation_and_replacement_transition_are_reenumerated(self):
+        result = self.probe(replacement=True)['answer']
+        self.assertEqual(result['status'], 'settled')
+        self.assertEqual(result['elapsedMs'], 224)
+        self.assertEqual(len(result['observedTransitions']), 2)
+        self.assertEqual(result['observedTransitions'][1]['firstSeenMs'], 48)
+        self.assertEqual(result['after']['transitions'], [])
+
+    def test_longhand_border_colours_and_text_colour_are_waited(self):
+        for prop in ('color', 'border-color', 'border-top-color', 'border-right-color', 'border-bottom-color', 'border-left-color'):
+            with self.subTest(prop=prop):
+                result = self.probe(property=prop)['answer']
+                self.assertEqual(result['status'], 'settled')
+                self.assertEqual(result['elapsedMs'], 176)
+                self.assertEqual(result['observedTransitions'][0]['first']['property'], prop)
+
+    def test_unrelated_animation_and_transform_do_not_extend_local_wait(self):
+        for case in (dict(none=True, unrelated=True), dict(property='transform', unrelated=True)):
+            result = self.probe(**case)['answer']
+            self.assertEqual(result['status'], 'settled')
+            self.assertEqual(result['elapsedMs'], 32)
+            self.assertEqual(result['observedTransitions'], [])
+
+    def test_stuck_pending_and_frozen_frame_paths_timeout_once(self):
+        for case in (dict(stuck=True), dict(pending=True), dict(frozenFrames=True)):
+            with self.subTest(case=case):
+                data = self.probe(**case); result = data['answer']
+                self.assertEqual(result['status'], 'timeout')
+                self.assertEqual(result['elapsedMs'], 2000)
+                self.assertEqual(data['callbacks'], 1)
+                self.assertTrue(result['before']['transitions'])
+                self.assertTrue(result['after'])
+
+    def test_nonending_timing_missing_api_and_removed_toolbar_fail_closed(self):
+        for case in (dict(infinite=True), dict(invalidTiming=True), dict(paused=True), dict(reverse=True),
+                     dict(unsupported=True), dict(missing=True), dict(disappear=True)):
+            with self.subTest(case=case):
+                data = self.probe(**case)
+                self.assertEqual(data['answer']['status'], 'error')
+                self.assertEqual(data['callbacks'], 1)
+                self.assertLess(data['answer']['elapsedMs'], 2000)
+
+    def test_transition_churn_has_a_diagnostic_bound_and_cannot_pass(self):
+        result = self.probe(churn=True)['answer']
+        self.assertEqual(result['status'], 'error')
+        self.assertIn('churn', result['reason'])
+        self.assertEqual(len(result['observedTransitions']), 64)
+
+    def test_stable_alpha_or_low_contrast_still_fails_original_readability_gate(self):
+        import copy
+        for case in (dict(none=True, alpha=True), dict(alpha=True), dict(none=True, lowContrast=True), dict(lowContrast=True)):
+            with self.subTest(case=case):
+                result = self.probe(**case)
+                self.assertEqual(result['answer']['status'], 'settled')
+                data = S0FooterCaptureChecks.fixture()
+                proof = next(row['proof'] for row in data['toolbar']['controls'] if row['id'] == 'np-map-relations-toggle')
+                for run in [proof, *proof['textRuns']]:
+                    run['background'] = copy.deepcopy(result['background'])
+                    run['foreground'] = copy.deepcopy(result['foreground'])
+                with self.assertRaises(RuntimeError): MODULE.check_s0_footer(data)
+
+    def test_successful_settle_does_not_excuse_hidden_clipped_or_covered_controls(self):
+        self.assertEqual(self.probe(none=True)['answer']['status'], 'settled')
+        for mutate in (lambda p: p.update(visible=False), lambda p: p.update(opaque=False),
+                       lambda p: p.update(clipped=True), lambda p: p['fragments'][0].update(visible=False)):
+            data = S0FooterCaptureChecks.fixture()
+            proof = next(row['proof'] for row in data['toolbar']['controls'] if row['id'] == 'np-map-relations-toggle')
+            mutate(proof)
+            with self.assertRaises(RuntimeError): MODULE.check_s0_footer(data)
+
+    def test_receipt_is_saved_before_any_timeout_or_error_is_raised(self):
+        import copy
+        good = self.probe()['answer']
+        test = self
+        class Driver:
+            def __init__(self, result): self.result = result
+            def call(self, method, path, data):
+                test.assertEqual((method, path), ('POST', '/execute/async'))
+                test.assertEqual(data, dict(script=MODULE.S0_TOOLBAR_PAINT_SETTLE_JS, args=[2000]))
+                return self.result
+        for data in (good, None, dict(good, status='timeout'), dict(good, status='error'),
+                     dict(good, elapsedMs=2000), dict(good, elapsedMs=float('nan')),
+                     dict(good, timeoutMs=4000), dict(good, before=None), dict(good, after=None)):
+            report = {}; saved = []
+            save = lambda: saved.append(copy.deepcopy(report))
+            if data is good:
+                self.assertEqual(MODULE.settle_s0_toolbar_paint(Driver(data), report, save, 'before-selection'), good)
+            else:
+                with self.assertRaises(RuntimeError): MODULE.settle_s0_toolbar_paint(Driver(data), report, save, 'before-selection')
+            self.assertEqual(len(saved), 1)
+            self.assertEqual(saved[0]['s0ToolbarPaintSettles'][0]['phase'], 'before-selection')
+            self.assertIs(report['s0ToolbarPaintSettles'][0]['settle'], data)
+        source = (Path(__file__).parents[1] / 'scripts/navigation_screenshots.py').read_text()
+        import ast
+        tree = ast.parse(source)
+        paint_helper = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'settle_s0_toolbar_paint')
+        def save_calls(node):
+            return [n for n in ast.walk(node) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']
+        self.assertEqual(len(save_calls(paint_helper)), 1)
+        tree.body.remove(paint_helper)
+        self.assertEqual(len(save_calls(tree)), 99)  # Every original save checkpoint remains.
+        self.assertIn('def s0_footer_check(phase):\n        settle_s0_toolbar_paint(driver, report, save, phase)\n        data = driver.js(S0_FOOTER_SNAPSHOT_JS, footer_expected)', source)
+
+
 class S0FooterCaptureChecks(unittest.TestCase):
     @staticmethod
     def source():
@@ -4484,7 +4656,7 @@ class S0FooterCaptureChecks(unittest.TestCase):
         self.assertIn("check_s0_footer(graph['s0AdaptiveSpacing'])", main)
         self.assertIn("reading_home(relation_mode='all')", main)
         saves = [n for n in ast.walk(ast.parse(inspect.getsource(MODULE))) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']
-        self.assertEqual(len(saves), 99)
+        self.assertEqual(len(saves), 100)  # 99 original checkpoints + one paint-settle diagnostic save.
         self.assertEqual(len(MODULE.SCENE_NAMES) * len(MODULE.VIEWPORTS), 106)
         self.assertIn('s0_adaptive_spacing', MODULE.DISPLAY_CONTRACT_MIGRATIONS)
 
@@ -5054,7 +5226,7 @@ class AtomicReceiptPersistenceChecks(unittest.TestCase):
         import tempfile
         source = Path(MODULE.__file__).read_text(encoding='utf-8'); tree = ast.parse(source)
         calls = [node for node in ast.walk(tree) if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == 'save']
-        self.assertEqual(len(calls), 99)
+        self.assertEqual(len(calls), 100)  # 99 original checkpoints + one paint-settle diagnostic save.
         saves = [node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef) and node.name == 'save']
         self.assertEqual(len(saves), 1)
         self.assertEqual(ast.dump(saves[0].body[0].value.func), "Name(id='write_receipt', ctx=Load())")
@@ -5168,7 +5340,7 @@ class S0SelectorOcclusionChecks(unittest.TestCase):
         for text in ("s0_footer_check('before-selection-'", "s0_footer_check('closed-'", "check_s0_stability(before_selection, selected_footer)", "closed['focus'] != 'np-relation-select-'", 'check_s0_stability(footer_before_reload, footer_after_reload, restore=True)'):
             self.assertIn(text, main)
         saves = [n for n in ast.walk(ast.parse(inspect.getsource(MODULE))) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']
-        self.assertEqual(len(saves), 99)
+        self.assertEqual(len(saves), 100)  # 99 original checkpoints + one paint-settle diagnostic save.
         self.assertEqual(len(MODULE.SCENE_NAMES) * len(MODULE.VIEWPORTS), 106)
 
 

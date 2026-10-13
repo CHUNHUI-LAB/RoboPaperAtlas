@@ -1177,6 +1177,84 @@ def check_chrome_text(proof, text, font, *areas):
         raise RuntimeError('Desktop chrome final text fragment is not fully visible')
 
 
+# The toolbar's 160ms hover colour transitions can outlive Driver.settle's two
+# frames. Wait for their natural completion, not for a readability gate to pass.
+# This local wait never finishes/cancels animations or changes rendered styles.
+S0_TOOLBAR_PAINT_TIMEOUT_MS = 2000
+S0_TOOLBAR_PAINT_SETTLE_JS = r"""
+var budget=arguments[0],done=arguments[arguments.length-1],start=performance.now();
+var toolbar=null,timer=null,frame=null,completed=false,quietFrames=0,observed=new Map();
+var result={status:'pending',timeoutMs:budget,elapsedMs:0,before:null,after:null,observedTransitions:[]};
+function identity(e){return {id:e.id||'',tag:e.tagName,className:e.getAttribute('class')||''};}
+function paintProperty(p){return /^(?:color|background-color|border-(?:(?:top|right|bottom|left)-)?color)$/.test(p);}
+function metadata(a){var t=a.effect.getComputedTiming();return {target:identity(a.effect.target),property:a.transitionProperty,playState:a.playState,pending:a.pending,currentTime:a.currentTime,playbackRate:a.playbackRate,duration:t.duration,endTime:t.endTime};}
+function relevant(){return toolbar.getAnimations({subtree:true}).filter(a=>a instanceof CSSTransition&&paintProperty(a.transitionProperty));}
+function snapshot(){
+  if(!toolbar)return null;
+  return {colors:[toolbar,...toolbar.querySelectorAll('*')].map(e=>{var s=getComputedStyle(e);return {...identity(e),color:s.color,backgroundColor:s.backgroundColor,borderTopColor:s.borderTopColor,borderRightColor:s.borderRightColor,borderBottomColor:s.borderBottomColor,borderLeftColor:s.borderLeftColor};}),transitions:relevant().map(metadata)};
+}
+function finish(status,reason){
+  if(completed)return;completed=true;clearTimeout(timer);cancelAnimationFrame(frame);
+  result.status=status;result.reason=reason||'';
+  try{result.after=snapshot();}catch(e){result.status='error';result.reason='Final paint diagnostics unavailable: '+String(e);}
+  result.elapsedMs=performance.now()-start;
+  if(result.status==='settled'&&result.elapsedMs>=budget){result.status='timeout';result.reason='Final paint diagnostics exceeded the fixed budget';}
+  result.observedTransitions=[...observed.values()];done(result);
+}
+function inspect(){
+  if(performance.now()-start>=budget){finish('timeout','Toolbar paint transitions did not settle within the fixed budget');return null;}
+  if(document.querySelectorAll('#np-reading-landing .np-overview-map-toolbar').length!==1||!toolbar.isConnected){finish('error','S0 toolbar changed or disappeared during paint settlement');return null;}
+  var active=false;
+  for(var a of relevant()){
+    var m=metadata(a),elapsed=performance.now()-start;
+    if(!observed.has(a)){
+      if(observed.size>=64){finish('error','Excessive toolbar transition churn');return null;}
+      observed.set(a,{firstSeenMs:elapsed,lastSeenMs:elapsed,first:m,last:m});
+    }else{var seen=observed.get(a);seen.lastSeenMs=elapsed;seen.last=m;}
+    if(m.playState==='finished'||(m.playState==='idle'&&!m.pending))continue;
+    if(!Number.isFinite(m.endTime)||m.endTime<0||!Number.isFinite(m.duration)||m.duration<0||!Number.isFinite(m.playbackRate)||m.playbackRate<=0||m.playState==='paused'){
+      finish('error','Toolbar paint transition cannot finish naturally with finite timing');return null;
+    }
+    active=true;
+  }
+  return active;
+}
+function tick(){
+  if(completed)return;
+  try{
+    var active=inspect();if(active===null)return;
+    quietFrames=active?0:quietFrames+1;
+    if(quietFrames>=2){finish('settled');return;}
+    frame=requestAnimationFrame(tick);
+  }catch(e){finish('error','Toolbar paint inspection failed: '+String(e));}
+}
+try{
+  if(!Number.isFinite(budget)||budget<=0)throw Error('Invalid toolbar paint budget');
+  timer=setTimeout(()=>finish('timeout','Toolbar paint settlement exceeded the fixed budget'),budget);
+  var roots=document.querySelectorAll('#np-reading-landing .np-overview-map-toolbar');
+  if(roots.length!==1)throw Error('Expected exactly one S0 toolbar');
+  toolbar=roots[0];
+  if(typeof CSSTransition!=='function'||typeof toolbar.getAnimations!=='function')throw Error('CSS transition inspection unavailable');
+  result.before=snapshot();
+  if(inspect()!==null)frame=requestAnimationFrame(tick);
+}catch(e){finish('error','Toolbar paint inspection failed: '+String(e));}
+"""
+
+
+def settle_s0_toolbar_paint(driver, report, save, phase):
+    data = driver.call('POST', '/execute/async', {
+        'script': S0_TOOLBAR_PAINT_SETTLE_JS, 'args': [S0_TOOLBAR_PAINT_TIMEOUT_MS]})
+    report.setdefault('s0ToolbarPaintSettles', []).append({'phase': phase, 'settle': data})
+    save()  # Preserve even timeout/error diagnostics before raising.
+    if (not isinstance(data, dict) or data.get('status') != 'settled' or
+            data.get('timeoutMs') != S0_TOOLBAR_PAINT_TIMEOUT_MS or
+            not isinstance(data.get('elapsedMs'), (int, float)) or
+            not 0 <= data['elapsedMs'] < S0_TOOLBAR_PAINT_TIMEOUT_MS or
+            not data.get('before') or not data.get('after')):
+        raise RuntimeError('S0 toolbar paint transitions failed to settle within the fixed budget')
+    return data
+
+
 S0_FOOTER_SNAPSHOT_JS = VISUAL_GEOMETRY + DESKTOP_CHROME_GEOMETRY_JS + FIXED_TEXT_PROOF_JS + SCROLL_REGION_VISIBILITY_JS + r"""
 var a=NavigationProductApp,m=NavigationProductModel,s=a.getState(),b=a.getBundle(),landing=document.getElementById('np-reading-landing'),
     map=document.getElementById('np-overview-map'),panels=document.querySelectorAll('#np-overview-relation-panel'),panel=panels[0],
@@ -4619,6 +4697,7 @@ def main():
                 raise RuntimeError('Method screenshot does not show any complete actual mechanism field inside the reader')
 
     def s0_footer_check(phase):
+        settle_s0_toolbar_paint(driver, report, save, phase)
         data = driver.js(S0_FOOTER_SNAPSHOT_JS, footer_expected)
         report.setdefault('s0FooterChecks', []).append({'phase': phase, 'snapshot': data})
         save()
