@@ -894,6 +894,7 @@ def _reader_proof(proof, *areas, font_size=None):
 # diagnostic, content-delay and native-input predicates remain independent.
 DISPLAY_CONTRACT_MIGRATIONS = {
     'shared_chrome_budget': 'shared site header, global navigation, four-field selection identity and workspace toolbar retain their measured natural flow; remaining desktop height is proved against the viewport bottom and actual layout width, including a reserved scrollbar gutter; short S0 retains 4px outer bottom padding, otherwise16px; overview toolbar is deducted before the map; source task cards retain the current56px placement contract and C cards37px; first-screen route/answer/entry budgets remain relative to their verified panels',
+    'workspace_branch_tabs': 'global root highlights g; a global descendant retains its exact g source route while its source-verified Literature or Challenge ancestry uniquely selects l or c; ordinary l/c/a routes retain their own tab; all four selected states remain exact',
     'relation_picker': 'same IDs, types, endpoints and controls; outside tree scroll in fixed toolbar',
     'reader_identity': 'fixed current title and exact version replace generic sticky READING DESK',
     'context_path': 'one compact row; original global links and real local parent chain remain distinct',
@@ -1052,13 +1053,14 @@ function desktopChromeGeometry(){
   var header=document.querySelector('.site-header'),app=document.getElementById('navigation-product'),start=app?.querySelector('.np-global-start'),
     workspace=document.getElementById('np-workspace'),identity=document.getElementById('np-selection-context'),bar=workspace?.querySelector('.np-workspace-bar');
   var a=window.NavigationProductApp,b=a?.getBundle(),r=a?.getState().route,source=null;
-  if(b&&r&&Array.isArray(b.scopes)&&b.researchMap){var path=[],p=b.positions[r.node];while(p){path.push(p);p=b.positions[p.parentId];}
+  if(b&&r&&Array.isArray(b.scopes)&&b.researchMap){var path=[],p=b.positions[r.node],seen=new Set(),pathValid=!!p;while(p&&!seen.has(p.id)&&path.length<256){seen.add(p.id);path.push(p);if(p.parentId&&!b.positions[p.parentId])pathValid=false;p=b.positions[p.parentId];}if(p)pathValid=false;
     var scopes=new Map(b.scopes.map(s=>[s.id,s])),scope=r.tree==='g'?path.map(p=>scopes.get(p.sourceScopeId)).find(s=>s&&s.id!=='scope:all'):null;
     scope=scope||scopes.get(r.scope);var route=path.find(p=>['pipeline','pipeline_family','pipeline_or_representation','development_group'].includes(p.kind)),
       routeEntity=route&&b.entities[route.entityId],paper=r.paper&&b.papers[r.paper],version=r.version&&b.versions[r.version],
       names={poni:'PONI',semexp:'SemExp',vlfm:'VLFM',harnessvln:'HarnessVLN',navharness:'NavHarness（终身导航）',goat:'GOAT',modiin:'ModIIN',esc:'ESC',zson:'ZSON',cow:'CoW',cmp:'CMP',duet:'DUET',hamt:'HAMT',l3mvn:'L3MVN',vlmaps:'VLMaps',conceptgraphs:'ConceptGraphs',hovsg:'HOV-SG'},
       versionText=version?(version.label||version.descriptor||r.version):'来源版本待选择';if(versionText==='unknown')versionText='来源版本待核';
     source={route:r,scopeId:scope?.id,routePositionId:route?.id||null,atRoot:r.tree==='g'&&r.node===b.researchMap.roots[0],
+      tabSourceSha256:b.delivery?.sourceModelSha256||null,tabPath:r.tree==='g'?(pathValid?path.slice().reverse().map(p=>({id:p.id,parentId:p.parentId||null,entityId:p.entityId,tree:p.tree,scopeId:p.scopeId})):null):[],
       fields:[['当前'+(scope?.displayRole||'阅读范围'),scope?.label],['当前路线',route?(routeEntity?.label||route.sourceLabel||route.label):{g:'全局研究图',l:'文献树',c:'挑战–思路树',a:'论文解析树'}[r.tree]],
         ['当前论文',r.paper?(names[r.paper]||paper?.label||paper?.title||r.paper):'尚未选择'],['来源版本',r.version?versionText+(version?.status==='snapshot_not_version_pinned'?' · 未固定快照':''):'尚未选择']]};}
   function text(e){return e?fixedTextProof(e):null;}
@@ -1071,6 +1073,66 @@ function desktopChromeGeometry(){
       identity?.parentElement===workspace&&identity.nextElementSibling===bar};
 }
 """
+
+
+WORKSPACE_TAB_SCIENCE_SHA256 = '9069c6a11ae9a867671522d04e6a24b4edcada660d03feb2f41340bfc395825c'
+
+
+def workspace_tab_source_contract(graph):
+    """Derive the one legal highlighted tab from frozen source parent edges."""
+    positions, roots = graph['positions'], graph['roots']
+    if (graph.get('sourceModelSha256') != WORKSPACE_TAB_SCIENCE_SHA256 or len(roots) != 1 or
+            roots[0] not in positions or positions[roots[0]].get('entityId') != 'legacy:nav:goal' or
+            positions[roots[0]].get('parentId') is not None):
+        raise RuntimeError('Workspace tabs lack the exact reviewed global source root')
+    result = {}
+    for identity in positions:
+        path, seen, current = [], set(), identity
+        while current is not None:
+            if current not in positions or current in seen or len(path) >= 256:
+                raise RuntimeError('Workspace tab source parent chain is missing, cyclic or excessive')
+            seen.add(current); position = positions[current]
+            if position.get('id') != current or position.get('tree') != 'g' or position.get('scopeId') != 'scope:all':
+                raise RuntimeError('Workspace tab source ancestry changed its exact position identity')
+            parent = position.get('parentId')
+            if parent is not None and (parent not in positions or current not in positions[parent]['childIds']):
+                raise RuntimeError('Workspace tab source parent and child edges disagree')
+            path.append({key: position.get(key) for key in ('id', 'parentId', 'entityId', 'tree', 'scopeId')})
+            current = parent
+        path.reverse()
+        branches = [row['entityId'] for row in path if row['entityId'] in ('legacy:nav:l', 'legacy:nav:c')]
+        if path[0]['id'] != roots[0] or len(branches) != (0 if identity == roots[0] else 1):
+            raise RuntimeError('Workspace tab source path has a wrong root or ambiguous branch')
+        result[identity] = {'tab': {'legacy:nav:l': 'l', 'legacy:nav:c': 'c'}[branches[0]] if branches else 'g', 'path': path}
+    return result
+
+
+@functools.lru_cache(maxsize=2)
+def load_workspace_tab_sources(model_path, source_sha256):
+    """The cache key includes source location and reviewed science identity."""
+    import gzip
+    try:
+        from navigation_research_map import build_research_map
+    except ModuleNotFoundError:
+        from scripts.navigation_research_map import build_research_map
+    raw = gzip.decompress(Path(model_path).read_bytes())
+    if source_sha256 != WORKSPACE_TAB_SCIENCE_SHA256 or hashlib.sha256(raw).hexdigest() != source_sha256:
+        raise RuntimeError('Workspace tab model differs from the reviewed scientific source')
+    return workspace_tab_source_contract(build_research_map(json.loads(raw)))
+
+
+def workspace_selected_tree(route, source):
+    tree = route.get('tree')
+    if tree in ('l', 'c', 'a'):
+        return tree
+    if tree != 'g' or route.get('scope') != 'scope:all':
+        raise RuntimeError('Workspace tab route has no exact source tree')
+    model_path = str(Path(__file__).resolve().parents[1] / 'data/navigation-product/model.json.gz')
+    expected = load_workspace_tab_sources(model_path, WORKSPACE_TAB_SCIENCE_SHA256).get(route.get('node'))
+    if (not expected or source.get('tabSourceSha256') != WORKSPACE_TAB_SCIENCE_SHA256 or
+            source.get('tabPath') != expected['path']):
+        raise RuntimeError('Workspace tab ancestry differs from the exact reviewed source path')
+    return expected['tab']
 
 
 def check_desktop_chrome(data):
@@ -1133,6 +1195,7 @@ def check_desktop_chrome(data):
             if not proof or not text or abs(proof['fontSize'] - font) > S0_SPACING_TOLERANCE:
                 raise RuntimeError('Desktop selection identity lost its original labels or type size')
             check_chrome_text(proof, text, font, identity['clientRect'], viewport)
+    selected_tree = workspace_selected_tree(data['route'], source)
     controls = chrome.get('controls', [])
     if len(controls) != len(WORKSPACE_CONTROL_SPECS):
         raise RuntimeError('Desktop workspace omitted an original control')
@@ -1141,7 +1204,7 @@ def check_desktop_chrome(data):
         if (control.get('selector') != selector or control.get('count') != 1 or control.get('tag') != tag or
                 control.get('id') != identity or control.get('tree') != tree or control.get('hidden') != hidden or control.get('disabled')):
             raise RuntimeError('Desktop workspace control identity or legitimate hidden state changed')
-        if tree and control.get('selected') != str(tree == data['route']['tree']).lower():
+        if tree and control.get('selected') != str(tree == selected_tree).lower():
             raise RuntimeError('Desktop workspace tab lost its actual selected source tree')
         if hidden:
             if control['proof']['opaque'] or control['proof']['visible']:

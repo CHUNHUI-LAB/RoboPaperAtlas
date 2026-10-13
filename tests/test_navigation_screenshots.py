@@ -42,6 +42,17 @@ def desktop_chrome_fixture(width=1440, height=900, top=132, bottom_padding=16, r
     route = route if route is not None else dict(tree='l')
     texts = [('当前任务', '原始阅读范围'), ('当前路线', '原始路线'), ('当前论文', '尚未选择'), ('来源版本', '尚未选择')]
     result['identitySource'] = dict(route=route, scopeId='original-scope', routePositionId=None, atRoot=home, fields=texts)
+    if route.get('tree') == 'g' and route.get('node'):
+        import sys
+        with patch.object(sys, 'path', [str(Path(__file__).parents[1] / 'scripts'), *sys.path]):
+            from navigation_research_map import build_research_map
+            graph = build_research_map(S0FooterCaptureChecks.source())
+        path = []; position = graph['positions'][route['node']]
+        while position:
+            path.insert(0, {key: position.get(key) for key in ('id', 'parentId', 'entityId', 'tree', 'scopeId')})
+            position = graph['positions'].get(position.get('parentId'))
+        result['identitySource'].update(tabSourceSha256=graph['sourceModelSha256'], tabPath=path)
+
     result['identityFields'] = [dict(tag='DIV', className='np-context-field', children=['DT', 'DD'],
         label=chrome_text_fixture(label, 11, dict(x=20+i*330, y=58, width=100, height=14), [98,107,103], [250,250,248]),
         value=chrome_text_fixture(value, 13, dict(x=125+i*330, y=58, width=150, height=17), [23,26,25], [250,250,248])) for i,(label,value) in enumerate(texts)]
@@ -3172,7 +3183,15 @@ d.querySelector('.np-return-previous').click();await ready(()=>a.getState().rout
 
     def test_new_state_capture_mapping_keeps_original_90_scenes_and_historical_diagnostics(self):
         import inspect
-        self.assertEqual(len(MODULE.DISPLAY_CONTRACT_MIGRATIONS), 15)
+        original_migrations = {
+            'shared_chrome_budget', 'relation_picker', 'reader_identity', 'context_path',
+            'outer_scroll', 's0_footer', 's0_adaptive_spacing', 'overview_relations',
+            'analysis_entry', 'active_forest_heading', 'method_geometry', 'method_ancestry',
+            'method_introduction', 'source_scroll_fixtures', 'method_analysis_controls',
+        }
+        self.assertEqual(len(original_migrations), 15)
+        self.assertEqual(set(MODULE.DISPLAY_CONTRACT_MIGRATIONS),
+                         original_migrations | {'workspace_branch_tabs'})
         self.assertIn('shared_chrome_budget', MODULE.DISPLAY_CONTRACT_MIGRATIONS)
         self.assertIn('s0_footer', MODULE.DISPLAY_CONTRACT_MIGRATIONS)
         self.assertEqual(len(MODULE.SCENE_NAMES), 53)
@@ -3318,6 +3337,11 @@ class MethodReadingCaptureChecks(unittest.TestCase):
                 data = DesktopHierarchyContractChecks.shell(tree, width)
                 data.update(methodReading='true', readingLayout='reading', position=dict(id=p['id'], kind=p['kind'], paper=p['paperId'], version=p['versionId']))
                 data['route'].update(node=p['id'], paper=p['paperId'], version=p['versionId'])
+                if tree == 'g':
+                    data['route']['scope'] = p['scopeId']
+                    data['chrome'] = desktop_chrome_fixture(width, data['viewport']['height'], route=data['route'])
+                    for tab in data['chrome']['controls']:
+                        if tab['tree']: tab['selected'] = str(tab['tree'] == 'l').lower()
                 old_width = data['treePane']['width']; width_delta = old_width - (400 if width == 1440 else 448)
                 data['treePane']['width'] -= width_delta; data['tree']['width'] -= width_delta
                 for key in ('pane', 'reader'):
@@ -3602,11 +3626,16 @@ d.querySelector('[data-challenge-open="'+p.id+'"]').click();await ready(()=>a.ge
 const original=s.entities[p.entityId],header=d.getElementById('np-reader-object-title'),titles=d.querySelectorAll(input.titleSelector),roles=d.querySelectorAll(input.roleSelector),summary=d.querySelector('#np-reader-summary [data-reading-node="'+p.id+'"]');
 assert.equal(titles.length,1);assert.equal(titles[0].textContent,original.label);assert.deepEqual([header.dataset.objectPosition,header.dataset.objectEntity,header.dataset.objectPaper,header.dataset.objectVersion],[p.id,p.entityId,p.paperId||'',p.versionId||'']);
 assert.equal(roles.length,1);assert.equal(roles[0].textContent,' · 研究问题');const raw=summary.querySelector('[data-reader-duplicate-field="plain_language_question"] > p');assert.ok(raw);assert.equal(raw.textContent,original.detail.plain_language_question);assert.equal(summary.querySelector('[data-challenge-scope]').dataset.challengeScope,original.id);states.push(snapshot());
+d.elementFromPoint=()=>d.body;w.Range.prototype.getClientRects=function(){return [];};
+states[0].workspaceChrome=(new w.Function(input.chromeSnapshot))();
+assert.equal(a.getState().route.tree,'g');assert.deepEqual(JSON.parse(JSON.stringify(states[0].workspaceChrome.controls.filter(row=>row.tree&&row.selected==='true').map(row=>row.tree))),['c']);
 """
         states = run_product_capture_script(self, body, {'science': science, 'expected': MODULE.task_route_expected(science),
                                             'titleSelector': MODULE.ORIGINAL_CHALLENGE_TITLE_SELECTOR,
-                                            'roleSelector': MODULE.ORIGINAL_CHALLENGE_ROLE_SELECTOR})
+                                            'roleSelector': MODULE.ORIGINAL_CHALLENGE_ROLE_SELECTOR,
+                                            'chromeSnapshot': MODULE.VISUAL_GEOMETRY + MODULE.FIXED_TEXT_PROOF_JS + MODULE.DESKTOP_CHROME_GEOMETRY_JS + ';return desktopChromeGeometry();'})
         self.assertEqual(states[0]['position']['entity'], 'legacy:ci_search_unknown_target')
+        self.assertEqual(MODULE.workspace_selected_tree(states[0]['route'], states[0]['workspaceChrome']['identitySource']), 'c')
 
     def test_snapshot_uses_only_exact_fixed_h2_and_measures_actual_text_fragments(self):
         script = r"""
@@ -4165,6 +4194,128 @@ try{const w=dom.window,d=w.document,tree=d.getElementById('np-tree-scroll'),item
             for forbidden in ('style.', 'scrollTop=', 'scrollTop =', '.navigate(', 'dispatchEvent(', 'replaceState(', 'pushState('):
                 self.assertNotIn(forbidden,code)
         self.assertEqual(len(MODULE.SCENE_NAMES)*len(MODULE.VIEWPORTS),106)
+
+
+class WorkspaceSourceTabChecks(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        import sys
+        with patch.object(sys, 'path', [str(Path(__file__).parents[1] / 'scripts'), *sys.path]):
+            from navigation_research_map import build_research_map
+            cls.graph = build_research_map(S0FooterCaptureChecks.source())
+        cls.contract = MODULE.workspace_tab_source_contract(cls.graph)
+        cls.root = cls.graph['roots'][0]
+        cls.challenge = 'pos:g:ef16259815fbbfb1f944b9'
+        cls.literature = next(p['id'] for p in cls.graph['positions'].values() if p['entityId'] == 'legacy:nav:l')
+
+    def shell(self, node, selected):
+        data = DesktopHierarchyContractChecks.shell()
+        data['route'] = dict(tree='g', node=node, scope='scope:all', paper=None, version=None)
+        data['chrome'] = desktop_chrome_fixture(route=data['route'])
+        if node == self.root:
+            data['chrome']['identitySource']['atRoot'] = True
+            toggle = next(row for row in data['chrome']['controls'] if row['id'] == 'np-overview-toggle')
+            toggle['hidden'] = False
+            toggle['proof'].update(opaque=True, visible=True)
+        for row in data['chrome']['controls']:
+            if row['tree']: row['selected'] = str(row['tree'] == selected).lower()
+        return data
+
+    def test_frozen_global_paths_determine_one_branch_without_changing_source_tree(self):
+        self.assertEqual(self.contract[self.root]['tab'], 'g')
+        self.assertEqual(self.contract[self.literature]['tab'], 'l')
+        self.assertEqual(self.contract[self.challenge], dict(tab='c', path=[
+            dict(id='pos:g:62d6d6cb98df700cdd762e', parentId=None, entityId='legacy:nav:goal', tree='g', scopeId='scope:all'),
+            dict(id='pos:g:4ff09ffb1b1dc4d549b8fe', parentId='pos:g:62d6d6cb98df700cdd762e', entityId='legacy:nav:c', tree='g', scopeId='scope:all'),
+            dict(id=self.challenge, parentId='pos:g:4ff09ffb1b1dc4d549b8fe', entityId='legacy:ci_search_unknown_target', tree='g', scopeId='scope:all')]))
+        descendant = next(identity for identity, value in self.contract.items() if value['tab'] == 'l' and len(value['path']) > 3)
+        self.assertEqual(MODULE.workspace_selected_tree(dict(tree='g', scope='scope:all', node=descendant),
+                         dict(tabSourceSha256=MODULE.WORKSPACE_TAB_SCIENCE_SHA256, tabPath=self.contract[descendant]['path'])), 'l')
+        for tree in ('l', 'c', 'a'):
+            MODULE.check_desktop_chrome(DesktopHierarchyContractChecks.shell(tree))
+            self.assertEqual(MODULE.workspace_selected_tree(dict(tree=tree), {}), tree)
+
+    def test_exact_challenge_chrome_rejects_old_g_expectation_and_wrong_or_multiple_tabs(self):
+        import copy
+        for node, selected in ((self.root, 'g'), (self.literature, 'l'), (self.challenge, 'c')):
+            good = self.shell(node, selected)
+            MODULE.check_desktop_chrome(good)
+            self.assertEqual(good['route']['tree'], 'g')
+            for wrong in ('g', 'l', 'c', 'a', None):
+                if wrong == selected: continue
+                bad = copy.deepcopy(good)
+                for row in bad['chrome']['controls']:
+                    if row['tree']: row['selected'] = str(row['tree'] == wrong).lower()
+                with self.assertRaisesRegex(RuntimeError, 'selected source tree'): MODULE.check_desktop_chrome(bad)
+            bad = copy.deepcopy(good)
+            next(row for row in bad['chrome']['controls'] if row['tree'] and row['tree'] != selected)['selected'] = 'true'
+            with self.assertRaisesRegex(RuntimeError, 'selected source tree'): MODULE.check_desktop_chrome(bad)
+
+    def test_runtime_path_must_match_exact_source_even_when_selected_tab_looks_correct(self):
+        import copy
+        good = self.shell(self.challenge, 'c')
+        mutations = [lambda s: s.pop('tabPath'), lambda s: s.update(tabPath=[]), lambda s: s.update(tabPath=None),
+                     lambda s: s.update(tabSourceSha256='wrong'), lambda s: s['tabPath'].pop(0),
+                     lambda s: s['tabPath'][1].update(entityId='legacy:nav:l'),
+                     lambda s: s['tabPath'][-1].update(parentId='wrong'),
+                     lambda s: s['tabPath'][0].update(id='another-root'),
+                     lambda s: s['tabPath'][-1].update(scopeId='other'), lambda s: s['tabPath'][-1].update(tree='c'),
+                     lambda s: s['tabPath'].append(copy.deepcopy(s['tabPath'][-1]))]
+        for mutate in mutations:
+            bad = copy.deepcopy(good); mutate(bad['chrome']['identitySource'])
+            with self.assertRaisesRegex(RuntimeError, 'source path'): MODULE.check_desktop_chrome(bad)
+        for route in (dict(tree='g', node='unknown', scope='scope:all'), dict(tree='g', node=self.challenge, scope='other'), dict(tree='unknown')):
+            with self.assertRaises(RuntimeError): MODULE.workspace_selected_tree(route, good['chrome']['identitySource'])
+
+    def test_source_builder_rejects_broken_cycle_wrong_root_and_ambiguous_branch(self):
+        import copy
+        for mutate in (lambda g: g.update(sourceModelSha256='wrong'), lambda g: g.update(roots=[self.challenge]),
+                       lambda g: g['roots'].append(self.root),
+                       lambda g: g['positions'][self.challenge].update(parentId='missing'),
+                       lambda g: (g['positions'][self.challenge].update(parentId=self.challenge), g['positions'][self.challenge]['childIds'].append(self.challenge)),
+                       lambda g: g['positions'][self.challenge].update(entityId='legacy:nav:l'),
+                       lambda g: g['positions'][self.challenge].update(tree='c'),
+                       lambda g: g['positions'][self.challenge].update(scopeId='wrong')):
+            graph = copy.deepcopy(self.graph); mutate(graph)
+            with self.assertRaises(RuntimeError): MODULE.workspace_tab_source_contract(graph)
+
+    def test_source_cache_is_bound_to_model_path_and_reviewed_content_hash(self):
+        import tempfile, gzip
+        raw = gzip.decompress((Path(__file__).parents[1] / 'data/navigation-product/model.json.gz').read_bytes())
+        with tempfile.TemporaryDirectory() as directory:
+            valid = Path(directory) / 'reviewed.gz'; valid.write_bytes(gzip.compress(raw))
+            other = Path(directory) / 'other.gz'; other.write_bytes(gzip.compress(b'{}'))
+            self.assertEqual(MODULE.load_workspace_tab_sources(str(valid), MODULE.WORKSPACE_TAB_SCIENCE_SHA256)[self.challenge]['tab'], 'c')
+            for path, digest in ((str(valid), 'another-version'), (str(other), MODULE.WORKSPACE_TAB_SCIENCE_SHA256)):
+                with self.assertRaisesRegex(RuntimeError, 'reviewed scientific source'): MODULE.load_workspace_tab_sources(path, digest)
+
+    def test_browser_snapshot_records_raw_parent_path_and_rejects_cycles_without_ui_oracle(self):
+        import copy
+        script = r"""
+const input=JSON.parse(require('fs').readFileSync(0,'utf8')),b={positions:input.positions,researchMap:{roots:input.roots},delivery:{sourceModelSha256:input.sha},scopes:[{id:'scope:all',label:'All'}],entities:{},papers:{},versions:{}};
+global.window={NavigationProductApp:{getBundle:()=>b,getState:()=>({route:input.route})}};
+global.document={querySelector:()=>null,querySelectorAll:()=>[],getElementById:()=>null,body:{clientWidth:1425},documentElement:{clientWidth:1425,getBoundingClientRect:()=>({x:0,y:0,width:1440,height:900})}};
+global.getComputedStyle=()=>({scrollbarGutter:'stable'});
+process.stdout.write(JSON.stringify(new Function(input.script+';return desktopChromeGeometry().identitySource;')()));
+"""
+        for mutation in ('normal', 'missing-parent', 'cycle'):
+            positions = copy.deepcopy(self.graph['positions'])
+            if mutation == 'missing-parent': positions[self.challenge]['parentId'] = 'missing'
+            if mutation == 'cycle': positions[self.challenge]['parentId'] = self.challenge
+            payload = dict(script=MODULE.VISUAL_GEOMETRY + MODULE.DESKTOP_CHROME_GEOMETRY_JS,
+                           positions=positions, roots=self.graph['roots'], sha=MODULE.WORKSPACE_TAB_SCIENCE_SHA256,
+                           route=dict(tree='g', node=self.challenge, scope='scope:all'))
+            result = subprocess.run(['node', '-e', script], input=json.dumps(payload), text=True, capture_output=True, timeout=10)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            source = json.loads(result.stdout)
+            if mutation == 'normal':
+                self.assertEqual(source['tabPath'], self.contract[self.challenge]['path'])
+                self.assertEqual(MODULE.workspace_selected_tree(payload['route'], source), 'c')
+            else:
+                self.assertIsNone(source['tabPath'])
+                with self.assertRaises(RuntimeError): MODULE.workspace_selected_tree(payload['route'], source)
+        self.assertIn('workspace_branch_tabs', MODULE.DISPLAY_CONTRACT_MIGRATIONS)
+        self.assertNotIn('activeTree', MODULE.DESKTOP_CHROME_GEOMETRY_JS)
 
 
 class RelationSelectorRevealChecks(unittest.TestCase):
