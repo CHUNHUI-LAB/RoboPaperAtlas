@@ -1115,3 +1115,41 @@ html:has(#navigation-product[data-load-state=ready]), body:has(#navigation-produ
 }
 #navigation-product .np-task-route-overview, #navigation-product .np-task-route-overview p, #navigation-product .np-task-route-overview li, #navigation-product .np-task-route-overview span, #navigation-product .np-task-route-overview small, #navigation-product .np-task-route-overview summary, #navigation-product .np-task-route-overview button, #navigation-product .np-task-route-overview a, #navigation-product .np-task-route-overview .np-note, #navigation-product .np-task-route-overview .np-route-stamp, #navigation-product .np-task-route-overview .np-task-change>article, #navigation-product .np-task-route-overview .np-task-change>nav{font-size:15px;line-height:1.55;}
 #navigation-product .np-task-route-overview h2, #navigation-product .np-task-route-overview h3 {line-height:1.55;}
+
+/* The current identity and site chrome share the short desktop's height budget.
+ * Preserve every control, label, font and source-map card; recover only blank
+ * chrome space. Other desktop views only adopt the true remaining shell height.
+ */
+@media (min-width:1200px) {
+#navigation-product#navigation-product[data-load-state=ready] {display:flex;flex-direction:column;height:var(--np-workspace-shell-height,calc(100dvh - var(--site-header-height,64px) - 1px));min-height:0;}
+#navigation-product[data-load-state=ready]>.np-global-start {flex:0 0 auto;}
+#navigation-product[data-load-state=ready] .np-workspace {flex:1 1 auto;height:auto;min-height:0;}
+#navigation-product[data-load-state=ready] .np-workspace:fullscreen {flex:0 0 auto;height:100dvh;}
+/* Shared site summary touch padding must not expand the source-map chrome. */
+#navigation-product[data-reading-home=true] .np-global-navigation>details>summary, #navigation-product[data-reading-home=true] .np-overview-map-toolbar>details>summary {min-height:0;padding:0;}
+#navigation-product[data-reading-home=true] .np-overview-map-toolbar {min-height:36px;padding-bottom:8px;}
+}
+@media (min-width:1200px) and (max-height:950px) {
+#navigation-product#navigation-product[data-reading-home=true] {padding-bottom:4px;}
+#navigation-product[data-reading-home=true]>.np-global-start {flex:0 0 auto;min-height:0;margin:0;padding:0;}
+#navigation-product[data-reading-home=true] .np-global-navigation>details>summary {min-height:0;padding:0;}
+#navigation-product[data-reading-home=true] .np-selection-context {margin:0 0 2px;padding:0;}
+#navigation-product[data-reading-home=true] .np-context-field {flex-direction:row;align-items:baseline;gap:6px;}
+#navigation-product[data-reading-home=true] .np-selection-context dt {flex:0 0 auto;}
+#navigation-product[data-reading-home=true] .np-selection-context dd {min-width:0;}
+#navigation-product[data-reading-home=true] .np-workspace-bar {display:flex;flex:0 0 auto;flex-wrap:wrap;height:auto;min-height:34px;padding:0;gap:0 10px;}
+#navigation-product[data-reading-home=true] .np-tabs {order:1;flex:0 0 auto;width:auto;padding:0;}
+#navigation-product[data-reading-home=true] .np-global-context {order:2;flex:0 1 auto;width:auto;}
+#navigation-product[data-reading-home=true] .np-reading-tools {order:3;flex:0 0 auto;}
+#navigation-product[data-reading-home=true] .np-reading-tools>summary {min-height:30px;padding:0;}
+#navigation-product[data-reading-home=true] .np-origin-trail {order:4;flex:0 0 auto;width:auto;margin:0;}
+#navigation-product[data-reading-home=true] #np-overview-toggle {order:5;flex:0 0 auto;margin-left:auto;}
+#navigation-product[data-reading-home=true] .np-identity-controls {order:6;flex:0 0 auto;width:auto;margin:0;}
+#navigation-product[data-reading-home=true] .np-identity-controls>summary {padding-top:3px;padding-bottom:3px;}
+#navigation-product[data-reading-home=true] .np-identity-controls[open] {width:600px;top:34px;}
+#navigation-product[data-reading-home=true] #np-graph-fullscreen {order:7;flex:0 0 auto;}
+#navigation-product[data-reading-home=true] .np-reading-landing.np-graphical-home {padding-top:4px;padding-bottom:4px;}
+#navigation-product[data-reading-home=true] .np-overview-map-toolbar {min-height:28px;padding:0;margin:0;}
+#navigation-product[data-reading-home=true] .np-overview-map-toolbar>details>summary {min-height:28px;padding:0;}
+#navigation-product[data-reading-home=true] .np-overview-map-toolbar>details[open] {top:28px;}
+}

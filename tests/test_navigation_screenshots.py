@@ -14,6 +14,51 @@ MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
 
 
+def chrome_text_fixture(text, font, area, foreground, background):
+    import copy
+    fragment = dict(area, visible=True)
+    return dict(text=text, renderedText=text, rect=copy.deepcopy(area), visible=True, opaque=True, unscaled=True, clipped=False,
+                fontSize=font, foreground=foreground, background=background, clipAreas=[], fragments=[fragment],
+                textRuns=[dict(text=text, fontSize=font, foreground=foreground, background=background, opaque=True, unscaled=True,
+                               clipAreas=[], fragments=[copy.deepcopy(fragment)])])
+
+
+def desktop_chrome_fixture(width=1440, height=900, top=132, bottom_padding=16, route=None, home=False):
+    """Independent synthetic DOM frames, not an assertion of browser pixels."""
+    import copy
+    def frame(selector, x, y, w, h, **values):
+        area = dict(x=x, y=y, width=w, height=h)
+        return dict(selector=selector, count=1, rect=area, clientRect=copy.deepcopy(area),
+                    position='relative', display='block', opaque=True, unscaled=True, top=0, left=0,
+                    marginTop=0, marginBottom=0, marginLeft=0, marginRight=0, paddingTop=0, paddingBottom=0, paddingLeft=0, paddingRight=0, rowGap=0) | values
+    result = dict(layoutWidth=width, rootClientWidth=width, rootRect=dict(x=0, y=0, width=width, height=height), rootGutter='stable', topology=True,
+                body=frame('body', 0, 0, width, height),
+                header=frame('.site-header', 0, 0, width, 32),
+                app=frame('#navigation-product', 0, 32, width, height - 32, paddingLeft=16, paddingRight=16, paddingBottom=bottom_padding),
+                start=frame('#navigation-product > .np-global-start', 16, 32, width - 32, 24),
+                workspace=frame('#np-workspace', 16, 56, width - 32, height - 56 - bottom_padding),
+                identity=frame('#np-selection-context', 16, 56, width - 32, 20),
+                bar=frame('#np-workspace > .np-workspace-bar', 16, 76, width - 32, top - 76))
+    route = route if route is not None else dict(tree='l')
+    texts = [('当前任务', '原始阅读范围'), ('当前路线', '原始路线'), ('当前论文', '尚未选择'), ('来源版本', '尚未选择')]
+    result['identitySource'] = dict(route=route, scopeId='original-scope', routePositionId=None, atRoot=home, fields=texts)
+    result['identityFields'] = [dict(tag='DIV', className='np-context-field', children=['DT', 'DD'],
+        label=chrome_text_fixture(label, 11, dict(x=20+i*330, y=58, width=100, height=14), [98,107,103], [250,250,248]),
+        value=chrome_text_fixture(value, 13, dict(x=125+i*330, y=58, width=150, height=17), [23,26,25], [250,250,248])) for i,(label,value) in enumerate(texts)]
+    result['controls'] = []
+    for i,(selector,tag,identity,tree,text,font) in enumerate(MODULE.WORKSPACE_CONTROL_SPECS):
+        hidden = selector=='#np-overview-toggle' and not home
+        fg, bg = [23,26,25], [255,255,255]
+        if tree: fg,bg=([49,92,75],[255,255,255]) if tree==route['tree'] else ([107,122,130],[237,241,236])
+        elif selector=='#np-overview-toggle': fg,bg=[49,92,75],[250,250,248]
+        elif selector=='#np-reading-tools > summary': bg=[250,250,248]
+        proof=chrome_text_fixture(text or ('原全局树图' if home else '回到差异概览'),font,dict(x=20+i*160,y=78,width=155,height=18),fg,bg)
+        proof.update(opaque=not hidden,visible=not hidden)
+        result['controls'].append(dict(selector=selector,count=1,tag=tag,id=identity,tree=tree,hidden=hidden,disabled=False,hover=False,
+                                       selected=str(tree==route['tree']).lower() if tree else None,proof=proof))
+    return result
+
+
 def run_product_capture_script(owner, body, extra):
     """Production desktop DOM contract (1440px default); does not claim layout.
 
@@ -2664,19 +2709,21 @@ assert.ok(!JSON.stringify(result).includes('PRIVATE'));assert.ok(!JSON.stringify
 
 class DesktopHierarchyContractChecks(unittest.TestCase):
     @staticmethod
-    def shell(tree='l', width=1440):
+    def shell(tree='l', width=1440, layout_width=None):
         import copy
         height = 900 if width == 1440 else 1080
         def rect(x, y, w, h): return dict(x=x, y=y, width=w, height=h)
         def proof(r, text): return dict(rect=r, text=text, visible=True, opaque=True, unscaled=True, clipped=False,
                                        fontSize=15, foreground=[20, 30, 40], background=[255, 255, 255])
-        tw = (400 if width == 1440 else 448) if tree == 'a' else (768 if width == 1440 else 1056)
         gap = 24 if tree == 'a' else 16
-        pane = rect(16 + tw + gap, 132, width - 32 - tw - gap, height - 148)
-        return {'stationaryAncestors': [{'selector': selector, 'top': 0, 'left': 0} for selector in MODULE.STATIONARY_SHELL_SELECTORS],
-                'ready': 'ready', 'route': {'tree': tree}, 'methodReading': 'false', 'readingLayout': 'browse', 'position': None, 'window': {'x': 0, 'y': 0},
+        layout_width = layout_width or width
+        route = {'tree': tree}
+        tw = (400 if width == 1440 else 448) if tree == 'a' else (layout_width - 32 - gap) * 1.1 / 2.1
+        pane = rect(16 + tw + gap, 132, layout_width - 32 - tw - gap, height - 148)
+        return {'chrome': desktop_chrome_fixture(layout_width, height, route=route), 'stationaryAncestors': [{'selector': selector, 'top': 0, 'left': 0} for selector in MODULE.STATIONARY_SHELL_SELECTORS],
+                'ready': 'ready', 'route': route, 'methodReading': 'false', 'readingLayout': 'browse', 'position': None, 'window': {'x': 0, 'y': 0},
                 'viewport': rect(0, 0, width, height), 'home': False, 'collapsed': False,
-                'panels': rect(16, 132, width - 32, height - 148), 'treePane': rect(16, 132, tw, height - 148),
+                'panels': rect(16, 132, layout_width - 32, height - 148), 'treePane': rect(16, 132, tw, height - 148),
                 'tree': rect(17, 176, tw - 2, height - 217), 'pane': pane,
                 'reader': rect(pane['x'] + 1, 228, pane['width'] - 2, height - 245),
                 'heading': proof(rect(pane['x'] + 1, 133, pane['width'] - 2, 95), 'Object · version'),
@@ -2687,6 +2734,35 @@ class DesktopHierarchyContractChecks(unittest.TestCase):
                 'offsets': {'tree': {'top': 0, 'left': 0}, 'reader': {'top': 0, 'left': 0}},
                 'rootRows': [], 'routeRows': [], 'relation': None, 'visibleTaskDefinitions': 0,
                 'titleRelation': None, 'returnControlCount': 0, 'returnControl': None, 'treeFooter': None}
+
+    def test_chrome_budget_measures_new_top_gutter_and_original_pane_ratios(self):
+        import copy
+        for width in (1440, 1920):
+            for tree in ('l', 'c', 'a'):
+                data = self.shell(tree, width, layout_width=width - 15)
+                # Engines may report the root client box with or without the
+                # reserved stable gutter. The body still measures actual width.
+                data['chrome']['rootClientWidth'] = width
+                # The source panes move below an independently measured larger toolbar.
+                data['chrome']['bar']['rect']['height'] += 57
+                data['chrome']['bar']['clientRect']['height'] += 57
+                for key in ('panels', 'treePane', 'tree', 'pane', 'reader'):
+                    data[key]['y'] += 57; data[key]['height'] -= 57
+                for key in ('heading', 'title', 'meta'): data[key]['rect']['y'] += 57
+                MODULE.check_desktop_shell(data)
+                self.assertEqual(data['panels']['y'], 189)
+                for mutate in (lambda d: d.pop('chrome'), lambda d: d['chrome'].update(topology=False),
+                               lambda d: d['chrome']['header']['rect'].update(height=100),
+                               lambda d: d['chrome']['app']['rect'].update(height=100),
+                               lambda d: d['chrome']['bar']['rect'].update(height=800),
+                               lambda d: d['chrome']['identity'].update(opaque=False),
+                               lambda d: d['chrome']['start'].update(unscaled=False),
+                               lambda d: d['chrome']['workspace'].update(top=1),
+                               lambda d: d['chrome']['body'].update(marginLeft=15),
+                               lambda d: d['chrome']['body']['rect'].update(width=width),
+                               lambda d: d['panels'].update(width=width - 32)):
+                    bad = copy.deepcopy(data); mutate(bad)
+                    with self.subTest(width=width, tree=tree), self.assertRaises(RuntimeError): MODULE.check_desktop_shell(bad)
 
     def test_fixed_desktop_shell_rejects_outer_scroll_hidden_version_third_scroll_and_old_columns(self):
         import copy
@@ -2708,6 +2784,41 @@ class DesktopHierarchyContractChecks(unittest.TestCase):
                     bad = copy.deepcopy(good); mutate(bad)
                     with self.subTest(width=width, tree=tree, mutation=index), self.assertRaises(RuntimeError):
                         MODULE.check_desktop_shell(bad)
+
+    def test_original_identity_and_workspace_text_cannot_hide_behind_correct_frames(self):
+        import copy
+        good = self.shell()
+        MODULE.check_desktop_shell(good)
+        field = lambda d: d['chrome']['identityFields'][0]['value']
+        control = lambda d: d['chrome']['controls'][0]
+        mutations = [lambda d: d['chrome'].pop('identitySource'), lambda d: d['chrome']['identityFields'].pop(),
+                     lambda d: d['chrome']['identityFields'][0].update(children=['DD', 'DT']),
+                     lambda d: field(d).update(opaque=False), lambda d: field(d).update(clipped=True),
+                     lambda d: field(d).update(fontSize=12), lambda d: field(d).update(text='shortened'),
+                     lambda d: field(d)['textRuns'][0].update(unscaled=False),
+                     lambda d: field(d)['fragments'][-1].update(visible=False),
+                     lambda d: field(d)['textRuns'][0]['fragments'][-1].update(y=500),
+                     lambda d: field(d).update(foreground=[]),
+                     lambda d: d['chrome']['controls'].pop(), lambda d: control(d).update(count=2),
+                     lambda d: control(d).update(tag='SPAN'), lambda d: control(d).update(tree='other'),
+                     lambda d: control(d).update(hidden=True), lambda d: control(d).update(disabled=True),
+                     lambda d: control(d).update(selected='true'), lambda d: control(d)['proof'].update(clipped=True),
+                     lambda d: control(d)['proof'].update(visible=False),
+                     lambda d: control(d)['proof']['textRuns'][0]['fragments'][-1].update(visible=False)]
+        for index, mutate in enumerate(mutations):
+            bad = copy.deepcopy(good); mutate(bad)
+            with self.subTest(index=index), self.assertRaises(RuntimeError): MODULE.check_desktop_shell(bad)
+        # Preserve the existing lower-contrast unselected tab and approved hover
+        # styles; do not turn this geometry repair into a new color redesign.
+        self.assertLess(MODULE.contrast_ratio(control(good)['proof']['foreground'], control(good)['proof']['background']), 4.5)
+        for index, foreground, background in ((0,[107,122,130],[255,255,255]),(4,[49,92,75],[250,250,248]),
+                                               (6,[49,92,75],[255,255,255]),(7,[23,26,25],[240,244,239])):
+            hovered=copy.deepcopy(good); row=hovered['chrome']['controls'][index];row['hover']=True
+            for proof in [row['proof'], *row['proof']['textRuns']]: proof.update(foreground=foreground,background=background)
+            MODULE.check_desktop_shell(hovered)
+        transitioning=copy.deepcopy(good);proof=transitioning['chrome']['controls'][0]['proof']
+        for row in [proof,*proof['textRuns']]: row.update(foreground=[82,110,105],background=[246,248,245])
+        MODULE.check_desktop_shell(transitioning)
 
     def test_stationary_ancestor_offsets_cannot_hide_behind_window_zero_or_correct_panel_bounds(self):
         import copy
@@ -2814,7 +2925,8 @@ try{const w=dom.window,d=w.document;d.body.style.overflow='hidden';d.body.scroll
         science = json.loads(gzip.decompress((Path(__file__).parents[1] / 'data/navigation-product/model.json.gz').read_bytes()))
         body = r"""
 await scope('task:category-objectnav');
-d.elementFromPoint=()=>d.body;const shellSnapshot=new w.Function(input.shellSnapshot);assert.equal(shellSnapshot().headingInsideScroll,false);
+// DOM identity only; JSDOM has no native Range rectangles or browser pixels.
+d.elementFromPoint=()=>d.body;w.Range.prototype.getClientRects=function(){return [];};const shellSnapshot=new w.Function(input.shellSnapshot);assert.equal(shellSnapshot().headingInsideScroll,false);
 const tree=d.getElementById('np-tree-scroll'),reader=d.getElementById('np-detail-scroll'),picker=d.getElementById('np-task-route-canvas'),heading=d.getElementById('np-reader-heading');
 assert.equal(tree.contains(picker),false);assert.ok(picker.closest('.np-workspace-bar'));assert.equal(reader.contains(heading),false);assert.ok(heading.closest('.np-reading-pane'));
 d.getElementById('np-task-route-relations-summary').click();d.querySelector('[data-task-change="methods:relation:90"]').click();await ready(()=>d.querySelector('[data-selected-task-relation]')&&d.querySelector('[data-relation-state]')?.dataset.relationState==='ready');
@@ -2831,7 +2943,8 @@ d.querySelector('.np-return-previous').click();await ready(()=>a.getState().rout
 
     def test_new_state_capture_mapping_keeps_original_90_scenes_and_historical_diagnostics(self):
         import inspect
-        self.assertEqual(len(MODULE.DISPLAY_CONTRACT_MIGRATIONS), 14)
+        self.assertEqual(len(MODULE.DISPLAY_CONTRACT_MIGRATIONS), 15)
+        self.assertIn('shared_chrome_budget', MODULE.DISPLAY_CONTRACT_MIGRATIONS)
         self.assertIn('s0_footer', MODULE.DISPLAY_CONTRACT_MIGRATIONS)
         self.assertEqual(len(MODULE.SCENE_NAMES), 53)
         for name in ('-31-s0-reading-hierarchy', '-32-s1-relation-90', '-33-s2-first-answer', '-30-analysis-root-coverage'):
@@ -2893,6 +3006,7 @@ class MethodReadingCaptureChecks(unittest.TestCase):
                     title=self.proof(title), meta=self.proof(meta, y=179),
                     treeHeading=self.proof('当前位置与来路', 30, 144, 360), tree=dict(x=17, y=176, width=398, height=683),
                     viewport=dict(x=0, y=0, width=1440, height=900), reader=dict(x=433, y=261, width=990, height=622),
+                    pane=dict(x=432, y=132, width=992, height=752),
                     heading=self.proof('fixed source identity', 433, 133, 990, 128), rows=rows,
                     siblings=[], introductions=[dict(text='Original interface introduction', rendering=dict(display='none', rendered=False))],
                     mechanism=dict(entity=p['entityId'], ready=True, rect=dict(x=465, y=280, width=880, height=900),
@@ -2948,6 +3062,7 @@ class MethodReadingCaptureChecks(unittest.TestCase):
         import copy
         data, expected = self.receipt()
         mutations = [lambda d: d['heading']['rect'].update(height=129), lambda d: d['reader'].update(y=262),
+                     lambda d: d.pop('pane'), lambda d: (d['heading']['rect'].update(y=143), d['reader'].update(y=271)),
                      lambda d: d['mechanism']['rect'].update(width=478), lambda d: d['mechanism']['rect'].update(width=1200),
                      lambda d: d['rows'][0]['proof'].update(visible=False), lambda d: d['rows'][0]['proof'].update(fontSize=14.99), lambda d: d['rows'][0]['roleProof'].update(fontSize=14),
                      lambda d: d['title']['textRuns'][0].update(fontSize=10), lambda d: d['title'].update(fragments=[]),
@@ -3859,7 +3974,14 @@ class S0FooterCaptureChecks(unittest.TestCase):
         expected = cls.expected(); viewport = rect(0, 0, width, height)
         map_box = rect(41, 149, width - 82, height - 241.5)
         footer_rect = rect(41, height - 80.5, width - 82, 47.5)
-        landing = frame('np-reading-landing', rect(16, 132, width - 32, height - 148), paddingTop=17, paddingBottom=17, display='flex', flexDirection='column')
+        # Preserve the compact map fixture while budgeting a real preceding toolbar.
+        bottom_padding = 4 if height <= 950 else 16
+        landing = frame('np-reading-landing', rect(16, 100, width - 32, height - 100 - bottom_padding), paddingTop=17,
+                        paddingBottom=33 - bottom_padding, display='flex', flexDirection='column')
+        toolbar = frame('', rect(41, 117, width - 82, 32), 'np-reading-landing',
+                        className='np-overview-map-toolbar', flexShrink='0', count=1, beforeMap=True, first=True,
+                        controls=[dict(id=identity, tag=tag, proof=cls.proof(label or '显示全部关系', rect(41 + i * 190, 117, 180, 24)))
+                                  for i, (identity, tag, label) in enumerate(MODULE.S0_TOOLBAR_LABELS)])
         footer = frame('np-overview-footer', footer_rect, 'np-reading-landing', className='np-overview-footer',
                        display='flex', flexDirection='column', flexShrink='0', rowGap=4, marginTop=12,
                        afterMap=True, insideMap=False, children=[dict(id='', className='np-map-legend'), dict(id='', className='np-overview-coverage np-map-coverage')])
@@ -3897,7 +4019,7 @@ class S0FooterCaptureChecks(unittest.TestCase):
         for i, node in enumerate(expected['nodes']):
             if node['id'] in task_by_id:
                 scope = task_by_id[node['id']]; column, rank = task_places[scope]
-                area = rect(49 + column * (tw + 16), 307 + rank * (76 + task_extra), tw, 52)
+                area = rect(49 + column * (tw + 16), 307 + rank * (76 + task_extra), tw, 56)
                 name, contract = task_labels[scope]
                 labels = dict(name=cls.proof(name, rect(area['x'] + 10, area['y'] + 26, tw - 20, 21)),
                               contract=cls.proof(contract, rect(area['x'] + 10, area['y'] + 4, tw - 20, 20.8)))
@@ -3934,10 +4056,10 @@ class S0FooterCaptureChecks(unittest.TestCase):
         panel.update(scrollHeight=panel['clientHeight'] + (211 if selected else 0), maxTop=211 if selected else 0)
         route = dict(scope='scope:all', tree='g', node=expected['root'], paper=None, version=None)
         view = dict(selectedRelation=selected, relationScrollTop=0, scrollTop=0, relationsOpen=False, linesVisible=False)
-        return dict(expected=expected, viewport=viewport, ready='ready', home=True, scale=1, window=dict(x=0, y=0),
+        return dict(chrome=desktop_chrome_fixture(width, height, top=100, bottom_padding=bottom_padding, route=route, home=True), expected=expected, viewport=viewport, ready='ready', home=True, scale=1, window=dict(x=0, y=0),
                     route=route, historyRoute=copy.deepcopy(route), focus='np-map-relation-evidence-' + selected if selected else 'BODY',
                     selectedRelation=selected, relationsVisible='false', selectorOpen=False, runtimeOverview=copy.deepcopy(view), historyOverview=copy.deepcopy(view),
-                    landing=landing, map=map_frame, footerCount=1, legendCount=1, coverageCount=1,
+                    landing=landing, map=map_frame, toolbar=toolbar, footerCount=1, legendCount=1, coverageCount=1,
                     footer=footer, legend=legend, coverage=coverage, nodes=nodes, layoutNotes=layout_notes, panel=panel, scrollRegionCandidates=[],
                     scrollIds=['np-overview-relation-panel'] if selected else [])
 
@@ -3956,11 +4078,88 @@ class S0FooterCaptureChecks(unittest.TestCase):
         self.assertNotEqual(original['coverage'], changed['coverage'])
         self.assertEqual(original['nodes'], changed['nodes'])
 
+    def test_chrome_and_toolbar_budget_cannot_hide_excess_height_nodes_or_footer_overlap(self):
+        import copy
+        good = self.fixture()
+        MODULE.check_s0_footer(good)
+        for mutate in (lambda d: d['chrome']['header']['rect'].update(height=200),
+                       lambda d: d['chrome']['bar']['rect'].update(height=200),
+                       lambda d: d.pop('toolbar'), lambda d: d['toolbar'].update(count=2),
+                       lambda d: d['toolbar'].update(first=False), lambda d: d['toolbar'].update(beforeMap=False),
+                       lambda d: d['toolbar'].update(position='absolute'), lambda d: d['toolbar'].update(flexShrink='1'),
+                       lambda d: d['toolbar']['controls'].pop(), lambda d: d['toolbar']['controls'][0]['proof'].update(visible=False),
+                       lambda d: d['toolbar']['controls'][0]['proof'].update(fontSize=14),
+                       lambda d: d['toolbar']['controls'][0]['proof'].update(fontSize=16.1),
+                       lambda d: d['toolbar']['controls'][0]['proof'].update(clipped=True),
+                       lambda d: d['toolbar']['rect'].update(height=200),
+                       lambda d: d['nodes'].pop(), lambda d: d['nodes'][4]['labels'].pop('contract'),
+                       lambda d: d['footer']['rect'].update(y=d['map']['rect']['y'] + d['map']['rect']['height'] - 1)):
+            bad = copy.deepcopy(good); mutate(bad)
+            with self.assertRaises(RuntimeError): MODULE.check_s0_footer(bad)
+        # Budget accounting alone must not license reducing the source map: a
+        # genuinely taller toolbar takes height from the map, never from cards.
+        bad = copy.deepcopy(good); extra = 40
+        bad['toolbar']['rect']['height'] += extra
+        bad['toolbar']['clientRect']['height'] += extra
+        for key in ('rect', 'clientRect'):
+            bad['map'][key]['y'] += extra; bad['map'][key]['height'] -= extra
+        for key in ('clientHeight', 'scrollHeight'): bad['map'][key] -= extra
+        with self.assertRaises(RuntimeError): MODULE.check_s0_footer(bad)
+
+    def test_both_desktops_can_have_only_compact_source_height_after_current_chrome(self):
+        import copy
+        def translate(value, delta):
+            if isinstance(value, dict):
+                if all(key in value for key in ('x', 'y', 'width', 'height')): value['y'] += delta
+                for child in value.values(): translate(child, delta)
+            elif isinstance(value, list):
+                for child in value: translate(child, delta)
+        for width in (1440, 1920):
+            data = self.fixture(width)
+            old = MODULE.check_s0_adaptive_spacing(data)
+            # A synthetic tight budget at either viewport: the exact original
+            #649px compact graph fits with fractional CSS pixel rounding. This
+            # is not a claim that a1080px screen has the old838px map available.
+            delta = data['map']['rect']['height'] - 649.5
+            for key in ('rect', 'clientRect'): data['chrome']['bar'][key]['height'] += delta
+            for key in ('rect', 'clientRect'):
+                data['landing'][key]['y'] += delta; data['landing'][key]['height'] -= delta
+                data['map'][key]['y'] += delta; data['map'][key]['height'] -= delta
+            for region in ('landing', 'map'):
+                for key in ('clientHeight', 'scrollHeight'): data[region][key] -= delta
+            translate(data['toolbar'], delta)
+            ranks = {scope: rank for rank, group in enumerate(MODULE.S0_TASK_ROWS) for scope in group}
+            challenges = data['expected']['challengeIds']
+            for row in data['nodes']:
+                spread = ranks[row['scope']] * old['taskExtra'] if row['scope'] else (
+                    challenges.index(row['id']) * old['challengeExtra'] if row['id'] in challenges else 0)
+                translate(row, delta - spread)
+            translate(data['layoutNotes'], delta)
+            translate(data['panel'], delta)
+            for key in ('rect', 'clientRect'): data['panel'][key]['height'] -= delta
+            for key in ('clientHeight', 'scrollHeight'): data['panel'][key] -= delta
+            MODULE.check_s0_footer(data)
+            self.assertEqual(MODULE.check_s0_adaptive_spacing(data)['availableExtra'], 0)
+            # All accounting still balances when more chrome consumes space,
+            # but the unchanged source graph must then fail containment.
+            bad = copy.deepcopy(data)
+            for key in ('rect', 'clientRect'): bad['chrome']['bar'][key]['height'] += 20
+            for key in ('rect', 'clientRect'):
+                bad['landing'][key]['y'] += 20; bad['landing'][key]['height'] -= 20
+                bad['map'][key]['y'] += 20; bad['map'][key]['height'] -= 20
+            for region in ('landing', 'map'):
+                for key in ('clientHeight', 'scrollHeight'): bad[region][key] -= 20
+            for key in ('toolbar', 'nodes', 'layoutNotes'): translate(bad[key], 20)
+            with self.assertRaises(RuntimeError): MODULE.check_s0_footer(bad)
+
     def test_adaptive_spacing_uses_actual_client_height_and_preserves_compact_map_gap(self):
         for width, task_extra, c_extra in ((1440, 0, 0), (1920, 24, 7)):
             for selected in (None, *self.expected()['readouts']):
                 for mode in ('false', 'true'):
                     data = self.fixture(width, selected); data['relationsVisible'] = mode
+                    if mode == 'true':
+                        proof = data['toolbar']['controls'][-1]['proof']
+                        proof['text'] = proof['renderedText'] = proof['textRuns'][0]['text'] = '仅显示所选关系'
                     result = MODULE.check_s0_adaptive_spacing(data)
                     MODULE.check_s0_footer(data)
                     self.assertEqual(result, dict(compactBottom=649, availableExtra=0 if width == 1440 else 178,
@@ -3969,7 +4168,7 @@ class S0FooterCaptureChecks(unittest.TestCase):
                     self.assertAlmostEqual(last['y'] + last['height'] - map_rect['y'], 649 if width == 1440 else 733)
                     self.assertAlmostEqual(map_rect['y'] + map_rect['height'] - last['y'] - last['height'], 9.5 if width == 1440 else 105.5)
                     tasks = [n['proof']['rect'] for n in data['nodes'] if n['scope']]
-                    self.assertAlmostEqual(max(r['y'] + r['height'] for r in tasks) - map_rect['y'], 590 if width == 1440 else 710)
+                    self.assertAlmostEqual(max(r['y'] + r['height'] for r in tasks) - map_rect['y'], 594 if width == 1440 else 714)
                     self.assertTrue(all(data['footer']['rect']['y'] - r['y'] - r['height'] >= 12 for r in tasks + [last]))
 
     def test_adaptive_spacing_rejects_stale_large_layout_compact_drift_and_invented_metadata(self):
@@ -4017,7 +4216,8 @@ class S0FooterCaptureChecks(unittest.TestCase):
                      lambda d: task(d)['proof']['rect'].update(x=50),
                      lambda d: c(d)['proof']['rect'].update(x=c(d)['proof']['rect']['x'] - 1),
                      lambda d: task(d)['proof']['rect'].update(width=task(d)['proof']['rect']['width'] + 1),
-                     lambda d: task(d)['proof']['rect'].update(height=53),
+                     lambda d: task(d)['proof']['rect'].update(height=55),
+                     lambda d: task(d)['proof']['rect'].update(height=57),
                      lambda d: c(d)['proof']['rect'].update(height=38),
                      lambda d: c(d)['proof']['rect'].update(height=36),
                      lambda d: task(d)['labels']['contract'].update(fontSize=15),
@@ -4230,6 +4430,11 @@ d.elementFromPoint=()=>d.body;w.Range.prototype.getClientRects=function(){return
 const footerSnapshot=new w.Function(input.footerSnapshot),state=JSON.stringify(a.getState()),initial=footerSnapshot(input.footerExpected);
 assert.equal(JSON.stringify(a.getState()),state);assert.equal(initial.footerCount,1);assert.equal(initial.footer.id,'np-overview-footer');assert.equal(initial.footer.parent,'np-reading-landing');assert.equal(initial.footer.afterMap,true);assert.equal(initial.footer.insideMap,false);assert.equal(initial.legend.inFooter,true);assert.equal(initial.coverage.inFooter,true);
 assert.equal(initial.coverage.proof.renderedText,input.footerExpected.coverage);assert.equal(initial.legend.labels[2].proof.renderedText,input.footerExpected.defaultReadout);
+assert.equal(initial.chrome.identityFields.length,4);assert.equal(initial.chrome.identitySource.scopeId,a.getState().route.scope);assert.deepEqual(initial.chrome.identitySource.route,a.getState().route);
+assert.deepEqual(JSON.parse(JSON.stringify(initial.chrome.identityFields.map(f=>[f.label.renderedText,f.value.renderedText]))),JSON.parse(JSON.stringify(initial.chrome.identitySource.fields)));
+assert.deepEqual(JSON.parse(JSON.stringify(initial.chrome.controls.map(c=>[c.count,c.tag,c.tree]))),[[1,'BUTTON','g'],[1,'BUTTON','l'],[1,'BUTTON','c'],[1,'BUTTON','a'],[1,'SUMMARY',null],[1,'BUTTON',null],[1,'SUMMARY',null],[1,'BUTTON',null]]);
+const identityValue=d.querySelector('#np-selection-context dd');identityValue.style.visibility='hidden';assert.equal(footerSnapshot(input.footerExpected).chrome.identityFields[0].value.opaque,false);identityValue.style.visibility='';
+const originalTab=d.querySelector('.np-workspace-bar .np-tabs > [data-tree-tab="g"]'),duplicateTab=originalTab.cloneNode(true);originalTab.parentElement.appendChild(duplicateTab);assert.equal(footerSnapshot(input.footerExpected).chrome.controls[0].count,2);duplicateTab.remove();
 assert.deepEqual(JSON.parse(JSON.stringify(initial.nodes.map(({id,parent,entity})=>({id,parent,entity})))),input.footerExpected.nodes);states.push(initial);
 d.querySelector('[data-relation-select="tasks:relation:90"]').click();await wait(35);const selectedState=JSON.stringify(a.getState()),selected=footerSnapshot(input.footerExpected);assert.equal(JSON.stringify(a.getState()),selectedState);assert.equal(selected.legend.labels[2].proof.renderedText,input.footerExpected.readouts['tasks:relation:90']);assert.equal(selected.panel.parent,'np-overview-map');assert.deepEqual(JSON.parse(JSON.stringify(selected.panel.articles)),['tasks:relation:90']);states.push(selected);
 for(const id of Object.keys(input.footerExpected.readouts)){d.querySelector('[data-relation-select="'+id+'"]').click();await wait(10);assert.equal(footerSnapshot(input.footerExpected).legend.labels[2].proof.renderedText,input.footerExpected.readouts[id]);}
@@ -4243,7 +4448,7 @@ const span=d.createElement('span');span.style.opacity='0';span.textContent='隐�
     def test_designated_s0_scenes_cannot_omit_footer_but_glossary_keeps_original_overlay_contract(self):
         import copy, inspect
         s0 = self.fixture(); shell = DesktopHierarchyContractChecks.shell()
-        shell.update(home=True, position=None, landing=s0['landing']['rect'], landingOffsets=dict(top=0, left=0), s0Footer=s0)
+        shell.update(chrome=s0['chrome'], route=s0['route'], home=True, position=None, landing=s0['landing']['rect'], landingOffsets=dict(top=0, left=0), s0Footer=s0)
         for viewport in MODULE.VIEWPORTS:
             for suffix in MODULE.S0_FOOTER_SCENES:
                 self.assertTrue(MODULE.s0_footer_required(str(viewport[0]) + 'x' + str(viewport[1]) + suffix))

@@ -799,6 +799,7 @@ def _reader_proof(proof, *areas, font_size=None):
 # Display-only migrations are explicit. Original source, route, restoration,
 # diagnostic, content-delay and native-input predicates remain independent.
 DISPLAY_CONTRACT_MIGRATIONS = {
+    'shared_chrome_budget': 'shared site header, global navigation, four-field selection identity and workspace toolbar retain their measured natural flow; remaining desktop height is proved against the viewport bottom and actual layout width, including a reserved scrollbar gutter; short S0 retains 4px outer bottom padding, otherwise16px; overview toolbar is deducted before the map; source task cards retain the current56px placement contract and C cards37px; first-screen route/answer/entry budgets remain relative to their verified panels',
     'relation_picker': 'same IDs, types, endpoints and controls; outside tree scroll in fixed toolbar',
     'reader_identity': 'fixed current title and exact version replace generic sticky READING DESK',
     'context_path': 'one compact row; original global links and real local parent chain remain distinct',
@@ -898,6 +899,24 @@ S0_TASK_ROWS = (
     ('task:aerial-visual-object-search', 'task:person-finding-following', 'task:namo'),
 )
 S0_SPACING_TOLERANCE = 1 / 16  # CSS pixel rounding only; never a whole-pixel drift.
+S0_TOOLBAR_LABELS = (
+    ('np-all-scopes', 'DETAILS', '全部阅读范围与术语'),
+    ('np-overview-comparison', 'DETAILS', '任务输入与完成要求'),
+    ('np-task-relations', 'DETAILS', '7条有据对照与组合'),
+    ('np-overview-notes', 'DETAILS', '范围说明'),
+    ('np-overview-analysis', 'BUTTON', '单篇论文解析'),
+    ('np-map-relations-toggle', 'BUTTON', None),
+)
+WORKSPACE_CONTROL_SPECS = (
+    ('.np-tabs > [data-tree-tab="g"]', 'BUTTON', '', 'g', '全景', 15),
+    ('.np-tabs > [data-tree-tab="l"]', 'BUTTON', '', 'l', '文献发展', 15),
+    ('.np-tabs > [data-tree-tab="c"]', 'BUTTON', '', 'c', '困难与思路', 15),
+    ('.np-tabs > [data-tree-tab="a"]', 'BUTTON', '', 'a', '论文解析', 15),
+    ('#np-reading-tools > summary', 'SUMMARY', '', None, '阅读工具', 16),
+    ('#np-overview-toggle', 'BUTTON', 'np-overview-toggle', None, None, 15),
+    ('.np-identity-controls > summary', 'SUMMARY', '', None, '论文身份与来源版本', 15),
+    ('#np-graph-fullscreen', 'BUTTON', 'np-graph-fullscreen', None, '全屏查看', 14),
+)
 
 
 def s0_footer_expected(science):
@@ -928,7 +947,143 @@ def s0_footer_expected(science):
             'readouts': {rid: label + ' · ' + NATIVE_RELATION_LABELS[science['relations'][rid]['relationType']] for rid, label in S0_RELATION_LABELS.items()}}
 
 
-S0_FOOTER_SNAPSHOT_JS = VISUAL_GEOMETRY + FIXED_TEXT_PROOF_JS + SCROLL_REGION_VISIBILITY_JS + r"""
+DESKTOP_CHROME_GEOMETRY_JS = 'var workspaceControlSpecs=' + json.dumps(WORKSPACE_CONTROL_SPECS, ensure_ascii=False) + ';\n' + r"""
+function desktopChromeGeometry(){
+  function frame(selector){var matches=document.querySelectorAll(selector),e=matches[0];if(!e)return {selector:selector,count:0};
+    var r=rect(e),cs=getComputedStyle(e),p=box(e),number=k=>parseFloat(cs[k])||0;
+    return {selector:selector,count:matches.length,rect:r,clientRect:{x:r.x+e.clientLeft,y:r.y+e.clientTop,width:e.clientWidth,height:e.clientHeight},
+      position:cs.position,display:cs.display,opaque:p.opaque,unscaled:p.unscaled,top:e.scrollTop,left:e.scrollLeft,
+      marginTop:number('marginTop'),marginBottom:number('marginBottom'),marginLeft:number('marginLeft'),marginRight:number('marginRight'),paddingTop:number('paddingTop'),paddingBottom:number('paddingBottom'),
+      paddingLeft:number('paddingLeft'),paddingRight:number('paddingRight'),rowGap:number('rowGap')};}
+  var header=document.querySelector('.site-header'),app=document.getElementById('navigation-product'),start=app?.querySelector('.np-global-start'),
+    workspace=document.getElementById('np-workspace'),identity=document.getElementById('np-selection-context'),bar=workspace?.querySelector('.np-workspace-bar');
+  var a=window.NavigationProductApp,b=a?.getBundle(),r=a?.getState().route,source=null;
+  if(b&&r&&Array.isArray(b.scopes)&&b.researchMap){var path=[],p=b.positions[r.node];while(p){path.push(p);p=b.positions[p.parentId];}
+    var scopes=new Map(b.scopes.map(s=>[s.id,s])),scope=r.tree==='g'?path.map(p=>scopes.get(p.sourceScopeId)).find(s=>s&&s.id!=='scope:all'):null;
+    scope=scope||scopes.get(r.scope);var route=path.find(p=>['pipeline','pipeline_family','pipeline_or_representation','development_group'].includes(p.kind)),
+      routeEntity=route&&b.entities[route.entityId],paper=r.paper&&b.papers[r.paper],version=r.version&&b.versions[r.version],
+      names={poni:'PONI',semexp:'SemExp',vlfm:'VLFM',harnessvln:'HarnessVLN',navharness:'NavHarness（终身导航）',goat:'GOAT',modiin:'ModIIN',esc:'ESC',zson:'ZSON',cow:'CoW',cmp:'CMP',duet:'DUET',hamt:'HAMT',l3mvn:'L3MVN',vlmaps:'VLMaps',conceptgraphs:'ConceptGraphs',hovsg:'HOV-SG'},
+      versionText=version?(version.label||version.descriptor||r.version):'来源版本待选择';if(versionText==='unknown')versionText='来源版本待核';
+    source={route:r,scopeId:scope?.id,routePositionId:route?.id||null,atRoot:r.tree==='g'&&r.node===b.researchMap.roots[0],
+      fields:[['当前'+(scope?.displayRole||'阅读范围'),scope?.label],['当前路线',route?(routeEntity?.label||route.sourceLabel||route.label):{g:'全局研究图',l:'文献树',c:'挑战–思路树',a:'论文解析树'}[r.tree]],
+        ['当前论文',r.paper?(names[r.paper]||paper?.label||paper?.title||r.paper):'尚未选择'],['来源版本',r.version?versionText+(version?.status==='snapshot_not_version_pinned'?' · 未固定快照':''):'尚未选择']]};}
+  function text(e){return e?fixedTextProof(e):null;}
+  return {layoutWidth:document.body.clientWidth,rootClientWidth:document.documentElement.clientWidth,rootRect:rect(document.documentElement),rootGutter:getComputedStyle(document.documentElement).scrollbarGutter,
+    body:frame('body'),header:frame('.site-header'),app:frame('#navigation-product'),
+    start:frame('#navigation-product > .np-global-start'),workspace:frame('#np-workspace'),identity:frame('#np-selection-context'),bar:frame('#np-workspace > .np-workspace-bar'),
+    identitySource:source,identityFields:identity?[...identity.children].map(e=>({tag:e.tagName,className:e.className,children:[...e.children].map(n=>n.tagName),label:text(e.querySelector(':scope > dt')),value:text(e.querySelector(':scope > dd'))})):[],
+    controls:workspaceControlSpecs.map(spec=>{var matches=bar?bar.querySelectorAll(':scope > '+spec[0]):[],e=matches[0];return {selector:spec[0],count:matches.length,tag:e?.tagName,id:e?.id,tree:e?.dataset.treeTab||null,hidden:!!e?.hidden,disabled:!!e?.disabled,hover:!!e?.matches(':hover'),selected:e?.getAttribute('aria-selected')||null,proof:text(e)};}),
+    topology:!!header&&header.nextElementSibling===app&&start?.parentElement===app&&workspace?.parentElement===app&&
+      identity?.parentElement===workspace&&identity.nextElementSibling===bar};
+}
+"""
+
+
+def check_desktop_chrome(data):
+    """Budget from independently measured, contiguous chrome to the viewport edge.
+
+    The old y132 assumed no shared header or selection identity. Never infer the
+    available height from the landing itself, or trust a product CSS variable.
+    """
+    chrome, viewport = data.get('chrome'), data['viewport']
+    if not chrome or not chrome.get('topology'):
+        raise RuntimeError('Desktop viewport-filling budget lacks its exact chrome structure')
+    width = chrome['layoutWidth']
+    if not isinstance(width, (int, float)) or not math.isfinite(width) or not 1200 <= width <= viewport['width']:
+        raise RuntimeError('Desktop viewport-filling budget has an invalid layout viewport')
+    selectors = {'body': 'body', 'header': '.site-header', 'app': '#navigation-product', 'start': '#navigation-product > .np-global-start',
+                 'workspace': '#np-workspace', 'identity': '#np-selection-context', 'bar': '#np-workspace > .np-workspace-bar'}
+    for key, selector in selectors.items():
+        frame = chrome[key]
+        if (frame.get('count') != 1 or frame.get('selector') != selector or not frame.get('opaque') or not frame.get('unscaled') or
+                frame.get('top') != 0 or frame.get('left') != 0 or not rect_inside(frame['rect'], viewport) or
+                not rect_inside(frame['clientRect'], frame['rect']) or
+                frame['display'] == 'none' or frame['position'] not in (('static', 'relative', 'sticky') if key == 'header' else ('static', 'relative'))):
+            raise RuntimeError('Desktop viewport-filling chrome is missing, shifted, hidden or scaled')
+    body, header, app, start, workspace, identity, bar = (chrome[key] for key in selectors)
+    root = chrome['rootRect']
+    if (chrome['rootGutter'] != 'stable' or not width <= chrome['rootClientWidth'] <= viewport['width'] or
+            not _reader_close(root['x'], 0) or not width <= root['width'] <= viewport['width'] or
+            not _reader_close(width, min(root['width'], chrome['rootClientWidth'])) or
+            any(body[key] != 0 for key in ('marginTop', 'marginBottom', 'marginLeft', 'marginRight', 'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight')) or
+            not _reader_close(body['rect']['x'], 0) or not _reader_close(body['rect']['y'], 0) or
+            not _reader_close(body['rect']['width'], width) or not _reader_close(body['clientRect']['width'], width)):
+        raise RuntimeError('Desktop layout width is not its actual zero-margin body and reserved root gutter')
+    bottom = lambda row: row['rect']['y'] + row['rect']['height']
+    end = lambda row: row['clientRect']['y'] + row['clientRect']['height'] - row['paddingBottom']
+    checks = [(header['rect']['x'], 0), (header['rect']['y'], 0), (header['rect']['width'], width),
+              (app['rect']['x'], 0), (app['rect']['width'], width), (app['rect']['y'], bottom(header)),
+              (bottom(app), viewport['height']), (app['paddingLeft'], 16), (app['paddingRight'], 16),
+              (app['paddingBottom'], 4 if data['home'] and viewport['height'] <= 950 else 16),
+              (start['rect']['y'], app['clientRect']['y'] + app['paddingTop'] + start['marginTop']),
+              (workspace['rect']['y'], bottom(start) + start['marginBottom'] + workspace['marginTop'] + app['rowGap']),
+              (bottom(workspace) + workspace['marginBottom'], end(app)),
+              (workspace['rect']['x'], 16), (workspace['rect']['width'], width - 32),
+              (identity['rect']['y'], workspace['clientRect']['y'] + workspace['paddingTop'] + identity['marginTop']),
+              (bar['rect']['y'], bottom(identity) + identity['marginBottom'] + bar['marginTop'] + workspace['rowGap'])]
+    if any(not _reader_close(actual, expected) for actual, expected in checks):
+        raise RuntimeError('Desktop viewport-filling budget has a chrome gap, overlap or wrong bottom edge')
+    top = bottom(bar) + bar['marginBottom'] + workspace['rowGap']
+    area = dict(x=workspace['clientRect']['x'] + workspace['paddingLeft'], y=top,
+                width=workspace['clientRect']['width'] - workspace['paddingLeft'] - workspace['paddingRight'], height=end(workspace) - top)
+    if not rect_inside(area, viewport):
+        raise RuntimeError('Desktop viewport-filling chrome leaves no positive content budget')
+    source, fields = chrome.get('identitySource'), chrome.get('identityFields', [])
+    if not source or source.get('route') != data['route'] or not source.get('scopeId') or len(source.get('fields', [])) != 4 or len(fields) != 4:
+        raise RuntimeError('Desktop selection identity lacks all four original source-bound fields')
+    for field, texts in zip(fields, source['fields']):
+        if field.get('tag') != 'DIV' or field.get('className') != 'np-context-field' or field.get('children') != ['DT', 'DD']:
+            raise RuntimeError('Desktop selection identity changed its four DT/DD pairs')
+        for key, font, text in zip(('label', 'value'), (11, 13), texts):
+            proof = field.get(key)
+            if not proof or not text or abs(proof['fontSize'] - font) > S0_SPACING_TOLERANCE:
+                raise RuntimeError('Desktop selection identity lost its original labels or type size')
+            check_chrome_text(proof, text, font, identity['clientRect'], viewport)
+    controls = chrome.get('controls', [])
+    if len(controls) != len(WORKSPACE_CONTROL_SPECS):
+        raise RuntimeError('Desktop workspace omitted an original control')
+    for control, (selector, tag, identity, tree, text, font) in zip(controls, WORKSPACE_CONTROL_SPECS):
+        hidden = selector == '#np-overview-toggle' and not source['atRoot']
+        if (control.get('selector') != selector or control.get('count') != 1 or control.get('tag') != tag or
+                control.get('id') != identity or control.get('tree') != tree or control.get('hidden') != hidden or control.get('disabled')):
+            raise RuntimeError('Desktop workspace control identity or legitimate hidden state changed')
+        if tree and control.get('selected') != str(tree == data['route']['tree']).lower():
+            raise RuntimeError('Desktop workspace tab lost its actual selected source tree')
+        if hidden:
+            if control['proof']['opaque'] or control['proof']['visible']:
+                raise RuntimeError('Desktop workspace exposed its route-inapplicable original-map control')
+            continue
+        text = text or ('原全局树图' if data['home'] else '回到差异概览')
+        proof = control.get('proof')
+        if not proof or abs(proof['fontSize'] - font) > S0_SPACING_TOLERANCE:
+            raise RuntimeError('Desktop workspace control changed original type size')
+        check_chrome_text(proof, text, font, app['clientRect'], viewport)
+    return area
+
+
+def check_chrome_text(proof, text, font, *areas):
+    """Record current chrome colors, including legitimate native transitions.
+
+    CSS tests preserve the original color declarations. Scientific text retains
+    its independent 4.5 contrast gate; chrome gains no new color redesign here.
+    """
+    areas = list(areas)
+    color = lambda value: (isinstance(value, list) and len(value) == 3 and
+                           all(type(channel) in (int, float) and math.isfinite(channel) and 0 <= channel <= 255 for channel in value))
+    if (proof['text'] != text or proof['renderedText'] != text or not proof['fragments'] or not proof['textRuns'] or
+            ''.join(run['text'] for run in proof['textRuns']) != text or not _reader_proof(proof, *areas) or proof['clipped'] or
+            abs(proof['fontSize'] - font) > S0_SPACING_TOLERANCE or not color(proof['foreground']) or not color(proof['background'])):
+        raise RuntimeError('Desktop chrome text changed, disappeared, clipped or lost its current styling')
+    for run in proof['textRuns']:
+        if (not run['opaque'] or not run['unscaled'] or abs(run['fontSize'] - font) > S0_SPACING_TOLERANCE or
+                not color(run['foreground']) or not color(run['background']) or not run['fragments'] or
+                any(not fragment['visible'] or not all(rect_inside(fragment, area) for area in areas + run['clipAreas']) for fragment in run['fragments'])):
+            raise RuntimeError('Desktop chrome text fragment is hidden, covered, restyled or clipped')
+    if any(not fragment['visible'] or not all(rect_inside(fragment, area) for area in areas + proof['clipAreas']) for fragment in proof['fragments']):
+        raise RuntimeError('Desktop chrome final text fragment is not fully visible')
+
+
+S0_FOOTER_SNAPSHOT_JS = VISUAL_GEOMETRY + DESKTOP_CHROME_GEOMETRY_JS + FIXED_TEXT_PROOF_JS + SCROLL_REGION_VISIBILITY_JS + r"""
 var a=NavigationProductApp,m=NavigationProductModel,s=a.getState(),b=a.getBundle(),landing=document.getElementById('np-reading-landing'),
     map=document.getElementById('np-overview-map'),panels=document.querySelectorAll('#np-overview-relation-panel'),panel=panels[0],
     footers=document.querySelectorAll('#np-overview-footer,.np-overview-footer'),footer=footers.length===1?footers[0]:null,
@@ -949,11 +1104,13 @@ var selector=document.getElementById('np-task-relations');
 function nodeLabels(e){var result={};[['name','.np-task-reading-name'],['contract','.np-task-reading-contract'],['challenge','.np-map-challenge-label'],['title','h2,h3'],['subtitle','.np-overview-goal p']].forEach(([key,selector])=>{var n=e.querySelector(selector);if(n)result[key]=labelBox(n);});if(e.matches('.np-map-task-root'))result.title=labelBox(e);return result;}
 var candidates=[landing,...landing.querySelectorAll('*')].filter(e=>!e.closest('.np-overview-map-toolbar')).map(scrollRegionCandidate).filter(Boolean),
     selected=map.dataset.selectedRelation||null;
-return {expected:expected,ready:document.getElementById('navigation-product').dataset.loadState,home:!landing.hidden,
+var toolbar=landing.querySelector(':scope > .np-overview-map-toolbar');
+return {chrome:desktopChromeGeometry(),expected:expected,ready:document.getElementById('navigation-product').dataset.loadState,home:!landing.hidden,
   viewport:{x:0,y:0,width:innerWidth,height:innerHeight},window:{x:scrollX,y:scrollY},scale:m.getBucket(s).graphScale,
   route:s.route,historyRoute:persisted?.route||null,focus:document.activeElement.id,selectedRelation:selected,relationsVisible:map.dataset.relationsVisible,
   selectorOpen:selector.open,relationSelector:{id:selector.id,tag:selector.tagName,open:selector.open,inToolbar:selector.matches('#np-reading-landing>.np-overview-map-toolbar>#np-task-relations'),count:document.querySelectorAll('#np-task-relations').length,proof:box(selector)},runtimeOverview:overview(s),historyOverview:overview(persisted),
-  landing:frame(landing),map:frame(map),footerCount:footers.length,legendCount:legends.length,coverageCount:coverages.length,
+  landing:frame(landing),map:frame(map),toolbar:toolbar?Object.assign(frame(toolbar),{count:landing.querySelectorAll(':scope > .np-overview-map-toolbar').length,beforeMap:toolbar.nextElementSibling===map,first:landing.firstElementChild===toolbar,
+    controls:[...toolbar.children].map(e=>({id:e.id,tag:e.tagName,proof:fixedTextProof(e.tagName==='DETAILS'?e.querySelector(':scope > summary'):e)}))}):null,footerCount:footers.length,legendCount:legends.length,coverageCount:coverages.length,
   footer:footer?Object.assign(frame(footer),{afterMap:map.nextElementSibling===footer,insideMap:map.contains(footer),children:[...footer.children].map(e=>({id:e.id,className:e.className})),proof:fixedTextProof(footer)}):null,
   legend:legend?Object.assign(frame(legend),{inFooter:legend.parentElement===footer,labels:[...legend.children].map(e=>({id:e.id,className:e.className,proof:fixedTextProof(e)}))}):null,
   coverage:coverage?Object.assign(frame(coverage),{inFooter:coverage.parentElement===footer,proof:fixedTextProof(coverage)}):null,
@@ -965,14 +1122,14 @@ return {expected:expected,ready:document.getElementById('navigation-product').da
 """
 
 
-def check_s0_text(proof, text, *areas):
+def check_s0_text(proof, text, *areas, font_size=15):
     areas = list(areas) + [proof['rect']] + proof['clipAreas']
     if (proof['text'] != text or proof['renderedText'] != text or
             ''.join(run['text'] for run in proof['textRuns']) != text or
-            not _reader_proof(proof, *areas, font_size=15) or not proof['fragments'] or not proof['textRuns']):
+            not _reader_proof(proof, *areas, font_size=font_size) or not proof['fragments'] or not proof['textRuns']):
         raise RuntimeError('S0 complete footer/source text is shortened, hidden, clipped or unreadable')
     for run in proof['textRuns']:
-        if (not run['opaque'] or not run['unscaled'] or run['fontSize'] < 15 or
+        if (not run['opaque'] or not run['unscaled'] or run['fontSize'] < font_size or
                 len(run['foreground']) != 3 or len(run['background']) != 3 or
                 contrast_ratio(run['foreground'], run['background']) < 4.5 or not run['fragments'] or
                 any(not fragment['visible'] or not all(rect_inside(fragment, area) for area in areas + run['clipAreas']) for fragment in run['fragments'])):
@@ -1097,7 +1254,7 @@ def check_s0_adaptive_spacing(data):
         if any(not close(actual, wanted) for actual, wanted in ((r['x'] - mr['x'], x), (r['y'] - mr['y'], y), (r['width'], w))):
             raise RuntimeError('S0 adaptive spacing differs from bounded measured source-row placement')
         is_task, is_c = identity in task_ranks, identity in challenge_ranks
-        if (is_task and not close(r['height'], 52) or is_c and not close(r['height'], 37) or
+        if (is_task and not close(r['height'], 56) or is_c and not close(r['height'], 37) or
                 not rect_inside(r, client, S0_SPACING_TOLERANCE) or
                 data['footer']['rect']['y'] - r['y'] - r['height'] < 12 - S0_SPACING_TOLERANCE):
             raise RuntimeError('S0 adaptive spacing stretched a card, overflowed the map or lost footer clearance')
@@ -1131,7 +1288,7 @@ def check_s0_adaptive_spacing(data):
 def check_s0_footer(data):
     expected, viewport = data['expected'], data['viewport']
     landing, map_box, footer = data['landing'], data['map'], data['footer']
-    fill = dict(x=16, y=132, width=viewport['width'] - 32, height=viewport['height'] - 148)
+    fill = check_desktop_chrome(data)
     if (not data['home'] or data['ready'] != 'ready' or (viewport['width'], viewport['height']) not in VIEWPORTS or
             data['window'] != {'x': 0, 'y': 0} or data['scale'] != 1 or
             any(not _reader_close(landing['rect'][key], value) for key, value in fill.items()) or
@@ -1144,13 +1301,29 @@ def check_s0_footer(data):
             not data['legend']['inFooter'] or not data['coverage']['inFooter'] or
             footer['children'] != [{'id': '', 'className': 'np-map-legend'}, {'id': '', 'className': 'np-overview-coverage np-map-coverage'}]):
         raise RuntimeError('S0 requires one exact normal-flow footer immediately after the map with both original rows')
+    toolbar = data.get('toolbar')
+    if (not toolbar or toolbar['count'] != 1 or not toolbar['first'] or not toolbar['beforeMap'] or
+            toolbar['parent'] != 'np-reading-landing' or toolbar['position'] not in ('static', 'relative') or
+            toolbar['flexGrow'] != '0' or toolbar['flexShrink'] != '0' or toolbar['flexBasis'] != 'auto' or
+            toolbar['top'] != 0 or toolbar['left'] != 0 or not rect_inside(toolbar['rect'], landing['clientRect']) or
+            not _reader_close(toolbar['rect']['y'], landing['clientRect']['y'] + landing['paddingTop'] + toolbar['marginTop'])):
+        raise RuntimeError('S0 map toolbar lost its original natural-flow height and position')
+    toolbar_height = toolbar['rect']['height'] + toolbar['marginTop'] + toolbar['marginBottom']
+    controls = toolbar.get('controls', [])
+    if [(row['id'], row['tag']) for row in controls] != [(identity, tag) for identity, tag, _ in S0_TOOLBAR_LABELS]:
+        raise RuntimeError('S0 toolbar dropped or substituted an original control')
+    for control, (_, _, label) in zip(controls, S0_TOOLBAR_LABELS):
+        text = label if label is not None else ('仅显示所选关系' if data['relationsVisible'] == 'true' else '显示全部关系')
+        if abs(control['proof']['fontSize'] - 15) > S0_SPACING_TOLERANCE:
+            raise RuntimeError('S0 toolbar changed original control type size')
+        check_s0_text(control['proof'], text, landing['clientRect'], viewport)
     if (landing['display'] != 'flex' or landing['flexDirection'] != 'column' or landing['rowGap'] != 0 or
             map_box['parent'] != 'np-reading-landing' or map_box['position'] != 'relative' or
             map_box['flexGrow'] != '1' or map_box['flexShrink'] != '1' or map_box['flexBasis'] != 'auto' or map_box['minHeight'] != '0px' or
-            not _reader_close(map_box['rect']['y'], landing['clientRect']['y'] + landing['paddingTop']) or
+            not _reader_close(map_box['rect']['y'], landing['clientRect']['y'] + landing['paddingTop'] + toolbar_height) or
             not _reader_close(map_box['rect']['x'], footer['rect']['x']) or not _reader_close(map_box['rect']['width'], footer['rect']['width']) or
             not _reader_close(map_box['rect']['height'], landing['clientHeight'] - landing['paddingTop'] - landing['paddingBottom'] -
-                              footer['rect']['height'] - footer['marginTop'] - footer['marginBottom'])):
+                              toolbar_height - footer['rect']['height'] - footer['marginTop'] - footer['marginBottom'])):
         raise RuntimeError('S0 original map no longer receives the remaining natural-flow landing height')
     for region in (landing, map_box, footer, data['legend'], data['coverage']):
         if (region['top'] != 0 or region['left'] != 0 or region['scrollHeight'] > region['clientHeight'] + 1 or
@@ -1223,7 +1396,9 @@ def check_s0_stability(before, after, restore=False):
     for key in ('expected', 'route', 'historyRoute', 'window', 'scale', 'landing', 'map'):
         if before[key] != after[key]:
             raise RuntimeError('S0 relation interaction moved the landing/map/window or changed the source route')
-    if (before['footer']['rect'] != after['footer']['rect'] or
+    if any(before['chrome'][key] != after['chrome'][key] for key in ('layoutWidth', 'rootClientWidth', 'rootRect', 'body', 'header', 'app', 'start', 'workspace', 'identity', 'bar')):
+        raise RuntimeError('S0 relation interaction moved its measured chrome budget')
+    if (before['toolbar']['rect'] != after['toolbar']['rect'] or before['footer']['rect'] != after['footer']['rect'] or
             [(row['id'], row['proof']['rect']) for row in before['nodes']] != [(row['id'], row['proof']['rect']) for row in after['nodes']]):
         raise RuntimeError('S0 relation interaction shifted the footer or an original task/node')
     if restore:
@@ -1274,7 +1449,7 @@ def check_stationary_shell_ancestors(rows):
         raise RuntimeError('A stationary desktop shell ancestor is missing or has a hidden scroll offset')
 
 
-DESKTOP_SHELL_SNAPSHOT_JS = VISUAL_GEOMETRY + SCROLL_REGION_VISIBILITY_JS + FIXED_TEXT_PROOF_JS + STATIONARY_SHELL_ANCESTORS_JS + r"""
+DESKTOP_SHELL_SNAPSHOT_JS = VISUAL_GEOMETRY + DESKTOP_CHROME_GEOMETRY_JS + SCROLL_REGION_VISIBILITY_JS + FIXED_TEXT_PROOF_JS + STATIONARY_SHELL_ANCESTORS_JS + r"""
 var a=NavigationProductApp,m=NavigationProductModel,s=a.getState(),app=document.getElementById('navigation-product'),
     tree=document.getElementById('np-tree-scroll'),reader=document.getElementById('np-detail-scroll'),
     pane=document.querySelector('.np-reading-pane'),header=document.getElementById('np-reader-heading'),
@@ -1287,7 +1462,7 @@ function scroll(e){return {top:e.scrollTop,left:e.scrollLeft};}
 function metrics(e){return {top:e.scrollTop,left:e.scrollLeft,scrollHeight:e.scrollHeight,clientHeight:e.clientHeight,maxTop:Math.max(0,e.scrollHeight-e.clientHeight)};}
 var roots=host.querySelectorAll('[data-parallel-tree] > [role=tree] > [role=treeitem]'),b=a.getBundle(),
     scrollCandidates=[tree,reader,...tree.querySelectorAll('*'),...reader.querySelectorAll('*'),...(footer?[footer,...footer.querySelectorAll('*')]:[])].map(scrollRegionCandidate).filter(Boolean);
-return {stationaryAncestors:stationaryShellAncestors(),ready:app.dataset.loadState,route:s.route,methodReading:app.dataset.methodReading,readingLayout:app.dataset.readingLayout,window:{x:scrollX,y:scrollY},
+return {chrome:desktopChromeGeometry(),stationaryAncestors:stationaryShellAncestors(),ready:app.dataset.loadState,route:s.route,methodReading:app.dataset.methodReading,readingLayout:app.dataset.readingLayout,window:{x:scrollX,y:scrollY},
   viewport:{x:0,y:0,width:innerWidth,height:innerHeight},home:!document.getElementById('np-reading-landing').hidden,
   landing:rect(document.getElementById('np-reading-landing')),landingOffsets:{top:document.getElementById('np-reading-landing').scrollTop,left:document.getElementById('np-reading-landing').scrollLeft},
   collapsed:app.dataset.readerCollapsed==='true',sourceOverview:app.dataset.activeTree==='g'&&app.dataset.globalFocus==='overview',panels:rect(document.querySelector('.np-panels')),
@@ -1389,7 +1564,7 @@ def check_desktop_shell(data, require_s0_footer=False):
     if method and (data.get('readingLayout') != 'reading' or any(data['route'].get(k) != position.get(v) for k, v in
             (('node', 'id'), ('paper', 'paper'), ('version', 'version')))):
         raise RuntimeError('Desktop method presentation changed reading layout or exact source identity')
-    expected = {'x': 16, 'y': 132, 'width': viewport['width'] - 32, 'height': viewport['height'] - 148}
+    expected = check_desktop_chrome(data)
     if require_s0_footer and not data['home']:
         raise RuntimeError('Designated S0 footer capture did not retain the original home')
     if data['home']:
@@ -1425,8 +1600,8 @@ def check_desktop_shell(data, require_s0_footer=False):
     if data.get('relation') or data.get('returnControlCount', 0):
         check_desktop_return_control(data)
     analysis = data['route']['tree'] == 'a'
-    tree_width = (400 if viewport['width'] == 1440 else 448) if analysis or method else (768 if viewport['width'] == 1440 else 1056)
     gap = 24 if analysis else 16
+    tree_width = (400 if viewport['width'] == 1440 else 448) if analysis or method else (expected['width'] - gap) * 1.1 / 2.1
     if (not _reader_close(data['treePane']['width'], tree_width) or
             not _reader_close(data['pane']['width'], expected['width'] - tree_width - gap) or
             not _reader_close(data['pane']['x'], expected['x'] + tree_width + gap)):
@@ -1456,7 +1631,7 @@ def check_relation_canvas_stability(before, opened, selected, required_positions
             raise RuntimeError('Relation scene does not show its real root, route and endpoint methods together')
     root = next(r['proof']['rect'] for r in selected['routeRows'] if r['id'] == required_positions[0])
     poni = next(r['proof']['rect'] for r in selected['routeRows'] if r['id'] == required_positions[-1])
-    if root['y'] > 204 or poni['y'] + poni['height'] > 520:
+    if root['y'] - selected['panels']['y'] > 72 or poni['y'] + poni['height'] - selected['panels']['y'] > 388:
         raise RuntimeError('Relation scene spends the initial tree viewport on controls instead of its source route')
 
 
@@ -1482,7 +1657,7 @@ def check_analysis_first_answer(data, answer, entry, answer_text, version_label)
     if version_label not in data['meta']['text'] or coverage not in data['meta']['text']:
         raise RuntimeError('Fixed analysis heading omitted the exact source version or actual answer coverage')
     if (not data['answer'] or data['answer']['text'] != answer_text or
-            not _reader_proof(data['answer'], data['reader'], data['viewport'], font_size=15) or data['answer']['rect']['y'] > 300):
+            not _reader_proof(data['answer'], data['reader'], data['viewport'], font_size=15) or data['answer']['rect']['y'] - data['panels']['y'] > 168):
         raise RuntimeError('First source answer does not start visibly in the initial reader')
 
 
@@ -1533,7 +1708,7 @@ def check_reader_toggle_snapshot(data, collapsed):
             raise RuntimeError('Collapsed tree does not recover the complete panel width')
     else:
         rr, tr = reader['proof']['rect'], data['treePane']['rect']
-        expected_reader_width = 992 if viewport['width'] == 1440 else 1424
+        expected_reader_width = panels['width'] - data['columnGap'] - (400 if viewport['width'] == 1440 else 448)
         if (reader['display'] == 'none' or reader['tabIndex'] != -1 or
                 not _reader_close(rr['width'], expected_reader_width) or
                 not _reader_close(tr['width'], panels['width'] - data['columnGap'] - expected_reader_width) or rr['height'] < 320 or
@@ -1973,7 +2148,7 @@ return {route:s.route,expanded:m.getBucket(s).expandedByTree,methodReading:app.d
   selectedRelation:reader.querySelector('[data-selected-task-relation]')?.dataset.selectedTaskRelation||null,
   title:measured({selector:'#np-reader-object-title > h2',region:'heading'}),meta:measured({selector:'#np-reader-object-meta',region:'heading'}),
   fixedIdentity:{position:title.dataset.objectPosition||null,entity:title.dataset.objectEntity||null,paper:title.dataset.objectPaper||null,version:title.dataset.objectVersion||null},
-  treeHeading:proof(document.getElementById('np-tree-heading')),tree:rect(tree),reader:rect(reader),heading:proof(document.getElementById('np-reader-heading')),
+  treeHeading:proof(document.getElementById('np-tree-heading')),tree:rect(tree),reader:rect(reader),pane:rect(document.querySelector('.np-reading-pane')),heading:proof(document.getElementById('np-reader-heading')),
   viewport:{x:0,y:0,width:innerWidth,height:innerHeight},
   rows:[...host.querySelectorAll('[role=treeitem]')].map(e=>({id:e.dataset.position,parent:e.dataset.parent||null,domParent:e.parentElement.closest('[role=treeitem]')?.dataset.position||null,
     entity:e.dataset.entity,tree:e.dataset.tree,level:Number(e.getAttribute('aria-level')),ancestor:e.dataset.methodAncestor==='true',selected:e.getAttribute('aria-selected')==='true',
@@ -2109,8 +2284,9 @@ def check_method_reading(data, expected, source_positions, *, compact=False, vis
         for control in data['analysisControls']:
             if not _reader_proof(control, data['heading']['rect'], data['viewport'], font_size=15):
                 raise RuntimeError('Method fixed analysis state or action is unreadable')
-        if compact and (data['heading']['rect']['height'] > 128 or data['reader']['y'] > 261):
-            raise RuntimeError('Reviewed method acceptance case exceeds its 128px fixed heading or y261 body entry')
+        if compact and (data['heading']['rect']['height'] > 128 or not data.get('pane') or
+                        data['reader']['y'] - data['pane']['y'] > 129):
+            raise RuntimeError('Reviewed method acceptance case exceeds its 128px fixed heading or relative body-entry budget')
         if not 720 <= mechanism['rect']['width'] <= 880:
             raise RuntimeError('Desktop method prose does not keep the approved natural-flow reading measure')
 
@@ -3502,7 +3678,7 @@ def desktop_hierarchy_checks(driver, report, save, capture, prefix, base, scienc
         if not _reader_proof(record['method'][key], record['method']['pane'], record['method']['viewport'], font_size=15):
             raise RuntimeError('Imported version analysis status and main action are not immediately readable')
     entry_box = record['method']['analysisEntry']['rect']
-    if entry_box['y'] + entry_box['height'] > 320:
+    if entry_box['y'] + entry_box['height'] - record['method']['panels']['y'] > 188:
         raise RuntimeError('Version analysis main action is below its fixed first-screen entry')
     # The mandatory positive-wheel proof uses this existing exact PONI source.
     # Measure first; expand original evidence only if the natural body fits.
