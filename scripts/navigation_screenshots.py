@@ -4217,7 +4217,7 @@ def main():
                                 'directoryReturn': 'Original -12 scene keeps its native glossary open; full-height/outer0 and all original gates remain, without requiring uncovered footer beneath that intentional overlay'},
               'capturePlan': [str(w) + 'x' + str(h) + suffix for w, h in VIEWPORTS for suffix in SCENE_NAMES]}
     report['frontendSources'] = {name: sha(name) for name in ('assets/navigation-product.js', 'assets/navigation-product-model.js', 'assets/navigation-product.css', 'scripts/navigation_product.py')}
-    report['captureSources'] = {name: sha(name) for name in ('scripts/navigation_screenshots.py', 'tests/test_navigation_screenshots.py')}
+    report['captureSources'] = {name: sha(name) for name in ('scripts/navigation_screenshots.py', 'tests/test_navigation_screenshots.py', 'scripts/footer_screenshots.py', 'tests/test_footer_screenshots.py')}
     report['servedFiles'] = {str(p.relative_to(dist)): sha(p) for p in sorted((dist / 'research/navigation').rglob('*')) if p.is_file()}
     report['servedFiles'].update({str(p.relative_to(dist)): sha(p) for p in sorted((dist / 'assets').glob('navigation-*.js'))})
     report['servedFiles']['assets/navigation-product.css'] = sha(dist / 'assets/navigation-product.css')
@@ -4660,6 +4660,10 @@ def main():
         driver.cdp('CSS.enable', {})
         driver.call('POST', '/timeouts', {'script': 45000, 'pageLoad': 60000, 'implicit': 0})
         base = f'http://127.0.0.1:{server.server_port}/research/navigation/'
+        from footer_screenshots import capture_footer_checks
+        capture_footer_checks(driver, report, save, out, dist,
+                              f'http://127.0.0.1:{server.server_port}', VIEWPORTS, wait_for, png_has_visible_variation)
+        report['footerBrowserLogs'] = driver.call('POST', '/log', {'type': 'browser'})
         for width, height in VIEWPORTS:
             driver.call('POST', '/url', {'url': 'about:blank'})
             # Runner-owned DevTools emulation avoids Chrome's minimum outer window width.
