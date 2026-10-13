@@ -97,3 +97,28 @@ class EditorialInterfaceTests(unittest.TestCase):
   self.assertNotIn('getContext',js)
   interface=(ROOT/'assets/interface.js').read_text()
   self.assertNotIn('drawer.animate',interface)
+
+class CrossSiteFooterTests(unittest.TestCase):
+ def test_shared_shell_keeps_local_navigation_and_links_to_production_sites(self):
+  from build import shell
+  from unittest.mock import patch
+  from html.parser import HTMLParser
+  class FooterLinks(HTMLParser):
+   def __init__(self):super().__init__();self.in_footer=False;self.links=[]
+   def handle_starttag(self,tag,attrs):
+    if tag=='footer':self.in_footer=True
+    if self.in_footer and tag=='a':self.links.append(dict(attrs))
+   def handle_endtag(self,tag):
+    if tag=='footer':self.in_footer=False
+  for prefix in ['', '../', '../../', '../../../', '/RoboPaperAtlas/']:
+   with self.subTest(prefix=prefix),patch('build.asset_url',side_effect=lambda p,n:p+'assets/'+n),patch('build.data_version',return_value='fixture'):
+    parsed=FooterLinks();parsed.feed(shell('Test','<main id="main"></main>',prefix=prefix))
+    urls=[a['href'] for a in parsed.links]
+    for route in ['index.html','reading/index.html','about/index.html']:
+     self.assertEqual(urls.count(prefix+route),1)
+    for url in ['https://github.com/CHUNHUI-LAB/RoboPaperAtlas','https://chunhui-lab.github.io/GradCompass/','https://chunhui-lab.github.io/IELTSOrbit/']:
+     self.assertEqual(urls.count(url),1)
+     attrs=next(a for a in parsed.links if a['href']==url)
+     self.assertEqual(attrs.get('target'),'_blank')
+     self.assertEqual(set(attrs.get('rel','').split()),{'noopener','noreferrer'})
+    self.assertEqual(len(parsed.links),6)
