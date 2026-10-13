@@ -1177,6 +1177,51 @@ def check_chrome_text(proof, text, font, *areas):
         raise RuntimeError('Desktop chrome final text fragment is not fully visible')
 
 
+# A visible relation button must not be centred inside its scrollable menu:
+# centring R91 unnecessarily scrolls the menu's summary out of its client area.
+RELATION_SELECTOR_REVEAL_JS = VISUAL_GEOMETRY + r"""
+var e=arguments[0],relation=arguments[1],menu=e.closest('#np-task-relations'),summary=menu&&menu.querySelector(':scope > summary');
+if(!menu||!summary)throw Error('Exact relationship selector menu is missing');
+function measure(){var r=rect(menu);return {relation:relation,buttonId:e.id,buttonTag:e.tagName,buttonRelation:e.dataset.relationSelect,
+  menuId:menu.id,menuCount:document.querySelectorAll('#np-task-relations').length,open:menu.open,
+  topology:menu.matches('#np-reading-landing>.np-overview-map-toolbar>#np-task-relations')&&e.matches('.np-relation-selectors>button')&&menu.contains(e),
+  scrollTop:menu.scrollTop,scrollLeft:menu.scrollLeft,scrollHeight:menu.scrollHeight,scrollWidth:menu.scrollWidth,
+  menuRect:r,clientRect:{x:r.x+menu.clientLeft,y:r.y+menu.clientTop,width:menu.clientWidth,height:menu.clientHeight},
+  buttonRect:rect(e),summaryRect:rect(summary),viewport:{x:0,y:0,width:innerWidth,height:innerHeight},window:{x:scrollX,y:scrollY}};}
+var before=measure();e.scrollIntoView({block:'nearest',inline:'nearest'});
+return {relation:relation,requested:{block:'nearest',inline:'nearest'},before:before,after:measure()};
+"""
+
+
+def check_relation_selector_reveal(data, relation):
+    if data.get('relation') != relation or data.get('requested') != {'block': 'nearest', 'inline': 'nearest'}:
+        raise RuntimeError('Relationship selector reveal did not request the exact minimal native scroll')
+    before, after = data['before'], data['after']
+    for frame in (before, after):
+        if (frame.get('relation') != relation or frame.get('buttonRelation') != relation or
+                frame.get('buttonId') != 'np-relation-select-' + relation or frame.get('buttonTag') != 'BUTTON' or
+                frame.get('menuId') != 'np-task-relations' or frame.get('menuCount') != 1 or
+                frame.get('open') is not True or frame.get('topology') is not True or
+                frame.get('window') != {'x': 0, 'y': 0}):
+            raise RuntimeError('Relationship selector reveal lost its exact native target or stationary page')
+    for key in ('menuRect', 'clientRect', 'viewport', 'scrollHeight', 'scrollWidth'):
+        if before[key] != after[key]:
+            raise RuntimeError('Relationship selector reveal changed its containing geometry')
+    was_inside = all(rect_inside(before['buttonRect'], before[area], tolerance=0) for area in ('clientRect', 'viewport'))
+    if was_inside and any(before[key] != after[key] for key in ('scrollTop', 'scrollLeft', 'buttonRect', 'summaryRect')):
+        raise RuntimeError('Already visible relationship selector was unnecessarily scrolled')
+    if not all(rect_inside(after['buttonRect'], after[area]) for area in ('clientRect', 'viewport')):
+        raise RuntimeError('Relationship selector reveal left the native target clipped or outside its client area')
+
+
+def reveal_relation_selector(driver, control, relation, report, save):
+    data = driver.js(RELATION_SELECTOR_REVEAL_JS, control, relation)
+    report.setdefault('relationSelectorRevealChecks', []).append(data)
+    save()
+    check_relation_selector_reveal(data, relation)
+    return data
+
+
 # The toolbar's 160ms hover colour transitions can outlive Driver.settle's two
 # frames. Wait for their natural completion, not for a readability gate to pass.
 # This local wait never finishes/cancels animations or changes rendered styles.
@@ -4794,7 +4839,7 @@ def main():
             if not driver.js("return document.getElementById('np-task-relations').open"):
                 driver.click(driver.selector('#np-task-relations > summary'))
             control = driver.selector('[data-relation-select="' + expected['id'] + '"]')
-            driver.js("arguments[0].scrollIntoView({block:'center'});", control)
+            reveal_relation_selector(driver, control, expected['id'], report, save)
             driver.settle()
             native = driver.js(VISUAL_GEOMETRY + "return {tag:arguments[0].tagName,type:arguments[0].type,disabled:arguments[0].disabled,tabIndex:arguments[0].tabIndex,target:arguments[0].getAttribute('aria-controls'),box:box(arguments[0])};", control)
             if native['tag'] != 'BUTTON' or native['type'] != 'button' or native['disabled'] or native['tabIndex'] != 0 or native['target'] != 'np-map-relation-evidence-' + expected['id'] or not native['box']['visible'] or native['box']['clipped']:

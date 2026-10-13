@@ -4167,6 +4167,128 @@ try{const w=dom.window,d=w.document,tree=d.getElementById('np-tree-scroll'),item
         self.assertEqual(len(MODULE.SCENE_NAMES)*len(MODULE.VIEWPORTS),106)
 
 
+class RelationSelectorRevealChecks(unittest.TestCase):
+    """Replay R91's measured scroll geometry without claiming browser pixels."""
+
+    def probe(self, **case):
+        fixture = r"""
+const input=JSON.parse(require('fs').readFileSync(0,'utf8')),c=input.case,relation='tasks:relation:91';
+let top=0,left=0,calls=[];
+const client={x:965,y:181.890625,width:403,height:322},rowHeight=36.25;
+const buttonTop=c.buttonTop===undefined?338.640625:c.buttonTop,buttonHeight=c.buttonHeight||rowHeight;
+const summary={getBoundingClientRect:()=>({x:977,y:191.890625-top,width:379,height:28})};
+const menu={id:'np-task-relations',open:true,clientLeft:1,clientTop:1,clientWidth:403,clientHeight:322,scrollHeight:620,scrollWidth:403,
+ get scrollTop(){return top;},get scrollLeft(){return left;},matches:()=>true,contains:e=>e===button,
+ querySelector:s=>summary,getBoundingClientRect:()=>({x:964,y:180.890625,width:420,height:324})};
+const button={id:'np-relation-select-'+relation,tagName:'BUTTON',dataset:{relationSelect:relation},closest:()=>menu,matches:()=>true,
+ getBoundingClientRect:()=>({x:977-left,y:buttonTop-top,width:379,height:buttonHeight}),
+ scrollIntoView:options=>{calls.push(options);if(c.noScroll)return;
+  const r=button.getBoundingClientRect(),bottom=client.y+client.height;
+  let delta=0;
+  if(options.block==='center')delta=r.y+r.height/2-(client.y+client.height/2);
+  else if(options.block==='nearest'){
+   if(r.y<client.y&&r.y+r.height>bottom)delta=0;
+   else if(r.y<client.y)delta=r.y-client.y;
+   else if(r.y+r.height>bottom)delta=r.y+r.height-bottom;
+  }else throw Error('Unknown native scroll option');
+  top=Math.max(0,Math.min(menu.scrollHeight-menu.clientHeight,Math.round(top+delta)));
+ }};
+global.document={querySelectorAll:()=>[menu]};global.innerWidth=1440;global.innerHeight=900;global.scrollX=0;global.scrollY=0;
+const data=new Function(input.script)(button,relation);
+process.stdout.write(JSON.stringify({data,calls}));
+"""
+        script = MODULE.RELATION_SELECTOR_REVEAL_JS
+        if case.pop('legacy_center', False):
+            script = script.replace("e.scrollIntoView({block:'nearest',inline:'nearest'})", "e.scrollIntoView({block:'center'})")
+        result = subprocess.run(['node', '-e', fixture], input=json.dumps(dict(script=script, case=case)),
+                                text=True, capture_output=True, cwd=Path(__file__).parents[1], timeout=10)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        return json.loads(result.stdout)
+
+    def test_exact_r91_geometry_rejects_old_fourteen_pixel_scroll_and_accepts_nearest(self):
+        old = self.probe(legacy_center=True)['data']; new = self.probe()['data']
+        self.assertEqual(old['before']['buttonRect'], dict(x=977, y=338.640625, width=379, height=36.25))
+        self.assertEqual(old['after']['scrollTop'], 14)
+        self.assertEqual(old['after']['summaryRect']['y'], 177.890625)
+        self.assertAlmostEqual(old['after']['summaryRect']['y'] + .1 * 28, 180.690625)
+        self.assertLess(180.690625, old['after']['clientRect']['y'])
+        with self.assertRaisesRegex(RuntimeError, 'unnecessarily scrolled'):
+            MODULE.check_relation_selector_reveal(old, 'tasks:relation:91')
+        MODULE.check_relation_selector_reveal(new, 'tasks:relation:91')
+        self.assertEqual(new['before'], new['after'])
+        # Replay the original failing text predicate too; the summary's top hit
+        # lies outside the client, independently of its still-visible text centre.
+        for data, passes in ((old, False), (new, True)):
+            frame = data['after']; area = frame['summaryRect']
+            proof = S0FooterCaptureChecks.proof('7条有据对照与组合', area)
+            proof['clipAreas'] = [frame['clientRect']]
+            proof['visible'] = area['y'] + .1 * area['height'] >= frame['clientRect']['y']
+            fragment = dict(x=992.890625, y=area['y'] + 3, width=130.453125, height=18, visible=True)
+            proof['fragments'] = [fragment]; proof['textRuns'][0]['fragments'] = [fragment.copy()]
+            if passes: MODULE.check_s0_text(proof, proof['text'], frame['viewport'])
+            else:
+                with self.assertRaises(RuntimeError): MODULE.check_s0_text(proof, proof['text'], frame['viewport'])
+
+    def test_all_seven_existing_fitting_rows_remain_unscrolled(self):
+        for i in range(7):
+            result = self.probe(buttonTop=229.890625 + i * 36.25)
+            MODULE.check_relation_selector_reveal(result['data'], 'tasks:relation:91')
+            self.assertEqual(result['calls'], [dict(block='nearest', inline='nearest')])
+            self.assertEqual(result['data']['before'], result['data']['after'])
+
+    def test_target_that_needs_scrolling_is_revealed_and_noop_is_rejected(self):
+        data = self.probe(buttonTop=540)['data']
+        MODULE.check_relation_selector_reveal(data, 'tasks:relation:91')
+        self.assertGreater(data['after']['scrollTop'], data['before']['scrollTop'])
+        self.assertTrue(MODULE.rect_inside(data['after']['buttonRect'], data['after']['clientRect']))
+        bad = self.probe(buttonTop=540, noScroll=True)['data']
+        with self.assertRaisesRegex(RuntimeError, 'clipped or outside'):
+            MODULE.check_relation_selector_reveal(bad, 'tasks:relation:91')
+
+    def test_oversized_target_cannot_pass_as_revealed(self):
+        data = self.probe(buttonTop=175, buttonHeight=360)['data']
+        with self.assertRaisesRegex(RuntimeError, 'clipped or outside'):
+            MODULE.check_relation_selector_reveal(data, 'tasks:relation:91')
+
+    def test_missing_wrong_target_page_scroll_and_geometry_changes_fail(self):
+        import copy
+        good = self.probe()['data']
+        for mutate in (lambda d: d.update(relation='wrong'), lambda d: d.update(requested=dict(block='center')),
+                       lambda d: d['after'].update(buttonRelation='wrong'), lambda d: d['after'].update(buttonTag='DIV'),
+                       lambda d: d['after'].update(menuCount=2), lambda d: d['after'].update(open=False),
+                       lambda d: d['after'].update(topology=False), lambda d: d['after']['window'].update(y=1),
+                       lambda d: d['after']['clientRect'].update(height=323), lambda d: d['after'].update(scrollLeft=1),
+                       lambda d: d['after']['summaryRect'].update(y=180)):
+            bad = copy.deepcopy(good); mutate(bad)
+            with self.assertRaises(RuntimeError): MODULE.check_relation_selector_reveal(bad, 'tasks:relation:91')
+
+    def test_reveal_receipt_is_saved_before_rejecting_unnecessary_scroll(self):
+        import copy, inspect, ast
+        test = self
+        class Driver:
+            def __init__(self, data): self.data = data
+            def js(self, script, control, relation):
+                test.assertEqual(script, MODULE.RELATION_SELECTOR_REVEAL_JS)
+                test.assertEqual((control, relation), ('native-button', 'tasks:relation:91'))
+                return self.data
+        for legacy in (False, True):
+            data = self.probe(legacy_center=legacy)['data']; report = {}; saved = []
+            save = lambda: saved.append(copy.deepcopy(report))
+            if legacy:
+                with self.assertRaises(RuntimeError):
+                    MODULE.reveal_relation_selector(Driver(data), 'native-button', 'tasks:relation:91', report, save)
+            else: MODULE.reveal_relation_selector(Driver(data), 'native-button', 'tasks:relation:91', report, save)
+            self.assertEqual(saved, [report])
+            self.assertEqual(report['relationSelectorRevealChecks'], [data])
+        main = inspect.getsource(MODULE.main)
+        self.assertEqual(main.count("reveal_relation_selector(driver, control, expected['id'], report, save)"), 1)
+        self.assertIn("before_selection = s0_footer_check('before-selection-' + expected['id'])", main)
+        tree = ast.parse(inspect.getsource(MODULE))
+        helper = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'reveal_relation_selector')
+        saves = [n for n in ast.walk(helper) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']
+        self.assertEqual(len(saves), 1)
+
+
 class S0ToolbarPaintSettleChecks(unittest.TestCase):
     """Synthetic animation clocks test the protocol, not Chrome render evidence."""
 
@@ -4335,6 +4457,9 @@ process.stdout.write(JSON.stringify({answer,callbacks,inspections,background,for
             return [n for n in ast.walk(node) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']
         self.assertEqual(len(save_calls(paint_helper)), 1)
         tree.body.remove(paint_helper)
+        selector_helper = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'reveal_relation_selector')
+        self.assertEqual(len(save_calls(selector_helper)), 1)
+        tree.body.remove(selector_helper)
         self.assertEqual(len(save_calls(tree)), 99)  # Every original save checkpoint remains.
         self.assertIn('def s0_footer_check(phase):\n        settle_s0_toolbar_paint(driver, report, save, phase)\n        data = driver.js(S0_FOOTER_SNAPSHOT_JS, footer_expected)', source)
 
@@ -4656,7 +4781,7 @@ class S0FooterCaptureChecks(unittest.TestCase):
         self.assertIn("check_s0_footer(graph['s0AdaptiveSpacing'])", main)
         self.assertIn("reading_home(relation_mode='all')", main)
         saves = [n for n in ast.walk(ast.parse(inspect.getsource(MODULE))) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']
-        self.assertEqual(len(saves), 100)  # 99 original checkpoints + one paint-settle diagnostic save.
+        self.assertEqual(len(saves), 101)  # 99 original + one paint-settle + one selector-reveal diagnostic save.
         self.assertEqual(len(MODULE.SCENE_NAMES) * len(MODULE.VIEWPORTS), 106)
         self.assertIn('s0_adaptive_spacing', MODULE.DISPLAY_CONTRACT_MIGRATIONS)
 
@@ -5226,7 +5351,7 @@ class AtomicReceiptPersistenceChecks(unittest.TestCase):
         import tempfile
         source = Path(MODULE.__file__).read_text(encoding='utf-8'); tree = ast.parse(source)
         calls = [node for node in ast.walk(tree) if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == 'save']
-        self.assertEqual(len(calls), 100)  # 99 original checkpoints + one paint-settle diagnostic save.
+        self.assertEqual(len(calls), 101)  # 99 original + one paint-settle + one selector-reveal diagnostic save.
         saves = [node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef) and node.name == 'save']
         self.assertEqual(len(saves), 1)
         self.assertEqual(ast.dump(saves[0].body[0].value.func), "Name(id='write_receipt', ctx=Load())")
@@ -5340,7 +5465,7 @@ class S0SelectorOcclusionChecks(unittest.TestCase):
         for text in ("s0_footer_check('before-selection-'", "s0_footer_check('closed-'", "check_s0_stability(before_selection, selected_footer)", "closed['focus'] != 'np-relation-select-'", 'check_s0_stability(footer_before_reload, footer_after_reload, restore=True)'):
             self.assertIn(text, main)
         saves = [n for n in ast.walk(ast.parse(inspect.getsource(MODULE))) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']
-        self.assertEqual(len(saves), 100)  # 99 original checkpoints + one paint-settle diagnostic save.
+        self.assertEqual(len(saves), 101)  # 99 original + one paint-settle + one selector-reveal diagnostic save.
         self.assertEqual(len(MODULE.SCENE_NAMES) * len(MODULE.VIEWPORTS), 106)
 
 
