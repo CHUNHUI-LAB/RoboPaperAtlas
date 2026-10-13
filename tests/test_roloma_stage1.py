@@ -5,6 +5,7 @@ from unittest.mock import patch
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT/'scripts'))
 import reports as r
 import current_reader as current
+from reader_test_support import strip_live_presentation_scripts
 from report_roloma_stage1 import IDENTITY,POLICY_PATH,SECTION_IDS,EVIDENCE_IDS,IMAGE_HASHES,MATH_HASH
 from validate import expected_stage,validate_catalog
 from build import details,home
@@ -85,7 +86,7 @@ class RoLoMaFirstTests(unittest.TestCase):
   page=current.render(ROOT,self.paper,'stage1',self.records)
   self.assertIn('href="stage1.html"',page);self.assertIn('href="stage2.html"',page);self.assertNotIn('href="stage3.html"',page)
   self.assertIn('href="../index.html#reading"',page);self.assertEqual(page.count(current.context_script(ROOT)),1)
-  for tag in ('article','style','script'):self.assertEqual(re.findall(rf'<{tag}\b.*?</{tag}>',page.replace(current.context_script(ROOT),''),re.S),re.findall(rf'<{tag}\b.*?</{tag}>',self.text,re.S))
+  for tag in ('article','style','script'):self.assertEqual(re.findall(rf'<{tag}\b.*?</{tag}>',strip_live_presentation_scripts(self,page,ROOT,self.text),re.S),re.findall(rf'<{tag}\b.*?</{tag}>',self.text,re.S))
   with patch.dict(current.ROLOMA_FROZEN,{'stage1':dict(current.ROLOMA_FROZEN['stage1'],sha256='0'*64)}):
    with self.assertRaisesRegex(ValueError,'Unreviewed RoLoMa'):current.render(ROOT,self.paper,'stage1',self.records)
  def test_48000_byte_chunks_and_no_source_pdf_in_artifact_directory(self):

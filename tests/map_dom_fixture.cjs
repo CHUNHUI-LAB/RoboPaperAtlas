@@ -51,7 +51,7 @@ function fixture(options={}){
   setPointerCapture(id){this.pointerCapture=id}hasPointerCapture(id){return this.pointerCapture===id}releasePointerCapture(id){delete this.pointerCapture;this.emit('lostpointercapture',{pointerId:id,bubbles:false})}
  }
  document=new Element('#document');document.activeElement=null;document.hidden=false;document.createElement=tag=>new Element(tag);document.createElementNS=(_,tag)=>new Element(tag);document.getElementById=id=>document.querySelector('#'+id);
- const html=fs.readFileSync(path.join(rootDir,options.htmlFile||'dist/map/index.html'),'utf8'),stack=[document],voids=new Set(['meta','link','input','br','hr','img']);
+ const html=fs.readFileSync(path.resolve(rootDir,options.htmlFile||process.env.ATLAS_MAP_HTML||'dist/map/index.html'),'utf8'),stack=[document],voids=new Set(['meta','link','input','br','hr','img']);
  for(const match of html.matchAll(/<([^>]+)>|([^<]+)/g)){
   if(match[2]){stack.at(-1)._text+=decode(match[2]);continue}
   const tag=match[1];if(tag.startsWith('!'))continue;if(tag.startsWith('/')){if(stack.length>1)stack.pop();continue}
@@ -61,9 +61,9 @@ function fixture(options={}){
  }
  document.body=document.querySelector('body');
  const window=new Element('#window');window.document=document;window.matchMedia=key=>media[key]??=(Object.assign(new Element('media'),{matches:key.includes('max-width')?!!options.mobile:!!options.reduced}));
- const historyStack=[url.href];let historyIndex=0;
+ const historyStack=[url.href],historyStates=[null];let historyIndex=0;
  const location={get href(){return url.href},get search(){return url.search},get origin(){return url.origin},get pathname(){return url.pathname},get hash(){return url.hash}};
- const history={pushState(_,__,value){url=new URL(value,url);historyStack.splice(++historyIndex);historyStack.push(url.href)},replaceState(_,__,value){url=new URL(value,url);historyStack[historyIndex]=url.href}};
+ const history={get state(){return historyStates[historyIndex]},pushState(state,__,value){url=new URL(value,url);historyStack.splice(++historyIndex);historyStates.splice(historyIndex);historyStack.push(url.href);historyStates.push(structuredClone(state))},replaceState(state,__,value){url=new URL(value,url);historyStack[historyIndex]=url.href;historyStates[historyIndex]=structuredClone(state)}};
  class IO{constructor(cb){this.cb=cb;observers.push(this)}observe(el){this.element=el}disconnect(){this.disconnected=true}}
  class RO{constructor(cb){this.cb=cb;resizers.push(this)}observe(el){this.element=el}disconnect(){}}
  const context={window,document,location,history,URL,URLSearchParams,Map,Set,CustomEvent:class{constructor(type){this.type=type}},performance:{now:()=>now},queueMicrotask:fn=>fn(),IntersectionObserver:IO,ResizeObserver:RO,
@@ -79,7 +79,7 @@ function fixture(options={}){
   changeMedia(key,matches){media[key].matches=matches;media[key].emit('change',{bubbles:false})},
   goBack(){if(historyIndex){url=new URL(historyStack[--historyIndex]);window.emit('popstate',{bubbles:false})}},
   goForward(){if(historyIndex+1<historyStack.length){url=new URL(historyStack[++historyIndex]);window.emit('popstate',{bubbles:false})}},
-  setURL(value){url=new URL(value,url);window.emit('popstate',{bubbles:false})},
+  setURL(value){url=new URL(value,url);historyStates[historyIndex]=null;window.emit('popstate',{bubbles:false})},
   input(value){const el=document.getElementById('map-search');el.value=value;el.focus();el.emit('input')},
   click(selector){const el=document.querySelector(selector);if(!el)throw Error('Missing '+selector);el.emit('click',{button:0});return el},
  };

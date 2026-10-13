@@ -5,6 +5,7 @@ from unittest.mock import patch
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT/'scripts'))
 import reports as r
 import current_reader as current
+from reader_test_support import strip_live_presentation_scripts
 from report_roloma_stage2 import IDENTITY,POLICY_PATH,UNIT_IDS,QUOTE_HASHES,SECTION_IDS,MATH_HASH
 from validate import expected_stage,validate_catalog
 from build import details,home
@@ -89,9 +90,9 @@ class RoLoMaWritingTests(unittest.TestCase):
    rec=next(x for x in self.records if x['paper_id']=='rpa-0054' and x['stage']==stage)
    original=(ROOT/r.report_path(rec)).read_text();page=current.render(ROOT,self.paper,stage,self.records)
    self.assertIn('href="stage1.html"',page);self.assertIn('href="stage2.html"',page);self.assertNotIn('href="stage3.html"',page)
-   self.assertIn('aria-disabled="true"><small>03 · 未完成</small>',page)
+   self.assertIn('aria-disabled="true"><small>03 · 未导入</small>',page)
    self.assertIn('href="../index.html#reading"',page);self.assertEqual(page.count(current.context_script(ROOT)),1)
-   for tag in ('article','style','script'):self.assertEqual(re.findall(rf'<{tag}\b.*?</{tag}>',page.replace(current.context_script(ROOT),''),re.S),re.findall(rf'<{tag}\b.*?</{tag}>',original,re.S))
+   for tag in ('article','style','script'):self.assertEqual(re.findall(rf'<{tag}\b.*?</{tag}>',strip_live_presentation_scripts(self,page,ROOT,original),re.S),re.findall(rf'<{tag}\b.*?</{tag}>',original,re.S))
   with patch.dict(current.ROLOMA_FROZEN,{'stage2':dict(current.ROLOMA_FROZEN['stage2'],sha256='0'*64)}):
    with self.assertRaisesRegex(ValueError,'Unreviewed RoLoMa'):current.render(ROOT,self.paper,'stage2',self.records)
  def test_four_chunks_and_no_unregistered_artifact(self):

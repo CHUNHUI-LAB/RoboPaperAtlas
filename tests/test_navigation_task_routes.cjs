@@ -14,11 +14,13 @@ if(!process.env.NP_TASK_ROUTE_CASE){
  test.after(()=>fs.rmSync(temp,{recursive:true,force:true}));
  function scenario(name,fn){if(process.env.NP_TASK_ROUTE_CASE===name)test(name,fn);}
  async function frames(w){await new Promise(resolve=>w.requestAnimationFrame(()=>w.requestAnimationFrame(resolve)));}
+ // These scenarios exercise simultaneous desktop tree/reader focus and offsets.
+ // JSDOM's 1024px default is now a compact pane-switching layout (<1200px).
  async function page(options={}){
-  const calls=[],errors=[],queuedFrames=[];class Resources extends ResourceLoader{fetch(url){throw new Error('Unexpected external request '+url);}}
+  const calls=[],errors=[],queuedFrames=[];class Resources extends ResourceLoader{fetch(url){const name=new URL(url).pathname.split('/').at(-1);if(['site.css','catalog-navigation.js','presentation.js','interface.js','chrome.js'].includes(name))return null;throw new Error('Unexpected external navigation dependency '+url);}}
   const vc=new VirtualConsole();vc.on('jsdomError',error=>errors.push(error.message));
   const d=new JSDOM(html,{url:'https://example.org/research/navigation/'+(options.hash||''),runScripts:'dangerously',resources:new Resources(),pretendToBeVisual:true,virtualConsole:vc,beforeParse(w){
-   if(options.holdFrames)w.requestAnimationFrame=fn=>{queuedFrames.push(fn);return queuedFrames.length;};if(options.width)Object.defineProperty(w,'innerWidth',{value:options.width,configurable:true});w.TextEncoder=TextEncoder;w.TextDecoder=TextDecoder;w.scrollTo=(x,y)=>Object.defineProperty(w,'scrollY',{value:y,configurable:true});w.HTMLElement.prototype.scrollIntoView=function(){};Object.defineProperty(w.crypto,'subtle',{value:crypto.webcrypto.subtle});
+   if(options.holdFrames)w.requestAnimationFrame=fn=>{queuedFrames.push(fn);return queuedFrames.length;};Object.defineProperty(w,'innerWidth',{value:options.width||1440,configurable:true});w.matchMedia=query=>{const min=query.match(/min-width:\s*(\d+)px/),max=query.match(/max-width:\s*(\d+)px/);return {media:query,matches:!query.includes('prefers-reduced-motion')&&(!min||w.innerWidth>=Number(min[1]))&&(!max||w.innerWidth<=Number(max[1])),addEventListener(){},removeEventListener(){}};};w.TextEncoder=TextEncoder;w.TextDecoder=TextDecoder;w.scrollTo=(x,y)=>Object.defineProperty(w,'scrollY',{value:y,configurable:true});w.HTMLElement.prototype.scrollIntoView=function(){};Object.defineProperty(w.crypto,'subtle',{value:crypto.webcrypto.subtle});
    if(options.saved)w.history.replaceState(options.saved,'',w.location.href);w.fetch=url=>{calls.push(url);if(options.fetch)return options.fetch(url);if(options.offline)return new Promise(()=>{});return Promise.resolve({ok:true,arrayBuffer:async()=>fs.readFileSync(path.join(output,url))});};
   }});
   for(let i=0;i<150&&!d.window.NavigationProductApp;i++)await wait(10);assert.ok(d.window.NavigationProductApp);if(!options.holdFrames)await frames(d.window);return {w:d.window,doc:d.window.document,calls,errors,flushFrames:()=>{while(queuedFrames.length)queuedFrames.shift()();}};
@@ -163,7 +165,11 @@ if(!process.env.NP_TASK_ROUTE_CASE){
   await frames(x.w);assert.ok(texts>0);assert.ok(sources>0);if(failures.length)t.diagnostic(JSON.stringify(failures));assert.deepEqual(failures,[],'method claim body, scope, version, sources, locators and controls preserve the 15px reading floor');assert.deepEqual(x.errors,[]);
  });
  scenario('typography',async t=>{
-  const css=fs.readFileSync(path.join(root,'assets/navigation-product.css'),'utf8'),floor=css.split('/* Task-root reading text keeps the 15px floor, including inherited legacy notes. */')[1];assert.ok(floor);for(const rule of floor.matchAll(/([^{}]+)\{([^{}]+)\}/g)){for(const selector of rule[1].split(','))assert.ok(selector.trim().startsWith('#navigation-product .np-task-route-overview'),'relation font floor stays inside its overview');assert.match(rule[2],/line-height:1\.55/);}assert.match(floor,/#navigation-product \.np-task-route-overview \.np-note/);assert.match(floor,/line-height:1\.55/);
+  const css=fs.readFileSync(path.join(root,'assets/navigation-product.css'),'utf8');
+  // The stylesheet is consolidated; find the scoped reading rule by behavior,
+  // rather than requiring the old appended override's comment and position.
+  const floor=Array.from(css.matchAll(/([^{}]+)\{([^{}]+)\}/g)).find(rule=>rule[1].includes('#navigation-product .np-task-route-overview .np-note')&&/font-size:\s*15px/.test(rule[2]));
+  assert.ok(floor,'task-root reading keeps an explicit 15px note/body floor');for(const selector of floor[1].split(','))assert.ok(selector.trim().startsWith('#navigation-product .np-task-route-overview'),'relation font floor stays inside its overview');assert.match(floor[2],/line-height:\s*1\.55/);
   const x=await page();t.after(()=>closePage(x));let checked=0,slots=0;const violations=[];
   // Production reading DOM/CSS contract; real layout, zoom and scroll geometry
   // remain the separate browser capture gate. No hidden duplicate satisfies it.

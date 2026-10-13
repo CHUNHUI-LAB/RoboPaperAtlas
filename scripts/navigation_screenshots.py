@@ -4008,7 +4008,7 @@ def check_capture_visible_regions(data, require_tree=True, require_home=False):
 
 
 # These four display occurrences were independently reviewed at 7d34188. Each
-# scene shows the real script-free full-title surface, not a short method label.
+# scene shows the native full-title surface with optional site chrome, not a short method label.
 VERSION_TITLE_CASES = (
     ('-34-version-title-langmap', 'pos:g:18a33fba17e8e92ee1ed5d', 'langmap26', 'arxiv:2602.02220v3',
      'LangMap: A Human-Verified Benchmark for Hierarchical Open-Vocabulary Goal Navigation'),
@@ -4071,19 +4071,26 @@ var links=[...node.querySelectorAll(':scope > .native-body > p > a')];
 return {screenKind:'native_version_title',position:node.dataset.nativePosition,ancestors:ancestors,ancestorOpen:open,
         focusedSummary:document.activeElement===summary,
         title:proof,linkCount:links.length,branchHref:links[0]?.getAttribute('href'),pagePath:location.pathname,
-        readyState:document.readyState,scriptCount:document.scripts.length,appPresent:!!window.NavigationProductApp,
+        readyState:document.readyState,scriptCount:document.scripts.length,
+        scripts:[...document.scripts].map(s=>({src:s.getAttribute('src'),defer:s.defer,inline:s.textContent.trim()})),
+        appPresent:!!window.NavigationProductApp,
         fonts:document.fonts.status,viewport:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},
         bodyWidth:document.body.scrollWidth,windowScroll:scrollY};
 """
 
 
 def check_version_title_capture(data, expected, require_navigation=True):
+    # Native scientific content remains entirely in HTML; only these shared,
+    # deferred navigation/search scripts may be present on the surrounding page.
+    chrome_scripts = [dict(src='../../../assets/' + name, defer=True, inline='')
+                      for name in ('catalog-navigation.js', 'presentation.js', 'interface.js', 'chrome.js')]
     if (data['screenKind'] != 'native_version_title' or data['position'] != expected['position'] or
             data['ancestors'] != expected['ancestors'] or
             data['ancestorOpen'] != [True] * len(expected['ancestors']) or
             data['linkCount'] != 1 or data['branchHref'] != expected['branch'] or
             data['pagePath'] != '/research/navigation/branches/index.html' or
-            data['readyState'] != 'complete' or data['scriptCount'] != 0 or data['appPresent'] or
+            data['readyState'] != 'complete' or data['scriptCount'] != len(chrome_scripts) or
+            data.get('scripts') != chrome_scripts or data['appPresent'] or
             data.get('sourceBinding') != expected or data.get('focusedSummary') is not True):
         raise RuntimeError('Version-title native occurrence, ancestry or source link is incorrect')
     actions = data.get('nativeActions', [])

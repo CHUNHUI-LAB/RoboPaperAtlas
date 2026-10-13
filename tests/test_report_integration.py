@@ -39,9 +39,16 @@ class ReportIntegrationTests(unittest.TestCase):
    output=Path(d);paper=output/'papers/rpa-0062/index.html';paper.parent.mkdir(parents=True);paper.write_text('<html><body>Paper</body></html>')
    for r in self.records:
     path=report_path(r);dest=output/path;dest.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(ROOT/path,dest)
-   (output/'assets').mkdir();shutil.copyfile(ROOT/'assets/catalog-navigation.js',output/'assets/catalog-navigation.js');shutil.copyfile(ROOT/'assets/f2.css',output/'assets/f2.css')
+   # Complete the public chrome destinations without replacing link validation
+   # or broadening the report/current-reader output allowlists.
+   destinations=['index.html','map/index.html','research/navigation/index.html','frontier/index.html','reading/index.html','submit/index.html','about/index.html']
+   for path in destinations:
+    dest=output/path;dest.parent.mkdir(parents=True,exist_ok=True);dest.write_text('<html><body><main id="catalog">Navigation fixture</main></body></html>')
+   (output/'assets').mkdir()
+   for name in ['site.css','reader-current.css','catalog-navigation.js','presentation.js','interface.js','chrome.js','reader-toc-focus-v1.js','reader-current.js']:
+    shutil.copyfile(ROOT/'assets'/name,output/'assets'/name)
    write_current_readers(ROOT,output,[self.paper],self.records)
-   self.assertEqual(validate_output(output,self.records),14)
+   self.assertEqual(validate_output(output,self.records),14+len(destinations))
    changed=output/report_path(self.records[0]);changed.write_bytes(changed.read_bytes()+b' ')
    with self.assertRaises(ValueError):validate_output(output,self.records)
  def test_stage3_narrow_wrap_is_presentation_only(self):

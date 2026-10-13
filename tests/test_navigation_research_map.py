@@ -335,11 +335,14 @@ class ResearchMapTests(unittest.TestCase):
                 for key in ('entityId', 'paperId', 'versionId', 'claimIds', 'association'):
                     self.assertEqual(p.get(key), old.get(key))
 
-    def test_all_native_links_resolve_and_no_scripts_or_unsafe_urls(self):
+    def test_all_native_links_resolve_and_only_optional_shared_scripts(self):
         for name, raw in self.outputs.items():
             if not name.endswith('.html'): continue
             dom = DOM(raw.decode())
-            self.assertFalse(any(t in ('script', 'iframe') for t, _ in dom.nodes), name)
+            self.assertFalse(any(t == 'iframe' for t, _ in dom.nodes), name)
+            allowed_scripts = {'../../../assets/' + x for x in ('catalog-navigation.js', 'presentation.js', 'interface.js', 'chrome.js')}
+            self.assertEqual({a.get('src') for t, a in dom.nodes if t == 'script'}, allowed_scripts, name)
+            self.assertIn('class="native-main"', raw.decode())
             for tag, attrs in dom.nodes:
                 self.assertFalse(any(k.startswith('on') for k in attrs), name)
                 href = attrs.get('href')
@@ -348,6 +351,9 @@ class ResearchMapTests(unittest.TestCase):
                 if parts.scheme:
                     self.assertIn(parts.scheme, ('https', 'http')); continue
                 if not parts.path or parts.path == '../index.html': continue
+                if parts.path.startswith('../../../'):
+                    self.assertIn(parts.path[9:], {'index.html', 'map/index.html', 'research/navigation/index.html', 'frontier/index.html', 'reading/index.html', 'submit/index.html', 'about/index.html', 'assets/site.css'}, name)
+                    continue
                 self.assertIn(parts.path, self.outputs, name + ' -> ' + href)
 
     def test_writer_is_deterministic_rejects_extra_or_symlink_before_writing(self):

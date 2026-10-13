@@ -44,11 +44,16 @@ class NavigationEntryTests(unittest.TestCase):
                 with self.subTest(prefix=prefix, route=route):
                     links = [a for a in Links(text).links
                              if 'research/navigation/' in a.get('href', '')]
-                    self.assertEqual(len(links), 1)
-                    self.assertFalse(links[0]['href'].startswith('/'))
-                    self.assertEqual(urljoin(base + route, links[0]['href']), expected)
-                    self.assertNotIn('target', links[0])
-                    self.assertIn('导航研究地图 · 正式三树', text)
+                    if route == 'index.html':
+                        self.assertGreaterEqual(len(links), 1)
+                        self.assertIn('导航研究地图', text)
+                    else:
+                        self.assertEqual(len(links), 1)
+                        self.assertIn('导航研究地图 · 正式三树', text)
+                    for link in links:
+                        self.assertFalse(link['href'].startswith('/'))
+                        self.assertEqual(urljoin(base + route, link['href']), expected)
+                        self.assertNotIn('target', link)
 
     def test_c2_preserves_all_sealed_content_and_route(self):
         self.assertEqual(c2.ROUTE, 'review/radar-c2-analysis')

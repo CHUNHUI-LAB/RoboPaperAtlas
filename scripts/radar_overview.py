@@ -108,7 +108,7 @@ def render(data,index,prefix='',archive=False,preview=False):
  used={vid for t in o['themes'] for vid in t['evidence_ids']};scope=''.join('<li>'+e(x)+'</li>' for x in o['limitations'])
  state={'ready':'','stale':'更新未完成，保留原始成功观察窗口与旧内容。' if weekly else '此页保留此前观察窗口；本次更新未完成。','no_material_update':'本周没有新增研究主线；不拼接或重复旧日报。' if weekly else '本窗口没有需要新增的研究主题，不重复上期总结。','error':'本期研究概览暂未完成；此状态不代表没有新论文。'}[data['status']]
  state_html='<p class="radar-state">'+e(state)+'</p>' if state else ''
- root=Path(__file__).resolve().parents[1];assets=''.join('<'+('link rel="stylesheet" href="' if kind=='css' else 'script defer src="')+prefix+'assets/radar-overview.'+kind+'?v='+hashlib.sha256((root/('assets/radar-overview.'+kind)).read_bytes()).hexdigest()[:12]+('">' if kind=='css' else '"></script>') for kind in ['css','js'])
+ root=Path(__file__).resolve().parents[1];assets=''.join('<'+('link rel="stylesheet" href="' if kind=='css' else 'script defer src="')+prefix+'assets/radar-overview.'+kind+'?v='+hashlib.sha256((root/('assets/radar-overview.'+kind)).read_bytes()).hexdigest()[:12]+('">' if kind=='css' else '"></script>') for kind in (['css','js'] if preview else ['js']))
  archives=''.join('<a href="'+prefix+'frontier/'+route+'/'+e(row['date'])+'/index.html"'+(' aria-current="page"' if archive and row['date']==data['date'] else '')+'>'+e(row['date'])+'</a>' for row in sorted(entries,key=lambda x:x['date'],reverse=True))
  data_href=prefix+('data/radar-preview/' if preview else 'data/weekly/' if weekly else 'data/briefs/')+data['date']+'.json'
  history='<a href="'+prefix+'frontier/briefs/2026-09-30/v1/index.html">最初摘要快照 ↗</a>' if data['date']=='2026-09-30' and not preview else ''

@@ -6,10 +6,10 @@ from briefs import load_archive,section
 class ExperienceTests(unittest.TestCase):
  def test_library_leads_with_editorial_content_then_search_and_results(self):
   data=json.loads((ROOT/'data/catalog.json').read_text());page=home(data)
-  markers=['id="catalog"','id="search"','class="topic-filters"','id="catalog-results"','id="paper-grid"','class="reading-roadmap"']
+  markers=['class="home-hero"','id="catalog"','id="search"','class="topic-filters"','id="catalog-results"','id="paper-grid"','class="reading-roadmap"']
   positions=[page.index(marker) for marker in markers]
   self.assertEqual(positions,sorted(positions))
-  for marker in ['class="experience-hero"','class="experience-routes"','data-atlas-toggle','<canvas']:
+  for marker in ['class="experience-hero"','class="experience-routes"']:
    self.assertNotIn(marker,page)
   self.assertIn(f'全部论文 · {len(data["papers"])} 篇',page)
   self.assertIn('data-default-view="list"',page)
@@ -28,18 +28,21 @@ class ExperienceTests(unittest.TestCase):
  def test_editorial_rows_use_existing_summaries_and_real_routes(self):
   data=json.loads((ROOT/'data/catalog.json').read_text());page=home(data)
   self.assertNotIn('class="library-features"',page)
-  self.assertEqual(page.count('class="paper-summary"'),len(data['papers']))
+  self.assertEqual(page.count('data-classification-note='),len(data['papers']))
+  self.assertNotIn('class="paper-summary"',page)
   for paper in data['papers']:
    self.assertIn('href="papers/'+paper['id']+'/index.html"',page)
    self.assertIn('data-preview="'+paper['id']+'"',page)
    if paper.get('summary'):self.assertIn(esc(paper['summary']),page)
-  self.assertIn('不代表全文精读',page)
+  self.assertIn('来源核验与全文阅读分开记录',page)
  def test_library_theme_does_not_replace_other_page_themes(self):
   library=home(json.loads((ROOT/'data/catalog.json').read_text()))
-  self.assertIn('library.css?v=',library);self.assertIn('library.js?v=',library)
+  self.assertIn('site.css?v=',library);self.assertIn('library.js?v=',library)
+  self.assertNotIn('library.css?v=',library)
   self.assertNotIn('experience.css?v=',library);self.assertNotIn('experience.js?v=',library)
   ordinary=shell('Atlas','<main id="main"></main>',prefix='../',page='map')
-  self.assertIn('experience.css?v=',ordinary);self.assertNotIn('library.css?v=',ordinary)
+  self.assertIn('site.css?v=',ordinary);self.assertNotIn('library.css?v=',ordinary)
+  self.assertNotIn('experience.css?v=',ordinary)
  def test_existing_preview_uses_preserved_base(self):
   page=shell('RoboPaperAtlas','<main id="main"></main>',prefix='../',page='preview')
   self.assertIn('preview-base.css?v=',page);self.assertNotIn('experience.css?v=',page);self.assertNotIn('hero-atlas.js?v=',page)
@@ -59,19 +62,19 @@ class ExperienceTests(unittest.TestCase):
   self.assertNotIn('class="library-galaxy-art"',page)
   self.assertEqual(page.count('class="paper-card library-paper"'),95)
   self.assertIn('12 份报告已导入',page)
-  self.assertNotIn('<canvas',page)
-  css=(ROOT/'assets/library-editorial.css').read_text()
+  self.assertIn('data-star-count="840"',page)
+  self.assertIn('星域为视觉示意，不表示论文引用关系',page)
+  css=(ROOT/'assets/home-hero.css').read_text()
   self.assertIn('prefers-reduced-motion:reduce',css)
-  self.assertIn('scroll-margin-top:104px',css)
+  self.assertIn('max-width:480px',css)
   self.assertNotIn('library-galaxy.js?v=',page)
  def test_galaxy_controller_regressions(self):
   result=subprocess.run(['node','--test','tests/test_library_galaxy.cjs'],cwd=ROOT,capture_output=True,text=True)
   self.assertEqual(result.returncode,0,result.stdout+result.stderr)
  def test_library_summaries_are_not_clipped_and_reduced_motion_is_explicit(self):
-  css=(ROOT/'assets/library.css').read_text()
-  summary=re.search(r'\.library-page \.paper-card \.card-summary\{([^}]+)\}',css).group(1)
-  self.assertIn('overflow:visible',summary);self.assertIn('-webkit-line-clamp:unset',summary)
-  self.assertIn('@media(prefers-reduced-motion:reduce)',css)
-  self.assertIn('animation:none!important;transition:none!important',css)
+  css=(ROOT/'assets/site.css').read_text()
+  self.assertIn('.f2-paper-description',css)
+  self.assertNotIn('-webkit-line-clamp',css)
+  self.assertIn('prefers-reduced-motion',css)
 if __name__=='__main__':unittest.main()
 

@@ -15,10 +15,10 @@ class MapIntegrationTests(unittest.TestCase):
  def test_map_route_uses_same_shell_with_isolated_hashed_assets(self):
   body=map_html(self.catalog,css=asset_url('../','paper-map.css'),js=asset_url('../','paper-map.js'),report_records=load_reports(ROOT))
   page=shell('论文地图',body,prefix='../',page='map')
-  self.assertIn('<title>RoboPaperAtlas</title>',page)
-  self.assertIn('class="f2-theme page-map"',page)
+  self.assertIn('<title>论文地图 · RoboPaperAtlas</title>',page)
+  self.assertIn('class="atlas-theme f2-theme page-map"',page)
   self.assertIn('href="../map/index.html" aria-current="page"',page)
-  self.assertIn('assets/experience.css?v=',page)
+  self.assertIn('assets/site.css?v=',page)
   self.assertIn('assets/paper-map.css?v=',page)
   self.assertIn('assets/paper-map.js?v=',page)
   self.assertNotIn('assets/hero-atlas.js',page)
@@ -76,4 +76,6 @@ class MapIntegrationTests(unittest.TestCase):
  def test_current_build_script_writes_standalone_map(self):
   script=(ROOT/'scripts/build.py').read_text()
   self.assertIn("(target/'map/index.html').write_text",script)
-  self.assertIn("('map','map/index.html','星图')",script)
+  self.assertIn("page='map'",script)
+  chrome=(ROOT/'scripts/site_chrome.py').read_text()
+  self.assertIn("item('map/index.html', '研究星图', page == 'map')",chrome)

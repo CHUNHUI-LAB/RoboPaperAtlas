@@ -37,11 +37,9 @@
     const centers = {}, systems = {}, subsystems = {}, output = [];
     const count = directions.length;
     directions.forEach((direction, index) => {
-      const angle = -Math.PI / 2 + index * Math.PI * 2 / count;
       // Fixed coordinates are navigation geometry, never citation or importance data.
-      const positions = [[-80,0],[-540,1050],[540,1350],[-80,2350],[-540,3400],[540,3700],[-80,4700],[-540,5750],[540,6050]];
-      const [x,y] = positions[index] || [index % 2 ? 540 : -540, index * 780];
-      const center = { x, y, rx: 565, ry: 440 };
+      const columns = Math.min(3, count);
+      const center = { x: (index % columns) * 1020, y: Math.floor(index / columns) * 800, rx: 435, ry: 330 };
       centers[direction.id] = center;
       const children = problems.filter(p => p.direction === direction.id).slice().sort(stableCompare);
       systems[direction.id] = { ...direction, ...center, children: children.map(p => p.id) };
@@ -140,15 +138,12 @@
   drillButton.type='button'; drillButton.hidden=true;
   drillButton.addEventListener('click',()=>navigate(state.topic,'',{drill:true}));
   $('.map-results-heading').append(drillButton);
-  const moreDirections = create('button', '更多研究方向 ↓', 'map-more-directions');
-  moreDirections.type = 'button'; moreDirections.setAttribute('aria-label', '向下浏览其余研究方向，全部九个方向也可通过上方筛选访问');
-  moreDirections.addEventListener('click', () => { if (canvas.parentElement) canvas.parentElement.scrollTop += 430; });
-  canvas.parentElement.append(moreDirections);
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const smallScreen = window.matchMedia('(max-width: 760px)');
   const nodeEls = new Map(), rows = new Map($$('[data-map-row]').map(el => [el.dataset.mapRow, el]));
-  let camera = { x: 0, y: 0, k: .5 }, width = 1, height = 1, overviewScale = .2, animation = 0, cameraEpoch = 0;
+  let camera = { x: 0, y: 0, k: .5 }, width = 1, height = 1, animation = 0, cameraEpoch = 0;
   let visible = true, activeSuggestions = [], suggestionIndex = -1, pointer = null, ignoreClickUntil = 0;
+  let selectionOrigin = null, restoringHistory = false, composing = false;
   let opener = null, focusedId = nodes[0]?.id || '', lastViewExplicit = false;
   let state = { topic: 'all', problem: '', query: '', selected: '', view: smallScreen.matches ? 'list' : 'map', drill: false };
   const yearText = p => p.display?.yearLabel || (p.year ? `${p.year}${p.yearBasis === 'user_provided' ? ' · 原始记录年' : p.yearBasis === 'preprint' ? ' · 预印本年' : ' · 出版年'}` : '年份待核验');
@@ -160,6 +155,7 @@
   };
   const isOverview = () => !state.drill && !state.problem && !state.query && !state.selected;
   const currentNodes = () => search(nodes.filter(p => (state.topic === 'all' || p.mapTopic === state.topic) && (!state.problem || p.classification.problem === state.problem)), state.query);
+  const visibleNodes = () => { const filtered = currentNodes(); const selected = nodeById.get(state.selected); return selected && !filtered.some(p => p.id === selected.id) ? [...filtered, selected] : filtered; };
   const systemEls = new Map(), problemEls = new Map();
 
   function navigationObject(item, kind, layer) {
@@ -204,7 +200,7 @@
       const hit = group.querySelector('.atlas-navigation-hit');
       const text = group.querySelector('.atlas-navigation-label').textContent;
       const compact = false;
-      const labelSize = smallScreen.matches ? 16 : kind === 'system' ? 19 : 17;
+      const labelSize = smallScreen.matches ? 13 : kind === 'system' ? 17 : 16;
       // Account for full-width Chinese glyphs in the screen-space hit target.
       const labelWidth = Array.from(text).reduce((sum, char) => sum + (/[^\x00-\x7f]/.test(char) ? 1 : .6), 0) * labelSize;
       const half = compact ? 27 : Math.max(32, labelWidth / 2 + 8);
@@ -212,12 +208,12 @@
       const screenX = item.x * camera.k + camera.x;
       // Keep a visible node's enlarged label inside a narrow desktop canvas.
       const offset = !compact && screenX >= 0 && screenX <= width ? clamp(screenX, half + 8, width - half - 8) - screenX : 0;
-      hit.setAttribute('x', (offset - half) * scale); hit.setAttribute('y', -27 * scale); hit.setAttribute('width', half * 2 * scale); hit.setAttribute('height', (compact ? 54 : kind === 'system' ? 112 : 83) * scale);
+      hit.setAttribute('x', (offset - half) * scale); hit.setAttribute('y', -27 * scale); hit.setAttribute('width', half * 2 * scale); hit.setAttribute('height', (compact ? 54 : 83) * scale);
       group.querySelector('.atlas-navigation-core').setAttribute('r', (kind === 'system' ? 7 : 4) * scale);
       const label = group.querySelector('.atlas-navigation-label'), meta = group.querySelector('.atlas-navigation-meta');
       label.setAttribute('x', offset * scale); meta.setAttribute('x', offset * scale);
       label.style.fontSize = `${labelSize * scale}px`;
-      label.setAttribute('y', (kind === 'system' ? 62 : 30) * scale); meta.style.fontSize = `${14 * scale}px`; meta.setAttribute('y', (kind === 'system' ? 84 : 52) * scale);
+      label.setAttribute('y', 30 * scale); meta.style.fontSize = `${(smallScreen.matches ? 11 : 13) * scale}px`; meta.setAttribute('y', 51 * scale);
       const selectedSystem = kind === 'system' && state.topic === item.id && isOverview();
       const plate = group.querySelector('.atlas-selection-plate');
       plate.style.display = selectedSystem ? '' : 'none';
@@ -244,9 +240,9 @@
     });
     // Screen-space label collision checks preserve legibility as zoom changes.
     const occupied = [];
-    const candidates = currentNodes().slice().sort((a, b) => Number(b.id === state.selected) - Number(a.id === state.selected) || Number(b.anchor) - Number(a.anchor) || stableCompare(a, b));
+    const candidates = visibleNodes().slice().sort((a, b) => Number(b.id === state.selected) - Number(a.id === state.selected) || Number(b.anchor) - Number(a.anchor) || stableCompare(a, b));
     candidates.forEach(p => {
-      if (p.id !== state.selected && !state.problem && !state.query) return;
+      if (p.id !== state.selected && !state.problem && !state.query && camera.k < .6) return;
       const rect = { x: p.x * camera.k + camera.x + 11, y: p.y * camera.k + camera.y - 12, w: Array.from(shortLabel(p)).reduce((sum, char) => sum + (/[^\x00-\x7f]/.test(char) ? 14 : 8.4), 0) + 7, h: 23 };
       if (rect.x < 6 || rect.x + rect.w > width - 6 || rect.y < 42 || rect.y + rect.h > height - 72) return;
       if (p.id !== state.selected && occupied.some(r => rect.x < r.x + r.w && rect.x + rect.w > r.x && rect.y < r.y + r.h && rect.y + rect.h > r.y)) return;
@@ -256,14 +252,14 @@
   function moveCamera(target, animate = true) {
     cancelCamera(); hover.hidden = true;
     target = { ...target, k: clamp(target.k, .025, 3.5) };
-    if (!animate || reducedMotion.matches || !visible || document.hidden || state.view !== 'map') { camera = target; drawCamera(); return; }
+    if (!animate || reducedMotion.matches || !visible || document.hidden || state.view !== 'map') { camera = target; drawCamera(); saveSnapshot(); return; }
     const start = { ...camera }, started = performance.now(), epoch = cameraEpoch;
     const tick = now => {
       if (epoch !== cameraEpoch || document.hidden || !visible) { animation = 0; return; }
       const elapsed = clamp((now - started) / 360, 0, 1), ease = 1 - Math.pow(1 - elapsed, 3);
       camera = { x: start.x + (target.x - start.x) * ease, y: start.y + (target.y - start.y) * ease, k: start.k + (target.k - start.k) * ease };
       drawCamera(); animation = elapsed < 1 ? requestAnimationFrame(tick) : 0;
-      if (elapsed === 1) { const active = document.activeElement?.closest('[data-atlas-system]'); if (active) revealSystem(hierarchy.systems[active.dataset.atlasSystem]); }
+      if (elapsed === 1) { saveSnapshot(); const active = document.activeElement?.closest('[data-atlas-system]'); if (active) revealSystem(hierarchy.systems[active.dataset.atlasSystem]); }
     };
     animation = requestAnimationFrame(tick);
   }
@@ -277,29 +273,19 @@
     const rect = canvas.getBoundingClientRect();
     if (!rect.width) return;
     width = rect.width;
-    const overview = isOverview();
-    const visibleHeight = Math.max(420, (window.innerHeight || 1024) - Math.max(72, rect.top || 72) - 36);
-    const scale = Math.max(.12, Math.min((width - 80) / 1680, (visibleHeight - 240) / 2350));
-    overviewScale = scale;
-    const bottom = Math.max(...Object.values(hierarchy.systems).map(item => item.y + 360));
-    height = overview ? Math.ceil(150 + bottom * scale + 180) : smallScreen.matches ? 420 : 680;
+    height = smallScreen.matches ? 420 : Math.max(480, Math.min(660, (window.innerHeight || 900) - 190));
     canvas.style.height = `${height}px`; canvas.style.minHeight = `${height}px`;
     svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
   }
-  function resetMapScroll() { if (canvas.parentElement) canvas.parentElement.scrollTop = 0; }
   function revealSystem(item) {
-    if (!isOverview()) return;
-    const viewport = canvas.parentElement;
-    const y = item.y * camera.k + camera.y;
-    const viewportHeight = viewport.clientHeight || 600;
-    if (y - 40 < viewport.scrollTop || y + 105 > viewport.scrollTop + viewportHeight)
-      viewport.scrollTop = Math.max(0, y - viewportHeight / 2);
+    if (!isOverview() || animation) return;
+    const x = item.x * camera.k + camera.x, y = item.y * camera.k + camera.y;
+    if (x < 80 || x > width - 80 || y < 55 || y > height - 125)
+      moveCamera({ ...camera, x: width / 2 - item.x * camera.k, y: height * .44 - item.y * camera.k }, false);
   }
   function fit(animate = true) {
-    measureMap(); resetMapScroll();
-    if (isOverview()) {
-      moveCamera({x:width / 2,y:150,k:overviewScale},animate);
-    } else moveCamera(fitCamera(scopePoints(), width, height), animate);
+    measureMap();
+    moveCamera(fitCamera(scopePoints(), width, height), animate);
   }
   function focusScope() {
     const target = state.selected ? $('#map-selected-title') : state.view === 'list' ? $('#map-results-title') : state.problem ? nodeEls.get(currentNodes()[0]?.id) : !isOverview() && state.topic !== 'all' ? [...problemEls.values()].find(g => !g.hidden) : [...systemEls.values()].find(g => !g.hidden);
@@ -309,28 +295,33 @@
   function navigate(topic = 'all', problem = '', { push = true, animate = true, drill = false } = {}) {
     const active = document.activeElement;
     const movingFocus = active === drillButton || active?.closest('[data-atlas-system]') || active?.closest('[data-atlas-problem]') || active?.closest('[data-paper-id]') || active?.closest('#atlas-breadcrumbs') || active?.closest('#map-panel-content');
-    cancelCamera(); closeSuggestions(); hover.hidden = true; state.topic = categories.has(topic) ? topic : 'all';
+    saveSnapshot(); selectionOrigin = null; cancelCamera(); closeSuggestions(); hover.hidden = true; state.topic = categories.has(topic) ? topic : 'all';
     state.problem = hierarchy.subsystems[problem]?.direction === state.topic ? problem : ''; state.drill = drill || !!state.problem;
     state.query = ''; state.selected = ''; input.value = ''; opener = null;
     renderMap(); renderPanel(false); renderNavigation(); syncURL(push);
-    if (canvas.parentElement) canvas.parentElement.scrollTop = 0;
     fit(animate);
     if (movingFocus) focusScope();
   }
-  function goUp() { if (state.selected) closePanel(); else if (state.problem) { const id = state.problem; navigate(state.topic,'',{drill:true}); if (state.view === 'map') problemEls.get(id)?.focus({ preventScroll: true }); else focusScope(); } else if (state.drill && state.topic !== 'all') { const id=state.topic; navigate(id); if (state.view === 'map') systemEls.get(id)?.focus({preventScroll:true}); else focusScope(); } else if (state.topic !== 'all') { const id = state.topic; navigate(); if (state.view === 'map') systemEls.get(id)?.focus({ preventScroll: true }); else focusScope(); } }
+  function goUp() { if (state.selected) closePanel(); else if (state.problem) { const id = state.problem; navigate(state.topic,'',{drill:true}); if (state.view === 'map') problemEls.get(id)?.focus({ preventScroll: true }); else focusScope(); } else if (state.drill && state.topic !== 'all') { const id=state.topic; navigate(id); if (state.view === 'map') systemEls.get(id)?.focus({preventScroll:true}); else focusScope(); } else if (state.query) navigate(); else if (state.topic !== 'all') { const id = state.topic; navigate(); if (state.view === 'map') systemEls.get(id)?.focus({ preventScroll: true }); else focusScope(); } }
   function renderNavigation() {
-    root.dataset.level = state.query ? 'search' : state.problem ? 'problem' : state.drill && state.topic !== 'all' ? 'system' : 'galaxy';
-    drillButton.hidden = state.topic === 'all' || !!state.query || !!state.problem || state.drill;
+    root.dataset.level = state.selected ? 'paper' : state.query ? 'search' : state.problem ? 'problem' : state.drill && state.topic !== 'all' ? 'system' : 'galaxy';
+    drillButton.hidden = state.topic === 'all' || !!state.query || !!state.problem || state.drill || !!state.selected;
     const crumbs = $('#atlas-breadcrumbs'); crumbs.replaceChildren();
-    const add = (label, topic, problem, current) => { const button = create('button', label); button.type = 'button'; button.dataset.atlasCrumb = topic; button.dataset.atlasProblem = problem || ''; if (current) button.setAttribute('aria-current', 'location'); crumbs.append(button); };
-    add('全部方向', 'all', '', state.topic === 'all');
-    if (state.topic !== 'all') add(displayLabel(categories.get(state.topic)), state.topic, '', !state.problem);
-    if (state.problem) add(displayLabel(hierarchy.subsystems[state.problem]), state.topic, state.problem, true);
-    $('#atlas-back').disabled = state.topic === 'all' && !state.selected;
-    $('#atlas-level-description').textContent = state.query ? `搜索全部 ${nodes.length} 篇论文` : state.problem ? '选择论文，查看分类证据与资源' : state.topic !== 'all' ? (state.topic === 'resources' ? '跨领域资源：独立资源集合，不作为研究方向' : state.topic === 'cross-domain' ? '跨领域研究：尚无唯一主方向归属' : '选择研究问题，或直接查看论文') : '选择研究方向，展开具体问题';
+    const add = (label, topic, problem, current) => { const button = create('button', label); button.type = 'button'; button.dataset.atlasCrumb = topic; button.dataset.atlasProblem = problem || ''; if (current) button.setAttribute('aria-current', 'location'); crumbs.append(button); return button; };
+    add('全部方向', 'all', '', state.topic === 'all' && !state.selected);
+    if (state.topic !== 'all') add(displayLabel(categories.get(state.topic)), state.topic, '', !state.problem && !state.selected);
+    if (state.problem) add(displayLabel(hierarchy.subsystems[state.problem]), state.topic, state.problem, !state.selected);
+    const selected = nodeById.get(state.selected);
+    if (selected) {
+      if (state.topic === 'all') add(displayLabel(categories.get(selected.mapTopic)), selected.mapTopic, '', false);
+      const paperCrumb = add(shortLabel(selected), state.topic, state.problem, true);
+      paperCrumb.className = 'map-paper-crumb'; paperCrumb.title = selected.title; paperCrumb.dataset.atlasSelected = selected.id;
+    }
+    $('#atlas-back').disabled = state.topic === 'all' && !state.selected && !state.query;
+    $('#atlas-level-description').textContent = selected ? `已选择论文 · ${state.query ? `保留搜索“${state.query}”及 ${currentNodes().length} 条结果` : '返回结果将恢复原来的筛选与地图位置'}` : state.query ? `搜索全部 ${nodes.length} 篇论文` : state.problem ? '选择论文，查看分类证据与资源' : state.topic !== 'all' ? (state.topic === 'resources' ? '跨领域资源：独立资源集合，不作为研究方向' : state.topic === 'cross-domain' ? '跨领域研究：尚无唯一主方向归属' : '已定位研究方向；可展开问题或直接选择论文') : '选择研究方向，展开具体问题';
   }
   function focusPaper(id, animate = true) {
-    measureMap(); resetMapScroll();
+    measureMap();
     const p = nodeById.get(id); if (!p) return;
     const k = smallScreen.matches ? .98 : 1.13;
     moveCamera({ x: width / 2 - p.x * k, y: height * .47 - p.y * k, k }, animate);
@@ -338,8 +329,27 @@
   function resize() {
     if (state.view !== 'map') { cancelCamera(); return; }
     const rect = canvas.getBoundingClientRect(); if (!rect.width || !rect.height) return;
-    width = rect.width; height = rect.height; svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
-    if (state.selected) focusPaper(state.selected, false); else fit(false);
+    const previousWidth = width, previousHeight = height;
+    measureMap();
+    if (previousWidth <= 1) { if (state.selected) focusPaper(state.selected, false); else fit(false); }
+    else if (previousWidth !== width || previousHeight !== height) {
+      // Preserve the viewed world point and scale when the viewport changes.
+      if (isOverview() && state.topic === 'all') fit(false);
+      else moveCamera({ ...camera, x: camera.x + (width - previousWidth) / 2, y: camera.y + (height - previousHeight) / 2 }, false);
+    }
+  }
+  function snapshot() {
+    return { camera: { ...camera }, width, height, selectionOrigin, scrollY: window.scrollY || 0 };
+  }
+  function saveSnapshot() {
+    if (restoringHistory) return;
+    history.replaceState({ ...history.state, atlasMap: snapshot() }, '', location.href);
+  }
+  function restoreCamera(saved) {
+    if (!saved?.camera || !Object.values(saved.camera).every(Number.isFinite) || (state.view === 'map' && saved.width <= 1)) return false;
+    cancelCamera(); if (state.view === 'map') measureMap();
+    camera = { ...saved.camera, x: saved.camera.x + (width - saved.width) / 2, y: saved.camera.y + (height - saved.height) / 2 };
+    drawCamera(); return true;
   }
   function zoom(factor, x = width / 2, y = height / 2, animate = true) {
     const k = clamp(camera.k * factor, .025, 3.5);
@@ -354,7 +364,8 @@
     if (state.problem) url.searchParams.set('problem', state.problem);
     if (state.query) url.searchParams.set('q', state.query);
     if (lastViewExplicit) url.searchParams.set('view', state.view);
-    if (url.href !== location.href) history[push ? 'pushState' : 'replaceState']({}, '', url);
+    if (url.href !== location.href) history[push ? 'pushState' : 'replaceState']({ ...history.state, atlasMap: snapshot() }, '', url);
+    else saveSnapshot();
   }
   function readURL() {
     const params = new URLSearchParams(location.search);
@@ -365,7 +376,9 @@
     if (state.topic === 'all') state.drill = false;
     if (!state.problem && params.get('explore') !== '1') state.drill = false;
     if (state.query) { state.topic = 'all'; state.problem = ''; state.drill = false; }
-    if (state.selected) { const p = nodeById.get(state.selected); state.topic = p.mapTopic; state.problem = p.classification.problem; state.drill = true; state.query = ''; }
+    // A bare paper link keeps its legacy exact-problem entry; explicit filter URLs
+    // preserve the originating query/direction instead of being rewritten by selection.
+    if (state.selected && !params.has('topic') && !params.has('problem') && !params.has('q') && params.get('explore') !== '1' && !history.state?.atlasMap?.selectionOrigin) { const p = nodeById.get(state.selected); state.topic = p.mapTopic; state.problem = p.classification.problem; state.drill = true; }
     input.value = state.query;
   }
   function setRoving(id, focus = false) {
@@ -377,7 +390,7 @@
     const filtered = currentNodes(), ids = new Set(filtered.map(p => p.id));
     const relations = related(nodes, state.selected), relatedIds = new Set(relations.items.map(item => item.paper.id));
     nodeEls.forEach((group, id) => {
-      const showing = isOverview() || ids.has(id);
+      const showing = isOverview() || ids.has(id) || id === state.selected;
       group.style.display = showing ? '' : 'none'; group.hidden = !showing;
       group.setAttribute('aria-hidden', String(!showing));
       group.classList.toggle('is-selected', id === state.selected);
@@ -386,7 +399,7 @@
       group.setAttribute('aria-pressed', String(id === state.selected));
     });
     rows.forEach((row, id) => {
-      row.hidden = !ids.has(id);
+      row.hidden = !ids.has(id); row.classList.toggle('is-selected', id === state.selected);
       const link = row.querySelector('a');
       if (id === state.selected) link.setAttribute('aria-current', 'true'); else link.removeAttribute('aria-current');
     });
@@ -404,7 +417,7 @@
       });
     }
     $('#map-result-count').textContent = filtered.length === nodes.length ? `${nodes.length} 篇论文` : `${filtered.length} / ${nodes.length} 篇论文`;
-    $('.map-empty').hidden = !!filtered.length; $('.map-list-empty').hidden = !!filtered.length;
+    $('.map-empty').hidden = !!filtered.length || !!state.selected; $('.map-list-empty').hidden = !!filtered.length;
     $('#map-search-clear').hidden = !state.query;
     $$('[data-map-topic]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.mapTopic === state.topic)));
     const resultTitle = $('#map-results-title'), resultStatus = $('#map-selection-status');
@@ -449,9 +462,10 @@
     badge.append(create('span', p.originalRecord ? '原始书目字段的核验状态与 Atlas 分类证据分别记录；摘要支持的分类不等于全文、方法或结论已核验。' : '元数据编目不代表完成全文精读、代码审计或独立复现。'));
     content.append(badge);
     if (p.summary) content.append(create('p', p.summary, 'map-panel-summary'));
+    const quicklook = create('button', '论文速览', 'map-panel-quicklook'); quicklook.type = 'button'; quicklook.dataset.preview = p.id; quicklook.dataset.directionLabel = displayLabel(c); quicklook.dataset.problemLabel = problemLabel(p); quicklook.dataset.classificationNote = p.display?.classificationRationale || classification.rationale; quicklook.setAttribute('aria-label', `速览 ${p.title}`); quicklook.append(create('span', '↗')); content.append(quicklook);
     const section = (title) => { const element = create('section', null, 'map-panel-section'); element.append(create('h3', title)); content.append(element); return element; };
     const resources = section('原文与资源'), resourceLinks = create('div', null, 'map-resource-links');
-    const links = [safeLink(p.pdfUrl, p.pdfKind === 'publisher' ? '出版方 PDF' : '预印本替代 PDF'), safeLink(p.paperUrl, '出版 / 论文页面'), safeLink(p.projectUrl, '官方项目'), ...p.codeUrls.map((url, i) => safeLink(url, p.codeUrls.length > 1 ? `代码 / 数据 ${i + 1}` : '代码 / 数据')), safeLink(p.detailUrl, '完整书目详情', true), safeLink(p.catalogUrl, '在 Library 中查看')].filter(Boolean);
+    const links = [safeLink(p.pdfUrl, p.pdfKind === 'publisher' ? '出版方 PDF' : '预印本替代 PDF'), safeLink(p.paperUrl, '出版 / 论文页面'), safeLink(p.projectUrl, '官方项目'), ...p.codeUrls.map((url, i) => safeLink(url, p.codeUrls.length > 1 ? `代码 / 数据 ${i + 1}` : '代码 / 数据')), safeLink(p.detailUrl, '完整书目详情', true), safeLink(p.catalogUrl, '在论文库中查看')].filter(Boolean);
     links.forEach(link => resourceLinks.append(link)); resources.append(resourceLinks);
     if (!p.paperUrl && !p.pdfUrl) resources.append(create('p', '原文与 PDF 链接尚待核验，暂不提供猜测入口。', 'map-panel-note'));
     if (p.pdfNote) { resources.append(create('p', p.display?.pdfNoteHeading || '书目／链接核验记录；后续阅读范围见各阶段报告。', 'map-panel-note')); resources.append(create('p', p.pdfNote, 'map-panel-note')); }
@@ -506,37 +520,53 @@
   }
   function selectPaper(id, source, { history: writeHistory = true, focusPanel = false, animate = true } = {}) {
     const p = nodeById.get(id); if (!p) return;
+    saveSnapshot();
+    if (!state.selected) {
+      selectionOrigin = { camera: { ...camera }, width, height, scrollY: window.scrollY || 0, focusId: source === input ? 'map-search' : '', paperId: id, fromRow: !!source?.closest('[data-map-row]') };
+      opener = source?.isConnected ? source : nodeEls.get(id);
+    }
     cancelCamera(); closeSuggestions(); hover.hidden = true;
-    opener = source?.isConnected ? source : nodeEls.get(id);
-    state.topic = p.mapTopic; state.problem = p.classification.problem; state.drill = true;
-    state.query = ''; input.value = ''; state.selected = id;
+    // Selection is an overlay on the current result set, never a new filter.
+    state.selected = id;
     renderMap(); renderPanel(animate); setRoving(id);
-    if (state.view === 'map') focusPaper(id, animate);
     if (writeHistory) syncURL(true);
+    if (state.view === 'map') focusPaper(id, animate);
     // This panel is intentionally non-modal. Focus never gets trapped.
     if (focusPanel) $('#map-selected-title').focus({ preventScroll: true });
-    panel.scrollIntoView({ behavior: 'instant', block: 'start' });
+    panel.scrollIntoView({ behavior: 'instant', block: 'nearest' });
   }
   function closePanel({ restore = true, writeHistory = true } = {}) {
-    const previous = state.selected; state.selected = ''; cancelCamera(); renderMap(); renderPanel(false); hover.hidden = true;
+    saveSnapshot();
+    const previous = state.selected, origin = selectionOrigin; state.selected = ''; selectionOrigin = null;
+    cancelCamera(); renderMap(); renderPanel(false); hover.hidden = true;
     if (writeHistory) syncURL(true);
+    if (!restoreCamera(origin) && state.view === 'map') fit(false);
     if (restore) {
+      const source = opener || (origin?.focusId === 'map-search' ? input : origin?.fromRow ? rows.get(origin.paperId)?.querySelector('a') : nodeEls.get(origin?.paperId));
       const target = state.view === 'list' ? rows.get(previous)?.querySelector('a') : nodeEls.get(previous);
-      if (opener?.isConnected && !opener.closest('[hidden]') && !opener.closest('#map-panel-content') && opener !== input) opener.focus({ preventScroll: true });
-      else target?.focus({ preventScroll: true });
+      const canFocus = element => element?.isConnected && !element.closest('[hidden]') && !element.closest('#map-panel-content');
+      if (canFocus(source)) source.focus({ preventScroll: true });
+      else if (canFocus(target)) target.focus({ preventScroll: true });
+      else focusScope();
+      if (origin) window.scrollTo?.({ top: origin.scrollY, behavior: 'instant' });
     }
-    opener = null;
+    saveSnapshot(); opener = null;
   }
   function clearFilters() {
     navigate();
   }
 
-  input.addEventListener('input', () => {
+  function applySearch() {
+    saveSnapshot(); selectionOrigin = null;
     state.drill = false; state.query = input.value.slice(0, 300); state.topic = 'all'; state.problem = ''; state.selected = '';
     renderMap(); renderPanel(false); renderSuggestions(); syncURL(false); if (state.view === 'map') fit();
-  });
+  }
+  input.addEventListener('compositionstart', () => { composing = true; });
+  input.addEventListener('compositionend', () => { composing = false; applySearch(); });
+  input.addEventListener('input', event => { if (!composing && !event.isComposing) applySearch(); });
   input.addEventListener('focus', () => { if (input.value.trim()) renderSuggestions(); });
   input.addEventListener('keydown', event => {
+    if (composing || event.isComposing) return;
     if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); closeSuggestions(); return; }
     if (['ArrowDown', 'ArrowUp'].includes(event.key)) {
       if (suggestions.hidden) renderSuggestions(); if (!activeSuggestions.length) return;
@@ -549,12 +579,12 @@
   });
   suggestions.addEventListener('pointerdown', event => event.preventDefault());
   suggestions.addEventListener('click', event => { const option = event.target.closest('[data-suggest-paper]'); if (option) selectPaper(option.dataset.suggestPaper, input, { focusPanel: true }); });
-  $('#map-search-clear').addEventListener('click', () => { state.drill = false; state.query = ''; input.value = ''; closeSuggestions(); renderMap(); syncURL(false); fit(); input.focus(); });
+  $('#map-search-clear').addEventListener('click', () => { input.value = ''; applySearch(); closeSuggestions(); input.focus(); });
   document.addEventListener('pointerdown', event => { if (!event.target.closest('.map-search-wrap')) closeSuggestions(); });
   root.addEventListener('focusout', () => queueMicrotask(() => { if (!document.activeElement?.closest('.map-search-wrap')) closeSuggestions(); }));
   $$('[data-map-topic]').forEach(button => button.addEventListener('click', () => navigate(button.dataset.mapTopic)));
   $('#atlas-back').addEventListener('click', goUp);
-  $('#atlas-breadcrumbs').addEventListener('click', event => { const button = event.target.closest('[data-atlas-crumb]'); if (button) navigate(button.dataset.atlasCrumb, button.dataset.atlasProblem); });
+  $('#atlas-breadcrumbs').addEventListener('click', event => { const button = event.target.closest('[data-atlas-crumb]'); if (button && !button.dataset.atlasSelected) navigate(button.dataset.atlasCrumb, button.dataset.atlasProblem); });
   for (const [collection, kind] of [[systemEls, 'system'], [problemEls, 'problem']]) collection.forEach((group, id) => {
     const activate = () => kind === 'system' ? navigate(id) : navigate(hierarchy.subsystems[id].direction, id);
     group.addEventListener('click', event => { if (performance.now() < ignoreClickUntil) return; event.stopPropagation(); activate(); });
@@ -570,7 +600,7 @@
     group.addEventListener('focusout', () => group.classList.remove('is-hovered'));
   });
   $$('[data-map-view]').forEach(button => button.addEventListener('click', () => {
-    state.view = button.dataset.mapView; lastViewExplicit = true; hover.hidden = true; closeSuggestions(); renderView(); syncURL(true);
+    saveSnapshot(); state.view = button.dataset.mapView; lastViewExplicit = true; hover.hidden = true; closeSuggestions(); renderView(); syncURL(true);
   }));
   $$('[data-map-reset]').forEach(button => button.addEventListener('click', clearFilters));
   $$('[data-camera]').forEach(button => button.addEventListener('click', () => {
@@ -593,7 +623,7 @@
     if (!Number.isFinite(event.clientX) || !Number.isFinite(event.clientY)) return event.target.closest('[data-paper-id]')?.dataset.paperId;
     const rect = svg.getBoundingClientRect(), x = event.clientX - rect.left, y = event.clientY - rect.top;
     if (x < 0 || y < 0 || x > rect.width || y > rect.height) return undefined;
-    const candidates = currentNodes().filter(p => !nodeEls.get(p.id).hidden).map(p => ({
+    const candidates = visibleNodes().filter(p => !nodeEls.get(p.id).hidden).map(p => ({
       paper: p, distance: Math.hypot(p.x * camera.k + camera.x - x, p.y * camera.k + camera.y - y)
     })).sort((a, b) => a.distance - b.distance || stableCompare(a.paper, b.paper));
     // A direct star hit wins; otherwise visible text is the same target as its star.
@@ -625,6 +655,7 @@
     const done = pointer; pointer = null; svg.classList.remove('is-dragging');
     if (svg.hasPointerCapture(event.pointerId)) svg.releasePointerCapture(event.pointerId);
     ignoreClickUntil = performance.now() + 180;
+    if (done.moved) saveSnapshot();
     if (event.type === 'pointerup' && !done.moved && done.nodeId) selectPaper(done.nodeId, nodeEls.get(done.nodeId), { focusPanel: true });
   }
   svg.addEventListener('pointerup', endPointer); svg.addEventListener('pointercancel', endPointer);
@@ -644,7 +675,7 @@
     }
     const id = event.target.closest('[data-paper-id]')?.dataset.paperId || focusedId;
     if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
-      event.preventDefault(); const next = nearest(currentNodes(), nodeById.get(id), event.key);
+      event.preventDefault(); const next = nearest(visibleNodes(), nodeById.get(id), event.key);
       if (next) { setRoving(next.id, true); focusPaper(next.id); } return;
     }
     if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); if (id) selectPaper(id, nodeEls.get(id), { focusPanel: true }); }
@@ -669,10 +700,15 @@
   svg.addEventListener('pointerleave', () => { hover.hidden = true; });
   window.addEventListener('popstate', () => {
     const restoreFocus = !!document.activeElement?.closest('#paper-map');
-    cancelCamera(); closeSuggestions(); hover.hidden = true; readURL(); renderMap(); renderPanel(false); renderView();
-    if (state.selected && state.view === 'map') focusPaper(state.selected, false); opener = null;
+    const saved = history.state?.atlasMap;
+    restoringHistory = true;
+    cancelCamera(); closeSuggestions(); hover.hidden = true; readURL(); selectionOrigin = saved?.selectionOrigin || null;
+    renderMap(); renderPanel(false); renderView();
+    if (!restoreCamera(saved)) { if (state.selected && state.view === 'map') focusPaper(state.selected, false); else if (state.view === 'map') fit(false); }
+    opener = null; restoringHistory = false;
     if (restoreFocus) focusScope();
   });
+  window.addEventListener('pagehide', saveSnapshot);
   document.addEventListener('visibilitychange', () => { if (document.hidden) { cancelCamera(); hover.hidden = true; } });
   if ('IntersectionObserver' in window) {
     const observer = new IntersectionObserver(entries => {
@@ -684,9 +720,10 @@
   reducedMotion.addEventListener('change', () => { cancelCamera(); if (state.selected) focusPaper(state.selected, false); else fit(false); });
   smallScreen.addEventListener('change', () => { if (!lastViewExplicit) state.view = smallScreen.matches ? 'list' : 'map'; renderView(); });
 
-  readURL(); renderMap(); renderPanel(false); root.classList.add('map-ready'); $('.map-toolbar').hidden = false; $('.map-topics').hidden = false;
+  const initialSnapshot = history.state?.atlasMap; restoringHistory = true;
+  readURL(); selectionOrigin = initialSnapshot?.selectionOrigin || null; renderMap(); renderPanel(false); root.classList.add('map-ready'); $('.map-toolbar').hidden = false; $('.map-topics').hidden = false;
   renderView(); $('#map-help').textContent = smallScreen.matches ? '点击节点查看 · 使用按钮缩放 · 页面可正常滚动' : '拖动平移 · Ctrl / ⌘ + 滚轮缩放 · 方向键选择';
   $('.map-canvas-top>span:last-child').textContent = `${nodes.length} PAPERS / ATLAS`;
   $('.atlas-navigation').hidden = false;
-  syncURL(false);
+  restoreCamera(initialSnapshot); restoringHistory = false; syncURL(false);
 })(typeof window !== 'undefined' ? window : globalThis);

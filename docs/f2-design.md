@@ -1,4 +1,6 @@
-# F2 interface implementation
+# F2 interface — historical design record
+
+This describes the previous F2 implementation. The live site now uses [the unified design system](design-system.md); `f2.css` is not loaded by production pages. Fixed historical reports and retained previews are not restyled in place. The record below is historical, including its earlier counts and layout.
 
 The F2 presentation layer gives the paper library, reading archive, research radar and submission guides the same readable, neutral visual system. The independent C star map uses a navy exploration column beside the white paper list.
 

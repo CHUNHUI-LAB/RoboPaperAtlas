@@ -50,7 +50,7 @@
   if (root.dataset.atlasInitialized) return;
   const canvas = root.querySelector('canvas');let ctx=null;try{ctx=canvas&&canvas.getContext('2d');}catch{} // Keep real topic/paper links usable without Canvas.
   root.dataset.atlasInitialized = 'true';
-  const stars = makeStars(), toggle = root.querySelector('[data-atlas-toggle]');
+  const stars = makeStars(Math.max(240, Math.min(3600, Number(root.dataset.starCount) || 3600))), toggle = root.querySelector('[data-atlas-toggle]');
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)'), compact = window.matchMedia('(max-width: 767px)');
   const topicLinks=[...root.querySelectorAll('[data-atlas-topic]')],panels=[...root.querySelectorAll('[data-atlas-panel]')],overview=root.querySelector('.atlas-galaxy__overview'),status=root.querySelector('[data-atlas-status]');
   topicLinks.forEach(link=>{link.setAttribute('aria-expanded','false');link.setAttribute('aria-controls','atlas-panel-'+link.dataset.atlasTopic);});root.dataset.activeTopic='overview';

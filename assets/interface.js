@@ -3,14 +3,14 @@
  document.body.classList.add('js-ready');
  const root=document.body.dataset.root||'';
  const menu=document.querySelector('.mobile-menu'),nav=document.querySelector('#main-nav');
- function closeMenu(){menu.setAttribute('aria-expanded','false');nav.classList.remove('open')}
- menu.addEventListener('click',()=>{const open=menu.getAttribute('aria-expanded')!=='true';menu.setAttribute('aria-expanded',String(open));nav.classList.toggle('open',open)});
- nav.addEventListener('click',e=>{if(e.target.closest('a'))closeMenu()});
+ function closeMenu(){menu?.setAttribute('aria-expanded','false');nav?.classList.remove('open')}
+ menu?.addEventListener('click',()=>{const open=menu.getAttribute('aria-expanded')!=='true';menu.setAttribute('aria-expanded',String(open));nav.classList.toggle('open',open)});
+ nav?.addEventListener('click',e=>{if(e.target.closest('a'))closeMenu()});
  const dialog=document.querySelector('#search-dialog'),input=document.querySelector('#global-search-input'),results=document.querySelector('#global-search-results'),status=document.querySelector('#global-search-status');
- let index=null,pending=null,opener=null;
+ let index=null,pending=null,opener=null,loadFailed=false;
  function showResults(){
   results.replaceChildren();const allLink=document.querySelector('#global-all-results');allLink.href=root+'index.html'+(input.value.trim()?'?q='+encodeURIComponent(input.value.trim()):'')+'#catalog';allLink.textContent=input.value.trim()?'查看全部匹配结果 ↗':'进入完整目录 ↗';const query=input.value.trim().toLocaleLowerCase(),terms=query.split(/\s+/).filter(Boolean);
-  if(!index){status.textContent='正在载入目录…';return}
+  if(!index){status.textContent=loadFailed?'搜索索引暂时无法载入，请重试或进入完整目录':'正在载入目录…';return}
   if(!terms.length){status.textContent='试试 HarnessVLN、whole-body、diffusion 或作者名';return}
   const matches=index.filter(p=>terms.every(t=>p.text.toLocaleLowerCase().includes(t)));
   status.textContent=matches.length?`找到 ${matches.length} 篇论文，显示前 ${Math.min(8,matches.length)} 篇`:'没有匹配论文，试试更短的关键词';
@@ -20,9 +20,9 @@
   }
  }
  async function openSearch(){
-  opener=document.activeElement;closeMenu();if(!dialog.open)dialog.showModal();input.focus();showResults();
+  if(!dialog.open)opener=document.activeElement;closeMenu();if(!dialog.open)dialog.showModal();input.focus();loadFailed=false;showResults();
   try{if(!index){pending=pending||fetch(root+'data/search-index.json?v='+encodeURIComponent(document.body.dataset.dataVersion||'1')).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()});index=await pending}showResults()}
-  catch(e){pending=null;status.textContent='搜索索引暂时无法载入，请使用下方完整目录入口'}
+  catch(e){pending=null;loadFailed=true;status.textContent='搜索索引暂时无法载入，请重试或进入完整目录'}
  }
  document.querySelectorAll('.global-search-trigger,[data-search-trigger]').forEach(b=>b.addEventListener('click',openSearch));
  document.querySelector('.dialog-close').addEventListener('click',()=>dialog.close());
@@ -43,7 +43,7 @@
   if(filterOpen)return;
   if(e.key==='/'&&!editing&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)&&!dialog.open&&!document.querySelector('#paper-drawer').open){e.preventDefault();const local=document.querySelector('#search[type=search]');if(local){closeMenu();local.focus()}else openSearch()}
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();if(document.querySelector('#paper-drawer').open)return;dialog.open?dialog.close():openSearch()}
-  if(e.key==='Escape'&&menu.getAttribute('aria-expanded')==='true'){closeMenu();menu.focus()}
+  if(e.key==='Escape'&&menu?.getAttribute('aria-expanded')==='true'){closeMenu();menu.focus()}
  });
  let toastTimer;
  document.querySelector('.copy-page')?.addEventListener('click',async()=>{
@@ -80,22 +80,31 @@
    const overlay=p.verified_overlay||{},title=overlay.title||p.title,a=overlay.authors||p.authors,authors=Array.isArray(a)?a.join(', '):a;
    const presentation=globalThis.RoboPaperPresentation;
    body.replaceChildren();
-   const h=text('h2',title);h.id='drawer-title';body.append(h,text('p',p.summary||(presentation.overlayStatus(p)?'当前显示独立核验后的书目；原始记录仍单独保留。':'已收录原始书目，题名、作者与年份尚待来源核验。'),'drawer-summary'),text('p',authors,'drawer-authors'));
+   const h=text('h2',title);h.id='drawer-title';body.append(h,text('p',p.summary||button.dataset.classificationNote||(presentation.overlayStatus(p)?'当前显示独立核验后的书目；原始记录仍单独保留。':'已收录原始书目，题名、作者与年份尚待来源核验。'),'drawer-summary'),text('p',authors,'drawer-authors'));
    body.append(text('p',(p.bibliographic_year||'年份待核验')+' · '+presentation.metadataLabel(p)+(p.verified_at?' · 核验于 '+p.verified_at:''),'drawer-kicker'));
    if(presentation.overlayStatus(p))body.append(text('p','原始书目：'+(p.citation_verified?'已核验。':'保留原始记录，尚未核验。')+'补充书目的核验与原始记录状态分开保存。','drawer-note'));
-   if(button.dataset.directionLabel)body.append(text('p',button.dataset.directionLabel+' / '+button.dataset.problemLabel,'drawer-taxonomy'));
+   if(button.dataset.directionLabel)body.append(text('p',[button.dataset.directionLabel,button.dataset.problemLabel].filter(Boolean).join(' / '),'drawer-taxonomy'));
+   if(button.dataset.classificationNote && p.summary && button.dataset.classificationNote!==p.summary){
+    const disclosure=document.createElement('details');disclosure.className='drawer-classification';
+    disclosure.append(text('summary','分类依据与范围'),text('p',button.dataset.classificationNote),text('p','编目概览与分类依据，不代表全文精读。','drawer-note'));body.append(disclosure);
+   }
    const resources=document.createElement('div');resources.className='drawer-resources';
-   for(const [url,label] of [[p.pdf_url,p.pdf_kind==='publisher'?'出版方 PDF ↗':'预印本替代 PDF ↗'],[p.paper_url,'出版 / 论文页面 ↗'],[p.project_url,'官方项目 ↗']]){if(url){const a=safeLink(url,label);if(a){a.target='_blank';a.rel='noopener noreferrer';resources.append(a)}}}
+   for(const [url,label] of [[p.pdf_url,p.pdf_kind==='publisher'?'出版方 PDF ↗':'预印本替代 PDF ↗'],[p.paper_url,'出版 / 论文页面 ↗'],[p.project_url,'官方项目 ↗'],...(p.code_urls||[]).map((url,i)=>[url,'代码 / 数据'+(i?' '+(i+1):'')+' ↗'])]){if(url){const a=safeLink(url,label);if(a){a.target='_blank';a.rel='noopener noreferrer';resources.append(a)}}}
    if(resources.children.length)body.append(resources);
    const reports=document.createElement('div');reports.className='drawer-resources';
    const available=presentation.currentReports(p);
    for(const item of available){const context=document.querySelector('#paper-grid')?'?catalog='+encodeURIComponent(globalThis.RoboCatalogNavigation.cleanQuery(window.location.search)):'';const a=safeLink(globalThis.RoboCatalogNavigation.readerHref(root+item.path,context),'S'+item.index+' '+item.label+' ↗');if(a)reports.append(a)}
    if(reports.children.length)body.append(reports);
    body.append(text('p',available.length?'已导入独立阅读报告；导入状态不等于全文已核验，具体阅读范围与未核验项见各阶段报告。':'当前没有可显示的已导入阅读报告；来源核验不代表已完成论文阅读、代码审计或独立复现。','drawer-note'));
-   for(const item of available)if(item.artifact.source_edition)body.append(text('p','已导入报告所用版本 · S'+item.index+' '+item.artifact.version+'：'+item.artifact.source_edition,'drawer-note'));
+   if(available.some(item=>item.artifact.source_edition)){
+    const editions=document.createElement('details');editions.className='drawer-editions';editions.append(text('summary','各阶段报告的来源版本'));
+    for(const item of available)if(item.artifact.source_edition)editions.append(text('p','S'+item.index+' · '+item.artifact.version+'：'+item.artifact.source_edition,'drawer-note'));
+    body.append(editions);
+   }
+   if(p.code_note)body.append(text('p',presentation.translate?presentation.translate(p.code_note):p.code_note,'drawer-note'));
    if(p.pdf_note){body.append(text('p',presentation.pdfNoteHeading(p),'drawer-note'));body.append(text('p',p.pdf_note,'drawer-note'))}
    const full=safeLink(globalThis.RoboCatalogNavigation.paperHref(root+'papers/'+encodeURIComponent(id)+'/index.html',document.querySelector('#paper-grid')?window.location.search:''),'打开完整详情 ↗','primary-link');if(full)body.append(full);
-  }catch(e){pending=null;if(current!==requestId)return;body.replaceChildren();const h=text('h2','暂时无法载入速览');h.id='drawer-title';body.append(h,text('p','可以直接打开完整论文详情。','drawer-summary'));const a=safeLink(globalThis.RoboCatalogNavigation.paperHref(root+'papers/'+encodeURIComponent(id)+'/index.html',document.querySelector('#paper-grid')?window.location.search:''),'打开完整详情 ↗','primary-link');if(a)body.append(a)}
+  }catch(e){pending=null;if(current!==requestId)return;body.replaceChildren();const h=text('h2','暂时无法载入速览');h.id='drawer-title';body.append(h,text('p','可以重新载入，或直接打开完整论文详情。','drawer-summary'));const retry=text('button','重试','secondary-button');retry.type='button';retry.addEventListener('click',()=>show(button));body.append(retry);const a=safeLink(globalThis.RoboCatalogNavigation.paperHref(root+'papers/'+encodeURIComponent(id)+'/index.html',document.querySelector('#paper-grid')?window.location.search:''),'打开完整详情 ↗','primary-link');if(a)body.append(a)}
  }
- document.querySelectorAll('[data-preview]').forEach(button=>button.addEventListener('click',()=>show(button)));
+ document.addEventListener('click',event=>{const button=event.target.closest('[data-preview]');if(button){event.preventDefault();show(button)}});
 })();

@@ -5,6 +5,7 @@ from unittest.mock import patch
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT/'scripts'))
 import reports as r
 import current_reader as current
+from reader_test_support import strip_live_presentation_scripts
 from report_vbc_stage1 import IDENTITY,POLICY_PATH,SECTION_IDS,EVIDENCE_IDS,FIGURE_IDS,IMAGE_HASHES
 from validate import expected_stage,validate_catalog
 from build import details,home
@@ -87,7 +88,7 @@ class VBCFirstTests(unittest.TestCase):
   current_text=(ROOT/r.report_path(current_record)).read_text()
   self.assertIn('href="stage1.html"',page);self.assertNotIn('href="stage2.html"',page);self.assertNotIn('href="stage3.html"',page)
   self.assertIn('href="../index.html#reading"',page);self.assertEqual(page.count(current.context_script(ROOT)),1)
-  for tag in ('article','style','script'):self.assertEqual(re.findall(rf'<{tag}\b.*?</{tag}>',page.replace(current.context_script(ROOT),''),re.S),re.findall(rf'<{tag}\b.*?</{tag}>',current_text,re.S))
+  for tag in ('article','style','script'):self.assertEqual(re.findall(rf'<{tag}\b.*?</{tag}>',strip_live_presentation_scripts(self,page,ROOT,current_text),re.S),re.findall(rf'<{tag}\b.*?</{tag}>',current_text,re.S))
   with patch.dict(current.VBC_FROZEN,{'stage1':dict(current.VBC_FROZEN['stage1'],sha256='0'*64)}):
    with self.assertRaisesRegex(ValueError,'Unreviewed VBC'):current.render(ROOT,self.paper,'stage1',self.records)
  def test_v1_76_utf8_parts_and_two_versioned_public_htmls(self):

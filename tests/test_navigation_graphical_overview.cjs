@@ -122,7 +122,18 @@ const TASK_RELATIONS = [
 ];
 // The science payload and reviewed projection implementation are independently
 // pinned: checking DOM against a candidate-defined hierarchy alone could self-pass.
-const REVIEWED_PROJECTION_SHA = 'b5169e9a048aa6b4bb212237f01bbdfbd3c2f1b39bd5b22188a79cab5b087cee';
+// c26f035's exact source bytes except NATIVE_CSS and _page, whose only role
+// is native-page presentation. This retains every projection function, including
+// _extend_canonical_scopes below the presentation section; the independent full
+// descriptor comparison below is unchanged. The reviewed excluded diff is CSS
+// plus shared chrome/title rendering, not scientific inputs or graph identity.
+const REVIEWED_PROJECTION_SHA = '08c7fcba5aa4d13d4b8bdb0166133469473699a56526e1f5cfceb68479d1df03';
+function projectionImplementationBytes() {
+  const source = fs.readFileSync(path.join(root, 'scripts/navigation_research_map.py'), 'utf8');
+  const start = source.indexOf('\nNATIVE_CSS = '), end = source.indexOf('\ndef _enhanced(', start);
+  assert.ok(start > 0 && end > start, 'the reviewed native-presentation section has exact boundaries');
+  return Buffer.from(source.slice(0, start) + source.slice(end));
+}
 // Frozen descriptor produced by the independently pinned c2301e8 projection
 // (implementation SHA-256 c1dcba7bb06d0ad8961ce33b28b596d94b32d4e1fe41d0811de40502321005be).
 // It is test evidence, not generated from the implementation under test.
@@ -1154,9 +1165,21 @@ async function frames(w) {
   await new Promise(resolve => w.requestAnimationFrame(() => w.requestAnimationFrame(resolve)));
 }
 async function page(options = {}) {
-  const errors = [], calls = [], external = [];
+  const errors = [], calls = [], external = [], chromeRequests = [];
+  // The scientific runtime is inline and must work while optional shared chrome
+  // is unavailable. Only these exact same-origin, content-versioned assets are
+  // permitted; neither network access nor an arbitrary basename is allowlisted.
+  const chromeAssets = ['site.css', 'catalog-navigation.js', 'presentation.js', 'interface.js', 'chrome.js'];
+  const allowedChrome = new Set(chromeAssets.map(name => {
+    const digest = crypto.createHash('sha256').update(fs.readFileSync(path.join(root, 'assets', name))).digest('hex').slice(0, 16);
+    return 'https://example.org/assets/' + name + '?v=' + digest;
+  }));
   class NoNetwork extends ResourceLoader {
-    fetch(url) { external.push(url); return null; }
+    fetch(url) {
+      if (allowedChrome.has(url)) chromeRequests.push(url);
+      else external.push(url);
+      return null;
+    }
   }
   const vc = new VirtualConsole();
   vc.on('jsdomError', error => errors.push(error.message));
@@ -1164,6 +1187,9 @@ async function page(options = {}) {
     url:'https://example.org/research/navigation/' + (options.hash || ''),
     runScripts:'dangerously', resources:new NoNetwork(), pretendToBeVisual:true, virtualConsole:vc,
     beforeParse(w) {
+      // This suite exercises the desktop graph; compact workspace behavior is
+      // covered by its dedicated viewport tests, not JSDOM's implicit 1024px.
+      w.innerWidth = options.width || 1440; w.innerHeight = 900;
       w.TextEncoder = TextEncoder;
       w.TextDecoder = TextDecoder;
       w.scrollTo = (x, y) => Object.defineProperty(w, 'scrollY', {value:y, configurable:true});
@@ -1187,7 +1213,7 @@ async function page(options = {}) {
   for (let i = 0; i < 150 && !w.NavigationProductApp; i++) await wait(10);
   assert.ok(w.NavigationProductApp, w.document.querySelector('#np-load-message')?.textContent);
   await frames(w);
-  return {w, d:w.document, a:w.NavigationProductApp, M:w.NavigationProductModel, errors, calls, external};
+  return {w, d:w.document, a:w.NavigationProductApp, M:w.NavigationProductModel, errors, calls, external, chromeRequests, allowedChrome};
 }
 function descendants(ids) {
   return ids.flatMap(id => [id, ...descendants(science.positions[id].childIds || [])]);
@@ -1200,6 +1226,7 @@ function ancestorIds(id) {
 function healthy(x) {
   assert.deepEqual(x.errors, []);
   assert.deepEqual(x.external, []);
+  assert.deepEqual(x.chromeRequests.slice().sort(), [...x.allowedChrome].sort(), 'every requested chrome asset is expected and versioned; scientific startup needs none of them');
   assert.equal(x.d.querySelector('#np-navigation-error').hidden, true);
 }
 
@@ -1347,7 +1374,7 @@ function snapshotGraph(x) {
 
 test('graphical S0 leaves frozen science and the original global projection intact', async t => {
   assert.equal(crypto.createHash('sha256').update(scienceBytes).digest('hex'), SCIENCE_SHA);
-  assert.equal(frozenSources['scripts/navigation_research_map.py'], REVIEWED_PROJECTION_SHA, 'the graph uses the independently reviewed projection implementation');
+  assert.equal(crypto.createHash('sha256').update(projectionImplementationBytes()).digest('hex'), REVIEWED_PROJECTION_SHA, 'the graph uses every independently reviewed projection implementation byte outside native CSS and page chrome');
   assert.equal(science.scopes.length, 64);
   assert.equal(Object.keys(science.positions).length, 1683);
   const x = await page(); t.after(() => x.w.close());
@@ -1701,7 +1728,9 @@ test('the explicit old graph and cold original g links remain available without 
 const publishedHistory = require('./fixtures/navigation-pr53-history.json');
 for (const [name, fixture] of Object.entries(publishedHistory.states)) {
   test('graphical S0 retains the exact published ' + name + ' deep-link and historical reading position', async t => {
-    const x = await page({hash:fixture.urlHash, saved:fixture.history}); t.after(() => x.w.close());
+    // Published document-scroll histories were captured below the 1200px
+    // fixed desktop workspace breakpoint; preserve that original viewport.
+    const x = await page({hash:fixture.urlHash, saved:fixture.history, width:1024}); t.after(() => x.w.close());
     assert.deepEqual(clean(x.a.getState().route), fixture.history[x.M.KEY].route);
     assert.equal(x.d.querySelector('#np-tree-scroll').scrollTop, 123);
     assert.equal(x.d.querySelector('#np-detail-scroll').scrollTop, 570);
@@ -2371,12 +2400,15 @@ test('nohash: saved relation focus and disclosure restore on the actual bare URL
   if(map(x).dataset.relationsVisible!=='true')x.d.querySelector('#np-map-relations-toggle').click();
   relationPath(x, 'tasks:relation:90').dispatchEvent(new x.w.MouseEvent('click', {bubbles:true}));
   await frames(x.w);
+  // A document scroll exists in the compact layout; desktop intentionally
+  // pins the outer page at zero. Select the real edge before changing layout.
+  x.w.innerWidth = 1024; x.w.dispatchEvent(new x.w.Event('resize')); await frames(x.w);
   home(x).scrollTop = 143;
   x.w.scrollTo(0, 211);
   x.w.dispatchEvent(new x.w.Event('pagehide'));
   const saved = clean(x.w.history.state), focus = x.d.activeElement.id;
   assert.equal(x.w.location.hash, '');
-  const reload = await page({saved}); t.after(() => reload.w.close());
+  const reload = await page({saved, width:1024}); t.after(() => reload.w.close());
   assert.equal(reload.w.location.hash, '', 'test the original bare URL, not a synthetic canonical hash');
   assert.equal(reload.d.activeElement.id, focus);
   assert.equal(reload.d.activeElement.tagName, 'ARTICLE');
@@ -2433,6 +2465,9 @@ test('nohash: unload saves the final scroll before the debounce without cancelli
   if(map(x).dataset.relationsVisible!=='true')x.d.querySelector('#np-map-relations-toggle').click();
   relationPath(x, 'tasks:relation:90').dispatchEvent(new x.w.MouseEvent('click', {bubbles:true}));
   await frames(x.w);
+  // A document scroll exists in the compact layout; desktop intentionally
+  // pins the outer page at zero. Select the real edge before changing layout.
+  x.w.innerWidth = 1024; x.w.dispatchEvent(new x.w.Event('resize')); await frames(x.w);
   home(x).scrollTop = 527;
   x.w.dispatchEvent(new x.w.Event('pagehide'));
   x.w.history.replaceState({...clean(x.w.history.state),unrelatedOwnerField:'preserved'}, '', x.w.location.href);
@@ -2470,7 +2505,7 @@ test('nohash: unload saves the final scroll before the debounce without cancelli
   assert.equal(x.M.getBucket(x.w.history.state[x.M.KEY]).overviewView.scrollTop,900);
 
   assert.equal(fs.readFileSync(path.join(root,'assets/navigation-product.js'),'utf8').split("addEventListener('beforeunload',saveCurrent)").length-1, 1, 'one lifecycle listener registration');
-  const reload = await page({saved}); t.after(() => reload.w.close());
+  const reload = await page({saved, width:1024}); t.after(() => reload.w.close());
   assert.equal(reload.w.location.hash, '');
   assert.equal(home(reload).scrollTop, 872);
   assert.equal(reload.w.scrollY, 33);

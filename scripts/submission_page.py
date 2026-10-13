@@ -61,7 +61,8 @@ def write_submission(root, target, shell):
     css += '\n.submission-module{width:100%;font-family:inherit}'
     import hashlib
     version = hashlib.sha256(css.encode()).hexdigest()[:12]
-    page = page.replace('</head>', f'<link rel="stylesheet" href="style.css?v={version}"></head>')
+    # Production uses the shared site stylesheet. Keep the scoped legacy file
+    # available for existing preview/reference routes, without loading two skins.
     page = page.replace('</body>', f'<script src="../submit-preview/app.js?v={versions["script"]}&amp;data={versions["data"]}"></script></body>')
     folder = target / 'submit'
     folder.mkdir(exist_ok=True)

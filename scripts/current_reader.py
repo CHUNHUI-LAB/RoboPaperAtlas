@@ -1,7 +1,7 @@
 """Deterministic live navigation views derived from validated immutable reports."""
 import hashlib
 import re
-from html import escape
+from html import escape, unescape
 
 NAVIGATION_READER_PAPERS = frozenset({'harnessvln','navharness','holoagent-0'})
 NAVIGATION_FROZEN = {'harnessvln': {'version': 'v1', 'sha256': '923f7f4a707517708eb14d33905b67046d57aca57a44a0adad96d50f19c2b56a', 'nav': '<nav class="reader-stages" aria-label="阅读阶段"><a href="#section-01" aria-current="page"><small>01</small>初读</a><span aria-disabled="true"><small>02</small>写作精读 · 未收录</span><span aria-disabled="true"><small>03</small>方法与代码 · 未收录</span></nav>', 'return_link': '<a class="atlas-return" href="https://chunhui-lab.github.io/RoboPaperAtlas/papers/harnessvln/index.html">回到论文详情</a>', 'note': '<p class="reader-document-note">阅读报告 v1 · 集成预览 · 待视觉验收；内容终审与桌面、窄屏、打印验收尚未完成；受控预览，尚未正式收录。</p>', 'current_return': '<a class="atlas-return" href="../index.html#reading">回到论文详情</a>'}, 'navharness': {'version': 'v1', 'sha256': '290ef898e427462784ce2f4b930893b882d16875b9ced2bddbc3180b8024e23e', 'nav': '<nav class="reader-stages" aria-label="阅读阶段"><a href="#section-01" aria-current="page"><small>01</small>初读</a><span aria-disabled="true"><small>02</small>写作精读 · 未收录</span><span aria-disabled="true"><small>03</small>方法与代码 · 未收录</span></nav>', 'return_link': '<a class="atlas-return" href="https://chunhui-lab.github.io/RoboPaperAtlas/papers/navharness/index.html">回到论文详情</a>', 'note': '<p class="reader-document-note">阅读报告 v1 · 集成预览 · 待视觉验收；内容终审与桌面、窄屏、打印验收尚未完成；受控预览，尚未正式收录。</p>', 'current_return': '<a class="atlas-return" href="../index.html#reading">回到论文详情</a>'}, 'holoagent-0': {'version': 'v1', 'sha256': '665471b396b2154f521b42209b2e2545b28773c4b335788b22b3cb4961c7d4bc', 'nav': '<nav class="reader-stages" aria-label="阅读阶段"><a href="#section-01" aria-current="page"><small>01</small>初读</a><span aria-disabled="true"><small>02</small>写作精读 · 未收录</span><span aria-disabled="true"><small>03</small>方法与代码 · 未收录</span></nav>', 'return_link': '<a class="atlas-return" href="https://chunhui-lab.github.io/RoboPaperAtlas/papers/holoagent-0/index.html">回到论文详情</a>', 'note': '<p class="reader-document-note">阅读报告 v1 · 集成预览 · 待视觉验收；内容终审与桌面、窄屏、打印验收尚未完成；受控预览，尚未正式收录。</p>', 'current_return': '<a class="atlas-return" href="../index.html#reading">回到论文详情</a>'}}
@@ -148,6 +148,19 @@ def context_script(root):
     return f'<script src="../../../assets/catalog-navigation.js?v={digest}" defer></script>'
 
 
+def presentation_scripts(root, *, embedded_interface=False, toc_fix=True):
+    """Live presentation only; never rewrite the fixed report's inline scripts."""
+    names = ['catalog-navigation.js', 'presentation.js']
+    if not embedded_interface:
+        names.append('interface.js')
+    names.append('chrome.js')
+    if toc_fix:
+        names.extend(['reader-toc-focus-v1.js', 'reader-current.js'])
+    return ''.join(
+        f'<script src="../../../assets/{name}?v={hashlib.sha256((root / "assets" / name).read_bytes()).hexdigest()[:12]}" defer></script>'
+        for name in names)
+
+
 def render(root, paper, stage, records, *, preview_payload=None):
     """Require reviewed bytes; add only the generated navigation-context runtime."""
     from reports import report_path
@@ -208,13 +221,22 @@ def render(root, paper, stage, records, *, preview_payload=None):
     else:
         frozen, frozen_return, note = FROZEN_NAV[stage], FROZEN_RETURN[stage], NOTE
         current_return = '<a class="atlas-return" href="../index.html#reading">回到论文详情</a>'
-    return _render_reviewed_page(root,paper,stage,record,page,frozen,frozen_return,note,current_return,report_path(record))
+    return _render_reviewed_page(root,paper,stage,record,page,frozen,frozen_return,note,current_return,report_path(record),managed_preview=preview_payload is not None)
 
 
-def _render_reviewed_page(root,paper,stage,record,page,frozen,frozen_return,note,current_return,artifact_path):
+def _render_reviewed_page(root,paper,stage,record,page,frozen,frozen_return,note,current_return,artifact_path,*,managed_preview=False):
     """Pure shared presentation; callers own exact identity/content/state validation."""
+    from site_chrome import render_header, render_footer, render_dialogs
     if page.count(OPEN) != 1 or page.count(frozen) != 1 or page.count(note) != 1 or page.count(frozen_return) != 1:
         raise ValueError('Unexpected current reader navigation signature')
+    original_title = re.search(r'<title>(.*?)</title>', page, re.S)
+    title = (paper.get('short_name') or (paper.get('verified_overlay') or {}).get('title')
+             or paper.get('title') or (unescape(original_title[1]).split('·')[0].strip() if original_title else paper['id']))
+    short_title, separator, _ = title.partition(':')
+    if separator and 2 <= len(short_title) <= 48:
+        title = short_title
+    title = f'{title} · {dict(STAGES)[stage]} · RoboPaperAtlas'
+    page = re.sub(r'<title>.*?</title>', lambda _: '<title>' + escape(title) + '</title>', page, count=1, flags=re.S)
     # The reviewed UMI layout hides its stagebar paper brand below 767px.
     # Give current views a plain, visible return in the existing breadcrumb row.
     if paper['id'] == 'rpa-0062' and stage in ('stage1', 'stage3'):
@@ -229,28 +251,51 @@ def _render_reviewed_page(root,paper,stage,record,page,frozen,frozen_return,note
             current = ' aria-current="page"' if key == stage else ''
             nav.append(f'<a href="{key}.html"{current}><small>{index:02}</small>{label}</a>')
         else:
-            nav.append(f'<span aria-disabled="true"><small>{index:02} · 未完成</small>{label}</span>')
-    provenance = (f'当前导航视图 · 基于固定报告 {escape(record["version"])} 生成，保留正文，更新阶段导航、返回入口与统一阅读界面；'
-                  f'正文与原报告脚本保持原样；保留原有样式并叠加 F2 界面样式，另加载目录上下文导航。<a href="../../../{escape(artifact_path, quote=True)}">打开固定版本报告 ↗</a> ')
-    # Align live reader navigation wording without rewriting fixed reports or article content.
-    page = re.sub(r'<header\b.*?</header>', lambda match: match[0].replace('>Library</a>', '>论文库</a>').replace('>Atlas</a>', '>星图</a>').replace('>Radar</a>', '>前沿动态</a>'), page, count=1, flags=re.S)
-    navigation_script = context_script(root)
-    # A presentation-only stylesheet on current routes; immutable artifacts stay byte-identical.
-    theme_digest = hashlib.sha256((root / 'assets/f2.css').read_bytes()).hexdigest()[:12]
-    theme = f'<link rel="stylesheet" href="../../../assets/f2.css?v={theme_digest}">'
+            nav.append(f'<span aria-disabled="true"><small>{index:02} · 未导入</small>{label}</span>')
+    provenance = (f'当前阅读 · 报告 {escape(record["version"])} · '
+                  f'<a href="../../../{escape(artifact_path, quote=True)}">打开固定版本报告 ↗</a> ')
+    # The compatibility class lets the unchanged reader measure the common header.
+    header = render_header('../../../', page='reading', compact=True).replace(
+        'site-header--compact"', 'site-header--compact atlas-site-header"', 1)
+    page = page.replace(frozen, OPEN + ''.join(nav) + '</nav>', 1).replace(frozen_return, current_return, 1)
+    page = re.sub(r'<header\b.*?</header>', lambda _: header, page, count=1, flags=re.S)
+    # A visible paper return sits outside the shared header and never disappears on mobile.
+    route = ('<div class="reader-route"><a class="atlas-return" href="../index.html#reading">回到论文详情</a>'
+             '<a href="../../../reading/index.html">阅读档案 <span aria-hidden="true">↗</span></a></div>')
+    page = re.sub(r'(<main\b[^>]*class="reader-page[^>]*>)', lambda m: m[0] + route, page, count=1)
+    if '<footer class="site-footer"' in page:
+        page = re.sub(r'<footer class="site-footer".*?</footer>', lambda _: render_footer('../../../'), page, count=1, flags=re.S)
+    else:
+        page = page.replace('</body>', render_footer('../../../') + '</body>', 1)
+    embedded_interface = 'data-report-script="interface.js"' in page
+    dialogs = render_dialogs('../../../')
+    if '<dialog id="search-dialog"' in page:
+        # Keep the dialog before the original inline interface runtime executes.
+        page = re.sub(r'<dialog class="paper-drawer".*?</dialog>', '', page, count=1, flags=re.S)
+        page = re.sub(r'<div class="toast"[^>]*>.*?</div>', '', page, count=1, flags=re.S)
+        page = re.sub(r'<dialog id="search-dialog".*?</dialog>', lambda _: dialogs, page, count=1, flags=re.S)
+    else:
+        page = page.replace('</body>', dialogs + '</body>', 1)
+    # Historical preview routes own their versioned focus patch separately.
+    navigation_script = presentation_scripts(root, embedded_interface=embedded_interface, toc_fix=not managed_preview)
+    theme = ''.join(
+        f'<link rel="stylesheet" href="../../../assets/{name}?v={hashlib.sha256((root / "assets" / name).read_bytes()).hexdigest()[:12]}">'
+        for name in ('site.css', 'reader-current.css'))
     # Load after the final fixed stylesheet, before the inline reader runtime measures layout.
     style_end = page.rfind('</style>') + len('</style>')
     if style_end < len('</style>'):
         raise ValueError('Current reader requires its fixed source styles')
     page = page[:style_end] + theme + page[style_end:]
-    page = re.sub(r'<body([^>]*)>', lambda m: '<body' + (
-        re.sub(r'class="([^"]*)"', r'class="\1 f2-theme f2-current-reader"', m[1])
-        if 'class="' in m[1] else m[1] + ' class="f2-theme f2-current-reader"') + '>', page, count=1)
+    def live_body(match):
+        attrs = match[1]
+        classes = 'atlas-theme atlas-current-reader f2-current-reader'
+        attrs = re.sub(r'class="([^"]*)"', lambda m: f'class="{m[1]} {classes}"', attrs) if 'class="' in attrs else attrs + f' class="{classes}"'
+        attrs = re.sub(r'data-root="[^"]*"', 'data-root="../../../"', attrs) if 'data-root="' in attrs else attrs + ' data-root="../../../"'
+        return '<body' + attrs + '>'
+    page = re.sub(r'<body([^>]*)>', live_body, page, count=1)
     if page.count('</body>') != 1:
         raise ValueError('Unexpected current reader body signature')
-    return (page.replace(frozen, OPEN + ''.join(nav) + '</nav>', 1)
-            .replace(frozen_return, current_return, 1)
-            .replace(note, note.replace('>', '>' + provenance, 1), 1)
+    return (page.replace(note, note.replace('>', '>' + provenance, 1), 1)
             .replace('</body>', navigation_script + '</body>', 1))
 
 
@@ -267,7 +312,7 @@ def render_navigation_v2_candidate(root,record,raw):
     paper={'id':pid,'stages':{key:{'status':'not_imported','artifacts':[]}for key in ('stage1','stage2','stage3')}}
     # Display-only navigation model; no registry entry or approval is produced.
     paper['stages']['stage1']={'status':'imported','artifacts':[{'path':artifact_path}]}
-    return _render_reviewed_page(root,paper,'stage1',record,raw.decode('utf-8'),spec['nav'],spec['return_link'],spec['note'],spec['current_return'],artifact_path)
+    return _render_reviewed_page(root,paper,'stage1',record,raw.decode('utf-8'),spec['nav'],spec['return_link'],spec['note'],spec['current_return'],artifact_path,managed_preview=True)
 
 
 def write_current_readers(root, target, papers, records):

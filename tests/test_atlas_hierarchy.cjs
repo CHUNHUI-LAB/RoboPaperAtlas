@@ -1,7 +1,7 @@
 'use strict';
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
 const {fixture}=require('./map_dom_fixture.cjs'),{hierarchyLayout,fitCamera}=require('../assets/paper-map.js');
-const html=fs.readFileSync(require('node:path').join(__dirname,'../dist/map/index.html'),'utf8');
+const html=fs.readFileSync(process.env.ATLAS_MAP_HTML||require('node:path').join(__dirname,'../dist/map/index.html'),'utf8');
 const data=JSON.parse(html.match(/<script type="application\/json" id="paper-map-data">(.*?)<\/script>/s)[1]);
 const level=f=>f.$('#paper-map').dataset.level;
 test('hierarchy positions remain deterministic under paper order and contain every unique ID',()=>{
@@ -34,8 +34,8 @@ test('all pending placements expose evidence and resources stay distinct from cr
  f.setURL('?paper=holoagent-0');assert.match(f.$('#atlas-breadcrumbs').textContent,/跨领域研究/);assert(!f.$('#atlas-breadcrumbs').textContent.includes('跨领域资源'));
  f.setURL('?paper=savva2019habitat');assert.match(f.$('#atlas-breadcrumbs').textContent,/跨领域资源/);
 });
-test('search reaches all95 regardless of the current system and restores exact problem',()=>{
- const f=fixture({reduced:true});for(const p of data.papers){f.setURL('?topic=resources');f.input(p.title);f.$('#map-search').emit('keydown',{key:'Enter'});assert.equal(f.$('#map-selected-title')?.textContent,p.title);assert.equal(level(f),'problem');}
+test('search reaches all95 regardless of the current system and retains its original query',()=>{
+ const f=fixture({reduced:true});for(const p of data.papers){f.setURL('?topic=resources');f.input(p.title);f.$('#map-search').emit('keydown',{key:'Enter'});assert.equal(f.$('#map-selected-title')?.textContent,p.title);assert.equal(level(f),'paper');assert.equal(f.$('#map-search').value,p.title);}
 });
 test('global URL search normalizes away a conflicting direction and problem',()=>{
  const f=fixture({url:'https://example.org/map/?topic=navigation&problem=navigation%2Fnav-goal&q=whole-body'});
@@ -56,13 +56,11 @@ test('list breadcrumbs and history reveal the focused results heading',()=>{
  assert(f.document.activeElement.isConnected);assert(!f.document.activeElement.closest('[hidden]'));assert.equal(f.document.activeElement,f.$('#map-results-title'));assert.equal(f.document.activeElement.scrolled,true);
  f.goBack();assert(f.document.activeElement.isConnected);assert(!f.document.activeElement.closest('[hidden]'));
 });
-test('pending classification notes meet readable contrast on both list and dark map panels',()=>{
+test('pending classification notes remain readable on the shared light reading panel',()=>{
  const css=fs.readFileSync(require('node:path').join(__dirname,'../assets/paper-map.css'),'utf8');
- const dark=css.match(/\.map-classification-pending\{color:(#[0-9a-f]{6})!important\}/i)?.[1];
- const light=css.match(/\.paper-map\[data-view=list\] \.map-classification-pending\{color:(#[0-9a-f]{6})!important\}/i)?.[1];
+ const foreground=css.match(/\.map-classification-pending\{color:(#[0-9a-f]{6})!important\}/i)?.[1];
  const luminance=hex=>{const c=hex.slice(1).match(/../g).map(v=>parseInt(v,16)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);return c[0]*.2126+c[1]*.7152+c[2]*.0722};
- const contrast=(a,b)=>{const x=luminance(a),y=luminance(b);return(Math.max(x,y)+.05)/(Math.min(x,y)+.05)};
- assert(dark&&light);assert(contrast(dark,'#0c1017')>=4.5);assert(contrast(light,'#ffffff')>=4.5);
+ assert(foreground);assert((luminance('#f2f5ef')+.05)/(luminance(foreground)+.05)>=4.5);
 });
 
 test('original inferred tags are explicitly separated from source-supported method components',()=>{

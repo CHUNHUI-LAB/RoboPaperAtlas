@@ -168,6 +168,10 @@
   });
   function apply(reset = true, save = true) {
     if (save) cancelScrollRestore();
+    if (save && grid.animate && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      grid.getAnimations().forEach(animation => animation.cancel());
+      grid.animate([{opacity: .72}, {opacity: 1}], {duration: 180, easing: 'cubic-bezier(.22,1,.36,1)'});
+    }
     if (reset) limit = 24;
     search.value = search.value.slice(0, 512).replace(/[\uD800-\uDBFF]$/, '');
     const terms = search.value.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
@@ -261,8 +265,11 @@
   window.addEventListener('popstate', event => restore(event.state));
   window.addEventListener('pageshow', event => {
     if (event.persisted) restore(window.history.state);
-    else if (initialReturn && initialReturn.revision === scrollRestoreRevision && initialReturn.href === window.location.href)
-      scheduleScrollRestore(initialReturn.saved);
+    else if (initialReturn && initialReturn.revision === scrollRestoreRevision && initialReturn.href === window.location.href) {
+      if (initialReturn.saved) scheduleScrollRestore(initialReturn.saved);
+      else if (cleanQuery(window.location.search))
+        document.querySelector('#catalog')?.scrollIntoView({block: 'start', behavior: 'instant'});
+    }
     initialReturn = null;
   });
   window.addEventListener('pagehide', () => { cancelScrollRestore(); cancelPendingSearch(); saveSnapshot(); });

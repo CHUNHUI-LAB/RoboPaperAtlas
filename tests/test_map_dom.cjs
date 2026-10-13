@@ -19,7 +19,7 @@ test('related-node selection and Back restore correct panel and URL',()=>{
 });
 test('category single-click counts, global search resets category, empty results recover',()=>{
  const f=fixture();for(const [topic,n]of[['navigation',18],['wbc',20],['mobile-manipulation',19],['policy-learning',21],['spatial-representations',3],['locomotion',2],['general-ml',4],['resources',7],['cross-domain',1],['all',95]]){f.click(`[data-map-topic="${topic}"]`);f.step();assert.equal(f.$$('.map-node').filter(n=>!n.hidden).length,95);assert.equal(f.$$('[data-map-row]').filter(row=>!row.hidden).length,n)}
- f.click('[data-map-topic="wbc"]');pick(f,'HarnessVLN');assert.match(selected(f),/HarnessVLN/);assert.equal(f.$('[data-map-topic="navigation"]').getAttribute('aria-pressed'),'true');
+ f.click('[data-map-topic="wbc"]');pick(f,'HarnessVLN');assert.match(selected(f),/HarnessVLN/);assert.equal(f.$('[data-map-topic="all"]').getAttribute('aria-pressed'),'true');assert.equal(f.$('#map-search').value,'HarnessVLN');
  f.input('q_not_present');f.step();assert.equal(f.$$('.map-node').filter(n=>!n.hidden).length,0);assert.equal(f.$('.map-empty').hidden,false);f.click('[data-map-reset]');f.step();assert.equal(f.$$('.map-node').filter(n=>!n.hidden).length,95);
 });
 test('rapid selection-close-search and map-list switches leave no animations or stale panel',()=>{
@@ -30,7 +30,7 @@ test('camera cancels on hidden/offscreen/reduced motion and reflow',()=>{
  const f=fixture();f.click('[data-camera="in"]');assert.equal(f.raf.size,1);f.document.hidden=true;f.document.emit('visibilitychange');assert.equal(f.raf.size,0);f.document.hidden=false;f.document.emit('visibilitychange');
  f.click('[data-camera="in"]');assert.equal(f.raf.size,1);f.observers[0].cb([{isIntersecting:false}]);assert.equal(f.raf.size,0);f.observers[0].cb([{isIntersecting:true}]);
  f.click('[data-camera="in"]');f.changeMedia('(prefers-reduced-motion: reduce)',true);assert.equal(f.raf.size,0);f.click('[data-camera="in"]');assert.equal(f.raf.size,0);
- f.changeMedia('(prefers-reduced-motion: reduce)',false);f.click('[data-camera="in"]');f.resizers[0].cb();assert.equal(f.raf.size,0);
+ f.changeMedia('(prefers-reduced-motion: reduce)',false);f.click('[data-camera="in"]');f.$('.map-canvas-wrap').getBoundingClientRect=()=>({width:850,height:690});f.resizers[0].cb();assert.equal(f.raf.size,0);
 });
 test('direct drag is synchronous and normal wheel is not intercepted',()=>{
  const f=fixture(),svg=f.$('#map-canvas');const before=f.$('.map-world').getAttribute('transform');
@@ -41,8 +41,8 @@ test('direct drag is synchronous and normal wheel is not intercepted',()=>{
 });
 test('keyboard search combobox, node arrows and Escape do not trap focus',()=>{
  const f=fixture();f.input('whole-body');const input=f.$('#map-search');input.emit('keydown',{key:'ArrowDown'});assert(input.getAttribute('aria-activedescendant'));input.emit('keydown',{key:'Enter'});assert.equal(f.document.activeElement.id,'map-selected-title');
- f.document.activeElement.emit('keydown',{key:'Escape'});assert.equal(selected(f),'');assert(f.document.activeElement.classList.contains('map-node'));
- const svg=f.$('#map-canvas');f.document.activeElement.emit('keydown',{key:'ArrowRight'});f.step();f.document.activeElement.emit('keydown',{key:'Enter'});assert(selected(f));assert.equal(f.document.activeElement.id,'map-selected-title');
+ f.document.activeElement.emit('keydown',{key:'Escape'});assert.equal(selected(f),'');assert.equal(f.document.activeElement,input);
+ const svg=f.$('#map-canvas');f.$$('.map-node').find(n=>!n.hidden).focus();f.document.activeElement.emit('keydown',{key:'ArrowRight'});f.step();f.document.activeElement.emit('keydown',{key:'Enter'});assert(selected(f));assert.equal(f.document.activeElement.id,'map-selected-title');
 });
 test('mobile defaults to full list and can opt into map without changing records',()=>{
  const f=fixture({mobile:true});assert.equal(f.$('#paper-map').dataset.view,'list');assert.equal(f.$('.map-canvas-wrap').hidden,true);assert.equal(f.$$('.map-paper-list')[0].children.filter(c=>!c.hidden).length,95);
@@ -50,12 +50,12 @@ test('mobile defaults to full list and can opt into map without changing records
  const camera=f.$('.map-world').getAttribute('transform');f.$('#map-canvas').emit('pointerdown',{pointerType:'touch',button:0,pointerId:2,clientX:100,clientY:100});f.$('#map-canvas').emit('pointermove',{pointerId:2,clientX:130,clientY:130});assert.equal(f.$('.map-world').getAttribute('transform'),camera);
 });
 test('unknown query params and cross-category links cannot leave an invisible selected node',()=>{
- const f=fixture({url:'https://example.org/RoboPaperAtlas/map/index.html?paper=rpa-0012&topic=navigation&q=not_present'});assert.match(selected(f),/Deep Whole-Body/);assert.equal(f.$('[data-map-topic="wbc"]').getAttribute('aria-pressed'),'true');assert.equal(f.$('#map-search').value,'');
+ const f=fixture({url:'https://example.org/RoboPaperAtlas/map/index.html?paper=rpa-0012&topic=navigation&q=not_present'});assert.match(selected(f),/Deep Whole-Body/);assert.equal(f.$('[data-map-topic="all"]').getAttribute('aria-pressed'),'true');assert.equal(f.$('#map-search').value,'not_present');assert.equal(f.$('[data-paper-id="rpa-0012"]').hidden,false);
  f.setURL('?paper=not_real&topic=bad&view=bad');assert.equal(selected(f),'');assert.equal(f.$('#paper-map').dataset.view,'map');assert.equal(f.$$('.map-node').filter(n=>!n.hidden).length,95);
 });
 
 test('empty search after selection cannot reuse stale suggestions; first Up selects last result',()=>{
- const f=fixture();pick(f,'whole-body');f.click('#map-panel-close');const input=f.$('#map-search');input.focus();input.emit('keydown',{key:'ArrowDown'});input.emit('keydown',{key:'ArrowUp'});input.emit('keydown',{key:'Enter'});assert.equal(selected(f),'');assert.equal(f.$('#map-suggestions').hidden,true);assert.equal(input.getAttribute('aria-activedescendant'),null);
+ const f=fixture();pick(f,'whole-body');f.click('#map-panel-close');f.click('#map-search-clear');const input=f.$('#map-search');input.focus();input.emit('keydown',{key:'ArrowDown'});input.emit('keydown',{key:'ArrowUp'});input.emit('keydown',{key:'Enter'});assert.equal(selected(f),'');assert.equal(f.$('#map-suggestions').hidden,true);assert.equal(input.getAttribute('aria-activedescendant'),null);
  f.input('whole-body');const n=f.$('#map-suggestions').children.length;input.emit('keydown',{key:'ArrowUp'});assert.equal(input.getAttribute('aria-activedescendant'),`map-option-${n-1}`);input.emit('keydown',{key:'Escape'});input.emit('keydown',{key:'ArrowDown'});assert.equal(input.getAttribute('aria-activedescendant'),'map-option-0');
 });
 
@@ -146,9 +146,10 @@ test('canvas clipping rejects off-canvas label coordinates',()=>{
 // Split-view regression checks run in the established map CI suite.
 require('./test_split_starmap.cjs');
 
-// Keep reference-C regressions in the existing CI entry point.
+// Keep layout and keyboard regressions in the existing CI entry point.
 require('./test_reference_scroll_regressions.cjs');
 require('./test_persistent_overview.cjs');
+require('./test_map_context.cjs');
 
 test('Chinese method search finds evidence-backed RMA and RoboDuet and clears repeatedly',()=>{
  const f=fixture();

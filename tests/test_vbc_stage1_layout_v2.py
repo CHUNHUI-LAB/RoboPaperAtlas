@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'scripts'))
 import reports as r
 import current_reader as current
+from reader_test_support import strip_live_presentation_scripts
 from report_vbc_stage1 import POLICIES, IMAGE_HASHES
 
 BEFORE = json.loads((ROOT / 'tests/fixtures/vbc-before-layout-v2.json').read_text())
@@ -180,7 +181,7 @@ class VBCLayoutV2Tests(unittest.TestCase):
         self.assertIn('公开页面视觉验收尚未完成', page)
         self.assertIn('仅修正 Fig. 2 懒加载前的尺寸占位', page)
         for tag in ('article', 'style', 'script'):
-            self.assertEqual(re.findall(rf'<{tag}\b.*?</{tag}>', page.replace(current.context_script(ROOT), ''), re.S),
+            self.assertEqual(re.findall(rf'<{tag}\b.*?</{tag}>', strip_live_presentation_scripts(self, page, ROOT, self.text['v2']), re.S),
                              re.findall(rf'<{tag}\b.*?</{tag}>', self.text['v2'], re.S))
 
 

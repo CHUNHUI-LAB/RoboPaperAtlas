@@ -363,6 +363,11 @@ test.after(() => {
   finally { fs.rmSync(generated, {recursive:true, force:true}); }
 });
 const html = fs.readFileSync(path.join(generated, 'index.html'), 'utf8');
+// Optional shared chrome must not become a research-startup dependency. Accept
+// only the exact same-origin, content-hashed presentation resources and leave
+// them unavailable in this fixture; all research packets remain exact below.
+const allowedChrome = new Set(['site.css', 'catalog-navigation.js', 'presentation.js', 'interface.js', 'chrome.js'].map(name =>
+  'https://example.org/assets/' + name + '?v=' + crypto.createHash('sha256').update(fs.readFileSync(path.join(root, 'assets', name))).digest('hex').slice(0, 16)));
 const clean = value => value === undefined ? undefined : JSON.parse(JSON.stringify(value));
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function frames(w) {
@@ -371,7 +376,7 @@ async function frames(w) {
 async function page(options = {}) {
   const errors = [], calls = [], external = [];
   class NoNetwork extends ResourceLoader {
-    fetch(url) { external.push(url); return null; }
+    fetch(url) { if (!allowedChrome.has(url)) external.push(url); return null; }
   }
   const vc = new VirtualConsole();
   vc.on('jsdomError', error => errors.push(error.message));
@@ -379,6 +384,8 @@ async function page(options = {}) {
     url:'https://example.org/research/navigation/' + (options.hash || ''),
     runScripts:'dangerously', resources:new NoNetwork(), pretendToBeVisual:true, virtualConsole:vc,
     beforeParse(w) {
+      Object.defineProperty(w, 'innerWidth', {value:options.width || 1440, configurable:true});
+      w.matchMedia = query => ({matches:false, media:query, addEventListener(){}, removeEventListener(){}});
       w.TextEncoder = TextEncoder;
       w.TextDecoder = TextDecoder;
       w.scrollTo = (x, y) => Object.defineProperty(w, 'scrollY', {value:y, configurable:true});
@@ -1077,7 +1084,9 @@ test('delayed method content updates only its reading section while preserving e
 const publishedHistory = require('./fixtures/navigation-pr53-history.json');
 for (const [name, fixture] of Object.entries(publishedHistory.states)) {
   test('parallel reading preserves the exact published ' + name + ' deep-link and scrolling history', async t => {
-    const x = await page({hash:fixture.urlHash, saved:fixture.history}); t.after(() => x.w.close());
+    // Retain the published fixture's 1024px outer-scroll environment. Ready
+    // desktop migration to zero is covered separately by desktop_exploration.
+    const x = await page({hash:fixture.urlHash, saved:fixture.history, width:1024}); t.after(() => x.w.close());
     assert.deepEqual(clean(x.a.getState().route), fixture.history[x.M.KEY].route);
     assert.equal(x.d.querySelector('#np-tree-scroll').scrollTop, 123);
     assert.equal(x.d.querySelector('#np-detail-scroll').scrollTop, 570);

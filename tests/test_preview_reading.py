@@ -133,7 +133,7 @@ class PreviewReadingTests(unittest.TestCase):
                 self.assertIn(f'href="../{current_path}"', archive)
                 current = render_current(ROOT, paper, stage, records)
                 self.assertIn(f'href="../../../{artifact["path"]}"', current)
-                self.assertIn('基于固定报告 ' + artifact['version'], current)
+                self.assertIn('当前阅读 · 报告 ' + artifact['version'], current)
                 self.assertEqual(projected['artifacts'][0]['version'], artifact['version'])
                 for fixed in canonical['artifacts']:
                     fixed_count += 1

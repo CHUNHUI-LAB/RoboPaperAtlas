@@ -7,8 +7,8 @@ test('map labels stay readable in screen space after zooming',()=>{
  const f=fixture({reduced:true});
  for(const step of [null,'[data-camera="in"]','[data-camera="out"]']){
   if(step)f.click(step);
-  assert(Math.abs(screenSize(f,f.$('.atlas-system').querySelector('.atlas-navigation-label'))-19)<.01);
-  assert(Math.abs(screenSize(f,f.$('.atlas-navigation-meta'))-14)<.01);
+  assert(Math.abs(screenSize(f,f.$('.atlas-system').querySelector('.atlas-navigation-label'))-17)<.01);
+  assert(Math.abs(screenSize(f,f.$('.atlas-navigation-meta'))-13)<.01);
   assert(Math.abs(screenSize(f,f.$('.map-node-label'))-14)<.01);
  }
 });
@@ -18,7 +18,7 @@ test('known navigation labels use Chinese while canonical taxonomy remains intac
  assert.match(f.$('[data-atlas-system="navigation"]').textContent,/具身导航/);
  assert.match(f.$('[data-atlas-system="navigation"]').getAttribute('aria-label'),/具身导航。探索研究问题/);
  f.click('[data-atlas-system="wbc"]');
- assert.match(f.$('#atlas-level-description').textContent,/选择研究问题/);
+ assert.match(f.$('#atlas-level-description').textContent,/展开问题/);
  const data=JSON.parse(f.$('#paper-map-data').textContent);
  assert.equal(data.categories.find(c=>c.id==='wbc').label,'Motion & Control');
  assert.equal(data.problems.find(p=>p.label==='Coordinated Motion').displayLabel,'协调运动');
@@ -27,7 +27,7 @@ test('full-width Chinese label is covered by its navigation hit target',()=>{
  const f=fixture({reduced:true}),group=f.$('[data-atlas-system="wbc"]');
  const label=group.querySelector('.atlas-navigation-label'),hit=group.querySelector('.atlas-navigation-hit');
  const actualWidth=Number(hit.getAttribute('width'))*cameraScale(f);
- assert(actualWidth>=label.textContent.length*19);
+ assert(actualWidth>=label.textContent.length*17);
 });
 test('paper heading leads panel while evidence and publication routing remain available',()=>{
  const f=fixture({url:'https://example.org/RoboPaperAtlas/map/?paper=rpa-0012',reduced:true}),content=f.$('#map-panel-content');
@@ -46,7 +46,7 @@ test('enlarged Chinese direction labels stay within modeled narrow desktop canva
   for(const group of f.$$('.atlas-system')){
    const x=Number(group.getAttribute('transform').match(/translate\(([-\d.]+)/)[1]);
    const label=group.querySelector('.atlas-navigation-label');
-   const center=x*k+tx+Number(label.getAttribute('x'))*k,half=label.textContent.length*19/2;
+   const center=x*k+tx+Number(label.getAttribute('x'))*k,half=label.textContent.length*17/2;
    assert(center-half>=7.9 && center+half<=width-7.9,`${width}: ${label.textContent}`);
   }
  }

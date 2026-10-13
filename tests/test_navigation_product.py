@@ -27,9 +27,9 @@ class NavigationProductBuildTests(unittest.TestCase):
             values=[]
             def handle_starttag(self,tag,attrs):
                 a=dict(attrs)
-                if tag=='button' and a.get('role')=='tab':self.values.append(a.get('data-tree-tab'))
+                if tag=='button' and a.get('role')=='tab' and a.get('data-tree-tab'):self.values.append(a.get('data-tree-tab'))
         tabs=Tabs();tabs.feed(page)
-        self.assertEqual(tabs.values,['g','l','c'])
+        self.assertEqual(tabs.values,['g','l','c','a'])
         self.assertIn('data-tree-tab="a"',page)
         self.assertIn('打开这篇论文的版本证据解析',page)
         self.assertIn('原59节点模板',page)

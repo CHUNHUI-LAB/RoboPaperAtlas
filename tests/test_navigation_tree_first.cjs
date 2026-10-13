@@ -15,7 +15,7 @@ test('tree-first document keeps current scope and all research entries before ac
  assert.ok(doc.querySelector('.np-identity-controls').contains(doc.querySelector('#np-paper')));
  assert.ok(doc.querySelector('.np-identity-controls').contains(doc.querySelector('#np-version')));
  assert.ok(doc.querySelector('.np-tree-options').contains(doc.querySelector('#np-node-search')));
- assert.equal(doc.querySelectorAll('.np-tabs [data-tree-tab]').length,3);assert.ok(doc.querySelector('.np-identity-controls [data-tree-tab="a"]'),'analysis is evidence drilldown');
+ assert.equal(doc.querySelectorAll('.np-tabs [data-tree-tab]').length,4);assert.ok(doc.querySelector('.np-identity-controls [data-tree-tab="a"]'),'analysis is evidence drilldown');
  assert.equal(doc.querySelectorAll('[id]').length,new Set([...doc.querySelectorAll('[id]')].map(x=>x.id)).size,'all controller IDs remain unique');
  });
 });

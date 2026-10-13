@@ -42,7 +42,22 @@ class NavigationTransportTests(unittest.TestCase):
  def test_embedded_json_escapes_script_boundaries(self):
   text=inline_json({'example':'</script><img src=x>\u2028\u2029'});self.assertNotIn('<',text);self.assertNotIn('\u2028',text);self.assertEqual(json.loads(text)['example'],'</script><img src=x>\u2028\u2029')
  def test_real_html_has_no_external_boot_dependency(self):
-  html=product.render(ROOT,self.model,self.projected);self.assertNotIn('<script src=',html);self.assertNotIn('rel="stylesheet"',html);self.assertIn('id="np-navigation-index"',html);self.assertIn('data-inline-start="1"',html);self.assertIn('data-index-sha="'+self.projected['indexSha256']+'"',html);self.assertIn('data-native-global-position=',html)
+  html=product.render(ROOT,self.model,self.projected)
+  from html.parser import HTMLParser
+  from urllib.parse import urlsplit
+  class Assets(HTMLParser):
+   def __init__(self):super().__init__();self.scripts=[];self.styles=[];self.inline=[]
+   def handle_starttag(self,tag,attrs):
+    a=dict(attrs)
+    if tag=='script' and a.get('src'):self.scripts.append(a)
+    if tag=='script' and a.get('data-navigation-module'):self.inline.append(a['data-navigation-module'])
+    if tag=='link' and a.get('rel')=='stylesheet':self.styles.append(a['href'])
+  assets=Assets();assets.feed(html)
+  self.assertEqual({urlsplit(a['src']).path for a in assets.scripts},{'../../assets/'+x for x in ('catalog-navigation.js','presentation.js','interface.js','chrome.js')})
+  self.assertTrue(all('defer' in a for a in assets.scripts))
+  self.assertEqual([urlsplit(x).path for x in assets.styles],['../../assets/site.css'])
+  self.assertEqual(assets.inline,['module_model','module_content','module_app'])
+  self.assertIn('id="np-navigation-index"',html);self.assertIn('data-inline-start="1"',html);self.assertIn('data-index-sha="'+self.projected['indexSha256']+'"',html);self.assertIn('data-native-global-position=',html)
 
  def test_global_labels_reconstruct_exactly_from_serialized_source_references(self):
   from navigation_transport import restore_research_map

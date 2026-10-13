@@ -1,4 +1,4 @@
-# Atlas
+# Research Atlas / 研究星图
 
 `/map/index.html` explores the 95 canonical papers as a stable hierarchy: galaxy → research direction → problem subsystem → paper. The route remains stable. The product name is RoboPaperAtlas and this feature is Atlas.
 
@@ -14,20 +14,20 @@ Taxonomy revision 3 applies two reviewed consistency corrections to revision 2: 
 
 ## Interaction
 
-- The galaxy has distinct direction colors and labeled systems. Select a system to see problem subsystems; select a problem to see named paper stars. Search can jump directly to any of the 95 papers from any level
+- The galaxy places all nine canonical directions in a bounded 3×3 overview. Desktop uses a 60/40 map/results layout; the toolbar and breadcrumbs stay outside the canvas. Select a direction to focus it and filter results, then explicitly enter its problem subsystems. Search can locate any canonical paper from any level.
 - Positions are deterministic. Drill navigation changes the camera without running a physics simulation or random spin. Decorative navigation orbits, background glow, distance, order and star size do not encode citation, chronology, scientific similarity or importance
 - Every paper has one star. A system's central navigation symbol is a labeled control, not another paper. Default paper marks have equal sizes within the current view
-- Breadcrumbs, Back, Escape and browser Back/Forward restore hierarchy and visible focus. New navigation cancels old camera animations and captured pointer clicks
+- Breadcrumbs, Back, Escape and browser Back/Forward restore hierarchy and visible focus. Selecting a paper overlays the existing query/direction/problem result set; following related papers does not replace the original result opener. Closing restores the original camera and a visible source control. Selection origin and camera live in history.state; public URL parameters are unchanged. New navigation cancels old camera animations and captured pointer clicks.
 - Desktop dragging is immediate. Ordinary wheel scrolls the page; Ctrl/Command plus wheel zooms. Zoom buttons, fit, arrows, Enter/Space, Home/0 and +/- are provided. Paper targets remain 44px; system controls are at least 54px
 - Mobile defaults to the complete server-rendered paper list. The optional map uses simple controls and labeled direction buttons; physical-device touch testing is not claimed
-- The non-modal side panel shows classification support, unresolved boundaries, methods, resource types, original metadata, PDF/code links and actual Stage availability. Only rpa-0062 has three imported reports; the other 94 entries remain disabled
+- The non-modal side panel shows classification support, unresolved boundaries, methods, resource types, original metadata, PDF/code links and actual Stage availability. Availability is derived from the current report registry; absent stages remain unavailable. It is never inferred from metadata verification
 - The panel's Library link searches for the exact displayed title, so it does not silently equate an older Library facet with a new primary direction
 - There are no verified citation edges. At most six dashed shared-tag inference links are drawn for the current selection and visible scope; each actual shared tag is listed. Missing shared tags produce a same-primary-group navigation list with no edges
-- Reduced motion, hidden documents, offscreen views, resize, close, search and view changes cancel ongoing animation. No ambient animation, network requests, API/model calls or tracking are used
+- Reduced motion, hidden documents, offscreen views, resize, close, search and view changes cancel ongoing animation. The map geometry and list need no API/model service. Shared search and quick view may fetch the same-origin static index/catalog on demand; no tracking is added.
 
 ## Integration and checks
 
-The map renderer returns a `<main>` fragment for the existing shell and accepts hashed CSS/JS URLs plus `report_records`. Integrate only the changed map files, additive taxonomy and tests. Preserve concurrent reader work and canonical data. A separate shared-nav patch can rename the map's shell title to Atlas without replacing build.py.
+The map renderer returns a `<main>` fragment for the shared shell and accepts hashed CSS/JS URLs plus `report_records`. `site.css` supplies the common navigation and controls; `paper-map.css` owns the map layout without the former F2 override layer. The shell title is “研究星图 · RoboPaperAtlas”. Scientific taxonomy, source records and immutable reports are unchanged by presentation edits.
 
 ```sh
 python3 scripts/assemble_frontier.py
@@ -35,7 +35,7 @@ python3 -m unittest discover -s tests -q
 node tests/test_hero_atlas.cjs
 node tests/test_brief_reader.cjs
 python3 scripts/build.py
-node --test tests/test_map_core.cjs tests/test_map_dom.cjs tests/test_atlas_hierarchy.cjs tests/test_catalog_facets.cjs
+node --test tests/test_map_core.cjs tests/test_map_dom.cjs tests/test_atlas_hierarchy.cjs tests/test_catalog_facets.cjs tests/test_map_context.cjs
 python3 scripts/validate.py
 ```
 

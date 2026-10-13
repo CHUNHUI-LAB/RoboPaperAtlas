@@ -10,6 +10,43 @@ from discovery_facets import GROUPS, for_catalog, counts as group_counts, method
 FEATURE_SUMMARIES = {'rpa-0067': '以视觉输入生成移动与末端目标，通过低层全身跟踪协调腿与臂。'}
 
 
+def brand_hero(papers, memberships, counts, esc):
+    """An abstract constellation with links to real, source-classified examples."""
+    import math, random
+    labels = {key: label for key, label, _ in GROUPS}
+    labels['methods-resources'] = '方法与资源'
+    preferred = {
+        'navigation-space': ['gu2024conceptgraphs', 'huang2023vlmaps'],
+        'motion-manipulation': ['rpa-0062', 'rpa-0012'],
+        'robot-learning': ['rpa-0052', 'rpa-0067'],
+        'methods-resources': ['yadav2023hm3dsem', 'ramakrishnan2021hm3d'],
+    }
+    topics, panels = [], []
+    for key, _, _ in GROUPS:
+        topics.append(f'<a data-atlas-topic="{key}" href="?topic={key}#catalog" aria-label="{esc(labels[key])}"><span>{esc(labels[key])}<small>{counts[key]} 篇相关论文</small></span></a>')
+        candidates = [p for p in papers if key in memberships[p['id']]['groups']]
+        order = preferred[key]
+        candidates.sort(key=lambda p: (order.index(p['id']) if p['id'] in order else len(order), p['id']))
+        samples = []
+        for paper in candidates[:2]:
+            title = (paper.get('verified_overlay') or {}).get('title') or paper['title']
+            short = paper.get('short_name') or title.split(':')[0]
+            samples.append(f'<a href="papers/{paper["id"]}/index.html?catalog=topic%3D{key}" title="{esc(title)}"><span>{esc(short)}</span><small>查看论文与来源 ↗</small></a>')
+        panels.append(f'<section class="atlas-galaxy__paper-panel" id="atlas-panel-{key}" data-atlas-panel="{key}" aria-hidden="true" inert><header><strong>{esc(labels[key])}</strong><span>真实目录示例</span></header><div>{"".join(samples)}</div></section>')
+    rng = random.Random(721947)
+    points = []
+    for i in range(130):
+        radius = 168 * rng.random() ** .7
+        angle = i * math.tau / 5 + radius / 42 + rng.random() * .6
+        x, y = 280 + math.cos(angle)*radius, 155 + math.sin(angle)*radius*.56
+        points.append(f'<circle cx="{x:.2f}" cy="{y:.2f}" r="{rng.uniform(.5,1.5):.2f}" opacity="{rng.uniform(.25,.85):.2f}"/>')
+    report_count = sum(s['status'] == 'imported' for p in papers for s in p['stages'].values())
+    reading_papers = sum(any(s['status'] == 'imported' for s in p['stages'].values()) for p in papers)
+    return f'''<section class="home-hero" aria-labelledby="home-title">
+    <div class="home-hero-copy"><p class="hero-eyebrow">A MAP FOR ROBOTICS RESEARCH</p><h1 id="home-title"><span>从问题出发，</span><span class="hero-title-second">看见研究的脉络。</span></h1><p class="hero-intro">探索机器人论文、研究关系与分阶段阅读档案。<br>让每一步理解，都有迹可循。</p><div class="home-hero-actions"><a href="#catalog" class="hero-primary" data-catalog-jump>浏览论文 <span aria-hidden="true">↗</span></a><a href="map/index.html" class="hero-secondary">探索研究星图 <span aria-hidden="true">→</span></a></div><dl class="hero-stats"><div><dt>论文目录</dt><dd>{len(papers)}</dd></div><div><dt>有阅读档案的论文</dt><dd>{reading_papers}</dd></div><div><dt>当前阶段报告</dt><dd>{report_count}</dd></div></dl></div>
+    <figure class="atlas-galaxy" data-star-count="840"><div class="hero-star-topline"><span>THE RESEARCH CONSTELLATION</span><button type="button" data-atlas-toggle aria-pressed="false" hidden>暂停星图</button></div><div class="atlas-galaxy__field"><canvas aria-hidden="true"></canvas><svg class="atlas-galaxy__fallback" viewBox="0 0 560 310" aria-hidden="true"><g fill="#c6e1dc">{"".join(points)}</g></svg><nav class="atlas-galaxy__topics" aria-label="按研究问题探索">{"".join(topics)}</nav></div><div class="atlas-galaxy__preview"><div class="atlas-galaxy__overview"><span>每个问题，都有一条探索的路径。</span><p>选择一个方向，发现相关论文。<br>从已有的证据，走向下一个问题。</p></div>{"".join(panels)}</div><figcaption>星域为视觉示意，不表示论文引用关系。<span class="sr-only" data-atlas-status aria-live="polite"></span></figcaption></figure>
+  </section>'''
+
 def render(data, card, categories, shell, esc):
     root = Path(__file__).resolve().parents[1]
     papers = data['papers']
@@ -36,8 +73,9 @@ def render(data, card, categories, shell, esc):
     ordered = sorted(papers, key=lambda p: (not p['citation_verified'], -(p.get('bibliographic_year') or 0), p['title'].casefold()))
 
     body = f'''<main id="main" class="atlas-experience library-main">
-  <header class="f2-page-intro"><h1>论文库</h1><p>从研究问题出发，连接方法、证据与实现。</p><p><a href="research/navigation/index.html" data-navigation-entry="formal">导航研究地图 · 正式三树 →</a></p></header>
+  {brand_hero(papers, memberships, counts, esc)}
   <section class="catalog-section" id="catalog" aria-labelledby="catalog-title">
+    <div class="catalog-section-heading"><p>THE LIBRARY / 论文库</p><a href="research/navigation/index.html" data-navigation-entry="formal">进入导航研究地图 <span aria-hidden="true">↗</span></a></div>
     <form class="library-search" role="search" aria-label="搜索当前论文目录">
       <label class="sr-only" for="search">搜索标题、作者或关键词</label><span class="library-search-icon" aria-hidden="true">⌕</span>
       <input id="search" class="catalog-search-trigger" type="search" maxlength="512" placeholder="搜索论文、作者或关键词" autocomplete="off" aria-controls="paper-grid">
@@ -84,5 +122,8 @@ def render(data, card, categories, shell, esc):
     <div class="roadmap-stages"><div><span>01</span><h3>初读</h3><p>建立研究问题、核心贡献与证据入口。</p></div><div><span>02</span><h3>写作精读</h3><p>梳理论证结构、研究缺口与表达。</p></div><div><span>03</span><h3>方法精读</h3><p>结合公式、框架与公开代码理解方法。</p></div></div>
   </section>
 </main>'''
-    return shell('RoboPaperAtlas', body, library=True)
+    page = shell('RoboPaperAtlas', body, library=True)
+    from build import asset_url
+    assets = f'<link rel="stylesheet" href="{asset_url("","home-hero.css")}"><script defer src="{asset_url("","hero-atlas.js")}"></script>'
+    return page.replace('</head>', assets + '</head>')
 

@@ -32,8 +32,11 @@ test('clear filters restores all results and keeps visible focus',()=>{
  assert.equal(f.document.activeElement,f.$('#catalog-title'));
  assert.equal(f.location.search,'');
 });
-test('editorial page separates map and keeps every canonical paper accessible',()=>{
+test('library keeps a single quick-view action and a direct title link for every canonical paper',()=>{
  const f=make();assert.equal(f.$('.library-galaxy-art'),null);assert.equal(f.$('.library-features'),null);
- assert.equal(f.$$('.paper-summary').length,95);assert.equal(f.$$('.paper-open').length,95);
+ assert.equal(f.$$('.library-paper').length,95);assert.equal(f.$$('[data-preview]').length,95);
+ const titleLinks=f.$$('h3 > a[data-catalog-link]');assert.equal(titleLinks.length,95);
+ assert(titleLinks.every(link=>link.closest('.library-paper')));
+ assert.equal(new Set(f.$$('[data-preview]').map(button=>button.getAttribute('data-preview'))).size,95);
  assert(f.$('a[href="map/index.html"]'));
 });

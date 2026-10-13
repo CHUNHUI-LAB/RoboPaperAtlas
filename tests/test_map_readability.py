@@ -20,10 +20,10 @@ class MapReadabilityTests(unittest.TestCase):
   self.assertIn('← 返回上一级',s);self.assertNotIn('← Back',s)
  def test_reading_text_and_mobile_resource_rows_have_explicit_rules(self):
   css=(ROOT/'assets/paper-map.css').read_text()
-  for rule in ['.paper-map .map-list-copy strong{font-size:17px', '.paper-map .map-panel-welcome>p:not(.eyebrow),.paper-map .map-panel-summary{font-size:16px', '.paper-map .map-classification-evidence small,.paper-map .map-panel-note,.paper-map .map-original-tags-label{font-size:14px', '.paper-map .map-stage-list,.paper-map .map-resource-links{grid-template-columns:1fr}']:
+  for rule in ['.map-list-copy strong{display:block;font-size:21px', '.map-panel-summary{font-size:16px;line-height:1.9', '.map-classification-evidence small,.map-panel-note,.map-original-tags-label{font-size:14px', '.paper-map .map-stage-list,.paper-map .map-resource-links{grid-template-columns:1fr}']:
    self.assertIn(rule,css)
 
  def test_help_row_does_not_overlay_canvas_and_is_absent_in_list_mode(self):
   css=(ROOT/'assets/paper-map.css').read_text()
   self.assertIn('.paper-map .map-help{position:static;inset:auto;',css)
-  self.assertIn('.paper-map[data-view=list] .map-help{display:none}',css)
+  self.assertIn('.paper-map[data-view=list] .map-explore,.paper-map[data-view=list] .map-help{display:none}',css)

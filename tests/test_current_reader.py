@@ -12,6 +12,7 @@ sys.path.insert(0, str(ROOT / 'scripts'))
 from build import details
 import current_reader as current
 from reports import load_reports, report_path
+from reader_test_support import strip_live_presentation_scripts
 
 
 class CurrentReaderTests(unittest.TestCase):
@@ -32,17 +33,17 @@ class CurrentReaderTests(unittest.TestCase):
                 self.assertIn(f'href="{target}.html"', page)
             self.assertIn('href="../../../' + artifact['path'] + '"', page)
             self.assertNotIn('<iframe', page)
-            self.assertIn('当前导航视图', page)
+            self.assertIn('当前阅读 · 报告', page)
             for tag in ['script', 'style', 'article']:
                 pattern = rf'<{tag}\b.*?</{tag}>'
-                self.assertEqual(re.findall(pattern, page.replace(current.context_script(ROOT), ""), re.S), re.findall(pattern, source, re.S))
+                self.assertEqual(re.findall(pattern, strip_live_presentation_scripts(self, page, ROOT, source), re.S), re.findall(pattern, source, re.S))
 
     def test_umi_current_stage1_to_stage2_uses_v4_without_history_rewrites(self):
         paper = next(p for p in self.papers if p['id'] == 'rpa-0062')
         for stage, version in [('stage1', 'v3'), ('stage2', 'v4'), ('stage3', 'v3')]:
             page = current.render(ROOT, paper, stage, self.records)
             source = (ROOT / paper['stages'][stage]['artifacts'][0]['path']).read_text()
-            self.assertIn('基于固定报告 ' + version, page)
+            self.assertIn('当前阅读 · 报告 ' + version, page)
             self.assertIn('href="../index.html#reading"', page)
             self.assertIn('href="../../../' + paper['stages'][stage]['artifacts'][0]['path'] + '"', page)
             nav = re.search(r'<nav class="reader-stages".*?</nav>', page, re.S)[0]
@@ -50,7 +51,7 @@ class CurrentReaderTests(unittest.TestCase):
                 self.assertIn(f'href="{target}.html"', nav)
             for tag in ('article', 'script', 'style'):
                 pattern = rf'<{tag}\b.*?</{tag}>'
-                self.assertEqual(re.findall(pattern, page.replace(current.context_script(ROOT), ""), re.S), re.findall(pattern, source, re.S))
+                self.assertEqual(re.findall(pattern, strip_live_presentation_scripts(self, page, ROOT, source), re.S), re.findall(pattern, source, re.S))
             if stage != 'stage2':
                 self.assertIn('href="writing-close-reading.html"', source)
         self.assertEqual(current.entry_path('rpa-0062', 'stage2'), 'papers/rpa-0062/reading/stage2.html')
@@ -79,7 +80,48 @@ class CurrentReaderTests(unittest.TestCase):
                 self.assertNotIn('catalog-navigation.js', source)
                 for tag in ('article', 'script', 'style'):
                     pattern = rf'<{tag}\b.*?</{tag}>'
-                    self.assertEqual(re.findall(pattern, page.replace(script, ''), re.S), re.findall(pattern, source, re.S))
+                    self.assertEqual(re.findall(pattern, strip_live_presentation_scripts(self, page, ROOT, source), re.S), re.findall(pattern, source, re.S))
+
+    def test_script_preservation_guard_rejects_unknown_and_modified_runtimes(self):
+        source = (ROOT / self.paper['stages']['stage1']['artifacts'][0]['path']).read_text()
+        page = current.render(ROOT, self.paper, 'stage1', self.records)
+        for changed in (page.replace('</body>', '<script>alert(1)</script></body>'),
+                        page.replace('<script>', '<script>/* altered source */', 1),
+                        page.replace(current.context_script(ROOT), '')):
+            with self.assertRaises(AssertionError):
+                strip_live_presentation_scripts(self, changed, ROOT, source)
+
+    def test_live_chrome_is_shared_relative_and_never_duplicates_legacy_search(self):
+        for paper in self.papers:
+            if paper['id'] not in current.CURRENT_READER_PAPERS:
+                continue
+            for stage, state in paper['stages'].items():
+                if state['status'] != 'imported':
+                    continue
+                page = current.render(ROOT, paper, stage, self.records)
+                source = (ROOT / state['artifacts'][0]['path']).read_text()
+                self.assertIn('site-header--compact atlas-site-header', page)
+                self.assertIn('data-root="../../../"', page)
+                self.assertIn('href="../../../reading/index.html" aria-current="page"', page)
+                self.assertIn('href="../../../index.html#catalog">论文库</a>', page)
+                self.assertEqual(page.count('id="search-dialog"'), 1)
+                self.assertEqual(page.count('id="paper-drawer"'), 1)
+                self.assertEqual(page.count('id="global-search-retry"'), 1)
+                external_interface = re.findall(r'<script src="../../../assets/interface.js\?[^>]*>', page)
+                self.assertEqual(len(external_interface), 0 if 'data-report-script="interface.js"' in source else 1)
+                self.assertNotIn('assets/f2.css', page)
+                self.assertLess(page.rfind('</style>'), page.index('assets/site.css'))
+                self.assertLess(page.index('assets/site.css'), page.index('assets/reader-current.css'))
+                self.assertNotIn('叠加 F2', page)
+
+    def test_current_browser_titles_identify_paper_and_stage_without_changing_frozen_title(self):
+        paper = next(p for p in self.papers if p['id'] == 'rpa-0062')
+        for stage, label in current.STAGES:
+            page = current.render(ROOT, paper, stage, self.records)
+            self.assertEqual(re.search(r'<title>(.*?)</title>', page, re.S)[1],
+                             f'UMI-on-Legs · {label} · RoboPaperAtlas')
+        source = (ROOT / paper['stages']['stage3']['artifacts'][0]['path']).read_text()
+        self.assertEqual(re.search(r'<title>(.*?)</title>', source, re.S)[1], 'RoboPaperAtlas')
 
     def test_umi_narrow_reader_has_a_visible_breadcrumb_return_outside_hidden_brand(self):
         paper = next(p for p in self.papers if p['id'] == 'rpa-0062')
@@ -94,7 +136,7 @@ class CurrentReaderTests(unittest.TestCase):
         paper = copy.deepcopy(self.paper)
         paper['stages']['stage3'] = {'status': 'not_imported', 'artifacts': []}
         page = current.render(ROOT, paper, 'stage1', self.records)
-        self.assertIn('aria-disabled="true"><small>03 · 未完成</small>', page)
+        self.assertIn('aria-disabled="true"><small>03 · 未导入</small>', page)
         self.assertNotIn('href="stage3.html"', page)
         with self.assertRaises(ValueError):
             current.render(ROOT, paper, 'stage3', self.records)

@@ -22,12 +22,21 @@ python3 scripts/reports.py
 python3 -m unittest discover -s tests -v
 node tests/test_hero_atlas.cjs
 node tests/test_brief_reader.cjs
+node --test tests/test_site_chrome.cjs tests/test_reader_current.cjs tests/test_map_context.cjs tests/test_navigation_workspace.cjs
 python3 scripts/build.py
 python3 scripts/validate.py
 python3 -m http.server 8000 --directory dist
 ```
 
-输出为 dist/。所有目录与详情页以相对 URL 连接，适用于 GitHub Pages 的 /RoboPaperAtlas/ 子路径。404 页回到该固定站点根。全局搜索使用浏览器加载静态书目索引，支持 /、Ctrl/⌘K、方向键与 Escape；默认编辑式列表，卡片/列表视图与筛选保存在当前 URL。论文速览保留目录上下文，完整详情保持独立地址。移动端菜单、详情页目录和复制链接均为实际交互。首页标题使用分组配色与局部字形反馈，右侧原创星系式知识星图为抽象视觉，不代表论文引用关系；四个主题入口支持局部星域放大与真实论文示例，点击仍跳转到真实目录筛选；悬停和键盘选择等效，↓进入论文、↑返回方向、Esc恢复总览。桌面动画可暂停，离屏/隐藏时暂停；手机与减少动态效果模式使用静态状态。目录、摘要速览与候选页共享交互和视觉规范；独立设计预览仍保留。CSS/JS 使用内容哈希版本 URL，避免混用缓存资源。浏览器搜索在本地运行；不需要账户、模型 API、数据库或外部字体。
+输出为 dist/。所有目录与详情页以相对 URL 连接，适用于 GitHub Pages 的 /RoboPaperAtlas/ 子路径。404 页回到该固定站点根。全局搜索使用浏览器加载静态书目索引，支持 /、Ctrl/⌘K、方向键与 Escape，以及失败后重试；不需要账户、模型 API、数据库或外部字体。
+
+## 界面与交互
+
+首页以品牌介绍和深色抽象星域连接到同页论文库。星域四个入口来自既有交叉浏览分类，展示真实目录示例；装饰星光不表示论文引用关系。支持悬停与键盘选择，↓进入示例、↑返回方向、Escape 恢复总览。桌面动画可暂停，离屏或页面隐藏时停止；手机和减少动态效果模式使用静态画面。
+
+论文库默认编辑式列表，卡片／列表、检索、筛选和排序进入 URL。速览保留原位置，完整详情和当前阅读器沿同一检索上下文返回。研究星图采用九方向总览与并列结果，选择论文不清空来源筛选；关闭、前后退恢复相机与可见焦点。导航研究地图提供全景、文献发展、挑战–思路与论文解析，窄屏在研究树与正文之间切换，节点、来源版本和阅读位置继续保留。
+
+主站通过一份公共 site.css 使用统一排版和交互组件；星图、首页品牌区、三树与当前阅读器保留各自的页面样式。公共导航覆盖主站、阅读器、研究工作台与静态资料页。当前阅读器改进目录、图表查看和阅读空间，固定版本的正文、图表、公式、代码、脚本及哈希保持不变。CSS／JS 使用内容哈希 URL。旧外观资源只保留给历史预览，生产页不再叠加多套主题。详见 [设计规范](docs/design-system.md) 与 [本次改版说明](docs/experience-upgrade.md)。
 
 ## 目录
 

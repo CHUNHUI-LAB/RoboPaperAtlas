@@ -1,0 +1,64 @@
+/* The homepage's only decorative surface. The rest of the site uses site.css. */
+.home-hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.04fr);align-items:center;gap:48px;padding:24px 0 64px}
+.home-hero-copy{padding:16px 0}
+.home-hero .hero-eyebrow{display:flex;align-items:center;gap:12px;font-size:11px;font-weight:650;letter-spacing:.14em;color:var(--accent,#315c4b);margin:0 0 30px}
+.hero-eyebrow:before{content:'';width:28px;height:1px;background:currentColor}
+.home-hero h1{font-size:clamp(42px,4.8vw,68px);font-weight:600;line-height:1.23;letter-spacing:-.045em;margin:0 0 24px;color:#171a19}
+.home-hero h1 span{display:block;white-space:nowrap}
+.home-hero h1 .hero-title-second{color:#315c4b}
+.home-hero .hero-intro{font-size:18px;color:#626b67;line-height:1.8;max-width:29em;margin:0}
+.home-hero-actions{display:flex;align-items:center;gap:22px;margin-top:28px;flex-wrap:wrap}
+.home-hero-actions a{display:inline-flex;align-items:center;justify-content:center;gap:14px;min-height:48px;font-size:15px}
+.home-hero-actions .hero-primary{padding:12px 20px;background:#171a19;color:#fff;border-radius:8px;border:1px solid #171a19;text-decoration:none}
+.home-hero-actions .hero-secondary{color:#315c4b;text-decoration:none}
+.home-hero-actions a span{display:inline-block;transition:transform 160ms cubic-bezier(.22,1,.36,1)}
+.home-hero-actions a:hover span{transform:translateX(3px)}
+.hero-stats{display:flex;gap:28px;padding:28px 0 0;margin:28px 0 0;border-top:1px solid #e2e6e2;max-width:430px}
+.hero-stats div{display:flex;flex-direction:column;gap:5px}
+.hero-stats dt{font-size:12px;color:#626b67;order:2}
+.hero-stats dd{font-size:25px;line-height:1.2;margin:0;font-weight:500;font-variant-numeric:tabular-nums;letter-spacing:-.03em}
+.atlas-galaxy{position:relative;isolation:isolate;background:#0c1418;border:1px solid #14242b;color:#e7eeee;border-radius:20px;overflow:hidden;margin:0;min-width:0;box-shadow:0 14px 36px #0c141810}
+.atlas-galaxy:before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 56% 43%,#23403990,transparent 60%),radial-gradient(ellipse at 20% 25%,#2e36442e,transparent 50%)}
+.hero-star-topline{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 22px 0;min-height:52px;color:#9eaeb1;font-size:10px;letter-spacing:.17em}
+.hero-star-topline button{min-height:32px;padding:6px 9px;background:none;border:1px solid #a2c3ba28;border-radius:6px;color:#bccbc8;font:inherit;font-size:10px;letter-spacing:0;cursor:pointer}
+.atlas-galaxy__field{position:relative;height:298px}
+.atlas-galaxy__field>canvas,.atlas-galaxy__fallback{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.atlas-galaxy__field>canvas{opacity:0}
+.atlas-ready .atlas-galaxy__field>canvas{opacity:1;animation:star-arrive 850ms cubic-bezier(.22,1,.36,1) both}
+.atlas-ready .atlas-galaxy__fallback{display:none}
+.atlas-galaxy__topics{position:absolute;inset:0;pointer-events:none}
+.atlas-galaxy__topics a{position:absolute;display:flex;align-items:center;gap:8px;min-height:44px;padding:8px 10px;border-radius:8px;border:1px solid #ffffff08;color:#ccdad7;background:#0c141877;backdrop-filter:blur(4px);text-decoration:none;font-size:12px;line-height:1.5;pointer-events:auto;transition:color 160ms ease,border-color 180ms ease,background 180ms ease,transform 180ms ease}
+.atlas-galaxy__topics a:before{content:'';width:5px;height:5px;flex:0 0 5px;border-radius:50%;background:var(--star-color);box-shadow:0 0 9px var(--star-color)}
+.atlas-galaxy__topics a small{display:block;font-size:10px;font-weight:400;color:#9badac;margin-top:2px}
+.atlas-galaxy__topics a:hover,.atlas-galaxy__topics a.is-active{border-color:var(--star-color);background:#1a292bf0;color:#fff;transform:translateY(-2px)}
+.atlas-galaxy__topics a:nth-child(1){left:5%;top:19%;--star-color:#99d6d6}
+.atlas-galaxy__topics a:nth-child(2){right:8%;top:7%;--star-color:#e6bd85}
+.atlas-galaxy__topics a:nth-child(3){right:4%;bottom:13%;--star-color:#b6a6de}
+.atlas-galaxy__topics a:nth-child(4){left:12%;bottom:4%;--star-color:#a5ccb1}
+.atlas-galaxy :is(a,button):focus-visible{outline:2px solid #a9ded0;outline-offset:4px}
+.atlas-galaxy__preview{position:relative;min-height:112px;margin:4px 24px 0;border-top:1px solid #aec6bc26}
+.atlas-galaxy__overview{padding:20px 0;color:#dce6e3;transition:opacity 180ms ease}
+.atlas-galaxy__overview>span{font-size:14px;font-weight:500}
+.atlas-galaxy__overview p{font-size:12px;color:#9dadac;line-height:1.7;margin:9px 0 0;max-width:33em}
+.atlas-galaxy__overview.is-hidden{opacity:0;pointer-events:none}
+.atlas-galaxy__paper-panel{position:absolute;inset:0;padding:12px 0 0;opacity:0;visibility:hidden;pointer-events:none;transition:opacity 180ms ease}
+.atlas-galaxy__paper-panel.is-active{opacity:1;visibility:visible;pointer-events:auto}
+.atlas-galaxy__paper-panel header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px}
+.atlas-galaxy__paper-panel strong{font-size:12px;font-weight:500;color:#a9d6c7}
+.atlas-galaxy__paper-panel header>span{font-size:10px;color:#99aeaa}
+.atlas-galaxy__paper-panel>div{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.atlas-galaxy__paper-panel a{display:flex;flex-direction:column;justify-content:center;gap:5px;min-width:0;min-height:56px;padding:4px 6px;margin-left:-6px;border-radius:5px;color:#eff5f2;text-decoration:none}
+.atlas-galaxy__paper-panel a:hover{background:#ffffff09}
+.atlas-galaxy__paper-panel a>span{font-size:13px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.atlas-galaxy__paper-panel a>small{font-size:10px;color:#9dadac}
+.atlas-galaxy figcaption{font-size:10px;line-height:1.5;color:#91a5a2;margin:0;padding:10px 24px 17px}
+.catalog-section-heading{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin:0 0 20px}
+.catalog-section-heading p{margin:0;font-size:12px;letter-spacing:.13em;color:#626b67}
+.catalog-section-heading a{font-size:13px;color:#315c4b;min-height:44px;display:inline-flex;align-items:center;gap:6px}
+@keyframes star-arrive{from{opacity:0;transform:scale(.965)}to{opacity:1;transform:none}}
+@media(min-width:1440px){.home-hero{gap:64px}.atlas-galaxy__field{height:318px}}
+@media(max-width:1100px){.home-hero{gap:28px}.home-hero h1{font-size:clamp(40px,5vw,56px)}.hero-stats{gap:22px}.atlas-galaxy__topics a{font-size:11px;padding:6px 8px}.home-hero .hero-intro{font-size:17px}}
+@media(max-width:860px){.home-hero{grid-template-columns:1fr;gap:32px;padding-top:0;padding-bottom:40px}.home-hero-copy{padding:0}.home-hero h1{font-size:clamp(36px,7.4vw,60px);max-width:none}.home-hero .hero-eyebrow{margin-bottom:20px}.hero-stats{max-width:100%;margin-top:22px;padding-top:20px;gap:32px}.atlas-galaxy{max-width:600px;width:100%;justify-self:center}.atlas-galaxy__field{height:240px}.atlas-galaxy__preview{min-height:104px}}
+@media(max-width:480px){.home-hero h1{font-size:clamp(34px,9.5vw,42px)}.home-hero-actions{gap:20px;margin-top:22px}.home-hero .hero-intro{font-size:16px}.home-hero-actions a{font-size:14px}.hero-stats{justify-content:space-between;gap:12px}.hero-stats dd{font-size:24px}.hero-stats dt{font-size:11px}.atlas-galaxy__field{height:202px}.hero-star-topline{min-height:38px;padding:10px 16px 0;font-size:9px}.atlas-galaxy__topics a{font-size:11px;min-height:44px;padding:5px 6px;gap:6px}.atlas-galaxy__topics a small{font-size:9px}.atlas-galaxy__preview{margin:6px 16px 0;min-height:106px}.atlas-galaxy__overview>span{font-size:13px}.atlas-galaxy__overview p{font-size:11px}.atlas-galaxy__paper-panel>div{gap:10px}.atlas-galaxy__paper-panel a>span{font-size:12px}.atlas-galaxy figcaption{padding:8px 16px 13px;font-size:9px}.catalog-section-heading{align-items:flex-start;flex-direction:column;gap:6px}.catalog-section-heading a{min-height:32px}}
+@media(prefers-reduced-motion:reduce){.home-hero *,.atlas-galaxy *{animation:none!important;transition:none!important}}
+@media print{.home-hero{display:block}.atlas-galaxy,.home-hero-actions{display:none}.home-hero h1{font-size:32px}.hero-stats{display:none}}

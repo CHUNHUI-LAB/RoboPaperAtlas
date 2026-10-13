@@ -5,6 +5,7 @@ from unittest.mock import patch
 ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT/'scripts'))
 import reports as r
 import current_reader as current
+from reader_test_support import strip_live_presentation_scripts
 from report_roboduet_stage3 import IDENTITY,POLICY_PATH,SECTION_IDS
 from validate import expected_stage,validate_catalog
 from build import details
@@ -73,7 +74,7 @@ class RoboDuetMethodTests(unittest.TestCase):
    page=current.render(ROOT,self.paper,stage,self.records);source=(ROOT/self.paper['stages'][stage]['artifacts'][0]['path']).read_text()
    for target in ('stage1','stage2','stage3'):self.assertIn(f'href="{target}.html"',page)
    self.assertIn('href="../index.html#reading"',page)
-   for tag in ('article','style','script'):self.assertEqual(re.findall(rf'<{tag}\b.*?</{tag}>',page.replace(current.context_script(ROOT), ''),re.S),re.findall(rf'<{tag}\b.*?</{tag}>',source,re.S))
+   for tag in ('article','style','script'):self.assertEqual(re.findall(rf'<{tag}\b.*?</{tag}>',strip_live_presentation_scripts(self,page,ROOT,source),re.S),re.findall(rf'<{tag}\b.*?</{tag}>',source,re.S))
   with patch.dict(current.ROBO_FROZEN,{'stage3':dict(current.ROBO_FROZEN['stage3'],sha256='0'*64)}):
    with self.assertRaisesRegex(ValueError,'Unreviewed RoboDuet'):current.render(ROOT,self.paper,'stage3',self.records)
  def test_exact_packaged_controls_via_existing_python_discovery(self):

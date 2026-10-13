@@ -268,14 +268,37 @@ def _analysis_name(paper, version):
     return 'analysis-' + hashlib.sha256((paper + '\x1f' + version).encode()).hexdigest()[:20] + '.html'
 
 
-NATIVE_CSS = '''*{box-sizing:border-box}body{margin:0;background:#fbfcf9;color:#18313d;font:16px/1.65 system-ui,sans-serif}main{max-width:1200px;margin:auto;padding:12px 18px 36px}h1{font-size:1.35rem;line-height:1.4;margin:8px 0}h2{font-size:1.1rem;margin:10px 0}h3{font-size:1rem}p{margin:6px 0 12px}a{color:#155b4e;overflow-wrap:anywhere}nav{display:flex;gap:12px;flex-wrap:wrap;font-size:.85rem}summary{cursor:pointer;overflow-wrap:anywhere;min-height:30px;line-height:1.5;padding:4px 0}a:focus-visible,summary:focus-visible{outline:3px solid #ab5013;outline-offset:2px}.native-tree ul{list-style:none;padding-left:12px;margin:2px 0}.native-tree ul ul ul{padding-left:0}.native-tree details{min-width:0;margin:2px 0;border-left:1px solid #b6cec4}.native-tree summary{padding-left:5px}.native-depth{display:block;font-size:.7rem;color:#456170}.native-columns{display:grid;grid-template-columns:1fr 1fr;gap:18px}.native-columns>*{min-width:0}.native-content{overflow-wrap:anywhere}.native-note{font-size:.85rem;color:#456170}.native-boundary{padding:8px;border-left:3px solid #ab772e;background:#faf3e4}.native-directory{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.native-directory ul{padding-left:18px}li{overflow-wrap:anywhere}.native-identity{font-size:.85rem;color:#155b4e}.native-body{padding:5px 10px}details.native-evidence{margin:12px 0;border-top:1px solid #b6cec4}@media(max-width:600px){main{padding:8px}.native-columns,.native-directory{grid-template-columns:1fr;gap:10px}.native-tree summary{font-size:.9rem}.native-tree ul ul ul{padding-left:0}}'''
+NATIVE_CSS = """/* Static source reading remains complete without JavaScript. */
+.native-main{max-width:1280px;margin:auto;padding:32px 32px 72px;color:#171a19;font:17px/1.8 system-ui,-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif}
+.native-main h1{max-width:1000px;font-size:clamp(28px,3.4vw,44px);font-weight:550;letter-spacing:-.035em;line-height:1.3;margin:32px 0 24px;overflow-wrap:anywhere}
+.native-main h2{font-size:24px;line-height:1.4;margin:32px 0 16px;letter-spacing:-.02em}
+.native-main h3{font-size:19px;line-height:1.5}.native-main p{margin:8px 0 16px}
+.native-main a{color:#315c4b;text-underline-offset:.2em;overflow-wrap:anywhere}.native-main nav{display:flex;gap:8px 20px;flex-wrap:wrap;font-size:14px}
+.native-main summary{cursor:pointer;overflow-wrap:anywhere;min-height:44px;line-height:1.65;padding:10px 12px;border-radius:6px;transition:background-color 160ms cubic-bezier(.22,1,.36,1)}
+.native-main summary:hover{background:#f0f4ef}.native-main a:focus-visible,.native-main summary:focus-visible{outline:2px solid #315c4b;outline-offset:4px}
+.native-tree ul{list-style:none;padding-left:18px;margin:6px 0}.native-tree ul ul ul{padding-left:8px}.native-tree details{min-width:0;margin:6px 0;border-left:1px solid #d9e2da}
+.native-depth{display:block;font-size:13px;line-height:1.65;color:#626b67}.native-columns{display:grid;grid-template-columns:1fr 1fr;gap:32px}.native-columns>*{min-width:0}
+.native-content{overflow-wrap:anywhere}.native-note{font-size:14px;color:#626b67}.native-boundary{padding:12px 16px;border-left:3px solid #a27c3f;background:#f8f3e9;font-size:15px}
+.native-directory{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px}.native-directory ul{padding-left:18px}.native-main li{overflow-wrap:anywhere}
+.native-identity{font-size:15px;color:#315c4b}.native-body{padding:8px 18px}.native-body p{max-width:760px}.native-main details.native-evidence{margin:16px 0;border-top:1px solid #e2e6e2}
+@media(max-width:900px){.native-columns,.native-directory{grid-template-columns:1fr;gap:18px}.native-main{padding:24px 20px 48px}}
+@media(max-width:600px){.native-main{padding:20px 16px 40px;font-size:16px}.native-main h1{font-size:28px;margin:24px 0}.native-main summary{padding:10px 8px}.native-tree ul{padding-left:10px}.native-tree ul ul ul{padding-left:0}.native-body{padding:6px 12px}.native-main h2{font-size:22px}}
+@media(prefers-reduced-motion:reduce){.native-main summary{transition:none}}
+"""
 
 
 def _page(title, body):
+    from site_chrome import render_header, render_footer, render_dialogs
+    prefix = '../../../'
+    shared_scripts = ''.join('<script defer src="' + prefix + 'assets/' + name + '"></script>'
+                             for name in ('catalog-navigation.js', 'presentation.js', 'interface.js', 'chrome.js'))
     return ('<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
-            '<title>' + _esc(title) + ' · 导航研究图</title><link rel="stylesheet" href="native.css"></head><body><main>'
+            '<title>' + _esc(title) + ' · 导航研究图 · RoboPaperAtlas</title><link rel="stylesheet" href="' + prefix + 'assets/site.css">'
+            '<link rel="stylesheet" href="native.css"></head><body class="atlas-theme f2-theme page-navigation-native" data-root="' + prefix + '">'
+            + render_header(prefix=prefix, page='navigation', compact=True) + '<main class="native-main">'
             '<nav aria-label="原生阅读来路"><a href="index.html">全局研究图</a><a href="directory.html">全部阅读范围与角色</a>'
-            '<a href="../index.html">返回联动研究图</a></nav><h1>' + _esc(title) + '</h1>' + body + '</main></body></html>').encode()
+            '<a href="../index.html">返回联动研究图</a></nav><h1>' + _esc(title) + '</h1>' + body + '</main>'
+            + render_footer(prefix=prefix) + render_dialogs(prefix=prefix) + shared_scripts + '</body></html>').encode()
 
 
 def _enhanced(p, scope=None, paper=None, version=None, template=False):
