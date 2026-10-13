@@ -819,6 +819,13 @@ html:has(#navigation-product[data-load-state=ready]), body:has(#navigation-produ
 .np-ancestry-disclosure>summary {cursor:pointer;min-height:28px;font-size:15px;line-height:1.5;}
 .np-ancestry-disclosure[open]>.np-context-local {position:absolute;left:0;top:32px;width:min(820px,calc(100vw - 64px));padding:14px;background:#fff;border:1px solid #e2e6e2;border-radius:8px;box-shadow:0 12px 36px #20343f25;z-index:35;white-space:normal;}
 @media (min-width:1200px) { .np-ancestry-disclosure[open]>.np-context-local {top:calc(100% + 4px);} }
+/* Ready non-home controls share two 36px desktop rows. Reclaim only inherited
+ * touch whitespace; retain the original text metrics and each full hit box. */
+@media (min-width:1200px) {
+#navigation-product[data-reading-home=false] .np-ancestry-disclosure>summary {padding:2px 0;}
+#navigation-product[data-reading-home=false] .np-reading-tools>summary {min-height:34px;padding:2px 0;}
+#navigation-product[data-reading-home=false] .np-reading-tools[open]>div {top:calc(100% + 4px);}
+}
 #navigation-product .np-global-context [data-path-kind=local-ancestry] .np-crumb {max-width:100%;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;line-height:1.55;flex:0 1 auto;}
 #navigation-product[data-reading-home=true] .np-panels {display:none;}
 .np-reading-landing[hidden], #np-overview-toggle[hidden] {display:none;}
