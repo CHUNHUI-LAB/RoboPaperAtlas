@@ -507,20 +507,28 @@ class RelationPathSamplingChecks(unittest.TestCase):
 const {JSDOM}=require('jsdom'),input=JSON.parse(require('fs').readFileSync(0,'utf8'));
 const dom=new JSDOM('<div id="map"><svg><path id="edge" data-map-relation="tasks:relation:90" data-from-entity="from" data-to-entity="to"></path></svg></div>');
 const d=dom.window.document,m=d.getElementById('map'),svg=m.querySelector('svg'),e=d.getElementById('edge'),c=input.case;
-const identity={a:1,b:0,c:0,d:1,e:0,f:0},matrix=c.matrix||identity;
+const identity={a:1,b:0,c:0,d:1,e:0,f:0},matrix=c.matrix||identity;matrix.inverse=()=>{const det=matrix.a*matrix.d-matrix.b*matrix.c;return {a:matrix.d/det,b:-matrix.b/det,c:-matrix.c/det,d:matrix.a/det,e:(matrix.c*matrix.f-matrix.d*matrix.e)/det,f:(matrix.b*matrix.e-matrix.a*matrix.f)/det};};
 global.DOMPoint=class{constructor(x,y){this.x=x;this.y=y;}matrixTransform(a){return {x:this.x*a.a+this.y*a.c+a.e,y:this.x*a.b+this.y*a.d+a.f};}};
 global.innerWidth=1440;global.innerHeight=900;global.document=d;
 global.rect=n=>n.area||{x:0,y:0,width:1440,height:900};
 global.color=()=>({rgb:[60,131,125],alpha:1});global.bg=()=>[255,255,255];
-const style={opacity:'1',strokeOpacity:'1',visibility:'visible',display:'block',stroke:'rgb(60, 131, 125)',strokeWidth:'2',strokeDasharray:'5px, 4px',vectorEffect:'non-scaling-stroke'};
+const style={opacity:'1',strokeOpacity:'1',visibility:'visible',display:'block',stroke:'rgb(60, 131, 125)',strokeWidth:'2',strokeDasharray:'5px, 4px',strokeDashoffset:String(c.offset||0),strokeLinecap:'butt',strokeLinejoin:'miter',vectorEffect:'non-scaling-stroke'};
 global.getComputedStyle=n=>Object.assign({},style,n.customStyle||{});
 function configure(path,points,styleChanges={}){
+  if(c.float32Geometry)points=points.map(p=>p.map(Math.fround));
   path.points=points;path.customStyle=styleChanges;path.setAttribute('d','M '+points.map(p=>p.join(' ')).join(' L '));path.getScreenCTM=()=>matrix;
   path.parts=points.slice(1).map((p,i)=>({a:points[i],b:p,len:Math.hypot(p[0]-points[i][0],p[1]-points[i][1])}));
-  path.getTotalLength=()=>path.parts.reduce((sum,p)=>sum+p.len,0);
-  path.getPointAtLength=arc=>{let pos=arc;for(const p of path.parts){if(pos<=p.len)return {x:p.a[0]+(p.b[0]-p.a[0])*pos/p.len,y:p.a[1]+(p.b[1]-p.a[1])*pos/p.len};pos-=p.len;}const p=points.at(-1);return {x:p[0],y:p[1]};};
+  path.getTotalLength=()=>{const len=path.parts.reduce((sum,p)=>sum+p.len,0);return c.float32Geometry?Math.fround(len):len;};
+  path.getPointAtLength=arc=>{let pos=c.float32Geometry?Math.fround(arc):arc;for(const p of path.parts){if(pos<=p.len){const q={x:p.a[0]+(p.b[0]-p.a[0])*pos/p.len,y:p.a[1]+(p.b[1]-p.a[1])*pos/p.len};return c.float32Geometry?{x:Math.fround(q.x),y:Math.fround(q.y)}:q;}pos-=p.len;}const p=points.at(-1);return {x:p[0],y:p[1]};};
   path.nearest=(x,y)=>{let arc=0,best={distance:Infinity};for(const p of path.parts){const dx=p.b[0]-p.a[0],dy=p.b[1]-p.a[1],t=Math.max(0,Math.min(1,((x-p.a[0])*dx+(y-p.a[1])*dy)/(p.len*p.len))),distance=Math.hypot(x-p.a[0]-t*dx,y-p.a[1]-t*dy);if(distance<best.distance)best={distance,arc:arc+t*p.len};arc+=p.len;}return best;};
-  path.isPointInStroke=q=>{const p=path.nearest(q.x,q.y),s=getComputedStyle(path),dash=s.strokeDasharray==='none'?null:s.strokeDasharray.split(/[ ,]+/).map(parseFloat),period=dash&&dash.reduce((a,b)=>a+b,0),phase=period&&((p.arc+(c.offset||0))%period+period)%period;return p.distance<=parseFloat(s.strokeWidth)/2+1e-8&&(!dash||phase<dash[0]);};
+  path.isPointInStroke=q=>{
+    if(c.float32Geometry)q={x:Math.fround(q.x),y:Math.fround(q.y)};
+    const s=getComputedStyle(path),dash=s.strokeDasharray==='none'?null:s.strokeDasharray.split(/[ ,]+/).map(parseFloat),period=dash&&dash.reduce((a,b)=>a+b,0),painted=arc=>!dash||((arc+(c.offset||0))%period+period)%period<dash[0];
+    // Unlike nearest-arc approximation, a real stroked corner is the union of
+    // painted segments. These cases use butt caps and the inner miter side.
+    if(c.strokeUnion){let arc=0;for(const p of path.parts){const dx=p.b[0]-p.a[0],dy=p.b[1]-p.a[1],t=((q.x-p.a[0])*dx+(q.y-p.a[1])*dy)/(p.len*p.len),distance=Math.abs((q.x-p.a[0])*dy-(q.y-p.a[1])*dx)/p.len;if(t>=0&&t<=1&&distance<=parseFloat(s.strokeWidth)/2&&painted(arc+t*p.len))return true;arc+=p.len;}return false;}
+    const p=path.nearest(q.x,q.y);return p.distance<=parseFloat(s.strokeWidth)/2+1e-8&&painted(p.arc);
+  };
 }
 configure(e,c.points||[[30,100],[568.421875,100]],c.style||{});
 if(c.rawPath!==undefined)e.setAttribute('d',c.rawPath);
@@ -529,6 +537,7 @@ const extras=[];for(const spec of c.crossingPaths||[]){const p=d.createElementNS
 const cards=[];for(const spec of c.cards||[]){const n=d.createElement('button');n.dataset.mapPosition=spec.id||'card';if(spec.task)n.dataset.taskOpen=spec.task;n.area=spec.rect;if(spec.hidden)n.customStyle={visibility:'hidden'};m.append(n);cards.push(n);}
 let calls=0,arcs=[];const original=e.getPointAtLength;e.getPointAtLength=arc=>{arcs.push(arc);return original(arc);};
 d.elementsFromPoint=(x,y)=>{
+  if(c.float32HitTest){x=Math.fround(x);y=Math.fround(y);}
   const q={x:(x-matrix.e)/matrix.a,y:(y-matrix.f)/matrix.d},stack=[];
   if(!c.pointerlessCards)for(const n of cards){const r=n.area;if(!n.customStyle&&x>=r.x&&x<=r.x+r.width&&y>=r.y&&y<=r.y+r.height)stack.push(n);}
   for(const p of extras)if(p.isPointInStroke(q))stack.push(p);
@@ -540,8 +549,13 @@ const result=new Function('e','m',input.helper+'\n'+input.edge+'\nreturn edge(e)
 console.log(JSON.stringify({result,calls,arcs}));dom.window.close();
 """
         edge = next(line.strip() for line in Path(MODULE.__file__).read_text().splitlines() if line.strip().startswith('function edge(e)'))
+        helper = MODULE.RELATION_PATH_SAMPLES_JS
+        if case.pop('legacyCoordinates', False):
+            current = 'var z={x:Math.fround(rawScreen.x),y:Math.fround(rawScreen.y)},localProbe=point(inverse,z.x,z.y)'
+            self.assertIn(current, helper)
+            helper = helper.replace(current, 'var z=rawScreen,localProbe=q', 1)
         run = subprocess.run(['node', '-e', driver], cwd=Path(__file__).parents[1],
-                             input=json.dumps(dict(helper=MODULE.RELATION_PATH_SAMPLES_JS, edge=edge, case=case)),
+                             input=json.dumps(dict(helper=helper, edge=edge, case=case)),
                              text=True, capture_output=True, timeout=30)
         self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
         return json.loads(run.stdout)
@@ -562,6 +576,42 @@ console.log(JSON.stringify({result,calls,arcs}));dom.window.close();
         self.assertLessEqual(len(edge['ownHits']), proof['diagnosticLimit'])
         self.assertLessEqual(len(edge['blockedHits']), proof['diagnosticLimit'])
         self.assertLessEqual(len(edge['crossings']), proof['diagnosticLimit'])
+
+    def test_real_r90_r93_float32_corner_uses_one_coordinate_for_both_queries(self):
+        # Actual 88ec3e6 receipt points. Local SVG values and the screen hit-test
+        # each use float32; the map translation is exact and is not rounded away.
+        for points, length, raw_y in [
+            ([[277.828125, 366], [277.828125, 379.3333333333333], [687.25, 379.3333333333333], [687.25, 269], [697.25, 269]], 543.0885620117188, 561.2239685058594),
+            ([[317.90625, 442], [317.90625, 455.3333333333333], [695.25, 455.3333333333333], [695.25, 355.5], [697.25, 355.5]], 492.51043701171875, 637.2239685058594),
+        ]:
+            case = dict(points=points, matrix=dict(a=1, b=0, c=0, d=1, e=41, f=181.890625),
+                        float32Geometry=True, float32HitTest=True, strokeUnion=True, gapSurface='map')
+            old = self.probe(**case, legacyCoordinates=True)['result']
+            self.assertEqual(old['length'], length)
+            self.assertFalse(old['uncovered'])
+            self.assertEqual(old['sampling']['counts']['blocked'], 1)
+            blocked = old['blockedHits'][0]
+            self.assertTrue(blocked['painted'])
+            self.assertEqual(blocked['hit']['id'], 'map')
+            self.assertEqual(blocked['y'], raw_y)
+            self.assertTrue(5 < blocked['arc'] % 9 < 9)
+            record = self.probe(**case)
+            self.assert_complete_sampling(record)
+            new = record['result']
+            self.assertTrue(new['uncovered'])
+            self.assertEqual(new['sampling']['counts']['blocked'], 0)
+            self.assertEqual(new['sampling']['coordinates'], 'float32-screen-roundtrip')
+            self.assertEqual(new['sampling']['roundtripDifferenceCount'], 1)
+            delta = new['roundtripDifferences'][0]
+            self.assertTrue(delta['rawPainted'])
+            self.assertFalse(delta['painted'])
+            self.assertEqual(delta['localProbe']['y']-delta['rawLocal']['y'], 2**-15)
+            self.assertEqual(delta['rawScreen']['y'], raw_y)
+            # A screen background at an actually painted point is still failure.
+            missing = self.probe(**case, missing=True)['result']
+            self.assertFalse(missing['uncovered'])
+            self.assertGreater(missing['sampling']['counts']['blocked'], 0)
+            self.assertFalse(missing['ownHits'])
 
     def test_original_r90_arc_length_alias_is_reproducible_without_chrome(self):
         # 0f497e receipt: all 19 old probes occupy the 4px gap in a 5px/4px

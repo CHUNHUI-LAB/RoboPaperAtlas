@@ -93,7 +93,7 @@ return {text:e.textContent,rect:r,visible:visible,opaque:opaque,unscaled:unscale
 # rather than granting an occlusion exception to arbitrary SVG descendants.
 RELATION_PATH_SAMPLES_JS = r"""
 function relationPathSamples(e,m,len,matrix){
-  var limit=24,svg=e.closest('svg'),cs=getComputedStyle(e),mr=rect(m),ownHits=[],blockedHits=[],crossings=[],counts={own:0,gap:0,crossing:0,endpoint:0,blocked:0};
+  var limit=24,svg=e.closest('svg'),cs=getComputedStyle(e),mr=rect(m),ownHits=[],blockedHits=[],crossings=[],roundtripDifferences=[],roundtripDifferenceCount=0,counts={own:0,gap:0,crossing:0,endpoint:0,blocked:0};
   function scale(a){return Math.sqrt(Math.max(Math.abs(a.a)+Math.abs(a.b),Math.abs(a.c)+Math.abs(a.d))*Math.max(Math.abs(a.a)+Math.abs(a.c),Math.abs(a.b)+Math.abs(a.d)));}
   function point(a,x,y){var p=new DOMPoint(x,y).matrixTransform(a);return {x:p.x,y:p.y};}
   function segments(path){
@@ -130,6 +130,7 @@ function relationPathSamples(e,m,len,matrix){
   var pathLength=e.getAttribute('pathLength'),calibration=pathLength===null?1:len/Number(pathLength),positive=dash.filter(n=>n>0);
   var step=Math.min(.5/factor,positive.length?Math.min(...positive)*calibration/4:Infinity),count=Math.ceil(len/step);
   var valid=!!line&&!!svg&&Number.isFinite(len)&&len>0&&Number.isFinite(step)&&step>0&&Number.isFinite(calibration)&&calibration>0&&dash.every(Number.isFinite)&&count>=1&&count<=20000&&typeof e.isPointInStroke==='function';
+  var inverse=matrix.inverse();valid=valid&&['a','b','c','d','e','f'].every(key=>Number.isFinite(inverse[key]));
   var inBounds=valid,cache=new Map();
   function bounds(z){return Number.isFinite(z.x)&&Number.isFinite(z.y)&&z.x>=mr.x-1&&z.y>=mr.y-1&&z.x<=mr.x+mr.width+1&&z.y<=mr.y+mr.height+1&&z.x>=0&&z.y>=0&&z.x<=innerWidth&&z.y<=innerHeight;}
   function crossing(hit,z){
@@ -154,7 +155,10 @@ function relationPathSamples(e,m,len,matrix){
   if(valid){
     for(var end of [0,len]){var q=e.getPointAtLength(end);if(!bounds(point(matrix,q.x,q.y)))inBounds=false;}
     for(var i=0;i<count;i++){
-      var arc=len*(i+.5)/count,q=e.getPointAtLength(arc),z=point(matrix,q.x,q.y),hit=document.elementFromPoint(z.x,z.y),painted=e.isPointInStroke(q),kind='blocked',proof=null;
+      var arc=len*(i+.5)/count,q=e.getPointAtLength(arc),rawScreen=point(matrix,q.x,q.y);
+      // Blink's screen hit-test takes float32 coordinates. Query local stroke
+      // geometry at that same screen point, not the pre-roundtrip path point.
+      var z={x:Math.fround(rawScreen.x),y:Math.fround(rawScreen.y)},localProbe=point(inverse,z.x,z.y),hit=document.elementFromPoint(z.x,z.y),rawPainted=e.isPointInStroke(q),painted=e.isPointInStroke(localProbe),kind='blocked',proof=null;
       if(!bounds(z))inBounds=false;
       if(hit===e)kind='own';
       else if((hit===m||hit===svg)&&!painted)kind='gap';
@@ -164,15 +168,16 @@ function relationPathSamples(e,m,len,matrix){
         var stack=document.elementsFromPoint(z.x,z.y),index=stack.indexOf(e),above=index<0?[]:stack.slice(0,index);
         if(proof&&(!painted||index>0&&above.every(n=>crossing(n,z))))kind='crossing';
       }
-      counts[kind]++;var sample={x:z.x,y:z.y,fraction:arc/len,arc:arc};
+      counts[kind]++;var sample={x:z.x,y:z.y,fraction:arc/len,arc:arc,rawLocal:{x:q.x,y:q.y},rawScreen:rawScreen,localProbe:localProbe,rawPainted:rawPainted,painted:painted};
+      if(rawPainted!==painted){roundtripDifferenceCount++;if(roundtripDifferences.length<limit)roundtripDifferences.push(sample);}
       if(kind==='own'&&ownHits.length<limit)ownHits.push(sample);
       if(kind==='blocked'&&blockedHits.length<limit)blockedHits.push(Object.assign(sample,{hit:identity(hit),painted:painted}));
       if(kind==='crossing'&&crossings.length<limit)crossings.push(Object.assign(sample,{painted:painted},proof));
     }
   }
   return {inBounds:inBounds,uncovered:valid&&counts.own>0&&counts.own+counts.gap>=3&&counts.blocked===0&&cardIntersections.length===0,ownHits:ownHits,
-    sampling:{method:'uniform-full-arc',valid:valid,count:valid?count:0,firstArc:valid?len/(2*count):null,lastArc:valid?len-len/(2*count):null,maxArcStep:valid?len/count:null,maxScreenStep:valid?len/count*factor:null,counts:counts,diagnosticLimit:limit},
-    blockedHits:blockedHits,crossings:crossings,cardIntersections:cardIntersections};
+    sampling:{method:'uniform-full-arc',coordinates:'float32-screen-roundtrip',matrix:{a:matrix.a,b:matrix.b,c:matrix.c,d:matrix.d,e:matrix.e,f:matrix.f},inverse:{a:inverse.a,b:inverse.b,c:inverse.c,d:inverse.d,e:inverse.e,f:inverse.f},strokeDasharray:cs.strokeDasharray,strokeDashoffset:cs.strokeDashoffset,strokeLinecap:cs.strokeLinecap,strokeLinejoin:cs.strokeLinejoin,roundtripDifferenceCount:roundtripDifferenceCount,valid:valid,count:valid?count:0,firstArc:valid?len/(2*count):null,lastArc:valid?len-len/(2*count):null,maxArcStep:valid?len/count:null,maxScreenStep:valid?len/count*factor:null,counts:counts,diagnosticLimit:limit},
+    blockedHits:blockedHits,crossings:crossings,roundtripDifferences:roundtripDifferences,cardIntersections:cardIntersections};
 }
 """
 
