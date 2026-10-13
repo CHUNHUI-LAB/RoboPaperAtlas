@@ -3218,6 +3218,51 @@ d.querySelector('.np-return-previous').click();await ready(()=>a.getState().rout
         self.assertEqual(result.returncode, 0, result.stderr)
 
 
+def attach_method_child_fixture(data, expected):
+    """Independent synthetic staged evidence; never a claim about Chrome pixels."""
+    import copy
+    p=expected['position']; selected=p['id']; key='method-fixture'; history_key='navigation-fixture'
+    names={'methods:pipeline-tap-llm':'-28-portable-llm','methods:pipeline-zhu':'-27-imagenav-zhu','methods:pipeline-poni':'-23-poni-method'}
+    data['captureName']='1440x900'+names.get(p['entityId'],'-03-method-reader' if p['tree']=='g' else '-11-active-method-reader')
+    bucket=dict(focusTarget=selected,expandedByTree=copy.deepcopy(data['expanded']),selectedByTree={p['tree']:selected},
+                treeScrollByTree={p['tree']:0},treeScrollLeftByTree={p['tree']:0},detailScrollByTree={p['tree']:0},windowScroll=0)
+    runtime=dict(route=copy.deepcopy(data['route']),originTrail=[],revision=7,contexts={key:bucket})
+    before=dict(route=copy.deepcopy(data['route']),runtime=runtime,history={history_key:copy.deepcopy(runtime)},historyKey=history_key,
+                contextKey=key,historyLength=15,viewport=dict(data['viewport'],dpr=1),window=dict(x=0,y=0),
+                tree=dict(top=0,left=0,maxTop=145,maxLeft=0,client=copy.deepcopy(data['tree'])),
+                reader=dict(top=0,left=0,maxTop=200,maxLeft=0,client=copy.deepcopy(data['reader'])),
+                active=dict(id='np-node-'+selected,tag='LI',position=selected,tabIndex=0,original=True),
+                roving=[selected],domSame=True,hoverSame=True,originalFocus=dict(id='np-node-'+selected,tag='LI',tabIndex=0),tabBound=8)
+    children=[r['id'] for r in data['rows'] if r['id'] in expected['children']]
+    audit=dict(binding=MODULE.method_child_binding(data['captureName'],data,expected),status='verified_native_children',cleanedUp=True,
+               before=before,after=copy.deepcopy(before),baselineMode='coherent',required=children,proofs=[],actions=[],keys=[])
+    audit['settles']=[dict(ok=True,elapsed=180,quietMs=160)]
+    audit['afterSnapshot']=copy.deepcopy({k:v for k,v in data.items() if k not in ('captureName','childReadability')})
+    current=copy.deepcopy(before)
+    def key_action(pid, key_name):
+        nonlocal current
+        state=copy.deepcopy(current);state['active']=dict(id='np-node-'+pid,tag='LI',position=pid,tabIndex=0,original=pid==selected);state['roving']=[pid]
+        state['runtime']['contexts'][key]['focusTarget']=pid
+        trace=MethodKeyTraceChecks.fixture(selected,expected['chain'][0],pid,key_name,top=0)
+        for frame in [trace['before'],trace['after'],*(e['snapshot'] for e in trace['events'])]:
+            frame['route']=copy.deepcopy(data['route']);frame['tree']['rect']=copy.deepcopy(data['tree']);frame['tree']['clientRect']=copy.deepcopy(data['tree'])
+        trace['before']['active']=current['active']['id'];trace['after']['active']='np-node-'+pid
+        for event in trace['events']:event['eventTarget']=current['active']['id']
+        index=len(audit['actions'])
+        audit['keys'].append(dict(input='\ue011' if key_name=='Home' else '\ue015',target=pid,trace=copy.deepcopy(trace),actionIndex=index))
+        audit['actions'].append(dict(kind='tree-key',before=copy.deepcopy(current),after=copy.deepcopy(state),events=dict(overflow=0,events=[dict(type='keydown',key=key_name,trusted=True,target=current['active']['id'])])))
+        current=state
+        return state,trace
+    for pid in children:
+        state,trace=key_action(pid,'ArrowDown')
+        audit['proofs'].append(dict(id=pid,row=copy.deepcopy(next(r for r in data['rows'] if r['id']==pid)),state=copy.deepcopy(state),keyTrace=trace))
+    if children:
+        key_action(expected['chain'][0],'Home')
+        for pid in expected['chain'][1:]:key_action(pid,'ArrowDown')
+    data['childReadability']=audit
+    return audit
+
+
 class MethodReadingCaptureChecks(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -3274,6 +3319,12 @@ class MethodReadingCaptureChecks(unittest.TestCase):
         if expected['siblings']:
             data['siblings'] = [dict(tag='DETAILS', parent=p['parentId'], open=False, summary=self.proof('Real parent alternatives', 30, 700, 360),
                                     controls=[dict(tag='BUTTON', id=pid, treeRole=False, sourceLabel=expected['siblingLabels'][pid], text=expected['siblingLabels'][pid], meta='Original role · '+expected['siblingVersions'].get(pid, ''), disabled=False) for pid in expected['siblings']])]
+        for row in rows:
+            if row['id'] in expected['childDisplay']:
+                display=expected['childDisplay'][row['id']]
+                row['label']=display['label'];row['role']=display['role']
+                row['proof']['text']=display['label'];row['roleProof']['text']=display['role']
+        attach_method_child_fixture(data, expected)
         return data, expected
 
     def test_source_projection_keeps_exact_global_local_and_original_condition_identity(self):
@@ -3338,6 +3389,7 @@ class MethodReadingCaptureChecks(unittest.TestCase):
                 MODULE.check_method_reading(bad, expected, self.source_positions, compact=True)
         # No hard clipping target is imposed on another genuinely long source identity.
         data['heading']['rect']['height'] = 140
+        attach_method_child_fixture(data, expected)
         MODULE.check_method_reading(data, expected, self.source_positions, compact=False)
 
     def test_method_geometry_is_separate_from_task_relation_analysis_and_collapse(self):
@@ -3461,6 +3513,7 @@ for(const name of ['local','rich','condition','imported']){const p=input.cases[n
         data, expected = self.receipt('global')
         data['expanded']['g'].remove(expected['position']['id'])
         data['rows'] = data['rows'][:len(expected['chain'])]
+        attach_method_child_fixture(data, expected)
         MODULE.check_method_reading(data, expected, self.source_positions)
         wrong = copy.deepcopy(data); wrong['rows'].append(self.receipt('global')[0]['rows'][-1])
         with self.assertRaises(RuntimeError): MODULE.check_method_reading(wrong, expected, self.source_positions)
@@ -4771,6 +4824,9 @@ process.stdout.write(JSON.stringify({answer,callbacks,inspections,background,for
         chrome_helper = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'desktop_chrome_snapshot')
         self.assertEqual(len(save_calls(chrome_helper)), 1)
         tree.body.remove(chrome_helper)
+        child_helper = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'method_child_readability_checks')
+        self.assertEqual(len(save_calls(child_helper)), 1)
+        tree.body.remove(child_helper)
         self.assertEqual(len(save_calls(tree)), 99)  # Every original save checkpoint remains.
         self.assertIn('def s0_footer_check(phase):\n        settle_s0_toolbar_paint(driver, report, save, phase)\n        data = desktop_chrome_snapshot(driver, report, save, phase, S0_FOOTER_SNAPSHOT_JS, footer_expected)', source)
 
@@ -5198,7 +5254,7 @@ class S0FooterCaptureChecks(unittest.TestCase):
         self.assertIn("check_s0_footer(graph['s0AdaptiveSpacing'])", main)
         self.assertIn("reading_home(relation_mode='all')", main)
         saves = [n for n in ast.walk(ast.parse(inspect.getsource(MODULE))) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']
-        self.assertEqual(len(saves), 102)  # 99 original + S0 paint + selector reveal + desktop paint diagnostic saves.
+        self.assertEqual(len(saves), 103)  # 99 original + S0 paint + selector reveal + desktop paint + child audit saves.
         self.assertEqual(len(MODULE.SCENE_NAMES) * len(MODULE.VIEWPORTS), 106)
         self.assertIn('s0_adaptive_spacing', MODULE.DISPLAY_CONTRACT_MIGRATIONS)
 
@@ -5768,7 +5824,7 @@ class AtomicReceiptPersistenceChecks(unittest.TestCase):
         import tempfile
         source = Path(MODULE.__file__).read_text(encoding='utf-8'); tree = ast.parse(source)
         calls = [node for node in ast.walk(tree) if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == 'save']
-        self.assertEqual(len(calls), 102)  # 99 original + S0 paint + selector reveal + desktop paint diagnostic saves.
+        self.assertEqual(len(calls), 103)  # 99 original + S0 paint + selector reveal + desktop paint + child audit saves.
         saves = [node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef) and node.name == 'save']
         self.assertEqual(len(saves), 1)
         self.assertEqual(ast.dump(saves[0].body[0].value.func), "Name(id='write_receipt', ctx=Load())")
@@ -5882,7 +5938,7 @@ class S0SelectorOcclusionChecks(unittest.TestCase):
         for text in ("s0_footer_check('before-selection-'", "s0_footer_check('closed-'", "check_s0_stability(before_selection, selected_footer)", "closed['focus'] != 'np-relation-select-'", 'check_s0_stability(footer_before_reload, footer_after_reload, restore=True)'):
             self.assertIn(text, main)
         saves = [n for n in ast.walk(ast.parse(inspect.getsource(MODULE))) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']
-        self.assertEqual(len(saves), 102)  # 99 original + S0 paint + selector reveal + desktop paint diagnostic saves.
+        self.assertEqual(len(saves), 103)  # 99 original + S0 paint + selector reveal + desktop paint + child audit saves.
         self.assertEqual(len(MODULE.SCENE_NAMES) * len(MODULE.VIEWPORTS), 106)
 
 
@@ -6062,3 +6118,765 @@ process.stdout.write(JSON.stringify(states));
             for actual,expected in zip(states,self.expected):
                 good,_=self.fixture();actual.update(sourceBinding=expected,renderedFonts=good['renderedFonts'],pngDimensions=[1440,900],pixelVariation=True,screenshotSha256='a'*64,console=[],networkFailures=[])
                 MODULE.check_version_title_capture(actual,expected,require_navigation=False)
+
+
+class MethodChildReadabilityChecks(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        MethodReadingCaptureChecks.setUpClass()
+
+    def fixture(self, case='global'):
+        return MethodReadingCaptureChecks().receipt(case)
+
+    def test_actual_failure_requires_child_native_proof_and_preserves_first_screen_ancestry(self):
+        import copy
+        data,expected=self.fixture();child=data['rows'][-1]
+        data['tree']=dict(x=17,y=382.390625,width=398,height=455.609375)
+        # Reproduce the real below-viewport child, without altering the independent
+        # source text or the separately revealed proof frame.
+        for key,y,h in (('proof',859.890625,93),('roleProof',957.890625,21)):
+            child[key]['rect'].update(y=y,height=h);child[key]['visible']=False
+        # Synthetic fixture ancestor geometry is shifted into the real current pane.
+        for index,row in enumerate(data['rows'][:-1]):
+            row['proof']['rect'].update(y=394+index*65,height=28)
+            row['roleProof']['rect'].update(y=422+index*65,height=20)
+        audit=data['childReadability'];audit['binding']=MODULE.method_child_binding(data['captureName'],data,expected)
+        for state in [audit['before'],audit['after'],audit['proofs'][0]['state'],*[a[k] for a in audit['actions'] for k in ('before','after')]]:
+            state['tree']['client']=copy.deepcopy(data['tree'])
+        item=audit['proofs'][0];item['state']['tree']['top']=145
+        audit['actions'][0]['after']['tree']['top']=145;audit['actions'][1]['before']['tree']['top']=145
+        for key,y,h in (('proof',714.890625,93),('roleProof',812.890625,21)):
+            item['row'][key]['rect'].update(y=y,height=h)
+        for trace in [k['trace'] for k in audit['keys']]:
+            for frame in [trace['before'],trace['after'],*(e['snapshot'] for e in trace['events'])]:
+                frame['tree']['clientRect']=copy.deepcopy(data['tree']);frame['tree']['rect']=copy.deepcopy(data['tree'])
+        for trace in (item['keyTrace'],audit['keys'][0]['trace']):
+            for frame in [trace['before'],trace['after'],*(e['snapshot'] for e in trace['events'])]:
+                frame['tree']['clientRect']=copy.deepcopy(data['tree']);frame['tree']['rect']=copy.deepcopy(data['tree']);frame['tree']['top']=145
+        audit['afterSnapshot']=copy.deepcopy({k:v for k,v in data.items() if k not in ('captureName','childReadability')})
+        MODULE.check_method_reading(data,expected,MethodReadingCaptureChecks.source_positions,compact=True)
+        old=copy.deepcopy(data)
+        self.assertFalse(MODULE._reader_proof(old['rows'][-1]['proof'],old['tree'],old['viewport'],font_size=15),'old all-at-once requirement stays red at actual CI coordinates')
+        bad=copy.deepcopy(data);bad.pop('childReadability')
+        with self.assertRaisesRegex(RuntimeError,'lacks its complete'):MODULE.check_method_reading(bad,expected,MethodReadingCaptureChecks.source_positions)
+        for key in ('proof','roleProof'):
+            bad=copy.deepcopy(data);bad['rows'][0][key]['visible']=False
+            with self.assertRaises(RuntimeError):MODULE.check_method_reading(bad,expected,MethodReadingCaptureChecks.source_positions)
+
+    def test_receipt_replay_requires_final_snapshot_quiet_windows_and_exact_key_action_bridge(self):
+        import copy
+        data,expected=self.fixture()
+        for mutate in (lambda a:a.pop('afterSnapshot'),lambda a:a.update(afterSnapshot={}),lambda a:a.pop('settles'),
+                       lambda a:a['settles'][0].update(ok=False),lambda a:a['settles'][0].update(quietMs=159),lambda a:a['settles'][0].update(elapsed=2001),
+                       lambda a:a['actions'][0].update(kind='anything'),lambda a:a['actions'][0]['events'].update(events=[]),
+                       lambda a:a['keys'][0].update(actionIndex=1),lambda a:a['actions'][0]['events']['events'][0].update(key='Home'),
+                       lambda a:a['actions'][0]['events']['events'][0].update(target='other-node'),lambda a:a['actions'][0]['events']['events'][0].update(trusted=False),
+                       lambda a:a['before']['active'].update(original=False),lambda a:a['before'].update(hoverSame=False)):
+            bad=copy.deepcopy(data);mutate(bad['childReadability'])
+            with self.subTest(mutation=mutate),self.assertRaises(RuntimeError):MODULE.check_method_child_audit(bad,expected,MethodReadingCaptureChecks.source_positions)
+
+    def test_all_thirteen_scene_sources_bind_technical_and_portable_environment_children(self):
+        science=MethodReadingCaptureChecks.science;positions=MethodReadingCaptureChecks.source_positions
+        routes=MODULE.task_route_expected(science)
+        sources=[MethodReadingCaptureChecks.cases['global'],MethodReadingCaptureChecks.cases['local'],routes['poni'],*routes['image'],*routes['portable']]
+        self.assertEqual(len(sources),8)
+        for source in sources:
+            expected=MODULE.method_reading_expected(science,source,positions)
+            self.assertEqual(set(expected['childDisplay']),set(source['childIds']))
+            for pid,display in expected['childDisplay'].items():
+                child=positions[pid];self.assertIn(child['kind'],('technical_improvement','environment'))
+                self.assertEqual(display['label'],science['entities'][child['entityId']]['label'])
+                role='有来源的阅读条目' if child['kind']=='environment' else '技术改进'+(' · 条件关联' if child.get('association')=='condition' else '')
+                self.assertEqual(display['role'],role)
+        self.assertTrue(all(positions[p['childIds'][0]]['kind']=='environment' for p in routes['portable']))
+
+    def test_source_claim_viewport_scene_and_expansion_cannot_reuse_an_audit(self):
+        import copy
+        data,expected=self.fixture('imported')
+        for mutate in (lambda d:d['route'].update(claim='different-original-claim'),lambda d:d.update(captureName='1920x1080-24-poni-claim'),
+                       lambda d:d['viewport'].update(width=1920),lambda d:d['expanded']['l'].pop(),
+                       lambda d:d['childReadability']['binding'].update(scienceSha256='0'*64),
+                       lambda d:d['childReadability']['binding']['identity'].update(version='wrong'),
+                       lambda d:d['childReadability'].update(required=[]),lambda d:d['childReadability']['proofs'].clear(),
+                       lambda d:d['childReadability']['proofs'].append(copy.deepcopy(d['childReadability']['proofs'][0]))):
+            bad=copy.deepcopy(data);mutate(bad)
+            with self.subTest(mutation=mutate),self.assertRaises(RuntimeError):MODULE.check_method_reading(bad,expected,MethodReadingCaptureChecks.source_positions)
+
+    def test_children_keep_full_text_role_contrast_font_hit_and_clip_gates(self):
+        import copy
+        data,expected=self.fixture()
+        for key in ('proof','roleProof'):
+            for mutate in (lambda p:p.update(text='short'),lambda p:p.update(visible=False),lambda p:p.update(opaque=False),
+                           lambda p:p.update(unscaled=False),lambda p:p.update(clipped=True),lambda p:p.update(fontSize=14.99),
+                           lambda p:p.update(foreground=[240,240,240]),lambda p:p.update(background=[]),lambda p:p['rect'].update(y=899)):
+                bad=copy.deepcopy(data);mutate(bad['childReadability']['proofs'][0]['row'][key])
+                with self.subTest(key=key,mutation=mutate),self.assertRaises(RuntimeError):MODULE.check_method_child_audit(bad,expected,MethodReadingCaptureChecks.source_positions)
+        for mutate in (lambda p:p['keyTrace']['events'][0].update(isTrusted=False),lambda p:p['state']['active'].update(position='other'),
+                       lambda p:p['state'].update(roving=['other']),lambda p:p['keyTrace']['after']['tree'].update(top=12),
+                       lambda p:p['row'].update(parent='different-source')):
+            bad=copy.deepcopy(data);mutate(bad['childReadability']['proofs'][0])
+            with self.assertRaises(RuntimeError):MODULE.check_method_child_audit(bad,expected,MethodReadingCaptureChecks.source_positions)
+
+    def test_matching_initial_and_revealed_shortened_text_cannot_replace_source_expectation(self):
+        import copy
+        data,expected=self.fixture()
+        for field,proof in (('label','proof'),('role','roleProof')):
+            bad=copy.deepcopy(data)
+            for row in (bad['rows'][-1],bad['childReadability']['proofs'][0]['row']):
+                row[field]='truncated';row[proof]['text']='truncated'
+            with self.assertRaisesRegex(RuntimeError,'independent scientific source'):
+                MODULE.check_method_reading(bad,expected,MethodReadingCaptureChecks.source_positions)
+
+    def test_exact_return_rejects_runtime_history_focus_scroll_dom_and_hover_drift(self):
+        import copy
+        data,expected=self.fixture();base=data['childReadability']['after'];key=base['contextKey'];hk=base['historyKey']
+        for mutate in (lambda a:a['tree'].update(top=12),lambda a:a['reader'].update(top=160),lambda a:a['window'].update(y=1),
+                       lambda a:a.update(domSame=False),lambda a:a.update(hoverSame=False),lambda a:a['active'].update(original=False),
+                       lambda a:a.update(roving=[expected['children'][0]]),lambda a:a['runtime']['contexts'][key].update(focusTarget='other'),
+                       lambda a:a['history'][hk]['contexts'][key].update(focusTarget='other'),lambda a:a['runtime']['contexts'][key]['expandedByTree']['g'].pop(),
+                       lambda a:a['runtime']['route'].update(claim='other')):
+            bad=copy.deepcopy(data);mutate(bad['childReadability']['after'])
+            with self.subTest(mutation=mutate),self.assertRaises(RuntimeError):MODULE.check_method_child_audit(bad,expected,MethodReadingCaptureChecks.source_positions)
+
+    def test_explicit_empty_closed_child_audit_is_required_and_visible_child_need_not_scroll(self):
+        data,expected=self.fixture()
+        MODULE.check_method_child_audit(data,expected,MethodReadingCaptureChecks.source_positions)
+        self.assertEqual(data['childReadability']['proofs'][0]['state']['tree']['top'],0,'already-visible child can have genuine0→0 keyboard geometry')
+        data['expanded']['g'].remove(expected['position']['id']);data['rows']=data['rows'][:-1]
+        audit=attach_method_child_fixture(data,expected)
+        self.assertEqual(audit['required'],[]);self.assertEqual(audit['proofs'],[])
+        MODULE.check_method_reading(data,expected,MethodReadingCaptureChecks.source_positions)
+        data.pop('childReadability')
+        with self.assertRaises(RuntimeError):MODULE.check_method_reading(data,expected,MethodReadingCaptureChecks.source_positions)
+
+    def test_stable_focus_only_difference_is_preserved_but_other_model_drift_is_not_accepted(self):
+        import copy
+        data,expected=self.fixture();before=data['childReadability']['before'];key=before['contextKey'];hk=before['historyKey']
+        before['history'][hk]['contexts'][key]['focusTarget']=expected['chain'][0]
+        self.assertEqual(MODULE.method_child_baseline_mode(before),'stable-keyboard-focus-only')
+        bad=copy.deepcopy(before);bad['history'][hk]['contexts'][key]['treeScrollByTree']['g']=12
+        with self.assertRaises(RuntimeError):MODULE.method_child_baseline_mode(bad)
+        bad=copy.deepcopy(before);bad['active']['position']='external'
+        with self.assertRaises(RuntimeError):MODULE.method_child_baseline_mode(bad)
+
+    def test_only_13_original_method_scenes_share_gateway_and_all_106_pngs_remain(self):
+        import ast,inspect
+        wanted={'-03-method-reader','-03b-reader-visible','-11-active-method-reader','-11c-reader-reopened','-23-poni-method','-24-poni-claim',
+                '-27-imagenav-zhu','-27-imagenav-sptm','-27-imagenav-ving','-28-portable-rl','-28-portable-llm','-30-analysis-imported-entry','-30-analysis-not-imported'}
+        self.assertEqual(set(MODULE.METHOD_CHILD_SCENES),wanted);self.assertEqual(len(MODULE.METHOD_CHILD_SCENES),13)
+        self.assertTrue(wanted<=set(MODULE.SCENE_NAMES));self.assertEqual(len(MODULE.SCENE_NAMES)*len(MODULE.VIEWPORTS),106)
+        tree=ast.parse(inspect.getsource(MODULE.main));calls=[n for n in ast.walk(tree) if isinstance(n,ast.Call) and isinstance(n.func,ast.Name) and n.func.id=='method_child_readability_checks']
+        self.assertEqual(len(calls),1)
+        source=inspect.getsource(MODULE.main)
+        self.assertIn("if data['desktopShell'].get('methodReading') == 'true' and not data['desktopShell']['collapsed']:",source)
+        self.assertIn("compact=name.endswith(('-03-method-reader', '-03b-reader-visible', '-11-active-method-reader', '-11c-reader-reopened'))",source)
+        self.assertIn('check_method_child_audit(data, expected, source_positions)',inspect.getsource(MODULE.check_method_reading))
+
+    def test_observer_scripts_are_syntactically_valid_and_never_set_focus_scroll_or_state(self):
+        js=[getattr(MODULE,n) for n in dir(MODULE) if n.startswith('METHOD_CHILD_') and n.endswith('_JS')]
+        self.assertEqual({n for n in dir(MODULE) if n.startswith('METHOD_CHILD_') and n.endswith('_JS')},
+                         {'METHOD_CHILD_PROBE_START_JS','METHOD_CHILD_STATE_JS','METHOD_CHILD_ACTION_JS','METHOD_CHILD_IDLE_JS','METHOD_CHILD_READER_POINT_JS','METHOD_CHILD_HOVER_POINT_JS','METHOD_CHILD_PROBE_STOP_JS'})
+        for script in js:
+            for operation in ('.focus(','.scrollIntoView(','.scrollTo(','.navigate(','.replaceState(','.pushState(','.scrollTop=', '.scrollLeft=', '.tabIndex='):
+                self.assertNotIn(operation,script)
+        result=subprocess.run(['node','-e',"for(const s of JSON.parse(require('fs').readFileSync(0,'utf8')))new Function(s);"],input=json.dumps(js),text=True,capture_output=True)
+        self.assertEqual(result.returncode,0,result.stderr)
+
+    def test_reader_pointer_requires_exact_self_hit_integer_client_padding_and_not_overlay(self):
+        code=r"""
+const input=JSON.parse(require('fs').readFileSync(0,'utf8')),c=input.case;
+const reader={id:'np-detail-scroll',isConnected:true,tabIndex:-1,clientLeft:1,clientTop:1,clientWidth:970,clientHeight:430,getBoundingClientRect:()=>({x:433.25,y:446.6875,width:992,height:436.3125})};
+global.window=global;window.__npMethodChildProbe={active:c.wrong?{}:reader};global.innerWidth=1440;global.innerHeight=900;
+const probes=[];global.document={getElementById:()=>reader,elementFromPoint:(x,y)=>{probes.push([x,y]);return c.overlay?{}:c.descendant?{parentElement:reader}:reader;}};
+let value,error;try{value=new Function(input.script)();}catch(e){error=String(e);}process.stdout.write(JSON.stringify({value,error,probes}));
+"""
+        def probe(**case):
+            result=subprocess.run(['node','-e',code],input=json.dumps(dict(case=case,script=MODULE.METHOD_CHILD_READER_POINT_JS)),text=True,capture_output=True)
+            self.assertEqual(result.returncode,0,result.stderr);return json.loads(result.stdout)
+        good=probe();p=good['value']['point'];self.assertIsInstance(p['x'],int);self.assertIsInstance(p['y'],int)
+        self.assertGreater(p['x'],434.25);self.assertLess(p['x'],444.25);self.assertLess(p['x'],1404.25)
+        self.assertEqual(good['value']['candidateCount'],9)
+        for case in ('overlay','descendant'):
+            self.assertIsNone(probe(**{case:True})['value']['point'])
+        self.assertIn('original reader',probe(wrong=True)['error'])
+
+
+# Native-input transport/state-machine regressions. This is a deterministic fake
+# WebDriver, NOT Chrome, trusted-browser-event evidence, layout or paint proof.
+class _MethodChildNativeDriver:
+    """Interpret requested native actions; JS calls may only inspect/observe.
+
+    The model implements the product's important independent state channels:
+    DOM object focus, roving tabindex, runtime focus, persisted history/taskView,
+    independent pane offsets, hover and a 120 ms debounced scroll save.
+    """
+    def __init__(self, fixture, expected, positions, *, original='tree', divergent=False,
+                 child_visible=False, reader_top=0, tree_top=0, tab_scroll=False, fault=None):
+        import copy
+        self.copy = copy.deepcopy
+        self.base = copy.deepcopy(fixture)
+        self.base.pop('captureName', None); self.base.pop('childReadability', None)
+        self.expected, self.positions, self.fault = expected, positions, fault
+        self.route = dict(nav='1', bench=None, protocol=None, claim=None, mode='tree', template=None,
+                          **self.base['route'])
+        self.base['route'] = copy.deepcopy(self.route)
+        self.tree_name = self.route['tree']; self.selected = self.route['node']
+        self.path = MODULE.method_visible_source_ids(expected, positions, self.base['expanded'][self.tree_name])
+        self.root, self.child = self.path[0], expected['children'][0]
+        self.child_visible, self.tab_scroll = child_visible, tab_scroll
+        self.tree = dict(top=tree_top, left=0, maxTop=300, maxLeft=0,
+                         client=dict(x=17, y=382.391, width=398, height=456))
+        self.reader = dict(top=reader_top, left=0, maxTop=800, maxLeft=0,
+                           client=dict(x=433, y=261, width=990, height=622))
+        self.initial_reader_top = reader_top
+        self.base['tree'] = copy.deepcopy(self.tree['client'])
+        self.nodes = {pid: dict(id='np-node-'+pid, tag='LI', position=pid, tabIndex=-1) for pid in self.path}
+        self.nodes[self.selected]['tabIndex'] = 0
+        self.reader_node = dict(id='np-detail-scroll', tag='DIV', position=None, tabIndex=-1)
+        self.tree_node = dict(id='np-tree-scroll', tag='DIV', position=None, tabIndex=0)
+        self.header_button = dict(id='np-reader-heading-button', tag='BUTTON', position=None, tabIndex=0)
+        self.content_button = dict(id='np-reader-content-button', tag='BUTTON', position=None, tabIndex=0)
+        self.toggle_button = dict(id='np-reader-toggle', tag='BUTTON', position=None, tabIndex=0)
+        self.active = self.reader_node if original == 'reader' else self.content_button if original == 'reader-control' else self.nodes[self.selected]
+        self.original_active = self.active
+        self.roving = self.selected
+        self.original_focus = {k: self.active[k] for k in ('id', 'tag', 'tabIndex')}
+        self.dom_refs = [object() for _ in range(4 + len(self.path))]
+        self.original_dom_refs = self.dom_refs.copy()
+        self.original_hover = object(); self.hover = self.original_hover
+        self.pointer = None; self.shift = False
+        self.history_key = 'navigationProduct'; self.context_key = 'exact-method-context'; self.neutral_key = 'task-neutral-context'
+        initial_focus = self.active['position'] or self.active['id']
+        bucket = dict(expandedByTree=copy.deepcopy(self.base['expanded']), selectedByTree={self.tree_name:self.selected},
+                      treeScrollByTree={self.tree_name:tree_top}, treeScrollLeftByTree={self.tree_name:0},
+                      detailScrollByTree={self.tree_name:reader_top}, windowScroll=0, focusTarget=initial_focus,
+                      graphScale=1, untouched=dict(nested=['preserve', 17]))
+        self.runtime = dict(schemaVersion='navigation-ui/1', modelRevision='fixture-source-revision',
+                            route=copy.deepcopy(self.route), revision=7,
+                            originTrail=[dict(route=dict(node='existing-origin'), bucket=dict(focusTarget='original-origin-focus'))],
+                            contexts={self.context_key:bucket, 'other-context':dict(untouched=['keep', 23])})
+        if self.tree_name in ('l','c'):
+            self.runtime['contexts'][self.neutral_key] = dict(taskView=dict(schema=1,
+                lastRouteByTree={self.tree_name:copy.deepcopy(self.route)}, focusTargetByTree={self.tree_name:initial_focus}))
+        self.history = {self.history_key:copy.deepcopy(self.runtime), 'externalOwner':dict(nested=['do not replace', 42])}
+        if divergent:
+            if original != 'tree': raise AssertionError('Supported divergent fixture starts at its roving treeitem')
+            self.history[self.history_key]['contexts'][self.context_key]['focusTarget'] = self.root
+            if self.tree_name in ('l','c'):
+                for s in (self.runtime,self.history[self.history_key]):
+                    s['contexts'][self.neutral_key]['taskView']['focusTargetByTree'][self.tree_name] = self.root
+        self.now = 0; self.pending_save = None; self.probe = False; self.trace = None
+        self.events = []; self.overflow = 0; self.calls = []; self.keys = []
+        self.cleanup_calls = 0; self.trace_cleanup_calls = 0; self.save_count = 0; self.saved_focuses = []
+        self.child_seen = False; self.return_home_count = 0; self.no_scroll_stage = False
+        self.wheel_count = 0; self.fault_triggered = False
+        self.initial_state = self.snapshot_state()
+        self.initial_snapshot = self.snapshot_reading()
+
+    def _event(self, kind, *, key=None, target=None, trusted=True):
+        if not self.probe: return
+        target = target or self.active
+        row = dict(type=kind, key=key, trusted=trusted, target=target['id'],
+                   originalTarget=target is self.original_active, readerTarget=target is self.reader_node)
+        if len(self.events) < 24: self.events.append(row)
+        else: self.overflow = min(25, self.overflow + 1)
+
+    def _focus(self, node):
+        if self.active is not node:
+            self.active = node; self._event('focusin', target=node)
+
+    def _scroll(self, region, *, top=None, left=None):
+        area = self.tree if region == 'tree' else self.reader
+        old = (area['top'],area['left'])
+        if top is not None: area['top'] = max(0,min(area['maxTop'],top))
+        if left is not None: area['left'] = max(0,min(area['maxLeft'],left))
+        if old != (area['top'],area['left']):
+            self._event('scroll',target=self.tree_node if region=='tree' else self.reader_node)
+            self.pending_save = self.now + 120
+
+    def _save_current(self):
+        # Production capture clones runtime and reads DOM focus, never roving alone.
+        self.runtime = self.copy(self.runtime)
+        bucket = self.runtime['contexts'][self.context_key]
+        bucket.update(focusTarget=self.active['position'] or self.active['id'], windowScroll=0)
+        bucket['treeScrollByTree'][self.tree_name] = self.tree['top']
+        bucket['treeScrollLeftByTree'][self.tree_name] = self.tree['left']
+        bucket['detailScrollByTree'][self.tree_name] = self.reader['top']
+        if self.tree_name in ('l','c'):
+            task = self.runtime['contexts'][self.neutral_key]['taskView']
+            task['lastRouteByTree'][self.tree_name] = self.copy(self.route)
+            task['focusTargetByTree'][self.tree_name] = bucket['focusTarget']
+        self.history[self.history_key] = self.copy(self.runtime)
+        self.pending_save = None; self.save_count += 1; self.saved_focuses.append(bucket['focusTarget'])
+
+    def _idle(self):
+        self.now += 200
+        if self.pending_save is not None and self.pending_save <= self.now: self._save_current()
+        return dict(ok=True, elapsed=200, quietMs=160)
+
+    def _row_rect(self, pid):
+        if pid == self.child:
+            y = 690 if self.child_visible else 855.891
+            height = 127.5
+        else:
+            y = self.tree['client']['y'] + 12 + self.path.index(pid)*58
+            height = 49
+        return dict(x=25,y=y-self.tree['top'],width=375,height=height)
+
+    def _native_nearest(self, pid):
+        import math
+        row = self._row_rect(pid); client = self.tree['client']
+        top = self.tree['top']
+        top_edge=client['y']+(12 if pid==self.root else 0)
+        if row['y'] < top_edge: top -= math.ceil(round(top_edge-row['y'],6))
+        elif row['y']+row['height'] > client['y']+client['height']:
+            top += math.ceil(round(row['y']+row['height']-client['y']-client['height'],6))
+        self._scroll('tree',top=top)
+
+    def _trace_frame(self):
+        if not self.trace: raise AssertionError('No active keyboard trace')
+        def row(pid):
+            return dict(id='np-node-'+pid,position=pid,rect=self._row_rect(pid),itemMarginTop=0,rowScrollMarginBlockStart='auto')
+        return dict(route=self.copy(self.route),methodReading='true',window=dict(x=0,y=0),active=self.active['id'],
+                    tree=dict(id='np-tree-scroll',connected=True,top=self.tree['top'],left=self.tree['left'],
+                              scrollHeight=756,scrollWidth=398,rect=self.copy(self.tree['client']),clientRect=self.copy(self.tree['client']),
+                              paddingTop=0,scrollPaddingBlockStart='auto'),
+                    root=row(self.trace['root']),target=row(self.trace['target']))
+
+    def _key(self, value):
+        key = {'\ue011':'Home','\ue015':'ArrowDown','\ue004':'Tab','\ue008':'Shift'}.get(value,value)
+        if key=='Shift': self.shift=True; return
+        trusted = not (self.fault=='untrusted-child' and key=='ArrowDown' and self.active['position']==self.path[self.path.index(self.child)-1])
+        self._event('keydown',key=key,trusted=trusted)
+        self.keys.append((key,self.active['id']))
+        if key=='Tab':
+            ring = [self.tree_node,self.nodes[self.roving],self.header_button,self.content_button,self.toggle_button]
+            # tabindex=-1 reader is outside the sequential ring; its DOM position
+            # is between fixed header controls and reader content controls.
+            if self.active is self.reader_node: target = self.header_button if self.shift else self.content_button
+            else:
+                index=next((i for i,n in enumerate(ring) if n is self.active),1)
+                target=ring[(index+(-1 if self.shift else 1))%len(ring)]
+            self._focus(target)
+            if self.tab_scroll and target is self.header_button: self._scroll('reader',top=0)
+            return
+        if key not in ('Home','ArrowDown'): raise AssertionError('Unsupported native key '+key)
+        if self.active['position'] is None: return
+        source=self.active['id']; at=self.path.index(self.active['position'])
+        # Detect the persistence-preserving phase from actual restored history,
+        # not from an incidental count of Home requests.
+        if (self.child_seen and self.history==self.initial_state['history'] and self.pending_save is None and
+                self.active['position']==self.initial_state['history'][self.history_key]['contexts'][self.context_key]['focusTarget']):
+            self.no_scroll_stage=True
+        target=self.root if key=='Home' else self.path[min(len(self.path)-1,at+1)]
+        if self.fault=='action-error' and target==self.child:
+            self.fault_triggered=True; raise RuntimeError('injected native action transport failure')
+        if self.trace:
+            self.trace['events'].append(dict(phase='capture',key=key,code=key,isTrusted=trusted,defaultPrevented=False,
+                                              eventTarget=source,snapshot=self._trace_frame()))
+        for node in self.nodes.values(): node['tabIndex']=-1
+        self.nodes[target]['tabIndex']=0; self.roving=target; self._focus(self.nodes[target]); self._native_nearest(target)
+        self.runtime['contexts'][self.context_key]['focusTarget']=target
+        if target==self.child: self.child_seen=True
+        if self.fault=='delayed-save' and self.no_scroll_stage and key=='ArrowDown' and not self.fault_triggered:
+            # Fault injection: a delayed pre-existing save leaks into the
+            # history-preserving phase. No DOM scroll is invented for the key.
+            self.pending_save=self.now+120; self.fault_triggered=True
+        if self.fault=='dom-replaced' and target==self.child: self.dom_refs[-1]=object()
+        if self.trace:
+            self.trace['events'].append(dict(phase='bubble',key=key,code=key,isTrusted=trusted,defaultPrevented=True,
+                                              eventTarget=source,snapshot=self._trace_frame()))
+
+    def _wheel(self, action):
+        self.wheel_count += 1
+        x,y=action['x'],action['y']
+        region=next((name for name,area in [('tree',self.tree),('reader',self.reader)]
+                     if area['client']['x']<=x<area['client']['x']+area['client']['width'] and
+                     area['client']['y']<=y<area['client']['y']+area['client']['height']),None)
+        if region is None: raise AssertionError('Native wheel origin misses both existing panes')
+        if action['origin']!='viewport' or action['duration']!=80: raise AssertionError('Unexpected native wheel transport')
+        if self.fault=='wheel-noop': self.fault_triggered=True; return
+        area=self.tree if region=='tree' else self.reader
+        dx,dy=action['deltaX'],action['deltaY']
+        if self.fault=='wheel-inexact':
+            dx=dx/2;dy=dy/2;self.fault_triggered=True
+        self._scroll(region,top=area['top']+dy,left=area['left']+dx)
+
+    def _pointer(self, action):
+        kind=action['type']
+        if kind=='pointerMove':
+            self.pointer=(action['x'],action['y'])
+            self.hover = self.original_hover if self.pointer==(100,200) else self.reader_node
+        elif kind=='pointerDown':
+            if self.pointer!=(435,500): raise AssertionError('Pointer down was not aimed at verified reader self-hit')
+            self._event('pointerdown',target=self.reader_node)
+            if self.fault!='pointer-no-focus': self._focus(self.reader_node)
+            else: self.fault_triggered=True
+        elif kind=='pointerUp':
+            self._event('pointerup',target=self.reader_node);self._event('click',target=self.reader_node)
+        else: raise AssertionError('Unexpected pointer action '+kind)
+
+    def call(self, method, endpoint, payload):
+        self.calls.append(('call',method,endpoint,self.copy(payload)))
+        if method!='POST': raise AssertionError('Unexpected non-POST transport')
+        if endpoint=='/execute/async':
+            if payload!={'script':MODULE.METHOD_CHILD_IDLE_JS,'args':[]}: raise AssertionError('Non-observational asynchronous JavaScript')
+            return self._idle()
+        if endpoint!='/actions': raise AssertionError('Only native actions and read-only idle may run')
+        for source in payload['actions']:
+            for action in source['actions']:
+                if source['type']=='key':
+                    if action['type']=='keyDown': self._key(action['value'])
+                    elif action['type']=='keyUp':
+                        if action['value']=='\ue008': self.shift=False
+                    else: raise AssertionError('Unexpected key action')
+                elif source['type']=='wheel': self._wheel(action)
+                elif source['type']=='pointer': self._pointer(action)
+                else: raise AssertionError('Unexpected action source')
+        return None
+
+    def snapshot_state(self):
+        active={**self.active,'original':self.active is self.original_active}
+        return dict(route=self.copy(self.route),runtime=self.copy(self.runtime),history=self.copy(self.history),
+                    historyKey=self.history_key,contextKey=self.context_key,historyLength=15,
+                    viewport=dict(self.base['viewport'],dpr=1),window=dict(x=0,y=0),tree=self.copy(self.tree),reader=self.copy(self.reader),
+                    active=active,roving=[self.roving],hoverSame=self.hover is self.original_hover,
+                    domSame=len(self.dom_refs)==len(self.original_dom_refs) and all(a is b for a,b in zip(self.dom_refs,self.original_dom_refs)),
+                    originalFocus=self.copy(self.original_focus),tabBound=8)
+
+    def snapshot_reading(self):
+        snapshot=self.copy(self.base)
+        for row in snapshot['rows']:
+            pid=row['id'];row['tabIndex']=self.nodes[pid]['tabIndex']
+            if pid==self.child:
+                label_y=694 if self.child_visible else 859.891
+                role_y=792 if self.child_visible else 957.891
+                label_height=93;role_height=21
+            else:
+                label_y=self.tree['client']['y']+8+self.path.index(pid)*58
+                role_y=label_y+29;label_height=28;role_height=20
+            row['proof']=MethodReadingCaptureChecks.proof(row['label'],30,label_y-self.tree['top'],360,label_height)
+            row['roleProof']=MethodReadingCaptureChecks.proof(row['role'],30,role_y-self.tree['top'],360,role_height)
+            for field in ('proof','roleProof'):
+                proof=row[field]
+                visible=MODULE.rect_inside(proof['rect'],self.tree['client'],0)
+                proof['visible']=visible;proof['clipped']=not visible
+                proof['readerContent']=self.copy(self.tree['client'])
+                proof['clipAreas']=[self.copy(self.tree['client'])]
+                for fragment in proof['fragments']:fragment['visible']=visible
+                for run in proof['textRuns']:
+                    run['clipAreas']=[self.copy(self.tree['client'])]
+                    for fragment in run['fragments']:fragment['visible']=visible
+        # Reflect reader movement in source/geometry snapshots, so failing to
+        # restore reader160 cannot pass only because source strings are stable.
+        delta=self.initial_reader_top-self.reader['top']
+        snapshot['mechanism']['rect']['y']+=delta
+        for field in snapshot['mechanism']['fields']:
+            field['proof']['rect']['y']+=delta
+        return snapshot
+
+    def js(self, script, *args):
+        self.calls.append(('js',script,self.copy(args)))
+        if script==MODULE.METHOD_CHILD_PROBE_START_JS:
+            if self.probe: raise AssertionError('Probe installed twice')
+            self.probe=True;return True
+        if script==MODULE.METHOD_CHILD_STATE_JS:
+            if not self.probe: raise AssertionError('State measurement requires its observation probe')
+            return self.snapshot_state()
+        if script==MODULE.METHOD_READING_SNAPSHOT_JS:return self.snapshot_reading()
+        if script==MODULE.METHOD_CHILD_ACTION_JS:
+            if args==('baseline',):
+                self.original_active=self.active;self.original_hover=self.hover
+                self.original_focus={k:self.active[k] for k in ('id','tag','tabIndex')}
+                return True
+            if args==('reset',):self.events=[];self.overflow=0;return True
+            if args==('read',):return dict(events=self.copy(self.events),overflow=self.overflow)
+            raise AssertionError('Unexpected event-recorder command')
+        if script==MODULE.METHOD_CHILD_READER_POINT_JS:
+            if self.original_active is not self.reader_node: raise AssertionError('Reader pointer special-case used for another original focus')
+            return dict(id='np-detail-scroll',client=self.copy(self.reader['client']),
+                        point=None if self.fault=='pointer-missing' else dict(x=435,y=500),candidateCount=0 if self.fault=='pointer-missing' else 1)
+        if script==MODULE.METHOD_CHILD_HOVER_POINT_JS:
+            return dict(point=dict(x=100,y=200),id='original-hover-target',tag='BUTTON')
+        if script==MODULE.METHOD_KEY_TRACE_START_JS:
+            if self.trace is not None: raise AssertionError('Keyboard trace leaked from preceding action')
+            source,root,target,key=args
+            self.trace=dict(scope='method-tree-key',source=source,root=root,target=target,key=key,eventLimit=2,
+                            events=[],overflow=0,after=None,cleanedUp=False)
+            self.trace['before']=self._trace_frame();return self.copy(self.trace)
+        if script==MODULE.METHOD_KEY_TRACE_STOP_JS:
+            if self.trace is None: raise AssertionError('No keyboard trace to clean up')
+            self.trace['after']=self._trace_frame();self.trace['cleanedUp']=True
+            result=self.copy(self.trace);self.trace=None;self.trace_cleanup_calls+=1;return result
+        if script==MODULE.METHOD_CHILD_PROBE_STOP_JS:
+            self.cleanup_calls+=1;self.probe=False
+            if self.fault=='cleanup-error': self.fault_triggered=True;raise RuntimeError('injected probe cleanup transport failure')
+            return dict(cleanedUp=True)
+        raise AssertionError('Unapproved JavaScript execution: helper must not focus, scroll, rewrite model/history or rebuild DOM')
+
+
+class MethodChildNativeOrchestrationChecks(unittest.TestCase):
+    """State-machine transport checks; actual Chrome remains the acceptance gate."""
+    @classmethod
+    def setUpClass(cls):
+        MethodReadingCaptureChecks.setUpClass()
+
+    def make(self, case='global', **options):
+        fixture=MethodReadingCaptureChecks()
+        data,expected=fixture.receipt(case)
+        driver=_MethodChildNativeDriver(data,expected,fixture.source_positions,**options)
+        data=driver.snapshot_reading()
+        report={};saves=[]
+        suffix='-11c-reader-reopened' if options.get('original')=='reader' else '-03-method-reader' if case=='global' else '-11-active-method-reader'
+        name='1440x900'+suffix
+        return driver,data,expected,fixture.source_positions,report,lambda:saves.append(len(driver.calls)),name,saves
+
+    def run_helper(self, values):
+        driver,data,expected,positions,report,save,name,_=values
+        return MODULE.method_child_readability_checks(driver,report,save,name,data,expected,positions)
+
+    def assert_exact_return(self, values, record):
+        driver,data,expected,positions,report,save,name,saves=values
+        self.assertEqual(record['status'],'verified_native_children')
+        self.assertTrue(record['cleanedUp']);self.assertFalse(driver.probe);self.assertIsNone(driver.trace)
+        self.assertEqual(driver.cleanup_calls,1);self.assertGreater(len(saves),0)
+        self.assertEqual(driver.snapshot_state(),driver.initial_state)
+        self.assertEqual(driver.snapshot_reading(),driver.initial_snapshot)
+        self.assertIs(driver.active,driver.original_active)
+        self.assertTrue(all(a is b for a,b in zip(driver.dom_refs,driver.original_dom_refs)))
+        self.assertEqual(record['before'],record['after'])
+        self.assertEqual(record['afterSnapshot'],driver.initial_snapshot)
+        MODULE.check_method_child_audit(data,expected,positions)
+        action_calls=[call for call in driver.calls if call[:3]==('call','POST','/actions')]
+        self.assertGreater(len(action_calls),0)
+        self.assertEqual(driver.history['externalOwner'],{'nested':['do not replace',42]})
+        self.assertEqual(driver.runtime['contexts']['other-context'],{'untouched':['keep',23]})
+
+    def test_coherent_global_child_full_label_and_role_require_actual_145_scroll(self):
+        values=self.make();driver=values[0]
+        before=next(r for r in driver.initial_snapshot['rows'] if r['id']==driver.child)
+        self.assertEqual(before['proof']['rect']['y'],859.891)
+        self.assertEqual(before['roleProof']['rect']['y']+before['roleProof']['rect']['height'],978.891)
+        self.assertFalse(before['proof']['visible']);self.assertFalse(before['roleProof']['visible'])
+        record=self.run_helper(values);self.assert_exact_return(values,record)
+        proof=record['proofs'][0]
+        self.assertEqual(proof['state']['tree']['top'],145)
+        self.assertEqual(proof['keyTrace']['before']['tree']['top'],0)
+        self.assertEqual(proof['keyTrace']['after']['tree']['top'],145)
+        for field in ('proof','roleProof'):
+            self.assertTrue(MODULE._reader_proof(proof['row'][field],driver.tree['client'],driver.base['viewport'],font_size=15))
+        self.assertEqual(record['baselineMode'],'coherent')
+        self.assertGreater(driver.wheel_count,0,'coherent original selected focus must be naturally persisted after Home saves root')
+
+    def test_stable_original_history_root_runtime_method_survives_without_final_save(self):
+        for case in ('global','local'):
+            with self.subTest(case=case):
+                values=self.make(case,divergent=True);driver=values[0]
+                record=self.run_helper(values);self.assert_exact_return(values,record)
+                self.assertEqual(record['baselineMode'],'stable-keyboard-focus-only')
+                key=driver.context_key;hkey=driver.history_key
+                self.assertEqual(driver.runtime['contexts'][key]['focusTarget'],driver.selected)
+                self.assertEqual(driver.history[hkey]['contexts'][key]['focusTarget'],driver.root)
+                self.assertEqual(record['persistedReturn']['runtime'],driver.initial_state['history'][hkey])
+                self.assertEqual(driver.saved_focuses[-1],driver.root,'last native save must persist original history, never the runtime-only final focus')
+                self.assertTrue(all(a['kind']=='tree-key' for a in record['actions'][-len(driver.expected['chain']):]),'history reconstruction must finish with only non-scrolling keys')
+                if case=='local':
+                    self.assertEqual(driver.runtime['contexts'][driver.neutral_key]['taskView']['focusTargetByTree']['l'],driver.root)
+
+    def test_nonzero_original_tree_offset_and_reader_scroll_survive_focus_only_history_return(self):
+        values=self.make(divergent=True,tree_top=4,reader_top=160);driver=values[0]
+        record=self.run_helper(values);self.assert_exact_return(values,record)
+        self.assertEqual(record['before']['tree']['top'],4);self.assertEqual(record['after']['tree']['top'],4)
+        self.assertEqual(record['after']['reader']['top'],160)
+        persisted=record['persistedReturn'];self.assertEqual(persisted['tree']['top'],4)
+        # A needless Home here would move12px-padded root back to0 and fail.
+        last_home=max(i for i,k in enumerate(record['keys']) if k['input']=='\ue011')
+        self.assertTrue(all(k['input']=='\ue015' for k in record['keys'][last_home+1:]))
+
+    def test_reader_reopened_minus_one_focus_reader160_and_tab_scroll_are_restored(self):
+        values=self.make('local',original='reader',reader_top=160,tab_scroll=True);driver=values[0]
+        record=self.run_helper(values);self.assert_exact_return(values,record)
+        self.assertEqual(record['before']['originalFocus'],dict(id='np-detail-scroll',tag='DIV',tabIndex=-1))
+        self.assertEqual(record['after']['reader']['top'],160)
+        self.assertTrue(any(a['kind']=='reverse-tab' and a['after']['reader']['top']==0 for a in record['actions']))
+        pointer=next(a for a in record['actions'] if a['kind']=='pointer-return-reader')
+        self.assertEqual(pointer['after']['active']['id'],'np-detail-scroll')
+        self.assertTrue(pointer['after']['active']['original'])
+        for kind in ('pointerdown','pointerup','click','focusin'):
+            self.assertTrue(any(e['type']==kind and e['readerTarget'] and e['trusted'] for e in pointer['events']['events']))
+        self.assertTrue(any(a['kind']=='restore-original-hover' for a in record['actions']))
+        self.assertTrue(any(a['kind']=='wheel-reader' for a in record['actions']))
+
+    def test_reader_focus_alone_requires_effective_one_pixel_persistence_roundtrip(self):
+        values=self.make('local',original='reader',reader_top=160,child_visible=True)
+        driver=values[0];record=self.run_helper(values);self.assert_exact_return(values,record)
+        pointer=next(a for a in record['actions'] if a['kind']=='pointer-return-reader')
+        key=driver.context_key;hkey=driver.history_key
+        self.assertEqual(pointer['after']['active']['id'],'np-detail-scroll')
+        self.assertEqual(pointer['after']['runtime']['contexts'][key]['focusTarget'],driver.selected)
+        self.assertEqual(pointer['after']['history'][hkey]['contexts'][key]['focusTarget'],'np-detail-scroll')
+        wheels=[a for a in record['actions'] if a['kind']=='wheel-reader']
+        self.assertEqual([(a['before']['reader']['top'],a['after']['reader']['top']) for a in wheels],[(160,161),(161,160)])
+        self.assertEqual(driver.saved_focuses,['np-detail-scroll','np-detail-scroll'])
+
+    def test_execution_transport_never_requests_javascript_focus_scroll_or_model_writes(self):
+        import re
+        values=self.make('local',original='reader',reader_top=160,tab_scroll=True)
+        record=self.run_helper(values);self.assert_exact_return(values,record)
+        for call in values[0].calls:
+            if call[0]=='js':
+                script=call[1]
+            elif call[:3]==('call','POST','/execute/async'):
+                script=call[3]['script']
+            else:
+                self.assertEqual(call[:3],('call','POST','/actions'))
+                continue
+            self.assertNotRegex(script,r'\.(?:focus|scrollIntoView|scrollTo|navigate|replaceState|pushState)\s*\(')
+            self.assertNotRegex(script,r'\.(?:scrollTop|scrollLeft|tabIndex|focusTarget)\s*=(?!=)')
+            self.assertNotRegex(script,r'history\.state\s*=(?!=)')
+
+    def test_tab_reachable_reader_control_returns_without_activating_it(self):
+        values=self.make('local',original='reader-control',reader_top=160,tab_scroll=True)
+        record=self.run_helper(values);self.assert_exact_return(values,record)
+        self.assertTrue(any(a['kind']=='tab' for a in record['actions']))
+        self.assertFalse(any(a['kind']=='pointer-return-reader' for a in record['actions']))
+        self.assertFalse(any(e['type']=='click' for a in record['actions'] for e in a['events']['events']))
+
+    def test_already_visible_child_zero_scroll_still_requires_trusted_key_proof(self):
+        values=self.make(child_visible=True);driver=values[0]
+        record=self.run_helper(values);self.assert_exact_return(values,record)
+        proof=record['proofs'][0]
+        self.assertEqual(proof['keyTrace']['before']['tree']['top'],0)
+        self.assertEqual(proof['keyTrace']['after']['tree']['top'],0)
+        self.assertEqual([e['phase'] for e in proof['keyTrace']['events']],['capture','bubble'])
+        self.assertTrue(all(e['isTrusted'] for e in proof['keyTrace']['events']))
+        self.assertEqual(driver.wheel_count,0,'zero-scroll child proof does not invent a wheel requirement')
+
+    def test_missing_self_hit_or_pointer_without_focus_fails_and_cleans_up(self):
+        for fault,pattern in [('pointer-missing','safe self-hit'),('pointer-no-focus','exact-target focus')]:
+            with self.subTest(fault=fault):
+                values=self.make('local',original='reader',reader_top=160,tab_scroll=True,fault=fault)
+                with self.assertRaisesRegex(RuntimeError,pattern): self.run_helper(values)
+                self.assert_failure_cleanup(values)
+
+    def test_ineffective_or_inexact_native_wheel_cannot_pass_restoration(self):
+        for fault,pattern in [('wheel-noop','no effective progress'),('wheel-inexact','integer native wheel')]:
+            with self.subTest(fault=fault):
+                values=self.make(fault=fault)
+                with self.assertRaisesRegex(RuntimeError,pattern): self.run_helper(values)
+                self.assertTrue(values[0].fault_triggered);self.assert_failure_cleanup(values)
+
+    def test_delayed_save_in_no_scroll_history_return_is_rejected(self):
+        values=self.make(divergent=True,fault='delayed-save')
+        with self.assertRaisesRegex(RuntimeError,'forbidden persistence or scroll change'): self.run_helper(values)
+        self.assertTrue(values[0].fault_triggered);self.assert_failure_cleanup(values)
+        self.assertNotEqual(values[0].history,values[0].initial_state['history'])
+
+    def test_untrusted_already_visible_child_is_rejected(self):
+        values=self.make(child_visible=True,fault='untrusted-child')
+        with self.assertRaisesRegex(RuntimeError,'trusted'): self.run_helper(values)
+        self.assert_failure_cleanup(values)
+
+    def test_transport_action_failure_always_cleans_up_both_observers(self):
+        values=self.make(fault='action-error')
+        with self.assertRaisesRegex(RuntimeError,'native action transport failure'): self.run_helper(values)
+        self.assertTrue(values[0].fault_triggered);self.assert_failure_cleanup(values)
+        self.assertGreater(values[0].trace_cleanup_calls,0)
+
+    def test_original_dom_replacement_fails_even_with_same_node_labels(self):
+        values=self.make(fault='dom-replaced')
+        with self.assertRaisesRegex(RuntimeError,'original DOM'): self.run_helper(values)
+        self.assert_failure_cleanup(values)
+
+    def test_cleanup_failure_never_attaches_a_successful_audit(self):
+        values=self.make(fault='cleanup-error')
+        with self.assertRaisesRegex(RuntimeError,'cleanup transport failure'): self.run_helper(values)
+        driver,data,_,_,report,_,_,_=values
+        self.assertEqual(driver.cleanup_calls,1);self.assertFalse(driver.probe);self.assertIsNone(driver.trace)
+        self.assertNotIn('childReadability',data)
+        self.assertNotEqual(report['methodChildReadabilityChecks'][0].get('cleanedUp'),True)
+
+    def assert_failure_cleanup(self, values):
+        driver,data,_,_,report,_,_,_=values
+        self.assertFalse(driver.probe);self.assertIsNone(driver.trace);self.assertEqual(driver.cleanup_calls,1)
+        self.assertTrue(report['methodChildReadabilityChecks'][0]['cleanedUp'])
+        self.assertNotEqual(report['methodChildReadabilityChecks'][0]['status'],'verified_native_children')
+        self.assertNotIn('childReadability',data)
+
+
+class MethodChildObserverContractChecks(unittest.TestCase):
+    def probe_dom(self, replacement=None, events=0, roving=False, rebind=False):
+        code=r"""
+const input=JSON.parse(require('fs').readFileSync(0,'utf8')),{JSDOM}=require('jsdom');
+const dom=new JSDOM('<main id="navigation-product" data-method-reading="true"><div id="np-reader-object-title">method</div><div id="np-tree-scroll"><ul id="np-tree"><li id="np-node-method" role="treeitem" tabindex="0" data-position="method"><div class="np-node-row"><button class="np-node-label">method</button><span class="np-node-kind">具体方法</span></div></li><li id="np-node-child" role="treeitem" tabindex="-1" data-position="child"><div class="np-node-row"><button class="np-node-label">full scientific child</button><span class="np-node-kind">技术改进</span></div></li></ul></div><div id="np-detail-scroll" tabindex="-1"><section data-mechanism-entity="method">full original mechanism</section></div></main>',{runScripts:'outside-only'}),w=dom.window,d=w.document;
+const s={route:{tree:'g',node:'method'},contexts:{k:{focusTarget:'method',expandedByTree:{g:['method']},selectedByTree:{g:'method'}}}},h={nav:s};
+w.NavigationProductApp={getState:()=>JSON.parse(JSON.stringify(s))};w.NavigationProductModel={KEY:'nav',contextKey:()=> 'k'};w.history.replaceState(h,'');
+for(const n of d.querySelectorAll('*')){n.getBoundingClientRect=()=>({x:17,y:382,width:398,height:456});for(const [k,v] of Object.entries({clientWidth:398,clientHeight:456,scrollWidth:398,scrollHeight:601}))Object.defineProperty(n,k,{value:v,configurable:true});}
+const observed=new Set();const add=d.addEventListener.bind(d),remove=d.removeEventListener.bind(d);d.addEventListener=(t,f,c)=>{if(['keydown','pointerdown','pointerup','click','focusin','scroll'].includes(t))observed.add(f);return add(t,f,c);};d.removeEventListener=(t,f,c)=>{observed.delete(f);return remove(t,f,c);};
+const method=d.getElementById('np-node-method'),child=d.getElementById('np-node-child');
+if(input.roving&&!input.rebind)method.focus();
+new w.Function(input.start)();
+if(input.rebind)method.focus();
+new w.Function(input.action)('baseline');const before=new w.Function(input.state)();
+if(input.roving){method.tabIndex=-1;child.tabIndex=0;child.focus();s.contexts.k.focusTarget='child';}
+
+if(input.replacement){const selectors={row:'[data-position="method"]>.np-node-row',label:'[data-position="child"] .np-node-label',role:'[data-position="child"] .np-node-kind',mechanism:'[data-mechanism-entity]'};const n=d.querySelector(selectors[input.replacement]);n.replaceWith(n.cloneNode(true));}
+for(let i=0;i<input.events;i++)d.getElementById('np-tree-scroll').dispatchEvent(new w.Event('scroll',{bubbles:true}));
+const after=new w.Function(input.state)();if(input.rebind)method.focus();const events=new w.Function(input.action)('read'),refs=w.__npMethodChildProbe.refs.length;const stop=new w.Function(input.stop)();
+process.stdout.write(JSON.stringify({before,after,events,refs,stop,listeners:observed.size,installed:!!w.__npMethodChildProbe}));dom.window.close();
+"""
+        result=subprocess.run(['node','-e',code],input=json.dumps(dict(start=MODULE.METHOD_CHILD_PROBE_START_JS,state=MODULE.METHOD_CHILD_STATE_JS,
+                              action=MODULE.METHOD_CHILD_ACTION_JS,stop=MODULE.METHOD_CHILD_PROBE_STOP_JS,replacement=replacement,events=events,roving=roving,rebind=rebind)),text=True,capture_output=True,timeout=10)
+        self.assertEqual(result.returncode,0,result.stderr);return json.loads(result.stdout)
+
+    def test_same_text_row_label_role_or_mechanism_clones_are_not_original_dom(self):
+        good=self.probe_dom();self.assertTrue(good['before']['domSame']);self.assertTrue(good['after']['domSame']);self.assertEqual(good['refs'],13)
+        for target in ('row','label','role','mechanism'):
+            with self.subTest(target=target):
+                data=self.probe_dom(target);self.assertTrue(data['before']['domSame']);self.assertFalse(data['after']['domSame'])
+                self.assertEqual(data['listeners'],0);self.assertFalse(data['installed']);self.assertTrue(data['stop']['cleanedUp'])
+
+    def test_original_focus_metadata_is_a_baseline_snapshot_while_roving_reads_real_dom(self):
+        data=self.probe_dom(roving=True)
+        self.assertEqual(data['before']['originalFocus'],dict(id='np-node-method',tag='LI',tabIndex=0))
+        self.assertEqual(data['after']['originalFocus'],data['before']['originalFocus'])
+        self.assertEqual(data['after']['active']['id'],'np-node-child');self.assertFalse(data['after']['active']['original'])
+        self.assertEqual(data['after']['roving'],['child']);self.assertTrue(data['after']['domSame'])
+        MODULE.check_method_child_state(data['before'],data['after'])
+        with self.assertRaises(RuntimeError):MODULE.check_method_child_state(data['before'],data['after'],exact=True)
+
+    def test_listener_rebinds_original_target_after_natural_baseline_focus_change(self):
+        data=self.probe_dom(roving=True,rebind=True)
+        events=[e for e in data['events']['events'] if e['type']=='focusin' and e['target']=='np-node-method']
+        self.assertEqual(len(events),2);self.assertFalse(events[0]['originalTarget']);self.assertTrue(events[-1]['originalTarget'])
+        self.assertEqual(data['after']['originalFocus']['tabIndex'],0)
+
+    def test_observer_caps_events_and_preserves_untrusted_status_instead_of_fabricating_native_input(self):
+        data=self.probe_dom(events=100)
+        self.assertEqual(len(data['events']['events']),24);self.assertEqual(data['events']['overflow'],25)
+        self.assertTrue(all(e['trusted'] is False for e in data['events']['events']))
+        self.assertEqual(data['listeners'],0);self.assertFalse(data['installed'])
+
+    def idle(self, **case):
+        code=r"""
+const input=JSON.parse(require('fs').readFileSync(0,'utf8')),c=input.case;let now=0,serial=0,queue=[],cancelled=new Set(),answer=null,calls=0,reads=0;
+global.window=global;global.performance={now:()=>now};window.__npMethodChildProbe={lastScroll:0,lastFocus:0};
+global.setTimeout=(fn,delay)=>{const id=++serial;queue.push({id,t:now+delay,fn});return id;};global.clearTimeout=id=>cancelled.add(id);
+global.requestAnimationFrame=fn=>{if(c.hangFrames)return;++serial;queue.push({id:serial,t:now+(c.slowFrames?1100:16),fn});};
+global.NavigationProductApp={getState:()=>({revision:c.churn?++reads:c.lateSave&&now>=100?1:0})};global.history={state:{value:1}};global.scrollX=0;global.scrollY=0;
+global.document={activeElement:{id:'method',tagName:'LI'},getElementById:()=>({scrollTop:0,scrollLeft:0})};
+new Function(input.script)(r=>{answer=r;calls++;});
+for(let limit=0;queue.length&&limit<500;limit++){queue.sort((a,b)=>a.t-b.t||a.id-b.id);let e=queue.shift();if(cancelled.has(e.id))continue;now=e.t;e.fn();}
+process.stdout.write(JSON.stringify({answer,calls,now,reads}));
+"""
+        result=subprocess.run(['node','-e',code],input=json.dumps(dict(case=case,script=MODULE.METHOD_CHILD_IDLE_JS)),text=True,capture_output=True,timeout=10)
+        self.assertEqual(result.returncode,0,result.stderr);return json.loads(result.stdout)
+
+    def test_quiet_wait_covers_late_save_and_two_frames_without_waiting_for_assertions(self):
+        data=self.idle(lateSave=True);self.assertTrue(data['answer']['ok']);self.assertEqual(data['calls'],1)
+        self.assertGreaterEqual(data['answer']['elapsed'],292);self.assertGreaterEqual(data['answer']['quietMs'],160);self.assertLessEqual(data['answer']['elapsed'],2000)
+
+    def test_watchdog_rejects_churn_stalled_or_slow_frames_without_late_success(self):
+        for case in ('churn','hangFrames','slowFrames'):
+            with self.subTest(case=case):
+                data=self.idle(**{case:True});self.assertFalse(data['answer']['ok']);self.assertEqual(data['calls'],1);self.assertEqual(data['answer']['elapsed'],2000)

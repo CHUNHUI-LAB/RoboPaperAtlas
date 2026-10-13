@@ -658,3 +658,23 @@ assert.equal(methodMediaActive(['print'],1440,900),false);assert.equal(methodMed
 for(const q of['(orientation:landscape)','(min-width:1200px) and (hover:hover)','(min-width:9999px) and (unknown:1)','(max-height:950px) trailing','(min-width:1200px) or (max-height:950px)'])assert.throws(()=>methodMediaActive([q],1440,900),/unexpected media query/);
 assert.throws(()=>methodMediaActive(['print','(unknown:1)'],1440,900),/unexpected media query/,'inactive media must not hide unknown syntax');
 });
+
+test('desktop method reading: analysis summary overrides shared touch whitespace without shrinking text or other scopes',()=>{
+ const navigation=fs.readFileSync(path.join(root,'assets/navigation-product.css'),'utf8'),site=fs.readFileSync(path.join(root,'assets/site.css'),'utf8');
+ const selector='#navigation-product[data-method-reading=true] .np-analysis-reference>summary';
+ for(const width of [1199,1200,1440,1920])for(const method of [false,true]){
+  const dom=new JSDOM('<!doctype html><style id="site"></style><style id="navigation"></style><main id="navigation-product" data-method-reading="'+method+'"><details class="np-analysis-reference"><summary>未填参考模板，保留完整来源身份和未填状态</summary></details></main><details><summary id="outside">其他页面控件</summary></details>');
+  try{
+   const d=dom.window.document,ss=d.getElementById('site'),ns=d.getElementById('navigation');ss.textContent=site;
+   const shared=[...ss.sheet.cssRules].filter(r=>r.selectorText==='summary'||r.selectorText==='button, select, input[type="search"], input[type="text"], summary');
+   assert.equal(shared.length,2,'retain the exact shared44px/9px defaults');ss.textContent=shared.map(r=>r.cssText).join('\n');
+   ns.textContent=navigation;const entries=[];function collect(rules,media=[]){for(const r of rules)if(r.cssRules)collect(r.cssRules,r.media?media.concat(r.media.mediaText):media);else if(r.selectorText)entries.push({rule:r,media});}collect(ns.sheet.cssRules);
+   const override=entries.filter(e=>e.rule.selectorText===selector);assert.equal(override.length,1);assert.deepEqual(override[0].media,['(min-width:1200px)']);
+   ns.textContent=entries.filter(e=>methodMediaActive(e.media,width,900)).map(e=>e.rule.cssText).join('\n');
+   const summary=d.querySelector('.np-analysis-reference>summary'),text=summary.textContent,inside=width>=1200&&method;
+   function check(){const s=dom.window.getComputedStyle(summary);assert.equal(s.minHeight,inside?'26px':'44px');assert.equal(s.paddingTop,inside?'2px':'9px');assert.equal(s.paddingBottom,inside?'2px':'9px');assert.equal(s.fontSize,'15px');assert.notEqual(s.whiteSpace,'nowrap');assert.ok(!['hidden','clip','auto','scroll'].includes(s.overflow));assert.notEqual(s.textOverflow,'ellipsis');assert.equal(summary.textContent,text);const outside=dom.window.getComputedStyle(d.getElementById('outside'));assert.equal(outside.minHeight,'44px');assert.equal(outside.paddingTop,'9px');}
+   check();
+   if(inside){const rules=[...ns.sheet.cssRules],rule=rules.find(r=>r.selectorText===selector);rule.style.removeProperty('min-height');rule.style.removeProperty('padding');ns.textContent=rules.map(r=>r.cssText).join('\n');assert.throws(check,/44px/,'without the narrow overrides the original shared whitespace failure returns');}
+  }finally{dom.window.close();}
+ }
+});

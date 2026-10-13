@@ -905,7 +905,7 @@ DISPLAY_CONTRACT_MIGRATIONS = {
     'analysis_entry': 'first actual version answer; explicit legacy root remains coverage and full original topology',
     'active_forest_heading': 'same active source forest and roots; visible #np-tree-heading plus exact root-label proofs replace the deliberately hidden duplicate forest h3',
     'method_geometry': 'actual desktop g/L method only: 400/448px real-path pane, 16px gap, 992/1424px reader; task/relation/A unchanged',
-    'method_ancestry': 'original root-to-selection parent edges and children; real-parent siblings in native navigation disclosure, never tree nodes',
+    'method_ancestry': 'user-approved 2026-10-13: full original root-to-current path remains readable together; each originally expanded direct child keeps its source identity and receives native-keyboard full-label/role proof in the original scroll pane, followed by exact runtime/history/DOM/focus/scroll return; real-parent siblings remain native disclosures',
     'method_introduction': 'desktop selected method hides only repeated interface introduction; original mechanism and source boundaries remain natural flow',
     'source_scroll_fixtures': 'S1 fitting body proves stationary identity only; mandatory positive wheel uses measured genuine PONI content; L/C nonzero history uses same-version original technical child, measured offscreen last-row End target, then real pipeline ancestor for A and claim links',
     'method_analysis_controls': 'full fixed title/version/warning and genuine analysis controls in a compact status row; no cropped identity',
@@ -2501,7 +2501,21 @@ def method_reading_expected(science, position, source_positions=None):
         snippets.append(text(detail['condition']))
     if position.get('association') in ('condition', 'context'):
         snippets.append('条件关联，不能按同一任务或同一评测协议理解。' if position['association'] == 'condition' else '跨任务相关阅读，不作为本任务的解法子节点。')
-    return {'position': position, 'chain': chain, 'children': position['childIds'], 'siblings': siblings,
+    child_display = {}
+    # Source-bound technical and environment children in the13 reviewed scenes.
+    # Unknown/new display transformations require explicit review, not DOM text
+    # as an expectation or a permissive shortened-title fallback.
+    child_roles = {'technical_improvement': '技术改进', 'technical_design': '技术设计', 'environment': '有来源的阅读条目'}
+    for pid in position['childIds']:
+        child = positions[pid]; entity = science['entities'][child['entityId']]
+        role = child.get('displayRole') or child_roles.get(child['kind'])
+        if child['kind']=='environment' and not child.get('displayRole'):
+            role = '跨任务相关阅读' if child.get('association')=='context' else '条件投影 · 非协议等同' if child.get('association')=='condition' else '有来源的阅读条目'
+        if role:
+            role += ' · 条件关联' if child.get('association') == 'condition' else ' · 跨范围相关阅读' if child.get('association') == 'context' else ''
+        child_display[pid] = {'label': (entity.get('label') or child.get('sourceLabel') or child['label']) if child['kind'] in child_roles else None,
+                              'role': role}
+    return {'position': position, 'chain': chain, 'children': position['childIds'], 'siblings': siblings, 'childDisplay': child_display,
             'version': science['versions'][position['versionId']], 'snippets': snippets,
             'siblingLabels': {pid: positions[pid].get('sourceLabel') or positions[pid]['label'] for pid in siblings},
             'siblingVersions': {pid: science['versions'][positions[pid]['versionId']]['label'] for pid in siblings if positions[pid].get('versionId')}}
@@ -2544,8 +2558,10 @@ def check_method_reading(data, expected, source_positions, *, compact=False, vis
                 row['ancestor'] != (row['id'] in ancestors) or row['selected'] != (row['id'] == p['id']) or
                 row['sourceLabel'] != (source.get('sourceLabel') or source['label']) or not row['label'] or not row['role']):
             raise RuntimeError('Method path changed an original parent edge, role, label or ARIA hierarchy')
-        if visual and row['id'] in expected['chain'] + expected['children'] and any(not _reader_proof(row[key], data['tree'], data['viewport'], font_size=15) for key in ('proof', 'roleProof')):
+        if visual and row['id'] in expected['chain'] and any(not _reader_proof(row[key], data['tree'], data['viewport'], font_size=15) for key in ('proof', 'roleProof')):
             raise RuntimeError('Method current position and full original ancestor labels are not readable together')
+    if visual:
+        check_method_child_audit(data, expected, source_positions)
     selected = rows[len(expected['chain']) - 1]
     if data['title']['text'] != selected['label'] or data['treeHeading']['text'] != '当前位置与来路':
         raise RuntimeError('Method fixed title and real-path navigation describe different selected objects')
@@ -2597,6 +2613,361 @@ def check_method_reading(data, expected, source_positions, *, compact=False, vis
             raise RuntimeError('Reviewed method acceptance case exceeds its 128px fixed heading or relative body-entry budget')
         if not 720 <= mechanism['rect']['width'] <= 880:
             raise RuntimeError('Desktop method prose does not keep the approved natural-flow reading measure')
+
+
+# User-approved staged reading: first-screen ancestors/current, every rendered
+# direct child proved after genuine keyboard reveal, then exact original return.
+METHOD_CHILD_SCENES = (
+    '-03-method-reader', '-03b-reader-visible', '-11-active-method-reader', '-11c-reader-reopened',
+    '-23-poni-method', '-24-poni-claim', '-27-imagenav-zhu', '-27-imagenav-sptm', '-27-imagenav-ving',
+    '-28-portable-rl', '-28-portable-llm', '-30-analysis-imported-entry', '-30-analysis-not-imported',
+)
+METHOD_CHILD_PROBE_START_JS = r"""
+if(window.__npMethodChildProbe)throw Error('Method child probe already installed');
+var a=NavigationProductApp,m=NavigationProductModel,tree=document.getElementById('np-tree-scroll'),reader=document.getElementById('np-detail-scroll'),host=document.getElementById('np-tree');
+var refs=[host,tree,reader,document.getElementById('np-reader-object-title'),reader.querySelector('[data-mechanism-entity]'),...[...host.querySelectorAll('[role=treeitem]')].flatMap(e=>[e,e.querySelector(':scope > .np-node-row'),e.querySelector(':scope > .np-node-row > .np-node-label'),e.querySelector(':scope > .np-node-row > .np-node-kind')])],active=document.activeElement;
+if(!refs.every(n=>n&&n.isConnected)||!active||document.getElementById('navigation-product').dataset.methodReading!=='true')throw Error('Method child probe lacks its real method DOM');
+var p={refs:refs,active:active,originalFocus:{id:active.id||null,tag:active.tagName,tabIndex:active.tabIndex},hover:[...document.querySelectorAll(':hover')],events:[],overflow:0,lastScroll:performance.now(),lastFocus:performance.now(),started:performance.now()};
+p.listener=function(e){if(e.type==='scroll')p.lastScroll=performance.now();if(e.type==='focusin')p.lastFocus=performance.now();if(p.events.length>=24){p.overflow=Math.min(25,p.overflow+1);return;}p.events.push({type:e.type,key:e.key||null,trusted:e.isTrusted,target:e.target.id||null,originalTarget:e.target===p.active,readerTarget:e.target===reader});};
+p.types=['keydown','pointerdown','pointerup','click','focusin','scroll'];try{p.types.forEach(t=>document.addEventListener(t,p.listener,true));window.__npMethodChildProbe=p;}catch(e){p.types.forEach(t=>document.removeEventListener(t,p.listener,true));delete window.__npMethodChildProbe;throw e;}
+return true;
+"""
+METHOD_CHILD_STATE_JS = r"""
+var p=window.__npMethodChildProbe,a=NavigationProductApp,m=NavigationProductModel,s=a.getState(),key=m.contextKey(s.route),host=document.getElementById('np-tree'),tree=document.getElementById('np-tree-scroll'),reader=document.getElementById('np-detail-scroll');
+if(!p)throw Error('Method child state lacks probe');
+function rect(e){var r=e.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};}
+function scroll(e){var r=rect(e);return {top:e.scrollTop,left:e.scrollLeft,maxTop:Math.max(0,e.scrollHeight-e.clientHeight),maxLeft:Math.max(0,e.scrollWidth-e.clientWidth),client:{x:r.x+e.clientLeft,y:r.y+e.clientTop,width:e.clientWidth,height:e.clientHeight}};}
+var active=document.activeElement,current=[host,tree,reader,document.getElementById('np-reader-object-title'),reader.querySelector('[data-mechanism-entity]'),...[...host.querySelectorAll('[role=treeitem]')].flatMap(e=>[e,e.querySelector(':scope > .np-node-row'),e.querySelector(':scope > .np-node-row > .np-node-label'),e.querySelector(':scope > .np-node-row > .np-node-kind')])];
+return {route:s.route,runtime:s,history:history.state,historyKey:m.KEY,contextKey:key,historyLength:history.length,
+ viewport:{x:0,y:0,width:innerWidth,height:innerHeight,dpr:devicePixelRatio},window:{x:scrollX,y:scrollY},tree:scroll(tree),reader:scroll(reader),
+ active:{id:active.id||null,tag:active.tagName,position:active.closest('[data-position]')?.dataset.position||null,tabIndex:active.tabIndex,original:active===p.active},
+ roving:[...host.querySelectorAll('[role=treeitem][tabindex="0"]')].map(e=>e.dataset.position),
+ hoverSame:(()=>{var h=[...document.querySelectorAll(':hover')];return h.length===p.hover.length&&h.every((n,i)=>n===p.hover[i]);})(),
+ domSame:current.length===p.refs.length&&current.every((n,i)=>n===p.refs[i]&&n.isConnected)&&p.active.isConnected,
+ originalFocus:p.originalFocus,
+ tabBound:Math.min(256,[...document.querySelectorAll('a[href],button,input,select,textarea,summary,[tabindex]')].filter(n=>n.tabIndex>=0&&!n.disabled&&n.getClientRects().length).length+1)};
+"""
+METHOD_CHILD_ACTION_JS = r"""
+var p=window.__npMethodChildProbe;if(!p)throw Error('Method child action lacks probe');
+if(arguments[0]==='baseline'){p.active=document.activeElement;p.originalFocus={id:p.active.id||null,tag:p.active.tagName,tabIndex:p.active.tabIndex};p.hover=[...document.querySelectorAll(':hover')];return true;}
+if(arguments[0]==='reset'){p.events=[];p.overflow=0;return true;}
+return {events:p.events,overflow:p.overflow};
+"""
+METHOD_CHILD_IDLE_JS = r"""
+var done=arguments[arguments.length-1],p=window.__npMethodChildProbe,start=performance.now(),last=null,since=start,finished=false;
+if(!p){done({ok:false,error:'missing probe'});return;}
+var watchdog=setTimeout(()=>finish(false,'method state exceeded2000ms'),2000);
+function finish(ok,error){if(finished)return;finished=true;clearTimeout(watchdog);var now=performance.now();done({ok:ok&&now-start<=2000,error:error||null,elapsed:now-start,quietMs:now-Math.max(since,p.lastScroll,p.lastFocus)});}
+function read(){var a=NavigationProductApp;return JSON.stringify([a.getState(),history.state,document.activeElement?.id,document.activeElement?.tagName,scrollX,scrollY,document.getElementById('np-tree-scroll').scrollTop,document.getElementById('np-tree-scroll').scrollLeft,document.getElementById('np-detail-scroll').scrollTop,document.getElementById('np-detail-scroll').scrollLeft]);}
+function tick(){if(finished)return;var now=performance.now(),value=read();if(value!==last){last=value;since=now;}
+ if(now-start>=2000){finish(false,'method state did not naturally settle');return;}
+ if(now-Math.max(since,p.lastScroll,p.lastFocus)>=160){requestAnimationFrame(()=>requestAnimationFrame(()=>{if(finished)return;if(performance.now()-start>=2000){finish(false,'method frames exceeded2000ms');return;}if(read()===last&&performance.now()-Math.max(p.lastScroll,p.lastFocus)>=160)finish(true);else tick();}));return;}setTimeout(tick,20);}
+tick();
+"""
+METHOD_CHILD_READER_POINT_JS = r"""
+var p=window.__npMethodChildProbe,e=document.getElementById('np-detail-scroll');
+if(!p||p.active!==e||!e.isConnected||e.tabIndex!==-1)throw Error('Native pointer return is only for the original reader container');
+var r=e.getBoundingClientRect(),a={x:r.x+e.clientLeft,y:r.y+e.clientTop,width:e.clientWidth,height:e.clientHeight},points=[];
+for(var dx of [2,5,10])for(var fy of [.25,.5,.75]){var x=Math.ceil(a.x+dx),y=Math.floor(a.y+a.height*fy);
+ if(x-1<a.x||x+1>=a.x+a.width||y-1<a.y||y+1>=a.y+a.height||x<1||y<1||x>=innerWidth-1||y>=innerHeight-1)continue;
+ if([[0,0],[-1,0],[1,0],[0,-1],[0,1]].every(([ox,oy])=>document.elementFromPoint(x+ox,y+oy)===e))points.push({x:x,y:y});}
+return {id:e.id,client:a,point:points[0]||null,candidateCount:points.length};
+"""
+METHOD_CHILD_HOVER_POINT_JS = r"""
+var p=window.__npMethodChildProbe,e=p?.hover[p.hover.length-1];if(!e||!e.isConnected)throw Error('Original hover target is unavailable');
+var r=e.getBoundingClientRect(),points=[];for(var fx of [.5,.1,.9,.02,.98])for(var fy of [.5,.1,.9,.02,.98]){
+ var x=Math.floor(r.x+r.width*fx),y=Math.floor(r.y+r.height*fy);if(x<0||y<0||x>=innerWidth||y>=innerHeight)continue;
+ if(document.elementFromPoint(x,y)===e)points.push({x:x,y:y});}
+return {point:points[0]||null,id:e.id||null,tag:e.tagName};
+"""
+METHOD_CHILD_PROBE_STOP_JS = r"""
+var p=window.__npMethodChildProbe;if(!p)throw Error('Method child probe missing during cleanup');
+try{p.types.forEach(t=>document.removeEventListener(t,p.listener,true));return {cleanedUp:true};}finally{delete window.__npMethodChildProbe;}
+"""
+
+
+def method_child_binding(name, data, expected):
+    return dict(scene=name, scienceSha256='9069c6a11ae9a867671522d04e6a24b4edcada660d03feb2f41340bfc395825c',
+                route=data['route'], identity=data['fixedIdentity'], viewport=data['viewport'],
+                expanded=data['expanded'], source=expected['position']['id'])
+
+
+def method_child_baseline_mode(before):
+    """Do not canonicalize a stable runtime/history focus-only difference."""
+    import copy
+    state, history = before['runtime'], before['history'][before['historyKey']]
+    if state == history:
+        return 'coherent'
+    key = before['contextKey']; normalized = copy.deepcopy(state)
+    normalized['contexts'][key]['focusTarget'] = history['contexts'][key]['focusTarget']
+    if (normalized != history or before['active']['position'] != before['roving'][0] or
+            state['contexts'][key]['focusTarget'] != before['roving'][0]):
+        raise RuntimeError('Method child audit cannot natively restore this non-focus baseline history difference')
+    return 'stable-keyboard-focus-only'
+
+
+def check_method_child_state(before, after, *, exact=False):
+    if after.get('domSame') is not True or len(after.get('roving', [])) != 1:
+        raise RuntimeError('Method child audit replaced its original DOM or one roving scope')
+    for key in ('route', 'viewport', 'window', 'historyLength', 'contextKey', 'historyKey', 'originalFocus'):
+        if before[key] != after[key]:
+            raise RuntimeError('Method child audit changed its bound source/viewport/window: ' + key)
+    for key in ('route', 'originTrail', 'revision'):
+        if before['runtime'].get(key) != after['runtime'].get(key):
+            raise RuntimeError('Method child keyboard audit navigated or rewrote source history: ' + key)
+    context = before['contextKey']
+    for key in ('expandedByTree', 'selectedByTree'):
+        if before['runtime']['contexts'][context][key] != after['runtime']['contexts'][context][key]:
+            raise RuntimeError('Method child keyboard audit changed original expansion or selection')
+    for region in ('tree','reader'):
+        for key in ('client','maxTop','maxLeft'):
+            if before[region][key]!=after[region][key]:
+                raise RuntimeError('Method child audit changed original scroll geometry: '+region+'/'+key)
+    if exact:
+        for key in ('runtime', 'history', 'tree', 'reader', 'active', 'roving', 'hoverSame'):
+            if before[key] != after[key]:
+                raise RuntimeError('Method child audit did not restore the exact original state: ' + key)
+
+
+def check_method_child_audit(data, expected, source_positions):
+    audit = data.get('childReadability')
+    if not isinstance(audit, dict) or audit.get('status') != 'verified_native_children' or audit.get('cleanedUp') is not True:
+        raise RuntimeError('Method capture lacks its complete native child readability audit')
+    name = data.get('captureName', '')
+    if ((data['viewport']['width'],data['viewport']['height']) not in VIEWPORTS or
+            not any(name == str(data['viewport']['width'])+'x'+str(data['viewport']['height'])+suffix for suffix in METHOD_CHILD_SCENES)):
+        raise RuntimeError('Method child audit is not bound to an original method capture')
+    if audit.get('binding') != method_child_binding(name, data, expected):
+        raise RuntimeError('Method child proof was reused across source, claim, scene, expansion or viewport')
+    path = method_visible_source_ids(expected, source_positions, data['expanded'][expected['position']['tree']])
+    children = [pid for pid in path if pid in expected['children']]
+    if audit.get('required') != children or [p.get('id') for p in audit.get('proofs', [])] != children:
+        raise RuntimeError('Method child audit omitted, duplicated or invented a rendered source child')
+    if audit['before'].get('domSame') is not True or audit['before']['active'].get('original') is not True or audit['before'].get('hoverSame') is not True:
+        raise RuntimeError('Method child audit did not bind its settled original DOM focus and hover')
+    check_method_child_state(audit['before'], audit['after'], exact=True)
+    if (audit['before']['runtime']['contexts'][audit['before']['contextKey']]['expandedByTree']!=data['expanded'] or
+            audit['before']['route'] != data['route'] or audit['before']['viewport'] != dict(data['viewport'], dpr=1)):
+        raise RuntimeError('Method child audit does not describe the photographed source and viewport')
+    if audit.get('baselineMode') != method_child_baseline_mode(audit['before']):
+        raise RuntimeError('Method child audit changed its original persistence semantics')
+    settles=audit.get('settles')
+    if not isinstance(settles,list) or not settles or any(s.get('ok') is not True or not 160<=s.get('quietMs',-1)<=s.get('elapsed',-1)<=2000 for s in settles):
+        raise RuntimeError('Method child audit lacks its bounded naturally stable state windows')
+    actions=audit.get('actions',[])
+    key_indexes=[k.get('actionIndex') for k in audit.get('keys',[])]
+    if key_indexes!=[i for i,a in enumerate(actions) if a.get('kind')=='tree-key']:
+        raise RuntimeError('Method child native keys are not bound one-to-one to actual actions')
+    for key in audit.get('keys',[]):
+        action=actions[key['actionIndex']];trace=key['trace'];target=key['target'];requested='Home' if key['input']=='\ue011' else 'ArrowDown' if key['input']=='\ue015' else None
+        if requested is None or target not in path or (requested=='Home' and target!=path[0]):raise RuntimeError('Method child audit invented a native source traversal')
+        check_method_key_trace(trace,expected['position']['id'],path[0],target,requested)
+        events=[e for e in action['events']['events'] if e.get('type')=='keydown']
+        if (len(events)!=1 or events[0].get('key')!=requested or events[0].get('target')!=trace['events'][0]['eventTarget'] or
+                action['after']['active']['position']!=target or action['after']['roving']!=[target] or trace['after']['active']!='np-node-'+target):
+            raise RuntimeError('Method key trace and actual action focus disagree')
+    prior=audit['before']
+    for action in actions:
+        if action.get('kind') not in ('tree-key','tab','reverse-tab','pointer-move-reader','pointer-return-reader','wheel-tree','wheel-reader','restore-original-hover') or action.get('before')!=prior:
+            raise RuntimeError('Method child actions are unsupported or omit an intervening state')
+        prior=action['after']
+        events=action.get('events',{}); rows=events.get('events',[])
+        if events.get('overflow')!=0 or len(rows)>24 or any(e.get('trusted') is not True for e in rows):
+            raise RuntimeError('Method child receipt lost bounded trusted native actions')
+        check_method_child_state(audit['before'],action['after'])
+        if action['kind'] in ('tree-key','tab','reverse-tab') and not any(e.get('type')=='keydown' for e in rows):
+            raise RuntimeError('Method child receipt lost native keyboard input')
+        if action['kind']=='pointer-return-reader' and (not action['after']['active']['original'] or
+                any(not any(e.get('type')==t and e.get('readerTarget') for e in rows) for t in ('pointerdown','pointerup','click','focusin'))):
+            raise RuntimeError('Method child receipt lost exact original reader pointer focus')
+        if action['kind'].startswith('wheel-'):
+            region=action['kind'].split('-',1)[1]
+            if not any(e.get('type')=='scroll' for e in rows) or all(action['before'][region][k]==action['after'][region][k] for k in ('top','left')):
+                raise RuntimeError('Method child receipt invented native scroll progress')
+    if prior!=audit['after']:raise RuntimeError('Method child final state is not its actual last native action')
+    for item in audit['proofs']:
+        pid=item['id']; row=item['row']; original=next(r for r in data['rows'] if r['id']==pid)
+        display=expected['childDisplay'][pid]
+        if not display['label'] or not display['role'] or any(row[k]!=display[k] for k in ('label','role')):
+            raise RuntimeError('Native child full label or role differs from its independent scientific source')
+        for key in ('id','parent','domParent','entity','tree','level','ancestor','selected','label','sourceLabel','role'):
+            if row[key] != original[key]:
+                raise RuntimeError('Native child reveal changed its exact source label/role/parent: '+key)
+        frame=item['state']; check_method_child_state(audit['before'],frame)
+        if frame['active']['position']!=pid or frame['roving']!=[pid]:
+            raise RuntimeError('Native child proof did not focus its exact original child')
+        key=item.get('keyTrace', {})
+        check_method_key_trace(key,expected['position']['id'],path[0],pid,'ArrowDown')
+        matched=[k for k in audit.get('keys',[]) if k.get('trace')==key]
+        if (len(matched)!=1 or actions[matched[0]['actionIndex']]['after']!=frame or key['after']['tree']['clientRect']!=frame['tree']['client'] or
+                key['after']['tree']['top']!=frame['tree']['top'] or key['after']['tree']['left']!=frame['tree']['left'] or
+                row['proof'].get('text')!=row['label'] or row['roleProof'].get('text')!=row['role']):
+            raise RuntimeError('Child text or geometry is not bound to its actual native key frame')
+        if any(not _reader_proof(row[k],frame['tree']['client'],data['viewport'],font_size=15) for k in ('proof','roleProof')):
+            raise RuntimeError('Native child full label or role is clipped, covered, small or unreadable')
+    if children and (not actions or not audit.get('keys')):
+        raise RuntimeError('Method child proof lacks its actual native actions and geometry records')
+    if audit.get('afterSnapshot')!={k:v for k,v in data.items() if k not in ('captureName','childReadability')}:
+        raise RuntimeError('Method child audit lost the exact final original text, paint and geometry snapshot')
+
+
+def method_child_readability_checks(driver, report, save, name, data, expected, source_positions):
+    """Bounded native input only. JavaScript measures/observes; it never focuses or scrolls."""
+    import copy
+    record=dict(binding=method_child_binding(name,data,expected),status='started',proofs=[],actions=[],keys=[])
+    report.setdefault('methodChildReadabilityChecks',[]).append(record)
+    def checkpoint():
+        save()
+    def state():
+        return driver.js(METHOD_CHILD_STATE_JS)
+    def idle():
+        result=driver.call('POST','/execute/async',{'script':METHOD_CHILD_IDLE_JS,'args':[]})
+        record.setdefault('settles',[]).append(result); checkpoint()
+        if result.get('ok') is not True: raise RuntimeError('Method child native input did not naturally settle')
+    def native(kind, actions):
+        before=state(); driver.js(METHOD_CHILD_ACTION_JS,'reset')
+        item=dict(kind=kind,before=before); record['actions'].append(item); checkpoint()
+        try:
+            driver.call('POST','/actions',{'actions':actions}); idle()
+        finally:
+            item['events']=driver.js(METHOD_CHILD_ACTION_JS,'read'); item['after']=state(); checkpoint()
+        check_method_child_state(record['before'],item['after'])
+        if item['events']['overflow'] or any(e['trusted'] is not True for e in item['events']['events']):
+            raise RuntimeError('Method child native input lacks bounded trusted events')
+        return item
+    def tab(backwards=False):
+        actions=([{'type':'keyDown','value':'\ue008'}] if backwards else [])+[{'type':'keyDown','value':'\ue004'},{'type':'keyUp','value':'\ue004'}]+([{'type':'keyUp','value':'\ue008'}] if backwards else [])
+        item=native('reverse-tab' if backwards else 'tab',[{'type':'key','id':'method-child-focus','actions':actions}])
+        if not any(e['type']=='keydown' and e['key']=='Tab' for e in item['events']['events']):raise RuntimeError('Method child focus lacked native Tab')
+    def focus_roving():
+        for _ in range(record['before']['tabBound']):
+            now=state()
+            if now['active']['position']==now['roving'][0] and now['active']['tag']=='LI':return
+            tab(True)
+        raise RuntimeError('Native Tab could not reach original method keyboard scope')
+    def key(value,target):
+        item=dict(input=value,target=target);record['keys'].append(item);checkpoint();installed=False
+        try:
+            item['trace']=driver.js(METHOD_KEY_TRACE_START_JS,expected['position']['id'],path[0],target,'Home' if value=='\ue011' else 'ArrowDown');installed=True
+            item['actionIndex']=len(record['actions'])
+            native('tree-key',[{'type':'key','id':'method-child-tree','actions':[{'type':'keyDown','value':value},{'type':'keyUp','value':value}]}])
+        finally:
+            if installed:item['trace']=driver.js(METHOD_KEY_TRACE_STOP_JS)
+            checkpoint()
+        check_method_key_trace(item['trace'],expected['position']['id'],path[0],target,'Home' if value=='\ue011' else 'ArrowDown')
+        now=state()
+        if now['active']['position']!=target or now['roving']!=[target]:raise RuntimeError('Method child native traversal missed source position')
+        return item['trace']
+    def to_position(target,no_scroll=False):
+        if target not in path:raise RuntimeError('Original stored method focus is not a rendered source position')
+        focus_roving();start=state()
+        start_index=path.index(start['roving'][0]);target_index=path.index(target)
+        # Preserve a legitimate nonzero original tree offset: replay forward
+        # from the persisted ancestor rather than needlessly Home-clamping it.
+        sequence=([('\ue015',p) for p in path[start_index+1:target_index+1]] if no_scroll and start_index<=target_index else
+                  [('\ue011',path[0])]+[('\ue015',p) for p in path[1:target_index+1]])
+        for value,pid in sequence:
+            key(value,pid)
+            if no_scroll and (any(state()[k]!=start[k] for k in ('tree','reader','window','history')) or
+                              any(e['type']=='scroll' for e in record['actions'][-1]['events']['events'])):
+                raise RuntimeError('Transient method focus return caused a forbidden persistence or scroll change')
+    def wheel(region,dx,dy):
+        now=state();box=now[region]['client'];x=math.floor(box['x']+box['width']/2);y=math.floor(box['y']+box['height']/2)
+        item=native('wheel-'+region,[{'type':'wheel','id':'method-child-return','actions':[{'type':'scroll','origin':'viewport','x':x,'y':y,'deltaX':dx,'deltaY':dy,'duration':80}]}])
+        after=item['after']
+        if (dx and (after[region]['left']-now[region]['left'])*dx<=0) or (dy and (after[region]['top']-now[region]['top'])*dy<=0):
+            raise RuntimeError('Method child native wheel made no effective progress')
+        if not any(e['type']=='scroll' for e in item['events']['events']):raise RuntimeError('Method child return lacks actual scroll event')
+    def offsets():
+        for region in ('tree','reader'):
+            for _ in range(4):
+                now=state();target=record['before'][region]
+                dx=target['left']-now[region]['left'];dy=target['top']-now[region]['top']
+                if not dx and not dy:break
+                if dx!=int(dx) or dy!=int(dy):raise RuntimeError('Exact original offset is not reachable with integer native wheel')
+                wheel(region,int(dx),int(dy))
+            else:raise RuntimeError('Bounded method child native return did not reach exact offsets')
+    def pulse():
+        now=state()
+        for region in ('reader','tree'):
+            for offset,maximum in (('top','maxTop'),('left','maxLeft')):
+                if now[region][maximum]<1:continue
+                delta=1 if now[region][offset]<now[region][maximum] else -1
+                wheel(region,delta if offset=='left' else 0,delta if offset=='top' else 0);offsets();return
+        raise RuntimeError('No actual scroll range is available for native persistence return')
+    def original_focus():
+        if state()['active']['original']:return
+        if record['before']['originalFocus']['id']=='np-detail-scroll':
+            point=driver.js(METHOD_CHILD_READER_POINT_JS);record['readerReturnPoint']=point;checkpoint()
+            if not point['point']:raise RuntimeError('Original reader has no safe self-hit native pointer target')
+            xy=point['point'];native('pointer-move-reader',[{'type':'pointer','id':'method-child-pointer','parameters':{'pointerType':'mouse'},'actions':[{'type':'pointerMove','origin':'viewport','x':xy['x'],'y':xy['y'],'duration':0}]}])
+            if driver.js(METHOD_CHILD_READER_POINT_JS)['point']!=xy:raise RuntimeError('Reader self-hit target moved before native click')
+            item=native('pointer-return-reader',[{'type':'pointer','id':'method-child-pointer','parameters':{'pointerType':'mouse'},'actions':[{'type':'pointerDown','button':0},{'type':'pointerUp','button':0}]}])
+            events=item['events']['events']
+            if any(not any(e['type']==t and e['readerTarget'] for e in events) for t in ('pointerdown','pointerup','click','focusin')):raise RuntimeError('Reader native pointer return lacks trusted exact-target focus')
+        elif record['before']['originalFocus']['tabIndex']>=0:
+            for _ in range(record['before']['tabBound']):
+                if state()['active']['original']:break
+                tab()
+        else:raise RuntimeError('Original non-tabstop focus has no reviewed native return path')
+        if not state()['active']['original']:raise RuntimeError('Native input did not restore the original active DOM object')
+    driver.js(METHOD_CHILD_PROBE_START_JS)
+    try:
+        idle();driver.js(METHOD_CHILD_ACTION_JS,'baseline');data.clear();data.update(driver.js(METHOD_READING_SNAPSHOT_JS));record['binding']=method_child_binding(name,data,expected)
+        original_snapshot=copy.deepcopy(data)
+        before=record['before']=state();record['baselineMode']=method_child_baseline_mode(before)
+        if before['domSame'] is not True or before['active']['original'] is not True or before['hoverSame'] is not True or len(before['roving'])!=1:raise RuntimeError('Method child baseline DOM or roving focus is invalid')
+        path=method_visible_source_ids(expected,source_positions,data['expanded'][expected['position']['tree']])
+        if not path or len(path)>256:raise RuntimeError('Method child traversal is not within its source bound')
+        record['required']=[pid for pid in path if pid in expected['children']];checkpoint()
+        if record['required']:
+            focus_roving();key('\ue011',path[0])
+            for pid in path[1:]:
+                trace=key('\ue015',pid)
+                if pid in record['required']:
+                    snapshot=driver.js(METHOD_READING_SNAPSHOT_JS)
+                    row=next((r for r in snapshot['rows'] if r['id']==pid),None)
+                    if row is None:raise RuntimeError('Method child disappeared during its native reveal')
+                    record['proofs'].append(dict(id=pid,row=row,state=state(),keyTrace=trace));checkpoint()
+            if record['baselineMode']=='stable-keyboard-focus-only':
+                stored=before['history'][before['historyKey']]['contexts'][before['contextKey']]['focusTarget']
+                to_position(stored);offsets();idle()
+                if state()['history']!=before['history']:pulse()
+                idle();record['persistedReturn']=state();checkpoint()
+                if record['persistedReturn']['history']!=before['history']:raise RuntimeError('Method child return could not reconstruct original persisted history')
+                to_position(before['roving'][0],no_scroll=True);original_focus()
+            else:
+                to_position(before['roving'][0]);original_focus();offsets();idle()
+                if state()['runtime']!=before['runtime'] or state()['history']!=before['history']:pulse()
+            if not state()['hoverSame']:
+                point=driver.js(METHOD_CHILD_HOVER_POINT_JS);record['hoverReturnPoint']=point;checkpoint()
+                if not point['point']:raise RuntimeError('Original hover target has no genuine pointer return point')
+                xy=point['point'];native('restore-original-hover',[{'type':'pointer','id':'method-child-pointer','parameters':{'pointerType':'mouse'},'actions':[{'type':'pointerMove','origin':'viewport','x':xy['x'],'y':xy['y'],'duration':0}]}])
+            idle()
+        record['afterSnapshot']=driver.js(METHOD_READING_SNAPSHOT_JS)
+        if record['afterSnapshot']!=original_snapshot:raise RuntimeError('Native method child audit changed original source text, geometry, paint or reader state')
+        record['after']=state();check_method_child_state(before,record['after'],exact=True)
+        record['status']='inputs_returned'
+    except Exception as exc:
+        record['status']='failed';record['error']=str(exc)[:2000]
+        raise
+    finally:
+        try:
+            record['cleanedUp']=driver.js(METHOD_CHILD_PROBE_STOP_JS)['cleanedUp']
+        except Exception as exc:
+            record['status']='failed';record['cleanupError']=str(exc)[:2000]
+            raise
+        finally:
+            checkpoint()
+    data['captureName']=name;data['childReadability']=record;record['status']='verified_native_children'
+    try:
+        check_method_child_audit(data,expected,source_positions)
+    except Exception as exc:
+        record['status']='failed';record['error']=str(exc)[:2000];data.pop('childReadability',None)
+        raise
+    finally:
+        checkpoint()
+    return record
 
 
 METHOD_NAVIGATION_STATE_JS = r"""
@@ -4829,6 +5200,8 @@ def main():
             data['desktopShell']['s0Footer'] = s0_footer_check(name)
         if data['desktopShell'].get('methodReading') == 'true' and not data['desktopShell']['collapsed']:
             data['methodReading'] = driver.js(METHOD_READING_SNAPSHOT_JS)
+            method_expected = method_reading_expected(science, method_positions[data['route']['node']], method_positions)
+            method_child_readability_checks(driver, report, save, name, data['methodReading'], method_expected, method_positions)
         data['screenKind'] = 'default_reading_overview' if require_home else 'tree_or_reader'
         data['readingVisibility'] = driver.js('''function rect(e){if(!e)return null;let r=e.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};}
           let a=NavigationProductApp,b=a.getBundle(),root=b.researchMap.roots[0];
