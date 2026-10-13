@@ -516,6 +516,162 @@ def write_receipt(path, report):
             temporary.unlink(missing_ok=True)
 
 
+class ReceiptSnapshotCache:
+    """Reuse JSON encoding, never checkpoints or observations.
+
+    Every call still publishes the complete ordinary JSON document atomically.
+    The capture's report is main-thread owned; server diagnostics are copied
+    into it. Every item is freshly marshalled before consulting its cache, so
+    later fields, nested mutations, aliases, and type changes are never hidden.
+    Marshal bytes are only decoded directly from that new in-memory snapshot,
+    never from an artifact or cache file. This is not an artifact format change.
+    """
+    def __init__(self, path, max_cache_bytes=2 * 1024 ** 3, progress_every=50):
+        import marshal
+        self.marshal = marshal
+        self.path = Path(path)
+        self.directory = tempfile.TemporaryDirectory(prefix='.receipt-cache-', dir=self.path.parent)
+        self.root = Path(self.directory.name)
+        self.entries, self.serial, self.bytes = {}, 0, 0
+        self.limit, self.progress_every, self.closed = max_cache_bytes, progress_every, False
+        if type(max_cache_bytes) is not int or max_cache_bytes < 0 or type(progress_every) is not int or progress_every < 0:
+            self.directory.cleanup()
+            raise ValueError('Invalid receipt cache budget')
+        self.stats = dict(writes=0, hits=0, misses=0, fingerprintSeconds=0.0,
+                          encodeSeconds=0.0, copySeconds=0.0, totalSeconds=0.0)
+
+    def close(self):
+        if not self.closed:
+            self.directory.cleanup()
+            self.entries.clear()
+            self.bytes, self.closed = 0, True
+
+    def _remove(self, entry):
+        for path in entry[:2]:
+            path.unlink(missing_ok=True)
+
+    def _chunk(self, slot, value):
+        started = time.perf_counter()
+        frozen = self.marshal.dumps(value, 4)
+        old = self.entries.get(slot)
+        same = old is not None and old[5] and old[0].is_file() and old[1].is_file() and old[0].read_bytes() == frozen
+        self.stats['fingerprintSeconds'] += time.perf_counter() - started
+        if same:
+            self.stats['hits'] += 1
+            return slot, old[1], old[3], old[4]
+        self.stats['misses'] += 1
+        started = time.perf_counter()
+        payload = json.dumps(self.marshal.loads(frozen), ensure_ascii=False,
+                             separators=(',', ':')).encode('utf-8')
+        self.stats['encodeSeconds'] += time.perf_counter() - started
+        size = len(frozen) + len(payload)
+        remaining = self.bytes - (old[2] if old is not None else 0)
+        if remaining + size > self.limit:
+            # No uncached disk sidecars: write this single encoded item directly
+            # to the final temporary receipt, then release it before the next.
+            return payload
+        if old is not None:
+            self._remove(old)
+            del self.entries[slot]
+            self.bytes -= old[2]
+        self.serial += 1
+        stamp, encoded = (self.root / (str(self.serial) + suffix) for suffix in ('.snapshot', '.json'))
+        stored = False
+        digest = hashlib.sha256(payload).digest()
+        # Reserve the full staging cost before writing. Failed cleanup leaves
+        # this incomplete entry conservatively charged until removal succeeds.
+        entry = (stamp, encoded, size, len(payload), digest, False)
+        self.entries[slot] = entry
+        self.bytes += size
+        try:
+            # The cap includes retained AND staged auxiliary files. The old
+            # entry was removed before staging its replacement; ordinary old
+            # receipt + final atomic temporary receipt remain outside this cap.
+            if stamp.write_bytes(frozen) != len(frozen) or encoded.write_bytes(payload) != len(payload):
+                raise OSError('Incomplete receipt cache write')
+            self.entries[slot] = (stamp, encoded, size, len(payload), digest, True)
+            stored = True
+            return slot, encoded, len(payload), digest
+        finally:
+            if not stored:
+                self._remove(entry)
+                del self.entries[slot]
+                self.bytes -= size
+
+    @staticmethod
+    def _write(stream, payload):
+        if stream.write(payload) != len(payload):
+            raise OSError('Incomplete receipt temporary write')
+
+    def _copy(self, chunk, stream):
+        slot, path, length, digest = chunk
+        actual, total = hashlib.sha256(), 0
+        with path.open('rb') as source:
+            while True:
+                block = source.read(1024 * 1024)
+                if not block:
+                    break
+                actual.update(block)
+                total += len(block)
+                self._write(stream, block)
+        if total != length or actual.digest() != digest:
+            old = self.entries.get(slot)
+            if old is not None and old[1] == path:
+                self._remove(old)
+                del self.entries[slot]
+                self.bytes -= old[2]
+            raise RuntimeError('Receipt cache payload integrity check failed')
+
+    def __call__(self, path, report):
+        if self.closed or Path(path) != self.path:
+            raise ValueError('Receipt cache is closed or changed target')
+        if type(report) is not dict or any(type(key) is not str for key in report):
+            raise TypeError('Receipt cache requires original named report fields')
+        started = time.perf_counter()
+        seen, target = set(), None
+        try:
+            with tempfile.NamedTemporaryFile(mode='wb', dir=self.path.parent,
+                                             prefix='.' + self.path.name + '.', suffix='.tmp', delete=False) as stream:
+                target = Path(stream.name)
+                self._write(stream, b'{')
+                for number, (key, value) in enumerate(report.items()):
+                    if number:
+                        self._write(stream, b',')
+                    self._write(stream, json.dumps(key, ensure_ascii=False).encode('utf-8') + b':')
+                    items = enumerate(value) if type(value) is list else [(None, value)]
+                    if type(value) is list:
+                        self._write(stream, b'[')
+                    for index, item in items:
+                        if type(value) is list and index:
+                            self._write(stream, b',')
+                        slot = (key, index)
+                        seen.add(slot)
+                        chunk = self._chunk(slot, item)
+                        copy_started = time.perf_counter()
+                        if isinstance(chunk, bytes):
+                            self._write(stream, chunk)
+                        else:
+                            self._copy(chunk, stream)
+                        self.stats['copySeconds'] += time.perf_counter() - copy_started
+                    if type(value) is list:
+                        self._write(stream, b']')
+                self._write(stream, b'}\n')
+            os.replace(target, self.path)
+            self.stats['writes'] += 1
+            for slot in list(self.entries):
+                if slot not in seen:
+                    old = self.entries[slot]
+                    self._remove(old)
+                    del self.entries[slot]
+                    self.bytes -= old[2]
+        finally:
+            if target is not None:
+                target.unlink(missing_ok=True)
+            self.stats['totalSeconds'] += time.perf_counter() - started
+        if self.progress_every and self.stats['writes'] % self.progress_every == 0:
+            print('receipt_checkpoint ' + json.dumps(dict(self.stats, cacheBytes=self.bytes), separators=(',', ':')), flush=True)
+
+
 def wait_for(check, timeout=45):
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
@@ -5245,6 +5401,9 @@ def main():
     process = None
     server = None
     logs = (out / 'chromedriver.log').open('w')
+    # Preserve the original save wrapper and all checkpoint call sites.
+    receipt_cache = ReceiptSnapshotCache(out / 'receipt.json')
+    write_receipt = receipt_cache
 
     def save():
         write_receipt(out / 'receipt.json', report)
@@ -5845,23 +6004,26 @@ def main():
                 report['diagnosticError'] = type(diagnostic_error).__name__
         raise
     finally:
-        save()
-        if driver and driver.session:
-            try:
-                driver.call('DELETE', '')
-            except Exception:
-                pass
-        if process:
-            process.terminate()
-            try:
-                process.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                process.kill()
-                process.wait(timeout=5)
-        if server:
-            server.shutdown()
-            server.server_close()
-        logs.close()
+        try:
+            save()
+            if driver and driver.session:
+                try:
+                    driver.call('DELETE', '')
+                except Exception:
+                    pass
+            if process:
+                process.terminate()
+                try:
+                    process.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    process.wait(timeout=5)
+            if server:
+                server.shutdown()
+                server.server_close()
+            logs.close()
+        finally:
+            receipt_cache.close()
 
 
 if __name__ == '__main__':
