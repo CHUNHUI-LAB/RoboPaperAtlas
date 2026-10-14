@@ -5200,7 +5200,49 @@ def version_title_expected(science):
     return rows
 
 
-VERSION_TITLE_SNAPSHOT_JS = VISUAL_GEOMETRY + r"""
+# Native summary hover paint also lasts 160ms. Keep this wait local to the
+# exact original control; never wait for a readability predicate to become true.
+VERSION_TITLE_PAINT_TIMEOUT_MS = 2000
+VERSION_TITLE_PAINT_SETTLE_JS = ('var paintScopeSelector=arguments[1],paintScopeName="Native version title";\n' +
+                               SCOPED_TOOLBAR_PAINT_SETTLE_JS)
+
+
+def settle_version_title_paint(driver, report, save, phase, selector):
+    data = driver.call('POST', '/execute/async', {
+        'script': VERSION_TITLE_PAINT_SETTLE_JS, 'args': [VERSION_TITLE_PAINT_TIMEOUT_MS, selector]})
+    report.setdefault('versionTitlePaintSettles', []).append({'phase': phase, 'scope': selector, 'settle': data})
+    save()  # Retain real raw colors and timeout/error diagnostics before failing.
+    if (not isinstance(data, dict) or data.get('status') != 'settled' or
+            data.get('scopeSelector') != selector or data.get('timeoutMs') != VERSION_TITLE_PAINT_TIMEOUT_MS or
+            type(data.get('elapsedMs')) not in (int, float) or
+            not 0 <= data['elapsedMs'] < VERSION_TITLE_PAINT_TIMEOUT_MS or
+            not data.get('before') or not data.get('after')):
+        raise RuntimeError('Native version-title paint did not settle within the fixed budget')
+    return data
+
+
+VERSION_TITLE_PAINT_DIAGNOSTIC_JS = r"""
+function nativeVersionTitlePaint(summary){
+ var layers=[],transitions=[],error=null;
+ for(var e=summary;e;e=e.parentElement){
+  var s=getComputedStyle(e),identity={tag:e.tagName,id:e.id||'',position:e.dataset.nativePosition||null,className:e.getAttribute('class')||''};
+  layers.push({...identity,color:s.color,backgroundColor:s.backgroundColor});
+  try{
+   if(typeof CSSTransition!=='function'||typeof e.getAnimations!=='function')throw Error('CSS transition inspection unavailable');
+   for(var a of e.getAnimations({subtree:false})){
+    if(!(a instanceof CSSTransition)||!/^(?:color|background-color|border-(?:(?:top|right|bottom|left)-)?color)$/.test(a.transitionProperty))continue;
+    if(a.playState==='finished'||(a.playState==='idle'&&!a.pending))continue;
+    var t=a.effect.getComputedTiming();
+    transitions.push({target:identity,property:a.transitionProperty,playState:a.playState,pending:a.pending,currentTime:a.currentTime,playbackRate:a.playbackRate,duration:t.duration,endTime:t.endTime});
+   }
+  }catch(err){error=String(err);}
+ }
+ return {layers:layers,transitions:transitions,error:error};
+}
+"""
+
+
+VERSION_TITLE_SNAPSHOT_JS = VISUAL_GEOMETRY + VERSION_TITLE_PAINT_DIAGNOSTIC_JS + r"""
 var expected=arguments[0],matches=[...document.querySelectorAll('[data-native-position]')].filter(e=>e.dataset.nativePosition===expected.position);
 if(matches.length!==1)throw Error('Exact native title occurrence missing or duplicated');
 var node=matches[0],summary=node.querySelector(':scope > summary'),ancestors=[],open=[],cursor=node;
@@ -5218,7 +5260,7 @@ var viewport={x:0,y:0,width:innerWidth,height:innerHeight},main=rect(document.qu
 Object.assign(proof,{renderedText:runs.map(r=>r.text).join(''),textRuns:runs,fragments:fragments,clipAreas:clips(summary),viewport:viewport,readerContent:{x:main.x,y:0,width:main.width,height:innerHeight},textOverflow:style.textOverflow,lineClamp:style.webkitLineClamp});
 var links=[...node.querySelectorAll(':scope > .native-body > p > a')];
 return {screenKind:'native_version_title',position:node.dataset.nativePosition,ancestors:ancestors,ancestorOpen:open,
-        focusedSummary:document.activeElement===summary,
+        focusedSummary:document.activeElement===summary,paint:nativeVersionTitlePaint(summary),
         title:proof,linkCount:links.length,branchHref:links[0]?.getAttribute('href'),pagePath:location.pathname,
         readyState:document.readyState,scriptCount:document.scripts.length,
         scripts:[...document.scripts].map(s=>({src:s.getAttribute('src'),defer:s.defer,inline:s.textContent.trim()})),
@@ -5226,6 +5268,18 @@ return {screenKind:'native_version_title',position:node.dataset.nativePosition,a
         fonts:document.fonts.status,viewport:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},
         bodyWidth:document.body.scrollWidth,windowScroll:scrollY};
 """
+
+
+def check_version_title_capture_stability(before, after):
+    # Bracket the PNG with the same unmodified DOM proof and actual paint state.
+    # Unknown colors still fail the original contrast gate; they gain no fallback.
+    for data in (before, after):
+        paint = data.get('paint')
+        if (not isinstance(paint, dict) or not paint.get('layers') or
+                paint.get('error') is not None or paint.get('transitions') != []):
+            raise RuntimeError('Native version-title capture has active or unknown paint state')
+    if before != after:
+        raise RuntimeError('Native version-title DOM or paint changed across the PNG capture')
 
 
 def check_version_title_capture(data, expected, require_navigation=True):
@@ -5314,12 +5368,21 @@ def version_title_checks(driver, report, save, prefix, base, science, out):
         summary_selector = '[data-native-position="' + expected['position'] + '"] > summary'
         driver.js("arguments[0].scrollIntoView({block:'center',inline:'nearest'});", driver.selector(summary_selector))
         driver.settle()
-        data = driver.js(VERSION_TITLE_SNAPSHOT_JS, expected)
-        data.update(name=prefix + expected['suffix'], sourceBinding=expected, nativeActions=actions)
         root_node = driver.cdp('DOM.getDocument', {'depth': 1})['root']['nodeId']
         title_node = driver.cdp('DOM.querySelector', {'nodeId': root_node, 'selector': summary_selector})['nodeId']
-        data['renderedFonts'] = driver.cdp('CSS.getPlatformFontsForNode', {'nodeId': title_node})['fonts']
+        rendered_fonts = driver.cdp('CSS.getPlatformFontsForNode', {'nodeId': title_node})['fonts']
+        settle_version_title_paint(driver, report, save, prefix + expected['suffix'], summary_selector)
+        data = driver.js(VERSION_TITLE_SNAPSHOT_JS, expected)
+        before_capture = dict(data)
         image = base64.b64decode(driver.call('GET', '/screenshot'), validate=True)
+        try:
+            after_capture = driver.js(VERSION_TITLE_SNAPSHOT_JS, expected)
+        except Exception as exc:
+            # A disappearing/duplicated summary must retain the PNG and pre-proof
+            # already obtained. The unavailable post-proof always fails below.
+            after_capture = {'snapshotError': str(exc)}
+        data.update(name=prefix + expected['suffix'], sourceBinding=expected, nativeActions=actions,
+                    captureAfter=after_capture, renderedFonts=rendered_fonts)
         if not image.startswith(b'\x89PNG\r\n\x1a\n'): raise RuntimeError('Version-title screenshot is not PNG')
         data['pngDimensions'] = list(struct.unpack('>II', image[16:24]))
         data['screenshotSha256'] = hashlib.sha256(image).hexdigest()
@@ -5329,6 +5392,7 @@ def version_title_checks(driver, report, save, prefix, base, science, out):
         report['captures'].append(data)
         record['cases'].append(data)
         save()
+        check_version_title_capture_stability(before_capture, after_capture)
         check_version_title_capture(data, expected, require_navigation=False)
         link_selector = '[data-native-position="' + expected['position'] + '"] > .native-body > p > a'
         driver.click(driver.selector(link_selector))

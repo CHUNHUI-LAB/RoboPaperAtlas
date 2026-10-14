@@ -291,6 +291,9 @@ cache(target,{'status':'new','observations':[{'complete':'完整'}]})
 
     def test_original_checkpoint_wrapper_all_103_save_sites_and_106_scenes_remain(self):
         source = ast.parse(Path(MODULE.__file__).read_text())
+        native_paint = next(n for n in source.body if isinstance(n, ast.FunctionDef) and n.name == 'settle_version_title_paint')
+        self.assertEqual(len([n for n in ast.walk(native_paint) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']), 1)
+        source.body.remove(native_paint)
         saves = [n for n in ast.walk(source) if isinstance(n, ast.FunctionDef) and n.name == 'save']
         calls = [n for n in ast.walk(source) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']
         self.assertEqual(len(saves), 1); self.assertEqual(len(calls), 103)

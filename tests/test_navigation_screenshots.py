@@ -4837,6 +4837,9 @@ process.stdout.write(JSON.stringify({answer,callbacks,inspections,background,for
             return [n for n in ast.walk(node) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']
         self.assertEqual(len(save_calls(paint_helper)), 1)
         tree.body.remove(paint_helper)
+        native_paint_helper = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'settle_version_title_paint')
+        self.assertEqual(len(save_calls(native_paint_helper)), 1)
+        tree.body.remove(native_paint_helper)
         selector_helper = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'reveal_relation_selector')
         self.assertEqual(len(save_calls(selector_helper)), 1)
         tree.body.remove(selector_helper)
@@ -5272,7 +5275,11 @@ class S0FooterCaptureChecks(unittest.TestCase):
         self.assertIn("graph['s0AdaptiveSpacing'] = desktop_chrome_snapshot(driver, report, save, 'reading-home-' + relation_mode, S0_FOOTER_SNAPSHOT_JS, footer_expected)", main)
         self.assertIn("check_s0_footer(graph['s0AdaptiveSpacing'])", main)
         self.assertIn("reading_home(relation_mode='all')", main)
-        saves = [n for n in ast.walk(ast.parse(inspect.getsource(MODULE))) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']
+        tree = ast.parse(inspect.getsource(MODULE))
+        native_paint = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'settle_version_title_paint')
+        self.assertEqual(len([n for n in ast.walk(native_paint) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']), 1)
+        tree.body.remove(native_paint)
+        saves = [n for n in ast.walk(tree) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']
         self.assertEqual(len(saves), 103)  # 99 original + S0 paint + selector reveal + desktop paint + child audit saves.
         self.assertEqual(len(MODULE.SCENE_NAMES) * len(MODULE.VIEWPORTS), 106)
         self.assertIn('s0_adaptive_spacing', MODULE.DISPLAY_CONTRACT_MIGRATIONS)
@@ -5842,6 +5849,9 @@ class AtomicReceiptPersistenceChecks(unittest.TestCase):
         import ast
         import tempfile
         source = Path(MODULE.__file__).read_text(encoding='utf-8'); tree = ast.parse(source)
+        native_paint = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'settle_version_title_paint')
+        self.assertEqual(len([n for n in ast.walk(native_paint) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']), 1)
+        tree.body.remove(native_paint)
         calls = [node for node in ast.walk(tree) if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == 'save']
         self.assertEqual(len(calls), 103)  # 99 original + S0 paint + selector reveal + desktop paint + child audit saves.
         saves = [node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef) and node.name == 'save']
@@ -5956,7 +5966,11 @@ class S0SelectorOcclusionChecks(unittest.TestCase):
         main = inspect.getsource(MODULE.main)
         for text in ("s0_footer_check('before-selection-'", "s0_footer_check('closed-'", "check_s0_stability(before_selection, selected_footer)", "closed['focus'] != 'np-relation-select-'", 'check_s0_stability(footer_before_reload, footer_after_reload, restore=True)'):
             self.assertIn(text, main)
-        saves = [n for n in ast.walk(ast.parse(inspect.getsource(MODULE))) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']
+        tree = ast.parse(inspect.getsource(MODULE))
+        native_paint = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'settle_version_title_paint')
+        self.assertEqual(len([n for n in ast.walk(native_paint) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']), 1)
+        tree.body.remove(native_paint)
+        saves = [n for n in ast.walk(tree) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']
         self.assertEqual(len(saves), 103)  # 99 original + S0 paint + selector reveal + desktop paint + child audit saves.
         self.assertEqual(len(MODULE.SCENE_NAMES) * len(MODULE.VIEWPORTS), 106)
 
