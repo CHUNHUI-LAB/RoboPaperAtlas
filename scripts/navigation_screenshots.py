@@ -5412,6 +5412,437 @@ def version_title_checks(driver, report, save, prefix, base, science, out):
         save()
 
 
+DISCLOSURE_AUDIT_SECONDS = 420
+DISCLOSURE_IDS = tuple(row[0] for row in S0_TOOLBAR_LABELS if row[1] == 'DETAILS')
+DISCLOSURE_NOTES_END = '地图中的区域与邻近位置只按已有目标输入、完成要求和过程属性组织阅读，不是科学父类。实线保持原目录父子；虚线分别表示已有对照、按序组合或目标类型构成，不表示方法继承。'
+DISCLOSURE_RELATIONS_END = '这些是已有的非树关系；没有据此增加科学父节点，也没有预选一条示范主线。'
+
+
+def disclosure_expected(science):
+    """Original directory order is reconstructed from frozen source, not tested DOM."""
+    scopes = {row['id']: row for row in science['scopes']}
+    directory, seen = [], set()
+    def visit(identity):
+        if identity in seen:
+            return
+        if identity not in scopes:
+            raise RuntimeError('Disclosure source directory has a missing scope')
+        seen.add(identity); row = scopes[identity]
+        directory.append({'scope': identity, 'parent': row.get('parentScopeId') or '',
+                          'text': row['label'] + ' · ' + (row.get('displayRole') or row['kind'])})
+        for child in row.get('childScopeIds', []):
+            visit(child)
+    for group in science['directoryGroups']:
+        for identity in group['scopeIds']:
+            visit(identity)
+    for row in science['scopes']:
+        if row['id'] != 'scope:all':
+            visit(row['id'])
+    visit('scope:all')
+    if len(directory) != 64 or directory[-1]['scope'] != 'scope:all':
+        raise RuntimeError('Disclosure source directory lost its original 64-entry boundary')
+    last = TASK_INDEX[-1][0]
+    if last != 'task:language-objectnav':
+        raise RuntimeError('Reviewed final comparison source changed')
+    scope = scopes[last]
+    coverage = scope['coverage']
+    def status(field):
+        return '有直接关联' if coverage.get('direct', {}).get(field) else '仅条件关联' if coverage.get('condition', {}).get(field) else '当前未整理'
+    row = '[data-task-comparison="' + last + '"]'
+    comparison = [
+        {'selector': row + ' > td:first-child > button', 'text': scope['label']},
+        {'selector': row + ' > td:first-child > p', 'text': scope.get('displayRole') or scope['kind']},
+        {'selector': row + ' > [data-task-field="input"]', 'text': '目标物体或实例描述'},
+        {'selector': row + ' > [data-task-field="completion"]', 'text': '自主搜索符合描述的目标'},
+        {'selector': row + ' > [data-task-field="boundary"]', 'text': '不是路线指令；现有方法/CI仅条件关联，预建图、楼层/房间条件不得隐藏。'},
+        {'selector': row + ' > [data-task-field="sources"] > p:first-child', 'text': status('methodCount') + ' / ' + status('challengeCount')},
+    ]
+    for index, (version, url) in enumerate((('arxiv:2203.10421v2', 'https://arxiv.org/html/2203.10421v2'),
+                                           ('source:src_ef717861b303', 'https://arxiv.org/html/2512.22342v5')), 2):
+        base = row + ' > [data-task-field="sources"] > p:nth-child(' + str(index) + ')'
+        comparison.extend([{'selector': base + ' > a', 'text': version, 'url': url},
+                           {'selector': base + ' > span', 'text': ' · 固定来源版本'}])
+    return {'directory': directory, 'comparisonOrder': [item[0] for item in TASK_INDEX], 'comparisonLast': last,
+            'targets': {'np-all-scopes': [{'selector': '[data-scope-open="' + item['scope'] + '"]', 'text': item['text']}
+                                          for item in (directory[0], directory[-1])],
+                        'np-overview-comparison': comparison,
+                        'np-task-relations': [{'selector': ':scope > p:last-child', 'text': DISCLOSURE_RELATIONS_END}],
+                        'np-overview-notes': [{'selector': ':scope > p.np-index-boundary:last-child', 'text': DISCLOSURE_NOTES_END}]}}
+
+
+DISCLOSURE_SNAPSHOT_JS = VISUAL_GEOMETRY + FIXED_TEXT_PROOF_JS + STATIONARY_SHELL_ANCESTORS_JS + r"""
+var requested=arguments[0],specs=arguments[1],a=NavigationProductApp,s=a.getState(),landing=document.getElementById('np-reading-landing'),toolbar=landing.querySelector(':scope > .np-overview-map-toolbar');
+function frame(e){var r=rect(e),cs=getComputedStyle(e);return {id:e.id,tag:e.tagName,open:!!e.open,rect:r,
+ clientRect:{x:r.x+e.clientLeft,y:r.y+e.clientTop,width:e.clientWidth,height:e.clientHeight},top:e.scrollTop,left:e.scrollLeft,
+ scrollHeight:e.scrollHeight,clientHeight:e.clientHeight,scrollWidth:e.scrollWidth,clientWidth:e.clientWidth,maxTop:Math.max(0,e.scrollHeight-e.clientHeight),
+ overflowX:cs.overflowX,overflowY:cs.overflowY,paddingBottom:parseFloat(cs.paddingBottom),maxHeight:cs.maxHeight,
+ borderTop:parseFloat(cs.borderTopWidth),borderRight:parseFloat(cs.borderRightWidth),borderBottom:parseFloat(cs.borderBottomWidth),borderLeft:parseFloat(cs.borderLeftWidth),
+ opaque:box(e).opaque,unscaled:box(e).unscaled};}
+function identity(e){return {id:e?.id||'',tag:e?.tagName||'',summaryFor:e?.tagName==='SUMMARY'?e.parentElement.id:null,scope:e?.dataset.scopeOpen||null};}
+var panels=[...toolbar.querySelectorAll(':scope > details')],panel=panels.find(e=>e.id===requested),active=document.activeElement;
+function target(spec){var matches=panel?[...panel.querySelectorAll(spec.selector)]:[],e=matches[0],suffix=null;
+ if(!e)return {selector:spec.selector,count:matches.length};
+ if(spec.url){var suffixes=e.querySelectorAll(':scope > span.np-sr');suffix=suffixes.length===1?suffixes[0]:null;
+  if(e.tagName!=='A'||!suffix||suffix!==e.lastChild||suffix.textContent!=='（新标签页）'||suffix.children.length)throw Error('Disclosure source link lost its exact accessibility suffix');}
+ var p=fixedTextProof(e,suffix);if(suffix)p.text=p.renderedText;
+ return {selector:spec.selector,count:matches.length,tag:e.tagName,id:e.id,scope:e.dataset.scopeOpen||null,disabled:!!e.disabled,tabIndex:e.tabIndex,
+  panel:e.closest('.np-overview-map-toolbar > details')?.id,url:e.tagName==='A'?e.href:null,proof:p};}
+return {ready:document.getElementById('navigation-product').dataset.loadState,home:!landing.hidden,route:s.route,
+ historyRoute:history.state&&history.state[NavigationProductModel.KEY]?.route,historyLength:history.length,scale:NavigationProductModel.getBucket(s).graphScale,
+ originTrail:s.originTrail,historyOriginTrail:history.state&&history.state[NavigationProductModel.KEY]?.originTrail,
+ expanded:NavigationProductModel.getBucket(s).expandedByTree,selected:NavigationProductModel.getBucket(s).selectedByTree,
+ selectedRelation:document.getElementById('np-overview-map').dataset.selectedRelation||null,
+ window:{x:scrollX,y:scrollY},viewport:{x:0,y:0,width:innerWidth,height:innerHeight},stationaryAncestors:stationaryShellAncestors(),
+ landing:frame(landing),toolbar:frame(toolbar),panels:panels.map(e=>Object.assign(frame(e),{count:document.querySelectorAll('[id="'+e.id+'"]').length,
+  topology:e.parentElement===toolbar,summary:fixedTextProof(e.querySelector(':scope > summary'))})),focus:identity(active),
+ directory:[...document.querySelectorAll('#np-all-scopes [data-scope-open]')].map(e=>({scope:e.dataset.scopeOpen,parent:e.parentElement.dataset.parentScope,
+  domParent:e.parentElement.parentElement.closest('[data-directory-scope]')?.dataset.directoryScope||'',text:e.textContent,id:e.id,tag:e.tagName,type:e.type,disabled:e.disabled,tabIndex:e.tabIndex})),
+ comparisonOrder:[...document.querySelectorAll('#np-overview-comparison [data-task-comparison]')].map(e=>e.dataset.taskComparison),
+ comparisonLast:panel?.id==='np-overview-comparison'?{id:panel.querySelector('tr:last-child')?.dataset.taskComparison,cells:panel.querySelector('tr:last-child')?.children.length,rect:rect(panel.querySelector('tr:last-child'))}:null,
+ requested:requested,targets:specs.map(target)};
+"""
+
+DISCLOSURE_PROBE_JS = r"""
+var mode=arguments[0],slot='__npDisclosureAudit',owner=arguments[mode==='start'?2:1];
+if(typeof owner!=='string'||!owner)throw Error('Disclosure audit probe lacks its owner');
+function identity(e){return {id:e?.id||'',tag:e?.tagName||'',summaryFor:e?.tagName==='SUMMARY'?e.parentElement.id:null,scope:e?.dataset.scopeOpen||null};}
+if(mode==='start'){
+ if(window[slot])throw Error('Disclosure audit probe already installed');
+ var p={owner:owner,events:[],overflow:0,limit:arguments[1]};p.listener=function(e){if(p.events.length>=p.limit){p.overflow++;return;}
+  p.events.push({type:e.type,key:e.key||null,trusted:e.isTrusted,target:identity(e.target),panel:e.target.closest?.('.np-overview-map-toolbar > details')?.id||null});};
+ window[slot]=p;for(var kind of ['keydown','keyup','focusin','wheel','scroll','click'])document.addEventListener(kind,p.listener,true);return true;
+}
+var p=window[slot];
+if(!p&&mode==='stop')return {owner:owner,events:[],overflow:0,limit:0,cleanedUp:true,absent:true};
+if(!p)throw Error('Disclosure audit probe is missing');
+if(p.owner!==owner)throw Error('Disclosure audit cannot access another observer owner');
+if(mode==='reset'){p.events=[];p.overflow=0;return true;}
+try{return {owner:owner,events:p.events,overflow:p.overflow,limit:p.limit,cleanedUp:mode==='stop',absent:false};}
+finally{if(mode==='stop'){for(var kind of ['keydown','keyup','focusin','wheel','scroll','click'])document.removeEventListener(kind,p.listener,true);delete window[slot];}}
+"""
+
+
+def check_disclosure_scroll_metrics(panel):
+    """CSSOM offsets are double; the integer extent is only a rounding sanity bound."""
+    values = [panel.get(k) for k in ('top', 'left', 'scrollHeight', 'clientHeight', 'maxTop')]
+    if (not all(type(n) in (int, float) and math.isfinite(n) for n in values) or
+            panel['scrollHeight'] < 0 or panel['clientHeight'] <= 0 or
+            any(int(panel[k]) != panel[k] for k in ('scrollHeight', 'clientHeight')) or
+            panel['top'] < 0 or panel['maxTop'] != max(0, panel['scrollHeight'] - panel['clientHeight']) or
+            panel['top'] - panel['maxTop'] >= 1):
+        raise RuntimeError('Disclosure lacks consistent CSSOM double offsets and rounded integer extents')
+
+
+def check_disclosure_snapshot(data, expected, baseline=None):
+    if (data['ready'] != 'ready' or not data['home'] or data['window'] != {'x': 0, 'y': 0} or
+            (data['viewport']['width'], data['viewport']['height']) not in VIEWPORTS or data['scale'] != 1 or
+            data['landing']['top'] != 0 or data['landing']['left'] != 0 or
+            data['historyRoute'] != data['route'] or [p['id'] for p in data['panels']] != list(DISCLOSURE_IDS)):
+        raise RuntimeError('Disclosure audit lost the exact stationary desktop home')
+    check_stationary_shell_ancestors(data['stationaryAncestors'])
+    actual = data['directory']
+    if len(actual) != len(expected['directory']):
+        raise RuntimeError('Disclosure audit lost the complete source directory')
+    for row, source in zip(actual, expected['directory']):
+        if (any(row.get(key) != value for key, value in source.items()) or row.get('domParent') != source['parent'] or
+                row.get('id') != 'np-scope-entry-' + source['scope'] or row.get('tag') != 'BUTTON' or
+                row.get('type') != 'button' or row.get('disabled') or row.get('tabIndex') != 0):
+            raise RuntimeError('Disclosure audit changed a source directory label, order, parent or native control')
+    if data['comparisonOrder'] != expected['comparisonOrder']:
+        raise RuntimeError('Disclosure audit changed the original comparison order')
+    if baseline:
+        for key in ('route', 'historyRoute', 'historyLength', 'scale', 'window', 'originTrail', 'historyOriginTrail', 'expanded', 'selected', 'selectedRelation'):
+            if data[key] != baseline[key]:
+                raise RuntimeError('Disclosure input changed source/history identity: ' + key)
+        for key in ('landing', 'toolbar'):
+            if data[key]['rect'] != baseline[key]['rect']:
+                raise RuntimeError('Disclosure input moved the original landing or toolbar')
+    for panel in data['panels']:
+        if panel['count'] != 1 or panel['tag'] != 'DETAILS' or not panel['topology']:
+            raise RuntimeError('Disclosure audit lost an original native toolbar details')
+        if not panel['open']:
+            continue
+        check_disclosure_scroll_metrics(panel)
+        landing = data['landing']; bounds = landing['rect']
+        inner = dict(x=bounds['x'] + landing['borderLeft'], y=bounds['y'] + landing['borderTop'],
+                     width=bounds['width'] - landing['borderLeft'] - landing['borderRight'],
+                     height=bounds['height'] - landing['borderTop'] - landing['borderBottom'] - landing['paddingBottom'])
+        room = min(data['viewport']['height'], inner['y'] + inner['height']) - panel['rect']['y']
+        cap = min(324 if panel['id'] == 'np-task-relations' else data['viewport']['height'] - 240, room)
+        if (not math.isfinite(cap) or cap <= 0 or
+                panel['rect']['height'] > cap + S0_SPACING_TOLERANCE or not panel['opaque'] or not panel['unscaled'] or
+                not rect_inside(panel['rect'], inner, S0_SPACING_TOLERANCE) or
+                not rect_inside(panel['rect'], data['viewport'], S0_SPACING_TOLERANCE) or
+                panel['left'] != 0 or panel['scrollWidth'] > panel['clientWidth'] + 1 or panel['overflowY'] not in ('auto', 'scroll')):
+            raise RuntimeError('Toolbar disclosure exceeds its independent actual available-height cap or clipping bounds')
+
+
+def check_disclosure_targets(data, expected, indexes=None):
+    panel = next(p for p in data['panels'] if p['id'] == data['requested'])
+    specs = expected['targets'][panel['id']]
+    if not panel['open'] or len(data['targets']) != len(specs):
+        raise RuntimeError('Disclosure reachability proof lost its open original target set')
+    for index in range(len(specs)) if indexes is None else indexes:
+        actual, spec = data['targets'][index], specs[index]
+        if (actual.get('selector') != spec['selector'] or actual.get('count') != 1 or actual.get('panel') != panel['id'] or
+                spec.get('url') and (actual.get('tag') != 'A' or actual.get('url') != spec['url'])):
+            raise RuntimeError('Disclosure reachability proof substituted or duplicated an original target')
+        for paint in [actual['proof'], *actual['proof']['textRuns']]:
+            for field in ('foreground', 'background'):
+                color = paint.get(field)
+                if (not isinstance(color, list) or len(color) != 3 or
+                        any(type(v) not in (int, float) or not math.isfinite(v) or not 0 <= v <= 255 for v in color)):
+                    raise RuntimeError('Disclosure text has unknown or invalid actual paint')
+        check_s0_text(actual['proof'], spec['text'], panel['clientRect'], data['landing']['clientRect'], data['viewport'])
+    if panel['id'] == 'np-overview-comparison':
+        row = data['comparisonLast']
+        if (row['id'] != expected['comparisonLast'] or row['cells'] != 5 or
+                not rect_inside(row['rect'], panel['clientRect']) or not rect_inside(row['rect'], data['viewport'])):
+            raise RuntimeError('Complete final comparison row is not reachable inside its disclosure')
+
+
+def check_disclosure_action(item, expected):
+    before, after, trace = item['before'], item['after'], item['events']
+    check_disclosure_snapshot(after, expected, before)
+    if (trace['limit'] != 4 * (len(expected['directory']) + 1) + 16 or trace['overflow'] or
+            len(trace['events']) > trace['limit'] or any(event.get('trusted') is not True for event in trace['events'])):
+        raise RuntimeError('Disclosure input lost its bounded trusted native trace')
+    panel_id = item['panel']
+    b = next(p for p in before['panels'] if p['id'] == panel_id)
+    a = next(p for p in after['panels'] if p['id'] == panel_id)
+    if item['kind'] in ('wheel', 'wheel-boundary'):
+        check_disclosure_scroll_metrics(b)
+        if (not b['open'] or not a['open'] or b['maxTop'] != a['maxTop'] or b['clientRect'] != a['clientRect'] or
+                type(item['delta']) is not int or item['delta'] == 0 or before['focus'] != after['focus'] or
+                not any(e['type'] == 'wheel' and e['panel'] == panel_id for e in trace['events'])):
+            raise RuntimeError('Disclosure wheel lost its real isolated native input')
+        if item['kind'] == 'wheel':
+            if ((a['top'] - b['top']) * item['delta'] <= 0 or
+                    not any(e['type'] == 'scroll' and e['target']['id'] == panel_id for e in trace['events'])):
+                raise RuntimeError('Disclosure wheel did not produce real isolated internal progress')
+        elif (item['delta'] <= 0 or a['top'] != b['top'] or abs(a['top'] - a['maxTop']) >= 1):
+            raise RuntimeError('Disclosure native end overshoot did not remain at a stable real boundary')
+    elif item['kind'] in ('tab', 'escape'):
+        key = 'Tab' if item['kind'] == 'tab' else 'Escape'
+        keys = [e for e in trace['events'] if e['type'] in ('keydown', 'keyup')]
+        count = item.get('count', 1)
+        if (type(count) is not int or count < 1 or count > len(expected['directory']) + 1 or
+                len(keys) != count * 2 or [e['type'] for e in keys] != ['keydown', 'keyup'] * count or
+                any(e['key'] != key for e in keys)):
+            raise RuntimeError('Disclosure keyboard trace is missing the exact native key sequence')
+        if item['kind'] == 'escape':
+            if not b['open'] or a['open'] or after['focus']['summaryFor'] != panel_id or keys[0]['target'] != before['focus']:
+                raise RuntimeError('Disclosure Escape lost its closed state or exact summary focus')
+            label = next(row[2] for row in S0_TOOLBAR_LABELS if row[0] == panel_id)
+            check_chrome_text(a['summary'], label, 15, after['landing']['clientRect'], after['viewport'])
+        else:
+            wanted = item['scopes']
+            focuses = [e['target']['scope'] for e in trace['events'] if e['type'] == 'focusin']
+            if (count != len(wanted) or focuses != wanted or [e['target']['scope'] for e in keys if e['type'] == 'keyup'] != wanted or
+                    after['focus']['scope'] != wanted[-1] or not a['open']):
+                raise RuntimeError('Native Tab did not reach the exact source-bound directory path')
+    elif item['kind'] == 'open':
+        if (b['open'] or not a['open'] or after['focus']['summaryFor'] != panel_id or
+                not any(e['type'] == 'click' and e['target']['summaryFor'] == panel_id for e in trace['events'])):
+            raise RuntimeError('Native summary click did not open the exact disclosure with focus')
+    else:
+        raise RuntimeError('Unsupported disclosure audit action')
+    for other_before, other_after in zip(before['panels'], after['panels']):
+        if other_before['id'] != panel_id and any(other_before[key] != other_after[key] for key in ('open', 'top', 'left')):
+            raise RuntimeError('Disclosure input changed another toolbar panel')
+
+
+class DisclosureBudgetDriver(Driver):
+    """Only this additional audit uses the remaining deadline; normal Driver is unchanged."""
+    def __init__(self, driver, deadline):
+        self.url, self.session, self.deadline = driver.url, driver.session, deadline
+
+    def remaining(self):
+        remaining = self.deadline - time.monotonic()
+        if remaining <= 0:
+            raise TimeoutError('Disclosure audit exceeded its fixed ' + str(DISCLOSURE_AUDIT_SECONDS) + '-second input/checkpoint budget')
+        return remaining
+
+    def request(self, method, path, data=None):
+        raw = None if data is None else json.dumps(data).encode()
+        req = urllib.request.Request(self.url + path, data=raw, method=method, headers={'Content-Type': 'application/json'})
+        with urllib.request.urlopen(req, timeout=min(50, self.remaining())) as response:
+            value = json.load(response)['value']
+        self.remaining()
+        if isinstance(value, dict) and value.get('error'):
+            raise RuntimeError(value['error'] + ': ' + value.get('message', ''))
+        return value
+
+
+class DisclosureCheckpointSave:
+    """Measure every unchanged checkpoint call, including the reused paint helper."""
+    def __init__(self, callback, record):
+        self.callback, self.record = callback, record
+
+    def __call__(self):
+        timing = self.record['checkpointTiming']
+        timing['attempts'] += 1; timing['inProgress'] = True
+        started = time.monotonic()
+        try:
+            self.callback()
+            timing['completed'] += 1
+        finally:
+            timing['seconds'] += time.monotonic() - started
+            timing['inProgress'] = False
+
+
+def disclosure_bounds_checks(driver, report, save, prefix, science):
+    """Additional native interaction evidence after the existing -12 PNG; no new scene."""
+    expected = disclosure_expected(science)
+    record = {'viewport': prefix, 'budgetSeconds': DISCLOSURE_AUDIT_SECONDS, 'expected': expected, 'actions': [], 'proofs': [],
+              'tabLimit': len(expected['directory']) + 1, 'wheelLimitPerPanel': 4, 'status': 'started',
+              'checkpointTiming': {'attempts': 0, 'completed': 0, 'seconds': 0.0, 'inProgress': False}, 'budgetExhausted': False}
+    started = time.monotonic(); bounded = DisclosureBudgetDriver(driver, started + DISCLOSURE_AUDIT_SECONDS)
+    report.setdefault('disclosureBoundsChecks', []).append(record)
+    save = DisclosureCheckpointSave(save, record)
+    attempted = False; owner = prefix + ':' + str(started)
+    record['probeOwner'] = owner; record['probeStartAcknowledged'] = False
+    def snapshot(identity):
+        return bounded.js(DISCLOSURE_SNAPSHOT_JS, identity, expected['targets'][identity])
+    def action(kind, identity, perform, **fields):
+        before = snapshot(identity)
+        item = dict(kind=kind, panel=identity, before=before, status='pending', actionAcknowledged=False, **fields)
+        record['actions'].append(item); bounded.remaining(); save(); bounded.remaining()
+        bounded.js(DISCLOSURE_PROBE_JS, 'reset', owner)
+        try:
+            input_started = time.monotonic()
+            try:
+                perform()
+            finally:
+                item['nativeActionSeconds'] = time.monotonic() - input_started
+            item['actionAcknowledged'] = True; bounded.settle()
+            settle_s0_toolbar_paint(bounded, report, save, prefix + '-disclosure-' + str(len(record['actions'])))
+            bounded.remaining()
+        except Exception as exc:
+            item['actionError'] = str(exc)[:2000]
+            raise
+        finally:
+            for key, script, args in (('events', DISCLOSURE_PROBE_JS, ['read', owner]),
+                                      ('after', DISCLOSURE_SNAPSHOT_JS, [identity, expected['targets'][identity]])):
+                try:
+                    item[key] = (driver if 'actionError' in item else bounded).js(script, *args)
+                except Exception as exc:
+                    item[key + 'Error'] = str(exc)[:2000]
+                    if 'actionError' not in item:
+                        item['actionError'] = str(exc)[:2000]
+            try:
+                save()
+                if 'actionError' not in item:
+                    bounded.remaining()
+            except Exception as exc:
+                item['checkpointError'] = str(exc)[:2000]
+                if 'actionError' not in item:
+                    raise
+        if 'actionError' in item:
+            raise RuntimeError(item['actionError'])
+        check_disclosure_action(item, expected)
+        item['status'] = 'verified'; save(); bounded.remaining()
+        return item['after']
+    def key(identity, kind, scopes=None):
+        values = scopes or [None]
+        count = len(values)
+        if kind == 'tab' and sum(a.get('count', 0) for a in record['actions'] if a['kind'] == 'tab') + count > record['tabLimit']:
+            raise RuntimeError('Disclosure audit exceeded its source-bound native Tab limit')
+        code = '\ue004' if kind == 'tab' else '\ue00c'
+        sequence = [{'type': kind_, 'value': code} for _ in values for kind_ in ('keyDown', 'keyUp')]
+        return action(kind, identity, lambda: bounded.call('POST', '/actions', {'actions': [
+            {'type': 'key', 'id': 'toolbar-disclosure-keyboard', 'actions': sequence}]}), count=count, scopes=scopes)
+    def wheel_to(identity, boundary):
+        before = snapshot(identity); panel = next(p for p in before['panels'] if p['id'] == identity)
+        check_disclosure_scroll_metrics(panel)
+        if boundary not in ('start', 'end'):
+            raise RuntimeError('Disclosure wheel requires a reviewed real boundary')
+        if boundary == 'start' and panel['top'] == 0 or boundary == 'end' and panel['maxTop'] == 0 and panel['top'] == 0:
+            return before
+        # Integers scrollHeight/clientHeight are not the exact double endpoint.
+        # A full-content native overshoot reaches it; a second same-direction
+        # input must then leave the actual offset exactly stable. Tail proof is
+        # checked separately before any success is claimed.
+        delta = math.ceil(panel['scrollHeight'] + abs(panel['top']) + 1) * (-1 if boundary == 'start' else 1)
+        for kind in (('wheel',) if boundary == 'start' else ('wheel', 'wheel-boundary')):
+            if sum(a['kind'] in ('wheel', 'wheel-boundary') and a['panel'] == identity for a in record['actions']) >= record['wheelLimitPerPanel']:
+                raise RuntimeError('Disclosure audit exceeded its bounded native wheel steps')
+            r = panel['clientRect']; x, y = math.floor(r['x'] + r['width'] / 2), math.floor(r['y'] + r['height'] / 2)
+            after = action(kind, identity, lambda: bounded.call('POST', '/actions', {'actions': [
+                {'type': 'wheel', 'id': 'toolbar-disclosure-scroll', 'actions': [{'type': 'scroll', 'origin': 'viewport',
+                 'x': x, 'y': y, 'deltaX': 0, 'deltaY': delta, 'duration': 100}]}]}), delta=delta)
+            panel = next(p for p in after['panels'] if p['id'] == identity)
+            if boundary == 'start' and panel['top'] != 0 or boundary == 'end' and abs(panel['top'] - panel['maxTop']) >= 1:
+                raise RuntimeError('Native disclosure wheel did not reach its real content boundary')
+        return after
+    def proof(data, indexes=None):
+        record['proofs'].append({'panel': data['requested'], 'indexes': indexes, 'snapshot': data}); save(); bounded.remaining()
+        check_disclosure_targets(data, expected, indexes)
+    try:
+        save(); bounded.remaining()
+        attempted = True
+        bounded.js(DISCLOSURE_PROBE_JS, 'start', 4 * record['tabLimit'] + 16, owner)
+        record['probeStartAcknowledged'] = True
+        baseline = record['initial'] = snapshot('np-all-scopes'); save(); bounded.remaining(); check_disclosure_snapshot(baseline, expected)
+        if ([p['id'] for p in baseline['panels'] if p['open']] != ['np-all-scopes'] or
+                baseline['focus']['scope'] != 'task:dialnav'):
+            raise RuntimeError('Disclosure audit must start after the unchanged original directory-return scene')
+        key('np-all-scopes', 'escape')
+        for identity in DISCLOSURE_IDS:
+            opened = action('open', identity, lambda identity=identity: bounded.click(bounded.selector('#' + identity + ' > summary')))
+            check_disclosure_snapshot(opened, expected, baseline)
+            current = wheel_to(identity, 'start')
+            if identity == 'np-all-scopes':
+                current = key(identity, 'tab', [expected['directory'][0]['scope']]); proof(current, [0])
+            bottom = wheel_to(identity, 'end')
+            proof(bottom, [1] if identity == 'np-all-scopes' else None)
+            if identity == 'np-all-scopes':
+                wheel_to(identity, 'start')
+                last = key(identity, 'tab', [row['scope'] for row in expected['directory'][1:]])
+                proof(last, [1])
+            key(identity, 'escape')
+        final = record['final'] = snapshot('np-all-scopes'); save(); bounded.remaining(); check_disclosure_snapshot(final, expected, baseline)
+        if any(p['open'] for p in final['panels']):
+            raise RuntimeError('Disclosure audit did not leave all temporary menus natively closed')
+        bounded.remaining(); record['status'] = 'native_bounds_and_reachability_verified'
+    except Exception as exc:
+        record['status'] = 'failed'; record['error'] = str(exc)[:2000]
+        record['budgetExhausted'] = time.monotonic() >= started + DISCLOSURE_AUDIT_SECONDS
+        raise
+    finally:
+        cleanup_started = time.monotonic()
+        record['inputAndCheckpointElapsedSeconds'] = cleanup_started - started
+        record['nativeActionSeconds'] = sum(a.get('nativeActionSeconds', 0) for a in record['actions'])
+        try:
+            if attempted:
+                try:
+                    record['cleanup'] = driver.js(DISCLOSURE_PROBE_JS, 'stop', owner)
+                    if record['cleanup'].get('cleanedUp') is not True or record['cleanup'].get('owner') != owner:
+                        raise RuntimeError('Disclosure native-input observer was not removed')
+                except Exception as exc:
+                    record['cleanupError'] = str(exc)[:2000]
+                    if record['status'] != 'failed':
+                        record['status'] = 'failed'; save(); raise
+        finally:
+            record['diagnosticCleanupSeconds'] = time.monotonic() - cleanup_started
+            try:
+                save()
+                if record['status'] != 'failed':
+                    bounded.remaining()
+            except Exception as exc:
+                record['terminalCheckpointError'] = str(exc)[:2000]
+                record['budgetExhausted'] = time.monotonic() >= started + DISCLOSURE_AUDIT_SECONDS
+                if record['status'] != 'failed':
+                    record['status'] = 'failed'; record['error'] = str(exc)[:2000]
+                    raise
+            finally:
+                record['totalObservedSeconds'] = time.monotonic() - started
+                print('disclosure_audit ' + json.dumps({key: record[key] for key in (
+                    'viewport', 'budgetSeconds', 'status', 'nativeActionSeconds', 'checkpointTiming',
+                    'inputAndCheckpointElapsedSeconds', 'diagnosticCleanupSeconds', 'totalObservedSeconds', 'budgetExhausted')},
+                    separators=(',', ':')), flush=True)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dist', type=Path, required=True)
@@ -5437,7 +5868,7 @@ def main():
                                 'directoryReturn': 'Original -12 scene keeps its native glossary open; full-height/outer0 and all original gates remain, without requiring uncovered footer beneath that intentional overlay'},
               'capturePlan': [str(w) + 'x' + str(h) + suffix for w, h in VIEWPORTS for suffix in SCENE_NAMES]}
     report['frontendSources'] = {name: sha(name) for name in ('assets/navigation-product.js', 'assets/navigation-product-model.js', 'assets/navigation-product.css', 'scripts/navigation_product.py')}
-    report['captureSources'] = {name: sha(name) for name in ('scripts/navigation_screenshots.py', 'tests/test_navigation_screenshots.py')}
+    report['captureSources'] = {name: sha(name) for name in ('scripts/navigation_screenshots.py', 'tests/test_navigation_screenshots.py', 'tests/test_navigation_disclosure_bounds.py')}
     report['servedFiles'] = {str(p.relative_to(dist)): sha(p) for p in sorted((dist / 'research/navigation').rglob('*')) if p.is_file()}
     report['servedFiles'].update({str(p.relative_to(dist)): sha(p) for p in sorted((dist / 'assets').glob('navigation-*.js'))})
     report['servedFiles']['assets/navigation-product.css'] = sha(dist / 'assets/navigation-product.css')
@@ -6045,6 +6476,7 @@ def main():
                     raise RuntimeError('Directory return lost open state, scroll or exact entry focus')
                 report.setdefault('directoryReturnChecks', []).append({'scope': scope, 'before': before, 'after': after})
             capture(prefix + '-12-directory-return', require_home=True)
+            disclosure_bounds_checks(driver, report, save, prefix, science)
             task_density_checks(driver, report, save, capture, prefix, base, science)
             desktop_hierarchy_checks(driver, report, save, capture, prefix, base, science)
             task_route_checks(driver, report, save, capture, prefix, base, science, server, dist)

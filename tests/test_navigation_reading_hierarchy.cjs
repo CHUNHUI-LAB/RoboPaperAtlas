@@ -386,7 +386,9 @@ test('ready desktop outer clip forbids hidden ancestor scrolling without changin
   check();for(const value of ['hidden','auto','scroll','visible','']){const old=rows[0].rule.style.cssText;try{rows[0].rule.style.setProperty('overflow',value);assert.throws(check,/stationary outer wrappers/);}finally{rows[0].rule.style.cssText=old;}check();}
   for(const width of [760,1199])assert.equal(entries.filter(({rule,media})=>methodMediaActive(media,width)&&rule.selectorText.replace(/,\s*/g,',')===selector).length,0,'non-desktop document scrolling is unchanged');
   for(const width of [1200,1440,1920]){const active=entries.filter(({media})=>methodMediaActive(media,width));assert.equal(active.filter(({rule})=>rule.selectorText.replace(/,\s*/g,',')===selector).length,1);for(const scroller of ['#navigation-product .np-tree-scroll','#navigation-product .np-reader-body']){const rules=active.filter(({rule})=>rule.selectorText.split(',').map(s=>s.trim()).includes(scroller)&&rule.style.getPropertyValue('overflow'));assert.ok(rules.length,scroller);assert.equal(rules.at(-1).rule.style.getPropertyValue('overflow'),'auto','actual inner native scrolling remains');}}
-  assert.equal(entries.filter(({rule})=>rule.style.getPropertyValue('overflow')==='clip').length,1,'no scientific region or text gains clipping');
+  const landingSelector='#navigation-product[data-reading-home=true] .np-reading-landing.np-graphical-home';
+  function checkClipScope(){const clips=entries.filter(({rule})=>rule.style.getPropertyValue('overflow')==='clip');assert.deepEqual(clips.map(({rule})=>rule.selectorText.replace(/,\s*/g,',')).sort(),[selector,landingSelector].sort(),'only the document and explicit desktop-home landing are non-scrollable');for(const {rule,media}of clips){assert.deepEqual(media,['(min-width:1200px)']);assert.equal(rule.style.getPropertyValue('overflow-x'),'');assert.equal(rule.style.getPropertyValue('overflow-y'),'');}}
+  checkClipScope();const landing=entries.find(({rule})=>rule.selectorText===landingSelector).rule,old=landing.style.cssText;try{landing.style.setProperty('overflow','hidden');assert.throws(checkClipScope,/non-scrollable/);}finally{landing.style.cssText=old;}checkClipScope();
  }finally{dom.window.close();}
 });
 
@@ -712,4 +714,40 @@ test('desktop column viewport initializes before ready and follows real lifecycl
   await go(x,x.M.initialState(x.a.getBundle(),{scope:p.scopeId,tree:'l'}).route);assert.equal(app.style.getPropertyValue('--np-desktop-viewport-width'),'1920px');assert.notEqual(app.dataset.methodReading,'true');
   await selectMethodExact(x,p);assert.equal(app.style.getPropertyValue('--np-desktop-viewport-width'),'1920px');assert.equal(app.dataset.methodReading,'true');assertIdentity();
  }
+});
+
+// Geometry inputs are explicit fixtures. JSDOM verifies lifecycle/state only;
+// the existing Chrome directory scene remains the native scroll/pixel gate.
+test('desktop toolbar disclosure height follows initial render, resize, fonts, fullscreen and repeated open without state mutation',async t=>{
+ let releaseFonts;const fontReady=new Promise(resolve=>{releaseFonts=resolve;}),geometry={height:1080,bottom:1064,toolbarTop:290,paddingBottom:16,borderBottom:1};
+ const x=await page({width:1920,beforeParse(w){
+  Object.defineProperty(w,'innerHeight',{get:()=>geometry.height,configurable:true});Object.defineProperty(w.document,'fonts',{value:{ready:fontReady},configurable:true});
+  const rect=w.HTMLElement.prototype.getBoundingClientRect;w.HTMLElement.prototype.getBoundingClientRect=function(){const r=rect.call(this);if(this.id==='np-reading-landing')return {...r,bottom:geometry.bottom};if(this.classList.contains('np-overview-map-toolbar'))return {...r,top:geometry.toolbarTop};return r;};
+  const computed=w.getComputedStyle.bind(w);w.getComputedStyle=function(element,...args){const style=computed(element,...args);if(element.id!=='np-reading-landing')return style;return new Proxy(style,{get(target,key){if(key==='paddingBottom')return geometry.paddingBottom+'px';if(key==='borderBottomWidth')return geometry.borderBottom+'px';const value=Reflect.get(target,key,target);return typeof value==='function'?value.bind(target):value;}});};
+ }});t.after(()=>close(x));
+ const landing=x.d.getElementById('np-reading-landing'),all=x.d.getElementById('np-all-scopes'),panels=[...landing.querySelectorAll('.np-overview-map-toolbar>details')],nodes=[...all.querySelectorAll('[data-scope-open]')],source=nodes.map(n=>[n.id,n.dataset.scopeOpen,n.parentElement.dataset.parentScope,n.textContent]),route=plain(x.a.getState().route),history=x.w.history.length,variable='--np-overview-disclosure-room';assert.equal(nodes.length,64);assert.deepEqual(panels.map(p=>p.id),['np-all-scopes','np-overview-comparison','np-task-relations','np-overview-notes']);assert.equal(x.d.querySelectorAll('#np-overview-comparison [data-task-comparison]').length,22);assert.equal(x.d.querySelectorAll('#np-task-relations [data-relation-select]').length,7);const panelContents=panels.map(p=>p.innerHTML);assert.equal(landing.style.getPropertyValue(variable),'757px','first settled render already has actual available height');
+ const unchanged=()=>{assert.deepEqual(plain(x.a.getState().route),route);assert.equal(x.w.history.length,history);assert.deepEqual([...all.querySelectorAll('[data-scope-open]')],nodes);assert.deepEqual(nodes.map(n=>[n.id,n.dataset.scopeOpen,n.parentElement.dataset.parentScope,n.textContent]),source);assert.equal(landing.scrollTop,0);assert.equal(x.w.scrollY,0);assert.deepEqual(panels.map(p=>p.innerHTML),panelContents);};
+ for(const [width,height,bottom,toolbarTop,padding,wanted]of[[1440,900,896,152.890625,4,'738.109375px'],[1920,1080,1064,290,16,'757px'],[1199,900,896,152.890625,4,''],[375,757,753,140,4,''],[1200,951,935,260,16,'658px'],[1920,1080,1064,290,16,'757px']]){
+  Object.assign(geometry,{height,bottom,toolbarTop,paddingBottom:padding});Object.defineProperty(x.w,'innerWidth',{value:width,configurable:true});for(let i=0;i<3;i++)x.w.dispatchEvent(new x.w.Event('resize'));await ready(x);assert.equal(landing.style.getPropertyValue(variable),wanted);unchanged();
+  for(const panel of panels)for(let i=0;i<2;i++){panel.open=true;await frames(x.w);assert.equal(landing.style.getPropertyValue(variable),wanted);panel.open=false;await frames(x.w);unchanged();}
+ }
+ for(const event of ['load','fullscreenchange']){geometry.bottom-=12;const wanted=(geometry.bottom-geometry.borderBottom-geometry.paddingBottom-geometry.toolbarTop)+'px';if(event==='fullscreenchange')Object.defineProperty(x.d,'fullscreenElement',{value:x.d.getElementById('np-workspace'),configurable:true});(event==='load'?x.w:x.d).dispatchEvent(new x.w.Event(event));await ready(x);assert.equal(landing.style.getPropertyValue(variable),wanted);unchanged();}
+ geometry.bottom=1064;Object.defineProperty(x.d,'fullscreenElement',{value:null,configurable:true});x.d.dispatchEvent(new x.w.Event('fullscreenchange'));await ready(x);assert.equal(landing.style.getPropertyValue(variable),'757px');unchanged();
+ geometry.bottom=1054;releaseFonts();await ready(x);assert.equal(landing.style.getPropertyValue(variable),'747px');unchanged();
+ x.a.render({restore:true,focus:false});await ready(x);assert.equal(x.d.getElementById('np-reading-landing').style.getPropertyValue(variable),'747px');assert.deepEqual([...x.d.querySelectorAll('#np-all-scopes [data-scope-open]')].map(n=>[n.id,n.dataset.scopeOpen,n.parentElement.dataset.parentScope,n.textContent]),source);assert.deepEqual(plain(x.a.getState().route),route);
+});
+
+test('directory first and last original entries preserve native button semantics, Escape, exact return focus and all 64 identities',async()=>{
+ for(const width of [1440,1920]){const x=await page({width});try{
+  const original=[...x.d.querySelectorAll('#np-all-scopes [data-scope-open]')].map(n=>({id:n.id,scope:n.dataset.scopeOpen,parent:n.parentElement.dataset.parentScope,text:n.textContent})),route=plain(x.a.getState().route);assert.equal(original.length,64);assert.deepEqual(original.map(x=>x.scope).sort(),science.scopes.map(x=>x.id).sort());for(const entry of original)assert.equal(entry.parent,science.scopes.find(s=>s.id===entry.scope).parentScopeId||'');
+  for(const entry of [original[0],original.at(-1)]){
+   let all=x.d.getElementById('np-all-scopes'),control=x.d.getElementById(entry.id);all.open=true;assert.equal(control.tagName,'BUTTON');assert.equal(control.type,'button');assert.equal(control.disabled,false);assert.equal(control.tabIndex,0);
+   control.focus({preventScroll:true});control.dispatchEvent(new x.w.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));assert.equal(all.open,false);assert.equal(x.d.activeElement,all.querySelector('summary'));
+   all.open=true;control.focus({preventScroll:true});assert.equal(x.d.activeElement,control);control.click();await ready(x);assert.equal(x.a.getState().route.scope,entry.scope);
+   for(const tree of ['c','l']){x.d.querySelector('[data-tree-tab="'+tree+'"]').click();await ready(x);assert.equal(x.a.getState().route.scope,entry.scope);}
+   for(let i=0;i<6&&x.d.getElementById('np-reading-landing').hidden;i++){const back=x.d.querySelector('.np-return-previous');assert.ok(back);back.click();await ready(x);}
+   assert.equal(x.d.getElementById('np-reading-landing').hidden,false);all=x.d.getElementById('np-all-scopes');assert.equal(all.open,true);assert.equal(x.d.activeElement.id,entry.id);assert.equal(x.d.getElementById('np-reading-landing').scrollTop,0);assert.equal(x.w.scrollY,0);assert.deepEqual(plain(x.a.getState().route),route);
+   assert.deepEqual([...all.querySelectorAll('[data-scope-open]')].map(n=>({id:n.id,scope:n.dataset.scopeOpen,parent:n.parentElement.dataset.parentScope,text:n.textContent})),original);x.M.validateState(x.a.getBundle(),x.a.getState());
+  }
+ }finally{await close(x);}}
 });

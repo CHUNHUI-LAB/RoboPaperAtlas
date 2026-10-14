@@ -294,6 +294,22 @@ cache(target,{'status':'new','observations':[{'complete':'完整'}]})
         native_paint = next(n for n in source.body if isinstance(n, ast.FunctionDef) and n.name == 'settle_version_title_paint')
         self.assertEqual(len([n for n in ast.walk(native_paint) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']), 1)
         source.body.remove(native_paint)
+        disclosure = next(n for n in source.body if isinstance(n, ast.FunctionDef) and n.name == 'disclosure_bounds_checks')
+        def save_count(node):
+            return len([n for n in ast.walk(node) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save'])
+        nested = {n.name: save_count(n) for n in disclosure.body if isinstance(n, ast.FunctionDef)}
+        self.assertEqual(nested, {'snapshot': 0, 'action': 3, 'key': 0, 'wheel_to': 0, 'proof': 1})
+        self.assertEqual(save_count(disclosure), 9)
+        self.assertEqual(save_count(disclosure) - sum(nested.values()), 5,
+                         'new audit keeps its initial, baseline, final, cleanup-error and terminal checkpoints')
+        measured_save = next(n for n in source.body if isinstance(n, ast.ClassDef) and n.name == 'DisclosureCheckpointSave')
+        forwards = [n for n in ast.walk(measured_save) if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)
+                    and isinstance(n.func.value, ast.Name) and n.func.value.id == 'self' and n.func.attr == 'callback']
+        self.assertEqual(len(forwards), 1, 'timing wrapper forwards every checkpoint exactly once')
+        measured_bindings = [n for n in disclosure.body if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == 'save' for t in n.targets)]
+        self.assertEqual(len(measured_bindings), 1)
+        self.assertEqual(ast.dump(measured_bindings[0].value), "Call(func=Name(id='DisclosureCheckpointSave', ctx=Load()), args=[Name(id='save', ctx=Load()), Name(id='record', ctx=Load())], keywords=[])")
+        source.body.remove(disclosure)
         saves = [n for n in ast.walk(source) if isinstance(n, ast.FunctionDef) and n.name == 'save']
         calls = [n for n in ast.walk(source) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']
         self.assertEqual(len(saves), 1); self.assertEqual(len(calls), 103)

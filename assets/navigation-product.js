@@ -127,6 +127,14 @@ function syncDesktopWorkspaceHeight(){
  syncDesktopViewportWidth();
  if(window.innerWidth>=1200)app.style.setProperty('--np-workspace-shell-height',Math.max(0,window.innerHeight-app.getBoundingClientRect().top)+'px');else app.style.removeProperty('--np-workspace-shell-height');
 }
+// Toolbar disclosures scroll inside the stationary landing. Their absolute top
+// is relative to the toolbar padding edge, not a fixed amount of page chrome.
+function syncOverviewDisclosureHeight(landing){
+ var toolbar=landing.querySelector('.np-overview-map-toolbar');
+ if(window.innerWidth<1200||!toolbar){landing.style.removeProperty('--np-overview-disclosure-room');return;}
+ var box=landing.getBoundingClientRect(),style=window.getComputedStyle(landing),bottom=Math.min(window.innerHeight,box.bottom-(parseFloat(style.borderBottomWidth)||0)-(parseFloat(style.paddingBottom)||0)),top=toolbar.getBoundingClientRect().top+toolbar.clientTop;
+ landing.style.setProperty('--np-overview-disclosure-room',Math.max(0,bottom-top)+'px');
+}
 // Route every non-tree relationship through measured card gutters. The source
 // identities and endpoint ports stay unchanged; only empty-space bends move.
 function overviewRelationPath(boxes,relations,index,mapWidth,mapHeight){
@@ -154,6 +162,7 @@ function layoutReadingOverview(){
 
  if(footer){footer.hidden=!desktop;[legend,coverage].forEach(function(n){if(!n)return;(desktop?footer:map).appendChild(n);if(desktop){n.style.removeProperty('top');n.style.removeProperty('width');}});}
  map.classList.toggle('np-compact-overview',!desktop);by('np-map-relations-toggle').hidden=!desktop;
+ syncOverviewDisclosureHeight(by('np-reading-landing'));
  if(!desktop){map.style.removeProperty('height');map.querySelectorAll('.np-map-node,[data-layout-note],.np-map-legend,.np-map-coverage,.np-overview-relation-panel').forEach(function(n){['left','top','width','height','min-height'].forEach(function(property){n.style.removeProperty(property);});});var compactSVG=map.querySelector('.np-overview-connectors');if(compactSVG)clear(compactSVG);return;}
  var width=map.clientWidth||Math.max(1200,window.innerWidth-80),height=desktop?(map.clientHeight||704):Math.max(704,map.clientHeight||704),ciWidth=Math.min(520,Math.max(408,408+(width-1360)*112/480)),litWidth=width-ciWidth-24,ciX=litWidth+24,taskInset=8,colGap=16,nodeWidth=(litWidth-taskInset-colGap*3)/4,colStep=nodeWidth+colGap,rootId=bundle.researchMap.roots[0],positions={},spaceY=1;
  function place(n,x,y,w,h){y*=spaceY;n.style.left=x+'px';n.style.top=y+'px';n.style.width=w+'px';n.style.minHeight=h+'px';var measured=n.getBoundingClientRect().height||n.offsetHeight||h;positions[n.dataset.mapPosition]={x:x,y:y,w:w,h:measured};}

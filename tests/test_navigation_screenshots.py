@@ -14,6 +14,19 @@ MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
 
 
+def separate_disclosure_save_sites(case, tree):
+    """Prove only the additive audit's exact checkpoints before testing old counts."""
+    import ast
+    helper = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'disclosure_bounds_checks')
+    def count(node):
+        return len([n for n in ast.walk(node) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save'])
+    nested = {n.name: count(n) for n in helper.body if isinstance(n, ast.FunctionDef)}
+    case.assertEqual(nested, {'snapshot': 0, 'action': 3, 'key': 0, 'wheel_to': 0, 'proof': 1})
+    case.assertEqual(count(helper), 9)
+    case.assertEqual(count(helper) - sum(nested.values()), 5)
+    tree.body.remove(helper)
+
+
 def chrome_text_fixture(text, font, area, foreground, background):
     import copy
     fragment = dict(area, visible=True)
@@ -4832,6 +4845,7 @@ process.stdout.write(JSON.stringify({answer,callbacks,inspections,background,for
         source = (Path(__file__).parents[1] / 'scripts/navigation_screenshots.py').read_text()
         import ast
         tree = ast.parse(source)
+        separate_disclosure_save_sites(self, tree)
         paint_helper = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'settle_s0_toolbar_paint')
         def save_calls(node):
             return [n for n in ast.walk(node) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']
@@ -5276,6 +5290,7 @@ class S0FooterCaptureChecks(unittest.TestCase):
         self.assertIn("check_s0_footer(graph['s0AdaptiveSpacing'])", main)
         self.assertIn("reading_home(relation_mode='all')", main)
         tree = ast.parse(inspect.getsource(MODULE))
+        separate_disclosure_save_sites(self, tree)
         native_paint = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'settle_version_title_paint')
         self.assertEqual(len([n for n in ast.walk(native_paint) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']), 1)
         tree.body.remove(native_paint)
@@ -5849,6 +5864,7 @@ class AtomicReceiptPersistenceChecks(unittest.TestCase):
         import ast
         import tempfile
         source = Path(MODULE.__file__).read_text(encoding='utf-8'); tree = ast.parse(source)
+        separate_disclosure_save_sites(self, tree)
         native_paint = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'settle_version_title_paint')
         self.assertEqual(len([n for n in ast.walk(native_paint) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']), 1)
         tree.body.remove(native_paint)
@@ -5967,6 +5983,7 @@ class S0SelectorOcclusionChecks(unittest.TestCase):
         for text in ("s0_footer_check('before-selection-'", "s0_footer_check('closed-'", "check_s0_stability(before_selection, selected_footer)", "closed['focus'] != 'np-relation-select-'", 'check_s0_stability(footer_before_reload, footer_after_reload, restore=True)'):
             self.assertIn(text, main)
         tree = ast.parse(inspect.getsource(MODULE))
+        separate_disclosure_save_sites(self, tree)
         native_paint = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'settle_version_title_paint')
         self.assertEqual(len([n for n in ast.walk(native_paint) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']), 1)
         tree.body.remove(native_paint)

@@ -48,7 +48,7 @@ test('both approved desktop budgets reserve full 649px source map and original s
   assert.ok(available>=649,JSON.stringify({budget,available}));assert.ok(available<680,'budget must not fabricate spare viewport');
   assert.ok(available-30<649,'a genuinely taller header exhausts the budget');
   assert.equal(s('.np-overview-footer').marginTop,'12px');assert.equal(s('.np-overview-footer').flexShrink,'0');
-  assert.equal(s('.np-overview-map').minHeight,'0');assert.equal(s('.np-reading-landing').overflow,'hidden');
+  assert.equal(s('.np-overview-map').minHeight,'0');assert.equal(s('.np-reading-landing').overflow,'clip');
  }finally{x.dom.window.close();}}
 });
 test('short-shell controller derives height from the actual application top, not the old fixed 128px offset',()=>{
@@ -130,4 +130,75 @@ test('viewport synchronization shares existing render, resize, font, load and fu
  assert.equal((source.match(/document\.fonts\.ready\.then\(refreshChromeHeight\)/g)||[]).length,1);
  const helper=source.match(/^function syncDesktopViewportWidth\([^]*?^\}/m)[0];
  assert.doesNotMatch(helper,/requestAnimationFrame|addEventListener|Observer|getBoundingClientRect|scroll|state\.|route\.|setTimeout|render\(/,'the viewport sync cannot create a layout/event/state loop');
+});
+
+// These declaration/box-model checks do not simulate native scrolling. Chrome
+// CI still owns native scroll/pixel evidence and the unchanged zero-offset gates.
+const directoryController=fs.readFileSync(path.join(root,'assets/navigation-product.js'),'utf8');
+const directoryHeightSource=directoryController.match(/^function syncOverviewDisclosureHeight\([^]*?^\}/m)[0];
+function directoryBudget(options={}){
+ const o={width:1920,height:1080,bottom:1064,paddingBottom:16,borderBottom:1,toolbarTop:290,toolbarBorder:0,...options},values=new Map([['--unrelated-value','preserved']]);
+ const toolbar={getBoundingClientRect:()=>({top:o.toolbarTop}),clientTop:o.toolbarBorder};
+ const landing={querySelector:selector=>{assert.equal(selector,'.np-overview-map-toolbar');return o.missingToolbar?null:toolbar;},getBoundingClientRect:()=>({bottom:o.bottom}),style:{setProperty:(k,v)=>values.set(k,v),removeProperty:k=>values.delete(k)}};
+ const window={innerWidth:o.width,innerHeight:o.height,getComputedStyle:element=>{assert.equal(element,landing);return {paddingBottom:o.paddingBottom+'px',borderBottomWidth:o.borderBottom+'px'};}};
+ Object.defineProperty(window,'scrollY',{get(){throw Error('Viewport coordinates must not include document scrolling');}});
+ const run=Function('window',directoryHeightSource+';return syncOverviewDisclosureHeight;')(window);
+ run(landing);return {o,window,landing,toolbar,values,run};
+}
+test('disclosure bound uses actual inner bottom and toolbar padding edge without double-counting border or padding',()=>{
+ for(const [options,wanted]of[[{},757],[{height:900,bottom:896,paddingBottom:4,toolbarTop:152.890625},738.109375],[{toolbarBorder:3},754],[{borderBottom:2.5,paddingBottom:21.25},750.25],[{height:1000},710],[{bottom:280},0],[{bottom:1064.375},757.375]]){
+  const x=directoryBudget(options);assert.equal(x.values.get('--np-overview-disclosure-room'),wanted+'px');assert.equal(x.values.get('--unrelated-value'),'preserved');
+ }
+ const x=directoryBudget();x.o.bottom=960;x.run(x.landing);assert.equal(x.values.get('--np-overview-disclosure-room'),'653px','recompute from new chrome rather than accumulate offsets');
+ assert.doesNotMatch(directoryHeightSource,/scrollTop|scrollLeft|scrollTo|scrollIntoView|focus\(|state\.|history|setTimeout|requestAnimationFrame|addEventListener|Observer/,'measurement must not repair scroll/state or introduce a loop');
+});
+test('disclosure bound clears on narrow layout and a missing toolbar without reading stale desktop geometry',()=>{
+ for(const width of [1199,1180,375]){const x=directoryBudget();x.window.innerWidth=width;x.landing.getBoundingClientRect=()=>{throw Error('Narrow layout must not receive desktop measurements');};x.run(x.landing);assert.equal(x.values.has('--np-overview-disclosure-room'),false);assert.equal(x.values.get('--unrelated-value'),'preserved');}
+ const x=directoryBudget({missingToolbar:true});assert.equal(x.values.has('--np-overview-disclosure-room'),false);
+});
+test('all four toolbar disclosures are bounded only inside desktop home and retain their distinct original caps and positions',()=>{
+ const selector='#navigation-product[data-reading-home=true] .np-overview-map-toolbar>details[open]',relationSelector='#navigation-product[data-reading-home=true] .np-overview-map-toolbar>#np-task-relations[open]',ids=['np-all-scopes','np-overview-comparison','np-task-relations','np-overview-notes'];
+ const generalCap='min(calc(100dvh - 240px),max(0px,calc(var(--np-overview-disclosure-room,0px) - var(--np-overview-disclosure-top))))',relationCap='min(324px,max(0px,calc(var(--np-overview-disclosure-room,0px) - var(--np-overview-disclosure-top))))';
+ for(const [width,height,home]of[[1440,900,true],[1440,950,true],[1440,951,true],[1920,1080,true],[1200,1000,true],[1199,900,true],[375,757,true],[1920,1080,false]]){
+  const x=fixture(width,height,home),base=fixture(width,height,home,false);try{
+   for(const id of ids){x.d.getElementById(id).open=true;base.d.getElementById(id).open=true;}
+   const landing=x.s('.np-reading-landing'),active=width>=1200&&home;
+   assert.equal(landing.overflow,active?'clip':base.s('.np-reading-landing').overflow);if(width<1200)assert.equal(landing.overflow,'visible');
+   for(const id of ids){const panel=x.s('#'+id);
+    if(active){assert.equal(panel.overflow,'auto');assert.equal(panel.top,'var(--np-overview-disclosure-top)');assert.equal(panel.getPropertyValue('--np-overview-disclosure-top'),height<=950?'28px':'40px');assert.equal(panel.maxHeight,id==='np-task-relations'?relationCap:generalCap);}
+    else{assert.equal(panel.getPropertyValue('--np-overview-disclosure-top'),'');assert.equal(panel.maxHeight,base.s('#'+id).maxHeight);}
+    for(const key of ['fontSize','lineHeight','width','paddingTop','paddingBottom','borderTopWidth','borderBottomWidth'])assert.equal(panel[key],base.s('#'+id)[key]);
+   }
+   for(const q of ['.np-reading-landing','.np-global-navigation>details'])for(const key of ['fontSize','lineHeight','borderTopWidth','borderBottomWidth','paddingLeft','paddingRight'])assert.equal(x.s(q)[key],base.s(q)[key]);
+  }finally{x.dom.window.close();base.dom.window.close();}
+ }
+ const dom=new JSDOM('<style></style>');try{const style=dom.window.document.querySelector('style');style.textContent=css;const entries=[];function collect(rules,media=[]){for(const r of rules)if(r.media)collect(r.cssRules,media.concat(r.media.mediaText));else if(r.selectorText)entries.push({r,media});}collect(style.sheet.cssRules);
+  const rules=entries.filter(({r})=>r.selectorText===selector);assert.equal(rules.length,2);assert.deepEqual(rules.map(x=>x.media),[['(min-width:1200px)'],['(min-width:1200px) and (max-height:950px)']]);
+  const cap=rules[0].r.style;assert.equal(cap.getPropertyValue('top'),'var(--np-overview-disclosure-top)');assert.equal(cap.getPropertyValue('--np-overview-disclosure-top'),'40px');assert.equal(rules[1].r.style.getPropertyValue('--np-overview-disclosure-top'),'28px');
+  const relation=entries.filter(({r})=>r.selectorText===relationSelector);assert.equal(relation.length,1);assert.deepEqual(relation[0].media,['(min-width:1200px)']);
+  const assertBound=()=>{assert.equal(cap.getPropertyValue('max-height'),generalCap);assert.equal(relation[0].r.style.getPropertyValue('max-height'),relationCap);};assertBound();
+  cap.setProperty('max-height','calc(100dvh - 240px)');assert.throws(assertBound,'the old viewport-only cap must not survive on comparison or notes');cap.setProperty('max-height',generalCap);
+  relation[0].r.style.setProperty('max-height','324px');assert.throws(assertBound,'the relation cap also needs the actual landing limit');relation[0].r.style.setProperty('max-height',relationCap);assertBound();
+  assert.equal(relationCap.includes('100dvh'),false,'relations preserve their independent original 324px cap rather than acquiring a new viewport cap');
+ }finally{dom.window.close();}
+});
+test('directory, long comparison, notes and relation scrollport budgets keep modeled first and last rows reachable',()=>{
+ // Independent scrollport arithmetic, not a claim that JSDOM paints or runs
+ // scrollIntoView. Existing CI checks only its declared interactions.
+ for(const [options,top,expectedGeneral,expectedRelation]of[[{},40,717,324],[{height:900,bottom:896,paddingBottom:4,toolbarTop:152.890625},28,660,324],[{height:600,bottom:584,toolbarTop:340},28,199,199]]){
+  const x=directoryBudget(options),room=parseFloat(x.values.get('--np-overview-disclosure-room')),available=Math.max(0,room-top),origin=x.o.toolbarTop+x.o.toolbarBorder+top,innerBottom=x.o.bottom-x.o.borderBottom-x.o.paddingBottom;
+  for(const id of ['np-all-scopes','np-overview-comparison','np-overview-notes','np-task-relations']){
+   const oldCap=id==='np-task-relations'?324:x.o.height-240,height=Math.min(oldCap,available);assert.equal(height,id==='np-task-relations'?expectedRelation:expectedGeneral,id);
+   function check(menuHeight){const border=1,padding=10,client=menuHeight-2*border,scrollHeight=4000,lastY=scrollHeight-padding-44;
+    for(const y of [padding+24,lastY]){const scroll=Math.max(0,Math.min(scrollHeight-client,y+22-client/2)),visibleTop=origin+border+y-scroll,visibleBottom=visibleTop+44;assert.ok(visibleTop>=origin+border);assert.ok(visibleBottom<=innerBottom,JSON.stringify({id,menuHeight,visibleBottom,innerBottom}));if(y===lastY)assert.ok(scroll>0,'long content retains its own internal scroll');}
+   }check(height);if(oldCap>available)assert.throws(()=>check(oldCap),/visibleBottom/,'clip without the matching cap strands the last row of '+id);
+  }
+ }
+});
+test('disclosure height follows existing home geometry lifecycle without changing capture or zero-offset contracts',()=>{
+ assert.match(directoryController,/map\.classList\.toggle\('np-compact-overview',!desktop\);by\('np-map-relations-toggle'\)\.hidden=!desktop;\s*syncOverviewDisclosureHeight\(by\('np-reading-landing'\)\);/);
+ assert.equal((directoryController.match(/syncOverviewDisclosureHeight\(by\(/g)||[]).length,1,'one shared lifecycle call');
+ assert.equal((directoryController.match(/window\.addEventListener\('resize'/g)||[]).length,1);assert.equal((directoryController.match(/document\.addEventListener\('fullscreenchange'/g)||[]).length,1);
+ assert.match(directoryController,/function refreshChromeHeight\(\)\{[^\n]*layoutReadingOverview\(\);\}/);
+ const capture=fs.readFileSync(path.join(root,'scripts/navigation_screenshots.py'),'utf8');assert.ok(capture.includes("arguments[0].scrollIntoView({block:'center'});arguments[0].focus({preventScroll:true});"));assert.ok(capture.includes("data.get('landingOffsets') != {'top': 0, 'left': 0}"));assert.ok(capture.includes("before != after"));
 });
