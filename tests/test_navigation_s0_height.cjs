@@ -61,7 +61,7 @@ test('short-shell controller derives height from the actual application top, not
 
 test('desktop height follows actual app top, clamps exhausted space and clears stale narrow styles',()=>{
  const source=fs.readFileSync(path.join(root,'assets/navigation-product.js'),'utf8');
- const fn=source.match(/^function syncDesktopWorkspaceHeight\([^]*?^\}/m)[0];
+ const fn=['syncDesktopViewportWidth','syncDesktopWorkspaceHeight'].map(name=>source.match(new RegExp('^function '+name+'\\([^]*?^\\}', 'm'))[0]).join('\n');
  const run=Function('app','window',fn+';syncDesktopWorkspaceHeight();');const values=new Map();
  const app={getBoundingClientRect:()=>({top:65}),style:{setProperty:(k,v)=>values.set(k,v),removeProperty:k=>values.delete(k)}};
  for(const [width,height,wanted]of[[1440,900,'835px'],[1920,1080,'1015px'],[1440,40,'0px']]){run(app,{innerWidth:width,innerHeight:height});assert.equal(values.get('--np-workspace-shell-height'),wanted);}
@@ -83,4 +83,51 @@ test('fullscreen changes request geometry refresh even when viewport dimensions 
  const doc={fullscreenElement:{}};const run=Function('document','by','refreshChromeHeight','return '+callback)(doc,()=>control,()=>refreshes++);
  run();assert.equal(refreshes,1);assert.equal(focused,0);assert.equal(control.textContent,'退出全屏');
  doc.fullscreenElement=null;run();assert.equal(refreshes,2);assert.equal(focused,1);assert.equal(control.textContent,'全屏查看');
+});
+
+test('desktop column viewport is raw innerWidth, independent of gutter, and clears narrow stale state',()=>{
+ const source=fs.readFileSync(path.join(root,'assets/navigation-product.js'),'utf8');
+ const fn=source.match(/^function syncDesktopViewportWidth\([^]*?^\}/m)[0];
+ const run=Function('app','window',fn+';syncDesktopViewportWidth();'),values=new Map([['--unrelated-value','preserved']]);
+ const app={style:{setProperty:(k,v)=>values.set(k,v),removeProperty:k=>values.delete(k)},getBoundingClientRect(){throw Error('Column input must not be inferred from product geometry');}};
+ for(const width of [1200,1440,1500,1600,1680,1800,1919,1920,2200])for(const gutter of [0,8,15,24]){
+  const window={innerWidth:width};Object.defineProperty(window,'document',{get(){throw Error('Do not infer viewport from root/body/gutter: '+gutter);}});
+  run(app,window);assert.equal(values.get('--np-desktop-viewport-width'),width+'px');assert.equal(values.get('--unrelated-value'),'preserved');
+ }
+ for(const width of [1199,1180,375]){run(app,{innerWidth:width});assert.equal(values.has('--np-desktop-viewport-width'),false);}
+ run(app,{innerWidth:1920});assert.equal(values.get('--np-desktop-viewport-width'),'1920px');
+});
+
+test('method and A columns retain continuous reviewed interpolation with actual gutter-aware reader remainder',()=>{
+ const dom=new JSDOM('<style></style>');try{
+  const style=dom.window.document.querySelector('style');style.textContent=css;
+  const desktop=[...style.sheet.cssRules].filter(r=>r.media&&r.media.mediaText==='(min-width:1200px)').flatMap(r=>[...r.cssRules]);
+  const source=fs.readFileSync(path.join(root,'assets/navigation-product.js'),'utf8'),fn=source.match(/^function syncDesktopViewportWidth\([^]*?^\}/m)[0];
+  const values=new Map(),app={style:{setProperty:(k,v)=>values.set(k,v),removeProperty:k=>values.delete(k)}},run=Function('app','window',fn+';syncDesktopViewportWidth();');
+  for(const [selector,gap]of[['#navigation-product[data-method-reading=true] .np-panels',16],['#navigation-product[data-active-tree=a] .np-panels',24]]){
+   const rule=desktop.find(r=>r.selectorText===selector);assert.ok(rule);
+   assert.match(rule.style.getPropertyValue('grid-template-columns'),/^clamp\(400px,\s*calc\(var\(--np-desktop-viewport-width,\s*100vw\)\s*\/\s*10\s*\+\s*256px\),\s*448px\)\s+minmax\(0,\s*1fr\)$/);
+   assert.equal(rule.style.getPropertyValue('gap'),gap+'px');
+   for(const [width,wanted]of[[1200,400],[1440,400],[1500,406],[1600,416],[1680,424],[1800,436],[1919,447.9],[1920,448],[2200,448]])for(const gutter of [0,8,15,24]){
+    run(app,{innerWidth:width});const viewport=parseFloat(values.get('--np-desktop-viewport-width')),tree=Math.min(448,Math.max(400,viewport/10+256)),panels=width-gutter-32,reader=panels-gap-tree;
+    assert.equal(tree,wanted);assert.ok(reader>0);assert.ok(Math.abs(tree+gap+reader-panels)<1e-9,'the reader takes remaining space without root overflow');
+    if(width===1920&&gutter===15){assert.equal(tree,448);assert.equal(reader,gap===16?1409:1401);}
+    if(width===1440&&gutter===15)assert.equal(reader,gap===16?977:969);
+   }
+  }
+  assert.equal((css.match(/var\(--np-desktop-viewport-width/g)||[]).length,2,'only A and actual-method column rules consume the viewport input');
+ }finally{dom.window.close();}
+});
+
+test('viewport synchronization shares existing render, resize, font, load and fullscreen lifecycle without new listeners',()=>{
+ const source=fs.readFileSync(path.join(root,'assets/navigation-product.js'),'utf8');
+ assert.match(source,/function render\(options\)\{[^\n]*restoring=true;syncDesktopViewportWidth\(\);[^\n]*renderScopePicker\(/,'initial render sets width inside restore suppression before readiness or panel reads');
+ assert.match(source,/function syncDesktopWorkspaceHeight\(\)\{\s*syncDesktopViewportWidth\(\);/);
+ assert.match(source,/resizeFrame=window\.requestAnimationFrame\(function\(\)\{resizeFrame=null;syncDesktopViewportWidth\(\);if\(state/,'resize writes the new viewport before selected-row anchoring');
+ assert.equal((source.match(/window\.addEventListener\('resize'/g)||[]).length,1);
+ assert.equal((source.match(/document\.addEventListener\('fullscreenchange'/g)||[]).length,1);
+ assert.equal((source.match(/window\.addEventListener\('load',refreshChromeHeight\)/g)||[]).length,1);
+ assert.equal((source.match(/document\.fonts\.ready\.then\(refreshChromeHeight\)/g)||[]).length,1);
+ const helper=source.match(/^function syncDesktopViewportWidth\([^]*?^\}/m)[0];
+ assert.doesNotMatch(helper,/requestAnimationFrame|addEventListener|Observer|getBoundingClientRect|scroll|state\.|route\.|setTimeout|render\(/,'the viewport sync cannot create a layout/event/state loop');
 });
