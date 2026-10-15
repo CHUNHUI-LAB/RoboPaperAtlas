@@ -4,14 +4,42 @@
 // Each production HTML scenario gets a separate heap. No browser network access.
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),cp=require('node:child_process'),crypto=require('node:crypto'),zlib=require('node:zlib');
 const root=path.resolve(__dirname,'..'),scenarios=['density-budget','retry-multiple','cold-clamp-c','cold-clamp-g','cold-clamp-g-scope','cold-clamp','cold-clamp-focus','cold-clamp-wheel','cold-clamp-scope','density','offline','retry-stability','retry-cancel','return-clamp','return-clamp-focus','return-clamp-wheel','return-clamp-scope','method-claim-typography','typography','coverage','entries','evidence','versions','summaries','async','failures','return','conditions','cold-restore','cold-focus','cold-key','cold-pointer','cold-click','cold-scope','cold-reader','cold-wheel','cold-touch','cold-pre-focus','cold-pre-key','settled-teardown','settled-teardown-failure','settled-teardown-error','settled-teardown-timeout'];
+// One build per suite, still one fresh Node/JSDOM heap per scenario.
+const {snapshot,unchanged}=require('./helpers/navigation_fixture.cjs');
 if(!process.env.NP_TASK_ROUTE_CASE){
- for(const name of scenarios)test('task route production contract: '+name,t=>{const env={...process.env,NP_TASK_ROUTE_CASE:name};delete env.NODE_TEST_CONTEXT;const result=cp.spawnSync(process.execPath,['--test',__filename],{cwd:root,env,encoding:'utf8',maxBuffer:8*1024*1024});if(result.stdout)t.diagnostic(result.stdout);if(result.stderr)t.diagnostic(result.stderr);assert.ifError(result.error);assert.equal(result.signal,null);assert.equal(result.status,0,result.stdout+result.stderr);});
+ require('./test_navigation_fixture.cjs');
+ let shared,expected;
+ test.before(()=>{
+  shared=fs.mkdtempSync(path.join(root,'.navigation-task-routes-'));
+  cp.execFileSync('python3',['-c',"import sys;from pathlib import Path;sys.path.insert(0,'scripts');import navigation_product as p;p.write_preview(Path('.').resolve(),Path(sys.argv[1]))",shared],{cwd:root});
+  expected=snapshot(shared);
+ });
+ test.after(()=>{try{if(expected)unchanged(shared,expected);}finally{if(shared)fs.rmSync(shared,{recursive:true,force:true});}});
+ for(const name of scenarios)test('task route production contract: '+name,t=>{
+  unchanged(shared,expected);
+  const env={...process.env,NP_TASK_ROUTE_CASE:name,NP_TASK_ROUTE_FIXTURE_HANDOFF:JSON.stringify({path:shared,sha256:crypto.createHash('sha256').update(expected).digest('hex')})};delete env.NODE_TEST_CONTEXT;
+  const result=cp.spawnSync(process.execPath,['--test',__filename],{cwd:root,env,encoding:'utf8',maxBuffer:8*1024*1024});
+  // Check even if the child failed, before another scenario can consume it.
+  unchanged(shared,expected);
+  if(result.stdout)t.diagnostic(result.stdout);if(result.stderr)t.diagnostic(result.stderr);
+  assert.ifError(result.error);assert.equal(result.signal,null);assert.equal(result.status,0,result.stdout+result.stderr);
+ });
 }else{
- const {JSDOM,ResourceLoader,VirtualConsole}=require('jsdom'),temp=fs.mkdtempSync(path.join(root,'.navigation-task-routes-'));
- cp.execFileSync('python3',['-c',"import sys;from pathlib import Path;sys.path.insert(0,'scripts');import navigation_product as p;p.write_preview(Path('.').resolve(),Path(sys.argv[1]))",temp],{cwd:root});
+ const {JSDOM,ResourceLoader,VirtualConsole}=require('jsdom');
+ // Direct single-case invocation retains its original independent-build behavior.
+ const handoff=process.env.NP_TASK_ROUTE_FIXTURE_HANDOFF;
+ let borrowed;
+ if(handoff){
+  const received=JSON.parse(handoff);assert.equal(typeof received.path,'string');assert.match(received.sha256,/^[a-f0-9]{64}$/);
+  borrowed=received.path;assert.equal(path.dirname(borrowed),root);assert.ok(path.basename(borrowed).startsWith('.navigation-task-routes-'));assert.equal(fs.realpathSync(borrowed),borrowed);
+  assert.equal(crypto.createHash('sha256').update(snapshot(borrowed)).digest('hex'),received.sha256,'fixture handoff integrity mismatch');
+ }
+ const temp=borrowed||fs.mkdtempSync(path.join(root,'.navigation-task-routes-'));
+ if(borrowed){assert.equal(path.dirname(temp),root);assert.ok(path.basename(temp).startsWith('.navigation-task-routes-'));assert.equal(fs.realpathSync(temp),temp);}
+ else cp.execFileSync('python3',['-c',"import sys;from pathlib import Path;sys.path.insert(0,'scripts');import navigation_product as p;p.write_preview(Path('.').resolve(),Path(sys.argv[1]))",temp],{cwd:root});
  const output=path.join(temp,'research/navigation'),html=fs.readFileSync(path.join(output,'index.html'),'utf8');
  const scienceBytes=zlib.gunzipSync(fs.readFileSync(path.join(root,'data/navigation-product/model.json.gz'))),raw=JSON.parse(scienceBytes),taskIds=raw.directoryGroups.find(g=>g.id==='task').scopeIds,wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
- test.after(()=>fs.rmSync(temp,{recursive:true,force:true}));
+ test.after(()=>{if(!borrowed)fs.rmSync(temp,{recursive:true,force:true});});
  function scenario(name,fn){if(process.env.NP_TASK_ROUTE_CASE===name)test(name,fn);}
  async function frames(w){await new Promise(resolve=>w.requestAnimationFrame(()=>w.requestAnimationFrame(resolve)));}
  // These scenarios exercise simultaneous desktop tree/reader focus and offsets.
