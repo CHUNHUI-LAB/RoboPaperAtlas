@@ -5926,6 +5926,7 @@ def main():
               'capturePlan': [str(w) + 'x' + str(h) + suffix for w, h in VIEWPORTS for suffix in SCENE_NAMES]}
     report['frontendSources'] = {name: sha(name) for name in ('assets/navigation-product.js', 'assets/navigation-product-model.js', 'assets/navigation-product.css', 'scripts/navigation_product.py')}
     report['captureSources'] = {name: sha(name) for name in ('scripts/navigation_screenshots.py', 'tests/test_navigation_screenshots.py', 'tests/test_navigation_disclosure_bounds.py')}
+    report['captureSources']['scripts/navigation_receipt_journal.py'] = sha('scripts/navigation_receipt_journal.py')
     report['servedFiles'] = {str(p.relative_to(dist)): sha(p) for p in sorted((dist / 'research/navigation').rglob('*')) if p.is_file()}
     report['servedFiles'].update({str(p.relative_to(dist)): sha(p) for p in sorted((dist / 'assets').glob('navigation-*.js'))})
     report['servedFiles']['assets/navigation-product.css'] = sha(dist / 'assets/navigation-product.css')
@@ -5954,7 +5955,8 @@ def main():
     server = None
     logs = (out / 'chromedriver.log').open('w')
     # Preserve the original save wrapper and all checkpoint call sites.
-    receipt_cache = ReceiptSnapshotCache(out / 'receipt.json')
+    from navigation_receipt_journal import ReceiptJournal
+    receipt_cache = ReceiptJournal(out / 'receipt.json')
     write_receipt = receipt_cache
 
     def save():

@@ -47,6 +47,9 @@ jobs:
         env:
           EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
         run: python3 scripts/navigation_screenshots.py --dist dist --output navigation-screenshots
+      - name: Reconstruct and validate every committed receipt checkpoint
+        if: always()
+        run: python3 scripts/navigation_receipt_journal.py --journal navigation-screenshots/receipt-journal --output navigation-screenshots/receipt.json
       - name: Preserve screenshots and diagnostics
         if: always()
         uses: actions/upload-artifact@v4
@@ -55,5 +58,8 @@ jobs:
           path: |
             navigation-screenshots/*.png
             navigation-screenshots/receipt.json
+            navigation-screenshots/receipt-journal/*.json
+            navigation-screenshots/receipt-journal/recover.py
+            navigation-screenshots/receipt-journal/README.md
           if-no-files-found: error
           retention-days: 7
