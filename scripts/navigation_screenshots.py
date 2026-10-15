@@ -516,6 +516,21 @@ def write_receipt(path, report):
             temporary.unlink(missing_ok=True)
 
 
+class ReceiptTimedOutput:
+    """Forward the original temporary-file context, measuring its I/O boundaries."""
+    def __init__(self, cache):
+        self.cache = cache
+
+    def __enter__(self):
+        self.manager = self.cache._timed(
+            'outputCreate', tempfile.NamedTemporaryFile, mode='wb', dir=self.cache.path.parent,
+            prefix='.' + self.cache.path.name + '.', suffix='.tmp', delete=False)
+        return self.cache._timed('outputEnter', self.manager.__enter__)
+
+    def __exit__(self, *error):
+        return self.cache._timed('outputClose', self.manager.__exit__, *error)
+
+
 class ReceiptSnapshotCache:
     """Reuse JSON encoding, never checkpoints or observations.
 
@@ -539,6 +554,23 @@ class ReceiptSnapshotCache:
             raise ValueError('Invalid receipt cache budget')
         self.stats = dict(writes=0, hits=0, misses=0, fingerprintSeconds=0.0,
                           encodeSeconds=0.0, copySeconds=0.0, totalSeconds=0.0)
+        # Additive diagnostics: legacy counters retain their original scopes.
+        # Inclusive disjoint phases explain total time; cache* phases are nested
+        # inside chunk/payload/staleCleanup and must not be subtracted twice.
+        self.phases = ('chunk', 'payload', 'outputCreate', 'outputEnter', 'outputClose',
+                       'replace', 'staleCleanup', 'temporaryCleanup')
+        for phase in self.phases + ('cacheDigest', 'cacheWrite', 'cacheRemove', 'remainder'):
+            self.stats[phase + 'Seconds'] = 0.0
+            self.stats[phase + 'CpuSeconds'] = 0.0
+        self.stats.update(totalCpuSeconds=0.0, attemptSeconds=0.0, attemptCpuSeconds=0.0)
+
+    def _timed(self, phase, operation, *args, **kwargs):
+        wall, cpu = time.perf_counter(), time.process_time()
+        try:
+            return operation(*args, **kwargs)
+        finally:
+            self.stats[phase + 'Seconds'] += time.perf_counter() - wall
+            self.stats[phase + 'CpuSeconds'] += time.process_time() - cpu
 
     def close(self):
         if not self.closed:
@@ -548,7 +580,7 @@ class ReceiptSnapshotCache:
 
     def _remove(self, entry):
         for path in entry[:2]:
-            path.unlink(missing_ok=True)
+            self._timed('cacheRemove', path.unlink, missing_ok=True)
 
     def _chunk(self, slot, value):
         started = time.perf_counter()
@@ -577,7 +609,7 @@ class ReceiptSnapshotCache:
         self.serial += 1
         stamp, encoded = (self.root / (str(self.serial) + suffix) for suffix in ('.snapshot', '.json'))
         stored = False
-        digest = hashlib.sha256(payload).digest()
+        digest = self._timed('cacheDigest', lambda: hashlib.sha256(payload).digest())
         # Reserve the full staging cost before writing. Failed cleanup leaves
         # this incomplete entry conservatively charged until removal succeeds.
         entry = (stamp, encoded, size, len(payload), digest, False)
@@ -587,11 +619,15 @@ class ReceiptSnapshotCache:
             # The cap includes retained AND staged auxiliary files. The old
             # entry was removed before staging its replacement; ordinary old
             # receipt + final atomic temporary receipt remain outside this cap.
-            if stamp.write_bytes(frozen) != len(frozen) or encoded.write_bytes(payload) != len(payload):
+            if (self._timed('cacheWrite', stamp.write_bytes, frozen) != len(frozen)
+                    or self._timed('cacheWrite', encoded.write_bytes, payload) != len(payload)):
                 raise OSError('Incomplete receipt cache write')
             self.entries[slot] = (stamp, encoded, size, len(payload), digest, True)
             stored = True
-            return slot, encoded, len(payload), digest
+            # These immutable bytes came from the fresh in-memory snapshot.
+            # Staging must succeed first; a later hit still reads and verifies
+            # the complete sidecar. Do not reread it for this first publication.
+            return payload
         finally:
             if not stored:
                 self._remove(entry)
@@ -622,16 +658,32 @@ class ReceiptSnapshotCache:
                 self.bytes -= old[2]
             raise RuntimeError('Receipt cache payload integrity check failed')
 
+    def _prune(self, seen):
+        for slot in list(self.entries):
+            if slot not in seen:
+                old = self.entries[slot]
+                self._remove(old)
+                del self.entries[slot]
+                self.bytes -= old[2]
+
+    def _payload(self, chunk, stream):
+        if isinstance(chunk, bytes):
+            self._write(stream, chunk)
+        else:
+            self._copy(chunk, stream)
+
     def __call__(self, path, report):
         if self.closed or Path(path) != self.path:
             raise ValueError('Receipt cache is closed or changed target')
         if type(report) is not dict or any(type(key) is not str for key in report):
             raise TypeError('Receipt cache requires original named report fields')
         started = time.perf_counter()
+        cpu_started = time.process_time()
+        before = {suffix: sum(self.stats[phase + suffix] for phase in self.phases)
+                  for suffix in ('Seconds', 'CpuSeconds')}
         seen, target = set(), None
         try:
-            with tempfile.NamedTemporaryFile(mode='wb', dir=self.path.parent,
-                                             prefix='.' + self.path.name + '.', suffix='.tmp', delete=False) as stream:
+            with ReceiptTimedOutput(self) as stream:
                 target = Path(stream.name)
                 self._write(stream, b'{')
                 for number, (key, value) in enumerate(report.items()):
@@ -646,28 +698,33 @@ class ReceiptSnapshotCache:
                             self._write(stream, b',')
                         slot = (key, index)
                         seen.add(slot)
-                        chunk = self._chunk(slot, item)
+                        chunk = self._timed('chunk', self._chunk, slot, item)
                         copy_started = time.perf_counter()
-                        if isinstance(chunk, bytes):
-                            self._write(stream, chunk)
-                        else:
-                            self._copy(chunk, stream)
+                        self._timed('payload', self._payload, chunk, stream)
                         self.stats['copySeconds'] += time.perf_counter() - copy_started
+                        del chunk  # Release fresh bytes before marshalling the next item.
                     if type(value) is list:
                         self._write(stream, b']')
                 self._write(stream, b'}\n')
-            os.replace(target, self.path)
+            self._timed('replace', os.replace, target, self.path)
             self.stats['writes'] += 1
-            for slot in list(self.entries):
-                if slot not in seen:
-                    old = self.entries[slot]
-                    self._remove(old)
-                    del self.entries[slot]
-                    self.bytes -= old[2]
+            self._timed('staleCleanup', self._prune, seen)
         finally:
-            if target is not None:
-                target.unlink(missing_ok=True)
-            self.stats['totalSeconds'] += time.perf_counter() - started
+            try:
+                if target is not None:
+                    self._timed('temporaryCleanup', target.unlink, missing_ok=True)
+                # Preserve the legacy total's scope, including its behavior when
+                # temporary cleanup raises. attempt* also records that failure.
+                self.stats['totalSeconds'] += time.perf_counter() - started
+                self.stats['totalCpuSeconds'] += time.process_time() - cpu_started
+            finally:
+                elapsed = {'Seconds': time.perf_counter() - started,
+                           'CpuSeconds': time.process_time() - cpu_started}
+                self.stats['attemptSeconds'] += elapsed['Seconds']
+                self.stats['attemptCpuSeconds'] += elapsed['CpuSeconds']
+                for suffix in elapsed:
+                    accounted = sum(self.stats[phase + suffix] for phase in self.phases) - before[suffix]
+                    self.stats['remainder' + suffix] += elapsed[suffix] - accounted
         if self.progress_every and self.stats['writes'] % self.progress_every == 0:
             print('receipt_checkpoint ' + json.dumps(dict(self.stats, cacheBytes=self.bytes), separators=(',', ':')), flush=True)
 

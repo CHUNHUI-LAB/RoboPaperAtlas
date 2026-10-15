@@ -289,6 +289,171 @@ cache(target,{'status':'new','observations':[{'complete':'完整'}]})
                 else:
                     self.assertEqual(target.read_bytes(), canonical(prior))
 
+    def test_fresh_miss_uses_current_bytes_without_copy_but_hits_verify_sidecars(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / 'receipt.json'; report = report_fixture(); cache = self.cache(target)
+            with patch.object(cache, '_copy', wraps=cache._copy) as copy_payload:
+                cache(target, report); self.assert_saved(target, report)
+                self.assertEqual(copy_payload.call_count, 0)
+                misses = cache.stats['misses']; hits = cache.stats['hits']
+                cache(target, report); self.assert_saved(target, report)
+                self.assertEqual(cache.stats['misses'], misses)
+                self.assertEqual(copy_payload.call_count, cache.stats['hits'] - hits)
+                self.assertGreater(copy_payload.call_count, 0)
+
+    def test_silently_corrupted_new_sidecar_cannot_change_first_publication_or_pass_next_hit(self):
+        # Both same-length and truncated corruption must fail on the first reuse.
+        for corruption in ('same-length', 'truncated'):
+            with self.subTest(corruption=corruption), tempfile.TemporaryDirectory() as directory:
+                target = Path(directory) / 'receipt.json'; report = {'proof': '完整原文'}; cache = self.cache(target)
+                real_write = Path.write_bytes
+                def write(path, payload):
+                    if path.parent == cache.root and path.suffix == '.json':
+                        broken = b'x' * len(payload) if corruption == 'same-length' else payload[:-1]
+                        real_write(path, broken)
+                        return len(payload)  # Simulate silent corruption after a reported complete write.
+                    return real_write(path, payload)
+                with patch.object(Path, 'write_bytes', write):
+                    cache(target, report)
+                self.assert_saved(target, report); prior = target.read_bytes()
+                with self.assertRaisesRegex(RuntimeError, 'integrity'):
+                    cache(target, report)
+                self.assertEqual(target.read_bytes(), prior)
+                self.assertEqual(cache.stats['writes'], 1)
+                self.assertNotIn(('proof', None), cache.entries)
+                cache(target, report); self.assert_saved(target, report)
+                cache(target, report); self.assert_saved(target, report)
+                self.assertEqual(cache.stats['writes'], 3)
+
+    def test_fresh_bytes_do_not_bypass_failed_or_short_sidecar_staging(self):
+        for suffix in ('.snapshot', '.json'):
+            for fault in ('short', 'error'):
+                with self.subTest(suffix=suffix, fault=fault), tempfile.TemporaryDirectory() as directory:
+                    target = Path(directory) / 'receipt.json'; cache = self.cache(target)
+                    report = {'proof': 'prior'}; cache(target, report); prior = target.read_bytes()
+                    report['proof'] = 'new complete proof'; real_write = Path.write_bytes
+                    def write(path, payload):
+                        if path.parent == cache.root and path.suffix == suffix:
+                            real_write(path, payload[:-1])
+                            if fault == 'error':
+                                raise OSError('staging I/O stopped')
+                            return len(payload) - 1
+                        return real_write(path, payload)
+                    with patch.object(Path, 'write_bytes', write):
+                        with self.assertRaises(OSError):
+                            cache(target, report)
+                    self.assertEqual(target.read_bytes(), prior)
+                    self.assertEqual(cache.stats['writes'], 1)
+                    self.assertEqual(list(target.parent.glob('.receipt.json.*.tmp')), [])
+                    self.assertEqual(cache.entries, {}); self.assertEqual(cache.bytes, 0)
+                    cache(target, report); self.assert_saved(target, report)
+                    cache(target, report); self.assert_saved(target, report)
+
+    def test_additive_wall_cpu_phases_partition_time_without_changing_legacy_fields(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / 'receipt.json'; report = report_fixture(); cache = self.cache(target)
+            for _ in range(2):
+                cache(target, report); self.assert_saved(target, report)
+            legacy = {'writes', 'hits', 'misses', 'fingerprintSeconds', 'encodeSeconds', 'copySeconds', 'totalSeconds'}
+            self.assertTrue(legacy <= cache.stats.keys())
+            self.assertEqual(cache.stats['writes'], 2)
+            for phase in cache.phases + ('cacheDigest', 'cacheWrite', 'cacheRemove'):
+                for suffix in ('Seconds', 'CpuSeconds'):
+                    self.assertGreaterEqual(cache.stats[phase + suffix], 0)
+            for suffix in ('Seconds', 'CpuSeconds'):
+                total = sum(cache.stats[phase + suffix] for phase in cache.phases) + cache.stats['remainder' + suffix]
+                self.assertAlmostEqual(total, cache.stats['attempt' + suffix], places=8)
+                self.assertLessEqual(cache.stats['total' + suffix], cache.stats['attempt' + suffix])
+            self.assertGreater(cache.stats['chunkSeconds'], 0)
+            self.assertGreater(cache.stats['payloadSeconds'], 0)
+            self.assertGreater(cache.stats['outputCloseSeconds'], 0)
+            self.assertGreater(cache.stats['replaceSeconds'], 0)
+            self.assertLessEqual(cache.stats['cacheWriteSeconds'], cache.stats['chunkSeconds'])
+            self.assertLessEqual(cache.stats['cacheDigestSeconds'], cache.stats['chunkSeconds'])
+            self.assertEqual(json.loads(target.read_bytes()), json.loads(canonical(report)))
+
+    def test_timing_counts_failed_operation_without_swallowing_or_replacing_error(self):
+        with tempfile.TemporaryDirectory() as directory:
+            cache = self.cache(Path(directory) / 'receipt.json')
+            error = OSError('original I/O failure')
+            def fail():
+                raise error
+            with patch.object(MODULE.time, 'perf_counter', side_effect=[10, 14]), \
+                    patch.object(MODULE.time, 'process_time', side_effect=[2, 3]):
+                with self.assertRaises(OSError) as caught:
+                    cache._timed('replace', fail)
+            self.assertIs(caught.exception, error)
+            self.assertEqual(cache.stats['replaceSeconds'], 4)
+            self.assertEqual(cache.stats['replaceCpuSeconds'], 1)
+            self.assertEqual(cache.stats['writes'], 0)
+
+    def test_failed_enter_close_replace_and_temporary_cleanup_keep_exact_error_and_phase_time(self):
+        for fault, phase in (('enter', 'outputEnter'), ('close', 'outputClose'),
+                             ('replace', 'replace'), ('cleanup', 'temporaryCleanup')):
+            with self.subTest(fault=fault), tempfile.TemporaryDirectory() as directory:
+                target = Path(directory) / 'receipt.json'; cache = self.cache(target)
+                report = {'proof': 'prior'}; cache(target, report); prior = target.read_bytes()
+                old_stats = dict(cache.stats); report['proof'] = 'new complete proof'
+                error = OSError('original ' + fault + ' failure')
+                factory = MODULE.tempfile.NamedTemporaryFile
+                class BrokenContext:
+                    def __init__(self, *args, **kwargs):
+                        # Deliberately allocate nothing when __enter__ will fail.
+                        self.manager = None if fault == 'enter' else factory(*args, **kwargs)
+                    def __enter__(self):
+                        if fault == 'enter':
+                            raise error
+                        return self.manager.__enter__()
+                    def __exit__(self, *args):
+                        result = self.manager.__exit__(*args)
+                        if fault == 'close':
+                            raise error
+                        return result
+                real_unlink = Path.unlink
+                def unlink(path, *args, **kwargs):
+                    if fault == 'cleanup' and path.suffix == '.tmp':
+                        raise error
+                    return real_unlink(path, *args, **kwargs)
+                @contextmanager
+                def replacement():
+                    if fault == 'replace':
+                        with patch.object(MODULE.os, 'replace', side_effect=error):
+                            yield
+                    else:
+                        yield
+                with patch.object(MODULE.tempfile, 'NamedTemporaryFile', BrokenContext), \
+                        patch.object(Path, 'unlink', unlink), replacement():
+                    with self.assertRaises(OSError) as caught:
+                        cache(target, report)
+                self.assertIs(caught.exception, error)
+                self.assertEqual(target.read_bytes(), canonical(report) if fault == 'cleanup' else prior)
+                self.assertGreater(cache.stats[phase + 'Seconds'], old_stats[phase + 'Seconds'])
+                self.assertGreaterEqual(cache.stats[phase + 'CpuSeconds'], old_stats[phase + 'CpuSeconds'])
+                for suffix in ('Seconds', 'CpuSeconds'):
+                    accounted = sum(cache.stats[p + suffix] for p in cache.phases) + cache.stats['remainder' + suffix]
+                    self.assertAlmostEqual(accounted, cache.stats['attempt' + suffix], places=8)
+                if fault == 'cleanup':
+                    self.assertEqual(cache.stats['totalSeconds'], old_stats['totalSeconds'])
+                    self.assertEqual(cache.stats['writes'], 2)
+                else:
+                    self.assertGreater(cache.stats['totalSeconds'], old_stats['totalSeconds'])
+                    self.assertEqual(cache.stats['writes'], 1)
+                cache(target, report); self.assert_saved(target, report)
+
+    def test_progress_log_retains_old_keys_and_reports_additive_phases(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / 'receipt.json'
+            cache = MODULE.ReceiptSnapshotCache(target, progress_every=1); self.addCleanup(cache.close)
+            with patch('builtins.print') as output:
+                cache(target, {'proof': 'complete'})
+            output.assert_called_once()
+            args, kwargs = output.call_args
+            self.assertEqual(kwargs, {'flush': True})
+            self.assertTrue(args[0].startswith('receipt_checkpoint '))
+            logged = json.loads(args[0].split(' ', 1)[1])
+            self.assertEqual(logged, dict(cache.stats, cacheBytes=cache.bytes))
+            self.assert_saved(target, {'proof': 'complete'})
+
     def test_original_checkpoint_wrapper_all_103_save_sites_and_106_scenes_remain(self):
         source = ast.parse(Path(MODULE.__file__).read_text())
         native_paint = next(n for n in source.body if isinstance(n, ast.FunctionDef) and n.name == 'settle_version_title_paint')
