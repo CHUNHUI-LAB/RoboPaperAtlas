@@ -1,199 +1,8 @@
-tion": "first_seen",
-      "abstract_excerpt": "A robot may know how to perform a task yet fail when a human asks for it naturally. We study this human--VLA communication gap by separating an \\emph{information gap}, where task semantics, grounding, or event structure remain unresolved, from a residual \\emph{execution gap}, where even a fully specified task depends on how it is organized and invoked. To do this, we characterize how people naturally express demonstrated objectives and evaluate controlled variants of the same physical tasks, with detailed analysis on $π_{0.5}$ and consistent trends on $π_0$-FAST and Cosmos3-Edge. Our study rev",
-      "abstract_truncated": true,
-      "abstract_original_chars": 1232,
-      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
-    },
-    {
-      "id": "2607.08436",
-      "canonical_id": "2607.08436",
-      "arxiv_version": 2,
-      "versioned_id": "2607.08436v2",
-      "title": "EgoWAM: World Action Models Beyond Pixels with In-the-Wild Egocentric Human Data",
-      "authors": [
-        "Baoyu Li",
-        "Xinchen Yin",
-        "Mengying Lin",
-        "Yixin Zhang",
-        "Danfei Xu"
-      ],
-      "first_submitted_at": "2026-07-08T16:11:37Z",
-      "updated_at": "2026-10-13T05:21:40Z",
+rst_submitted_at": "2026-05-08T19:57:11Z",
+      "updated_at": "2026-10-13T18:35:20Z",
       "change_type": "revision",
-      "source_url": "https://arxiv.org/abs/2607.08436",
-      "version_url": "https://arxiv.org/abs/2607.08436v2",
-      "categories": [
-        "cs.RO",
-        "cs.AI"
-      ],
-      "primary_category": "cs.RO",
-      "doi": null,
-      "journal_reference": null,
-      "matched_topics": [
-        "robot_world_models"
-      ],
-      "relevance_reasons": [
-        {
-          "topic": "robot_world_models",
-          "label": "Robot world models",
-          "method": "title_abstract_keyword_heuristic",
-          "evidence": [
-            {
-              "field": "title",
-              "matched_phrases": [
-                "world action models"
-              ]
-            },
-            {
-              "field": "abstract",
-              "matched_phrases": [
-                "world action models"
-              ]
-            }
-          ],
-          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
-        }
-      ],
-      "review_status": "candidate_not_reviewed",
-      "deep_read": false,
-      "fetched_at": "2026-10-15T09:04:34Z",
-      "first_seen_at": "2026-10-15T09:04:34Z",
-      "observation": "first_seen",
-      "abstract_excerpt": "Egocentric human data offers scalable supervision for robot manipulation. However, behavior cloning entangles transferable content like objects, scenes, and task semantics, with non-transferable factors like human morphology, head motion, and behavioral style. We study whether World Action Models (WAMs) provide a better training signal by requiring policies to predict not only actions, but also how the scene evolves. The central question is what world representation best enables human-to-robot transfer. We hypothesize that an effective world target should abstract appearance, capture agent-inv",
-      "abstract_truncated": true,
-      "abstract_original_chars": 1321,
-      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
-    },
-    {
-      "id": "2606.18097",
-      "canonical_id": "2606.18097",
-      "arxiv_version": 2,
-      "versioned_id": "2606.18097v2",
-      "title": "WireCraft: A Simulation Benchmark for Industrial DLO Manipulation",
-      "authors": [
-        "Chongyu Zhu",
-        "Ramy ElMallah",
-        "Hyegang Kim",
-        "Zachary Tang",
-        "Jiachen Rao",
-        "Artem Arutyunov",
-        "Seungyeon Ha",
-        "Chi-Guhn Lee"
-      ],
-      "first_submitted_at": "2026-06-16T15:59:46Z",
-      "updated_at": "2026-10-13T04:13:33Z",
-      "change_type": "revision",
-      "source_url": "https://arxiv.org/abs/2606.18097",
-      "version_url": "https://arxiv.org/abs/2606.18097v2",
-      "categories": [
-        "cs.RO"
-      ],
-      "primary_category": "cs.RO",
-      "doi": null,
-      "journal_reference": null,
-      "matched_topics": [
-        "robot_vla"
-      ],
-      "relevance_reasons": [
-        {
-          "topic": "robot_vla",
-          "label": "Robot VLA",
-          "method": "title_abstract_keyword_heuristic",
-          "evidence": [
-            {
-              "field": "abstract",
-              "matched_phrases": [
-                "vision language action",
-                "vla"
-              ]
-            }
-          ],
-          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
-        }
-      ],
-      "review_status": "candidate_not_reviewed",
-      "deep_read": false,
-      "fetched_at": "2026-10-15T09:04:34Z",
-      "first_seen_at": "2026-10-15T09:04:34Z",
-      "observation": "first_seen",
-      "abstract_excerpt": "Deformable Linear Objects (DLOs), such as wires and cables, are central to industrial assembly. Unlike rigid objects, whose state is captured by a 6-DoF pose, DLOs have an infinite-dimensional configuration space and deform continuously under contact with grippers, fixtures, and the workspace, making them a demanding benchmark for general dexterous manipulation. Despite their importance, policy development and comparison remain difficult: existing benchmarks are often tied to specific hardware setups, lack modular and customizable task assets, or study generic deformable-object tasks without t",
-      "abstract_truncated": true,
-      "abstract_original_chars": 1847,
-      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
-    },
-    {
-      "id": "2609.08209",
-      "canonical_id": "2609.08209",
-      "arxiv_version": 3,
-      "versioned_id": "2609.08209v3",
-      "title": "Monkey See, Can Monkey Do? A Benchmark for Evaluating Robot Skill Learning by Observation",
-      "authors": [
-        "Weiwei Gu",
-        "Anmol Gupta",
-        "Anant Sah",
-        "Ryan Varghese",
-        "Lalitha Shreya Vanam",
-        "Prabhath Adireddi",
-        "Peter Karkus",
-        "Nakul Gopalan"
-      ],
-      "first_submitted_at": "2026-09-08T03:48:44Z",
-      "updated_at": "2026-10-13T04:00:07Z",
-      "change_type": "revision",
-      "source_url": "https://arxiv.org/abs/2609.08209",
-      "version_url": "https://arxiv.org/abs/2609.08209v3",
-      "categories": [
-        "cs.RO"
-      ],
-      "primary_category": "cs.RO",
-      "doi": null,
-      "journal_reference": null,
-      "matched_topics": [
-        "robot_vla"
-      ],
-      "relevance_reasons": [
-        {
-          "topic": "robot_vla",
-          "label": "Robot VLA",
-          "method": "title_abstract_keyword_heuristic",
-          "evidence": [
-            {
-              "field": "abstract",
-              "matched_phrases": [
-                "vla"
-              ]
-            }
-          ],
-          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
-        }
-      ],
-      "review_status": "candidate_not_reviewed",
-      "deep_read": false,
-      "fetched_at": "2026-10-15T09:04:34Z",
-      "first_seen_at": "2026-10-15T09:04:34Z",
-      "observation": "first_seen",
-      "abstract_excerpt": "Learning from Observation (LfO) is a fundamental robotic capability that replicates how humans and animals socially learn from each other. Beyond its biological parallels, this modality provides a practical solution for data scaling in sample-inefficient and data-starved domains like robotics. Recent work has demonstrated promising results in learning manipulation skills from human videos, yet progress in this area remains difficult to assess. Existing methods vary widely in assumptions, hardware choices, and environment setups making it difficult to draw meaningful comparisons and identify ad",
-      "abstract_truncated": true,
-      "abstract_original_chars": 1754,
-      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
-    },
-    {
-      "id": "2606.12475",
-      "canonical_id": "2606.12475",
-      "arxiv_version": 2,
-      "versioned_id": "2606.12475v2",
-      "title": "Learning to Assist: Collaborative VLAs for Implicit Human-Robot Collaboration",
-      "authors": [
-        "Leo Xu",
-        "Letian Li",
-        "Alex Cuellar",
-        "Michael Hagenow"
-      ],
-      "first_submitted_at": "2026-06-10T05:42:49Z",
-      "updated_at": "2026-10-13T03:37:06Z",
-      "change_type": "revision",
-      "source_url": "https://arxiv.org/abs/2606.12475",
-      "version_url": "https://arxiv.org/abs/2606.12475v2",
+      "source_url": "https://arxiv.org/abs/2605.08434",
+      "version_url": "https://arxiv.org/abs/2605.08434v3",
       "categories": [
         "cs.RO"
       ],
@@ -212,7 +21,7 @@ tion": "first_seen",
             {
               "field": "title",
               "matched_phrases": [
-                "vlas"
+                "vision language action"
               ]
             },
             {
@@ -228,32 +37,30 @@ tion": "first_seen",
       ],
       "review_status": "candidate_not_reviewed",
       "deep_read": false,
-      "fetched_at": "2026-10-15T09:04:34Z",
+      "fetched_at": "2026-10-16T08:55:48Z",
       "first_seen_at": "2026-10-15T09:04:34Z",
-      "observation": "first_seen",
-      "abstract_excerpt": "Human-robot collaboration (HRC) combines the complementary strengths of humans and robots to improve task efficiency. However, many existing collaborative systems rely on hand-engineered pipelines, limiting their scalability and flexibility for new tasks. In this work, we show that models trained end-to-end with imitation learning, specifically vision-language-action (VLA) models, can support collaborative manipulation, and characterize the key factors affecting their real-world performance. We evaluate two state-of-the-art models and identify a failure mode of action-chunking policies in impl",
+      "observation": "unchanged",
+      "abstract_excerpt": "Vision-language-action (VLA) models provide a promising paradigm for scalable robotic manipulation, yet their reliance on success-only behavioral cloning leaves them brittle; lacking corrective training signals, minor execution errors rapidly compound into unrecoverable, out-of-distribution failures. To address this limitation, we propose Adaptive Failure-Informed Learning (AFIL), an end-to-end framework that leverages failure trajectories as adaptive negative guidance for diffusion- and flow-based VLA policies. AFIL uses a pretrained VLA to generate failure rollouts online, avoiding the need",
       "abstract_truncated": true,
-      "abstract_original_chars": 1411,
+      "abstract_original_chars": 1429,
       "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
     },
     {
-      "id": "2610.17640",
-      "canonical_id": "2610.17640",
+      "id": "2610.19007",
+      "canonical_id": "2610.19007",
       "arxiv_version": 1,
-      "versioned_id": "2610.17640v1",
-      "title": "MemAct: Streaming Spatial Understanding with Memory and Active Exploration",
+      "versioned_id": "2610.19007v1",
+      "title": "Action Jets: Learning the Local Shape of the Action-conditioned Data Manifold",
       "authors": [
-        "Yuxi Wei",
-        "Wei Huang",
-        "Qirui Chen",
-        "Lu Hou",
-        "Xiaojuan Qi"
+        "Anton Arapin",
+        "Chahyon Ku",
+        "Bernadette Bucher"
       ],
-      "first_submitted_at": "2026-10-13T03:08:40Z",
-      "updated_at": "2026-10-13T03:08:40Z",
+      "first_submitted_at": "2026-10-13T18:06:10Z",
+      "updated_at": "2026-10-13T18:06:10Z",
       "change_type": "new",
-      "source_url": "https://arxiv.org/abs/2610.17640",
-      "version_url": "https://arxiv.org/abs/2610.17640v1",
+      "source_url": "https://arxiv.org/abs/2610.19007",
+      "version_url": "https://arxiv.org/abs/2610.19007v1",
       "categories": [
         "cs.CV"
       ],
@@ -261,19 +68,18 @@ tion": "first_seen",
       "doi": null,
       "journal_reference": null,
       "matched_topics": [
-        "navigation_agents"
+        "end_effector_trajectories"
       ],
       "relevance_reasons": [
         {
-          "topic": "navigation_agents",
-          "label": "Navigation agents / harnesses",
+          "topic": "end_effector_trajectories",
+          "label": "End-effector trajectories",
           "method": "title_abstract_keyword_heuristic",
           "evidence": [
             {
               "field": "abstract",
               "matched_phrases": [
-                "agents",
-                "agent"
+                "end effector"
               ]
             }
           ],
@@ -282,37 +88,32 @@ tion": "first_seen",
       ],
       "review_status": "candidate_not_reviewed",
       "deep_read": false,
-      "fetched_at": "2026-10-15T09:04:34Z",
+      "fetched_at": "2026-10-16T08:55:48Z",
       "first_seen_at": "2026-10-15T09:04:34Z",
-      "observation": "first_seen",
-      "abstract_excerpt": "Spatial understanding is essential for embodied agents navigating and interacting with the physical world. As observations arrive incrementally, agents must reason in a streaming manner. Yet streaming understanding must also be closed-loop: task-relevant evidence may require both recalling past observations and actively acquiring new views. Existing streaming approaches largely emphasize processing incoming observations, leaving task-driven active exploration underexplored. We introduce MemAct, a framework for streaming spatial understanding with memory and action. A shared vision--language mo",
+      "observation": "unchanged",
+      "abstract_excerpt": "World models are a powerful means of reasoning and planning, but many of these action-conditioned predictive models are high dimensional and computationally expensive. These challenges limit the number of action candidates that can be evaluated by a planner. We show that this cost is avoidable for planners over short horizons, which only require local information with respect to the current state. For a fixed state, the frames reachable by varying a low-dimensional action (a camera movement or an end-effector command) lie on a low-dimensional manifold. We estimate the local shape of that manif",
       "abstract_truncated": true,
-      "abstract_original_chars": 1747,
+      "abstract_original_chars": 1859,
       "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
     },
     {
-      "id": "2610.17638",
-      "canonical_id": "2610.17638",
+      "id": "2610.18991",
+      "canonical_id": "2610.18991",
       "arxiv_version": 1,
-      "versioned_id": "2610.17638v1",
-      "title": "Acting Through Registers",
+      "versioned_id": "2610.18991v1",
+      "title": "Contact-UAN: Unsupervised Actuator Networks as a Residual World Model for Humanoid Control",
       "authors": [
-        "Yiwei Zhang",
-        "Yantai Yang",
-        "Jin Gao",
-        "Jin Lou",
-        "Andong Chen",
-        "Yufei Liu",
-        "Boyang Xing",
-        "Yuchen Zhu",
-        "Weiming Hu",
-        "Zhipeng Zhang"
+        "Nolan Fey",
+        "Khai Nguyen",
+        "Yash Prabhu",
+        "Gabriel B. Margolis",
+        "Pulkit Agrawal"
       ],
-      "first_submitted_at": "2026-10-13T03:06:52Z",
-      "updated_at": "2026-10-13T03:06:52Z",
+      "first_submitted_at": "2026-10-13T18:00:52Z",
+      "updated_at": "2026-10-13T18:00:52Z",
       "change_type": "new",
-      "source_url": "https://arxiv.org/abs/2610.17638",
-      "version_url": "https://arxiv.org/abs/2610.17638v1",
+      "source_url": "https://arxiv.org/abs/2610.18991",
+      "version_url": "https://arxiv.org/abs/2610.18991v1",
       "categories": [
         "cs.RO"
       ],
@@ -329,9 +130,14 @@ tion": "first_seen",
           "method": "title_abstract_keyword_heuristic",
           "evidence": [
             {
+              "field": "title",
+              "matched_phrases": [
+                "world model"
+              ]
+            },
+            {
               "field": "abstract",
               "matched_phrases": [
-                "world action models",
                 "world model"
               ]
             }
@@ -341,37 +147,191 @@ tion": "first_seen",
       ],
       "review_status": "candidate_not_reviewed",
       "deep_read": false,
-      "fetched_at": "2026-10-15T09:04:34Z",
+      "fetched_at": "2026-10-16T08:55:48Z",
       "first_seen_at": "2026-10-15T09:04:34Z",
-      "observation": "first_seen",
-      "abstract_excerpt": "World Action Models (WAMs) use generative visual representations to condition robot actions, yet how these representations organize action-relevant information remains poorly understood. We identify persistent high-norm spatial outliers in WAM representations and find that their action relevance persists even after normalization and K/V projection attenuate their extreme magnitude. Motivated by this observation, we introduce RegisterWAM, which adds learnable non-spatial registers to the world model and uses them directly for action conditioning. Registers alone do not fully eliminate spatial o",
+      "observation": "unchanged",
+      "abstract_excerpt": "Humanoid policies trained in simulation can transfer qualitatively to hardware while failing to transfer the force interactions learned during training, compromising torque efficiency, load regulation, and robustness to impacts. This failure can arise from actuator sim-to-real gaps because forces depend on actuator torques. We introduce Contact-UAN, a residual world model that preserves a simulator's physics priors while correcting actuator dynamics to align simulated rollouts with recorded hardware rollouts. For humanoid motion with contact, this requires contact-consistent replay: if hardwar",
       "abstract_truncated": true,
-      "abstract_original_chars": 1205,
+      "abstract_original_chars": 1258,
       "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
     },
     {
-      "id": "2610.17630",
-      "canonical_id": "2610.17630",
+      "id": "2610.18874",
+      "canonical_id": "2610.18874",
       "arxiv_version": 1,
-      "versioned_id": "2610.17630v1",
-      "title": "From Pixels to Executable Physics: Behavior-Grounded World Models for Embodied Action Consequence Prediction",
+      "versioned_id": "2610.18874v1",
+      "title": "ChunkAct: Action Chunking for Agentic Robotics",
       "authors": [
-        "Ruo Chen",
-        "Jiahua Pang",
-        "Yingjie Niu",
-        "Hongyi Lin",
-        "Jun Tian",
-        "Yang Zhu",
-        "Chao Li"
+        "Bingxin Xu",
+        "Wenrui Bao",
+        "Xinxin Liu",
+        "Jiawei Zhou",
+        "Yuzhang Shang",
+        "Emilio Ferrara"
       ],
-      "first_submitted_at": "2026-10-13T02:56:21Z",
-      "updated_at": "2026-10-13T02:56:21Z",
+      "first_submitted_at": "2026-10-13T17:59:57Z",
+      "updated_at": "2026-10-13T17:59:57Z",
       "change_type": "new",
-      "source_url": "https://arxiv.org/abs/2610.17630",
-      "version_url": "https://arxiv.org/abs/2610.17630v1",
+      "source_url": "https://arxiv.org/abs/2610.18874",
+      "version_url": "https://arxiv.org/abs/2610.18874v1",
+      "categories": [
+        "cs.RO",
+        "cs.AI",
+        "cs.CL",
+        "cs.CV"
+      ],
+      "primary_category": "cs.RO",
+      "doi": null,
+      "journal_reference": null,
+      "matched_topics": [
+        "robot_vla"
+      ],
+      "relevance_reasons": [
+        {
+          "topic": "robot_vla",
+          "label": "Robot VLA",
+          "method": "title_abstract_keyword_heuristic",
+          "evidence": [
+            {
+              "field": "abstract",
+              "matched_phrases": [
+                "vision language action",
+                "vla"
+              ]
+            }
+          ],
+          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
+        }
+      ],
+      "review_status": "candidate_not_reviewed",
+      "deep_read": false,
+      "fetched_at": "2026-10-16T08:55:48Z",
+      "first_seen_at": "2026-10-15T09:04:34Z",
+      "observation": "unchanged",
+      "abstract_excerpt": "Agentic robotics places a large language model (LLM) agent in the robot control loop, where it composes perception, motion, and vision-language-action (VLA) tools under the guidance of a memory and thereby generalizes to new tasks without retraining. This generality comes at a steep price in efficiency. Every primitive requires a round of LLM reasoning over the full interaction history, so the cost of an episode grows with the number of primitives. We find this reasoning largely redundant: once a sub-goal is chosen, its primitives follow a routine already prescribed by memory. We present Chunk",
+      "abstract_truncated": true,
+      "abstract_original_chars": 1250,
+      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
+    },
+    {
+      "id": "2610.18872",
+      "canonical_id": "2610.18872",
+      "arxiv_version": 1,
+      "versioned_id": "2610.18872v1",
+      "title": "EgoExplorer: A Vision-Motion-Touch Observatory for Human Loco-Manipulation In Situ",
+      "authors": [
+        "Yunsong Zhou",
+        "Xuekun Jiang",
+        "Haiqi Shen",
+        "Hangxu Liu",
+        "Chaojian Shi",
+        "Yujie Liu",
+        "Jingyuan Li",
+        "Haoran Yang",
+        "Jiafei Cao",
+        "Dongzhan Zhou",
+        "Dong Wang",
+        "Yao Mu",
+        "Chunhua Shen",
+        "Weinan Zhang"
+      ],
+      "first_submitted_at": "2026-10-13T17:59:55Z",
+      "updated_at": "2026-10-13T17:59:55Z",
+      "change_type": "new",
+      "source_url": "https://arxiv.org/abs/2610.18872",
+      "version_url": "https://arxiv.org/abs/2610.18872v1",
       "categories": [
         "cs.RO",
         "cs.CV"
+      ],
+      "primary_category": "cs.RO",
+      "doi": null,
+      "journal_reference": null,
+      "matched_topics": [
+        "mobile_manipulation",
+        "whole_body_control"
+      ],
+      "relevance_reasons": [
+        {
+          "topic": "mobile_manipulation",
+          "label": "Quadruped-arm / mobile manipulation",
+          "method": "title_abstract_keyword_heuristic",
+          "evidence": [
+            {
+              "field": "title",
+              "matched_phrases": [
+                "loco manipulation"
+              ]
+            },
+            {
+              "field": "abstract",
+              "matched_phrases": [
+                "loco manipulation"
+              ]
+            }
+          ],
+          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
+        },
+        {
+          "topic": "whole_body_control",
+          "label": "Whole-body control",
+          "method": "title_abstract_keyword_heuristic",
+          "evidence": [
+            {
+              "field": "abstract",
+              "matched_phrases": [
+                "whole body motion",
+                "whole body control"
+              ]
+            }
+          ],
+          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
+        }
+      ],
+      "review_status": "candidate_not_reviewed",
+      "deep_read": false,
+      "fetched_at": "2026-10-16T08:55:48Z",
+      "first_seen_at": "2026-10-15T09:04:34Z",
+      "observation": "unchanged",
+      "abstract_excerpt": "Learning humanoid loco-manipulation from human demonstrations rests on observing how locomotion, posture, and object interaction evolve together as tasks unfold. Scaling collection across diverse environments, in turn, favors lightweight, portable capture systems. Yet, existing datasets provide only partial views of this coordination. Thus, we introduce EgoExplorer, a 100-hour vision-motion-touch observatory of human loco-manipulation built with a wearable system. With an emphasis on professional activities, its continuous recordings align egocentric video with reconstructed whole-body motion,",
+      "abstract_truncated": true,
+      "abstract_original_chars": 1518,
+      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
+    },
+    {
+      "id": "2610.18852",
+      "canonical_id": "2610.18852",
+      "arxiv_version": 1,
+      "versioned_id": "2610.18852v1",
+      "title": "ForceWAM: Decoupling Future and Response Learning from Demo and Play Data for Contact-Rich Manipulation",
+      "authors": [
+        "Zijun Xu",
+        "Wendi Chen",
+        "Xinkai Wang",
+        "Jiachen Zou",
+        "Hongjin Chen",
+        "Hairuo Liu",
+        "Bokai Lin",
+        "Shihao Ma",
+        "Ke Ma",
+        "Zhiwei Zhang",
+        "Zhuohao Yan",
+        "Ke Wu",
+        "Haoming Song",
+        "Xueqi Li",
+        "Chuan Wen",
+        "Jieru Zhao",
+        "Wenchao Ding",
+        "Cewu Lu",
+        "Lixin Yang"
+      ],
+      "first_submitted_at": "2026-10-13T17:58:44Z",
+      "updated_at": "2026-10-13T17:58:44Z",
+      "change_type": "new",
+      "source_url": "https://arxiv.org/abs/2610.18852",
+      "version_url": "https://arxiv.org/abs/2610.18852v1",
+      "categories": [
+        "cs.RO"
       ],
       "primary_category": "cs.RO",
       "doi": null,
@@ -386,11 +346,460 @@ tion": "first_seen",
           "method": "title_abstract_keyword_heuristic",
           "evidence": [
             {
+              "field": "abstract",
+              "matched_phrases": [
+                "world action model",
+                "world model",
+                "world modeling"
+              ]
+            }
+          ],
+          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
+        }
+      ],
+      "review_status": "candidate_not_reviewed",
+      "deep_read": false,
+      "fetched_at": "2026-10-16T08:55:48Z",
+      "first_seen_at": "2026-10-15T09:04:34Z",
+      "observation": "unchanged",
+      "abstract_excerpt": "Expert demonstrations show how to complete contact-rich tasks, but provide limited coverage of how interaction forces respond to different actions. Task-agnostic play provides broader experience of contact dynamics without specifying task goals. To fully leverage these two types of data, we introduce ForceWAM, a force world action model that decouples knowledge of task-compatible interaction outcomes from knowledge of how local actions change contact. A world model learns from successful demonstrations to jointly predict future video and six-axis force/torque trajectories. Together, these futu",
+      "abstract_truncated": true,
+      "abstract_original_chars": 1517,
+      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
+    },
+    {
+      "id": "2610.18843",
+      "canonical_id": "2610.18843",
+      "arxiv_version": 1,
+      "versioned_id": "2610.18843v1",
+      "title": "LIBERO-RIG: A Hardware-Setup Robustness Benchmark for Vision-Language-Action Models",
+      "authors": [
+        "Andrea Yaoyun Cui",
+        "Hanyu Wang",
+        "Xinyi Wang",
+        "Bangzheng Li",
+        "Lin Zhang",
+        "Zhenggang Tang",
+        "Shyamal Buch",
+        "Dejia Xu",
+        "Matthew Tancik"
+      ],
+      "first_submitted_at": "2026-10-13T17:57:18Z",
+      "updated_at": "2026-10-13T17:57:18Z",
+      "change_type": "new",
+      "source_url": "https://arxiv.org/abs/2610.18843",
+      "version_url": "https://arxiv.org/abs/2610.18843v1",
+      "categories": [
+        "cs.RO",
+        "cs.AI"
+      ],
+      "primary_category": "cs.RO",
+      "doi": null,
+      "journal_reference": null,
+      "matched_topics": [
+        "end_effector_trajectories",
+        "robot_vla"
+      ],
+      "relevance_reasons": [
+        {
+          "topic": "end_effector_trajectories",
+          "label": "End-effector trajectories",
+          "method": "title_abstract_keyword_heuristic",
+          "evidence": [
+            {
+              "field": "abstract",
+              "matched_phrases": [
+                "end effector"
+              ]
+            }
+          ],
+          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
+        },
+        {
+          "topic": "robot_vla",
+          "label": "Robot VLA",
+          "method": "title_abstract_keyword_heuristic",
+          "evidence": [
+            {
               "field": "title",
               "matched_phrases": [
-                "world models"
+                "vision language action"
               ]
             },
+            {
+              "field": "abstract",
+              "matched_phrases": [
+                "vision language action"
+              ]
+            }
+          ],
+          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
+        }
+      ],
+      "review_status": "candidate_not_reviewed",
+      "deep_read": false,
+      "fetched_at": "2026-10-16T08:55:48Z",
+      "first_seen_at": "2026-10-15T09:04:34Z",
+      "observation": "unchanged",
+      "abstract_excerpt": "Robot policies are expected to generalize across deployment environments, including variations in the robot itself: cameras are bumped and remounted, calibrations drift, controllers run at different rates, and end-effector pads wear down. We present LIBERO-RIG, a benchmark that perturbs only the robot's hardware and setup while holding every LIBERO task fixed. The benchmark spans eleven perturbation axes, including camera mounting and optics, camera-to-arm calibration, actuation gain, control rate, proprioceptive noise, base pose, table height, and gripper pads. Each axis has five severity lev",
+      "abstract_truncated": true,
+      "abstract_original_chars": 1211,
+      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
+    },
+    {
+      "id": "2610.18950",
+      "canonical_id": "2610.18950",
+      "arxiv_version": 1,
+      "versioned_id": "2610.18950v1",
+      "title": "$λ_0$: Scaling Open-World Egocentric Human Data for Humanoid Loco-Manipulation",
+      "authors": [
+        "Lambda-humanoid Team"
+      ],
+      "first_submitted_at": "2026-10-13T17:40:58Z",
+      "updated_at": "2026-10-13T17:40:58Z",
+      "change_type": "new",
+      "source_url": "https://arxiv.org/abs/2610.18950",
+      "version_url": "https://arxiv.org/abs/2610.18950v1",
+      "categories": [
+        "cs.RO",
+        "cs.CV"
+      ],
+      "primary_category": "cs.RO",
+      "doi": null,
+      "journal_reference": null,
+      "matched_topics": [
+        "mobile_manipulation",
+        "whole_body_control"
+      ],
+      "relevance_reasons": [
+        {
+          "topic": "mobile_manipulation",
+          "label": "Quadruped-arm / mobile manipulation",
+          "method": "title_abstract_keyword_heuristic",
+          "evidence": [
+            {
+              "field": "title",
+              "matched_phrases": [
+                "loco manipulation"
+              ]
+            },
+            {
+              "field": "abstract",
+              "matched_phrases": [
+                "loco manipulation"
+              ]
+            }
+          ],
+          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
+        },
+        {
+          "topic": "whole_body_control",
+          "label": "Whole-body control",
+          "method": "title_abstract_keyword_heuristic",
+          "evidence": [
+            {
+              "field": "abstract",
+              "matched_phrases": [
+                "whole body coordination"
+              ]
+            }
+          ],
+          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
+        }
+      ],
+      "review_status": "candidate_not_reviewed",
+      "deep_read": false,
+      "fetched_at": "2026-10-16T08:55:48Z",
+      "first_seen_at": "2026-10-15T09:04:34Z",
+      "observation": "unchanged",
+      "abstract_excerpt": "Humanoid loco-manipulation requires coordinated whole-body interaction with the physical world, yet collecting robot demonstrations at scale remains costly. Human demonstrations offer a scalable alternative, but existing egocentric human supervision often omits locomotion and posture, while embodiment differences and controller dynamics hinder accurate end-effector execution. We introduce HumanVerse, a 500-hour dataset of open-world human loco-manipulation pairing egocentric video with synchronized body and hand motion. Our human-to-humanoid pipeline aligns camera viewpoints and arm appearance",
+      "abstract_truncated": true,
+      "abstract_original_chars": 1481,
+      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
+    },
+    {
+      "id": "2610.18792",
+      "canonical_id": "2610.18792",
+      "arxiv_version": 1,
+      "versioned_id": "2610.18792v1",
+      "title": "SEAR: Self-Evolving Agentic Robotics",
+      "authors": [
+        "Xinyi Wang",
+        "Bangzheng Li",
+        "Hanyu Wang",
+        "Lin Zhang",
+        "Andrea Yaoyun Cui",
+        "Zhenggang Tang",
+        "Shyamal Buch",
+        "Dejia Xu"
+      ],
+      "first_submitted_at": "2026-10-13T17:40:20Z",
+      "updated_at": "2026-10-13T17:40:20Z",
+      "change_type": "new",
+      "source_url": "https://arxiv.org/abs/2610.18792",
+      "version_url": "https://arxiv.org/abs/2610.18792v1",
+      "categories": [
+        "cs.RO",
+        "cs.AI",
+        "cs.CL"
+      ],
+      "primary_category": "cs.RO",
+      "doi": null,
+      "journal_reference": null,
+      "matched_topics": [
+        "robot_vla"
+      ],
+      "relevance_reasons": [
+        {
+          "topic": "robot_vla",
+          "label": "Robot VLA",
+          "method": "title_abstract_keyword_heuristic",
+          "evidence": [
+            {
+              "field": "abstract",
+              "matched_phrases": [
+                "vision language action"
+              ]
+            }
+          ],
+          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
+        }
+      ],
+      "review_status": "candidate_not_reviewed",
+      "deep_read": false,
+      "fetched_at": "2026-10-16T08:55:48Z",
+      "first_seen_at": "2026-10-15T09:04:34Z",
+      "observation": "unchanged",
+      "abstract_excerpt": "Frontier language-model agents can now improve robots on their own: they write control code, test it, and keep what works as skills and memories for the next task. We introduce SEAR (Self-Evolving Agentic Robotics), a framework and benchmark built around two questions. Is the agent really learning, or just trying more often? And does what it learns still help on new tasks, in a new simulator, and on a real robot? The framework runs an agent in three modes: it writes code that becomes the policy (code-as-policy), acts live in the control loop (agent-as-policy), or works as a researcher that fin",
+      "abstract_truncated": true,
+      "abstract_original_chars": 1776,
+      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
+    },
+    {
+      "id": "2610.18790",
+      "canonical_id": "2610.18790",
+      "arxiv_version": 1,
+      "versioned_id": "2610.18790v1",
+      "title": "EqC: Equilibrium Energy Control for Introspective Lifelong Robot Learning",
+      "authors": [
+        "Haodong Yang",
+        "Runhan Huang",
+        "Bowen Zhang",
+        "Iofai Lei",
+        "Zunzhe Zhang",
+        "Xiangcheng Zhang",
+        "Shaoting Zhu",
+        "Linzhan Mou",
+        "Yicheng Liu",
+        "Hang Zhao"
+      ],
+      "first_submitted_at": "2026-10-13T17:39:36Z",
+      "updated_at": "2026-10-13T17:39:36Z",
+      "change_type": "new",
+      "source_url": "https://arxiv.org/abs/2610.18790",
+      "version_url": "https://arxiv.org/abs/2610.18790v1",
+      "categories": [
+        "cs.RO"
+      ],
+      "primary_category": "cs.RO",
+      "doi": null,
+      "journal_reference": null,
+      "matched_topics": [
+        "robot_vla"
+      ],
+      "relevance_reasons": [
+        {
+          "topic": "robot_vla",
+          "label": "Robot VLA",
+          "method": "title_abstract_keyword_heuristic",
+          "evidence": [
+            {
+              "field": "abstract",
+              "matched_phrases": [
+                "vision language action",
+                "vla"
+              ]
+            }
+          ],
+          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
+        }
+      ],
+      "review_status": "candidate_not_reviewed",
+      "deep_read": false,
+      "fetched_at": "2026-10-16T08:55:48Z",
+      "first_seen_at": "2026-10-15T09:04:34Z",
+      "observation": "unchanged",
+      "abstract_excerpt": "Long-term robot autonomy depends on more than effective action generation: a policy must recognize when its behavior is no longer sufficiently supported and use assistance to improve. We introduce Equilibrium Energy Control (EqC), a framework for introspective lifelong robot learning built around an explicit conditional energy landscape. EqC casts generative action refinement as equilibrium-seeking optimization, while the geometry of the refinement process reveals whether the generated behavior remains consistent with the learned landscape. This competence signal enables Energy-Gated DAgger, w",
+      "abstract_truncated": true,
+      "abstract_original_chars": 1296,
+      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
+    },
+    {
+      "id": "2610.18774",
+      "canonical_id": "2610.18774",
+      "arxiv_version": 1,
+      "versioned_id": "2610.18774v1",
+      "title": "GreenWAM: A World Foundation Model for Robotics",
+      "authors": [
+        "Gennady Sidorov",
+        "Valerii Kornilov",
+        "Denis Grankin",
+        "Polina Fedotova",
+        "Aleksey Postnikov"
+      ],
+      "first_submitted_at": "2026-10-13T17:31:29Z",
+      "updated_at": "2026-10-13T17:31:29Z",
+      "change_type": "new",
+      "source_url": "https://arxiv.org/abs/2610.18774",
+      "version_url": "https://arxiv.org/abs/2610.18774v1",
+      "categories": [
+        "cs.RO"
+      ],
+      "primary_category": "cs.RO",
+      "doi": null,
+      "journal_reference": null,
+      "matched_topics": [
+        "robot_vla",
+        "robot_world_models"
+      ],
+      "relevance_reasons": [
+        {
+          "topic": "robot_vla",
+          "label": "Robot VLA",
+          "method": "title_abstract_keyword_heuristic",
+          "evidence": [
+            {
+              "field": "abstract",
+              "matched_phrases": [
+                "vision language action"
+              ]
+            }
+          ],
+          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
+        },
+        {
+          "topic": "robot_world_models",
+          "label": "Robot world models",
+          "method": "title_abstract_keyword_heuristic",
+          "evidence": [
+            {
+              "field": "abstract",
+              "matched_phrases": [
+                "world model",
+                "world action model"
+              ]
+            }
+          ],
+          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
+        }
+      ],
+      "review_status": "candidate_not_reviewed",
+      "deep_read": false,
+      "fetched_at": "2026-10-16T08:55:48Z",
+      "first_seen_at": "2026-10-15T09:04:34Z",
+      "observation": "unchanged",
+      "abstract_excerpt": "A robot needs a world model that predicts how its actions will change the scene and a policy that chooses those actions. Models are usually built and evaluated for only one of these roles, and every robot records its actions in its own format. We ask whether one robot world model can serve both roles across different bodies, and what makes this work. We present GreenWAM, a world foundation model for robotics, together with the recipe that produces it: (1) a shared anatomical action space that describes 20 robot families, from bimanual arms to dexterous humanoids, in common joint coordinates; (",
+      "abstract_truncated": true,
+      "abstract_original_chars": 1657,
+      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
+    },
+    {
+      "id": "2610.01939",
+      "canonical_id": "2610.01939",
+      "arxiv_version": 2,
+      "versioned_id": "2610.01939v2",
+      "title": "Fewer Tokens, Better Action: GPT-6 Astra Robot Agents with 14% Higher Success Rate but 65% Fewer Tokens",
+      "authors": [
+        "Ruiyang Si",
+        "Jianxin Bi",
+        "Shunyu Yang",
+        "Rui Ni",
+        "Wenbo Huang",
+        "Qiang Wang",
+        "Shulong Jiang",
+        "Yintianrun Zhang",
+        "Feixiang Ruan",
+        "Kewei Zhang",
+        "Duomin Wang",
+        "Xiuyu Li",
+        "Haiwen Feng",
+        "Zhen Dong",
+        "Daquan Zhou"
+      ],
+      "first_submitted_at": "2026-10-01T16:07:49Z",
+      "updated_at": "2026-10-13T17:21:36Z",
+      "change_type": "revision",
+      "source_url": "https://arxiv.org/abs/2610.01939",
+      "version_url": "https://arxiv.org/abs/2610.01939v2",
+      "categories": [
+        "cs.CV",
+        "cs.RO"
+      ],
+      "primary_category": "cs.CV",
+      "doi": null,
+      "journal_reference": null,
+      "matched_topics": [
+        "robot_vla"
+      ],
+      "relevance_reasons": [
+        {
+          "topic": "robot_vla",
+          "label": "Robot VLA",
+          "method": "title_abstract_keyword_heuristic",
+          "evidence": [
+            {
+              "field": "abstract",
+              "matched_phrases": [
+                "vision language action",
+                "vla"
+              ]
+            }
+          ],
+          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
+        }
+      ],
+      "review_status": "candidate_not_reviewed",
+      "deep_read": false,
+      "fetched_at": "2026-10-16T08:55:48Z",
+      "first_seen_at": "2026-10-15T09:04:34Z",
+      "observation": "unchanged",
+      "abstract_excerpt": "Vision-language model (VLM) agents can control robots through visual feedback and action primitives, but repeated LLM calls and redundant observations incur substantial token overhead. We introduce PyRUA-Lean, an interactive code-execution framework in which the agent composes robot primitives, including vision-language-action (VLA) policies, into Python cells that check and retry locally and return only the images and state they request. Across 700 simulated task instances from LIBERO-PRO, RoboTwin 2.0, and RoboCasa365, it raises success from 63.1% to 71.7% over tool calling with the same GPT",
+      "abstract_truncated": true,
+      "abstract_original_chars": 1111,
+      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
+    },
+    {
+      "id": "2610.18699",
+      "canonical_id": "2610.18699",
+      "arxiv_version": 1,
+      "versioned_id": "2610.18699v1",
+      "title": "RoboFQE: Rollout-Free Evaluation of Visual Robot Policies from Offline Trajectories",
+      "authors": [
+        "Yunfu Deng",
+        "Sangwoo Shin",
+        "Brahma S. Pavse",
+        "Josiah P. Hanna"
+      ],
+      "first_submitted_at": "2026-10-13T16:48:25Z",
+      "updated_at": "2026-10-13T16:48:25Z",
+      "change_type": "new",
+      "source_url": "https://arxiv.org/abs/2610.18699",
+      "version_url": "https://arxiv.org/abs/2610.18699v1",
+      "categories": [
+        "cs.RO"
+      ],
+      "primary_category": "cs.RO",
+      "doi": null,
+      "journal_reference": null,
+      "matched_topics": [
+        "robot_world_models"
+      ],
+      "relevance_reasons": [
+        {
+          "topic": "robot_world_models",
+          "label": "Robot world models",
+          "method": "title_abstract_keyword_heuristic",
+          "evidence": [
             {
               "field": "abstract",
               "matched_phrases": [
@@ -404,43 +813,112 @@ tion": "first_seen",
       ],
       "review_status": "candidate_not_reviewed",
       "deep_read": false,
-      "fetched_at": "2026-10-15T09:04:34Z",
+      "fetched_at": "2026-10-16T08:55:48Z",
       "first_seen_at": "2026-10-15T09:04:34Z",
-      "observation": "first_seen",
-      "abstract_excerpt": "In outdoor environments, varying terrain and contact conditions can cause identical action commands to produce different motion outcomes for quadruped robots. Predicting these outcomes is essential for reliable navigation and informed path selection. Existing video world models can generate visually plausible futures, yet often struggle to capture robot dynamics and terrain interactions, leading to overly optimistic predictions of action outcomes. We present DR-WM, a physically consistent world model that incorporates robot-terrain contact dynamics to predict the consequences of quadruped acti",
+      "observation": "unchanged",
+      "abstract_excerpt": "Evaluating robot policies before deployment typically requires producing new trajectories through real-world execution, simulators, or learned world models. These rollout-based approaches impose infrastructure requirements; simulator and world-model evaluators additionally face prediction errors that can compound over the evaluation horizon. In this paper, we study off-policy evaluation as an alternative to rollout-based robot-policy evaluation methods. Specifically, we introduce RoboFQE, an evaluator that estimates the discounted expected return of a target policy from offline robot trajector",
       "abstract_truncated": true,
-      "abstract_original_chars": 1808,
+      "abstract_original_chars": 1433,
       "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
     },
     {
-      "id": "2610.11508",
-      "canonical_id": "2610.11508",
-      "arxiv_version": 2,
-      "versioned_id": "2610.11508v2",
-      "title": "WARP-VLA: Wrist-Camera Adaptation for View-Robust Policy Execution in Vision-Language-Action Models",
+      "id": "2610.18697",
+      "canonical_id": "2610.18697",
+      "arxiv_version": 1,
+      "versioned_id": "2610.18697v1",
+      "title": "UniW(A)M: A Unified Mixture-of-Experts Framework for World and World-Action Models",
       "authors": [
-        "Junmyeong Lee",
-        "Dongmin Shin",
-        "Min-Gyu Park",
-        "Wooseok Jeon",
-        "Inho Chang",
-        "Hae-Gon Jeon"
+        "Jingbo Xu",
+        "Jianjie Fang",
+        "Zhuohang Li",
+        "Zihao Song",
+        "Zhaolu Wang",
+        "Xvyuan Liu",
+        "Xin Zhang",
+        "Haisheng Su",
+        "Yinzhou Tang",
+        "Chen Gao",
+        "Wei Wu",
+        "Yong Li"
       ],
-      "first_submitted_at": "2026-10-08T08:44:26Z",
-      "updated_at": "2026-10-13T02:24:43Z",
-      "change_type": "revision",
-      "source_url": "https://arxiv.org/abs/2610.11508",
-      "version_url": "https://arxiv.org/abs/2610.11508v2",
+      "first_submitted_at": "2026-10-13T16:47:16Z",
+      "updated_at": "2026-10-13T16:47:16Z",
+      "change_type": "new",
+      "source_url": "https://arxiv.org/abs/2610.18697",
+      "version_url": "https://arxiv.org/abs/2610.18697v1",
       "categories": [
         "cs.RO",
-        "cs.CV"
+        "cs.AI",
+        "cs.CV",
+        "cs.LG"
       ],
       "primary_category": "cs.RO",
       "doi": null,
       "journal_reference": null,
       "matched_topics": [
-        "robot_vla",
         "robot_moe"
+      ],
+      "relevance_reasons": [
+        {
+          "topic": "robot_moe",
+          "label": "Robot mixture-of-experts",
+          "method": "title_abstract_keyword_heuristic",
+          "evidence": [
+            {
+              "field": "title",
+              "matched_phrases": [
+                "mixture of experts"
+              ]
+            },
+            {
+              "field": "abstract",
+              "matched_phrases": [
+                "mixture of experts"
+              ]
+            }
+          ],
+          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
+        }
+      ],
+      "review_status": "candidate_not_reviewed",
+      "deep_read": false,
+      "fetched_at": "2026-10-16T08:55:48Z",
+      "first_seen_at": "2026-10-15T09:04:34Z",
+      "observation": "unchanged",
+      "abstract_excerpt": "World models (WMs) and world-action models (WAMs) focus on future world prediction and executable action generation, respectively. Although these models learn shared physical dynamics and interaction semantics from embodied trajectories, they are typically trained in isolation, which restricts knowledge reuse between prediction and control. The central challenge is therefore to develop a unified learning framework that shares these dynamics while preserving the distinct modeling capabilities required by each paradigm. We propose UniW(A)M, a mixture-of-experts world-(action) model built upon di",
+      "abstract_truncated": true,
+      "abstract_original_chars": 1495,
+      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
+    },
+    {
+      "id": "2610.18650",
+      "canonical_id": "2610.18650",
+      "arxiv_version": 1,
+      "versioned_id": "2610.18650v1",
+      "title": "ForkCast: Predictive Recovery for Vision-Language-Action Policies via Counterfactual Futures",
+      "authors": [
+        "Chenru Wen",
+        "Huajian Zeng",
+        "Haokai Ding",
+        "Jian Kang",
+        "Anqing Duan",
+        "Dawei Zhou",
+        "Dezhen Song",
+        "Xingxing Zuo"
+      ],
+      "first_submitted_at": "2026-10-13T16:13:36Z",
+      "updated_at": "2026-10-13T16:13:36Z",
+      "change_type": "new",
+      "source_url": "https://arxiv.org/abs/2610.18650",
+      "version_url": "https://arxiv.org/abs/2610.18650v1",
+      "categories": [
+        "cs.RO"
+      ],
+      "primary_category": "cs.RO",
+      "doi": null,
+      "journal_reference": null,
+      "matched_topics": [
+        "robot_vla"
       ],
       "relevance_reasons": [
         {
@@ -451,7 +929,6 @@ tion": "first_seen",
             {
               "field": "title",
               "matched_phrases": [
-                "vla",
                 "vision language action"
               ]
             },
@@ -459,23 +936,7 @@ tion": "first_seen",
               "field": "abstract",
               "matched_phrases": [
                 "vision language action",
-                "vlas",
                 "vla"
-              ]
-            }
-          ],
-          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
-        },
-        {
-          "topic": "robot_moe",
-          "label": "Robot mixture-of-experts",
-          "method": "title_abstract_keyword_heuristic",
-          "evidence": [
-            {
-              "field": "abstract",
-              "matched_phrases": [
-                "mixture of experts",
-                "moe"
               ]
             }
           ],
@@ -484,272 +945,31 @@ tion": "first_seen",
       ],
       "review_status": "candidate_not_reviewed",
       "deep_read": false,
-      "fetched_at": "2026-10-15T09:04:34Z",
-      "first_seen_at": "2026-10-09T08:59:18Z",
-      "observation": "version_updated",
-      "abstract_excerpt": "Despite recent advances in Vision-Language-Action models (VLAs) for robotic manipulation, their performance remains sensitive to changes in camera configuration. The problem becomes more evident in cross-setup deployment, as reproducing the exact camera pose used for training is nearly impossible. Unlike fixed external views, wrist views are more challenging because the camera moves with the robot, causing even small mounting variations to alter fine-grained geometric cues. To address this, we propose WARP-VLA, a camera-view robust VLA for diverse wrist camera configurations. WARP-VLA adopts a",
+      "fetched_at": "2026-10-16T08:55:48Z",
+      "first_seen_at": "2026-10-15T09:04:34Z",
+      "observation": "unchanged",
+      "abstract_excerpt": "Vision-language-action (VLA) policies perform manipulation tasks using camera images and language instructions, but object slip or visual occlusion can disrupt execution. Recovery is typically learned during policy training or delegated to a monitor that triggers a scripted repair after detecting a failure. We introduce ForkCast, a predictive recovery framework that compares counterfactual futures to determine whether and how to intervene in a frozen VLA policy. At each decision point, ForkCast evaluates three candidates: executing the policy's nominal action chunk (Commit), adjusting the came",
       "abstract_truncated": true,
-      "abstract_original_chars": 1316,
+      "abstract_original_chars": 1545,
       "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
     },
     {
-      "id": "2601.14628",
-      "canonical_id": "2601.14628",
+      "id": "2606.12965",
+      "canonical_id": "2606.12965",
       "arxiv_version": 2,
-      "versioned_id": "2601.14628v2",
-      "title": "NeuroVLA: A Brain-inspired Embodied Intelligence for Fluid and Fast Reflexive Robotics Control",
+      "versioned_id": "2606.12965v2",
+      "title": "EmbodiSteer: Steering Embodiment-Agnostic Visuomotor Policies with Joint-Space Guidance for Zero-Shot Cross-Embodiment Deployment",
       "authors": [
-        "Weiyu Guo",
-        "He Zhang",
-        "Pengteng Li",
-        "Tiefu Cai",
-        "Ziyang Chen",
-        "Yandong Guo",
-        "Xiao He",
-        "Yongkui Yang",
-        "Ying Sun",
-        "Hui Xiong"
+        "Shihefeng Wang",
+        "Kangchen Lv",
+        "Mingrui Yu",
+        "Xiang Li"
       ],
-      "first_submitted_at": "2026-01-21T04:04:44Z",
-      "updated_at": "2026-10-13T01:40:33Z",
+      "first_submitted_at": "2026-06-11T06:49:39Z",
+      "updated_at": "2026-10-13T15:57:08Z",
       "change_type": "revision",
-      "source_url": "https://arxiv.org/abs/2601.14628",
-      "version_url": "https://arxiv.org/abs/2601.14628v2",
-      "categories": [
-        "cs.RO",
-        "cs.AI"
-      ],
-      "primary_category": "cs.RO",
-      "doi": null,
-      "journal_reference": null,
-      "matched_topics": [
-        "robot_vla"
-      ],
-      "relevance_reasons": [
-        {
-          "topic": "robot_vla",
-          "label": "Robot VLA",
-          "method": "title_abstract_keyword_heuristic",
-          "evidence": [
-            {
-              "field": "abstract",
-              "matched_phrases": [
-                "vision language action",
-                "vla"
-              ]
-            }
-          ],
-          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
-        }
-      ],
-      "review_status": "candidate_not_reviewed",
-      "deep_read": false,
-      "fetched_at": "2026-10-15T09:04:34Z",
-      "first_seen_at": "2026-10-15T09:04:34Z",
-      "observation": "first_seen",
-      "abstract_excerpt": "Vision-language-action (VLA) models inherit powerful semantic representations from large language models, but carrying over their design priorities can leave the demands of physical control under-specified. Stable manipulation requires high-frequency proprioceptive feedback and persistent motor state, in addition to instruction understanding. Here we introduce Neuromorphic Vision-Language-Action (NeuroVLA), a brain-inspired architecture that couples a cortical vision-language planner to recurrent cerebellar modulation and a stateful spiking spinal controller. These components translate semanti",
-      "abstract_truncated": true,
-      "abstract_original_chars": 1406,
-      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
-    },
-    {
-      "id": "2610.17526",
-      "canonical_id": "2610.17526",
-      "arxiv_version": 1,
-      "versioned_id": "2610.17526v1",
-      "title": "Box-WAM: Box Trajectories as Compact State Representations for World Action Models",
-      "authors": [
-        "Qinxi Yu",
-        "Wenzhou Ding",
-        "Gloria X. Wang",
-        "Albert J. Zhai",
-        "Shenlong Wang"
-      ],
-      "first_submitted_at": "2026-10-13T00:42:36Z",
-      "updated_at": "2026-10-13T00:42:36Z",
-      "change_type": "new",
-      "source_url": "https://arxiv.org/abs/2610.17526",
-      "version_url": "https://arxiv.org/abs/2610.17526v1",
-      "categories": [
-        "cs.RO",
-        "cs.AI"
-      ],
-      "primary_category": "cs.RO",
-      "doi": null,
-      "journal_reference": null,
-      "matched_topics": [
-        "robot_world_models"
-      ],
-      "relevance_reasons": [
-        {
-          "topic": "robot_world_models",
-          "label": "Robot world models",
-          "method": "title_abstract_keyword_heuristic",
-          "evidence": [
-            {
-              "field": "title",
-              "matched_phrases": [
-                "world action models"
-              ]
-            },
-            {
-              "field": "abstract",
-              "matched_phrases": [
-                "world action models",
-                "world action modeling"
-              ]
-            }
-          ],
-          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
-        }
-      ],
-      "review_status": "candidate_not_reviewed",
-      "deep_read": false,
-      "fetched_at": "2026-10-15T09:04:34Z",
-      "first_seen_at": "2026-10-15T09:04:34Z",
-      "observation": "first_seen",
-      "abstract_excerpt": "World action models (WAMs) are a category of policy models that ex- plicitly predict both actions and future world states. They have been shown to outperform action-only models across various robotic manipulation tasks. How- ever, representing the future with full-frame video prediction can be computation- ally expensive during both training and inference. This raises a central question: what compact state representation preserves the planning and supervision bene- fits of future prediction? In this paper, we propose BoxWAM, which replaces dense future frames with oriented bounding box traject",
-      "abstract_truncated": true,
-      "abstract_original_chars": 1136,
-      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
-    },
-    {
-      "id": "2610.17521",
-      "canonical_id": "2610.17521",
-      "arxiv_version": 1,
-      "versioned_id": "2610.17521v1",
-      "title": "YUBI-Real2Sim: 3DGS Scene Verification for Reliable Policy Evaluation",
-      "authors": [
-        "Hiroki Nishizawa",
-        "Takehiko Ohkawa",
-        "Nicola Scianca",
-        "Tatsuya Matsushima",
-        "Shigeo Morishima",
-        "Kei Ota"
-      ],
-      "first_submitted_at": "2026-10-13T00:33:21Z",
-      "updated_at": "2026-10-13T00:33:21Z",
-      "change_type": "new",
-      "source_url": "https://arxiv.org/abs/2610.17521",
-      "version_url": "https://arxiv.org/abs/2610.17521v1",
-      "categories": [
-        "cs.RO",
-        "cs.AI"
-      ],
-      "primary_category": "cs.RO",
-      "doi": null,
-      "journal_reference": null,
-      "matched_topics": [
-        "robot_vla"
-      ],
-      "relevance_reasons": [
-        {
-          "topic": "robot_vla",
-          "label": "Robot VLA",
-          "method": "title_abstract_keyword_heuristic",
-          "evidence": [
-            {
-              "field": "abstract",
-              "matched_phrases": [
-                "vla"
-              ]
-            }
-          ],
-          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
-        }
-      ],
-      "review_status": "candidate_not_reviewed",
-      "deep_read": false,
-      "fetched_at": "2026-10-15T09:04:34Z",
-      "first_seen_at": "2026-10-15T09:04:34Z",
-      "observation": "first_seen",
-      "abstract_excerpt": "Evaluating VLA policies on real robots is costly, time-consuming, and difficult to reproduce, making real-to-sim simulation essential for scalable evaluation. While 3D Gaussian Splatting (3DGS) enables rapid real-to-sim scene generation, the reconstruction quality required for reliable policy evaluation remains unquantified. In particular, policies relying on wrist-mounted fisheye cameras (e.g., YUBI handheld gripper data) are heavily exposed to visual artifacts (holes, floaters) in wide-angle views, directly degrading task performance. To address this, we present YUBI-Real2Sim, a unified fram",
-      "abstract_truncated": true,
-      "abstract_original_chars": 1765,
-      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
-    },
-    {
-      "id": "2602.16356",
-      "canonical_id": "2602.16356",
-      "arxiv_version": 2,
-      "versioned_id": "2602.16356v2",
-      "title": "Articulated 3D Scene Graphs for Open-World Mobile Manipulation",
-      "authors": [
-        "Martin Büchner",
-        "Adrian Röfer",
-        "Tim Engelbracht",
-        "Tim Welschehold",
-        "Zuria Bauer",
-        "Hermann Blum",
-        "Marc Pollefeys",
-        "Abhinav Valada"
-      ],
-      "first_submitted_at": "2026-02-18T10:40:35Z",
-      "updated_at": "2026-10-12T21:08:07Z",
-      "change_type": "revision",
-      "source_url": "https://arxiv.org/abs/2602.16356",
-      "version_url": "https://arxiv.org/abs/2602.16356v2",
-      "categories": [
-        "cs.RO",
-        "cs.AI",
-        "cs.CV"
-      ],
-      "primary_category": "cs.RO",
-      "doi": null,
-      "journal_reference": null,
-      "matched_topics": [
-        "mobile_manipulation"
-      ],
-      "relevance_reasons": [
-        {
-          "topic": "mobile_manipulation",
-          "label": "Quadruped-arm / mobile manipulation",
-          "method": "title_abstract_keyword_heuristic",
-          "evidence": [
-            {
-              "field": "title",
-              "matched_phrases": [
-                "mobile manipulation"
-              ]
-            },
-            {
-              "field": "abstract",
-              "matched_phrases": [
-                "mobile manipulation",
-                "quadruped",
-                "mobile manipulator"
-              ]
-            }
-          ],
-          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
-        }
-      ],
-      "review_status": "candidate_not_reviewed",
-      "deep_read": false,
-      "fetched_at": "2026-10-15T09:04:34Z",
-      "first_seen_at": "2026-10-15T09:04:34Z",
-      "observation": "first_seen",
-      "abstract_excerpt": "Semantic scene understanding has enabled robots to reason and perform affordance-driven object interaction. Despite this, real-world manipulation remains fundamentally limited by the inability to predict how objects move and are articulated. Long-horizon mobile manipulation requires closing the gap between semantics, geometry, and kinematics. In this work, we present MoMa-SG, a novel framework for building semantic-kinematic 3D scene graphs of articulated scenes containing a myriad of interactable objects. Given RGB-D sequences containing multiple object articulations, we temporally segment ob",
-      "abstract_truncated": true,
-      "abstract_original_chars": 1672,
-      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
-    },
-    {
-      "id": "2610.17350",
-      "canonical_id": "2610.17350",
-      "arxiv_version": 1,
-      "versioned_id": "2610.17350v1",
-      "title": "Can a Frontier VLM Serve as a Robot Policy for Memory-Dependent Manipulation?",
-      "authors": [
-        "Jack B. Jedlicki",
-        "Amish Sethi",
-        "Heng Yang"
-      ],
-      "first_submitted_at": "2026-10-12T20:00:10Z",
-      "updated_at": "2026-10-12T20:00:10Z",
-      "change_type": "new",
-      "source_url": "https://arxiv.org/abs/2610.17350",
-      "version_url": "https://arxiv.org/abs/2610.17350v1",
+      "source_url": "https://arxiv.org/abs/2606.12965",
+      "version_url": "https://arxiv.org/abs/2606.12965v2",
       "categories": [
         "cs.RO"
       ],
@@ -777,104 +997,35 @@ tion": "first_seen",
       ],
       "review_status": "candidate_not_reviewed",
       "deep_read": false,
-      "fetched_at": "2026-10-15T09:04:34Z",
+      "fetched_at": "2026-10-16T08:55:48Z",
       "first_seen_at": "2026-10-15T09:04:34Z",
-      "observation": "first_seen",
-      "abstract_excerpt": "We use a frozen frontier vision-language model, GPT-6-Astra, directly as the robot policy on RoboMME, a benchmark of 16 memory-dependent manipulation tasks spanning temporal, spatial, object, and procedural memory. The model keeps the whole episode in context and outputs every end-effector waypoint and gripper command, with no RoboMME-specific training. On the 800 test episodes it succeeds in 92.1%, above the previously reported human score of 90.5%, which was obtained with an oracle skill interface, and far ahead of the best leaderboard entry (60.8%) and of a hierarchical system that pairs th",
+      "observation": "unchanged",
+      "abstract_excerpt": "Scalable robot imitation learning relies on large-scale heterogeneous data from diverse robots or body-free data, making Cartesian end-effector actions a key interface for embodiment-agnostic policy learning. However, end-effector-only abstraction leaves Cartesian policies unaware of the deployed robot body, making them brittle under robot-specific constraints such as whole-body collision avoidance. To overcome this limitation, we present EmbodiSteer, a training-free framework that steers embodiment-agnostic visuomotor policies toward zero-shot, embodiment-aware deployment. EmbodiSteer keeps p",
       "abstract_truncated": true,
-      "abstract_original_chars": 1189,
+      "abstract_original_chars": 1328,
       "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
     },
     {
-      "id": "2604.03208",
-      "canonical_id": "2604.03208",
-      "arxiv_version": 3,
-      "versioned_id": "2604.03208v3",
-      "title": "Hierarchical Planning with Latent World Models",
+      "id": "2610.18596",
+      "canonical_id": "2610.18596",
+      "arxiv_version": 1,
+      "versioned_id": "2610.18596v1",
+      "title": "ACCRUE: Continual Off-Policy Reinforcement Learning for Robot Foundation Models",
       "authors": [
-        "Wancong Zhang",
-        "Basile Terver",
-        "Artem Zholus",
-        "Soham Chitnis",
-        "Harsh Sutaria",
-        "Mido Assran",
-        "Randall Balestriero",
-        "Amir Bar",
-        "Yann LeCun",
-        "Nicolas Ballas"
+        "Changyeon Kim",
+        "Kimin Lee",
+        "Yashraj Narang",
+        "Yijie Guo"
       ],
-      "first_submitted_at": "2026-04-03T17:32:36Z",
-      "updated_at": "2026-10-12T19:55:32Z",
-      "change_type": "revision",
-      "source_url": "https://arxiv.org/abs/2604.03208",
-      "version_url": "https://arxiv.org/abs/2604.03208v3",
-      "categories": [
-        "cs.LG"
-      ],
-      "primary_category": "cs.LG",
-      "doi": null,
-      "journal_reference": null,
-      "matched_topics": [
-        "robot_world_models"
-      ],
-      "relevance_reasons": [
-        {
-          "topic": "robot_world_models",
-          "label": "Robot world models",
-          "method": "title_abstract_keyword_heuristic",
-          "evidence": [
-            {
-              "field": "title",
-              "matched_phrases": [
-                "world models"
-              ]
-            },
-            {
-              "field": "abstract",
-              "matched_phrases": [
-                "world models",
-                "world model"
-              ]
-            }
-          ],
-          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
-        }
-      ],
-      "review_status": "candidate_not_reviewed",
-      "deep_read": false,
-      "fetched_at": "2026-10-15T09:04:34Z",
-      "first_seen_at": "2026-10-15T09:04:34Z",
-      "observation": "first_seen",
-      "abstract_excerpt": "World models are a promising path to zero-shot embodied control through planning. However, existing world model planners struggle on long-horizon, multi-stage tasks: prediction errors compound and naive search is exponential in the planning horizon. Hierarchy mitigates both by decomposing tasks into shorter, tractable subproblems; yet prior hierarchical approaches either amortize control into task-specific policies (hierarchical RL) or assume low-dimensional states and known dynamics (classical hierarchical MPC). We present Hierarchical Planning with Latent World Models (HWM), an architecture",
-      "abstract_truncated": true,
-      "abstract_original_chars": 1420,
-      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
-    },
-    {
-      "id": "2605.13119",
-      "canonical_id": "2605.13119",
-      "arxiv_version": 2,
-      "versioned_id": "2605.13119v2",
-      "title": "Towards Long-horizon Embodied Agents with Tool-Aligned Vision-Language-Action Models",
-      "authors": [
-        "Zixing Lei",
-        "Changxing Liu",
-        "Yichen Xiong",
-        "Minhao Xiong",
-        "Yuanzhuo Ding",
-        "Zhipeng Zhang",
-        "Weixin Li",
-        "Siheng Chen"
-      ],
-      "first_submitted_at": "2026-05-13T07:40:34Z",
-      "updated_at": "2026-10-12T18:03:31Z",
-      "change_type": "revision",
-      "source_url": "https://arxiv.org/abs/2605.13119",
-      "version_url": "https://arxiv.org/abs/2605.13119v2",
+      "first_submitted_at": "2026-10-13T15:53:26Z",
+      "updated_at": "2026-10-13T15:53:26Z",
+      "change_type": "new",
+      "source_url": "https://arxiv.org/abs/2610.18596",
+      "version_url": "https://arxiv.org/abs/2610.18596v1",
       "categories": [
         "cs.RO",
         "cs.AI",
-        "cs.CV"
+        "cs.LG"
       ],
       "primary_category": "cs.RO",
       "doi": null,
@@ -889,9 +1040,65 @@ tion": "first_seen",
           "method": "title_abstract_keyword_heuristic",
           "evidence": [
             {
+              "field": "abstract",
+              "matched_phrases": [
+                "vlas"
+              ]
+            }
+          ],
+          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
+        }
+      ],
+      "review_status": "candidate_not_reviewed",
+      "deep_read": false,
+      "fetched_at": "2026-10-16T08:55:48Z",
+      "first_seen_at": "2026-10-15T09:04:34Z",
+      "observation": "unchanged",
+      "abstract_excerpt": "Reinforcement learning (RL) post-training improves robot foundation models (RFMs) beyond their demonstrations, but real-world deployment demands more: learning new tasks efficiently while retaining previously acquired behaviors. Existing continual RL methods on top of VLAs mitigate forgetting but rely on on-policy updates with limited forward transfer, whereas off-policy methods improve single-task sample efficiency without addressing learner persistence across tasks. We propose ACCRUE, a continual off-policy RL framework that carries lightweight actor and critic networks across tasks, allowin",
+      "abstract_truncated": true,
+      "abstract_original_chars": 1224,
+      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
+    },
+    {
+      "id": "2610.18568",
+      "canonical_id": "2610.18568",
+      "arxiv_version": 1,
+      "versioned_id": "2610.18568v1",
+      "title": "WAVE-0: Bridging VLA Policies and WAMs with Lightweight Latent Future Prediction",
+      "authors": [
+        "Haomin Wang",
+        "Anqiong Ji",
+        "Ke Wang",
+        "Zhongshan Liu",
+        "Ru Ying",
+        "Ran Zheng",
+        "Zhipeng Zhang"
+      ],
+      "first_submitted_at": "2026-10-13T15:37:50Z",
+      "updated_at": "2026-10-13T15:37:50Z",
+      "change_type": "new",
+      "source_url": "https://arxiv.org/abs/2610.18568",
+      "version_url": "https://arxiv.org/abs/2610.18568v1",
+      "categories": [
+        "cs.RO"
+      ],
+      "primary_category": "cs.RO",
+      "doi": null,
+      "journal_reference": null,
+      "matched_topics": [
+        "robot_vla",
+        "robot_world_models"
+      ],
+      "relevance_reasons": [
+        {
+          "topic": "robot_vla",
+          "label": "Robot VLA",
+          "method": "title_abstract_keyword_heuristic",
+          "evidence": [
+            {
               "field": "title",
               "matched_phrases": [
-                "vision language action"
+                "vla"
               ]
             },
             {
@@ -904,171 +1111,17 @@ tion": "first_seen",
             }
           ],
           "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
-        }
-      ],
-      "review_status": "candidate_not_reviewed",
-      "deep_read": false,
-      "fetched_at": "2026-10-15T09:04:34Z",
-      "first_seen_at": "2026-10-15T09:04:34Z",
-      "observation": "first_seen",
-      "abstract_excerpt": "Vision-language-action (VLA) models are effective robot action executors, but they remain limited on long-horizon tasks due to the dual burden of extended closed-loop planning and diverse physical operations. We therefore propose VLAs-as-Tools, a strategy that distributes this burden across a high-level vision language model (VLM) agent for temporal reasoning and a family of specialized VLA tools for diverse local physical operations. The VLM handles scene analysis, global planning, and recovery, while each VLA tool executes a bounded subtask. To tightly couple agent planning with VLA tool exe",
-      "abstract_truncated": true,
-      "abstract_original_chars": 1438,
-      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
-    },
-    {
-      "id": "2610.17232",
-      "canonical_id": "2610.17232",
-      "arxiv_version": 1,
-      "versioned_id": "2610.17232v1",
-      "title": "LiDAR-based Humanoid Navigation in Dynamic, Non-Convex Environments via Spatio-Temporal Safe Corridors",
-      "authors": [
-        "Shubham S. Kumbhar",
-        "Panagiotis Artemiadis"
-      ],
-      "first_submitted_at": "2026-10-12T18:02:07Z",
-      "updated_at": "2026-10-12T18:02:07Z",
-      "change_type": "new",
-      "source_url": "https://arxiv.org/abs/2610.17232",
-      "version_url": "https://arxiv.org/abs/2610.17232v1",
-      "categories": [
-        "cs.RO"
-      ],
-      "primary_category": "cs.RO",
-      "doi": null,
-      "journal_reference": null,
-      "matched_topics": [
-        "whole_body_control"
-      ],
-      "relevance_reasons": [
-        {
-          "topic": "whole_body_control",
-          "label": "Whole-body control",
-          "method": "title_abstract_keyword_heuristic",
-          "evidence": [
-            {
-              "field": "abstract",
-              "matched_phrases": [
-                "whole body control",
-                "wbc"
-              ]
-            }
-          ],
-          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
-        }
-      ],
-      "review_status": "candidate_not_reviewed",
-      "deep_read": false,
-      "fetched_at": "2026-10-15T09:04:34Z",
-      "first_seen_at": "2026-10-15T09:04:34Z",
-      "observation": "first_seen",
-      "abstract_excerpt": "Navigating humanoid robots through dynamic, non-convex environments requires tightly coupling onboard perception with footstep planning and dynamic locomotion control. Existing methods frequently discard complex free space through simplified convex obstacle bounds and fail to account for real-time dynamic occupancy predictions. This paper presents a real-time framework for humanoid navigation that directly constructs spatio-temporal safe corridors from LiDAR-based particle representations and couples them with Linear Inverted Pendulum (LIP)-based planning and Whole Body Control (WBC) to enable",
-      "abstract_truncated": true,
-      "abstract_original_chars": 1100,
-      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
-    },
-    {
-      "id": "2605.25782",
-      "canonical_id": "2605.25782",
-      "arxiv_version": 4,
-      "versioned_id": "2605.25782v4",
-      "title": "ParkourFormer: Integrating Predictive Supervision and Sequence Modeling into Parkour Locomotion",
-      "authors": [
-        "Yanheng Mai",
-        "Wenhao Xu",
-        "Zirui Huang",
-        "Kailun Huang",
-        "Yifei Fu",
-        "Shengwei Dong",
-        "Xinjue Wang",
-        "Yanzhe Xie",
-        "Renjing Xu"
-      ],
-      "first_submitted_at": "2026-05-25T12:29:47Z",
-      "updated_at": "2026-10-12T17:56:58Z",
-      "change_type": "revision",
-      "source_url": "https://arxiv.org/abs/2605.25782",
-      "version_url": "https://arxiv.org/abs/2605.25782v4",
-      "categories": [
-        "cs.RO"
-      ],
-      "primary_category": "cs.RO",
-      "doi": null,
-      "journal_reference": null,
-      "matched_topics": [
-        "robot_moe"
-      ],
-      "relevance_reasons": [
-        {
-          "topic": "robot_moe",
-          "label": "Robot mixture-of-experts",
-          "method": "title_abstract_keyword_heuristic",
-          "evidence": [
-            {
-              "field": "abstract",
-              "matched_phrases": [
-                "moe"
-              ]
-            }
-          ],
-          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
-        }
-      ],
-      "review_status": "candidate_not_reviewed",
-      "deep_read": false,
-      "fetched_at": "2026-10-15T09:04:34Z",
-      "first_seen_at": "2026-10-15T09:04:34Z",
-      "observation": "first_seen",
-      "abstract_excerpt": "Humanoid parkour requires locomotion policies to coordinate whole-body dynamics across rapidly changing terrains such as stairs, gaps, slopes, and obstacles. Existing learning-based humanoid locomotion policies typically infer actions from current and historical observations, while the future evolution of the robot state is represented only implicitly. Explicitly anticipating short-horizon state evolution is particularly beneficial for multiple terrains locomotion, where current actions must account for upcoming contact transitions and whole-body dynamics. We present ParkourForme, a Transforme",
-      "abstract_truncated": true,
-      "abstract_original_chars": 1657,
-      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
-    },
-    {
-      "id": "2610.17141",
-      "canonical_id": "2610.17141",
-      "arxiv_version": 1,
-      "versioned_id": "2610.17141v1",
-      "title": "MARS: Systematic Multi-Level Acceleration for World Action Models",
-      "authors": [
-        "Zengyuan Zuo",
-        "Yongchang Zhang",
-        "Guangyu Zhao",
-        "Tianze Zhang",
-        "Biao Wu",
-        "Meng Fang",
-        "Yiwu Zhong"
-      ],
-      "first_submitted_at": "2026-10-12T17:26:21Z",
-      "updated_at": "2026-10-12T17:26:21Z",
-      "change_type": "new",
-      "source_url": "https://arxiv.org/abs/2610.17141",
-      "version_url": "https://arxiv.org/abs/2610.17141v1",
-      "categories": [
-        "cs.CV"
-      ],
-      "primary_category": "cs.CV",
-      "doi": null,
-      "journal_reference": null,
-      "matched_topics": [
-        "robot_world_models"
-      ],
-      "relevance_reasons": [
+        },
         {
           "topic": "robot_world_models",
           "label": "Robot world models",
           "method": "title_abstract_keyword_heuristic",
           "evidence": [
             {
-              "field": "title",
-              "matched_phrases": [
-                "world action models"
-              ]
-            },
-            {
               "field": "abstract",
               "matched_phrases": [
-                "world action models"
+                "world action models",
+                "world model"
               ]
             }
           ],
@@ -1077,29 +1130,34 @@ tion": "first_seen",
       ],
       "review_status": "candidate_not_reviewed",
       "deep_read": false,
-      "fetched_at": "2026-10-15T09:04:34Z",
+      "fetched_at": "2026-10-16T08:55:48Z",
       "first_seen_at": "2026-10-15T09:04:34Z",
-      "observation": "first_seen",
-      "abstract_excerpt": "World Action Models (WAMs) have emerged as a promising alternative for embodied intelligence by jointly predicting future world states and robot actions. However, their heavy visual encoding and iterative generative inference incur substantial latency, limiting their applicability to high-frequency closed-loop control. Existing training-free acceleration methods typically optimize a single stage, yielding limited speedups or degraded control under aggressive reuse. In this work, we systematically profile the inference overhead of WAMs and observe abundant redundancy across Transformer computat",
+      "observation": "unchanged",
+      "abstract_excerpt": "Vision-language-action (VLA) policies excel at generalist robotic manipulation but generate actions without explicitly modeling their environmental consequences. World action models (WAMs) incorporate future prediction, yet most rely on costly video generation, while latent alternatives either use predicted futures only as auxiliary targets or infer latent actions from suboptimal visual transitions through costly large-scale video pretraining. We introduce WAVE-0 (World-model-Augmented VLA Execution), a framework that bridges VLAs and WAMs through a lightweight latent world model. By connectin",
       "abstract_truncated": true,
-      "abstract_original_chars": 1768,
+      "abstract_original_chars": 1545,
       "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
     },
     {
-      "id": "2610.17114",
-      "canonical_id": "2610.17114",
+      "id": "2610.18478",
+      "canonical_id": "2610.18478",
       "arxiv_version": 1,
-      "versioned_id": "2610.17114v1",
-      "title": "D-World: An Explicit World-Language-Action Model with Recursive Self-Improvement under Dual Control",
+      "versioned_id": "2610.18478v1",
+      "title": "MemoryVLN: From Ego-Aware Memory Representation to Cross-Context Memory Reuse in Vision-Language Navigation",
       "authors": [
-        "Xuan Wen",
-        "Baichao Wang"
+        "Xueyao Wei",
+        "Yifei Wang",
+        "Delun Li",
+        "Shaoan Wang",
+        "Junzhi Yu",
+        "Wenjie Song",
+        "Xingyu Chen"
       ],
-      "first_submitted_at": "2026-10-12T17:05:31Z",
-      "updated_at": "2026-10-12T17:05:31Z",
+      "first_submitted_at": "2026-10-13T14:40:04Z",
+      "updated_at": "2026-10-13T14:40:04Z",
       "change_type": "new",
-      "source_url": "https://arxiv.org/abs/2610.17114",
-      "version_url": "https://arxiv.org/abs/2610.17114v1",
+      "source_url": "https://arxiv.org/abs/2610.18478",
+      "version_url": "https://arxiv.org/abs/2610.18478v1",
       "categories": [
         "cs.RO",
         "cs.AI"
@@ -1108,37 +1166,22 @@ tion": "first_seen",
       "doi": null,
       "journal_reference": null,
       "matched_topics": [
-        "robot_world_models"
+        "vln_objectnav",
+        "navigation_agents",
+        "spatial_episodic_memory"
       ],
       "relevance_reasons": [
         {
-          "topic": "robot_world_models",
-          "label": "Robot world models",
+          "topic": "vln_objectnav",
+          "label": "VLN / ObjectNav",
           "method": "title_abstract_keyword_heuristic",
           "evidence": [
             {
-              "field": "abstract",
+              "field": "title",
               "matched_phrases": [
-                "world models"
+                "vision language navigation"
               ]
-            }
-          ],
-          "reason": "Keyword evidence in title/abstract with navigation or robot context where required; relevance is not human-verified."
-        }
-      ],
-      "review_status": "candidate_not_reviewed",
-      "deep_read": false,
-      "fetched_at": "2026-10-15T09:04:34Z",
-      "first_seen_at": "2026-10-15T09:04:34Z",
-      "observation": "first_seen",
-      "abstract_excerpt": "Frontier large language models (LLMs) now reason about space well enough to program robots, yet the world models behind robot policies are implicit, held in network weights or predicted video, and cannot be inspected or corrected directly. We present D-World, an explicit world-language-action model built on the Sense, Plan and Act decomposition. A perception agent writes the scene as an executable digital twin using generated vision and geometry code. A planning agent searches for actions in simulation and, after each executed action chunk, revises the twin's object states and named physical p",
-      "abstract_truncated": true,
-      "abstract_original_chars": 1913,
-      "abstract_excerpt_method": "verbatim_prefix_whitespace_normalized"
-    },
-    {
-      "id": "2604.07457",
-      "canonical_id": "2604.07457",
-      "arxiv_version": 2,
-      "versioned_id": "2604.07457v2",
-      "title": "CMP: Robust Whole-Body Track
+            },
+            {
+              "field": "abstract",
+              "match
