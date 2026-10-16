@@ -43,6 +43,8 @@ jobs:
           python3 scripts/assemble_frontier.py
           python3 scripts/reports.py
           python3 scripts/build_previews.py
+      - name: Check supplemental relation probe plumbing
+        run: python3 -m unittest discover -s tests -p test_navigation_relation_interactions.py -v
       - name: Capture candidate in preinstalled Chrome
         env:
           EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}

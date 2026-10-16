@@ -75,7 +75,7 @@ TASK_INDEX = [('task:audiogoal', 'AudioGoal', '声音→声源'), ('task:audiopo
 CHALLENGE_LABELS = {'legacy:ci_search_unknown_target': '未见目标，怎样少走冤路？', 'legacy:ci_generalize_environments': '路线更多，新屋仍难适应？', 'legacy:ci_instruction_progress': '指令哪段真正完成？', 'legacy:ci_recover_route_error': '走错后如何少代价纠正？', 'legacy:ci_candidate_verification': '看见候选，为何不能停？', 'legacy:ci_semantic_commitment': '语义有分歧，单标签丢什么？', 'legacy:ci_dynamic_revisit': '旧地图哪部分仍可信？', 'legacy:ci_negative_evidence': '未找到，何时算可信反证？', 'legacy:ci_long_horizon_evidence': '跨调用如何保留证据与待办？', 'methods:ci_ground_dynamic_plan': '未知布局为何难预先完整规划？', 'methods:ci_hierarchical_spatial_query': '扁平检索为何丢失楼层房间？', 'methods:ci_spatial_language_grounding': '仅图文匹配，怎样找两地标之间？', 'methods:ci_compact_relational_memory': '逐点语义冗余且缺少对象关系'}
 
 
-RELATION_EVIDENCE_ELEMENT_JS = "var e=[...document.querySelectorAll('[data-task-relation]')].find(n=>n.dataset.taskRelation===arguments[0]),s=arguments[1];if(s.kind==='heading')return e.querySelector('strong');if(s.kind==='locator')return [...e.querySelectorAll('p')].find(n=>n.textContent===s.text);var a=[...e.querySelectorAll('[data-task-relation-source]')].find(n=>n.dataset.taskRelationSource===s.id);if(!a)throw Error('Exact source anchor missing');if(s.kind==='source')return a;var status=a.nextElementSibling;if(!status||status.tagName!=='SPAN'||status.parentElement!==a.parentElement)throw Error('Exact source status sibling missing');return status;"
+RELATION_EVIDENCE_ELEMENT_JS = "var e=[...document.querySelectorAll('[data-task-relation]')].find(n=>n.dataset.taskRelation===arguments[0]),s=arguments[1];if(s.kind==='heading')return e.querySelector('strong');if(s.kind==='locator')return [...e.querySelectorAll('p[data-task-relation-locator-index]')].find(n=>Number(n.dataset.taskRelationLocatorIndex)===s.locatorRecord.index&&n.dataset.taskRelationLocator===s.locatorRecord.raw);var a=[...e.querySelectorAll('[data-task-relation-source]')].find(n=>n.dataset.taskRelationSource===s.id);if(!a)throw Error('Exact source anchor missing');if(s.kind==='source')return a;var status=a.nextElementSibling;if(!status||status.tagName!=='SPAN'||status.parentElement!==a.parentElement)throw Error('Exact source status sibling missing');return status;"
 
 
 VISUAL_GEOMETRY = r"""
@@ -279,6 +279,41 @@ def check_graphical_map(data):
 
 
 
+def relation_locator_url(url):
+    """Same intentionally narrow ASCII HTTP(S)/DNS grammar as the renderer."""
+    if re.search(r'[^\x21-\x7e]|[\\()[\]]|%(?![0-9A-Fa-f]{2})', url):
+        return False
+    match = re.fullmatch(r'https?://((?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,63})(?::([0-9]{1,5}))?(?:[/?#][\x21-\x7e]*)?', url)
+    return bool(match and len(match.group(1)) <= 253 and
+                not any(label.lower().startswith('xn--') for label in match.group(1).split('.')) and
+                (match.group(2) is None or int(match.group(2)) <= 65535))
+
+
+def relation_locator_display(raw):
+    """Independent visible-copy contract; scientific locator remains unchanged."""
+    text, links, last = [], [], 0
+    pattern = re.compile(r'\[([^\[\]\r\n]+)\]\(([^()\x00-\x20\x7f]+)\)')
+    for match in pattern.finditer(raw):
+        url = match.group(2)
+        if ((match.start() and raw[match.start() - 1] in '![' + chr(92)) or
+                raw[match.end():match.end() + 1] == ']' or re.search(r'[\\\x00-\x20\x7f]', url)):
+            continue
+        if not relation_locator_url(url):
+            continue
+        label = match.group(1) + '（' + url + '；新标签页）'
+        text.extend((raw[last:match.start()], label))
+        links.append({'text': label, 'url': url, 'target': '_blank', 'rel': 'noopener noreferrer'})
+        last = match.end()
+    text.append(raw[last:])
+    return {'text': ''.join(text), 'links': links}
+
+
+def relation_locator_spec(loc, index):
+    display = relation_locator_display(loc['locator'])
+    return {'kind': 'locator', 'text': display['text'],
+            'locatorRecord': {'index': index, 'raw': loc['locator'], 'links': display['links']}}
+
+
 def check_relation_evidence(data, expected):
     if data['id'] != expected['id'] or data['type'] != expected['relationType'] or data['from'] != expected['from'] or data['to'] != expected['to']:
         raise RuntimeError('Relationship selection opened another relationship')
@@ -288,17 +323,17 @@ def check_relation_evidence(data, expected):
     wanted = [(s['sourceId'], s['url'], s['versionId'], s['versionStatus']) for s in expected['sourceRefs']]
     if actual != wanted:
         raise RuntimeError('Relationship source IDs, URLs or version status differ from the original inventory')
-    if any(loc['locator'] not in data['text'] for loc in expected['locators']):
+    if any(relation_locator_display(loc['locator'])['text'] not in data['text'] for loc in expected['locators']):
         raise RuntimeError('Relationship original source locator was omitted')
     if len(data['visibleProofs']) != 1 + len(expected['locators']) + 2 * len(expected['sourceRefs']):
         raise RuntimeError('Relationship evidence visibility checks are incomplete')
-    specs = [{'kind': 'heading'}, *[{'kind': 'locator', 'text': loc['locator']} for loc in expected['locators']],
+    specs = [{'kind': 'heading'}, *[relation_locator_spec(loc, index) for index, loc in enumerate(expected['locators'])],
              *[{'kind': kind, 'text': '原文来源 · ' + (ref.get('descriptor') or ref['sourceId']) if kind == 'source' else
                 ' · ' + {'snapshot_not_version_pinned': '未固定全文快照', 'fixed_arxiv_version_url': '来源URL限定版本'}.get(ref['versionStatus'], ref['versionStatus']),
                 'source': {'id': ref['sourceId'], 'url': ref['url'], 'version': ref['versionId'], 'status': ref['versionStatus']}}
                for ref in expected['sourceRefs'] for kind in ('source', 'status')]]
     for proof, spec in zip(data['visibleProofs'], specs):
-        if (proof.get('kind') != spec['kind'] or proof.get('sourceRecord') != spec.get('source') or
+        if (proof.get('kind') != spec['kind'] or proof.get('sourceRecord') != spec.get('source') or proof.get('locatorRecord') != spec.get('locatorRecord') or
                 'text' in spec and proof['text'] != spec['text']):
             raise RuntimeError('Relationship visible fragment belongs to another source, version or locator')
         if spec['kind'] != 'source' and proof.get('accessibilitySuffix') is not None:
@@ -1179,7 +1214,7 @@ if(e.matches('[data-task-relation-source]')){
 }
 var proof=fixedTextProof(e,suffix),accessibleText=proof.text;
 if(suffix)proof.text=proof.renderedText;
-return Object.assign(proof,{elementTag:e.tagName,accessibleText:accessibleText,accessibilitySuffix:suffix?{tag:suffix.tagName,className:suffix.className,text:suffix.textContent}:null,
+return Object.assign(proof,{locatorRecord:e.matches('p[data-task-relation-locator-index]')?{index:Number(e.dataset.taskRelationLocatorIndex),raw:e.dataset.taskRelationLocator,links:[...e.querySelectorAll('a')].map(a=>({text:a.textContent,url:a.getAttribute('href'),target:a.getAttribute('target'),rel:a.getAttribute('rel')}))}:null,elementTag:e.tagName,accessibleText:accessibleText,accessibilitySuffix:suffix?{tag:suffix.tagName,className:suffix.className,text:suffix.textContent}:null,
   panelId:panel.id,panelContains:panel.contains(e),relationId:e.closest('[data-task-relation]')?.dataset.taskRelation,
   sourceRecord:source?{id:source.dataset.taskRelationSource,url:source.href,version:source.dataset.sourceVersion,status:source.dataset.sourceStatus}:null,
   panelClientRect:{x:r.x+panel.clientLeft,y:r.y+panel.clientTop,width:panel.clientWidth,height:panel.clientHeight},viewport:{x:0,y:0,width:innerWidth,height:innerHeight}});
@@ -5927,6 +5962,7 @@ def main():
     report['frontendSources'] = {name: sha(name) for name in ('assets/navigation-product.js', 'assets/navigation-product-model.js', 'assets/navigation-product.css', 'scripts/navigation_product.py')}
     report['captureSources'] = {name: sha(name) for name in ('scripts/navigation_screenshots.py', 'tests/test_navigation_screenshots.py', 'tests/test_navigation_disclosure_bounds.py')}
     report['captureSources']['scripts/navigation_receipt_journal.py'] = sha('scripts/navigation_receipt_journal.py')
+    report['captureSources']['scripts/navigation_relation_interactions.py'] = sha('scripts/navigation_relation_interactions.py')
     report['servedFiles'] = {str(p.relative_to(dist)): sha(p) for p in sorted((dist / 'research/navigation').rglob('*')) if p.is_file()}
     report['servedFiles'].update({str(p.relative_to(dist)): sha(p) for p in sorted((dist / 'assets').glob('navigation-*.js'))})
     report['servedFiles']['assets/navigation-product.css'] = sha(dist / 'assets/navigation-product.css')
@@ -6122,7 +6158,7 @@ def main():
             if expected_focus is not None:
                 data['expectedFocus'] = expected_focus
             proofs = []
-            specs = [{'kind':'heading'}] + [{'kind':'locator','text':loc['locator']} for loc in expected['locators']] + [{'kind':kind,'id':ref['sourceId']} for ref in expected['sourceRefs'] for kind in ('source','status')]
+            specs = [{'kind':'heading'}] + [relation_locator_spec(loc,index) for index,loc in enumerate(expected['locators'])] + [{'kind':kind,'id':ref['sourceId']} for ref in expected['sourceRefs'] for kind in ('source','status')]
             for spec in specs:
                 element = driver.js(RELATION_EVIDENCE_ELEMENT_JS,expected['id'],spec)
                 if element is None:
@@ -6249,6 +6285,11 @@ def main():
         if back_origin != endpoint_origin:
             raise RuntimeError('Relationship endpoint Back lost exact saved focus or reading scroll')
         evidence(expected, expected_focus=endpoint_origin['focus'])
+        # Supplemental bounded native-input regressions; existing gates unchanged.
+        from navigation_relation_interactions import run_relation_interaction_gaps
+        run_relation_interaction_gaps(driver, relation_expected, report, save,
+            s0_footer_check, reveal_relation_selector, check_s0_stability,
+            check_s0_panel_saved, wait_for)
         # Fresh document for real SVG hit tests; do not force a hidden path click.
         for rid in ('tasks:relation:90', 'tasks:relation:92'):
             driver.call('POST', '/url', {'url': 'about:blank'})

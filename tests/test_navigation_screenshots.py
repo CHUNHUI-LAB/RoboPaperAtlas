@@ -285,6 +285,8 @@ run(start+'<em>wrong sibling</em><span> · 未固定全文快照</span></p></art
         for kind, proof in zip(('heading', 'locator', 'source', 'status'), data['visibleProofs']):
             proof.update(S0FooterCaptureChecks.proof('原文来源 · s' if kind == 'source' else ' · fixed' if kind == 'status' else 'Section 3', proof['rect']))
             proof.update(kind=kind, sourceRecord=data['sources'][0].copy() if kind in ('source', 'status') else None)
+            if kind == 'locator':
+                proof['locatorRecord'] = dict(index=0, raw='Section 3', links=[])
             if kind == 'source':
                 proof.update(elementTag='A', accessibilitySuffix=dict(tag='SPAN', className='np-sr', text='（新标签页）'), accessibleText=proof['text'] + '（新标签页）')
             proof.update(panelId='np-overview-relation-panel', panelContains=True, relationId='r',
@@ -5423,6 +5425,8 @@ class S0FooterCaptureChecks(unittest.TestCase):
         for kind, proof in zip(('heading', 'locator', 'source', 'status'), data['visibleProofs']):
             proof.update(self.proof('原文来源 · 完整来源版本描述' if kind == 'source' else ' · fixed' if kind == 'status' else 'Section 3', proof['rect']))
             proof.update(kind=kind, sourceRecord=data['sources'][0].copy() if kind in ('source', 'status') else None)
+            if kind == 'locator':
+                proof['locatorRecord'] = dict(index=0, raw='Section 3', links=[])
             if kind == 'source':
                 proof.update(elementTag='A', accessibilitySuffix=dict(tag='SPAN', className='np-sr', text='（新标签页）'), accessibleText=proof['text'] + '（新标签页）')
         MODULE.check_relation_evidence(data, expected)
