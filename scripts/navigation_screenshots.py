@@ -75,7 +75,7 @@ TASK_INDEX = [('task:audiogoal', 'AudioGoal', '声音→声源'), ('task:audiopo
 CHALLENGE_LABELS = {'legacy:ci_search_unknown_target': '未见目标，怎样少走冤路？', 'legacy:ci_generalize_environments': '路线更多，新屋仍难适应？', 'legacy:ci_instruction_progress': '指令哪段真正完成？', 'legacy:ci_recover_route_error': '走错后如何少代价纠正？', 'legacy:ci_candidate_verification': '看见候选，为何不能停？', 'legacy:ci_semantic_commitment': '语义有分歧，单标签丢什么？', 'legacy:ci_dynamic_revisit': '旧地图哪部分仍可信？', 'legacy:ci_negative_evidence': '未找到，何时算可信反证？', 'legacy:ci_long_horizon_evidence': '跨调用如何保留证据与待办？', 'methods:ci_ground_dynamic_plan': '未知布局为何难预先完整规划？', 'methods:ci_hierarchical_spatial_query': '扁平检索为何丢失楼层房间？', 'methods:ci_spatial_language_grounding': '仅图文匹配，怎样找两地标之间？', 'methods:ci_compact_relational_memory': '逐点语义冗余且缺少对象关系'}
 
 
-RELATION_EVIDENCE_ELEMENT_JS = "var e=[...document.querySelectorAll('[data-task-relation]')].find(n=>n.dataset.taskRelation===arguments[0]),s=arguments[1];if(s.kind==='heading')return e.querySelector('strong');if(s.kind==='locator')return [...e.querySelectorAll('p')].find(n=>n.textContent===s.text);var a=[...e.querySelectorAll('[data-task-relation-source]')].find(n=>n.dataset.taskRelationSource===s.id);if(!a)throw Error('Exact source anchor missing');if(s.kind==='source')return a;var status=a.nextElementSibling;if(!status||status.tagName!=='SPAN'||status.parentElement!==a.parentElement)throw Error('Exact source status sibling missing');return status;"
+RELATION_EVIDENCE_ELEMENT_JS = "var e=[...document.querySelectorAll('[data-task-relation]')].find(n=>n.dataset.taskRelation===arguments[0]),s=arguments[1];if(s.kind==='heading')return e.querySelector('strong');if(s.kind==='locator')return [...e.querySelectorAll('p[data-task-relation-locator-index]')].find(n=>Number(n.dataset.taskRelationLocatorIndex)===s.locatorRecord.index&&n.dataset.taskRelationLocator===s.locatorRecord.raw);var a=[...e.querySelectorAll('[data-task-relation-source]')].find(n=>n.dataset.taskRelationSource===s.id);if(!a)throw Error('Exact source anchor missing');if(s.kind==='source')return a;var status=a.nextElementSibling;if(!status||status.tagName!=='SPAN'||status.parentElement!==a.parentElement)throw Error('Exact source status sibling missing');return status;"
 
 
 VISUAL_GEOMETRY = r"""
@@ -85,6 +85,100 @@ function bg(e){while(e){var c=color(getComputedStyle(e).backgroundColor);if(!c)r
 function box(e){var r=rect(e),style=getComputedStyle(e),fg=color(style.color),opaque=true,unscaled=true;for(var n=e;n;n=n.parentElement){var cs=getComputedStyle(n);if(cs.display==='none'||cs.visibility!=='visible'||Number(cs.opacity)!==1)opaque=false;var transform=cs.transform;if(transform!=='none'){try{if(!new DOMMatrixReadOnly(transform).isIdentity)unscaled=false;}catch(_){unscaled=false;}}if(!['normal','1',''].includes(String(cs.zoom)))unscaled=false;}
 var visible=opaque&&[[.5,.5],[.1,.1],[.9,.1],[.1,.9],[.9,.9]].every(([x,y])=>{var hit=document.elementFromPoint(r.x+r.width*x,r.y+r.height*y);return !!hit&&(hit===e||e.contains(hit));});
 return {text:e.textContent,rect:r,visible:visible,opaque:opaque,unscaled:unscaled,fontSize:parseFloat(style.fontSize),foreground:fg&&fg.alpha===1?fg.rgb:[],background:bg(e),clipped:e.scrollWidth>e.clientWidth+1||e.scrollHeight>e.clientHeight+1};}
+"""
+
+
+# Every point is checked; only bounded diagnostics are returned in the receipt.
+# The source map uses straight M/L/H/V segments. Unknown geometry fails closed,
+# rather than granting an occlusion exception to arbitrary SVG descendants.
+RELATION_PATH_SAMPLES_JS = r"""
+function relationPathSamples(e,m,len,matrix){
+  var limit=24,svg=e.closest('svg'),cs=getComputedStyle(e),mr=rect(m),ownHits=[],blockedHits=[],crossings=[],roundtripDifferences=[],roundtripDifferenceCount=0,counts={own:0,gap:0,crossing:0,endpoint:0,blocked:0};
+  function scale(a){return Math.sqrt(Math.max(Math.abs(a.a)+Math.abs(a.b),Math.abs(a.c)+Math.abs(a.d))*Math.max(Math.abs(a.a)+Math.abs(a.c),Math.abs(a.b)+Math.abs(a.d)));}
+  function point(a,x,y){var p=new DOMPoint(x,y).matrixTransform(a);return {x:p.x,y:p.y};}
+  function segments(path){
+    var d=path.getAttribute('d')||'',token=/[MLHV]|[-+]?(?:\d*\.\d+|\d+\.?\d*)(?:[eE][-+]?\d+)?/g,t=d.match(token)||[];
+    if(d.replace(token,'').replace(/[\s,]/g,'')||!t.length)return null;
+    var a=path.getScreenCTM(),out=[],i=0,cmd=null,x=0,y=0,started=false;
+    while(i<t.length){
+      if(/^[MLHV]$/.test(t[i]))cmd=t[i++];
+      if(!cmd||(!started&&cmd!=='M'))return null;
+      var n=cmd==='M'||cmd==='L'?2:1,v=t.slice(i,i+n);
+      if(v.length!==n||v.some(z=>/^[MLHV]$/.test(z)||!Number.isFinite(Number(z))))return null;
+      i+=n;var nx=cmd==='V'?x:Number(v[0]),ny=cmd==='H'?y:Number(v[cmd==='V'?0:1]);
+      if(cmd!=='M'){var from=point(a,x,y),to=point(a,nx,ny);if(from.x!==to.x||from.y!==to.y)out.push({from:from,to:to});}
+      x=nx;y=ny;started=true;if(cmd==='M')cmd='L';
+    }
+    return out.length?out:null;
+  }
+  function identity(n){return n?{tag:n.tagName,id:n.id||'',relation:n.dataset&&n.dataset.mapRelation||null,parent:n.dataset&&n.dataset.mapParent||null,child:n.dataset&&n.dataset.mapChild||null,position:n.dataset&&n.dataset.mapPosition||null}:null;}
+  function registered(n){return !!n&&n!==e&&n.closest('svg')===svg&&n.matches('path[data-map-relation][data-from-entity][data-to-entity],path[data-map-parent][data-map-child]');}
+  function opaque(n){for(;n;n=n.parentElement){var s=getComputedStyle(n);if(s.display==='none'||s.visibility!=='visible'||Number(s.opacity)===0)return false;}return true;}
+  function intersectsCard(s,r){
+    // Clip the complete centreline against the closed card. A point contact at
+    // an endpoint is valid; following a card border is a real partial overlap.
+    var lo=0,hi=1,dx=s.to.x-s.from.x,dy=s.to.y-s.from.y;
+    for(var row of [[s.from.x,dx,r.x,r.x+r.width],[s.from.y,dy,r.y,r.y+r.height]]){
+      if(row[1]===0){if(row[0]<row[2]||row[0]>row[3])return false;}
+      else{var a=(row[2]-row[0])/row[1],b=(row[3]-row[0])/row[1];lo=Math.max(lo,Math.min(a,b));hi=Math.min(hi,Math.max(a,b));}
+    }
+    return hi>lo&&Math.hypot(dx,dy)*(hi-lo)>.01;
+  }
+  var line=segments(e),cards=[...m.querySelectorAll('[data-map-position]')].filter(opaque),cardIntersections=[];
+  if(line)for(var card of cards){var r=rect(card);for(var k=0;k<line.length;k++)if(intersectsCard(line[k],r))cardIntersections.push({position:card.dataset.mapPosition,segment:k,rect:r});}
+  var factor=scale(matrix),dash=cs.strokeDasharray==='none'?[]:cs.strokeDasharray.split(/[ ,]+/).filter(Boolean).map(v=>/^\d*\.?\d+(?:px)?$/.test(v)?parseFloat(v):NaN);
+  var pathLength=e.getAttribute('pathLength'),calibration=pathLength===null?1:len/Number(pathLength),positive=dash.filter(n=>n>0);
+  var step=Math.min(.5/factor,positive.length?Math.min(...positive)*calibration/4:Infinity),count=Math.ceil(len/step);
+  var valid=!!line&&!!svg&&Number.isFinite(len)&&len>0&&Number.isFinite(step)&&step>0&&Number.isFinite(calibration)&&calibration>0&&dash.every(Number.isFinite)&&count>=1&&count<=20000&&typeof e.isPointInStroke==='function';
+  var inverse=matrix.inverse();valid=valid&&['a','b','c','d','e','f'].every(key=>Number.isFinite(inverse[key]));
+  var inBounds=valid,cache=new Map();
+  function bounds(z){return Number.isFinite(z.x)&&Number.isFinite(z.y)&&z.x>=mr.x-1&&z.y>=mr.y-1&&z.x<=mr.x+mr.width+1&&z.y<=mr.y+mr.height+1&&z.x>=0&&z.y>=0&&z.x<=innerWidth&&z.y<=innerHeight;}
+  function crossing(hit,z){
+    if(!registered(hit)||!opaque(hit))return null;
+    if(!cache.has(hit))cache.set(hit,segments(hit));var other=cache.get(hit);if(!other)return null;
+    var style=getComputedStyle(hit),width=parseFloat(style.strokeWidth)*(style.vectorEffect==='non-scaling-stroke'?1:scale(hit.getScreenCTM()));
+    if(!Number.isFinite(width)||width<=0||style.stroke==='none'||Number(style.strokeOpacity)<=0)return null;
+    for(var a of line)for(var b of other){
+      var ax=a.to.x-a.from.x,ay=a.to.y-a.from.y,bx=b.to.x-b.from.x,by=b.to.y-b.from.y,al=Math.hypot(ax,ay),bl=Math.hypot(bx,by),cross=ax*by-ay*bx,sine=Math.abs(cross)/(al*bl);
+      if(sine<.5)continue; // No parallel/near-parallel/coincident-path exception.
+      var qx=b.from.x-a.from.x,qy=b.from.y-a.from.y,t=(qx*by-qy*bx)/cross,u=(qx*ay-qy*ax)/cross;
+      if(t<0||t>1||u<0||u>1)continue;
+      var at={x:a.from.x+t*ax,y:a.from.y+t*ay},along=((z.x-a.from.x)*ax+(z.y-a.from.y)*ay)/(al*al),distance=Math.abs((z.x-a.from.x)*ay-(z.y-a.from.y)*ax)/al;
+      if(along>=0&&along<=1&&distance<.01&&Math.hypot(z.x-at.x,z.y-at.y)<=width/(2*sine)+.01)return {hit:identity(hit),at:at,sine:sine};
+    }
+    return null;
+  }
+  function endpointContact(hit,arc){
+    if(!hit)return false;var id=arc*factor<=1?e.dataset.fromEntity:(len-arc)*factor<=1?e.dataset.toEntity:null;
+    var card=id&&cards.find(n=>n.dataset.taskOpen===id);return !!card&&(hit===card||card.contains(hit));
+  }
+  if(valid){
+    for(var end of [0,len]){var q=e.getPointAtLength(end);if(!bounds(point(matrix,q.x,q.y)))inBounds=false;}
+    for(var i=0;i<count;i++){
+      var arc=len*(i+.5)/count,q=e.getPointAtLength(arc),rawScreen=point(matrix,q.x,q.y);
+      // Blink's screen hit-test takes float32 coordinates. Query local stroke
+      // geometry at that same screen point, not the pre-roundtrip path point.
+      var z={x:Math.fround(rawScreen.x),y:Math.fround(rawScreen.y)},localProbe=point(inverse,z.x,z.y),hit=document.elementFromPoint(z.x,z.y),rawPainted=e.isPointInStroke(q),painted=e.isPointInStroke(localProbe),kind='blocked',proof=null;
+      if(!bounds(z))inBounds=false;
+      if(hit===e)kind='own';
+      else if((hit===m||hit===svg)&&!painted)kind='gap';
+      else if(endpointContact(hit,arc))kind='endpoint';
+      else if(registered(hit)){
+        proof=crossing(hit,z);
+        var stack=document.elementsFromPoint(z.x,z.y),index=stack.indexOf(e),above=index<0?[]:stack.slice(0,index);
+        if(proof&&(!painted||index>0&&above.every(n=>crossing(n,z))))kind='crossing';
+      }
+      counts[kind]++;var sample={x:z.x,y:z.y,fraction:arc/len,arc:arc,rawLocal:{x:q.x,y:q.y},rawScreen:rawScreen,localProbe:localProbe,rawPainted:rawPainted,painted:painted};
+      if(rawPainted!==painted){roundtripDifferenceCount++;if(roundtripDifferences.length<limit)roundtripDifferences.push(sample);}
+      if(kind==='own'&&ownHits.length<limit)ownHits.push(sample);
+      if(kind==='blocked'&&blockedHits.length<limit)blockedHits.push(Object.assign(sample,{hit:identity(hit),painted:painted}));
+      if(kind==='crossing'&&crossings.length<limit)crossings.push(Object.assign(sample,{painted:painted},proof));
+    }
+  }
+  return {inBounds:inBounds,uncovered:valid&&counts.own>0&&counts.own+counts.gap>=3&&counts.blocked===0&&cardIntersections.length===0,ownHits:ownHits,
+    sampling:{method:'uniform-full-arc',coordinates:'float32-screen-roundtrip',matrix:{a:matrix.a,b:matrix.b,c:matrix.c,d:matrix.d,e:matrix.e,f:matrix.f},inverse:{a:inverse.a,b:inverse.b,c:inverse.c,d:inverse.d,e:inverse.e,f:inverse.f},strokeDasharray:cs.strokeDasharray,strokeDashoffset:cs.strokeDashoffset,strokeLinecap:cs.strokeLinecap,strokeLinejoin:cs.strokeLinejoin,roundtripDifferenceCount:roundtripDifferenceCount,valid:valid,count:valid?count:0,firstArc:valid?len/(2*count):null,lastArc:valid?len-len/(2*count):null,maxArcStep:valid?len/count:null,maxScreenStep:valid?len/count*factor:null,counts:counts,diagnosticLimit:limit},
+    blockedHits:blockedHits,crossings:crossings,roundtripDifferences:roundtripDifferences,cardIntersections:cardIntersections};
+}
 """
 
 
@@ -185,6 +279,41 @@ def check_graphical_map(data):
 
 
 
+def relation_locator_url(url):
+    """Same intentionally narrow ASCII HTTP(S)/DNS grammar as the renderer."""
+    if re.search(r'[^\x21-\x7e]|[\\()[\]]|%(?![0-9A-Fa-f]{2})', url):
+        return False
+    match = re.fullmatch(r'https?://((?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,63})(?::([0-9]{1,5}))?(?:[/?#][\x21-\x7e]*)?', url)
+    return bool(match and len(match.group(1)) <= 253 and
+                not any(label.lower().startswith('xn--') for label in match.group(1).split('.')) and
+                (match.group(2) is None or int(match.group(2)) <= 65535))
+
+
+def relation_locator_display(raw):
+    """Independent visible-copy contract; scientific locator remains unchanged."""
+    text, links, last = [], [], 0
+    pattern = re.compile(r'\[([^\[\]\r\n]+)\]\(([^()\x00-\x20\x7f]+)\)')
+    for match in pattern.finditer(raw):
+        url = match.group(2)
+        if ((match.start() and raw[match.start() - 1] in '![' + chr(92)) or
+                raw[match.end():match.end() + 1] == ']' or re.search(r'[\\\x00-\x20\x7f]', url)):
+            continue
+        if not relation_locator_url(url):
+            continue
+        label = match.group(1) + '（' + url + '；新标签页）'
+        text.extend((raw[last:match.start()], label))
+        links.append({'text': label, 'url': url, 'target': '_blank', 'rel': 'noopener noreferrer'})
+        last = match.end()
+    text.append(raw[last:])
+    return {'text': ''.join(text), 'links': links}
+
+
+def relation_locator_spec(loc, index):
+    display = relation_locator_display(loc['locator'])
+    return {'kind': 'locator', 'text': display['text'],
+            'locatorRecord': {'index': index, 'raw': loc['locator'], 'links': display['links']}}
+
+
 def check_relation_evidence(data, expected):
     if data['id'] != expected['id'] or data['type'] != expected['relationType'] or data['from'] != expected['from'] or data['to'] != expected['to']:
         raise RuntimeError('Relationship selection opened another relationship')
@@ -194,17 +323,17 @@ def check_relation_evidence(data, expected):
     wanted = [(s['sourceId'], s['url'], s['versionId'], s['versionStatus']) for s in expected['sourceRefs']]
     if actual != wanted:
         raise RuntimeError('Relationship source IDs, URLs or version status differ from the original inventory')
-    if any(loc['locator'] not in data['text'] for loc in expected['locators']):
+    if any(relation_locator_display(loc['locator'])['text'] not in data['text'] for loc in expected['locators']):
         raise RuntimeError('Relationship original source locator was omitted')
     if len(data['visibleProofs']) != 1 + len(expected['locators']) + 2 * len(expected['sourceRefs']):
         raise RuntimeError('Relationship evidence visibility checks are incomplete')
-    specs = [{'kind': 'heading'}, *[{'kind': 'locator', 'text': loc['locator']} for loc in expected['locators']],
+    specs = [{'kind': 'heading'}, *[relation_locator_spec(loc, index) for index, loc in enumerate(expected['locators'])],
              *[{'kind': kind, 'text': '原文来源 · ' + (ref.get('descriptor') or ref['sourceId']) if kind == 'source' else
                 ' · ' + {'snapshot_not_version_pinned': '未固定全文快照', 'fixed_arxiv_version_url': '来源URL限定版本'}.get(ref['versionStatus'], ref['versionStatus']),
                 'source': {'id': ref['sourceId'], 'url': ref['url'], 'version': ref['versionId'], 'status': ref['versionStatus']}}
                for ref in expected['sourceRefs'] for kind in ('source', 'status')]]
     for proof, spec in zip(data['visibleProofs'], specs):
-        if (proof.get('kind') != spec['kind'] or proof.get('sourceRecord') != spec.get('source') or
+        if (proof.get('kind') != spec['kind'] or proof.get('sourceRecord') != spec.get('source') or proof.get('locatorRecord') != spec.get('locatorRecord') or
                 'text' in spec and proof['text'] != spec['text']):
             raise RuntimeError('Relationship visible fragment belongs to another source, version or locator')
         if spec['kind'] != 'source' and proof.get('accessibilitySuffix') is not None:
@@ -420,6 +549,219 @@ def write_receipt(path, report):
     finally:
         if temporary is not None:
             temporary.unlink(missing_ok=True)
+
+
+class ReceiptTimedOutput:
+    """Forward the original temporary-file context, measuring its I/O boundaries."""
+    def __init__(self, cache):
+        self.cache = cache
+
+    def __enter__(self):
+        self.manager = self.cache._timed(
+            'outputCreate', tempfile.NamedTemporaryFile, mode='wb', dir=self.cache.path.parent,
+            prefix='.' + self.cache.path.name + '.', suffix='.tmp', delete=False)
+        return self.cache._timed('outputEnter', self.manager.__enter__)
+
+    def __exit__(self, *error):
+        return self.cache._timed('outputClose', self.manager.__exit__, *error)
+
+
+class ReceiptSnapshotCache:
+    """Reuse JSON encoding, never checkpoints or observations.
+
+    Every call still publishes the complete ordinary JSON document atomically.
+    The capture's report is main-thread owned; server diagnostics are copied
+    into it. Every item is freshly marshalled before consulting its cache, so
+    later fields, nested mutations, aliases, and type changes are never hidden.
+    Marshal bytes are only decoded directly from that new in-memory snapshot,
+    never from an artifact or cache file. This is not an artifact format change.
+    """
+    def __init__(self, path, max_cache_bytes=2 * 1024 ** 3, progress_every=50):
+        import marshal
+        self.marshal = marshal
+        self.path = Path(path)
+        self.directory = tempfile.TemporaryDirectory(prefix='.receipt-cache-', dir=self.path.parent)
+        self.root = Path(self.directory.name)
+        self.entries, self.serial, self.bytes = {}, 0, 0
+        self.limit, self.progress_every, self.closed = max_cache_bytes, progress_every, False
+        if type(max_cache_bytes) is not int or max_cache_bytes < 0 or type(progress_every) is not int or progress_every < 0:
+            self.directory.cleanup()
+            raise ValueError('Invalid receipt cache budget')
+        self.stats = dict(writes=0, hits=0, misses=0, fingerprintSeconds=0.0,
+                          encodeSeconds=0.0, copySeconds=0.0, totalSeconds=0.0)
+        # Additive diagnostics: legacy counters retain their original scopes.
+        # Inclusive disjoint phases explain total time; cache* phases are nested
+        # inside chunk/payload/staleCleanup and must not be subtracted twice.
+        self.phases = ('chunk', 'payload', 'outputCreate', 'outputEnter', 'outputClose',
+                       'replace', 'staleCleanup', 'temporaryCleanup')
+        for phase in self.phases + ('cacheDigest', 'cacheWrite', 'cacheRemove', 'remainder'):
+            self.stats[phase + 'Seconds'] = 0.0
+            self.stats[phase + 'CpuSeconds'] = 0.0
+        self.stats.update(totalCpuSeconds=0.0, attemptSeconds=0.0, attemptCpuSeconds=0.0)
+
+    def _timed(self, phase, operation, *args, **kwargs):
+        wall, cpu = time.perf_counter(), time.process_time()
+        try:
+            return operation(*args, **kwargs)
+        finally:
+            self.stats[phase + 'Seconds'] += time.perf_counter() - wall
+            self.stats[phase + 'CpuSeconds'] += time.process_time() - cpu
+
+    def close(self):
+        if not self.closed:
+            self.directory.cleanup()
+            self.entries.clear()
+            self.bytes, self.closed = 0, True
+
+    def _remove(self, entry):
+        for path in entry[:2]:
+            self._timed('cacheRemove', path.unlink, missing_ok=True)
+
+    def _chunk(self, slot, value):
+        started = time.perf_counter()
+        frozen = self.marshal.dumps(value, 4)
+        old = self.entries.get(slot)
+        same = old is not None and old[5] and old[0].is_file() and old[1].is_file() and old[0].read_bytes() == frozen
+        self.stats['fingerprintSeconds'] += time.perf_counter() - started
+        if same:
+            self.stats['hits'] += 1
+            return slot, old[1], old[3], old[4]
+        self.stats['misses'] += 1
+        started = time.perf_counter()
+        payload = json.dumps(self.marshal.loads(frozen), ensure_ascii=False,
+                             separators=(',', ':')).encode('utf-8')
+        self.stats['encodeSeconds'] += time.perf_counter() - started
+        size = len(frozen) + len(payload)
+        remaining = self.bytes - (old[2] if old is not None else 0)
+        if remaining + size > self.limit:
+            # No uncached disk sidecars: write this single encoded item directly
+            # to the final temporary receipt, then release it before the next.
+            return payload
+        if old is not None:
+            self._remove(old)
+            del self.entries[slot]
+            self.bytes -= old[2]
+        self.serial += 1
+        stamp, encoded = (self.root / (str(self.serial) + suffix) for suffix in ('.snapshot', '.json'))
+        stored = False
+        digest = self._timed('cacheDigest', lambda: hashlib.sha256(payload).digest())
+        # Reserve the full staging cost before writing. Failed cleanup leaves
+        # this incomplete entry conservatively charged until removal succeeds.
+        entry = (stamp, encoded, size, len(payload), digest, False)
+        self.entries[slot] = entry
+        self.bytes += size
+        try:
+            # The cap includes retained AND staged auxiliary files. The old
+            # entry was removed before staging its replacement; ordinary old
+            # receipt + final atomic temporary receipt remain outside this cap.
+            if (self._timed('cacheWrite', stamp.write_bytes, frozen) != len(frozen)
+                    or self._timed('cacheWrite', encoded.write_bytes, payload) != len(payload)):
+                raise OSError('Incomplete receipt cache write')
+            self.entries[slot] = (stamp, encoded, size, len(payload), digest, True)
+            stored = True
+            # These immutable bytes came from the fresh in-memory snapshot.
+            # Staging must succeed first; a later hit still reads and verifies
+            # the complete sidecar. Do not reread it for this first publication.
+            return payload
+        finally:
+            if not stored:
+                self._remove(entry)
+                del self.entries[slot]
+                self.bytes -= size
+
+    @staticmethod
+    def _write(stream, payload):
+        if stream.write(payload) != len(payload):
+            raise OSError('Incomplete receipt temporary write')
+
+    def _copy(self, chunk, stream):
+        slot, path, length, digest = chunk
+        actual, total = hashlib.sha256(), 0
+        with path.open('rb') as source:
+            while True:
+                block = source.read(1024 * 1024)
+                if not block:
+                    break
+                actual.update(block)
+                total += len(block)
+                self._write(stream, block)
+        if total != length or actual.digest() != digest:
+            old = self.entries.get(slot)
+            if old is not None and old[1] == path:
+                self._remove(old)
+                del self.entries[slot]
+                self.bytes -= old[2]
+            raise RuntimeError('Receipt cache payload integrity check failed')
+
+    def _prune(self, seen):
+        for slot in list(self.entries):
+            if slot not in seen:
+                old = self.entries[slot]
+                self._remove(old)
+                del self.entries[slot]
+                self.bytes -= old[2]
+
+    def _payload(self, chunk, stream):
+        if isinstance(chunk, bytes):
+            self._write(stream, chunk)
+        else:
+            self._copy(chunk, stream)
+
+    def __call__(self, path, report):
+        if self.closed or Path(path) != self.path:
+            raise ValueError('Receipt cache is closed or changed target')
+        if type(report) is not dict or any(type(key) is not str for key in report):
+            raise TypeError('Receipt cache requires original named report fields')
+        started = time.perf_counter()
+        cpu_started = time.process_time()
+        before = {suffix: sum(self.stats[phase + suffix] for phase in self.phases)
+                  for suffix in ('Seconds', 'CpuSeconds')}
+        seen, target = set(), None
+        try:
+            with ReceiptTimedOutput(self) as stream:
+                target = Path(stream.name)
+                self._write(stream, b'{')
+                for number, (key, value) in enumerate(report.items()):
+                    if number:
+                        self._write(stream, b',')
+                    self._write(stream, json.dumps(key, ensure_ascii=False).encode('utf-8') + b':')
+                    items = enumerate(value) if type(value) is list else [(None, value)]
+                    if type(value) is list:
+                        self._write(stream, b'[')
+                    for index, item in items:
+                        if type(value) is list and index:
+                            self._write(stream, b',')
+                        slot = (key, index)
+                        seen.add(slot)
+                        chunk = self._timed('chunk', self._chunk, slot, item)
+                        copy_started = time.perf_counter()
+                        self._timed('payload', self._payload, chunk, stream)
+                        self.stats['copySeconds'] += time.perf_counter() - copy_started
+                        del chunk  # Release fresh bytes before marshalling the next item.
+                    if type(value) is list:
+                        self._write(stream, b']')
+                self._write(stream, b'}\n')
+            self._timed('replace', os.replace, target, self.path)
+            self.stats['writes'] += 1
+            self._timed('staleCleanup', self._prune, seen)
+        finally:
+            try:
+                if target is not None:
+                    self._timed('temporaryCleanup', target.unlink, missing_ok=True)
+                # Preserve the legacy total's scope, including its behavior when
+                # temporary cleanup raises. attempt* also records that failure.
+                self.stats['totalSeconds'] += time.perf_counter() - started
+                self.stats['totalCpuSeconds'] += time.process_time() - cpu_started
+            finally:
+                elapsed = {'Seconds': time.perf_counter() - started,
+                           'CpuSeconds': time.process_time() - cpu_started}
+                self.stats['attemptSeconds'] += elapsed['Seconds']
+                self.stats['attemptCpuSeconds'] += elapsed['CpuSeconds']
+                for suffix in elapsed:
+                    accounted = sum(self.stats[phase + suffix] for phase in self.phases) - before[suffix]
+                    self.stats['remainder' + suffix] += elapsed[suffix] - accounted
+        if self.progress_every and self.stats['writes'] % self.progress_every == 0:
+            print('receipt_checkpoint ' + json.dumps(dict(self.stats, cacheBytes=self.bytes), separators=(',', ':')), flush=True)
 
 
 def wait_for(check, timeout=45):
@@ -799,6 +1141,8 @@ def _reader_proof(proof, *areas, font_size=None):
 # Display-only migrations are explicit. Original source, route, restoration,
 # diagnostic, content-delay and native-input predicates remain independent.
 DISPLAY_CONTRACT_MIGRATIONS = {
+    'shared_chrome_budget': 'shared site header, global navigation, four-field selection identity and workspace toolbar retain their measured natural flow; remaining desktop height is proved against the viewport bottom and actual layout width, including a reserved scrollbar gutter; short S0 retains 4px outer bottom padding, otherwise16px; overview toolbar is deducted before the map; source task cards retain the current56px placement contract and C cards37px; first-screen route/answer/entry budgets remain relative to their verified panels',
+    'workspace_branch_tabs': 'global root highlights g; a global descendant retains its exact g source route while its source-verified Literature or Challenge ancestry uniquely selects l or c; ordinary l/c/a routes retain their own tab; all four selected states remain exact',
     'relation_picker': 'same IDs, types, endpoints and controls; outside tree scroll in fixed toolbar',
     'reader_identity': 'fixed current title and exact version replace generic sticky READING DESK',
     'context_path': 'one compact row; original global links and real local parent chain remain distinct',
@@ -809,7 +1153,7 @@ DISPLAY_CONTRACT_MIGRATIONS = {
     'analysis_entry': 'first actual version answer; explicit legacy root remains coverage and full original topology',
     'active_forest_heading': 'same active source forest and roots; visible #np-tree-heading plus exact root-label proofs replace the deliberately hidden duplicate forest h3',
     'method_geometry': 'actual desktop g/L method only: 400/448px real-path pane, 16px gap, 992/1424px reader; task/relation/A unchanged',
-    'method_ancestry': 'original root-to-selection parent edges and children; real-parent siblings in native navigation disclosure, never tree nodes',
+    'method_ancestry': 'user-approved 2026-10-13: full original root-to-current path remains readable together; each originally expanded direct child keeps its source identity and receives native-keyboard full-label/role proof in the original scroll pane, followed by exact runtime/history/DOM/focus/scroll return; real-parent siblings remain native disclosures',
     'method_introduction': 'desktop selected method hides only repeated interface introduction; original mechanism and source boundaries remain natural flow',
     'source_scroll_fixtures': 'S1 fitting body proves stationary identity only; mandatory positive wheel uses measured genuine PONI content; L/C nonzero history uses same-version original technical child, measured offscreen last-row End target, then real pipeline ancestor for A and claim links',
     'method_analysis_controls': 'full fixed title/version/warning and genuine analysis controls in a compact status row; no cropped identity',
@@ -870,7 +1214,7 @@ if(e.matches('[data-task-relation-source]')){
 }
 var proof=fixedTextProof(e,suffix),accessibleText=proof.text;
 if(suffix)proof.text=proof.renderedText;
-return Object.assign(proof,{elementTag:e.tagName,accessibleText:accessibleText,accessibilitySuffix:suffix?{tag:suffix.tagName,className:suffix.className,text:suffix.textContent}:null,
+return Object.assign(proof,{locatorRecord:e.matches('p[data-task-relation-locator-index]')?{index:Number(e.dataset.taskRelationLocatorIndex),raw:e.dataset.taskRelationLocator,links:[...e.querySelectorAll('a')].map(a=>({text:a.textContent,url:a.getAttribute('href'),target:a.getAttribute('target'),rel:a.getAttribute('rel')}))}:null,elementTag:e.tagName,accessibleText:accessibleText,accessibilitySuffix:suffix?{tag:suffix.tagName,className:suffix.className,text:suffix.textContent}:null,
   panelId:panel.id,panelContains:panel.contains(e),relationId:e.closest('[data-task-relation]')?.dataset.taskRelation,
   sourceRecord:source?{id:source.dataset.taskRelationSource,url:source.href,version:source.dataset.sourceVersion,status:source.dataset.sourceStatus}:null,
   panelClientRect:{x:r.x+panel.clientLeft,y:r.y+panel.clientTop,width:panel.clientWidth,height:panel.clientHeight},viewport:{x:0,y:0,width:innerWidth,height:innerHeight}});
@@ -898,6 +1242,24 @@ S0_TASK_ROWS = (
     ('task:aerial-visual-object-search', 'task:person-finding-following', 'task:namo'),
 )
 S0_SPACING_TOLERANCE = 1 / 16  # CSS pixel rounding only; never a whole-pixel drift.
+S0_TOOLBAR_LABELS = (
+    ('np-all-scopes', 'DETAILS', '全部阅读范围与术语'),
+    ('np-overview-comparison', 'DETAILS', '任务输入与完成要求'),
+    ('np-task-relations', 'DETAILS', '7条有据对照与组合'),
+    ('np-overview-notes', 'DETAILS', '范围说明'),
+    ('np-overview-analysis', 'BUTTON', '单篇论文解析'),
+    ('np-map-relations-toggle', 'BUTTON', None),
+)
+WORKSPACE_CONTROL_SPECS = (
+    ('.np-tabs > [data-tree-tab="g"]', 'BUTTON', '', 'g', '全景', 15),
+    ('.np-tabs > [data-tree-tab="l"]', 'BUTTON', '', 'l', '文献发展', 15),
+    ('.np-tabs > [data-tree-tab="c"]', 'BUTTON', '', 'c', '困难与思路', 15),
+    ('.np-tabs > [data-tree-tab="a"]', 'BUTTON', '', 'a', '论文解析', 15),
+    ('#np-reading-tools > summary', 'SUMMARY', '', None, '阅读工具', 16),
+    ('#np-overview-toggle', 'BUTTON', 'np-overview-toggle', None, None, 15),
+    ('.np-identity-controls > summary', 'SUMMARY', '', None, '论文身份与来源版本', 15),
+    ('#np-graph-fullscreen', 'BUTTON', 'np-graph-fullscreen', None, '全屏查看', 14),
+)
 
 
 def s0_footer_expected(science):
@@ -928,7 +1290,356 @@ def s0_footer_expected(science):
             'readouts': {rid: label + ' · ' + NATIVE_RELATION_LABELS[science['relations'][rid]['relationType']] for rid, label in S0_RELATION_LABELS.items()}}
 
 
-S0_FOOTER_SNAPSHOT_JS = VISUAL_GEOMETRY + FIXED_TEXT_PROOF_JS + SCROLL_REGION_VISIBILITY_JS + r"""
+DESKTOP_CHROME_GEOMETRY_JS = 'var workspaceControlSpecs=' + json.dumps(WORKSPACE_CONTROL_SPECS, ensure_ascii=False) + ';\n' + r"""
+function desktopChromeGeometry(){
+  function frame(selector){var matches=document.querySelectorAll(selector),e=matches[0];if(!e)return {selector:selector,count:0};
+    var r=rect(e),cs=getComputedStyle(e),p=box(e),number=k=>parseFloat(cs[k])||0;
+    return {selector:selector,count:matches.length,rect:r,clientRect:{x:r.x+e.clientLeft,y:r.y+e.clientTop,width:e.clientWidth,height:e.clientHeight},
+      position:cs.position,display:cs.display,opaque:p.opaque,unscaled:p.unscaled,top:e.scrollTop,left:e.scrollLeft,
+      marginTop:number('marginTop'),marginBottom:number('marginBottom'),marginLeft:number('marginLeft'),marginRight:number('marginRight'),paddingTop:number('paddingTop'),paddingBottom:number('paddingBottom'),
+      paddingLeft:number('paddingLeft'),paddingRight:number('paddingRight'),rowGap:number('rowGap')};}
+  var header=document.querySelector('.site-header'),app=document.getElementById('navigation-product'),start=app?.querySelector('.np-global-start'),
+    workspace=document.getElementById('np-workspace'),identity=document.getElementById('np-selection-context'),bar=workspace?.querySelector('.np-workspace-bar');
+  var a=window.NavigationProductApp,b=a?.getBundle(),r=a?.getState().route,source=null;
+  if(b&&r&&Array.isArray(b.scopes)&&b.researchMap){var path=[],p=b.positions[r.node],seen=new Set(),pathValid=!!p;while(p&&!seen.has(p.id)&&path.length<256){seen.add(p.id);path.push(p);if(p.parentId&&!b.positions[p.parentId])pathValid=false;p=b.positions[p.parentId];}if(p)pathValid=false;
+    var scopes=new Map(b.scopes.map(s=>[s.id,s])),scope=r.tree==='g'?path.map(p=>scopes.get(p.sourceScopeId)).find(s=>s&&s.id!=='scope:all'):null;
+    scope=scope||scopes.get(r.scope);var route=path.find(p=>['pipeline','pipeline_family','pipeline_or_representation','development_group'].includes(p.kind)),
+      routeEntity=route&&b.entities[route.entityId],paper=r.paper&&b.papers[r.paper],version=r.version&&b.versions[r.version],
+      names={poni:'PONI',semexp:'SemExp',vlfm:'VLFM',harnessvln:'HarnessVLN',navharness:'NavHarness（终身导航）',goat:'GOAT',modiin:'ModIIN',esc:'ESC',zson:'ZSON',cow:'CoW',cmp:'CMP',duet:'DUET',hamt:'HAMT',l3mvn:'L3MVN',vlmaps:'VLMaps',conceptgraphs:'ConceptGraphs',hovsg:'HOV-SG'},
+      versionText=version?(version.label||version.descriptor||r.version):'来源版本待选择';if(versionText==='unknown')versionText='来源版本待核';
+    source={route:r,scopeId:scope?.id,routePositionId:route?.id||null,atRoot:r.tree==='g'&&r.node===b.researchMap.roots[0],
+      tabSourceSha256:b.delivery?.sourceModelSha256||null,tabPath:r.tree==='g'?(pathValid?path.slice().reverse().map(p=>({id:p.id,parentId:p.parentId||null,entityId:p.entityId,tree:p.tree,scopeId:p.scopeId})):null):[],
+      fields:[['当前'+(scope?.displayRole||'阅读范围'),scope?.label],['当前路线',route?(routeEntity?.label||route.sourceLabel||route.label):{g:'全局研究图',l:'文献树',c:'挑战–思路树',a:'论文解析树'}[r.tree]],
+        ['当前论文',r.paper?(names[r.paper]||paper?.label||paper?.title||r.paper):'尚未选择'],['来源版本',r.version?versionText+(version?.status==='snapshot_not_version_pinned'?' · 未固定快照':''):'尚未选择']]};}
+  function text(e){return e?fixedTextProof(e):null;}
+  return {layoutWidth:document.body.clientWidth,rootClientWidth:document.documentElement.clientWidth,rootRect:rect(document.documentElement),rootGutter:getComputedStyle(document.documentElement).scrollbarGutter,
+    body:frame('body'),header:frame('.site-header'),app:frame('#navigation-product'),
+    start:frame('#navigation-product > .np-global-start'),workspace:frame('#np-workspace'),identity:frame('#np-selection-context'),bar:frame('#np-workspace > .np-workspace-bar'),
+    identitySource:source,identityFields:identity?[...identity.children].map(e=>({tag:e.tagName,className:e.className,children:[...e.children].map(n=>n.tagName),label:text(e.querySelector(':scope > dt')),value:text(e.querySelector(':scope > dd'))})):[],
+    controls:workspaceControlSpecs.map(spec=>{var matches=bar?bar.querySelectorAll(':scope > '+spec[0]):[],e=matches[0];return {selector:spec[0],count:matches.length,tag:e?.tagName,id:e?.id,tree:e?.dataset.treeTab||null,hidden:!!e?.hidden,disabled:!!e?.disabled,hover:!!e?.matches(':hover'),selected:e?.getAttribute('aria-selected')||null,proof:text(e)};}),
+    topology:!!header&&header.nextElementSibling===app&&start?.parentElement===app&&workspace?.parentElement===app&&
+      identity?.parentElement===workspace&&identity.nextElementSibling===bar};
+}
+"""
+
+
+WORKSPACE_TAB_SCIENCE_SHA256 = '9069c6a11ae9a867671522d04e6a24b4edcada660d03feb2f41340bfc395825c'
+
+
+def workspace_tab_source_contract(graph):
+    """Derive the one legal highlighted tab from frozen source parent edges."""
+    positions, roots = graph['positions'], graph['roots']
+    if (graph.get('sourceModelSha256') != WORKSPACE_TAB_SCIENCE_SHA256 or len(roots) != 1 or
+            roots[0] not in positions or positions[roots[0]].get('entityId') != 'legacy:nav:goal' or
+            positions[roots[0]].get('parentId') is not None):
+        raise RuntimeError('Workspace tabs lack the exact reviewed global source root')
+    result = {}
+    for identity in positions:
+        path, seen, current = [], set(), identity
+        while current is not None:
+            if current not in positions or current in seen or len(path) >= 256:
+                raise RuntimeError('Workspace tab source parent chain is missing, cyclic or excessive')
+            seen.add(current); position = positions[current]
+            if position.get('id') != current or position.get('tree') != 'g' or position.get('scopeId') != 'scope:all':
+                raise RuntimeError('Workspace tab source ancestry changed its exact position identity')
+            parent = position.get('parentId')
+            if parent is not None and (parent not in positions or current not in positions[parent]['childIds']):
+                raise RuntimeError('Workspace tab source parent and child edges disagree')
+            path.append({key: position.get(key) for key in ('id', 'parentId', 'entityId', 'tree', 'scopeId')})
+            current = parent
+        path.reverse()
+        branches = [row['entityId'] for row in path if row['entityId'] in ('legacy:nav:l', 'legacy:nav:c')]
+        if path[0]['id'] != roots[0] or len(branches) != (0 if identity == roots[0] else 1):
+            raise RuntimeError('Workspace tab source path has a wrong root or ambiguous branch')
+        result[identity] = {'tab': {'legacy:nav:l': 'l', 'legacy:nav:c': 'c'}[branches[0]] if branches else 'g', 'path': path}
+    return result
+
+
+@functools.lru_cache(maxsize=2)
+def load_workspace_tab_sources(model_path, source_sha256):
+    """The cache key includes source location and reviewed science identity."""
+    import gzip
+    try:
+        from navigation_research_map import build_research_map
+    except ModuleNotFoundError:
+        from scripts.navigation_research_map import build_research_map
+    raw = gzip.decompress(Path(model_path).read_bytes())
+    if source_sha256 != WORKSPACE_TAB_SCIENCE_SHA256 or hashlib.sha256(raw).hexdigest() != source_sha256:
+        raise RuntimeError('Workspace tab model differs from the reviewed scientific source')
+    return workspace_tab_source_contract(build_research_map(json.loads(raw)))
+
+
+def workspace_selected_tree(route, source):
+    tree = route.get('tree')
+    if tree in ('l', 'c', 'a'):
+        return tree
+    if tree != 'g' or route.get('scope') != 'scope:all':
+        raise RuntimeError('Workspace tab route has no exact source tree')
+    model_path = str(Path(__file__).resolve().parents[1] / 'data/navigation-product/model.json.gz')
+    expected = load_workspace_tab_sources(model_path, WORKSPACE_TAB_SCIENCE_SHA256).get(route.get('node'))
+    if (not expected or source.get('tabSourceSha256') != WORKSPACE_TAB_SCIENCE_SHA256 or
+            source.get('tabPath') != expected['path']):
+        raise RuntimeError('Workspace tab ancestry differs from the exact reviewed source path')
+    return expected['tab']
+
+
+def check_desktop_chrome(data):
+    """Budget from independently measured, contiguous chrome to the viewport edge.
+
+    The old y132 assumed no shared header or selection identity. Never infer the
+    available height from the landing itself, or trust a product CSS variable.
+    """
+    chrome, viewport = data.get('chrome'), data['viewport']
+    if not chrome or not chrome.get('topology'):
+        raise RuntimeError('Desktop viewport-filling budget lacks its exact chrome structure')
+    width = chrome['layoutWidth']
+    if not isinstance(width, (int, float)) or not math.isfinite(width) or not 1200 <= width <= viewport['width']:
+        raise RuntimeError('Desktop viewport-filling budget has an invalid layout viewport')
+    selectors = {'body': 'body', 'header': '.site-header', 'app': '#navigation-product', 'start': '#navigation-product > .np-global-start',
+                 'workspace': '#np-workspace', 'identity': '#np-selection-context', 'bar': '#np-workspace > .np-workspace-bar'}
+    for key, selector in selectors.items():
+        frame = chrome[key]
+        if (frame.get('count') != 1 or frame.get('selector') != selector or not frame.get('opaque') or not frame.get('unscaled') or
+                frame.get('top') != 0 or frame.get('left') != 0 or not rect_inside(frame['rect'], viewport) or
+                not rect_inside(frame['clientRect'], frame['rect']) or
+                frame['display'] == 'none' or frame['position'] not in (('static', 'relative', 'sticky') if key == 'header' else ('static', 'relative'))):
+            raise RuntimeError('Desktop viewport-filling chrome is missing, shifted, hidden or scaled')
+    body, header, app, start, workspace, identity, bar = (chrome[key] for key in selectors)
+    root = chrome['rootRect']
+    if (chrome['rootGutter'] != 'stable' or not width <= chrome['rootClientWidth'] <= viewport['width'] or
+            not _reader_close(root['x'], 0) or not width <= root['width'] <= viewport['width'] or
+            not _reader_close(width, min(root['width'], chrome['rootClientWidth'])) or
+            any(body[key] != 0 for key in ('marginTop', 'marginBottom', 'marginLeft', 'marginRight', 'paddingTop', 'paddingBottom', 'paddingLeft', 'paddingRight')) or
+            not _reader_close(body['rect']['x'], 0) or not _reader_close(body['rect']['y'], 0) or
+            not _reader_close(body['rect']['width'], width) or not _reader_close(body['clientRect']['width'], width)):
+        raise RuntimeError('Desktop layout width is not its actual zero-margin body and reserved root gutter')
+    bottom = lambda row: row['rect']['y'] + row['rect']['height']
+    end = lambda row: row['clientRect']['y'] + row['clientRect']['height'] - row['paddingBottom']
+    checks = [(header['rect']['x'], 0), (header['rect']['y'], 0), (header['rect']['width'], width),
+              (app['rect']['x'], 0), (app['rect']['width'], width), (app['rect']['y'], bottom(header)),
+              (bottom(app), viewport['height']), (app['paddingLeft'], 16), (app['paddingRight'], 16),
+              (app['paddingBottom'], 4 if data['home'] and viewport['height'] <= 950 else 16),
+              (start['rect']['y'], app['clientRect']['y'] + app['paddingTop'] + start['marginTop']),
+              (workspace['rect']['y'], bottom(start) + start['marginBottom'] + workspace['marginTop'] + app['rowGap']),
+              (bottom(workspace) + workspace['marginBottom'], end(app)),
+              (workspace['rect']['x'], 16), (workspace['rect']['width'], width - 32),
+              (identity['rect']['y'], workspace['clientRect']['y'] + workspace['paddingTop'] + identity['marginTop']),
+              (bar['rect']['y'], bottom(identity) + identity['marginBottom'] + bar['marginTop'] + workspace['rowGap'])]
+    if any(not _reader_close(actual, expected) for actual, expected in checks):
+        raise RuntimeError('Desktop viewport-filling budget has a chrome gap, overlap or wrong bottom edge')
+    top = bottom(bar) + bar['marginBottom'] + workspace['rowGap']
+    area = dict(x=workspace['clientRect']['x'] + workspace['paddingLeft'], y=top,
+                width=workspace['clientRect']['width'] - workspace['paddingLeft'] - workspace['paddingRight'], height=end(workspace) - top)
+    if not rect_inside(area, viewport):
+        raise RuntimeError('Desktop viewport-filling chrome leaves no positive content budget')
+    source, fields = chrome.get('identitySource'), chrome.get('identityFields', [])
+    if not source or source.get('route') != data['route'] or not source.get('scopeId') or len(source.get('fields', [])) != 4 or len(fields) != 4:
+        raise RuntimeError('Desktop selection identity lacks all four original source-bound fields')
+    for field, texts in zip(fields, source['fields']):
+        if field.get('tag') != 'DIV' or field.get('className') != 'np-context-field' or field.get('children') != ['DT', 'DD']:
+            raise RuntimeError('Desktop selection identity changed its four DT/DD pairs')
+        for key, font, text in zip(('label', 'value'), (11, 13), texts):
+            proof = field.get(key)
+            if not proof or not text or abs(proof['fontSize'] - font) > S0_SPACING_TOLERANCE:
+                raise RuntimeError('Desktop selection identity lost its original labels or type size')
+            check_chrome_text(proof, text, font, identity['clientRect'], viewport)
+    selected_tree = workspace_selected_tree(data['route'], source)
+    controls = chrome.get('controls', [])
+    if len(controls) != len(WORKSPACE_CONTROL_SPECS):
+        raise RuntimeError('Desktop workspace omitted an original control')
+    for control, (selector, tag, identity, tree, text, font) in zip(controls, WORKSPACE_CONTROL_SPECS):
+        hidden = selector == '#np-overview-toggle' and not source['atRoot']
+        if (control.get('selector') != selector or control.get('count') != 1 or control.get('tag') != tag or
+                control.get('id') != identity or control.get('tree') != tree or control.get('hidden') != hidden or control.get('disabled')):
+            raise RuntimeError('Desktop workspace control identity or legitimate hidden state changed')
+        if tree and control.get('selected') != str(tree == selected_tree).lower():
+            raise RuntimeError('Desktop workspace tab lost its actual selected source tree')
+        if hidden:
+            if control['proof']['opaque'] or control['proof']['visible']:
+                raise RuntimeError('Desktop workspace exposed its route-inapplicable original-map control')
+            continue
+        text = text or ('原全局树图' if data['home'] else '回到差异概览')
+        proof = control.get('proof')
+        if not proof or abs(proof['fontSize'] - font) > S0_SPACING_TOLERANCE:
+            raise RuntimeError('Desktop workspace control changed original type size')
+        check_chrome_text(proof, text, font, app['clientRect'], viewport)
+    return area
+
+
+def check_chrome_text(proof, text, font, *areas):
+    """Record current chrome colors, including legitimate native transitions.
+
+    CSS tests preserve the original color declarations. Scientific text retains
+    its independent 4.5 contrast gate; chrome gains no new color redesign here.
+    """
+    areas = list(areas)
+    color = lambda value: (isinstance(value, list) and len(value) == 3 and
+                           all(type(channel) in (int, float) and math.isfinite(channel) and 0 <= channel <= 255 for channel in value))
+    if (proof['text'] != text or proof['renderedText'] != text or not proof['fragments'] or not proof['textRuns'] or
+            ''.join(run['text'] for run in proof['textRuns']) != text or not _reader_proof(proof, *areas) or proof['clipped'] or
+            abs(proof['fontSize'] - font) > S0_SPACING_TOLERANCE or not color(proof['foreground']) or not color(proof['background'])):
+        raise RuntimeError('Desktop chrome text changed, disappeared, clipped or lost its current styling')
+    for run in proof['textRuns']:
+        if (not run['opaque'] or not run['unscaled'] or abs(run['fontSize'] - font) > S0_SPACING_TOLERANCE or
+                not color(run['foreground']) or not color(run['background']) or not run['fragments'] or
+                any(not fragment['visible'] or not all(rect_inside(fragment, area) for area in areas + run['clipAreas']) for fragment in run['fragments'])):
+            raise RuntimeError('Desktop chrome text fragment is hidden, covered, restyled or clipped')
+    if any(not fragment['visible'] or not all(rect_inside(fragment, area) for area in areas + proof['clipAreas']) for fragment in proof['fragments']):
+        raise RuntimeError('Desktop chrome final text fragment is not fully visible')
+
+
+# A visible relation button must not be centred inside its scrollable menu:
+# centring R91 unnecessarily scrolls the menu's summary out of its client area.
+RELATION_SELECTOR_REVEAL_JS = VISUAL_GEOMETRY + r"""
+var e=arguments[0],relation=arguments[1],menu=e.closest('#np-task-relations'),summary=menu&&menu.querySelector(':scope > summary');
+if(!menu||!summary)throw Error('Exact relationship selector menu is missing');
+function measure(){var r=rect(menu);return {relation:relation,buttonId:e.id,buttonTag:e.tagName,buttonRelation:e.dataset.relationSelect,
+  menuId:menu.id,menuCount:document.querySelectorAll('#np-task-relations').length,open:menu.open,
+  topology:menu.matches('#np-reading-landing>.np-overview-map-toolbar>#np-task-relations')&&e.matches('.np-relation-selectors>button')&&menu.contains(e),
+  scrollTop:menu.scrollTop,scrollLeft:menu.scrollLeft,scrollHeight:menu.scrollHeight,scrollWidth:menu.scrollWidth,
+  menuRect:r,clientRect:{x:r.x+menu.clientLeft,y:r.y+menu.clientTop,width:menu.clientWidth,height:menu.clientHeight},
+  buttonRect:rect(e),summaryRect:rect(summary),viewport:{x:0,y:0,width:innerWidth,height:innerHeight},window:{x:scrollX,y:scrollY}};}
+var before=measure();e.scrollIntoView({block:'nearest',inline:'nearest'});
+return {relation:relation,requested:{block:'nearest',inline:'nearest'},before:before,after:measure()};
+"""
+
+
+def check_relation_selector_reveal(data, relation):
+    if data.get('relation') != relation or data.get('requested') != {'block': 'nearest', 'inline': 'nearest'}:
+        raise RuntimeError('Relationship selector reveal did not request the exact minimal native scroll')
+    before, after = data['before'], data['after']
+    for frame in (before, after):
+        if (frame.get('relation') != relation or frame.get('buttonRelation') != relation or
+                frame.get('buttonId') != 'np-relation-select-' + relation or frame.get('buttonTag') != 'BUTTON' or
+                frame.get('menuId') != 'np-task-relations' or frame.get('menuCount') != 1 or
+                frame.get('open') is not True or frame.get('topology') is not True or
+                frame.get('window') != {'x': 0, 'y': 0}):
+            raise RuntimeError('Relationship selector reveal lost its exact native target or stationary page')
+    for key in ('menuRect', 'clientRect', 'viewport', 'scrollHeight', 'scrollWidth'):
+        if before[key] != after[key]:
+            raise RuntimeError('Relationship selector reveal changed its containing geometry')
+    was_inside = all(rect_inside(before['buttonRect'], before[area], tolerance=0) for area in ('clientRect', 'viewport'))
+    if was_inside and any(before[key] != after[key] for key in ('scrollTop', 'scrollLeft', 'buttonRect', 'summaryRect')):
+        raise RuntimeError('Already visible relationship selector was unnecessarily scrolled')
+    if not all(rect_inside(after['buttonRect'], after[area]) for area in ('clientRect', 'viewport')):
+        raise RuntimeError('Relationship selector reveal left the native target clipped or outside its client area')
+
+
+def reveal_relation_selector(driver, control, relation, report, save):
+    data = driver.js(RELATION_SELECTOR_REVEAL_JS, control, relation)
+    report.setdefault('relationSelectorRevealChecks', []).append(data)
+    save()
+    check_relation_selector_reveal(data, relation)
+    return data
+
+
+# The toolbars' 160ms hover/selection colour transitions can outlive Driver.settle's two
+# frames. Wait for their natural completion, not for a readability gate to pass.
+# This local wait never finishes/cancels animations or changes rendered styles.
+S0_TOOLBAR_PAINT_TIMEOUT_MS = 2000
+SCOPED_TOOLBAR_PAINT_SETTLE_JS = r"""
+var budget=arguments[0],done=arguments[arguments.length-1],start=performance.now();
+var toolbar=null,timer=null,frame=null,completed=false,quietFrames=0,observed=new Map();
+var result={status:'pending',scopeSelector:paintScopeSelector,timeoutMs:budget,elapsedMs:0,before:null,after:null,observedTransitions:[]};
+function identity(e){return {id:e.id||'',tag:e.tagName,className:e.getAttribute('class')||'',treeTab:e.getAttribute('data-tree-tab'),selected:e.getAttribute('aria-selected')};}
+function paintProperty(p){return /^(?:color|background-color|border-(?:(?:top|right|bottom|left)-)?color)$/.test(p);}
+function metadata(a){var t=a.effect.getComputedTiming();return {target:identity(a.effect.target),property:a.transitionProperty,playState:a.playState,pending:a.pending,currentTime:a.currentTime,playbackRate:a.playbackRate,duration:t.duration,endTime:t.endTime};}
+function relevant(){return toolbar.getAnimations({subtree:true}).filter(a=>a instanceof CSSTransition&&paintProperty(a.transitionProperty));}
+function snapshot(){
+  if(!toolbar)return null;
+  return {colors:[toolbar,...toolbar.querySelectorAll('*')].map(e=>{var s=getComputedStyle(e);return {...identity(e),color:s.color,backgroundColor:s.backgroundColor,borderTopColor:s.borderTopColor,borderRightColor:s.borderRightColor,borderBottomColor:s.borderBottomColor,borderLeftColor:s.borderLeftColor};}),transitions:relevant().map(metadata)};
+}
+function finish(status,reason){
+  if(completed)return;completed=true;clearTimeout(timer);cancelAnimationFrame(frame);
+  result.status=status;result.reason=reason||'';
+  try{result.after=snapshot();}catch(e){result.status='error';result.reason='Final paint diagnostics unavailable: '+String(e);}
+  result.elapsedMs=performance.now()-start;
+  if(result.status==='settled'&&result.elapsedMs>=budget){result.status='timeout';result.reason='Final paint diagnostics exceeded the fixed budget';}
+  result.observedTransitions=[...observed.values()];done(result);
+}
+function inspect(){
+  if(performance.now()-start>=budget){finish('timeout','Toolbar paint transitions did not settle within the fixed budget');return null;}
+  if(document.querySelectorAll(paintScopeSelector).length!==1||document.querySelectorAll(paintScopeSelector)[0]!==toolbar||!toolbar.isConnected){finish('error',paintScopeName+' changed or disappeared during paint settlement');return null;}
+  var active=false;
+  for(var a of relevant()){
+    var m=metadata(a),elapsed=performance.now()-start;
+    if(!observed.has(a)){
+      if(observed.size>=64){finish('error','Excessive toolbar transition churn');return null;}
+      observed.set(a,{firstSeenMs:elapsed,lastSeenMs:elapsed,first:m,last:m});
+    }else{var seen=observed.get(a);seen.lastSeenMs=elapsed;seen.last=m;}
+    if(m.playState==='finished'||(m.playState==='idle'&&!m.pending))continue;
+    if(!Number.isFinite(m.endTime)||m.endTime<0||!Number.isFinite(m.duration)||m.duration<0||!Number.isFinite(m.playbackRate)||m.playbackRate<=0||m.playState==='paused'){
+      finish('error','Toolbar paint transition cannot finish naturally with finite timing');return null;
+    }
+    active=true;
+  }
+  return active;
+}
+function tick(){
+  if(completed)return;
+  try{
+    var active=inspect();if(active===null)return;
+    quietFrames=active?0:quietFrames+1;
+    if(quietFrames>=2){finish('settled');return;}
+    frame=requestAnimationFrame(tick);
+  }catch(e){finish('error','Toolbar paint inspection failed: '+String(e));}
+}
+try{
+  if(!Number.isFinite(budget)||budget<=0)throw Error('Invalid toolbar paint budget');
+  timer=setTimeout(()=>finish('timeout','Toolbar paint settlement exceeded the fixed budget'),budget);
+  var roots=document.querySelectorAll(paintScopeSelector);
+  if(roots.length!==1)throw Error('Expected exactly one '+paintScopeName);
+  toolbar=roots[0];
+  if(typeof CSSTransition!=='function'||typeof toolbar.getAnimations!=='function')throw Error('CSS transition inspection unavailable');
+  result.before=snapshot();
+  if(inspect()!==null)frame=requestAnimationFrame(tick);
+}catch(e){finish('error','Toolbar paint inspection failed: '+String(e));}
+"""
+
+
+S0_TOOLBAR_PAINT_SELECTOR = '#np-reading-landing .np-overview-map-toolbar'
+DESKTOP_CHROME_PAINT_SELECTOR = '#np-workspace > .np-workspace-bar'
+S0_TOOLBAR_PAINT_SETTLE_JS = ('var paintScopeSelector=' + json.dumps(S0_TOOLBAR_PAINT_SELECTOR) +
+                            ',paintScopeName="S0 toolbar";\n' + SCOPED_TOOLBAR_PAINT_SETTLE_JS)
+DESKTOP_CHROME_PAINT_SETTLE_JS = ('var paintScopeSelector=' + json.dumps(DESKTOP_CHROME_PAINT_SELECTOR) +
+                                ',paintScopeName="Desktop workspace toolbar";\n' + SCOPED_TOOLBAR_PAINT_SETTLE_JS)
+
+
+def settle_s0_toolbar_paint(driver, report, save, phase):
+    data = driver.call('POST', '/execute/async', {
+        'script': S0_TOOLBAR_PAINT_SETTLE_JS, 'args': [S0_TOOLBAR_PAINT_TIMEOUT_MS]})
+    report.setdefault('s0ToolbarPaintSettles', []).append({'phase': phase, 'scope': 's0-map-toolbar', 'settle': data})
+    save()  # Preserve even timeout/error diagnostics before raising.
+    if (not isinstance(data, dict) or data.get('status') != 'settled' or
+            data.get('scopeSelector') != S0_TOOLBAR_PAINT_SELECTOR or
+            data.get('timeoutMs') != S0_TOOLBAR_PAINT_TIMEOUT_MS or
+            not isinstance(data.get('elapsedMs'), (int, float)) or
+            not 0 <= data['elapsedMs'] < S0_TOOLBAR_PAINT_TIMEOUT_MS or
+            not data.get('before') or not data.get('after')):
+        raise RuntimeError('S0 toolbar paint transitions failed to settle within the fixed budget')
+    return data
+
+
+def desktop_chrome_snapshot(driver, report, save, phase, script, *args):
+    """Settle only the audited workspace bar before either chrome-bearing snapshot."""
+    if script not in (DESKTOP_SHELL_SNAPSHOT_JS, S0_FOOTER_SNAPSHOT_JS):
+        raise RuntimeError('Desktop chrome paint wait requires an exact chrome-bearing snapshot')
+    data = driver.call('POST', '/execute/async', {
+        'script': DESKTOP_CHROME_PAINT_SETTLE_JS, 'args': [S0_TOOLBAR_PAINT_TIMEOUT_MS]})
+    report.setdefault('desktopChromePaintSettles', []).append({
+        'phase': phase, 'scope': 'desktop-workspace-toolbar', 'settle': data})
+    save()  # Preserve diagnostics on the new scope, including every timeout/error.
+    if (not isinstance(data, dict) or data.get('status') != 'settled' or
+            data.get('scopeSelector') != DESKTOP_CHROME_PAINT_SELECTOR or
+            data.get('timeoutMs') != S0_TOOLBAR_PAINT_TIMEOUT_MS or
+            not isinstance(data.get('elapsedMs'), (int, float)) or
+            not 0 <= data['elapsedMs'] < S0_TOOLBAR_PAINT_TIMEOUT_MS or
+            not data.get('before') or not data.get('after')):
+        raise RuntimeError('Desktop workspace paint transitions failed to settle within the fixed budget')
+    return driver.js(script, *args)
+
+
+S0_FOOTER_SNAPSHOT_JS = VISUAL_GEOMETRY + DESKTOP_CHROME_GEOMETRY_JS + FIXED_TEXT_PROOF_JS + SCROLL_REGION_VISIBILITY_JS + r"""
 var a=NavigationProductApp,m=NavigationProductModel,s=a.getState(),b=a.getBundle(),landing=document.getElementById('np-reading-landing'),
     map=document.getElementById('np-overview-map'),panels=document.querySelectorAll('#np-overview-relation-panel'),panel=panels[0],
     footers=document.querySelectorAll('#np-overview-footer,.np-overview-footer'),footer=footers.length===1?footers[0]:null,
@@ -949,11 +1660,13 @@ var selector=document.getElementById('np-task-relations');
 function nodeLabels(e){var result={};[['name','.np-task-reading-name'],['contract','.np-task-reading-contract'],['challenge','.np-map-challenge-label'],['title','h2,h3'],['subtitle','.np-overview-goal p']].forEach(([key,selector])=>{var n=e.querySelector(selector);if(n)result[key]=labelBox(n);});if(e.matches('.np-map-task-root'))result.title=labelBox(e);return result;}
 var candidates=[landing,...landing.querySelectorAll('*')].filter(e=>!e.closest('.np-overview-map-toolbar')).map(scrollRegionCandidate).filter(Boolean),
     selected=map.dataset.selectedRelation||null;
-return {expected:expected,ready:document.getElementById('navigation-product').dataset.loadState,home:!landing.hidden,
+var toolbar=landing.querySelector(':scope > .np-overview-map-toolbar');
+return {chrome:desktopChromeGeometry(),expected:expected,ready:document.getElementById('navigation-product').dataset.loadState,home:!landing.hidden,
   viewport:{x:0,y:0,width:innerWidth,height:innerHeight},window:{x:scrollX,y:scrollY},scale:m.getBucket(s).graphScale,
   route:s.route,historyRoute:persisted?.route||null,focus:document.activeElement.id,selectedRelation:selected,relationsVisible:map.dataset.relationsVisible,
   selectorOpen:selector.open,relationSelector:{id:selector.id,tag:selector.tagName,open:selector.open,inToolbar:selector.matches('#np-reading-landing>.np-overview-map-toolbar>#np-task-relations'),count:document.querySelectorAll('#np-task-relations').length,proof:box(selector)},runtimeOverview:overview(s),historyOverview:overview(persisted),
-  landing:frame(landing),map:frame(map),footerCount:footers.length,legendCount:legends.length,coverageCount:coverages.length,
+  landing:frame(landing),map:frame(map),toolbar:toolbar?Object.assign(frame(toolbar),{count:landing.querySelectorAll(':scope > .np-overview-map-toolbar').length,beforeMap:toolbar.nextElementSibling===map,first:landing.firstElementChild===toolbar,
+    controls:[...toolbar.children].map(e=>({id:e.id,tag:e.tagName,proof:fixedTextProof(e.tagName==='DETAILS'?e.querySelector(':scope > summary'):e)}))}):null,footerCount:footers.length,legendCount:legends.length,coverageCount:coverages.length,
   footer:footer?Object.assign(frame(footer),{afterMap:map.nextElementSibling===footer,insideMap:map.contains(footer),children:[...footer.children].map(e=>({id:e.id,className:e.className})),proof:fixedTextProof(footer)}):null,
   legend:legend?Object.assign(frame(legend),{inFooter:legend.parentElement===footer,labels:[...legend.children].map(e=>({id:e.id,className:e.className,proof:fixedTextProof(e)}))}):null,
   coverage:coverage?Object.assign(frame(coverage),{inFooter:coverage.parentElement===footer,proof:fixedTextProof(coverage)}):null,
@@ -965,14 +1678,14 @@ return {expected:expected,ready:document.getElementById('navigation-product').da
 """
 
 
-def check_s0_text(proof, text, *areas):
+def check_s0_text(proof, text, *areas, font_size=15):
     areas = list(areas) + [proof['rect']] + proof['clipAreas']
     if (proof['text'] != text or proof['renderedText'] != text or
             ''.join(run['text'] for run in proof['textRuns']) != text or
-            not _reader_proof(proof, *areas, font_size=15) or not proof['fragments'] or not proof['textRuns']):
+            not _reader_proof(proof, *areas, font_size=font_size) or not proof['fragments'] or not proof['textRuns']):
         raise RuntimeError('S0 complete footer/source text is shortened, hidden, clipped or unreadable')
     for run in proof['textRuns']:
-        if (not run['opaque'] or not run['unscaled'] or run['fontSize'] < 15 or
+        if (not run['opaque'] or not run['unscaled'] or run['fontSize'] < font_size or
                 len(run['foreground']) != 3 or len(run['background']) != 3 or
                 contrast_ratio(run['foreground'], run['background']) < 4.5 or not run['fragments'] or
                 any(not fragment['visible'] or not all(rect_inside(fragment, area) for area in areas + run['clipAreas']) for fragment in run['fragments'])):
@@ -1097,7 +1810,7 @@ def check_s0_adaptive_spacing(data):
         if any(not close(actual, wanted) for actual, wanted in ((r['x'] - mr['x'], x), (r['y'] - mr['y'], y), (r['width'], w))):
             raise RuntimeError('S0 adaptive spacing differs from bounded measured source-row placement')
         is_task, is_c = identity in task_ranks, identity in challenge_ranks
-        if (is_task and not close(r['height'], 52) or is_c and not close(r['height'], 37) or
+        if (is_task and not close(r['height'], 56) or is_c and not close(r['height'], 37) or
                 not rect_inside(r, client, S0_SPACING_TOLERANCE) or
                 data['footer']['rect']['y'] - r['y'] - r['height'] < 12 - S0_SPACING_TOLERANCE):
             raise RuntimeError('S0 adaptive spacing stretched a card, overflowed the map or lost footer clearance')
@@ -1131,7 +1844,7 @@ def check_s0_adaptive_spacing(data):
 def check_s0_footer(data):
     expected, viewport = data['expected'], data['viewport']
     landing, map_box, footer = data['landing'], data['map'], data['footer']
-    fill = dict(x=16, y=132, width=viewport['width'] - 32, height=viewport['height'] - 148)
+    fill = check_desktop_chrome(data)
     if (not data['home'] or data['ready'] != 'ready' or (viewport['width'], viewport['height']) not in VIEWPORTS or
             data['window'] != {'x': 0, 'y': 0} or data['scale'] != 1 or
             any(not _reader_close(landing['rect'][key], value) for key, value in fill.items()) or
@@ -1144,13 +1857,29 @@ def check_s0_footer(data):
             not data['legend']['inFooter'] or not data['coverage']['inFooter'] or
             footer['children'] != [{'id': '', 'className': 'np-map-legend'}, {'id': '', 'className': 'np-overview-coverage np-map-coverage'}]):
         raise RuntimeError('S0 requires one exact normal-flow footer immediately after the map with both original rows')
+    toolbar = data.get('toolbar')
+    if (not toolbar or toolbar['count'] != 1 or not toolbar['first'] or not toolbar['beforeMap'] or
+            toolbar['parent'] != 'np-reading-landing' or toolbar['position'] not in ('static', 'relative') or
+            toolbar['flexGrow'] != '0' or toolbar['flexShrink'] != '0' or toolbar['flexBasis'] != 'auto' or
+            toolbar['top'] != 0 or toolbar['left'] != 0 or not rect_inside(toolbar['rect'], landing['clientRect']) or
+            not _reader_close(toolbar['rect']['y'], landing['clientRect']['y'] + landing['paddingTop'] + toolbar['marginTop'])):
+        raise RuntimeError('S0 map toolbar lost its original natural-flow height and position')
+    toolbar_height = toolbar['rect']['height'] + toolbar['marginTop'] + toolbar['marginBottom']
+    controls = toolbar.get('controls', [])
+    if [(row['id'], row['tag']) for row in controls] != [(identity, tag) for identity, tag, _ in S0_TOOLBAR_LABELS]:
+        raise RuntimeError('S0 toolbar dropped or substituted an original control')
+    for control, (_, _, label) in zip(controls, S0_TOOLBAR_LABELS):
+        text = label if label is not None else ('仅显示所选关系' if data['relationsVisible'] == 'true' else '显示全部关系')
+        if abs(control['proof']['fontSize'] - 15) > S0_SPACING_TOLERANCE:
+            raise RuntimeError('S0 toolbar changed original control type size')
+        check_s0_text(control['proof'], text, landing['clientRect'], viewport)
     if (landing['display'] != 'flex' or landing['flexDirection'] != 'column' or landing['rowGap'] != 0 or
             map_box['parent'] != 'np-reading-landing' or map_box['position'] != 'relative' or
             map_box['flexGrow'] != '1' or map_box['flexShrink'] != '1' or map_box['flexBasis'] != 'auto' or map_box['minHeight'] != '0px' or
-            not _reader_close(map_box['rect']['y'], landing['clientRect']['y'] + landing['paddingTop']) or
+            not _reader_close(map_box['rect']['y'], landing['clientRect']['y'] + landing['paddingTop'] + toolbar_height) or
             not _reader_close(map_box['rect']['x'], footer['rect']['x']) or not _reader_close(map_box['rect']['width'], footer['rect']['width']) or
             not _reader_close(map_box['rect']['height'], landing['clientHeight'] - landing['paddingTop'] - landing['paddingBottom'] -
-                              footer['rect']['height'] - footer['marginTop'] - footer['marginBottom'])):
+                              toolbar_height - footer['rect']['height'] - footer['marginTop'] - footer['marginBottom'])):
         raise RuntimeError('S0 original map no longer receives the remaining natural-flow landing height')
     for region in (landing, map_box, footer, data['legend'], data['coverage']):
         if (region['top'] != 0 or region['left'] != 0 or region['scrollHeight'] > region['clientHeight'] + 1 or
@@ -1223,7 +1952,9 @@ def check_s0_stability(before, after, restore=False):
     for key in ('expected', 'route', 'historyRoute', 'window', 'scale', 'landing', 'map'):
         if before[key] != after[key]:
             raise RuntimeError('S0 relation interaction moved the landing/map/window or changed the source route')
-    if (before['footer']['rect'] != after['footer']['rect'] or
+    if any(before['chrome'][key] != after['chrome'][key] for key in ('layoutWidth', 'rootClientWidth', 'rootRect', 'body', 'header', 'app', 'start', 'workspace', 'identity', 'bar')):
+        raise RuntimeError('S0 relation interaction moved its measured chrome budget')
+    if (before['toolbar']['rect'] != after['toolbar']['rect'] or before['footer']['rect'] != after['footer']['rect'] or
             [(row['id'], row['proof']['rect']) for row in before['nodes']] != [(row['id'], row['proof']['rect']) for row in after['nodes']]):
         raise RuntimeError('S0 relation interaction shifted the footer or an original task/node')
     if restore:
@@ -1274,7 +2005,7 @@ def check_stationary_shell_ancestors(rows):
         raise RuntimeError('A stationary desktop shell ancestor is missing or has a hidden scroll offset')
 
 
-DESKTOP_SHELL_SNAPSHOT_JS = VISUAL_GEOMETRY + SCROLL_REGION_VISIBILITY_JS + FIXED_TEXT_PROOF_JS + STATIONARY_SHELL_ANCESTORS_JS + r"""
+DESKTOP_SHELL_SNAPSHOT_JS = VISUAL_GEOMETRY + DESKTOP_CHROME_GEOMETRY_JS + SCROLL_REGION_VISIBILITY_JS + FIXED_TEXT_PROOF_JS + STATIONARY_SHELL_ANCESTORS_JS + r"""
 var a=NavigationProductApp,m=NavigationProductModel,s=a.getState(),app=document.getElementById('navigation-product'),
     tree=document.getElementById('np-tree-scroll'),reader=document.getElementById('np-detail-scroll'),
     pane=document.querySelector('.np-reading-pane'),header=document.getElementById('np-reader-heading'),
@@ -1287,7 +2018,7 @@ function scroll(e){return {top:e.scrollTop,left:e.scrollLeft};}
 function metrics(e){return {top:e.scrollTop,left:e.scrollLeft,scrollHeight:e.scrollHeight,clientHeight:e.clientHeight,maxTop:Math.max(0,e.scrollHeight-e.clientHeight)};}
 var roots=host.querySelectorAll('[data-parallel-tree] > [role=tree] > [role=treeitem]'),b=a.getBundle(),
     scrollCandidates=[tree,reader,...tree.querySelectorAll('*'),...reader.querySelectorAll('*'),...(footer?[footer,...footer.querySelectorAll('*')]:[])].map(scrollRegionCandidate).filter(Boolean);
-return {stationaryAncestors:stationaryShellAncestors(),ready:app.dataset.loadState,route:s.route,methodReading:app.dataset.methodReading,readingLayout:app.dataset.readingLayout,window:{x:scrollX,y:scrollY},
+return {chrome:desktopChromeGeometry(),stationaryAncestors:stationaryShellAncestors(),ready:app.dataset.loadState,route:s.route,methodReading:app.dataset.methodReading,readingLayout:app.dataset.readingLayout,window:{x:scrollX,y:scrollY},
   viewport:{x:0,y:0,width:innerWidth,height:innerHeight},home:!document.getElementById('np-reading-landing').hidden,
   landing:rect(document.getElementById('np-reading-landing')),landingOffsets:{top:document.getElementById('np-reading-landing').scrollTop,left:document.getElementById('np-reading-landing').scrollLeft},
   collapsed:app.dataset.readerCollapsed==='true',sourceOverview:app.dataset.activeTree==='g'&&app.dataset.globalFocus==='overview',panels:rect(document.querySelector('.np-panels')),
@@ -1389,7 +2120,7 @@ def check_desktop_shell(data, require_s0_footer=False):
     if method and (data.get('readingLayout') != 'reading' or any(data['route'].get(k) != position.get(v) for k, v in
             (('node', 'id'), ('paper', 'paper'), ('version', 'version')))):
         raise RuntimeError('Desktop method presentation changed reading layout or exact source identity')
-    expected = {'x': 16, 'y': 132, 'width': viewport['width'] - 32, 'height': viewport['height'] - 148}
+    expected = check_desktop_chrome(data)
     if require_s0_footer and not data['home']:
         raise RuntimeError('Designated S0 footer capture did not retain the original home')
     if data['home']:
@@ -1425,8 +2156,8 @@ def check_desktop_shell(data, require_s0_footer=False):
     if data.get('relation') or data.get('returnControlCount', 0):
         check_desktop_return_control(data)
     analysis = data['route']['tree'] == 'a'
-    tree_width = (400 if viewport['width'] == 1440 else 448) if analysis or method else (768 if viewport['width'] == 1440 else 1056)
     gap = 24 if analysis else 16
+    tree_width = (400 if viewport['width'] == 1440 else 448) if analysis or method else (expected['width'] - gap) * 1.1 / 2.1
     if (not _reader_close(data['treePane']['width'], tree_width) or
             not _reader_close(data['pane']['width'], expected['width'] - tree_width - gap) or
             not _reader_close(data['pane']['x'], expected['x'] + tree_width + gap)):
@@ -1456,7 +2187,7 @@ def check_relation_canvas_stability(before, opened, selected, required_positions
             raise RuntimeError('Relation scene does not show its real root, route and endpoint methods together')
     root = next(r['proof']['rect'] for r in selected['routeRows'] if r['id'] == required_positions[0])
     poni = next(r['proof']['rect'] for r in selected['routeRows'] if r['id'] == required_positions[-1])
-    if root['y'] > 204 or poni['y'] + poni['height'] > 520:
+    if root['y'] - selected['panels']['y'] > 72 or poni['y'] + poni['height'] - selected['panels']['y'] > 388:
         raise RuntimeError('Relation scene spends the initial tree viewport on controls instead of its source route')
 
 
@@ -1482,7 +2213,7 @@ def check_analysis_first_answer(data, answer, entry, answer_text, version_label)
     if version_label not in data['meta']['text'] or coverage not in data['meta']['text']:
         raise RuntimeError('Fixed analysis heading omitted the exact source version or actual answer coverage')
     if (not data['answer'] or data['answer']['text'] != answer_text or
-            not _reader_proof(data['answer'], data['reader'], data['viewport'], font_size=15) or data['answer']['rect']['y'] > 300):
+            not _reader_proof(data['answer'], data['reader'], data['viewport'], font_size=15) or data['answer']['rect']['y'] - data['panels']['y'] > 168):
         raise RuntimeError('First source answer does not start visibly in the initial reader')
 
 
@@ -1533,7 +2264,7 @@ def check_reader_toggle_snapshot(data, collapsed):
             raise RuntimeError('Collapsed tree does not recover the complete panel width')
     else:
         rr, tr = reader['proof']['rect'], data['treePane']['rect']
-        expected_reader_width = 992 if viewport['width'] == 1440 else 1424
+        expected_reader_width = panels['width'] - data['columnGap'] - (400 if viewport['width'] == 1440 else 448)
         if (reader['display'] == 'none' or reader['tabIndex'] != -1 or
                 not _reader_close(rr['width'], expected_reader_width) or
                 not _reader_close(tr['width'], panels['width'] - data['columnGap'] - expected_reader_width) or rr['height'] < 320 or
@@ -1973,7 +2704,7 @@ return {route:s.route,expanded:m.getBucket(s).expandedByTree,methodReading:app.d
   selectedRelation:reader.querySelector('[data-selected-task-relation]')?.dataset.selectedTaskRelation||null,
   title:measured({selector:'#np-reader-object-title > h2',region:'heading'}),meta:measured({selector:'#np-reader-object-meta',region:'heading'}),
   fixedIdentity:{position:title.dataset.objectPosition||null,entity:title.dataset.objectEntity||null,paper:title.dataset.objectPaper||null,version:title.dataset.objectVersion||null},
-  treeHeading:proof(document.getElementById('np-tree-heading')),tree:rect(tree),reader:rect(reader),heading:proof(document.getElementById('np-reader-heading')),
+  treeHeading:proof(document.getElementById('np-tree-heading')),tree:rect(tree),reader:rect(reader),pane:rect(document.querySelector('.np-reading-pane')),heading:proof(document.getElementById('np-reader-heading')),
   viewport:{x:0,y:0,width:innerWidth,height:innerHeight},
   rows:[...host.querySelectorAll('[role=treeitem]')].map(e=>({id:e.dataset.position,parent:e.dataset.parent||null,domParent:e.parentElement.closest('[role=treeitem]')?.dataset.position||null,
     entity:e.dataset.entity,tree:e.dataset.tree,level:Number(e.getAttribute('aria-level')),ancestor:e.dataset.methodAncestor==='true',selected:e.getAttribute('aria-selected')==='true',
@@ -2018,7 +2749,21 @@ def method_reading_expected(science, position, source_positions=None):
         snippets.append(text(detail['condition']))
     if position.get('association') in ('condition', 'context'):
         snippets.append('条件关联，不能按同一任务或同一评测协议理解。' if position['association'] == 'condition' else '跨任务相关阅读，不作为本任务的解法子节点。')
-    return {'position': position, 'chain': chain, 'children': position['childIds'], 'siblings': siblings,
+    child_display = {}
+    # Source-bound technical and environment children in the13 reviewed scenes.
+    # Unknown/new display transformations require explicit review, not DOM text
+    # as an expectation or a permissive shortened-title fallback.
+    child_roles = {'technical_improvement': '技术改进', 'technical_design': '技术设计', 'environment': '有来源的阅读条目'}
+    for pid in position['childIds']:
+        child = positions[pid]; entity = science['entities'][child['entityId']]
+        role = child.get('displayRole') or child_roles.get(child['kind'])
+        if child['kind']=='environment' and not child.get('displayRole'):
+            role = '跨任务相关阅读' if child.get('association')=='context' else '条件投影 · 非协议等同' if child.get('association')=='condition' else '有来源的阅读条目'
+        if role:
+            role += ' · 条件关联' if child.get('association') == 'condition' else ' · 跨范围相关阅读' if child.get('association') == 'context' else ''
+        child_display[pid] = {'label': (entity.get('label') or child.get('sourceLabel') or child['label']) if child['kind'] in child_roles else None,
+                              'role': role}
+    return {'position': position, 'chain': chain, 'children': position['childIds'], 'siblings': siblings, 'childDisplay': child_display,
             'version': science['versions'][position['versionId']], 'snippets': snippets,
             'siblingLabels': {pid: positions[pid].get('sourceLabel') or positions[pid]['label'] for pid in siblings},
             'siblingVersions': {pid: science['versions'][positions[pid]['versionId']]['label'] for pid in siblings if positions[pid].get('versionId')}}
@@ -2061,8 +2806,10 @@ def check_method_reading(data, expected, source_positions, *, compact=False, vis
                 row['ancestor'] != (row['id'] in ancestors) or row['selected'] != (row['id'] == p['id']) or
                 row['sourceLabel'] != (source.get('sourceLabel') or source['label']) or not row['label'] or not row['role']):
             raise RuntimeError('Method path changed an original parent edge, role, label or ARIA hierarchy')
-        if visual and row['id'] in expected['chain'] + expected['children'] and any(not _reader_proof(row[key], data['tree'], data['viewport'], font_size=15) for key in ('proof', 'roleProof')):
+        if visual and row['id'] in expected['chain'] and any(not _reader_proof(row[key], data['tree'], data['viewport'], font_size=15) for key in ('proof', 'roleProof')):
             raise RuntimeError('Method current position and full original ancestor labels are not readable together')
+    if visual:
+        check_method_child_audit(data, expected, source_positions)
     selected = rows[len(expected['chain']) - 1]
     if data['title']['text'] != selected['label'] or data['treeHeading']['text'] != '当前位置与来路':
         raise RuntimeError('Method fixed title and real-path navigation describe different selected objects')
@@ -2109,10 +2856,432 @@ def check_method_reading(data, expected, source_positions, *, compact=False, vis
         for control in data['analysisControls']:
             if not _reader_proof(control, data['heading']['rect'], data['viewport'], font_size=15):
                 raise RuntimeError('Method fixed analysis state or action is unreadable')
-        if compact and (data['heading']['rect']['height'] > 128 or data['reader']['y'] > 261):
-            raise RuntimeError('Reviewed method acceptance case exceeds its 128px fixed heading or y261 body entry')
+        if compact and (data['heading']['rect']['height'] > 128 or not data.get('pane') or
+                        data['reader']['y'] - data['pane']['y'] > 129):
+            raise RuntimeError('Reviewed method acceptance case exceeds its 128px fixed heading or relative body-entry budget')
         if not 720 <= mechanism['rect']['width'] <= 880:
             raise RuntimeError('Desktop method prose does not keep the approved natural-flow reading measure')
+
+
+# User-approved staged reading: first-screen ancestors/current, every rendered
+# direct child proved after genuine keyboard reveal, then exact original return.
+METHOD_CHILD_SCENES = (
+    '-03-method-reader', '-03b-reader-visible', '-11-active-method-reader', '-11c-reader-reopened',
+    '-23-poni-method', '-24-poni-claim', '-27-imagenav-zhu', '-27-imagenav-sptm', '-27-imagenav-ving',
+    '-28-portable-rl', '-28-portable-llm', '-30-analysis-imported-entry', '-30-analysis-not-imported',
+)
+METHOD_CHILD_PROBE_START_JS = r"""
+if(window.__npMethodChildProbe)throw Error('Method child probe already installed');
+var a=NavigationProductApp,m=NavigationProductModel,tree=document.getElementById('np-tree-scroll'),reader=document.getElementById('np-detail-scroll'),host=document.getElementById('np-tree');
+var refs=[host,tree,reader,document.getElementById('np-reader-object-title'),reader.querySelector('[data-mechanism-entity]'),...[...host.querySelectorAll('[role=treeitem]')].flatMap(e=>[e,e.querySelector(':scope > .np-node-row'),e.querySelector(':scope > .np-node-row > .np-node-label'),e.querySelector(':scope > .np-node-row > .np-node-kind')])],active=document.activeElement;
+if(!refs.every(n=>n&&n.isConnected)||!active||document.getElementById('navigation-product').dataset.methodReading!=='true')throw Error('Method child probe lacks its real method DOM');
+var p={refs:refs,active:active,originalFocus:{id:active.id||null,tag:active.tagName,tabIndex:active.tabIndex},hover:[...document.querySelectorAll(':hover')],events:[],overflow:0,lastScroll:performance.now(),lastFocus:performance.now(),started:performance.now()};
+// A Tab search limit is a baseline budget, not a live UI-state counter.
+// Keep every workspace candidate object (also hidden/-1) separately bound.
+p.workspace=document.getElementById('np-workspace');if(!p.workspace||!p.workspace.contains(host)||!p.workspace.contains(reader))throw Error('Method child workspace is unavailable');
+p.candidateSelector='a[href],button,input,select,textarea,summary,[tabindex]';p.candidateTokens=new WeakMap();p.nextCandidateToken=0;
+p.token=function(n){if(!p.candidateTokens.has(n))p.candidateTokens.set(n,'method-focus-'+(++p.nextCandidateToken));return p.candidateTokens.get(n);};
+p.describe=function(n){var ancestors=[],parent=n;while(parent){var css=getComputedStyle(parent);ancestors.push({token:p.token(parent),hidden:!!parent.hidden,inert:!!parent.inert,display:css.display,visibility:css.visibility,detailsOpen:parent.tagName==='DETAILS'?parent.open:null});if(parent===p.workspace)break;parent=parent.parentElement;}
+ return {token:p.token(n),id:n.id||null,tag:n.tagName,role:n.getAttribute('role'),type:n.getAttribute('type'),href:n.getAttribute('href'),name:n.getAttribute('name'),title:n.getAttribute('title'),ariaLabel:n.getAttribute('aria-label'),ariaControls:n.getAttribute('aria-controls'),
+  text:n.getAttribute('role')==='treeitem'?null:n.textContent,value:n.matches('input,select,textarea')?n.value:null,checked:n.tagName==='INPUT'?n.checked:null,attributes:[...n.attributes].map(a=>({name:a.name,value:a.value})),sourcePosition:p.sourceItems?.includes(n)?n.dataset.position:null,tabIndex:n.tabIndex,disabled:!!n.disabled,hidden:!!n.hidden,inert:!!n.inert,layout:n.getClientRects().length>0,ancestors:ancestors};};
+p.inventory=function(){var all=[...document.querySelectorAll(p.candidateSelector)],eligible=all.filter(n=>n.tabIndex>=0&&!n.disabled&&n.getClientRects().length);return {scopeRoot:p.token(p.workspace),candidateCount:all.length,eligibleCount:eligible.length,eligible:eligible.map(n=>Object.assign(p.describe(n),{inWorkspace:p.workspace.contains(n)}))};};
+p.bindCandidates=function(){if(document.getElementById('np-workspace')!==p.workspace)throw Error('Method child workspace was replaced before baseline');p.scopeCandidates=[...p.workspace.querySelectorAll(p.candidateSelector)];p.sourceItems=[...host.querySelectorAll('[role=treeitem]')];p.latestCandidates=p.inventory();p.tabBound=null;};
+p.scopeState=function(){var now=[...p.workspace.querySelectorAll(p.candidateSelector)],rootStyle=getComputedStyle(p.workspace);
+ return {same:document.getElementById('np-workspace')===p.workspace&&p.workspace.isConnected&&now.length===p.scopeCandidates.length&&now.every((n,i)=>n===p.scopeCandidates[i]&&n.isConnected),
+  root:{token:p.token(p.workspace),id:p.workspace.id,tag:p.workspace.tagName,hidden:!!p.workspace.hidden,inert:!!p.workspace.inert,display:rootStyle.display,visibility:rootStyle.visibility},
+  items:now.map(n=>{var item=p.describe(n);return p.sourceItems.includes(n)?Object.assign(item,{tabIndex:'native-tree-roving',attributes:item.attributes.map(a=>a.name==='tabindex'?{name:a.name,value:'native-tree-roving'}:a)}):item;}),
+  treeTabIndexes:p.sourceItems.map(n=>({position:n.dataset.position,tabIndex:n.tabIndex}))};};
+p.bindCandidates();
+p.listener=function(e){if(e.type==='scroll')p.lastScroll=performance.now();if(e.type==='focusin')p.lastFocus=performance.now();if(p.events.length>=24){p.overflow=Math.min(25,p.overflow+1);return;}p.events.push({type:e.type,key:e.key||null,trusted:e.isTrusted,target:e.target.id||null,originalTarget:e.target===p.active,readerTarget:e.target===reader});};
+p.types=['keydown','pointerdown','pointerup','click','focusin','scroll'];try{p.types.forEach(t=>document.addEventListener(t,p.listener,true));window.__npMethodChildProbe=p;}catch(e){p.types.forEach(t=>document.removeEventListener(t,p.listener,true));delete window.__npMethodChildProbe;throw e;}
+return true;
+"""
+METHOD_CHILD_STATE_JS = r"""
+var p=window.__npMethodChildProbe,a=NavigationProductApp,m=NavigationProductModel,s=a.getState(),key=m.contextKey(s.route),host=document.getElementById('np-tree'),tree=document.getElementById('np-tree-scroll'),reader=document.getElementById('np-detail-scroll');
+if(!p)throw Error('Method child state lacks probe');
+function rect(e){var r=e.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};}
+function scroll(e){var r=rect(e);return {top:e.scrollTop,left:e.scrollLeft,maxTop:Math.max(0,e.scrollHeight-e.clientHeight),maxLeft:Math.max(0,e.scrollWidth-e.clientWidth),client:{x:r.x+e.clientLeft,y:r.y+e.clientTop,width:e.clientWidth,height:e.clientHeight}};}
+var active=document.activeElement,current=[host,tree,reader,document.getElementById('np-reader-object-title'),reader.querySelector('[data-mechanism-entity]'),...[...host.querySelectorAll('[role=treeitem]')].flatMap(e=>[e,e.querySelector(':scope > .np-node-row'),e.querySelector(':scope > .np-node-row > .np-node-label'),e.querySelector(':scope > .np-node-row > .np-node-kind')])];
+// Freeze the budget and its matching inventory in the first baseline STATE,
+// so an external change between baseline setup and this read is not misbound.
+p.latestCandidates=p.inventory();if(p.tabBound===null)p.tabBound=Math.min(256,p.latestCandidates.eligibleCount+1);
+return {route:s.route,runtime:s,history:history.state,historyKey:m.KEY,contextKey:key,historyLength:history.length,
+ viewport:{x:0,y:0,width:innerWidth,height:innerHeight,dpr:devicePixelRatio},window:{x:scrollX,y:scrollY},tree:scroll(tree),reader:scroll(reader),
+ active:{id:active.id||null,tag:active.tagName,position:active.closest('[data-position]')?.dataset.position||null,tabIndex:active.tabIndex,original:active===p.active},
+ roving:[...host.querySelectorAll('[role=treeitem][tabindex="0"]')].map(e=>e.dataset.position),
+ hoverSame:(()=>{var h=[...document.querySelectorAll(':hover')];return h.length===p.hover.length&&h.every((n,i)=>n===p.hover[i]);})(),
+ domSame:current.length===p.refs.length&&current.every((n,i)=>n===p.refs[i]&&n.isConnected)&&p.active.isConnected,
+ originalFocus:p.originalFocus,scopeCandidates:p.scopeState(),tabBound:p.tabBound};
+"""
+METHOD_CHILD_ACTION_JS = r"""
+var p=window.__npMethodChildProbe;if(!p)throw Error('Method child action lacks probe');
+if(arguments[0]==='baseline'){p.active=document.activeElement;p.originalFocus={id:p.active.id||null,tag:p.active.tagName,tabIndex:p.active.tabIndex};p.hover=[...document.querySelectorAll(':hover')];p.bindCandidates();return true;}
+if(arguments[0]==='candidates')return p.latestCandidates;
+if(arguments[0]==='reset'){p.events=[];p.overflow=0;return true;}
+return {events:p.events,overflow:p.overflow};
+"""
+METHOD_CHILD_IDLE_JS = r"""
+var done=arguments[arguments.length-1],p=window.__npMethodChildProbe,start=performance.now(),last=null,since=start,finished=false;
+if(!p){done({ok:false,error:'missing probe'});return;}
+var watchdog=setTimeout(()=>finish(false,'method state exceeded2000ms'),2000);
+function finish(ok,error){if(finished)return;finished=true;clearTimeout(watchdog);var now=performance.now();done({ok:ok&&now-start<=2000,error:error||null,elapsed:now-start,quietMs:now-Math.max(since,p.lastScroll,p.lastFocus)});}
+function read(){var a=NavigationProductApp;return JSON.stringify([a.getState(),history.state,document.activeElement?.id,document.activeElement?.tagName,scrollX,scrollY,document.getElementById('np-tree-scroll').scrollTop,document.getElementById('np-tree-scroll').scrollLeft,document.getElementById('np-detail-scroll').scrollTop,document.getElementById('np-detail-scroll').scrollLeft]);}
+function tick(){if(finished)return;var now=performance.now(),value=read();if(value!==last){last=value;since=now;}
+ if(now-start>=2000){finish(false,'method state did not naturally settle');return;}
+ if(now-Math.max(since,p.lastScroll,p.lastFocus)>=160){requestAnimationFrame(()=>requestAnimationFrame(()=>{if(finished)return;if(performance.now()-start>=2000){finish(false,'method frames exceeded2000ms');return;}if(read()===last&&performance.now()-Math.max(p.lastScroll,p.lastFocus)>=160)finish(true);else tick();}));return;}setTimeout(tick,20);}
+tick();
+"""
+METHOD_CHILD_READER_POINT_JS = r"""
+var p=window.__npMethodChildProbe,e=document.getElementById('np-detail-scroll');
+if(!p||p.active!==e||!e.isConnected||e.tabIndex!==-1)throw Error('Native pointer return is only for the original reader container');
+var r=e.getBoundingClientRect(),a={x:r.x+e.clientLeft,y:r.y+e.clientTop,width:e.clientWidth,height:e.clientHeight},points=[];
+for(var dx of [2,5,10])for(var fy of [.25,.5,.75]){var x=Math.ceil(a.x+dx),y=Math.floor(a.y+a.height*fy);
+ if(x-1<a.x||x+1>=a.x+a.width||y-1<a.y||y+1>=a.y+a.height||x<1||y<1||x>=innerWidth-1||y>=innerHeight-1)continue;
+ if([[0,0],[-1,0],[1,0],[0,-1],[0,1]].every(([ox,oy])=>document.elementFromPoint(x+ox,y+oy)===e))points.push({x:x,y:y});}
+return {id:e.id,client:a,point:points[0]||null,candidateCount:points.length};
+"""
+METHOD_CHILD_HOVER_POINT_JS = r"""
+var p=window.__npMethodChildProbe,e=p?.hover[p.hover.length-1];if(!e||!e.isConnected)throw Error('Original hover target is unavailable');
+var r=e.getBoundingClientRect(),points=[];for(var fx of [.5,.1,.9,.02,.98])for(var fy of [.5,.1,.9,.02,.98]){
+ var x=Math.floor(r.x+r.width*fx),y=Math.floor(r.y+r.height*fy);if(x<0||y<0||x>=innerWidth||y>=innerHeight)continue;
+ if(document.elementFromPoint(x,y)===e)points.push({x:x,y:y});}
+return {point:points[0]||null,id:e.id||null,tag:e.tagName};
+"""
+METHOD_CHILD_PROBE_STOP_JS = r"""
+var p=window.__npMethodChildProbe;if(!p)throw Error('Method child probe missing during cleanup');
+try{p.types.forEach(t=>document.removeEventListener(t,p.listener,true));return {cleanedUp:true};}finally{delete window.__npMethodChildProbe;}
+"""
+
+
+def method_child_binding(name, data, expected):
+    return dict(scene=name, scienceSha256='9069c6a11ae9a867671522d04e6a24b4edcada660d03feb2f41340bfc395825c',
+                route=data['route'], identity=data['fixedIdentity'], viewport=data['viewport'],
+                expanded=data['expanded'], source=expected['position']['id'])
+
+
+def method_child_baseline_mode(before):
+    """Do not canonicalize a stable runtime/history focus-only difference."""
+    import copy
+    state, history = before['runtime'], before['history'][before['historyKey']]
+    if state == history:
+        return 'coherent'
+    key = before['contextKey']; normalized = copy.deepcopy(state)
+    normalized['contexts'][key]['focusTarget'] = history['contexts'][key]['focusTarget']
+    if (normalized != history or before['active']['position'] != before['roving'][0] or
+            state['contexts'][key]['focusTarget'] != before['roving'][0]):
+        raise RuntimeError('Method child audit cannot natively restore this non-focus baseline history difference')
+    return 'stable-keyboard-focus-only'
+
+
+def check_method_child_state(before, after, *, exact=False):
+    if after.get('domSame') is not True or len(after.get('roving', [])) != 1:
+        raise RuntimeError('Method child audit replaced its original DOM or one roving scope')
+    for key in ('route', 'viewport', 'window', 'historyLength', 'contextKey', 'historyKey', 'originalFocus', 'tabBound'):
+        if before[key] != after[key]:
+            raise RuntimeError('Method child audit changed its bound source/viewport/window: ' + key)
+    for key in ('route', 'originTrail', 'revision'):
+        if before['runtime'].get(key) != after['runtime'].get(key):
+            raise RuntimeError('Method child keyboard audit navigated or rewrote source history: ' + key)
+    scope=after.get('scopeCandidates') or {}; original=before.get('scopeCandidates') or {}
+    if (original.get('same') is not True or scope.get('same') is not True or not scope.get('items') or
+            any(scope.get(k)!=original.get(k) for k in ('root','items'))):
+        raise RuntimeError('Method child audit changed its original workspace focus candidates')
+    tree_tabs=scope.get('treeTabIndexes',[])
+    if ([row.get('position') for row in tree_tabs]!=[row.get('position') for row in original.get('treeTabIndexes',[])] or
+            any(type(row.get('tabIndex')) is not int or row['tabIndex'] not in (-1,0) for row in tree_tabs+original.get('treeTabIndexes',[])) or
+            [row.get('position') for row in tree_tabs if row.get('tabIndex')==0]!=after['roving'] or
+            [row.get('position') for row in original.get('treeTabIndexes',[]) if row.get('tabIndex')==0]!=before['roving']):
+        raise RuntimeError('Method child audit changed its source-bound tree roving candidates')
+    context = before['contextKey']
+    for key in ('expandedByTree', 'selectedByTree'):
+        if before['runtime']['contexts'][context][key] != after['runtime']['contexts'][context][key]:
+            raise RuntimeError('Method child keyboard audit changed original expansion or selection')
+    for region in ('tree','reader'):
+        for key in ('client','maxTop','maxLeft'):
+            if before[region][key]!=after[region][key]:
+                raise RuntimeError('Method child audit changed original scroll geometry: '+region+'/'+key)
+    if exact:
+        for key in ('runtime', 'history', 'tree', 'reader', 'active', 'roving', 'hoverSame', 'scopeCandidates'):
+            if before[key] != after[key]:
+                raise RuntimeError('Method child audit did not restore the exact original state: ' + key)
+
+
+def check_method_child_candidates(state, inventory):
+    """Keep dynamic external diagnostics separate from the frozen input budget."""
+    scope=state.get('scopeCandidates') or {}; items=scope.get('items',[])
+    if not isinstance(inventory,dict):raise RuntimeError('Method child audit lacks its actual focus candidate inventory')
+    eligible=inventory.get('eligible',[])
+    if (inventory.get('scopeRoot')!=scope.get('root',{}).get('token') or
+            type(inventory.get('candidateCount')) is not int or type(inventory.get('eligibleCount')) is not int or
+            inventory['candidateCount']<inventory['eligibleCount'] or inventory['eligibleCount']!=len(eligible) or
+            len({row.get('token') for row in eligible})!=len(eligible)):
+        raise RuntimeError('Method child focus candidate diagnostics lost their actual identities or counts')
+    indexes={row['position']:row['tabIndex'] for row in scope.get('treeTabIndexes',[])}
+    actual=[]
+    for item in items:
+        row=dict(item);row['tabIndex']=indexes.get(row['sourcePosition']) if row.get('sourcePosition') else row['tabIndex']
+        if type(row['tabIndex']) is not int:
+            raise RuntimeError('Method child candidate has no exact source-bound tabindex')
+        if row.get('sourcePosition') and 'attributes' in row:
+            row['attributes']=[dict(a,value=str(row['tabIndex'])) if a['name']=='tabindex' else a for a in row['attributes']]
+        if row['tabIndex']>=0 and not row['disabled'] and row['layout']:
+            actual.append(dict(row,inWorkspace=True))
+    if ([row for row in eligible if row.get('inWorkspace') is True]!=actual or
+            any(type(row.get('inWorkspace')) is not bool or not row.get('token') or
+                type(row.get('tabIndex')) is not int or row['tabIndex']<0 or row.get('disabled') is not False or row.get('layout') is not True for row in eligible)):
+        raise RuntimeError('Method child scope candidates were omitted or mislabeled as external')
+
+
+def check_method_child_audit(data, expected, source_positions):
+    audit = data.get('childReadability')
+    if not isinstance(audit, dict) or audit.get('status') != 'verified_native_children' or audit.get('cleanedUp') is not True:
+        raise RuntimeError('Method capture lacks its complete native child readability audit')
+    name = data.get('captureName', '')
+    if ((data['viewport']['width'],data['viewport']['height']) not in VIEWPORTS or
+            not any(name == str(data['viewport']['width'])+'x'+str(data['viewport']['height'])+suffix for suffix in METHOD_CHILD_SCENES)):
+        raise RuntimeError('Method child audit is not bound to an original method capture')
+    if audit.get('binding') != method_child_binding(name, data, expected):
+        raise RuntimeError('Method child proof was reused across source, claim, scene, expansion or viewport')
+    path = method_visible_source_ids(expected, source_positions, data['expanded'][expected['position']['tree']])
+    children = [pid for pid in path if pid in expected['children']]
+    if audit.get('required') != children or [p.get('id') for p in audit.get('proofs', [])] != children:
+        raise RuntimeError('Method child audit omitted, duplicated or invented a rendered source child')
+    if audit['before'].get('domSame') is not True or audit['before']['active'].get('original') is not True or audit['before'].get('hoverSame') is not True:
+        raise RuntimeError('Method child audit did not bind its settled original DOM focus and hover')
+    check_method_child_candidates(audit['before'],audit.get('tabCandidatesBefore'))
+    check_method_child_candidates(audit['after'],audit.get('tabCandidatesAfter'))
+    if audit['before']['tabBound']!=min(256,audit['tabCandidatesBefore']['eligibleCount']+1):
+        raise RuntimeError('Method child audit changed its original bounded native Tab budget')
+    if [row['position'] for row in audit['before']['scopeCandidates']['treeTabIndexes']]!=path:
+        raise RuntimeError('Method child focus candidates are not the complete source-bound method tree')
+    check_method_child_state(audit['before'], audit['after'], exact=True)
+    if (audit['before']['runtime']['contexts'][audit['before']['contextKey']]['expandedByTree']!=data['expanded'] or
+            audit['before']['route'] != data['route'] or audit['before']['viewport'] != dict(data['viewport'], dpr=1)):
+        raise RuntimeError('Method child audit does not describe the photographed source and viewport')
+    if audit.get('baselineMode') != method_child_baseline_mode(audit['before']):
+        raise RuntimeError('Method child audit changed its original persistence semantics')
+    settles=audit.get('settles')
+    if not isinstance(settles,list) or not settles or any(s.get('ok') is not True or not 160<=s.get('quietMs',-1)<=s.get('elapsed',-1)<=2000 for s in settles):
+        raise RuntimeError('Method child audit lacks its bounded naturally stable state windows')
+    actions=audit.get('actions',[])
+    key_indexes=[k.get('actionIndex') for k in audit.get('keys',[])]
+    if key_indexes!=[i for i,a in enumerate(actions) if a.get('kind')=='tree-key']:
+        raise RuntimeError('Method child native keys are not bound one-to-one to actual actions')
+    for key in audit.get('keys',[]):
+        action=actions[key['actionIndex']];trace=key['trace'];target=key['target'];requested='Home' if key['input']=='\ue011' else 'ArrowDown' if key['input']=='\ue015' else None
+        if requested is None or target not in path or (requested=='Home' and target!=path[0]):raise RuntimeError('Method child audit invented a native source traversal')
+        check_method_key_trace(trace,expected['position']['id'],path[0],target,requested)
+        events=[e for e in action['events']['events'] if e.get('type')=='keydown']
+        if (len(events)!=1 or events[0].get('key')!=requested or events[0].get('target')!=trace['events'][0]['eventTarget'] or
+                action['after']['active']['position']!=target or action['after']['roving']!=[target] or trace['after']['active']!='np-node-'+target):
+            raise RuntimeError('Method key trace and actual action focus disagree')
+    prior=audit['before']
+    for action in actions:
+        if action.get('kind') not in ('tree-key','tab','reverse-tab','pointer-move-reader','pointer-return-reader','wheel-tree','wheel-reader','restore-original-hover') or action.get('before')!=prior:
+            raise RuntimeError('Method child actions are unsupported or omit an intervening state')
+        if action['kind']!='tree-key' and (action['before']['roving']!=action['after']['roving'] or
+                action['before']['scopeCandidates']['treeTabIndexes']!=action['after']['scopeCandidates']['treeTabIndexes']):
+            raise RuntimeError('Non-tree-key method action changed its original tree roving candidates')
+        check_method_child_candidates(action['before'],action.get('tabCandidatesBefore'))
+        check_method_child_candidates(action['after'],action.get('tabCandidatesAfter'))
+        prior=action['after']
+        events=action.get('events',{}); rows=events.get('events',[])
+        if events.get('overflow')!=0 or len(rows)>24 or any(e.get('trusted') is not True for e in rows):
+            raise RuntimeError('Method child receipt lost bounded trusted native actions')
+        check_method_child_state(audit['before'],action['after'])
+        if action['kind'] in ('tree-key','tab','reverse-tab') and not any(e.get('type')=='keydown' for e in rows):
+            raise RuntimeError('Method child receipt lost native keyboard input')
+        if action['kind']=='pointer-return-reader' and (not action['after']['active']['original'] or
+                any(not any(e.get('type')==t and e.get('readerTarget') for e in rows) for t in ('pointerdown','pointerup','click','focusin'))):
+            raise RuntimeError('Method child receipt lost exact original reader pointer focus')
+        if action['kind'].startswith('wheel-'):
+            region=action['kind'].split('-',1)[1]
+            if not any(e.get('type')=='scroll' for e in rows) or all(action['before'][region][k]==action['after'][region][k] for k in ('top','left')):
+                raise RuntimeError('Method child receipt invented native scroll progress')
+    if prior!=audit['after']:raise RuntimeError('Method child final state is not its actual last native action')
+    for item in audit['proofs']:
+        pid=item['id']; row=item['row']; original=next(r for r in data['rows'] if r['id']==pid)
+        display=expected['childDisplay'][pid]
+        if not display['label'] or not display['role'] or any(row[k]!=display[k] for k in ('label','role')):
+            raise RuntimeError('Native child full label or role differs from its independent scientific source')
+        for key in ('id','parent','domParent','entity','tree','level','ancestor','selected','label','sourceLabel','role'):
+            if row[key] != original[key]:
+                raise RuntimeError('Native child reveal changed its exact source label/role/parent: '+key)
+        frame=item['state']; check_method_child_state(audit['before'],frame)
+        if frame['active']['position']!=pid or frame['roving']!=[pid]:
+            raise RuntimeError('Native child proof did not focus its exact original child')
+        key=item.get('keyTrace', {})
+        check_method_key_trace(key,expected['position']['id'],path[0],pid,'ArrowDown')
+        matched=[k for k in audit.get('keys',[]) if k.get('trace')==key]
+        if (len(matched)!=1 or actions[matched[0]['actionIndex']]['after']!=frame or key['after']['tree']['clientRect']!=frame['tree']['client'] or
+                key['after']['tree']['top']!=frame['tree']['top'] or key['after']['tree']['left']!=frame['tree']['left'] or
+                row['proof'].get('text')!=row['label'] or row['roleProof'].get('text')!=row['role']):
+            raise RuntimeError('Child text or geometry is not bound to its actual native key frame')
+        if any(not _reader_proof(row[k],frame['tree']['client'],data['viewport'],font_size=15) for k in ('proof','roleProof')):
+            raise RuntimeError('Native child full label or role is clipped, covered, small or unreadable')
+    if children and (not actions or not audit.get('keys')):
+        raise RuntimeError('Method child proof lacks its actual native actions and geometry records')
+    if audit.get('afterSnapshot')!={k:v for k,v in data.items() if k not in ('captureName','childReadability')}:
+        raise RuntimeError('Method child audit lost the exact final original text, paint and geometry snapshot')
+
+
+def method_child_readability_checks(driver, report, save, name, data, expected, source_positions):
+    """Bounded native input only. JavaScript measures/observes; it never focuses or scrolls."""
+    import copy
+    record=dict(binding=method_child_binding(name,data,expected),status='started',proofs=[],actions=[],keys=[])
+    report.setdefault('methodChildReadabilityChecks',[]).append(record)
+    def checkpoint():
+        save()
+    def state():
+        return driver.js(METHOD_CHILD_STATE_JS)
+    def idle():
+        result=driver.call('POST','/execute/async',{'script':METHOD_CHILD_IDLE_JS,'args':[]})
+        record.setdefault('settles',[]).append(result); checkpoint()
+        if result.get('ok') is not True: raise RuntimeError('Method child native input did not naturally settle')
+    def native(kind, actions):
+        before=state(); driver.js(METHOD_CHILD_ACTION_JS,'reset')
+        item=dict(kind=kind,before=before,tabCandidatesBefore=driver.js(METHOD_CHILD_ACTION_JS,'candidates')); record['actions'].append(item); checkpoint()
+        try:
+            driver.call('POST','/actions',{'actions':actions}); idle()
+        finally:
+            item['events']=driver.js(METHOD_CHILD_ACTION_JS,'read'); item['after']=state(); item['tabCandidatesAfter']=driver.js(METHOD_CHILD_ACTION_JS,'candidates'); checkpoint()
+        check_method_child_state(record['before'],item['after'])
+        if item['events']['overflow'] or any(e['trusted'] is not True for e in item['events']['events']):
+            raise RuntimeError('Method child native input lacks bounded trusted events')
+        return item
+    def tab(backwards=False):
+        actions=([{'type':'keyDown','value':'\ue008'}] if backwards else [])+[{'type':'keyDown','value':'\ue004'},{'type':'keyUp','value':'\ue004'}]+([{'type':'keyUp','value':'\ue008'}] if backwards else [])
+        item=native('reverse-tab' if backwards else 'tab',[{'type':'key','id':'method-child-focus','actions':actions}])
+        if not any(e['type']=='keydown' and e['key']=='Tab' for e in item['events']['events']):raise RuntimeError('Method child focus lacked native Tab')
+    def focus_roving():
+        for _ in range(record['before']['tabBound']):
+            now=state()
+            if now['active']['position']==now['roving'][0] and now['active']['tag']=='LI':return
+            tab(True)
+        raise RuntimeError('Native Tab could not reach original method keyboard scope')
+    def key(value,target):
+        item=dict(input=value,target=target);record['keys'].append(item);checkpoint();installed=False
+        try:
+            item['trace']=driver.js(METHOD_KEY_TRACE_START_JS,expected['position']['id'],path[0],target,'Home' if value=='\ue011' else 'ArrowDown');installed=True
+            item['actionIndex']=len(record['actions'])
+            native('tree-key',[{'type':'key','id':'method-child-tree','actions':[{'type':'keyDown','value':value},{'type':'keyUp','value':value}]}])
+        finally:
+            if installed:item['trace']=driver.js(METHOD_KEY_TRACE_STOP_JS)
+            checkpoint()
+        check_method_key_trace(item['trace'],expected['position']['id'],path[0],target,'Home' if value=='\ue011' else 'ArrowDown')
+        now=state()
+        if now['active']['position']!=target or now['roving']!=[target]:raise RuntimeError('Method child native traversal missed source position')
+        return item['trace']
+    def to_position(target,no_scroll=False):
+        if target not in path:raise RuntimeError('Original stored method focus is not a rendered source position')
+        focus_roving();start=state()
+        start_index=path.index(start['roving'][0]);target_index=path.index(target)
+        # Preserve a legitimate nonzero original tree offset: replay forward
+        # from the persisted ancestor rather than needlessly Home-clamping it.
+        sequence=([('\ue015',p) for p in path[start_index+1:target_index+1]] if no_scroll and start_index<=target_index else
+                  [('\ue011',path[0])]+[('\ue015',p) for p in path[1:target_index+1]])
+        for value,pid in sequence:
+            key(value,pid)
+            if no_scroll and (any(state()[k]!=start[k] for k in ('tree','reader','window','history')) or
+                              any(e['type']=='scroll' for e in record['actions'][-1]['events']['events'])):
+                raise RuntimeError('Transient method focus return caused a forbidden persistence or scroll change')
+    def wheel(region,dx,dy):
+        now=state();box=now[region]['client'];x=math.floor(box['x']+box['width']/2);y=math.floor(box['y']+box['height']/2)
+        item=native('wheel-'+region,[{'type':'wheel','id':'method-child-return','actions':[{'type':'scroll','origin':'viewport','x':x,'y':y,'deltaX':dx,'deltaY':dy,'duration':80}]}])
+        after=item['after']
+        if (dx and (after[region]['left']-now[region]['left'])*dx<=0) or (dy and (after[region]['top']-now[region]['top'])*dy<=0):
+            raise RuntimeError('Method child native wheel made no effective progress')
+        if not any(e['type']=='scroll' for e in item['events']['events']):raise RuntimeError('Method child return lacks actual scroll event')
+    def offsets():
+        for region in ('tree','reader'):
+            for _ in range(4):
+                now=state();target=record['before'][region]
+                dx=target['left']-now[region]['left'];dy=target['top']-now[region]['top']
+                if not dx and not dy:break
+                if dx!=int(dx) or dy!=int(dy):raise RuntimeError('Exact original offset is not reachable with integer native wheel')
+                wheel(region,int(dx),int(dy))
+            else:raise RuntimeError('Bounded method child native return did not reach exact offsets')
+    def pulse():
+        now=state()
+        for region in ('reader','tree'):
+            for offset,maximum in (('top','maxTop'),('left','maxLeft')):
+                if now[region][maximum]<1:continue
+                delta=1 if now[region][offset]<now[region][maximum] else -1
+                wheel(region,delta if offset=='left' else 0,delta if offset=='top' else 0);offsets();return
+        raise RuntimeError('No actual scroll range is available for native persistence return')
+    def original_focus():
+        if state()['active']['original']:return
+        if record['before']['originalFocus']['id']=='np-detail-scroll':
+            point=driver.js(METHOD_CHILD_READER_POINT_JS);record['readerReturnPoint']=point;checkpoint()
+            if not point['point']:raise RuntimeError('Original reader has no safe self-hit native pointer target')
+            xy=point['point'];native('pointer-move-reader',[{'type':'pointer','id':'method-child-pointer','parameters':{'pointerType':'mouse'},'actions':[{'type':'pointerMove','origin':'viewport','x':xy['x'],'y':xy['y'],'duration':0}]}])
+            if driver.js(METHOD_CHILD_READER_POINT_JS)['point']!=xy:raise RuntimeError('Reader self-hit target moved before native click')
+            item=native('pointer-return-reader',[{'type':'pointer','id':'method-child-pointer','parameters':{'pointerType':'mouse'},'actions':[{'type':'pointerDown','button':0},{'type':'pointerUp','button':0}]}])
+            events=item['events']['events']
+            if any(not any(e['type']==t and e['readerTarget'] for e in events) for t in ('pointerdown','pointerup','click','focusin')):raise RuntimeError('Reader native pointer return lacks trusted exact-target focus')
+        elif record['before']['originalFocus']['tabIndex']>=0:
+            for _ in range(record['before']['tabBound']):
+                if state()['active']['original']:break
+                tab()
+        else:raise RuntimeError('Original non-tabstop focus has no reviewed native return path')
+        if not state()['active']['original']:raise RuntimeError('Native input did not restore the original active DOM object')
+    driver.js(METHOD_CHILD_PROBE_START_JS)
+    try:
+        idle();driver.js(METHOD_CHILD_ACTION_JS,'baseline');data.clear();data.update(driver.js(METHOD_READING_SNAPSHOT_JS));record['binding']=method_child_binding(name,data,expected)
+        original_snapshot=copy.deepcopy(data)
+        before=record['before']=state();record['tabCandidatesBefore']=driver.js(METHOD_CHILD_ACTION_JS,'candidates');record['baselineMode']=method_child_baseline_mode(before)
+        if before['domSame'] is not True or before['active']['original'] is not True or before['hoverSame'] is not True or len(before['roving'])!=1:raise RuntimeError('Method child baseline DOM or roving focus is invalid')
+        path=method_visible_source_ids(expected,source_positions,data['expanded'][expected['position']['tree']])
+        if not path or len(path)>256:raise RuntimeError('Method child traversal is not within its source bound')
+        record['required']=[pid for pid in path if pid in expected['children']];checkpoint()
+        if record['required']:
+            focus_roving();key('\ue011',path[0])
+            for pid in path[1:]:
+                trace=key('\ue015',pid)
+                if pid in record['required']:
+                    snapshot=driver.js(METHOD_READING_SNAPSHOT_JS)
+                    row=next((r for r in snapshot['rows'] if r['id']==pid),None)
+                    if row is None:raise RuntimeError('Method child disappeared during its native reveal')
+                    record['proofs'].append(dict(id=pid,row=row,state=state(),keyTrace=trace));checkpoint()
+            if record['baselineMode']=='stable-keyboard-focus-only':
+                stored=before['history'][before['historyKey']]['contexts'][before['contextKey']]['focusTarget']
+                to_position(stored);offsets();idle()
+                if state()['history']!=before['history']:pulse()
+                idle();record['persistedReturn']=state();checkpoint()
+                if record['persistedReturn']['history']!=before['history']:raise RuntimeError('Method child return could not reconstruct original persisted history')
+                to_position(before['roving'][0],no_scroll=True);original_focus()
+            else:
+                to_position(before['roving'][0]);original_focus();offsets();idle()
+                if state()['runtime']!=before['runtime'] or state()['history']!=before['history']:pulse()
+            if not state()['hoverSame']:
+                point=driver.js(METHOD_CHILD_HOVER_POINT_JS);record['hoverReturnPoint']=point;checkpoint()
+                if not point['point']:raise RuntimeError('Original hover target has no genuine pointer return point')
+                xy=point['point'];native('restore-original-hover',[{'type':'pointer','id':'method-child-pointer','parameters':{'pointerType':'mouse'},'actions':[{'type':'pointerMove','origin':'viewport','x':xy['x'],'y':xy['y'],'duration':0}]}])
+            idle()
+        record['afterSnapshot']=driver.js(METHOD_READING_SNAPSHOT_JS)
+        if record['afterSnapshot']!=original_snapshot:raise RuntimeError('Native method child audit changed original source text, geometry, paint or reader state')
+        record['after']=state();record['tabCandidatesAfter']=driver.js(METHOD_CHILD_ACTION_JS,'candidates');check_method_child_state(before,record['after'],exact=True)
+        record['status']='inputs_returned'
+    except Exception as exc:
+        record['status']='failed';record['error']=str(exc)[:2000]
+        raise
+    finally:
+        try:
+            record['cleanedUp']=driver.js(METHOD_CHILD_PROBE_STOP_JS)['cleanedUp']
+        except Exception as exc:
+            record['status']='failed';record['cleanupError']=str(exc)[:2000]
+            raise
+        finally:
+            checkpoint()
+    data['captureName']=name;data['childReadability']=record;record['status']='verified_native_children'
+    try:
+        check_method_child_audit(data,expected,source_positions)
+    except Exception as exc:
+        record['status']='failed';record['error']=str(exc)[:2000];data.pop('childReadability',None)
+        raise
+    finally:
+        checkpoint()
+    return record
 
 
 METHOD_NAVIGATION_STATE_JS = r"""
@@ -2123,6 +3292,71 @@ return {route:s.route,originTrail:s.originTrail,historyLength:history.length,exp
   methodReading:document.getElementById('navigation-product').dataset.methodReading,
   siblings:[...document.querySelectorAll('#np-tree details[data-method-siblings]')].map(e=>({parent:e.dataset.methodSiblings,open:e.open}))};
 """
+
+
+METHOD_KEY_TRACE_START_JS = r"""
+var source=arguments[0],root=arguments[1],target=arguments[2],key=arguments[3],slot='__npMethodKeyTrace';
+if(window[slot])throw Error('A method keyboard trace is already installed');
+var tree=document.getElementById('np-tree-scroll'),app=document.getElementById('navigation-product');
+if(!tree||app?.dataset.methodReading!=='true'||!['Home','ArrowDown'].includes(key))throw Error('Method keyboard trace lacks its exact method scope');
+function rect(e){if(!e)return null;var r=e.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};}
+function row(id){var e=document.getElementById('np-node-'+id),r=e?.firstElementChild;if(!e||!r)return null;var cs=getComputedStyle(e),rs=getComputedStyle(r);return {id:e.id,position:e.dataset.position,rect:rect(r),itemMarginTop:parseFloat(cs.marginTop),rowScrollMarginBlockStart:rs.scrollMarginBlockStart};}
+function snapshot(){var r=tree.getBoundingClientRect(),s=getComputedStyle(tree),a=window.NavigationProductApp;return {
+  route:Object.assign({},a.getState().route),methodReading:app.dataset.methodReading,window:{x:scrollX,y:scrollY},active:document.activeElement?.id||null,
+  tree:{id:tree.id,connected:tree.isConnected,top:tree.scrollTop,left:tree.scrollLeft,scrollHeight:tree.scrollHeight,scrollWidth:tree.scrollWidth,
+    rect:rect(tree),clientRect:{x:r.x+tree.clientLeft,y:r.y+tree.clientTop,width:tree.clientWidth,height:tree.clientHeight},paddingTop:parseFloat(s.paddingTop),scrollPaddingBlockStart:s.scrollPaddingBlockStart},
+  root:row(root),target:row(target)};}
+var state={scope:'method-tree-key',source:source,root:root,target:target,key:key,eventLimit:2,before:snapshot(),events:[],overflow:0,after:null,cleanedUp:false};
+if(!state.before.root||!state.before.target||state.before.route.node!==source)throw Error('Method keyboard trace lost an exact source row');
+function observe(phase,event){if(state.events.length>=2){state.overflow=Math.min(3,state.overflow+1);return;}
+  state.events.push({phase:phase,key:event.key,code:event.code,isTrusted:event.isTrusted,defaultPrevented:event.defaultPrevented,eventTarget:event.target.id||null,snapshot:snapshot()});}
+function capture(event){observe('capture',event);}
+function bubble(event){observe('bubble',event);}
+try{tree.addEventListener('keydown',capture,true);tree.addEventListener('keydown',bubble,false);
+  window[slot]={state:state,snapshot:snapshot,tree:tree,capture:capture,bubble:bubble};
+}catch(e){tree.removeEventListener('keydown',capture,true);tree.removeEventListener('keydown',bubble,false);delete window[slot];throw e;}
+return state;
+"""
+
+METHOD_KEY_TRACE_STOP_JS = r"""
+var slot='__npMethodKeyTrace',probe=window[slot];
+if(!probe)throw Error('Method keyboard trace cleanup lacks its installed probe');
+try{probe.state.after=probe.snapshot();return probe.state;}
+finally{probe.tree.removeEventListener('keydown',probe.capture,true);probe.tree.removeEventListener('keydown',probe.bubble,false);probe.state.cleanedUp=true;delete window[slot];}
+"""
+
+
+def check_method_key_trace(data, source, root, target, key):
+    """Trace proves native ordering and cleanup; the existing exact-scroll gate decides restoration."""
+    if (data.get('scope') != 'method-tree-key' or data.get('source') != source or data.get('root') != root or
+            data.get('target') != target or data.get('key') != key or data.get('eventLimit') != 2 or
+            data.get('overflow') != 0 or data.get('cleanedUp') is not True):
+        raise RuntimeError('Method keyboard trace lost its bounded exact-source lifecycle')
+    events = data.get('events', [])
+    if len(events) != 2 or [row.get('phase') for row in events] != ['capture', 'bubble']:
+        raise RuntimeError('Method keyboard trace omitted or duplicated a native keydown phase')
+    for row in events:
+        if row.get('key') != key or row.get('isTrusted') is not True or not row.get('eventTarget'):
+            raise RuntimeError('Method keyboard trace did not observe the exact native key')
+    if events[-1].get('defaultPrevented') is not True:
+        raise RuntimeError('Method keyboard handler did not consume its native navigation key')
+    frames = [data.get('before'), *(row.get('snapshot') for row in events), data.get('after')]
+    if any(not isinstance(frame, dict) for frame in frames):
+        raise RuntimeError('Method keyboard trace omitted a before, event or after snapshot')
+    for frame in frames:
+        tree = frame.get('tree') or {}
+        if (frame.get('route') != data['before']['route'] or frame['route'].get('node') != source or
+                frame.get('methodReading') != 'true' or frame.get('window') != {'x': 0, 'y': 0} or
+                tree.get('id') != 'np-tree-scroll' or tree.get('connected') is not True):
+            raise RuntimeError('Method keyboard trace changed its source or containing pane')
+        for name, identity in (('root', root), ('target', target)):
+            proof = frame.get(name) or {}
+            if proof.get('id') != 'np-node-' + identity or proof.get('position') != identity or not proof.get('rect'):
+                raise RuntimeError('Method keyboard trace lost a source row rectangle')
+        for box in (tree.get('rect'), tree.get('clientRect'), frame['root']['rect'], frame['target']['rect']):
+            if (not isinstance(box, dict) or any(type(box.get(k)) not in (int, float) or not math.isfinite(box[k]) for k in ('x', 'y', 'width', 'height')) or
+                    box['width'] <= 0 or box['height'] <= 0):
+                raise RuntimeError('Method keyboard trace lacks finite actual pane and row geometry')
 
 
 def check_method_navigation_transition(before, after, focus=None, exact_tree_scroll=False):
@@ -2143,17 +3377,24 @@ def method_navigation_checks(driver, report, save, prefix, expected, source_posi
     record = {'viewport': prefix, 'position': expected['position']['id'], 'before': before, 'steps': []}
     report.setdefault('methodNavigationChecks', []).append(record)
     save()
+    path = method_visible_source_ids(expected, source_positions, before['expanded'][expected['position']['tree']])
     def key(value, target):
         element = driver.selector('[id="' + ('np-node-' + expected['position']['id'] if not record['steps'] else record['steps'][-1]['after']['focus']) + '"]')
         step = {'input': value, 'expectedFocus': target}
         record['steps'].append(step); save()
+        installed = False
         try:
+            step['trace'] = driver.js(METHOD_KEY_TRACE_START_JS, expected['position']['id'], path[0], target, 'Home' if value == '\ue011' else 'ArrowDown')
+            installed = True
             driver.call('POST', '/element/' + element[ELEMENT] + '/value', {'text': value, 'value': [value]})
             driver.settle()
         finally:
-            step['after'] = driver.js(METHOD_NAVIGATION_STATE_JS); save()
+            try:
+                if installed: step['trace'] = driver.js(METHOD_KEY_TRACE_STOP_JS)
+            finally:
+                step['after'] = driver.js(METHOD_NAVIGATION_STATE_JS); save()
+        check_method_key_trace(step['trace'], expected['position']['id'], path[0], target, 'Home' if value == '\ue011' else 'ArrowDown')
         check_method_navigation_transition(before, step['after'], target)
-    path = method_visible_source_ids(expected, source_positions, before['expanded'][expected['position']['tree']])
     key('\ue011', path[0])  # Home
     for pid in path[1:]:
         key('\ue015', pid)  # ArrowDown
@@ -2988,7 +4229,7 @@ def task_route_checks(driver, report, save, capture, prefix, base, science, serv
     def select_method(position, selector=None):
         element = reveal_control(driver, {'selector': selector}) if selector else expose_source_position(driver, position['id'], record, save)
         before = snapshot()
-        before['desktopShell'] = driver.js(DESKTOP_SHELL_SNAPSHOT_JS)
+        before['desktopShell'] = desktop_chrome_snapshot(driver, report, save, prefix + '-method-origin', DESKTOP_SHELL_SNAPSHOT_JS)
         before['activatedControl'] = driver.js("return arguments[0].id||arguments[0].closest('[role=treeitem]').id;", element)
         before['originFocusTarget'] = driver.js("return arguments[0].closest('[data-position]')?.dataset.position||arguments[0].id;", element)
         phase = transition_record(driver, record, save, 'select-exact-method', lambda: driver.click(element),
@@ -3020,7 +4261,7 @@ def task_route_checks(driver, report, save, capture, prefix, base, science, serv
         phase = transition_record(driver, record, save, 'explicit-return-method-origin', lambda: driver.click(driver.selector('.np-return-previous')),
             lambda: driver.js(TASK_ROUTE_RETURN_WAIT_JS, before['route'], before['activatedControl']))
         check_task_route_return(before, phase['after'], before['activatedControl'])
-        phase['desktopShellAfter'] = driver.js(DESKTOP_SHELL_SNAPSHOT_JS)
+        phase['desktopShellAfter'] = desktop_chrome_snapshot(driver, report, save, prefix + '-method-return', DESKTOP_SHELL_SNAPSHOT_JS)
         save()
         check_method_layout_return(before['desktopShell'], phase['desktopShellAfter'])
 
@@ -3455,7 +4696,7 @@ def desktop_hierarchy_checks(driver, report, save, capture, prefix, base, scienc
     save()
 
     def shell():
-        return driver.js(DESKTOP_SHELL_SNAPSHOT_JS)
+        return desktop_chrome_snapshot(driver, report, save, prefix + '-hierarchy-shell', DESKTOP_SHELL_SNAPSHOT_JS)
 
     def ready(pid):
         return driver.js("var a=window.NavigationProductApp,p=a&&a.getBundle().positions[arguments[0]];return p&&a.getState().route.node===p.id&&a.getContent().ready(p.entityId)&&document.querySelector('[data-load-state]')?.dataset.loadState==='ready';", pid)
@@ -3502,7 +4743,7 @@ def desktop_hierarchy_checks(driver, report, save, capture, prefix, base, scienc
         if not _reader_proof(record['method'][key], record['method']['pane'], record['method']['viewport'], font_size=15):
             raise RuntimeError('Imported version analysis status and main action are not immediately readable')
     entry_box = record['method']['analysisEntry']['rect']
-    if entry_box['y'] + entry_box['height'] > 320:
+    if entry_box['y'] + entry_box['height'] - record['method']['panels']['y'] > 188:
         raise RuntimeError('Version analysis main action is below its fixed first-screen entry')
     # The mandatory positive-wheel proof uses this existing exact PONI source.
     # Measure first; expand original evidence only if the natural body fits.
@@ -4051,7 +5292,49 @@ def version_title_expected(science):
     return rows
 
 
-VERSION_TITLE_SNAPSHOT_JS = VISUAL_GEOMETRY + r"""
+# Native summary hover paint also lasts 160ms. Keep this wait local to the
+# exact original control; never wait for a readability predicate to become true.
+VERSION_TITLE_PAINT_TIMEOUT_MS = 2000
+VERSION_TITLE_PAINT_SETTLE_JS = ('var paintScopeSelector=arguments[1],paintScopeName="Native version title";\n' +
+                               SCOPED_TOOLBAR_PAINT_SETTLE_JS)
+
+
+def settle_version_title_paint(driver, report, save, phase, selector):
+    data = driver.call('POST', '/execute/async', {
+        'script': VERSION_TITLE_PAINT_SETTLE_JS, 'args': [VERSION_TITLE_PAINT_TIMEOUT_MS, selector]})
+    report.setdefault('versionTitlePaintSettles', []).append({'phase': phase, 'scope': selector, 'settle': data})
+    save()  # Retain real raw colors and timeout/error diagnostics before failing.
+    if (not isinstance(data, dict) or data.get('status') != 'settled' or
+            data.get('scopeSelector') != selector or data.get('timeoutMs') != VERSION_TITLE_PAINT_TIMEOUT_MS or
+            type(data.get('elapsedMs')) not in (int, float) or
+            not 0 <= data['elapsedMs'] < VERSION_TITLE_PAINT_TIMEOUT_MS or
+            not data.get('before') or not data.get('after')):
+        raise RuntimeError('Native version-title paint did not settle within the fixed budget')
+    return data
+
+
+VERSION_TITLE_PAINT_DIAGNOSTIC_JS = r"""
+function nativeVersionTitlePaint(summary){
+ var layers=[],transitions=[],error=null;
+ for(var e=summary;e;e=e.parentElement){
+  var s=getComputedStyle(e),identity={tag:e.tagName,id:e.id||'',position:e.dataset.nativePosition||null,className:e.getAttribute('class')||''};
+  layers.push({...identity,color:s.color,backgroundColor:s.backgroundColor});
+  try{
+   if(typeof CSSTransition!=='function'||typeof e.getAnimations!=='function')throw Error('CSS transition inspection unavailable');
+   for(var a of e.getAnimations({subtree:false})){
+    if(!(a instanceof CSSTransition)||!/^(?:color|background-color|border-(?:(?:top|right|bottom|left)-)?color)$/.test(a.transitionProperty))continue;
+    if(a.playState==='finished'||(a.playState==='idle'&&!a.pending))continue;
+    var t=a.effect.getComputedTiming();
+    transitions.push({target:identity,property:a.transitionProperty,playState:a.playState,pending:a.pending,currentTime:a.currentTime,playbackRate:a.playbackRate,duration:t.duration,endTime:t.endTime});
+   }
+  }catch(err){error=String(err);}
+ }
+ return {layers:layers,transitions:transitions,error:error};
+}
+"""
+
+
+VERSION_TITLE_SNAPSHOT_JS = VISUAL_GEOMETRY + VERSION_TITLE_PAINT_DIAGNOSTIC_JS + r"""
 var expected=arguments[0],matches=[...document.querySelectorAll('[data-native-position]')].filter(e=>e.dataset.nativePosition===expected.position);
 if(matches.length!==1)throw Error('Exact native title occurrence missing or duplicated');
 var node=matches[0],summary=node.querySelector(':scope > summary'),ancestors=[],open=[],cursor=node;
@@ -4069,7 +5352,7 @@ var viewport={x:0,y:0,width:innerWidth,height:innerHeight},main=rect(document.qu
 Object.assign(proof,{renderedText:runs.map(r=>r.text).join(''),textRuns:runs,fragments:fragments,clipAreas:clips(summary),viewport:viewport,readerContent:{x:main.x,y:0,width:main.width,height:innerHeight},textOverflow:style.textOverflow,lineClamp:style.webkitLineClamp});
 var links=[...node.querySelectorAll(':scope > .native-body > p > a')];
 return {screenKind:'native_version_title',position:node.dataset.nativePosition,ancestors:ancestors,ancestorOpen:open,
-        focusedSummary:document.activeElement===summary,
+        focusedSummary:document.activeElement===summary,paint:nativeVersionTitlePaint(summary),
         title:proof,linkCount:links.length,branchHref:links[0]?.getAttribute('href'),pagePath:location.pathname,
         readyState:document.readyState,scriptCount:document.scripts.length,
         scripts:[...document.scripts].map(s=>({src:s.getAttribute('src'),defer:s.defer,inline:s.textContent.trim()})),
@@ -4077,6 +5360,18 @@ return {screenKind:'native_version_title',position:node.dataset.nativePosition,a
         fonts:document.fonts.status,viewport:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},
         bodyWidth:document.body.scrollWidth,windowScroll:scrollY};
 """
+
+
+def check_version_title_capture_stability(before, after):
+    # Bracket the PNG with the same unmodified DOM proof and actual paint state.
+    # Unknown colors still fail the original contrast gate; they gain no fallback.
+    for data in (before, after):
+        paint = data.get('paint')
+        if (not isinstance(paint, dict) or not paint.get('layers') or
+                paint.get('error') is not None or paint.get('transitions') != []):
+            raise RuntimeError('Native version-title capture has active or unknown paint state')
+    if before != after:
+        raise RuntimeError('Native version-title DOM or paint changed across the PNG capture')
 
 
 def check_version_title_capture(data, expected, require_navigation=True):
@@ -4165,12 +5460,21 @@ def version_title_checks(driver, report, save, prefix, base, science, out):
         summary_selector = '[data-native-position="' + expected['position'] + '"] > summary'
         driver.js("arguments[0].scrollIntoView({block:'center',inline:'nearest'});", driver.selector(summary_selector))
         driver.settle()
-        data = driver.js(VERSION_TITLE_SNAPSHOT_JS, expected)
-        data.update(name=prefix + expected['suffix'], sourceBinding=expected, nativeActions=actions)
         root_node = driver.cdp('DOM.getDocument', {'depth': 1})['root']['nodeId']
         title_node = driver.cdp('DOM.querySelector', {'nodeId': root_node, 'selector': summary_selector})['nodeId']
-        data['renderedFonts'] = driver.cdp('CSS.getPlatformFontsForNode', {'nodeId': title_node})['fonts']
+        rendered_fonts = driver.cdp('CSS.getPlatformFontsForNode', {'nodeId': title_node})['fonts']
+        settle_version_title_paint(driver, report, save, prefix + expected['suffix'], summary_selector)
+        data = driver.js(VERSION_TITLE_SNAPSHOT_JS, expected)
+        before_capture = dict(data)
         image = base64.b64decode(driver.call('GET', '/screenshot'), validate=True)
+        try:
+            after_capture = driver.js(VERSION_TITLE_SNAPSHOT_JS, expected)
+        except Exception as exc:
+            # A disappearing/duplicated summary must retain the PNG and pre-proof
+            # already obtained. The unavailable post-proof always fails below.
+            after_capture = {'snapshotError': str(exc)}
+        data.update(name=prefix + expected['suffix'], sourceBinding=expected, nativeActions=actions,
+                    captureAfter=after_capture, renderedFonts=rendered_fonts)
         if not image.startswith(b'\x89PNG\r\n\x1a\n'): raise RuntimeError('Version-title screenshot is not PNG')
         data['pngDimensions'] = list(struct.unpack('>II', image[16:24]))
         data['screenshotSha256'] = hashlib.sha256(image).hexdigest()
@@ -4180,6 +5484,7 @@ def version_title_checks(driver, report, save, prefix, base, science, out):
         report['captures'].append(data)
         record['cases'].append(data)
         save()
+        check_version_title_capture_stability(before_capture, after_capture)
         check_version_title_capture(data, expected, require_navigation=False)
         link_selector = '[data-native-position="' + expected['position'] + '"] > .native-body > p > a'
         driver.click(driver.selector(link_selector))
@@ -4197,6 +5502,437 @@ def version_title_checks(driver, report, save, prefix, base, science, out):
         data['enhancedNavigation'] = nav
         check_version_title_capture(data, expected)
         save()
+
+
+DISCLOSURE_AUDIT_SECONDS = 420
+DISCLOSURE_IDS = tuple(row[0] for row in S0_TOOLBAR_LABELS if row[1] == 'DETAILS')
+DISCLOSURE_NOTES_END = '地图中的区域与邻近位置只按已有目标输入、完成要求和过程属性组织阅读，不是科学父类。实线保持原目录父子；虚线分别表示已有对照、按序组合或目标类型构成，不表示方法继承。'
+DISCLOSURE_RELATIONS_END = '这些是已有的非树关系；没有据此增加科学父节点，也没有预选一条示范主线。'
+
+
+def disclosure_expected(science):
+    """Original directory order is reconstructed from frozen source, not tested DOM."""
+    scopes = {row['id']: row for row in science['scopes']}
+    directory, seen = [], set()
+    def visit(identity):
+        if identity in seen:
+            return
+        if identity not in scopes:
+            raise RuntimeError('Disclosure source directory has a missing scope')
+        seen.add(identity); row = scopes[identity]
+        directory.append({'scope': identity, 'parent': row.get('parentScopeId') or '',
+                          'text': row['label'] + ' · ' + (row.get('displayRole') or row['kind'])})
+        for child in row.get('childScopeIds', []):
+            visit(child)
+    for group in science['directoryGroups']:
+        for identity in group['scopeIds']:
+            visit(identity)
+    for row in science['scopes']:
+        if row['id'] != 'scope:all':
+            visit(row['id'])
+    visit('scope:all')
+    if len(directory) != 64 or directory[-1]['scope'] != 'scope:all':
+        raise RuntimeError('Disclosure source directory lost its original 64-entry boundary')
+    last = TASK_INDEX[-1][0]
+    if last != 'task:language-objectnav':
+        raise RuntimeError('Reviewed final comparison source changed')
+    scope = scopes[last]
+    coverage = scope['coverage']
+    def status(field):
+        return '有直接关联' if coverage.get('direct', {}).get(field) else '仅条件关联' if coverage.get('condition', {}).get(field) else '当前未整理'
+    row = '[data-task-comparison="' + last + '"]'
+    comparison = [
+        {'selector': row + ' > td:first-child > button', 'text': scope['label']},
+        {'selector': row + ' > td:first-child > p', 'text': scope.get('displayRole') or scope['kind']},
+        {'selector': row + ' > [data-task-field="input"]', 'text': '目标物体或实例描述'},
+        {'selector': row + ' > [data-task-field="completion"]', 'text': '自主搜索符合描述的目标'},
+        {'selector': row + ' > [data-task-field="boundary"]', 'text': '不是路线指令；现有方法/CI仅条件关联，预建图、楼层/房间条件不得隐藏。'},
+        {'selector': row + ' > [data-task-field="sources"] > p:first-child', 'text': status('methodCount') + ' / ' + status('challengeCount')},
+    ]
+    for index, (version, url) in enumerate((('arxiv:2203.10421v2', 'https://arxiv.org/html/2203.10421v2'),
+                                           ('source:src_ef717861b303', 'https://arxiv.org/html/2512.22342v5')), 2):
+        base = row + ' > [data-task-field="sources"] > p:nth-child(' + str(index) + ')'
+        comparison.extend([{'selector': base + ' > a', 'text': version, 'url': url},
+                           {'selector': base + ' > span', 'text': ' · 固定来源版本'}])
+    return {'directory': directory, 'comparisonOrder': [item[0] for item in TASK_INDEX], 'comparisonLast': last,
+            'targets': {'np-all-scopes': [{'selector': '[data-scope-open="' + item['scope'] + '"]', 'text': item['text']}
+                                          for item in (directory[0], directory[-1])],
+                        'np-overview-comparison': comparison,
+                        'np-task-relations': [{'selector': ':scope > p:last-child', 'text': DISCLOSURE_RELATIONS_END}],
+                        'np-overview-notes': [{'selector': ':scope > p.np-index-boundary:last-child', 'text': DISCLOSURE_NOTES_END}]}}
+
+
+DISCLOSURE_SNAPSHOT_JS = VISUAL_GEOMETRY + FIXED_TEXT_PROOF_JS + STATIONARY_SHELL_ANCESTORS_JS + r"""
+var requested=arguments[0],specs=arguments[1],a=NavigationProductApp,s=a.getState(),landing=document.getElementById('np-reading-landing'),toolbar=landing.querySelector(':scope > .np-overview-map-toolbar');
+function frame(e){var r=rect(e),cs=getComputedStyle(e);return {id:e.id,tag:e.tagName,open:!!e.open,rect:r,
+ clientRect:{x:r.x+e.clientLeft,y:r.y+e.clientTop,width:e.clientWidth,height:e.clientHeight},top:e.scrollTop,left:e.scrollLeft,
+ scrollHeight:e.scrollHeight,clientHeight:e.clientHeight,scrollWidth:e.scrollWidth,clientWidth:e.clientWidth,maxTop:Math.max(0,e.scrollHeight-e.clientHeight),
+ overflowX:cs.overflowX,overflowY:cs.overflowY,paddingBottom:parseFloat(cs.paddingBottom),maxHeight:cs.maxHeight,
+ borderTop:parseFloat(cs.borderTopWidth),borderRight:parseFloat(cs.borderRightWidth),borderBottom:parseFloat(cs.borderBottomWidth),borderLeft:parseFloat(cs.borderLeftWidth),
+ opaque:box(e).opaque,unscaled:box(e).unscaled};}
+function identity(e){return {id:e?.id||'',tag:e?.tagName||'',summaryFor:e?.tagName==='SUMMARY'?e.parentElement.id:null,scope:e?.dataset.scopeOpen||null};}
+var panels=[...toolbar.querySelectorAll(':scope > details')],panel=panels.find(e=>e.id===requested),active=document.activeElement;
+function target(spec){var matches=panel?[...panel.querySelectorAll(spec.selector)]:[],e=matches[0],suffix=null;
+ if(!e)return {selector:spec.selector,count:matches.length};
+ if(spec.url){var suffixes=e.querySelectorAll(':scope > span.np-sr');suffix=suffixes.length===1?suffixes[0]:null;
+  if(e.tagName!=='A'||!suffix||suffix!==e.lastChild||suffix.textContent!=='（新标签页）'||suffix.children.length)throw Error('Disclosure source link lost its exact accessibility suffix');}
+ var p=fixedTextProof(e,suffix);if(suffix)p.text=p.renderedText;
+ return {selector:spec.selector,count:matches.length,tag:e.tagName,id:e.id,scope:e.dataset.scopeOpen||null,disabled:!!e.disabled,tabIndex:e.tabIndex,
+  panel:e.closest('.np-overview-map-toolbar > details')?.id,url:e.tagName==='A'?e.href:null,proof:p};}
+return {ready:document.getElementById('navigation-product').dataset.loadState,home:!landing.hidden,route:s.route,
+ historyRoute:history.state&&history.state[NavigationProductModel.KEY]?.route,historyLength:history.length,scale:NavigationProductModel.getBucket(s).graphScale,
+ originTrail:s.originTrail,historyOriginTrail:history.state&&history.state[NavigationProductModel.KEY]?.originTrail,
+ expanded:NavigationProductModel.getBucket(s).expandedByTree,selected:NavigationProductModel.getBucket(s).selectedByTree,
+ selectedRelation:document.getElementById('np-overview-map').dataset.selectedRelation||null,
+ window:{x:scrollX,y:scrollY},viewport:{x:0,y:0,width:innerWidth,height:innerHeight},stationaryAncestors:stationaryShellAncestors(),
+ landing:frame(landing),toolbar:frame(toolbar),panels:panels.map(e=>Object.assign(frame(e),{count:document.querySelectorAll('[id="'+e.id+'"]').length,
+  topology:e.parentElement===toolbar,summary:fixedTextProof(e.querySelector(':scope > summary'))})),focus:identity(active),
+ directory:[...document.querySelectorAll('#np-all-scopes [data-scope-open]')].map(e=>({scope:e.dataset.scopeOpen,parent:e.parentElement.dataset.parentScope,
+  domParent:e.parentElement.parentElement.closest('[data-directory-scope]')?.dataset.directoryScope||'',text:e.textContent,id:e.id,tag:e.tagName,type:e.type,disabled:e.disabled,tabIndex:e.tabIndex})),
+ comparisonOrder:[...document.querySelectorAll('#np-overview-comparison [data-task-comparison]')].map(e=>e.dataset.taskComparison),
+ comparisonLast:panel?.id==='np-overview-comparison'?{id:panel.querySelector('tr:last-child')?.dataset.taskComparison,cells:panel.querySelector('tr:last-child')?.children.length,rect:rect(panel.querySelector('tr:last-child'))}:null,
+ requested:requested,targets:specs.map(target)};
+"""
+
+DISCLOSURE_PROBE_JS = r"""
+var mode=arguments[0],slot='__npDisclosureAudit',owner=arguments[mode==='start'?2:1];
+if(typeof owner!=='string'||!owner)throw Error('Disclosure audit probe lacks its owner');
+function identity(e){return {id:e?.id||'',tag:e?.tagName||'',summaryFor:e?.tagName==='SUMMARY'?e.parentElement.id:null,scope:e?.dataset.scopeOpen||null};}
+if(mode==='start'){
+ if(window[slot])throw Error('Disclosure audit probe already installed');
+ var p={owner:owner,events:[],overflow:0,limit:arguments[1]};p.listener=function(e){if(p.events.length>=p.limit){p.overflow++;return;}
+  p.events.push({type:e.type,key:e.key||null,trusted:e.isTrusted,target:identity(e.target),panel:e.target.closest?.('.np-overview-map-toolbar > details')?.id||null});};
+ window[slot]=p;for(var kind of ['keydown','keyup','focusin','wheel','scroll','click'])document.addEventListener(kind,p.listener,true);return true;
+}
+var p=window[slot];
+if(!p&&mode==='stop')return {owner:owner,events:[],overflow:0,limit:0,cleanedUp:true,absent:true};
+if(!p)throw Error('Disclosure audit probe is missing');
+if(p.owner!==owner)throw Error('Disclosure audit cannot access another observer owner');
+if(mode==='reset'){p.events=[];p.overflow=0;return true;}
+try{return {owner:owner,events:p.events,overflow:p.overflow,limit:p.limit,cleanedUp:mode==='stop',absent:false};}
+finally{if(mode==='stop'){for(var kind of ['keydown','keyup','focusin','wheel','scroll','click'])document.removeEventListener(kind,p.listener,true);delete window[slot];}}
+"""
+
+
+def check_disclosure_scroll_metrics(panel):
+    """CSSOM offsets are double; the integer extent is only a rounding sanity bound."""
+    values = [panel.get(k) for k in ('top', 'left', 'scrollHeight', 'clientHeight', 'maxTop')]
+    if (not all(type(n) in (int, float) and math.isfinite(n) for n in values) or
+            panel['scrollHeight'] < 0 or panel['clientHeight'] <= 0 or
+            any(int(panel[k]) != panel[k] for k in ('scrollHeight', 'clientHeight')) or
+            panel['top'] < 0 or panel['maxTop'] != max(0, panel['scrollHeight'] - panel['clientHeight']) or
+            panel['top'] - panel['maxTop'] >= 1):
+        raise RuntimeError('Disclosure lacks consistent CSSOM double offsets and rounded integer extents')
+
+
+def check_disclosure_snapshot(data, expected, baseline=None):
+    if (data['ready'] != 'ready' or not data['home'] or data['window'] != {'x': 0, 'y': 0} or
+            (data['viewport']['width'], data['viewport']['height']) not in VIEWPORTS or data['scale'] != 1 or
+            data['landing']['top'] != 0 or data['landing']['left'] != 0 or
+            data['historyRoute'] != data['route'] or [p['id'] for p in data['panels']] != list(DISCLOSURE_IDS)):
+        raise RuntimeError('Disclosure audit lost the exact stationary desktop home')
+    check_stationary_shell_ancestors(data['stationaryAncestors'])
+    actual = data['directory']
+    if len(actual) != len(expected['directory']):
+        raise RuntimeError('Disclosure audit lost the complete source directory')
+    for row, source in zip(actual, expected['directory']):
+        if (any(row.get(key) != value for key, value in source.items()) or row.get('domParent') != source['parent'] or
+                row.get('id') != 'np-scope-entry-' + source['scope'] or row.get('tag') != 'BUTTON' or
+                row.get('type') != 'button' or row.get('disabled') or row.get('tabIndex') != 0):
+            raise RuntimeError('Disclosure audit changed a source directory label, order, parent or native control')
+    if data['comparisonOrder'] != expected['comparisonOrder']:
+        raise RuntimeError('Disclosure audit changed the original comparison order')
+    if baseline:
+        for key in ('route', 'historyRoute', 'historyLength', 'scale', 'window', 'originTrail', 'historyOriginTrail', 'expanded', 'selected', 'selectedRelation'):
+            if data[key] != baseline[key]:
+                raise RuntimeError('Disclosure input changed source/history identity: ' + key)
+        for key in ('landing', 'toolbar'):
+            if data[key]['rect'] != baseline[key]['rect']:
+                raise RuntimeError('Disclosure input moved the original landing or toolbar')
+    for panel in data['panels']:
+        if panel['count'] != 1 or panel['tag'] != 'DETAILS' or not panel['topology']:
+            raise RuntimeError('Disclosure audit lost an original native toolbar details')
+        if not panel['open']:
+            continue
+        check_disclosure_scroll_metrics(panel)
+        landing = data['landing']; bounds = landing['rect']
+        inner = dict(x=bounds['x'] + landing['borderLeft'], y=bounds['y'] + landing['borderTop'],
+                     width=bounds['width'] - landing['borderLeft'] - landing['borderRight'],
+                     height=bounds['height'] - landing['borderTop'] - landing['borderBottom'] - landing['paddingBottom'])
+        room = min(data['viewport']['height'], inner['y'] + inner['height']) - panel['rect']['y']
+        cap = min(324 if panel['id'] == 'np-task-relations' else data['viewport']['height'] - 240, room)
+        if (not math.isfinite(cap) or cap <= 0 or
+                panel['rect']['height'] > cap + S0_SPACING_TOLERANCE or not panel['opaque'] or not panel['unscaled'] or
+                not rect_inside(panel['rect'], inner, S0_SPACING_TOLERANCE) or
+                not rect_inside(panel['rect'], data['viewport'], S0_SPACING_TOLERANCE) or
+                panel['left'] != 0 or panel['scrollWidth'] > panel['clientWidth'] + 1 or panel['overflowY'] not in ('auto', 'scroll')):
+            raise RuntimeError('Toolbar disclosure exceeds its independent actual available-height cap or clipping bounds')
+
+
+def check_disclosure_targets(data, expected, indexes=None):
+    panel = next(p for p in data['panels'] if p['id'] == data['requested'])
+    specs = expected['targets'][panel['id']]
+    if not panel['open'] or len(data['targets']) != len(specs):
+        raise RuntimeError('Disclosure reachability proof lost its open original target set')
+    for index in range(len(specs)) if indexes is None else indexes:
+        actual, spec = data['targets'][index], specs[index]
+        if (actual.get('selector') != spec['selector'] or actual.get('count') != 1 or actual.get('panel') != panel['id'] or
+                spec.get('url') and (actual.get('tag') != 'A' or actual.get('url') != spec['url'])):
+            raise RuntimeError('Disclosure reachability proof substituted or duplicated an original target')
+        for paint in [actual['proof'], *actual['proof']['textRuns']]:
+            for field in ('foreground', 'background'):
+                color = paint.get(field)
+                if (not isinstance(color, list) or len(color) != 3 or
+                        any(type(v) not in (int, float) or not math.isfinite(v) or not 0 <= v <= 255 for v in color)):
+                    raise RuntimeError('Disclosure text has unknown or invalid actual paint')
+        check_s0_text(actual['proof'], spec['text'], panel['clientRect'], data['landing']['clientRect'], data['viewport'])
+    if panel['id'] == 'np-overview-comparison':
+        row = data['comparisonLast']
+        if (row['id'] != expected['comparisonLast'] or row['cells'] != 5 or
+                not rect_inside(row['rect'], panel['clientRect']) or not rect_inside(row['rect'], data['viewport'])):
+            raise RuntimeError('Complete final comparison row is not reachable inside its disclosure')
+
+
+def check_disclosure_action(item, expected):
+    before, after, trace = item['before'], item['after'], item['events']
+    check_disclosure_snapshot(after, expected, before)
+    if (trace['limit'] != 4 * (len(expected['directory']) + 1) + 16 or trace['overflow'] or
+            len(trace['events']) > trace['limit'] or any(event.get('trusted') is not True for event in trace['events'])):
+        raise RuntimeError('Disclosure input lost its bounded trusted native trace')
+    panel_id = item['panel']
+    b = next(p for p in before['panels'] if p['id'] == panel_id)
+    a = next(p for p in after['panels'] if p['id'] == panel_id)
+    if item['kind'] in ('wheel', 'wheel-boundary'):
+        check_disclosure_scroll_metrics(b)
+        if (not b['open'] or not a['open'] or b['maxTop'] != a['maxTop'] or b['clientRect'] != a['clientRect'] or
+                type(item['delta']) is not int or item['delta'] == 0 or before['focus'] != after['focus'] or
+                not any(e['type'] == 'wheel' and e['panel'] == panel_id for e in trace['events'])):
+            raise RuntimeError('Disclosure wheel lost its real isolated native input')
+        if item['kind'] == 'wheel':
+            if ((a['top'] - b['top']) * item['delta'] <= 0 or
+                    not any(e['type'] == 'scroll' and e['target']['id'] == panel_id for e in trace['events'])):
+                raise RuntimeError('Disclosure wheel did not produce real isolated internal progress')
+        elif (item['delta'] <= 0 or a['top'] != b['top'] or abs(a['top'] - a['maxTop']) >= 1):
+            raise RuntimeError('Disclosure native end overshoot did not remain at a stable real boundary')
+    elif item['kind'] in ('tab', 'escape'):
+        key = 'Tab' if item['kind'] == 'tab' else 'Escape'
+        keys = [e for e in trace['events'] if e['type'] in ('keydown', 'keyup')]
+        count = item.get('count', 1)
+        if (type(count) is not int or count < 1 or count > len(expected['directory']) + 1 or
+                len(keys) != count * 2 or [e['type'] for e in keys] != ['keydown', 'keyup'] * count or
+                any(e['key'] != key for e in keys)):
+            raise RuntimeError('Disclosure keyboard trace is missing the exact native key sequence')
+        if item['kind'] == 'escape':
+            if not b['open'] or a['open'] or after['focus']['summaryFor'] != panel_id or keys[0]['target'] != before['focus']:
+                raise RuntimeError('Disclosure Escape lost its closed state or exact summary focus')
+            label = next(row[2] for row in S0_TOOLBAR_LABELS if row[0] == panel_id)
+            check_chrome_text(a['summary'], label, 15, after['landing']['clientRect'], after['viewport'])
+        else:
+            wanted = item['scopes']
+            focuses = [e['target']['scope'] for e in trace['events'] if e['type'] == 'focusin']
+            if (count != len(wanted) or focuses != wanted or [e['target']['scope'] for e in keys if e['type'] == 'keyup'] != wanted or
+                    after['focus']['scope'] != wanted[-1] or not a['open']):
+                raise RuntimeError('Native Tab did not reach the exact source-bound directory path')
+    elif item['kind'] == 'open':
+        if (b['open'] or not a['open'] or after['focus']['summaryFor'] != panel_id or
+                not any(e['type'] == 'click' and e['target']['summaryFor'] == panel_id for e in trace['events'])):
+            raise RuntimeError('Native summary click did not open the exact disclosure with focus')
+    else:
+        raise RuntimeError('Unsupported disclosure audit action')
+    for other_before, other_after in zip(before['panels'], after['panels']):
+        if other_before['id'] != panel_id and any(other_before[key] != other_after[key] for key in ('open', 'top', 'left')):
+            raise RuntimeError('Disclosure input changed another toolbar panel')
+
+
+class DisclosureBudgetDriver(Driver):
+    """Only this additional audit uses the remaining deadline; normal Driver is unchanged."""
+    def __init__(self, driver, deadline):
+        self.url, self.session, self.deadline = driver.url, driver.session, deadline
+
+    def remaining(self):
+        remaining = self.deadline - time.monotonic()
+        if remaining <= 0:
+            raise TimeoutError('Disclosure audit exceeded its fixed ' + str(DISCLOSURE_AUDIT_SECONDS) + '-second input/checkpoint budget')
+        return remaining
+
+    def request(self, method, path, data=None):
+        raw = None if data is None else json.dumps(data).encode()
+        req = urllib.request.Request(self.url + path, data=raw, method=method, headers={'Content-Type': 'application/json'})
+        with urllib.request.urlopen(req, timeout=min(50, self.remaining())) as response:
+            value = json.load(response)['value']
+        self.remaining()
+        if isinstance(value, dict) and value.get('error'):
+            raise RuntimeError(value['error'] + ': ' + value.get('message', ''))
+        return value
+
+
+class DisclosureCheckpointSave:
+    """Measure every unchanged checkpoint call, including the reused paint helper."""
+    def __init__(self, callback, record):
+        self.callback, self.record = callback, record
+
+    def __call__(self):
+        timing = self.record['checkpointTiming']
+        timing['attempts'] += 1; timing['inProgress'] = True
+        started = time.monotonic()
+        try:
+            self.callback()
+            timing['completed'] += 1
+        finally:
+            timing['seconds'] += time.monotonic() - started
+            timing['inProgress'] = False
+
+
+def disclosure_bounds_checks(driver, report, save, prefix, science):
+    """Additional native interaction evidence after the existing -12 PNG; no new scene."""
+    expected = disclosure_expected(science)
+    record = {'viewport': prefix, 'budgetSeconds': DISCLOSURE_AUDIT_SECONDS, 'expected': expected, 'actions': [], 'proofs': [],
+              'tabLimit': len(expected['directory']) + 1, 'wheelLimitPerPanel': 4, 'status': 'started',
+              'checkpointTiming': {'attempts': 0, 'completed': 0, 'seconds': 0.0, 'inProgress': False}, 'budgetExhausted': False}
+    started = time.monotonic(); bounded = DisclosureBudgetDriver(driver, started + DISCLOSURE_AUDIT_SECONDS)
+    report.setdefault('disclosureBoundsChecks', []).append(record)
+    save = DisclosureCheckpointSave(save, record)
+    attempted = False; owner = prefix + ':' + str(started)
+    record['probeOwner'] = owner; record['probeStartAcknowledged'] = False
+    def snapshot(identity):
+        return bounded.js(DISCLOSURE_SNAPSHOT_JS, identity, expected['targets'][identity])
+    def action(kind, identity, perform, **fields):
+        before = snapshot(identity)
+        item = dict(kind=kind, panel=identity, before=before, status='pending', actionAcknowledged=False, **fields)
+        record['actions'].append(item); bounded.remaining(); save(); bounded.remaining()
+        bounded.js(DISCLOSURE_PROBE_JS, 'reset', owner)
+        try:
+            input_started = time.monotonic()
+            try:
+                perform()
+            finally:
+                item['nativeActionSeconds'] = time.monotonic() - input_started
+            item['actionAcknowledged'] = True; bounded.settle()
+            settle_s0_toolbar_paint(bounded, report, save, prefix + '-disclosure-' + str(len(record['actions'])))
+            bounded.remaining()
+        except Exception as exc:
+            item['actionError'] = str(exc)[:2000]
+            raise
+        finally:
+            for key, script, args in (('events', DISCLOSURE_PROBE_JS, ['read', owner]),
+                                      ('after', DISCLOSURE_SNAPSHOT_JS, [identity, expected['targets'][identity]])):
+                try:
+                    item[key] = (driver if 'actionError' in item else bounded).js(script, *args)
+                except Exception as exc:
+                    item[key + 'Error'] = str(exc)[:2000]
+                    if 'actionError' not in item:
+                        item['actionError'] = str(exc)[:2000]
+            try:
+                save()
+                if 'actionError' not in item:
+                    bounded.remaining()
+            except Exception as exc:
+                item['checkpointError'] = str(exc)[:2000]
+                if 'actionError' not in item:
+                    raise
+        if 'actionError' in item:
+            raise RuntimeError(item['actionError'])
+        check_disclosure_action(item, expected)
+        item['status'] = 'verified'; save(); bounded.remaining()
+        return item['after']
+    def key(identity, kind, scopes=None):
+        values = scopes or [None]
+        count = len(values)
+        if kind == 'tab' and sum(a.get('count', 0) for a in record['actions'] if a['kind'] == 'tab') + count > record['tabLimit']:
+            raise RuntimeError('Disclosure audit exceeded its source-bound native Tab limit')
+        code = '\ue004' if kind == 'tab' else '\ue00c'
+        sequence = [{'type': kind_, 'value': code} for _ in values for kind_ in ('keyDown', 'keyUp')]
+        return action(kind, identity, lambda: bounded.call('POST', '/actions', {'actions': [
+            {'type': 'key', 'id': 'toolbar-disclosure-keyboard', 'actions': sequence}]}), count=count, scopes=scopes)
+    def wheel_to(identity, boundary):
+        before = snapshot(identity); panel = next(p for p in before['panels'] if p['id'] == identity)
+        check_disclosure_scroll_metrics(panel)
+        if boundary not in ('start', 'end'):
+            raise RuntimeError('Disclosure wheel requires a reviewed real boundary')
+        if boundary == 'start' and panel['top'] == 0 or boundary == 'end' and panel['maxTop'] == 0 and panel['top'] == 0:
+            return before
+        # Integers scrollHeight/clientHeight are not the exact double endpoint.
+        # A full-content native overshoot reaches it; a second same-direction
+        # input must then leave the actual offset exactly stable. Tail proof is
+        # checked separately before any success is claimed.
+        delta = math.ceil(panel['scrollHeight'] + abs(panel['top']) + 1) * (-1 if boundary == 'start' else 1)
+        for kind in (('wheel',) if boundary == 'start' else ('wheel', 'wheel-boundary')):
+            if sum(a['kind'] in ('wheel', 'wheel-boundary') and a['panel'] == identity for a in record['actions']) >= record['wheelLimitPerPanel']:
+                raise RuntimeError('Disclosure audit exceeded its bounded native wheel steps')
+            r = panel['clientRect']; x, y = math.floor(r['x'] + r['width'] / 2), math.floor(r['y'] + r['height'] / 2)
+            after = action(kind, identity, lambda: bounded.call('POST', '/actions', {'actions': [
+                {'type': 'wheel', 'id': 'toolbar-disclosure-scroll', 'actions': [{'type': 'scroll', 'origin': 'viewport',
+                 'x': x, 'y': y, 'deltaX': 0, 'deltaY': delta, 'duration': 100}]}]}), delta=delta)
+            panel = next(p for p in after['panels'] if p['id'] == identity)
+            if boundary == 'start' and panel['top'] != 0 or boundary == 'end' and abs(panel['top'] - panel['maxTop']) >= 1:
+                raise RuntimeError('Native disclosure wheel did not reach its real content boundary')
+        return after
+    def proof(data, indexes=None):
+        record['proofs'].append({'panel': data['requested'], 'indexes': indexes, 'snapshot': data}); save(); bounded.remaining()
+        check_disclosure_targets(data, expected, indexes)
+    try:
+        save(); bounded.remaining()
+        attempted = True
+        bounded.js(DISCLOSURE_PROBE_JS, 'start', 4 * record['tabLimit'] + 16, owner)
+        record['probeStartAcknowledged'] = True
+        baseline = record['initial'] = snapshot('np-all-scopes'); save(); bounded.remaining(); check_disclosure_snapshot(baseline, expected)
+        if ([p['id'] for p in baseline['panels'] if p['open']] != ['np-all-scopes'] or
+                baseline['focus']['scope'] != 'task:dialnav'):
+            raise RuntimeError('Disclosure audit must start after the unchanged original directory-return scene')
+        key('np-all-scopes', 'escape')
+        for identity in DISCLOSURE_IDS:
+            opened = action('open', identity, lambda identity=identity: bounded.click(bounded.selector('#' + identity + ' > summary')))
+            check_disclosure_snapshot(opened, expected, baseline)
+            current = wheel_to(identity, 'start')
+            if identity == 'np-all-scopes':
+                current = key(identity, 'tab', [expected['directory'][0]['scope']]); proof(current, [0])
+            bottom = wheel_to(identity, 'end')
+            proof(bottom, [1] if identity == 'np-all-scopes' else None)
+            if identity == 'np-all-scopes':
+                wheel_to(identity, 'start')
+                last = key(identity, 'tab', [row['scope'] for row in expected['directory'][1:]])
+                proof(last, [1])
+            key(identity, 'escape')
+        final = record['final'] = snapshot('np-all-scopes'); save(); bounded.remaining(); check_disclosure_snapshot(final, expected, baseline)
+        if any(p['open'] for p in final['panels']):
+            raise RuntimeError('Disclosure audit did not leave all temporary menus natively closed')
+        bounded.remaining(); record['status'] = 'native_bounds_and_reachability_verified'
+    except Exception as exc:
+        record['status'] = 'failed'; record['error'] = str(exc)[:2000]
+        record['budgetExhausted'] = time.monotonic() >= started + DISCLOSURE_AUDIT_SECONDS
+        raise
+    finally:
+        cleanup_started = time.monotonic()
+        record['inputAndCheckpointElapsedSeconds'] = cleanup_started - started
+        record['nativeActionSeconds'] = sum(a.get('nativeActionSeconds', 0) for a in record['actions'])
+        try:
+            if attempted:
+                try:
+                    record['cleanup'] = driver.js(DISCLOSURE_PROBE_JS, 'stop', owner)
+                    if record['cleanup'].get('cleanedUp') is not True or record['cleanup'].get('owner') != owner:
+                        raise RuntimeError('Disclosure native-input observer was not removed')
+                except Exception as exc:
+                    record['cleanupError'] = str(exc)[:2000]
+                    if record['status'] != 'failed':
+                        record['status'] = 'failed'; save(); raise
+        finally:
+            record['diagnosticCleanupSeconds'] = time.monotonic() - cleanup_started
+            try:
+                save()
+                if record['status'] != 'failed':
+                    bounded.remaining()
+            except Exception as exc:
+                record['terminalCheckpointError'] = str(exc)[:2000]
+                record['budgetExhausted'] = time.monotonic() >= started + DISCLOSURE_AUDIT_SECONDS
+                if record['status'] != 'failed':
+                    record['status'] = 'failed'; record['error'] = str(exc)[:2000]
+                    raise
+            finally:
+                record['totalObservedSeconds'] = time.monotonic() - started
+                print('disclosure_audit ' + json.dumps({key: record[key] for key in (
+                    'viewport', 'budgetSeconds', 'status', 'nativeActionSeconds', 'checkpointTiming',
+                    'inputAndCheckpointElapsedSeconds', 'diagnosticCleanupSeconds', 'totalObservedSeconds', 'budgetExhausted')},
+                    separators=(',', ':')), flush=True)
 
 
 def main():
@@ -4224,7 +5960,9 @@ def main():
                                 'directoryReturn': 'Original -12 scene keeps its native glossary open; full-height/outer0 and all original gates remain, without requiring uncovered footer beneath that intentional overlay'},
               'capturePlan': [str(w) + 'x' + str(h) + suffix for w, h in VIEWPORTS for suffix in SCENE_NAMES]}
     report['frontendSources'] = {name: sha(name) for name in ('assets/navigation-product.js', 'assets/navigation-product-model.js', 'assets/navigation-product.css', 'scripts/navigation_product.py')}
-    report['captureSources'] = {name: sha(name) for name in ('scripts/navigation_screenshots.py', 'tests/test_navigation_screenshots.py')}
+    report['captureSources'] = {name: sha(name) for name in ('scripts/navigation_screenshots.py', 'tests/test_navigation_screenshots.py', 'tests/test_navigation_disclosure_bounds.py')}
+    report['captureSources']['scripts/navigation_receipt_journal.py'] = sha('scripts/navigation_receipt_journal.py')
+    report['captureSources']['scripts/navigation_relation_interactions.py'] = sha('scripts/navigation_relation_interactions.py')
     report['servedFiles'] = {str(p.relative_to(dist)): sha(p) for p in sorted((dist / 'research/navigation').rglob('*')) if p.is_file()}
     report['servedFiles'].update({str(p.relative_to(dist)): sha(p) for p in sorted((dist / 'assets').glob('navigation-*.js'))})
     report['servedFiles']['assets/navigation-product.css'] = sha(dist / 'assets/navigation-product.css')
@@ -4252,6 +5990,10 @@ def main():
     process = None
     server = None
     logs = (out / 'chromedriver.log').open('w')
+    # Preserve the original save wrapper and all checkpoint call sites.
+    from navigation_receipt_journal import ReceiptJournal
+    receipt_cache = ReceiptJournal(out / 'receipt.json')
+    write_receipt = receipt_cache
 
     def save():
         write_receipt(out / 'receipt.json', report)
@@ -4266,13 +6008,15 @@ def main():
           bounds:[...document.querySelectorAll(arguments[0])].map(e=>{let r=e.getBoundingClientRect();return {id:e.id,position:e.closest('[data-position]')?.dataset.position,text:e.textContent.slice(0,180),x:r.x,y:r.y,width:r.width,height:r.height};}),
           nodeCount:document.querySelectorAll('#np-tree [role=treeitem]').length,
           focus:document.activeElement?.id, bodyWidth:document.body.scrollWidth};''', CAPTURE_BOUNDS_SELECTOR)
-        data['desktopShell'] = driver.js(DESKTOP_SHELL_SNAPSHOT_JS)
+        data['desktopShell'] = desktop_chrome_snapshot(driver, report, save, name, DESKTOP_SHELL_SNAPSHOT_JS)
         requires_s0_footer = s0_footer_required(name)
         data['s0FooterRequired'] = requires_s0_footer
         if data['desktopShell']['home'] and requires_s0_footer:
             data['desktopShell']['s0Footer'] = s0_footer_check(name)
         if data['desktopShell'].get('methodReading') == 'true' and not data['desktopShell']['collapsed']:
             data['methodReading'] = driver.js(METHOD_READING_SNAPSHOT_JS)
+            method_expected = method_reading_expected(science, method_positions[data['route']['node']], method_positions)
+            method_child_readability_checks(driver, report, save, name, data['methodReading'], method_expected, method_positions)
         data['screenKind'] = 'default_reading_overview' if require_home else 'tree_or_reader'
         data['readingVisibility'] = driver.js('''function rect(e){if(!e)return null;let r=e.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height};}
           let a=NavigationProductApp,b=a.getBundle(),root=b.researchMap.roots[0];
@@ -4349,7 +6093,8 @@ def main():
                 raise RuntimeError('Method screenshot does not show any complete actual mechanism field inside the reader')
 
     def s0_footer_check(phase):
-        data = driver.js(S0_FOOTER_SNAPSHOT_JS, footer_expected)
+        settle_s0_toolbar_paint(driver, report, save, phase)
+        data = desktop_chrome_snapshot(driver, report, save, phase, S0_FOOTER_SNAPSHOT_JS, footer_expected)
         report.setdefault('s0FooterChecks', []).append({'phase': phase, 'snapshot': data})
         save()
         check_s0_footer(data)
@@ -4365,7 +6110,7 @@ def main():
         save()
         check_reading_home(data)
 
-        graph = driver.js(VISUAL_GEOMETRY + """
+        graph = driver.js(VISUAL_GEOMETRY + RELATION_PATH_SAMPLES_JS + """
           var a=NavigationProductApp,b=a.getBundle(),m=document.getElementById('np-overview-map'),root=b.researchMap.roots[0],p=b.positions;
           var l=p[root].childIds.find(id=>p[id].entityId==='legacy:nav:l'),c=p[root].childIds.find(id=>p[id].entityId==='legacy:nav:c'),td=p[l].childIds.find(id=>p[id].sourceDirectoryGroupId==='task');
           var wanted=[root,l,c,td,...arguments[0].map(s=>b.researchMap.scopeEntries.find(e=>e.scopeId===s).canonicalPositionId),...p[c].childIds];
@@ -4373,7 +6118,7 @@ def main():
           function endpoint(e,end){var q=e.getPointAtLength(end?e.getTotalLength():0),r=new DOMPoint(q.x,q.y).matrixTransform(e.getScreenCTM());return {x:r.x,y:r.y};}
           function touches(q,r){return q.x>=r.x-2&&q.x<=r.x+r.width+2&&q.y>=r.y-2&&q.y<=r.y+r.height+2&&Math.min(Math.abs(q.x-r.x),Math.abs(q.x-r.x-r.width),Math.abs(q.y-r.y),Math.abs(q.y-r.y-r.height))<=3;}
           function node(id){return [...m.querySelectorAll('[data-map-position]')].find(n=>n.dataset.mapPosition===id);}
-          function edge(e){var cs=getComputedStyle(e),stroke=color(cs.stroke),alpha=stroke?stroke.alpha*Number(cs.strokeOpacity):0,display=true;for(var n=e;n;n=n.parentElement){var st=getComputedStyle(n);alpha*=Number(st.opacity);if(st.display==='none'||st.visibility!=='visible')display=false;}var background=bg(m),foreground=stroke&&background.length===3?stroke.rgb.map((v,i)=>v*alpha+background[i]*(1-alpha)):[],len=e.getTotalLength(),matrix=e.getScreenCTM(),mr=rect(m),inBounds=true,uncovered=0,ownHits=[];for(var i=1;i<20;i++){var q=e.getPointAtLength(len*i/20),z=new DOMPoint(q.x,q.y).matrixTransform(matrix);if(z.x<mr.x-1||z.y<mr.y-1||z.x>mr.x+mr.width+1||z.y>mr.y+mr.height+1||z.x<0||z.y<0||z.x>innerWidth||z.y>innerHeight)inBounds=false;var hit=document.elementFromPoint(z.x,z.y);if(hit&&(hit===e||hit===m||hit===e.closest('svg')))uncovered++;if(hit===e)ownHits.push({x:z.x,y:z.y,fraction:i/20});}return {visible:display&&alpha>0&&foreground.length===3&&parseFloat(cs.strokeWidth)>0,length:len,foreground:foreground,background:background,inBounds:inBounds,uncovered:uncovered>=3,ownHits:ownHits};}
+          function edge(e){var cs=getComputedStyle(e),stroke=color(cs.stroke),alpha=stroke?stroke.alpha*Number(cs.strokeOpacity):0,display=true;for(var n=e;n;n=n.parentElement){var st=getComputedStyle(n);alpha*=Number(st.opacity);if(st.display==='none'||st.visibility!=='visible')display=false;}var background=bg(m),foreground=stroke&&background.length===3?stroke.rgb.map((v,i)=>v*alpha+background[i]*(1-alpha)):[],len=e.getTotalLength(),matrix=e.getScreenCTM(),mr=rect(m),inBounds=true,uncovered=0,ownHits=[];if(e.dataset.mapRelation)return Object.assign({visible:display&&alpha>0&&foreground.length===3&&parseFloat(cs.strokeWidth)>0,length:len,foreground:foreground,background:background},relationPathSamples(e,m,len,matrix));for(var i=1;i<20;i++){var q=e.getPointAtLength(len*i/20),z=new DOMPoint(q.x,q.y).matrixTransform(matrix);if(z.x<mr.x-1||z.y<mr.y-1||z.x>mr.x+mr.width+1||z.y>mr.y+mr.height+1||z.x<0||z.y<0||z.x>innerWidth||z.y>innerHeight)inBounds=false;var hit=document.elementFromPoint(z.x,z.y);if(hit&&(hit===e||hit===m||hit===e.closest('svg')))uncovered++;if(hit===e)ownHits.push({x:z.x,y:z.y,fraction:i/20});}return {visible:display&&alpha>0&&foreground.length===3&&parseFloat(cs.strokeWidth)>0,length:len,foreground:foreground,background:background,inBounds:inBounds,uncovered:uncovered>=3,ownHits:ownHits};}
           return {relationsVisible:m.dataset.relationsVisible,selectedRelation:m.dataset.selectedRelation||null,relationControls:[...document.querySelectorAll('[data-relation-select]')].map(e=>e.dataset.relationSelect),viewport:{x:0,y:0,width:innerWidth,height:innerHeight},map:rect(m),mapVisible:!m.hidden&&opaque(m)&&m.clientWidth>0&&m.clientHeight>0,expectedIds:wanted,expectedEdges:wanted.filter(id=>p[id].parentId&&wanted.includes(p[id].parentId)).map(id=>[p[id].parentId,id]),expectedChallengeLabels:arguments[1],expectedRelations:arguments[2],
             directoryTitle:box(node(td)),
             nodes:[...m.querySelectorAll('[data-map-position]')].map(n=>Object.assign({id:n.dataset.mapPosition},box(n))),
@@ -4382,7 +6127,7 @@ def main():
             challenges:[...m.querySelectorAll('[data-challenge-open]')].map(n=>{var q=p[n.dataset.mapPosition];return {position:n.dataset.mapPosition,challengeOpen:n.dataset.challengeOpen,entity:q.entityId,expectedEntity:p[n.dataset.challengeOpen].entityId,title:n.title,aria:n.getAttribute('aria-label')||'',expectedTitle:arguments[3][q.entityId],label:box(n.querySelector('.np-map-challenge-label'))};}),
             relations:[...m.querySelectorAll('path[data-map-relation]')].map(e=>Object.assign({id:e.dataset.mapRelation,from:e.dataset.fromEntity,to:e.dataset.toEntity,type:e.dataset.relationType,endpointsMatch:(()=>{var from=[...m.querySelectorAll('[data-task-open]')].find(n=>n.dataset.taskOpen===e.dataset.fromEntity),to=[...m.querySelectorAll('[data-task-open]')].find(n=>n.dataset.taskOpen===e.dataset.toEntity);return !!from&&!!to&&touches(endpoint(e,false),rect(from))&&touches(endpoint(e,true),rect(to));})()},edge(e)))};
         """, [x[0] for x in TASK_INDEX], CHALLENGE_LABELS, [[r['id'],r['from'],r['to'],r['relationType']] for r in relation_expected], {entity:science['entities'][entity]['label'] for entity in CHALLENGE_LABELS})
-        graph['s0AdaptiveSpacing'] = driver.js(S0_FOOTER_SNAPSHOT_JS, footer_expected)
+        graph['s0AdaptiveSpacing'] = desktop_chrome_snapshot(driver, report, save, 'reading-home-' + relation_mode, S0_FOOTER_SNAPSHOT_JS, footer_expected)
         report.setdefault('graphicalOverviewChecks', []).append(graph)
         save()
         if (graph['relationsVisible'] != ('true' if relation_mode == 'all' else 'false') or
@@ -4413,7 +6158,7 @@ def main():
             if expected_focus is not None:
                 data['expectedFocus'] = expected_focus
             proofs = []
-            specs = [{'kind':'heading'}] + [{'kind':'locator','text':loc['locator']} for loc in expected['locators']] + [{'kind':kind,'id':ref['sourceId']} for ref in expected['sourceRefs'] for kind in ('source','status')]
+            specs = [{'kind':'heading'}] + [relation_locator_spec(loc,index) for index,loc in enumerate(expected['locators'])] + [{'kind':kind,'id':ref['sourceId']} for ref in expected['sourceRefs'] for kind in ('source','status')]
             for spec in specs:
                 element = driver.js(RELATION_EVIDENCE_ELEMENT_JS,expected['id'],spec)
                 if element is None:
@@ -4445,7 +6190,7 @@ def main():
             if not driver.js("return document.getElementById('np-task-relations').open"):
                 driver.click(driver.selector('#np-task-relations > summary'))
             control = driver.selector('[data-relation-select="' + expected['id'] + '"]')
-            driver.js("arguments[0].scrollIntoView({block:'center'});", control)
+            reveal_relation_selector(driver, control, expected['id'], report, save)
             driver.settle()
             native = driver.js(VISUAL_GEOMETRY + "return {tag:arguments[0].tagName,type:arguments[0].type,disabled:arguments[0].disabled,tabIndex:arguments[0].tabIndex,target:arguments[0].getAttribute('aria-controls'),box:box(arguments[0])};", control)
             if native['tag'] != 'BUTTON' or native['type'] != 'button' or native['disabled'] or native['tabIndex'] != 0 or native['target'] != 'np-map-relation-evidence-' + expected['id'] or not native['box']['visible'] or native['box']['clipped']:
@@ -4540,6 +6285,11 @@ def main():
         if back_origin != endpoint_origin:
             raise RuntimeError('Relationship endpoint Back lost exact saved focus or reading scroll')
         evidence(expected, expected_focus=endpoint_origin['focus'])
+        # Supplemental bounded native-input regressions; existing gates unchanged.
+        from navigation_relation_interactions import run_relation_interaction_gaps
+        run_relation_interaction_gaps(driver, relation_expected, report, save,
+            s0_footer_check, reveal_relation_selector, check_s0_stability,
+            check_s0_panel_saved, wait_for)
         # Fresh document for real SVG hit tests; do not force a hidden path click.
         for rid in ('tasks:relation:90', 'tasks:relation:92'):
             driver.call('POST', '/url', {'url': 'about:blank'})
@@ -4826,6 +6576,7 @@ def main():
                     raise RuntimeError('Directory return lost open state, scroll or exact entry focus')
                 report.setdefault('directoryReturnChecks', []).append({'scope': scope, 'before': before, 'after': after})
             capture(prefix + '-12-directory-return', require_home=True)
+            disclosure_bounds_checks(driver, report, save, prefix, science)
             task_density_checks(driver, report, save, capture, prefix, base, science)
             desktop_hierarchy_checks(driver, report, save, capture, prefix, base, science)
             task_route_checks(driver, report, save, capture, prefix, base, science, server, dist)
@@ -4849,23 +6600,26 @@ def main():
                 report['diagnosticError'] = type(diagnostic_error).__name__
         raise
     finally:
-        save()
-        if driver and driver.session:
-            try:
-                driver.call('DELETE', '')
-            except Exception:
-                pass
-        if process:
-            process.terminate()
-            try:
-                process.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                process.kill()
-                process.wait(timeout=5)
-        if server:
-            server.shutdown()
-            server.server_close()
-        logs.close()
+        try:
+            save()
+            if driver and driver.session:
+                try:
+                    driver.call('DELETE', '')
+                except Exception:
+                    pass
+            if process:
+                process.terminate()
+                try:
+                    process.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    process.wait(timeout=5)
+            if server:
+                server.shutdown()
+                server.server_close()
+            logs.close()
+        finally:
+            receipt_cache.close()
 
 
 if __name__ == '__main__':
