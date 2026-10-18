@@ -1,0 +1,867 @@
+{
+  "schema_version": "weekly-1.0",
+  "id": "arxiv-weekly-2026-10-18",
+  "date": "2026-10-18",
+  "title": "Radar 周报｜预测核验、选择性记忆与执行对齐",
+  "status": "ready",
+  "generated_at": "2026-10-18T13:59:59Z",
+  "language": "zh-CN",
+  "window": {
+    "start": "2026-10-11T08:12:30Z",
+    "end": "2026-10-18T08:12:30Z",
+    "timezone": "UTC",
+    "date_field": "updated_at",
+    "inclusive": true,
+    "duration_hours": 168
+  },
+  "source_snapshot": {
+    "name": "frontier.json",
+    "sha256": "3bc6d35136f94194aa78f36a12ba482f839817f6a08176b5d31bf3a062b63f71",
+    "generated_at": "2026-10-18T08:13:13Z",
+    "fetched_at": "2026-10-18T08:13:13Z",
+    "status": "ok",
+    "query": "(cat:cs.RO OR cat:cs.CV OR cat:cs.AI OR cat:cs.LG OR cat:cs.CL) AND (all:\"vision-language navigation\" OR all:\"vision language navigation\" OR all:VLN OR all:ObjectNav OR all:\"object-goal\" OR all:\"object goal\" OR ((ti:navigation OR abs:navigation) AND (all:agent OR all:memory OR all:feedback OR all:harness OR all:reflection)) OR all:\"spatial memory\" OR all:\"episodic memory\" OR all:\"mobile manipulation\" OR all:\"mobile manipulator\" OR all:quadruped OR all:\"whole-body\" OR all:\"whole body\" OR all:\"end-effector\" OR all:\"end effector\" OR all:\"vision-language-action\" OR all:\"vision language action\" OR all:\"world-action model\" OR all:\"world action model\" OR ((all:VLA OR all:MoE OR all:\"mixture of experts\" OR all:\"mixture-of-experts\" OR all:\"world model\" OR all:\"world models\") AND (all:robot OR all:robotic OR all:robotics OR all:manipulation OR all:navigation OR all:embodied)))",
+    "rule_version": "2026-09-30.3",
+    "coverage_complete": true,
+    "coverage_truncated": false,
+    "coverage_start": "2026-10-11T08:12:30Z",
+    "coverage_end": "2026-10-18T08:12:30Z"
+  },
+  "counts": {
+    "window_candidates": 192,
+    "new": 118,
+    "revisions": 74,
+    "source_seven_day_candidates": 192
+  },
+  "candidate_manifest": "2026-10-18/manifest.json",
+  "research_overview": {
+    "headline": "让预测、记忆和训练信号进入可检查的执行接口",
+    "executive_summary": "本期采用 10月11日08:12:30 至 10月18日08:12:30 UTC 的168小时更新时间窗口，共192条候选，118条首版、74条修订。已筛阅全部标题及摘要片段，并将18篇固定版本官方完整摘要核查收录为本期公开证据。五条主线分别对照预测核验、选择性记忆、闭环计算、导航恢复与移动全身执行对齐；阅读顺序和待核问题列在各主题中。这是窗口内研究问题归纳，不是七份日报拼接，也不是跨期趋势或领域共识。",
+    "coverage": {
+      "candidate_metadata_screened": 192,
+      "complete_abstracts_checked": 18,
+      "full_papers_read": 0,
+      "revision_diffs_checked": 0,
+      "comparison_window_available": false,
+      "topic_count_method": "existing_title_abstract_keyword_heuristic_multilabel",
+      "count_denominator": 192
+    },
+    "topic_distribution": [
+      {
+        "topic": "vln_objectnav",
+        "label": "VLN / ObjectNav",
+        "count": 13,
+        "new": 8,
+        "revisions": 5,
+        "candidate_ids": [
+          "2603.20804v2",
+          "2610.21450v1",
+          "2610.20998v1",
+          "2610.07396v2",
+          "2610.20121v1",
+          "2512.21201v4",
+          "2610.19618v1",
+          "2607.02417v2",
+          "2610.18478v1",
+          "2610.18307v1",
+          "2609.39207v2",
+          "2610.15782v1",
+          "2610.15595v1"
+        ]
+      },
+      {
+        "topic": "navigation_agents",
+        "label": "Navigation agents / harnesses",
+        "count": 15,
+        "new": 11,
+        "revisions": 4,
+        "candidate_ids": [
+          "2603.20804v2",
+          "2610.21450v1",
+          "2610.20121v1",
+          "2610.19618v1",
+          "2610.19420v1",
+          "2610.18478v1",
+          "2610.18381v1",
+          "2610.18307v1",
+          "2610.17640v1",
+          "2610.17089v1",
+          "2609.39166v4",
+          "2610.10787v2",
+          "2610.16369v1",
+          "2609.39207v2",
+          "2610.15782v1"
+        ]
+      },
+      {
+        "topic": "spatial_episodic_memory",
+        "label": "Spatial / episodic memory and feedback",
+        "count": 8,
+        "new": 5,
+        "revisions": 3,
+        "candidate_ids": [
+          "2610.21586v1",
+          "2610.21429v1",
+          "2610.15305v2",
+          "2610.20998v1",
+          "2610.19683v1",
+          "2606.16569v2",
+          "2610.18478v1",
+          "2609.39166v4"
+        ]
+      },
+      {
+        "topic": "mobile_manipulation",
+        "label": "Quadruped-arm / mobile manipulation",
+        "count": 29,
+        "new": 16,
+        "revisions": 13,
+        "candidate_ids": [
+          "2610.21429v1",
+          "2610.21152v1",
+          "2610.20998v1",
+          "2610.20968v1",
+          "2610.20607v1",
+          "2604.01567v2",
+          "2610.19600v1",
+          "2610.19594v1",
+          "2610.14896v2",
+          "2606.01458v2",
+          "2602.16705v4",
+          "2507.04949v4",
+          "2610.18872v1",
+          "2610.18950v1",
+          "2610.18381v1",
+          "2603.06280v2",
+          "2610.17750v1",
+          "2610.17748v1",
+          "2602.16356v2",
+          "2604.07457v2",
+          "2610.17069v1",
+          "2603.15046v2",
+          "2609.39207v2",
+          "2606.12956v2",
+          "2606.08278v2",
+          "2602.06219v3",
+          "2610.15572v1",
+          "2610.15558v1",
+          "2610.15486v1"
+        ]
+      },
+      {
+        "topic": "whole_body_control",
+        "label": "Whole-body control",
+        "count": 14,
+        "new": 8,
+        "revisions": 6,
+        "candidate_ids": [
+          "2609.22075v2",
+          "2610.21349v1",
+          "2610.21152v1",
+          "2610.20925v1",
+          "2604.01567v2",
+          "2610.19393v1",
+          "2606.00374v2",
+          "2610.18872v1",
+          "2610.18950v1",
+          "2610.08120v2",
+          "2610.17999v1",
+          "2610.17232v1",
+          "2604.07457v2",
+          "2610.12026v2"
+        ]
+      },
+      {
+        "topic": "end_effector_trajectories",
+        "label": "End-effector trajectories",
+        "count": 19,
+        "new": 13,
+        "revisions": 6,
+        "candidate_ids": [
+          "2610.22337v1",
+          "2606.14535v2",
+          "2606.03784v3",
+          "2610.21292v1",
+          "2610.21239v1",
+          "2610.20320v1",
+          "2610.19600v1",
+          "2602.16705v4",
+          "2610.19007v1",
+          "2610.18843v1",
+          "2606.12965v2",
+          "2610.18160v1",
+          "2610.18123v1",
+          "2610.17802v1",
+          "2606.02745v2",
+          "2610.17350v1",
+          "2604.07457v2",
+          "2610.16316v1",
+          "2610.15558v1"
+        ]
+      },
+      {
+        "topic": "robot_vla",
+        "label": "Robot VLA",
+        "count": 99,
+        "new": 57,
+        "revisions": 42,
+        "candidate_ids": [
+          "2610.22372v1",
+          "2604.20012v2",
+          "2610.22178v1",
+          "2610.22146v1",
+          "2610.21985v1",
+          "2610.21922v1",
+          "2610.21915v1",
+          "2610.16782v2",
+          "2610.21453v1",
+          "2610.21389v1",
+          "2606.03784v3",
+          "2610.21362v1",
+          "2610.21306v1",
+          "2610.21211v1",
+          "2610.21152v1",
+          "2610.19656v2",
+          "2606.15568v3",
+          "2610.20840v1",
+          "2610.20767v1",
+          "2610.20750v1",
+          "2610.20504v1",
+          "2610.20474v1",
+          "2610.20442v1",
+          "2610.18855v2",
+          "2610.20429v1",
+          "2610.20351v1",
+          "2610.20223v1",
+          "2606.21139v2",
+          "2606.24472v2",
+          "2610.20064v1",
+          "2610.20019v1",
+          "2604.05656v2",
+          "2610.19753v1",
+          "2610.19746v1",
+          "2604.01567v2",
+          "2603.14371v4",
+          "2610.19604v1",
+          "2510.08464v2",
+          "2610.19600v1",
+          "2610.19517v1",
+          "2610.19495v1",
+          "2610.19479v1",
+          "2606.01458v2",
+          "2607.02417v2",
+          "2610.19248v1",
+          "2610.19224v1",
+          "2608.24101v4",
+          "2610.02626v3",
+          "2605.08434v3",
+          "2610.18874v1",
+          "2610.18843v1",
+          "2610.18792v1",
+          "2610.18790v1",
+          "2610.18774v1",
+          "2610.01939v2",
+          "2610.18650v1",
+          "2610.18596v1",
+          "2610.18568v1",
+          "2610.18381v1",
+          "2610.18373v1",
+          "2609.40134v3",
+          "2610.17999v1",
+          "2610.17983v1",
+          "2610.17922v1",
+          "2604.13942v2",
+          "2606.02745v2",
+          "2511.17366v2",
+          "2610.17746v1",
+          "2606.18097v2",
+          "2609.08209v3",
+          "2606.12475v2",
+          "2610.11508v2",
+          "2601.14628v2",
+          "2610.17521v1",
+          "2605.13119v2",
+          "2610.16969v1",
+          "2607.10655v3",
+          "2603.15046v2",
+          "2610.16567v1",
+          "2610.00913v2",
+          "2610.10787v2",
+          "2607.14236v3",
+          "2604.14732v3",
+          "2610.16313v1",
+          "2610.13212v2",
+          "2610.16238v1",
+          "2610.05025v2",
+          "2606.12956v2",
+          "2610.16160v1",
+          "2609.37307v2",
+          "2610.12026v2",
+          "2606.08278v2",
+          "2610.15956v1",
+          "2610.15794v1",
+          "2609.25756v2",
+          "2610.15766v1",
+          "2610.15666v1",
+          "2610.15556v1",
+          "2604.19734v2"
+        ]
+      },
+      {
+        "topic": "robot_moe",
+        "label": "Robot mixture-of-experts",
+        "count": 3,
+        "new": 1,
+        "revisions": 2,
+        "candidate_ids": [
+          "2610.18697v1",
+          "2610.11508v2",
+          "2605.25782v4"
+        ]
+      },
+      {
+        "topic": "robot_world_models",
+        "label": "Robot world models",
+        "count": 43,
+        "new": 26,
+        "revisions": 17,
+        "candidate_ids": [
+          "2610.22364v1",
+          "2610.22363v1",
+          "2610.22340v1",
+          "2610.21922v1",
+          "2610.18873v2",
+          "2610.21686v1",
+          "2610.16443v2",
+          "2610.15305v2",
+          "2606.19729v3",
+          "2509.16998v2",
+          "2610.20157v1",
+          "2610.18038v2",
+          "2610.19957v1",
+          "2610.18447v2",
+          "2610.19327v1",
+          "2610.19212v1",
+          "2608.24101v4",
+          "2610.18991v1",
+          "2610.18852v1",
+          "2610.18774v1",
+          "2610.18699v1",
+          "2610.18568v1",
+          "2607.03941v2",
+          "2610.18135v1",
+          "2610.17922v1",
+          "2610.10270v3",
+          "2607.08436v2",
+          "2610.17638v1",
+          "2610.17630v1",
+          "2610.17526v1",
+          "2604.03208v3",
+          "2610.17141v1",
+          "2610.17114v1",
+          "2610.16969v1",
+          "2510.06492v3",
+          "2610.16355v1",
+          "2610.12026v2",
+          "2602.06219v3",
+          "2610.15794v1",
+          "2610.15645v1",
+          "2610.15585v1",
+          "2604.19734v2",
+          "2607.19190v5"
+        ]
+      }
+    ],
+    "themes": [
+      {
+        "id": "prediction-for-decisions",
+        "title": "行动前的预测：适应环境、比较动作与预警异常",
+        "summary": "三条路线分别更新环境条件潜变量、选择候选动作和预测交互异常。共同意义是把未来预测连接到一个具体决策接口；预测更准并不自动等于安全执行。",
+        "shared_problem": "不可见物理因素、随机动作差异和接触异常分别怎样进入机器人下一步决策？",
+        "method_routes": [
+          {
+            "text": "T2-Z 作者训练时交替优化世界模型与环境潜变量；部署时冻结模型，用一次或多次交互优化新环境潜变量。它针对未显式标注的环境差异，而不是直接筛选多个策略动作。",
+            "evidence_ids": [
+              "2610.22364v1"
+            ]
+          },
+          {
+            "text": "VeriVLA 作者用两次采样的块内时间变化和跨样本方差触发核验，再以 JEPA 潜世界模型预测任务进展，为动作块排序。训练自由指其触发机制，不能据此推断整个验证模型无需学习。",
+            "evidence_ids": [
+              "2610.21985v1"
+            ]
+          },
+          {
+            "text": "MAIA 作者以视觉—动作—力世界模型预测计划动作的视觉和受力后果，并用轻量异常头提前预警；摘要另报告利用预警进行动作选择，无需重训原操作策略。",
+            "evidence_ids": [
+              "2610.21686v1"
+            ]
+          }
+        ],
+        "open_question": "优先读 T2-Z 的适应接口，再对照 VeriVLA 的候选排序与 MAIA 的异常预警。需核查适应所需交互代价、错误排序、漏报和警报提前量；不同任务与硬件上的作者指标不能横向排名。",
+        "evidence_ids": [
+          "2610.22364v1",
+          "2610.21985v1",
+          "2610.21686v1"
+        ],
+        "related_topics": [
+          "robot_world_models",
+          "robot_vla"
+        ],
+        "attribution": "curator_synthesis",
+        "comparison_scope": "within_window_no_temporal_trend"
+      },
+      {
+        "id": "selective-memory",
+        "title": "记忆的有效性：存下变化，也要控制何时写入和使用",
+        "summary": "LTM 关注历史压缩成什么，RM-WAM 关注历史何时有用，AVALON 关注人类线索何时成为已验证空间事实。这是不同任务中记忆接口的对照，不是一个已验证的组合系统。",
+        "shared_problem": "当前观测不足时，怎样利用历史，同时避免过时信息或未经验证的线索误导动作？",
+        "method_routes": [
+          {
+            "text": "LTM 作者把相邻观测间的潜在转移作为紧凑历史，使用冻结潜动作编码器、轻量适配器和因果 KV 缓存增量推理；摘要的延迟记忆准入与压缩实验讨论的是历史内容和预算。",
+            "evidence_ids": [
+              "2610.21362v1"
+            ]
+          },
+          {
+            "text": "RM-WAM 作者结合短期视觉状态与长期潜事件记忆，在当前输入和目标不变时改变可用历史，以学习上下文相关的记忆效用，再用门控调节注入。",
+            "evidence_ids": [
+              "2610.15305v2"
+            ]
+          },
+          {
+            "text": "AVALON 作者以平面图、地点线索及初始拓扑—里程计对齐建立人类种子记忆；节点到达验证用于重锚定，现场感知证据控制记忆更新，并区分人类规定的许可与机器人观察的可通行性。",
+            "evidence_ids": [
+              "2610.21586v1"
+            ]
+          }
+        ],
+        "open_question": "优先对照 LTM 与 RM-WAM 的记忆单元及有用性判据；关注空间记忆时再读 AVALON。需核查重复证据、阶段错配与错误写入能否恢复；AVALON 摘要所述现场比较仅各五次运行，不能推定复杂建筑中的普遍可靠性。",
+        "evidence_ids": [
+          "2610.21362v1",
+          "2610.15305v2",
+          "2610.21586v1"
+        ],
+        "related_topics": [
+          "robot_vla",
+          "robot_world_models",
+          "spatial_episodic_memory"
+        ],
+        "attribution": "curator_synthesis",
+        "comparison_scope": "within_window_no_temporal_trend"
+      },
+      {
+        "id": "compute-and-feedback",
+        "title": "闭环计算预算：压缩视觉、固定任务上下文或延长执行",
+        "summary": "名称相近的 FastVLA 与 Fast-VLA 是不同论文；前者减少每次调用的视觉负担，后者减少大模型重复调用，PICES 调整下一次反馈前执行多少动作。三者改变的计算位置与闭环假设不同。",
+        "shared_problem": "怎样减少策略推理成本，又保留需要及时纠正动作时的反馈机会？",
+        "method_routes": [
+          {
+            "text": "FastVLA 作者以任务到视觉的注意力评分 token，用重要性分布的逆 Simpson 指标和滑动窗口校准动态决定压缩率，属于无需训练的视觉 token 压缩。",
+            "evidence_ids": [
+              "2610.22146v1"
+            ]
+          },
+          {
+            "text": "Fast-VLA 作者每回合只调用一次冻结 VLM，保留多层 KV 任务记忆；轻量在线 actor 仍接收当前视觉和本体反馈，并从固定任务记忆检索上下文生成动作块。",
+            "evidence_ids": [
+              "2610.21389v1"
+            ]
+          },
+          {
+            "text": "PICES 作者在一次策略调用中共享条件特征，生成名义动作块及局部噪声扰动对应块；根据动作差异同时选择动作块与执行长度，再决定何时重新调用策略。",
+            "evidence_ids": [
+              "2610.19656v2"
+            ]
+          }
+        ],
+        "open_question": "优先对照两篇 FastVLA 的不同假设，再读 PICES 的执行长度选择。需核查任务改变、视觉细节丢失、长执行段扰动与延迟尾部；摘要加速指标涉及不同硬件和计时口径，不可合并为统一加速排名。",
+        "evidence_ids": [
+          "2610.22146v1",
+          "2610.21389v1",
+          "2610.19656v2"
+        ],
+        "related_topics": [
+          "robot_vla"
+        ],
+        "attribution": "curator_synthesis",
+        "comparison_scope": "within_window_no_temporal_trend"
+      },
+      {
+        "id": "navigation-evidence-and-recovery",
+        "title": "导航可靠性：可复用历史、针对性训练与事件恢复",
+        "summary": "三篇分别在记忆管理、环境生成和运行时恢复层干预导航失败。对公开导航研究的价值在于区分失败发生在哪一层，而不是把更多记忆或更多数据视作通用解法。",
+        "shared_problem": "导航经历可以怎样转成可复用证据、针对当前策略的训练条件，以及执行中的恢复决策？",
+        "method_routes": [
+          {
+            "text": "MemoryVLN 作者把语义、三维几何和位姿组成自我中心记忆，以时间采样压缩历史，结合跨上下文暖启动、置信度控制写回和相关记忆检索。",
+            "evidence_ids": [
+              "2610.18478v1"
+            ]
+          },
+          {
+            "text": "WEDGE 作者从成功与失败轨迹提出可执行的弱点特征，经诊断集验证后映射到环境因素，针对策略当前困难区间生成适应训练环境，并迭代重新诊断。",
+            "evidence_ids": [
+              "2610.19420v1"
+            ]
+          },
+          {
+            "text": "F2A-ObjectNav 作者以规则 Supervisor 协调探索、检测、目标验证、语义指导与任务记忆，在事件触发时恢复或调整策略，正常运行保留轻量执行。",
+            "evidence_ids": [
+              "2610.19618v1"
+            ]
+          }
+        ],
+        "open_question": "优先读 WEDGE 的弱点验证方式，再对照 MemoryVLN 的写回与 F2A 的恢复触发。需核查诊断集过拟合、记忆污染和错误目标确认；F2A 在三个环境各25回合的结果只能支持其已报告设定。",
+        "evidence_ids": [
+          "2610.18478v1",
+          "2610.19420v1",
+          "2610.19618v1"
+        ],
+        "related_topics": [
+          "vln_objectnav",
+          "navigation_agents",
+          "spatial_episodic_memory"
+        ],
+        "attribution": "curator_synthesis",
+        "comparison_scope": "within_window_no_temporal_trend"
+      },
+      {
+        "id": "align-training-and-execution",
+        "title": "移动与全身操作：把训练接口对齐到实际执行",
+        "summary": "AIDA 使教师经过部署技能接口，I3L 收集整身纠错，HWAM 显式预测参考动作落地后的身体状态。共同问题是训练信号与执行现实之间的缺口，干预层次却不同。",
+        "shared_problem": "高层示范、动作参考和真正执行的运动不一致时，应在哪里补充监督或纠错？",
+        "method_routes": [
+          {
+            "text": "AIDA 作者让教师直接选择并执行部署代理的技能，演示保持可见、找回丢失目标及接近抓放，并在训练和推理共用观测、历史与输出组织接口。",
+            "evidence_ids": [
+              "2610.15572v1"
+            ]
+          },
+          {
+            "text": "I3L 作者通过 JoyLo+ 的策略跟踪主臂与触碰接管协调身体各部位纠错，再反复部署、收集当前策略失败并重训；它针对离线示范后的执行分布偏移。",
+            "evidence_ids": [
+              "2610.17748v1"
+            ]
+          },
+          {
+            "text": "HWAM 作者联合生成参考动作与执行后本体状态，并以策略、前向动力学及逆动力学三条条件路径连接动作、实现运动与视觉结果；这是层级全身控制下的动作—执行偏差建模。",
+            "evidence_ids": [
+              "2610.12026v2"
+            ]
+          }
+        ],
+        "open_question": "优先读 AIDA 的教师—技能接口，再看 I3L 的纠错成本与 HWAM 的执行状态监督。另可对照已核摘要的 KODA、SOMA、LIMBO，但不把它们视作本路线的组件。需核查教师可用性、接管时机、状态测量和跨控制器迁移；没有全文或复现实验支持通用部署保证。",
+        "evidence_ids": [
+          "2610.15572v1",
+          "2610.17748v1",
+          "2610.12026v2"
+        ],
+        "related_topics": [
+          "mobile_manipulation",
+          "whole_body_control",
+          "robot_world_models"
+        ],
+        "attribution": "curator_synthesis",
+        "comparison_scope": "within_window_no_temporal_trend"
+      }
+    ],
+    "evidence_sources": [
+      {
+        "versioned_id": "2610.22364v1",
+        "version_url": "https://arxiv.org/abs/2610.22364v1",
+        "source_url": "https://arxiv.org/abs/2610.22364v1",
+        "title": "T2-z: Test-Time Optimization of Environment Latents for Robotic World Models",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-18T13:59:59Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1604,
+        "abstract_sha256": "81d080fda0653b1d62017a542f578040993e2744ab972a9a5df32596cf6f6456"
+      },
+      {
+        "versioned_id": "2610.21985v1",
+        "version_url": "https://arxiv.org/abs/2610.21985v1",
+        "source_url": "https://arxiv.org/abs/2610.21985v1",
+        "title": "VeriVLA: Adaptive Test-Time Verification for Flow-Based VLAs with Latent World Models",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-18T13:59:59Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1401,
+        "abstract_sha256": "f584a4e84d66230abfb1c534da58c12acd0137db5d05c5a7fae2b013eab91a13"
+      },
+      {
+        "versioned_id": "2610.21686v1",
+        "version_url": "https://arxiv.org/abs/2610.21686v1",
+        "source_url": "https://arxiv.org/abs/2610.21686v1",
+        "title": "MAIA: Anticipating Interaction Anomalies in Contact-Rich Manipulation via Multimodal World Models",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-18T13:59:59Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1489,
+        "abstract_sha256": "9a6ba4795d3c5e1e39c3556f903846e36cfdde34d4df4cf05ad68e293f787e4d"
+      },
+      {
+        "versioned_id": "2610.21586v1",
+        "version_url": "https://arxiv.org/abs/2610.21586v1",
+        "source_url": "https://arxiv.org/abs/2610.21586v1",
+        "title": "AVALON: Zero-Shot Indoor Navigation with Human-Seeded Topological Memory",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-18T13:59:59Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1613,
+        "abstract_sha256": "dc43f4ceec3180edbf48bf64085be0f001d6f6f500f8e22ce41c78273c702701"
+      },
+      {
+        "versioned_id": "2610.21362v1",
+        "version_url": "https://arxiv.org/abs/2610.21362v1",
+        "source_url": "https://arxiv.org/abs/2610.21362v1",
+        "title": "LTM: Latent Transition Based In-Context Memory for Vision-Language-Action Models",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-18T13:59:59Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1342,
+        "abstract_sha256": "1a3273197df62deb4490c588ade6f1844bf42cc8b3b7ba51ac2da9b12e6fbac1"
+      },
+      {
+        "versioned_id": "2610.15305v2",
+        "version_url": "https://arxiv.org/abs/2610.15305v2",
+        "source_url": "https://arxiv.org/abs/2610.15305v2",
+        "title": "RM-WAM: Reliable Memory-Augmented World Action Models for Long-Horizon Robot Manipulation",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-18T13:59:59Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1396,
+        "abstract_sha256": "ed292f973b2c43534b540bc9e3c157cea1fe7f68e2394f44d3e82a2eacfd5d50"
+      },
+      {
+        "versioned_id": "2610.22146v1",
+        "version_url": "https://arxiv.org/abs/2610.22146v1",
+        "source_url": "https://arxiv.org/abs/2610.22146v1",
+        "title": "FastVLA: Task-Conditioned and Temporally Adaptive Visual Token Compression for Efficient Vision-Language-Action Models",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-18T13:59:59Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1580,
+        "abstract_sha256": "785ad4b8a02bce9b8ab8c087f1559b9f929120985f9fc65cb8d0cacbe110945a"
+      },
+      {
+        "versioned_id": "2610.21389v1",
+        "version_url": "https://arxiv.org/abs/2610.21389v1",
+        "source_url": "https://arxiv.org/abs/2610.21389v1",
+        "title": "Fast-VLA: You Only Think Once for Robot Manipulation",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-18T13:59:59Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1314,
+        "abstract_sha256": "f40c7dbd485569bec5e8859cee2ffe196057add5dd29d2c04ccea5d0423aee42"
+      },
+      {
+        "versioned_id": "2610.19656v2",
+        "version_url": "https://arxiv.org/abs/2610.19656v2",
+        "source_url": "https://arxiv.org/abs/2610.19656v2",
+        "title": "Accelerating VLA Inference with Perturbation Informed Execution",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-18T13:59:59Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1443,
+        "abstract_sha256": "34ee37f6a7bed95fd7ce9572f08f88b548dcd40a835c8b7ceef03280cb703d88"
+      },
+      {
+        "versioned_id": "2610.21152v1",
+        "version_url": "https://arxiv.org/abs/2610.21152v1",
+        "source_url": "https://arxiv.org/abs/2610.21152v1",
+        "title": "KODA: Kinematics--Observation Data Alignment for Humanoid Learning from Human Egocentric Demonstration",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-18T13:59:59Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1909,
+        "abstract_sha256": "2052d16c8570fd6aa6a3a131bb5f0bb3bde3037968d57a53fa8fb510bc756474"
+      },
+      {
+        "versioned_id": "2610.20968v1",
+        "version_url": "https://arxiv.org/abs/2610.20968v1",
+        "source_url": "https://arxiv.org/abs/2610.20968v1",
+        "title": "SOMA: Stack-of-Objects Manipulation using a Quadruped Robot",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-18T13:59:59Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1467,
+        "abstract_sha256": "403e29f0ff070e9bae09abe02735406129898902c4bcb0ac3482bf30248356e5"
+      },
+      {
+        "versioned_id": "2609.22075v2",
+        "version_url": "https://arxiv.org/abs/2609.22075v2",
+        "source_url": "https://arxiv.org/abs/2609.22075v2",
+        "title": "LIMBO: Learning and Internalizing Model-Free Barrier Objectives for Agile and Safe Whole-Body Control",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-18T13:59:59Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1572,
+        "abstract_sha256": "6327e13eab1b071f7f871006180a21bad3685c9667d0a3fe1b47e721ae131e22"
+      },
+      {
+        "versioned_id": "2610.17748v1",
+        "version_url": "https://arxiv.org/abs/2610.17748v1",
+        "source_url": "https://arxiv.org/abs/2610.17748v1",
+        "title": "I3L: Iterative Interactive Imitation Learning for Whole-Body Mobile Manipulation",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-18T13:59:59Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1718,
+        "abstract_sha256": "b2aa546b7aecc882b09ac99d64245880aa07e28f70ff959e28357b15b798fe7a"
+      },
+      {
+        "versioned_id": "2610.15572v1",
+        "version_url": "https://arxiv.org/abs/2610.15572v1",
+        "source_url": "https://arxiv.org/abs/2610.15572v1",
+        "title": "Look Before You Move: Agent-Interface-Aligned Supervision for Open-World Mobile Manipulation",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-18T13:59:59Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1337,
+        "abstract_sha256": "08ef7c08d007ebb894f59cdf7c7adddf5c9c44ffe5ca0b63f82c76ee6b95c89b"
+      },
+      {
+        "versioned_id": "2610.12026v2",
+        "version_url": "https://arxiv.org/abs/2610.12026v2",
+        "source_url": "https://arxiv.org/abs/2610.12026v2",
+        "title": "HWAM: Humanoid World Action Model With Joint State--Action Generation",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-18T13:59:59Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1888,
+        "abstract_sha256": "299be7d42c9dc7ffdb95b9d1a143b80461b6e1e304fee6a056d1ecdf119a1458"
+      },
+      {
+        "versioned_id": "2610.18478v1",
+        "version_url": "https://arxiv.org/abs/2610.18478v1",
+        "source_url": "https://arxiv.org/abs/2610.18478v1",
+        "title": "MemoryVLN: From Ego-Aware Memory Representation to Cross-Context Memory Reuse in Vision-Language Navigation",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-18T13:59:59Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1651,
+        "abstract_sha256": "2461605b28e2a9a3db37b53d9136ed98aa82ecd21570b6671744a65e7784b2fa"
+      },
+      {
+        "versioned_id": "2610.19420v1",
+        "version_url": "https://arxiv.org/abs/2610.19420v1",
+        "source_url": "https://arxiv.org/abs/2610.19420v1",
+        "title": "From Failures to Learnable Worlds: Policy-Conditioned Environment Generation for Navigation Agents",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-18T13:59:59Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1842,
+        "abstract_sha256": "1184dff4b9aa978ffe890aea380a62dbc524d004e4a0dffda224424c45f43087"
+      },
+      {
+        "versioned_id": "2610.19618v1",
+        "version_url": "https://arxiv.org/abs/2610.19618v1",
+        "source_url": "https://arxiv.org/abs/2610.19618v1",
+        "title": "F2A-ObjectNav: An Adaptive Agentic Architecture for Object-Goal Navigation",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-10-18T13:59:59Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1752,
+        "abstract_sha256": "ecb99134f0a05b06d246909452ef73d25c54d1a4f84d25bc15a8d20aebc7cd0e"
+      }
+    ],
+    "revision_note": "118条 new 表示固定版本为v1；74条 revision 表示版本号大于1。没有比较前后版本全文，不能把更新时间或版本变化视为贡献新增、首次发现或趋势。",
+    "limitations": [
+      "本期沿用当日08:13:13 UTC完成的成功官方API快照，窗口止于08:12:30；下午编辑没有重新滚动窗口，也没有把之后的观察冒充已覆盖。",
+      "查询完整覆盖仅指既有类别、检索串和更新时间范围。索引延迟、术语差异与保守标签门控仍会漏检，不等于全领域文献覆盖。",
+      "全部192条候选筛阅范围为标题与摘要片段；公开证据收录18篇官方完整摘要。原摘要来自本日API捕获，checked_at为本期复核时间；未逐篇重新打开网页确认撤回、正式发表或资源可用性。",
+      "未阅读全文、检查代码、独立复现实验或进行版本差异核验；文中方法与实验陈述来自作者摘要，主题联系和阅读次序是编辑归纳。",
+      "九类标签沿用源快照，可重叠、误分、漏分；计数不是质量、热度或人工分类，零匹配不证明没有相关研究。",
+      "不同论文任务、硬件、计时与成功标准不同；不据摘要进行性能排名、跨期趋势或组件组合安全性判断。正式精读另行核实并优先正式发表版本。"
+    ],
+    "keyword_caveats": [
+      {
+        "versioned_id": "2610.21985v1",
+        "topic": "robot_world_models",
+        "issue": "missed_match",
+        "explanation": "VeriVLA 标题及完整摘要明确涉及潜世界模型，但既有保守机器人语境门控只保留 robot_vla。记录潜在漏标并保留源标签。",
+        "evidence_basis": "complete_abstract"
+      },
+      {
+        "versioned_id": "2610.21586v1",
+        "topic": "navigation_agents",
+        "issue": "missed_match",
+        "explanation": "AVALON 完整摘要明确描述拓扑导航执行与人机记忆共同更新，但源标签仅保留 spatial_episodic_memory。这里提示启发式标签不能代替研究内容判断，不修改原快照。",
+        "evidence_basis": "complete_abstract"
+      }
+    ]
+  }
+}
