@@ -1,0 +1,1086 @@
+{
+  "schema_version": "1.1",
+  "id": "arxiv-daily-2026-11-11",
+  "date": "2026-11-11",
+  "title": "arXiv 研究总览 · 2026-11-11",
+  "status": "ready",
+  "generated_at": "2026-11-11T08:46:37Z",
+  "language": "zh-CN",
+  "window": {
+    "start": "2026-11-10T08:41:37Z",
+    "end": "2026-11-11T08:41:37Z",
+    "timezone": "UTC",
+    "date_field": "updated_at",
+    "inclusive": true,
+    "duration_hours": 24
+  },
+  "source_snapshot": {
+    "name": "frontier.json",
+    "sha256": "b1268cf6cc0e0c0e0ad47ef46c041d6bae538cb0426dc80107267990e5d48460",
+    "generated_at": "2026-11-11T08:42:14Z",
+    "fetched_at": "2026-11-11T08:42:14Z",
+    "last_successful_fetch_at": "2026-11-11T08:42:14Z",
+    "status": "ok",
+    "coverage": {
+      "window_start": "2026-11-04T08:41:37Z",
+      "window_end": "2026-11-11T08:41:37Z",
+      "window_inclusive": true,
+      "date_field": "updated_at",
+      "complete": true,
+      "truncated": false,
+      "api_total_results": 15703,
+      "fetched_entries": 300,
+      "pages_fetched": 3,
+      "window_entries": 285,
+      "matched_entries": 164,
+      "displayed_entries": 164,
+      "stopped_at": "reached_window_start",
+      "source": "arxiv_api",
+      "limitations": [
+        "Candidates are heuristic title-and-abstract matches, not reviewed or deep-read recommendations.",
+        "Coverage is limited to the declared arXiv query and categories; indexing delay and terminology can omit relevant work.",
+        "This feed discovers preprints. Curated reading should prefer an available formally published version.",
+        "New/revision describes the retrieved arXiv version, not novelty, publication acceptance, or first appearance on this site."
+      ]
+    },
+    "query": "(cat:cs.RO OR cat:cs.CV OR cat:cs.AI OR cat:cs.LG OR cat:cs.CL) AND (all:\"vision-language navigation\" OR all:\"vision language navigation\" OR all:VLN OR all:ObjectNav OR all:\"object-goal\" OR all:\"object goal\" OR ((ti:navigation OR abs:navigation) AND (all:agent OR all:memory OR all:feedback OR all:harness OR all:reflection)) OR all:\"spatial memory\" OR all:\"episodic memory\" OR all:\"mobile manipulation\" OR all:\"mobile manipulator\" OR all:quadruped OR all:\"whole-body\" OR all:\"whole body\" OR all:\"end-effector\" OR all:\"end effector\" OR all:\"vision-language-action\" OR all:\"vision language action\" OR all:\"world-action model\" OR all:\"world action model\" OR ((all:VLA OR all:MoE OR all:\"mixture of experts\" OR all:\"mixture-of-experts\" OR all:\"world model\" OR all:\"world models\") AND (all:robot OR all:robotic OR all:robotics OR all:manipulation OR all:navigation OR all:embodied)))",
+    "rule_version": "2026-09-30.3"
+  },
+  "counts": {
+    "source_seven_day_candidates": 164,
+    "window_candidates": 17,
+    "new": 9,
+    "revisions": 8,
+    "selected_new": 4,
+    "selected_revisions": 1,
+    "complete_abstracts_checked_for_selection": 17
+  },
+  "coverage_note": "七天来源查询已扫描到窗口起点之前，未触及分页或展示上限；本页仅纳入其最近24小时按 updated_at 匹配的17条候选。查询类别与关键词之外的论文，以及索引延迟或规则漏检，不在完整覆盖承诺内。",
+  "overview": "本窗口可围绕一个共同问题并读：机器人策略怎样把记忆、预测与训练监督接到可靠的动作执行。17 条候选中有 9 篇首版和 8 篇修订，已核对全部完整官方摘要；四条主线分别看事件/进度记忆、WAM 表示与计算分配、带局部限制或外载的全身控制，以及 VLA 的数据和动作表示。软体形状控制、四足稀疏专家与跨场景 agent 综述作为补充背景保留，未强行并入主线。以下是窗口内编辑归纳，并非全领域趋势或方法优劣结论。",
+  "new_papers": [
+    {
+      "arxiv_version": 1,
+      "versioned_id": "2611.14488v1",
+      "title": "Is Your Robot's Memory Just a Clock? Temporal Shortcuts in Memory-Augmented VLA Policies",
+      "authors": [
+        "Chubin Zhang",
+        "Bo An"
+      ],
+      "first_submitted_at": "2026-11-10T18:47:57Z",
+      "updated_at": "2026-11-10T18:47:57Z",
+      "change_type": "new",
+      "source_url": "https://arxiv.org/abs/2611.14488",
+      "version_url": "https://arxiv.org/abs/2611.14488v1",
+      "arxiv_id": "2611.14488",
+      "short_title": "记忆是否只在看时钟",
+      "problem": "暂停等无效事件可能被按时间采样的记忆误认成任务进度。",
+      "author_proposal": "作者通过暂停和时间戳干预定位时间捷径，并报告按事件建立记忆可免重训恢复部分计数任务损失。",
+      "relevance": "适合先核对长任务记忆如何区分事件、等待与真实进度。",
+      "evidence_limit": "仅核对固定版本的完整官方摘要，未读全文、代码或独立核验实验。摘要中的效果为作者主张；不同版本未作对比。",
+      "focus_tags": [
+        "spatial_episodic_memory",
+        "robot_vla"
+      ],
+      "evidence_level": "abstract_only",
+      "author_proposal_attribution": "author_claim",
+      "relevance_attribution": "curator_inference",
+      "evidence": {
+        "level": "primary_complete_abstract",
+        "label": "固定版本官方 API 完整摘要",
+        "source_type": "arxiv_api_atom",
+        "source_url": "https://arxiv.org/abs/2611.14488v1",
+        "retrieved_at": "2026-11-11T08:42:53Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "abstract_chars": 1585,
+        "abstract_sha256": "4d467d5507b52e966b94af1c4960547710f4bfbb83ae91e3a21588f25f23c0b8"
+      },
+      "curated_catalog_overlap": {
+        "already_present": false,
+        "catalog_id": null
+      }
+    },
+    {
+      "arxiv_version": 1,
+      "versioned_id": "2611.14365v1",
+      "title": "From Video Frames to Robot Meta-Frames: A Unified Latent Interface for World Action Models",
+      "authors": [
+        "Guoqiang Liang",
+        "Yiqi Lin",
+        "Yanzhe Chen",
+        "Kevin Yuchen Ma",
+        "Mike Zheng Shou"
+      ],
+      "first_submitted_at": "2026-11-10T17:21:37Z",
+      "updated_at": "2026-11-10T17:21:37Z",
+      "change_type": "new",
+      "source_url": "https://arxiv.org/abs/2611.14365",
+      "version_url": "https://arxiv.org/abs/2611.14365v1",
+      "arxiv_id": "2611.14365",
+      "short_title": "MetaWAM：机器人信号的潜空间接口",
+      "problem": "低维机器人信号进入视频模型时，编码形式可能偏离预训练去噪器的分布先验。",
+      "author_proposal": "作者用频域分带和逆 DCT 把多种信号装入单个 meta-frame，使其可解码并共用策略、世界模型和价值预测接口。",
+      "relevance": "可用于思考 world model 与机器人状态/动作接口，而非仅比较生成画面质量。",
+      "evidence_limit": "仅核对固定版本的完整官方摘要，未读全文、代码或独立核验实验。摘要中的效果为作者主张；不同版本未作对比。",
+      "focus_tags": [
+        "robot_world_models"
+      ],
+      "evidence_level": "abstract_only",
+      "author_proposal_attribution": "author_claim",
+      "relevance_attribution": "curator_inference",
+      "evidence": {
+        "level": "primary_complete_abstract",
+        "label": "固定版本官方 API 完整摘要",
+        "source_type": "arxiv_api_atom",
+        "source_url": "https://arxiv.org/abs/2611.14365v1",
+        "retrieved_at": "2026-11-11T08:42:53Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "abstract_chars": 1715,
+        "abstract_sha256": "f605cef3e4eae920ff89c3acb36574cef03ffe45dcbb82bb553d600a028288e1"
+      },
+      "curated_catalog_overlap": {
+        "already_present": false,
+        "catalog_id": null
+      }
+    },
+    {
+      "arxiv_version": 1,
+      "versioned_id": "2611.14049v1",
+      "title": "RedirectMimic: Local Motion Content Redaction for Humanoid Whole-Body Control",
+      "authors": [
+        "Zepeng Wang",
+        "Xiaochuan Shi"
+      ],
+      "first_submitted_at": "2026-11-10T13:15:54Z",
+      "updated_at": "2026-11-10T13:15:54Z",
+      "change_type": "new",
+      "source_url": "https://arxiv.org/abs/2611.14049",
+      "version_url": "https://arxiv.org/abs/2611.14049v1",
+      "arxiv_id": "2611.14049",
+      "short_title": "RedirectMimic：修改局部参考动作",
+      "problem": "继续观察原始参考时，去掉部分跟踪奖励并不能规定替代动作。",
+      "author_proposal": "作者用规则编辑参考指导 PPO 奖励，部署输入输出接口保持不变；摘要报告 G1 仿真的局部手臂编辑结果。",
+      "relevance": "适合与部署时 steering 并读，区分训练目标编辑和测试时控制适配。",
+      "evidence_limit": "仅核对固定版本的完整官方摘要，未读全文、代码或独立核验实验。摘要中的效果为作者主张；不同版本未作对比。",
+      "focus_tags": [
+        "whole_body_control"
+      ],
+      "evidence_level": "abstract_only",
+      "author_proposal_attribution": "author_claim",
+      "relevance_attribution": "curator_inference",
+      "evidence": {
+        "level": "primary_complete_abstract",
+        "label": "固定版本官方 API 完整摘要",
+        "source_type": "arxiv_api_atom",
+        "source_url": "https://arxiv.org/abs/2611.14049v1",
+        "retrieved_at": "2026-11-11T08:42:53Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "abstract_chars": 1411,
+        "abstract_sha256": "de40cd316a88a32a314ac52cecc9d8b42cc56695ac259f3a5d885f4d93438cd7"
+      },
+      "curated_catalog_overlap": {
+        "already_present": false,
+        "catalog_id": null
+      }
+    },
+    {
+      "arxiv_version": 1,
+      "versioned_id": "2611.14092v1",
+      "title": "DexSeed: Expanding Human Hand-Object Interactions into Robot Demonstrations for Dexterous Policy Learning",
+      "authors": [
+        "Huaijin Pi",
+        "Zehong Shen",
+        "Yong Wang",
+        "Kechun Xu",
+        "Changpeng Wang",
+        "Dingkun Wei",
+        "Xueyang Wang",
+        "Wenjia Wang",
+        "Xing Zhu",
+        "Yujun Shen",
+        "Taku Komura"
+      ],
+      "first_submitted_at": "2026-11-10T13:52:18Z",
+      "updated_at": "2026-11-10T13:52:18Z",
+      "change_type": "new",
+      "source_url": "https://arxiv.org/abs/2611.14092",
+      "version_url": "https://arxiv.org/abs/2611.14092v1",
+      "arxiv_id": "2611.14092",
+      "short_title": "DexSeed：从人手交互生成示范",
+      "problem": "灵巧 VLA 需要覆盖对象与位置变化、且在机器人物理约束下可执行的示范。",
+      "author_proposal": "作者结合交互重定向、手臂轨迹增广与手指强化学习，生成带渲染观测的成功仿真轨迹以微调 VLA。",
+      "relevance": "适合检查数据生成如何同时保持抓握关系与全臂可执行性。",
+      "evidence_limit": "仅核对固定版本的完整官方摘要，未读全文、代码或独立核验实验。摘要中的效果为作者主张；不同版本未作对比。",
+      "focus_tags": [
+        "robot_vla"
+      ],
+      "evidence_level": "abstract_only",
+      "author_proposal_attribution": "author_claim",
+      "relevance_attribution": "curator_inference",
+      "evidence": {
+        "level": "primary_complete_abstract",
+        "label": "固定版本官方 API 完整摘要",
+        "source_type": "arxiv_api_atom",
+        "source_url": "https://arxiv.org/abs/2611.14092v1",
+        "retrieved_at": "2026-11-11T08:42:53Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "abstract_chars": 1735,
+        "abstract_sha256": "6c1ccfb4c015f14b0bf555b6adff7e8bc992ccfb1a5b35c147b54996f03c5f86"
+      },
+      "curated_catalog_overlap": {
+        "already_present": false,
+        "catalog_id": null
+      }
+    }
+  ],
+  "revised_papers": [
+    {
+      "arxiv_version": 2,
+      "versioned_id": "2610.41354v2",
+      "title": "OneSteer: Unlocking Steerable General Humanoid Motion Tracking via One-Step Diffusion Whole-Body Control",
+      "authors": [
+        "Yifei Huang",
+        "Yazhao Yang",
+        "Weijia Li",
+        "Zhiheng Ma",
+        "Dian Shen"
+      ],
+      "first_submitted_at": "2026-10-30T07:16:01Z",
+      "updated_at": "2026-11-10T16:32:34Z",
+      "change_type": "revision",
+      "source_url": "https://arxiv.org/abs/2610.41354",
+      "version_url": "https://arxiv.org/abs/2610.41354v2",
+      "arxiv_id": "2610.41354",
+      "short_title": "OneSteer：保留参考下的部署时 steering",
+      "problem": "新的部署目标可能要求只放松部分参考动作，同时继续跟踪其余部分。",
+      "author_proposal": "作者用身体组掩码和任务代价优化冻结扩散控制器的输入噪声，通过预测状态-动作计划连接目标优化和反馈执行。",
+      "relevance": "可与局部动作编辑及全身避障一起阅读；这里报告 v2 内容，不声称这些功能本次才新增。",
+      "evidence_limit": "仅核对固定版本的完整官方摘要，未读全文、代码或独立核验实验。摘要中的效果为作者主张；不同版本未作对比。",
+      "focus_tags": [
+        "whole_body_control"
+      ],
+      "evidence_level": "abstract_only",
+      "author_proposal_attribution": "author_claim",
+      "relevance_attribution": "curator_inference",
+      "evidence": {
+        "level": "primary_complete_abstract",
+        "label": "固定版本官方 API 完整摘要",
+        "source_type": "arxiv_api_atom",
+        "source_url": "https://arxiv.org/abs/2610.41354v2",
+        "retrieved_at": "2026-11-11T08:42:53Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "abstract_chars": 1570,
+        "abstract_sha256": "1800400cb4c9e4cc6c687fd852a20bbc47f4c0f947d3c6bca441e276c8ee7a92"
+      },
+      "curated_catalog_overlap": {
+        "already_present": false,
+        "catalog_id": null
+      },
+      "revision_comparison": {
+        "performed": false,
+        "changes_verified": []
+      }
+    }
+  ],
+  "reading_priority": [
+    {
+      "audience": "长任务记忆与 world models",
+      "arxiv_ids": [
+        "2611.14488",
+        "2611.14365"
+      ],
+      "text": "先对照任务进度是否被正确表达，以及机器人信号如何进入预测模型；两篇处理不同层次，不是直接性能比较。"
+    },
+    {
+      "audience": "全身控制与灵巧操作",
+      "arxiv_ids": [
+        "2611.14049",
+        "2610.41354",
+        "2611.14092"
+      ],
+      "text": "区分训练时参考编辑、部署时 steering 和示范生成，再核对各自的动力学与实验条件。"
+    }
+  ],
+  "evidence_note": "17份固定版本完整摘要均来自官方 arXiv API，本期选读与总览各自核查范围均为这17份。Unicode空白归一为单个ASCII空格并trim后，以UTF-8计算字符数与SHA-256；公开文件不包含完整原始摘要。",
+  "limitations": [
+    "只覆盖声明的 arXiv 类别、查询词及 UTC 更新时间窗口；完整覆盖查询不代表穷尽相关文献。",
+    "九个标签由原始 matched_topics 重算，多标签重叠，计数不可相加；关键词可能误分漏分，零命中不证明该方向没有研究。",
+    "首版与修订只表示当前 arXiv 版本状态，不代表创新性、同行评审、正式发表或首次被本站发现。",
+    "所有归纳仅基于完整摘要，全文、代码、版本差异和实验均未核验；作者报告与编辑归纳不能视为独立验证。",
+    "没有跨期比较，不据单日样本推断增长趋势、全领域共识或方法排名。正式精读仍优先会议或期刊版本。"
+  ],
+  "candidate_ids": [
+    "2611.14488v1",
+    "2611.14365v1",
+    "2610.41354v2",
+    "2508.01415v9",
+    "2611.14257v1",
+    "2611.14256v1",
+    "2611.08577v2",
+    "2611.09672v2",
+    "2611.14092v1",
+    "2611.14049v1",
+    "2611.14048v1",
+    "2611.06625v2",
+    "2611.13929v1",
+    "2607.04171v5",
+    "2604.19344v2",
+    "2611.13818v1",
+    "2611.06447v2"
+  ],
+  "research_overview": {
+    "headline": "从任务进度到动作执行：检查机器人策略的中间环节",
+    "executive_summary": "本窗口可围绕一个共同问题并读：机器人策略怎样把记忆、预测与训练监督接到可靠的动作执行。17 条候选中有 9 篇首版和 8 篇修订，已核对全部完整官方摘要；四条主线分别看事件/进度记忆、WAM 表示与计算分配、带局部限制或外载的全身控制，以及 VLA 的数据和动作表示。软体形状控制、四足稀疏专家与跨场景 agent 综述作为补充背景保留，未强行并入主线。以下是窗口内编辑归纳，并非全领域趋势或方法优劣结论。",
+    "coverage": {
+      "candidate_metadata_screened": 17,
+      "complete_abstracts_checked": 17,
+      "full_papers_read": 0,
+      "revision_diffs_checked": 0,
+      "comparison_window_available": false,
+      "topic_count_method": "existing_title_abstract_keyword_heuristic_multilabel",
+      "count_denominator": 17
+    },
+    "topic_distribution": [
+      {
+        "topic": "vln_objectnav",
+        "label": "VLN / ObjectNav",
+        "count": 0,
+        "new": 0,
+        "revisions": 0,
+        "candidate_ids": []
+      },
+      {
+        "topic": "navigation_agents",
+        "label": "Navigation agents / harnesses",
+        "count": 2,
+        "new": 2,
+        "revisions": 0,
+        "candidate_ids": [
+          "2611.14256v1",
+          "2611.13929v1"
+        ]
+      },
+      {
+        "topic": "spatial_episodic_memory",
+        "label": "Spatial / episodic memory and feedback",
+        "count": 2,
+        "new": 1,
+        "revisions": 1,
+        "candidate_ids": [
+          "2611.14488v1",
+          "2508.01415v9"
+        ]
+      },
+      {
+        "topic": "mobile_manipulation",
+        "label": "Quadruped-arm / mobile manipulation",
+        "count": 2,
+        "new": 2,
+        "revisions": 0,
+        "candidate_ids": [
+          "2611.13929v1",
+          "2611.13818v1"
+        ]
+      },
+      {
+        "topic": "whole_body_control",
+        "label": "Whole-body control",
+        "count": 2,
+        "new": 1,
+        "revisions": 1,
+        "candidate_ids": [
+          "2610.41354v2",
+          "2611.14049v1"
+        ]
+      },
+      {
+        "topic": "end_effector_trajectories",
+        "label": "End-effector trajectories",
+        "count": 2,
+        "new": 0,
+        "revisions": 2,
+        "candidate_ids": [
+          "2611.08577v2",
+          "2611.06625v2"
+        ]
+      },
+      {
+        "topic": "robot_vla",
+        "label": "Robot VLA",
+        "count": 6,
+        "new": 2,
+        "revisions": 4,
+        "candidate_ids": [
+          "2611.14488v1",
+          "2611.08577v2",
+          "2611.09672v2",
+          "2611.14092v1",
+          "2607.04171v5",
+          "2611.06447v2"
+        ]
+      },
+      {
+        "topic": "robot_moe",
+        "label": "Robot mixture-of-experts",
+        "count": 1,
+        "new": 0,
+        "revisions": 1,
+        "candidate_ids": [
+          "2604.19344v2"
+        ]
+      },
+      {
+        "topic": "robot_world_models",
+        "label": "Robot world models",
+        "count": 3,
+        "new": 3,
+        "revisions": 0,
+        "candidate_ids": [
+          "2611.14365v1",
+          "2611.14257v1",
+          "2611.14048v1"
+        ]
+      }
+    ],
+    "themes": [
+      {
+        "id": "memory-progress",
+        "title": "记忆与进度：区分时间流逝、事件发生与任务恢复",
+        "summary": "三篇摘要可以围绕“系统如何知道任务做到哪里”并读：一篇诊断记忆的时间捷径，一篇组织异质记忆，一篇把任务事件用于恢复与重规划。它们处理的层次不同，不能互作性能排名。",
+        "shared_problem": "长任务中的暂停、状态变化与重复尝试，会使固定时间索引或缺乏组织的历史记录难以支持下一步决策。",
+        "method_routes": [
+          {
+            "text": "作者用暂停、手腕无效运动和时间戳缩放诊断 RoboMME 计数任务中的“虚假进度”，并报告按事件索引记忆可在不重训的情况下恢复部分损失；这不是对所有记忆策略的普遍结论。",
+            "evidence_ids": [
+              "2611.14488v1"
+            ]
+          },
+          {
+            "text": "RoboMemory 作者把时间、空间、语义和情节记忆结合起来，用动态空间知识图支持记忆更新与长时规划；摘要报告 EmbodiedBench 和重复任务尝试中的观察。",
+            "evidence_ids": [
+              "2508.01415v9"
+            ]
+          },
+          {
+            "text": "MR0 作者描述事件驱动的任务记录、进度或可行性变化时的计划重评，以及跨任务检索和条件满足后的恢复；其主体是固定底座桌面操作。",
+            "evidence_ids": [
+              "2611.08577v2"
+            ]
+          }
+        ],
+        "open_question": "继续读全文时，应分别核对事件定义、记忆更新/检索成本、暂停干预和任务恢复的实验覆盖。对导航与长时操作的相关性是编辑判断，不能由桌面任务直接推得移动导航效果。",
+        "evidence_ids": [
+          "2611.14488v1",
+          "2508.01415v9",
+          "2611.08577v2"
+        ],
+        "related_topics": [
+          "spatial_episodic_memory",
+          "robot_vla"
+        ],
+        "attribution": "curator_synthesis",
+        "comparison_scope": "within_window_no_temporal_trend"
+      },
+      {
+        "id": "world-action-interface",
+        "title": "世界动作模型：表示接口、计算预算与执行反馈",
+        "summary": "本窗口的 WAM 工作可按三个衔接点阅读：机器人信号如何进入视频潜空间、未来预测分配多少计算、预测如何服务当前动作及进度判断。系统方案还展示了推理预算下的组合取舍。",
+        "shared_problem": "视频生成先验、局部交互信息和闭环控制并非天然对齐；预测更丰富也不自动意味着动作更可靠或时延更低。",
+        "method_routes": [
+          {
+            "text": "MetaWAM 作者把本体状态、动作和价值等信号分配到互不重叠的频域通道，经逆 DCT 形成一个可解码 meta-frame，以匹配预训练视频去噪器的先验。",
+            "evidence_ids": [
+              "2611.14365v1"
+            ]
+          },
+          {
+            "text": "Elastic-WAM 作者学习时空细化需求场，决定未来世界预测何时停止、每次去噪推进多远以及刷新哪些区域，把计算分配与动作需求相联系。",
+            "evidence_ids": [
+              "2611.14257v1"
+            ]
+          },
+          {
+            "text": "LaST0.5 作者在世界与动作模块之间加入受视觉交互线索监督的潜在专家，联合预测未来表示与进度值，并利用进度一致性调整动作执行、触发未来重采样。",
+            "evidence_ids": [
+              "2611.14048v1"
+            ]
+          },
+          {
+            "text": "BEHAVIOR 方案作者在 Cosmos 3 上组合视觉历史、进度估计和任务/技能 LoRA 路由，并明确称为满足推理速率约束没有使用 RSI 或 agentic harness；这里不能把模型路由等同于导航代理。",
+            "evidence_ids": [
+              "2611.13818v1"
+            ]
+          }
+        ],
+        "open_question": "面向移动操作与相关 world models，可进一步核对闭环时延的硬件和批量口径、进度误判后的行为、交互表征的消融及任务迁移范围。摘要中的成功率和榜单结果均为作者报告，尚未独立核验。",
+        "evidence_ids": [
+          "2611.14365v1",
+          "2611.14257v1",
+          "2611.14048v1",
+          "2611.13818v1"
+        ],
+        "related_topics": [
+          "robot_world_models",
+          "mobile_manipulation"
+        ],
+        "attribution": "curator_synthesis",
+        "comparison_scope": "within_window_no_temporal_trend"
+      },
+      {
+        "id": "whole-body-constraints",
+        "title": "全身控制：改变局部动作与补偿非对称负载",
+        "summary": "OneSteer 与 RedirectMimic 都在保留部分参考动作时改变局部行为，但前者在部署时优化输入噪声，后者在训练时用编辑后的目标；ReACT 则关注外载导致的速度跟踪偏差。",
+        "shared_problem": "人形机器人在动作限制、环境障碍或单侧持物下，需要同时保持任务相关行为与身体稳定。其中，局部动作替换仅删除相应跟踪奖励仍不足以指定替代行为。",
+        "method_routes": [
+          {
+            "text": "OneSteer 作者用冻结的一步扩散控制器、身体组参考掩码和可微任务代价优化输入噪声；摘要分别报告仿真 steering 与 G1 名义跟踪、低杆和跨障尝试。",
+            "evidence_ids": [
+              "2610.41354v2"
+            ]
+          },
+          {
+            "text": "RedirectMimic 作者让策略继续观察原始参考，但用规则编辑的参考计算 PPO 跟踪奖励；摘要中的手臂姿态/速度编辑评估限于 Unitree G1 仿真。",
+            "evidence_ids": [
+              "2611.14049v1"
+            ]
+          },
+          {
+            "text": "ReACT 作者用估计外力/力矩调制策略特征，并比较同速度指令下有载与无载的跟踪一致性；这里的 reflection 指观测反射下的动作对应关系，并非代理的语言自我反思。",
+            "evidence_ids": [
+              "2611.13929v1"
+            ]
+          }
+        ],
+        "open_question": "对全身控制和移动搬运，应核对局部修改是否损伤未修改动作、外力估计误差和负载范围、控制频率与失败案例。不能把仿真编辑结果外推为实机安全保证，也未验证这些方法对足臂平台的迁移。",
+        "evidence_ids": [
+          "2610.41354v2",
+          "2611.14049v1",
+          "2611.13929v1"
+        ],
+        "related_topics": [
+          "whole_body_control",
+          "mobile_manipulation"
+        ],
+        "attribution": "curator_synthesis",
+        "comparison_scope": "within_window_no_temporal_trend"
+      },
+      {
+        "id": "vla-supervision-actions",
+        "title": "VLA：让数据、感知监督与动作表示相互对应",
+        "summary": "这组摘要分别从可执行示范、任务区域监督、小模型训练和动作连续性入手。它们可以帮助拆开“策略更好”究竟来自数据、表征还是动作头，当前证据不支持彼此排名。",
+        "shared_problem": "操作策略既需要覆盖对象与位置变化的数据，也需要抓住真正相关的视觉线索，并把训练信号转为可执行的连续动作。",
+        "method_routes": [
+          {
+            "text": "DexSeed 作者从人手-物体交互扩展示范：重定向与手臂轨迹增广保持局部抓握关系，手指 RL 策略与手臂跟踪在物理仿真中生成成功轨迹，再以渲染观测和动作微调 VLA。",
+            "evidence_ids": [
+              "2611.14092v1"
+            ]
+          },
+          {
+            "text": "A³-VLA 作者从交互引起的视觉变化产生候选区域，再用分割模型离线精化，结合注意力分配与区域-语言对比损失提供任务相关感知监督。",
+            "evidence_ids": [
+              "2611.06447v2"
+            ]
+          },
+          {
+            "text": "XS-VLA 作者先用教师派生的区域标签初始化表征，再以示范潜变量条件化动作空间的流学习；部署时去掉教师与后验编码器。",
+            "evidence_ids": [
+              "2607.04171v5"
+            ]
+          },
+          {
+            "text": "ODEAction 作者用学习的 Action Transition Field 定义动作演化 ODE，从当前动作出发数值求解后续动作，作为可替换的动作头避免独立动作块边界问题。",
+            "evidence_ids": [
+              "2611.09672v2"
+            ]
+          }
+        ],
+        "open_question": "继续核对合成数据覆盖和筛选比例、额外监督成本、相同数据/算力下的消融，以及连续性改善是否伴随闭环响应或求解成本变化。这是与 VLA 和操作控制有关的窗口内对照，未读代码或复现实验。",
+        "evidence_ids": [
+          "2611.14092v1",
+          "2611.06447v2",
+          "2607.04171v5",
+          "2611.09672v2"
+        ],
+        "related_topics": [
+          "robot_vla",
+          "end_effector_trajectories"
+        ],
+        "attribution": "curator_synthesis",
+        "comparison_scope": "within_window_no_temporal_trend"
+      }
+    ],
+    "evidence_sources": [
+      {
+        "versioned_id": "2611.14488v1",
+        "version_url": "https://arxiv.org/abs/2611.14488v1",
+        "source_url": "https://arxiv.org/abs/2611.14488",
+        "title": "Is Your Robot's Memory Just a Clock? Temporal Shortcuts in Memory-Augmented VLA Policies",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-11-11T08:42:53Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1585,
+        "abstract_sha256": "4d467d5507b52e966b94af1c4960547710f4bfbb83ae91e3a21588f25f23c0b8"
+      },
+      {
+        "versioned_id": "2611.14365v1",
+        "version_url": "https://arxiv.org/abs/2611.14365v1",
+        "source_url": "https://arxiv.org/abs/2611.14365",
+        "title": "From Video Frames to Robot Meta-Frames: A Unified Latent Interface for World Action Models",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-11-11T08:42:53Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1715,
+        "abstract_sha256": "f605cef3e4eae920ff89c3acb36574cef03ffe45dcbb82bb553d600a028288e1"
+      },
+      {
+        "versioned_id": "2610.41354v2",
+        "version_url": "https://arxiv.org/abs/2610.41354v2",
+        "source_url": "https://arxiv.org/abs/2610.41354",
+        "title": "OneSteer: Unlocking Steerable General Humanoid Motion Tracking via One-Step Diffusion Whole-Body Control",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-11-11T08:42:53Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1570,
+        "abstract_sha256": "1800400cb4c9e4cc6c687fd852a20bbc47f4c0f947d3c6bca441e276c8ee7a92"
+      },
+      {
+        "versioned_id": "2508.01415v9",
+        "version_url": "https://arxiv.org/abs/2508.01415v9",
+        "source_url": "https://arxiv.org/abs/2508.01415",
+        "title": "RoboMemory: A Brain-inspired Multi-memory Agentic Framework for Interactive Environmental Learning in Physical Embodied Systems",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-11-11T08:42:53Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1257,
+        "abstract_sha256": "ffc31a4bedd808cea8646969fed59f1d2a1f515fa8720cf65edaf5314d8e98ec"
+      },
+      {
+        "versioned_id": "2611.14257v1",
+        "version_url": "https://arxiv.org/abs/2611.14257v1",
+        "source_url": "https://arxiv.org/abs/2611.14257",
+        "title": "Elastic-WAM: Adaptive Spatiotemporal Imagination for Efficient Robot Control",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-11-11T08:42:53Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1221,
+        "abstract_sha256": "2d3edfb1092002d0e29ac09af8cb2052154fcf6def168a1860aa16754a3e171d"
+      },
+      {
+        "versioned_id": "2611.14256v1",
+        "version_url": "https://arxiv.org/abs/2611.14256v1",
+        "source_url": "https://arxiv.org/abs/2611.14256",
+        "title": "A Cross-Scenario Survey and Analysis of Self-Evolving Multimodal Agents",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-11-11T08:42:53Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1421,
+        "abstract_sha256": "85663224835246d3d62adadadd6b963cb9e138f64edc731d006b22d2b4ba0f3c"
+      },
+      {
+        "versioned_id": "2611.08577v2",
+        "version_url": "https://arxiv.org/abs/2611.08577v2",
+        "source_url": "https://arxiv.org/abs/2611.08577",
+        "title": "Meituan-Robotics-0: A Vision-Language-Action Foundation Model for Desktop Manipulation",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-11-11T08:42:53Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1556,
+        "abstract_sha256": "db409e493010d74ea7b022d86632cee6a450a506f7b5d66d352f2e21dcb77f15"
+      },
+      {
+        "versioned_id": "2611.09672v2",
+        "version_url": "https://arxiv.org/abs/2611.09672v2",
+        "source_url": "https://arxiv.org/abs/2611.09672",
+        "title": "ODEAction: From Predicting Chunks to Evolving Actions",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-11-11T08:42:53Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1170,
+        "abstract_sha256": "9f1b79b2445fc7cb32672be666ea538d6140783ae877efef8ddec467f9030abe"
+      },
+      {
+        "versioned_id": "2611.14092v1",
+        "version_url": "https://arxiv.org/abs/2611.14092v1",
+        "source_url": "https://arxiv.org/abs/2611.14092",
+        "title": "DexSeed: Expanding Human Hand-Object Interactions into Robot Demonstrations for Dexterous Policy Learning",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-11-11T08:42:53Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1735,
+        "abstract_sha256": "6c1ccfb4c015f14b0bf555b6adff7e8bc992ccfb1a5b35c147b54996f03c5f86"
+      },
+      {
+        "versioned_id": "2611.14049v1",
+        "version_url": "https://arxiv.org/abs/2611.14049v1",
+        "source_url": "https://arxiv.org/abs/2611.14049",
+        "title": "RedirectMimic: Local Motion Content Redaction for Humanoid Whole-Body Control",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-11-11T08:42:53Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1411,
+        "abstract_sha256": "de40cd316a88a32a314ac52cecc9d8b42cc56695ac259f3a5d885f4d93438cd7"
+      },
+      {
+        "versioned_id": "2611.14048v1",
+        "version_url": "https://arxiv.org/abs/2611.14048v1",
+        "source_url": "https://arxiv.org/abs/2611.14048",
+        "title": "LaST0.5: A Generalist World Action Model with Interaction-Centric Latent Reasoning",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-11-11T08:42:53Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1670,
+        "abstract_sha256": "ab8b0f6c3fe962b7f1f9ba8f2efe4820d36d47eaa178ecb6a49584fa77708be6"
+      },
+      {
+        "versioned_id": "2611.06625v2",
+        "version_url": "https://arxiv.org/abs/2611.06625v2",
+        "source_url": "https://arxiv.org/abs/2611.06625",
+        "title": "Dynamic Shape Control of Soft Trunk Robots",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-11-11T08:42:53Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1446,
+        "abstract_sha256": "40dba226e5eee167bc32bd428acc145a337fdab00d3275ad38397251f1679c72"
+      },
+      {
+        "versioned_id": "2611.13929v1",
+        "version_url": "https://arxiv.org/abs/2611.13929v1",
+        "source_url": "https://arxiv.org/abs/2611.13929",
+        "title": "ReACT: Reflection-Consistent Modulation and Cross-Load Consistency for Humanoid Velocity Tracking Under Asymmetric Loads",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-11-11T08:42:53Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1372,
+        "abstract_sha256": "e084f7ed3390b75a74f77aa36c4c1efa75a1ecf578cdc269cfff384721fab2dc"
+      },
+      {
+        "versioned_id": "2607.04171v5",
+        "version_url": "https://arxiv.org/abs/2607.04171v5",
+        "source_url": "https://arxiv.org/abs/2607.04171",
+        "title": "XS-VLA: Teaching Tiny Vision-Language-Action Models with Spatial Supervision and Demonstration Conditioning",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-11-11T08:42:53Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1125,
+        "abstract_sha256": "757b45978027c81479304389ec5c913b4668be40786e8d52597320c409a0ba9c"
+      },
+      {
+        "versioned_id": "2604.19344v2",
+        "version_url": "https://arxiv.org/abs/2604.19344v2",
+        "source_url": "https://arxiv.org/abs/2604.19344",
+        "title": "Quadruped Agile Locomotion: Sparsely Gated Mixture of Experts with Visual Input",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-11-11T08:42:53Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1299,
+        "abstract_sha256": "adf3303073bd7bac38588468576ff971e51a1e4dc17c215e00c5156a2f58d3a3"
+      },
+      {
+        "versioned_id": "2611.13818v1",
+        "version_url": "https://arxiv.org/abs/2611.13818v1",
+        "source_url": "https://arxiv.org/abs/2611.13818",
+        "title": "WAM is capable in BEHAVIOR-1K: the 2nd-place solution to the 2026 BEHAVIOR Challenge",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-11-11T08:42:53Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1315,
+        "abstract_sha256": "ca86c7b6dc44c10f14a9abd39939533fcab02d61362f9cb782293f44b5787e95"
+      },
+      {
+        "versioned_id": "2611.06447v2",
+        "version_url": "https://arxiv.org/abs/2611.06447v2",
+        "source_url": "https://arxiv.org/abs/2611.06447",
+        "title": "$A^3$-VLA: Automatic Perception-Guided Attention Alignment for Robot Manipulation",
+        "level": "primary_complete_abstract",
+        "source_type": "arxiv_api_atom",
+        "checked_at": "2026-11-11T08:42:53Z",
+        "abstract_complete": true,
+        "full_paper_read": false,
+        "experiments_independently_verified": false,
+        "version_comparison_performed": false,
+        "abstract_chars": 1519,
+        "abstract_sha256": "d7329d4ced4571c0dfbcbb0384a145e78586032cc0f0eb14d76827282d1a573b"
+      }
+    ],
+    "revision_note": "8 条候选是 v2 或更高版本。这里只讨论当前固定版本摘要，没有比较前后版本，因此不把所述能力、结果或实验认定为本次修订新增。",
+    "limitations": [
+      "只覆盖声明的 arXiv 类别、查询词及 UTC 更新时间窗口；完整覆盖查询不代表穷尽相关文献。",
+      "九个标签由原始 matched_topics 重算，多标签重叠，计数不可相加；关键词可能误分漏分，零命中不证明该方向没有研究。",
+      "首版与修订只表示当前 arXiv 版本状态，不代表创新性、同行评审、正式发表或首次被本站发现。",
+      "所有归纳仅基于完整摘要，全文、代码、版本差异和实验均未核验；作者报告与编辑归纳不能视为独立验证。",
+      "没有跨期比较，不据单日样本推断增长趋势、全领域共识或方法排名。正式精读仍优先会议或期刊版本。"
+    ],
+    "candidate_records": [
+      {
+        "versioned_id": "2611.14488v1",
+        "title": "Is Your Robot's Memory Just a Clock? Temporal Shortcuts in Memory-Augmented VLA Policies",
+        "first_submitted_at": "2026-11-10T18:47:57Z",
+        "updated_at": "2026-11-10T18:47:57Z",
+        "change_type": "new",
+        "matched_topics": [
+          "spatial_episodic_memory",
+          "robot_vla"
+        ]
+      },
+      {
+        "versioned_id": "2611.14365v1",
+        "title": "From Video Frames to Robot Meta-Frames: A Unified Latent Interface for World Action Models",
+        "first_submitted_at": "2026-11-10T17:21:37Z",
+        "updated_at": "2026-11-10T17:21:37Z",
+        "change_type": "new",
+        "matched_topics": [
+          "robot_world_models"
+        ]
+      },
+      {
+        "versioned_id": "2610.41354v2",
+        "title": "OneSteer: Unlocking Steerable General Humanoid Motion Tracking via One-Step Diffusion Whole-Body Control",
+        "first_submitted_at": "2026-10-30T07:16:01Z",
+        "updated_at": "2026-11-10T16:32:34Z",
+        "change_type": "revision",
+        "matched_topics": [
+          "whole_body_control"
+        ]
+      },
+      {
+        "versioned_id": "2508.01415v9",
+        "title": "RoboMemory: A Brain-inspired Multi-memory Agentic Framework for Interactive Environmental Learning in Physical Embodied Systems",
+        "first_submitted_at": "2025-08-02T15:39:42Z",
+        "updated_at": "2026-11-10T16:20:24Z",
+        "change_type": "revision",
+        "matched_topics": [
+          "spatial_episodic_memory"
+        ]
+      },
+      {
+        "versioned_id": "2611.14257v1",
+        "title": "Elastic-WAM: Adaptive Spatiotemporal Imagination for Efficient Robot Control",
+        "first_submitted_at": "2026-11-10T16:04:16Z",
+        "updated_at": "2026-11-10T16:04:16Z",
+        "change_type": "new",
+        "matched_topics": [
+          "robot_world_models"
+        ]
+      },
+      {
+        "versioned_id": "2611.14256v1",
+        "title": "A Cross-Scenario Survey and Analysis of Self-Evolving Multimodal Agents",
+        "first_submitted_at": "2026-11-10T16:04:02Z",
+        "updated_at": "2026-11-10T16:04:02Z",
+        "change_type": "new",
+        "matched_topics": [
+          "navigation_agents"
+        ]
+      },
+      {
+        "versioned_id": "2611.08577v2",
+        "title": "Meituan-Robotics-0: A Vision-Language-Action Foundation Model for Desktop Manipulation",
+        "first_submitted_at": "2026-11-05T18:55:42Z",
+        "updated_at": "2026-11-10T14:57:39Z",
+        "change_type": "revision",
+        "matched_topics": [
+          "end_effector_trajectories",
+          "robot_vla"
+        ]
+      },
+      {
+        "versioned_id": "2611.09672v2",
+        "title": "ODEAction: From Predicting Chunks to Evolving Actions",
+        "first_submitted_at": "2026-11-06T16:23:21Z",
+        "updated_at": "2026-11-10T13:53:00Z",
+        "change_type": "revision",
+        "matched_topics": [
+          "robot_vla"
+        ]
+      },
+      {
+        "versioned_id": "2611.14092v1",
+        "title": "DexSeed: Expanding Human Hand-Object Interactions into Robot Demonstrations for Dexterous Policy Learning",
+        "first_submitted_at": "2026-11-10T13:52:18Z",
+        "updated_at": "2026-11-10T13:52:18Z",
+        "change_type": "new",
+        "matched_topics": [
+          "robot_vla"
+        ]
+      },
+      {
+        "versioned_id": "2611.14049v1",
+        "title": "RedirectMimic: Local Motion Content Redaction for Humanoid Whole-Body Control",
+        "first_submitted_at": "2026-11-10T13:15:54Z",
+        "updated_at": "2026-11-10T13:15:54Z",
+        "change_type": "new",
+        "matched_topics": [
+          "whole_body_control"
+        ]
+      },
+      {
+        "versioned_id": "2611.14048v1",
+        "title": "LaST0.5: A Generalist World Action Model with Interaction-Centric Latent Reasoning",
+        "first_submitted_at": "2026-11-10T13:15:11Z",
+        "updated_at": "2026-11-10T13:15:11Z",
+        "change_type": "new",
+        "matched_topics": [
+          "robot_world_models"
+        ]
+      },
+      {
+        "versioned_id": "2611.06625v2",
+        "title": "Dynamic Shape Control of Soft Trunk Robots",
+        "first_submitted_at": "2026-11-04T15:09:19Z",
+        "updated_at": "2026-11-10T11:39:34Z",
+        "change_type": "revision",
+        "matched_topics": [
+          "end_effector_trajectories"
+        ]
+      },
+      {
+        "versioned_id": "2611.13929v1",
+        "title": "ReACT: Reflection-Consistent Modulation and Cross-Load Consistency for Humanoid Velocity Tracking Under Asymmetric Loads",
+        "first_submitted_at": "2026-11-10T11:18:34Z",
+        "updated_at": "2026-11-10T11:18:34Z",
+        "change_type": "new",
+        "matched_topics": [
+          "navigation_agents",
+          "mobile_manipulation"
+        ]
+      },
+      {
+        "versioned_id": "2607.04171v5",
+        "title": "XS-VLA: Teaching Tiny Vision-Language-Action Models with Spatial Supervision and Demonstration Conditioning",
+        "first_submitted_at": "2026-07-05T08:34:39Z",
+        "updated_at": "2026-11-10T11:18:29Z",
+        "change_type": "revision",
+        "matched_topics": [
+          "robot_vla"
+        ]
+      },
+      {
+        "versioned_id": "2604.19344v2",
+        "title": "Quadruped Agile Locomotion: Sparsely Gated Mixture of Experts with Visual Input",
+        "first_submitted_at": "2026-04-21T11:27:13Z",
+        "updated_at": "2026-11-10T10:50:25Z",
+        "change_type": "revision",
+        "matched_topics": [
+          "robot_moe"
+        ]
+      },
+      {
+        "versioned_id": "2611.13818v1",
+        "title": "WAM is capable in BEHAVIOR-1K: the 2nd-place solution to the 2026 BEHAVIOR Challenge",
+        "first_submitted_at": "2026-11-10T09:46:02Z",
+        "updated_at": "2026-11-10T09:46:02Z",
+        "change_type": "new",
+        "matched_topics": [
+          "mobile_manipulation"
+        ]
+      },
+      {
+        "versioned_id": "2611.06447v2",
+        "title": "$A^3$-VLA: Automatic Perception-Guided Attention Alignment for Robot Manipulation",
+        "first_submitted_at": "2026-11-04T12:50:54Z",
+        "updated_at": "2026-11-10T08:47:47Z",
+        "change_type": "revision",
+        "matched_topics": [
+          "robot_vla"
+        ]
+      }
+    ],
+    "keyword_caveats": [
+      {
+        "versioned_id": "2611.14256v1",
+        "topic": "navigation_agents",
+        "issue": "false_positive",
+        "explanation": "完整摘要是跨多模态推理、生成、GUI/Web 导航与具身操作的自演化机制综述；导航词并不证明这是一篇物理机器人导航代理方法。原始标签保留。",
+        "evidence_basis": "complete_abstract"
+      },
+      {
+        "versioned_id": "2611.13929v1",
+        "topic": "navigation_agents",
+        "issue": "false_positive",
+        "explanation": "论文研究持物外载下的速度跟踪。reflection 指观测反射下的动作对应关系，并非代理自我反思或 harness；导航任务是控制器应用背景。原始标签保留。",
+        "evidence_basis": "complete_abstract"
+      },
+      {
+        "versioned_id": "2611.13818v1",
+        "topic": "robot_world_models",
+        "issue": "missed_match",
+        "explanation": "完整摘要明确描述基于 world action model Cosmos 3 的移动操作系统，但现有关键词聚焦规则未保留 world-model 标签。此处仅提示漏标，不修改采集快照。",
+        "evidence_basis": "complete_abstract"
+      }
+    ]
+  }
+}
