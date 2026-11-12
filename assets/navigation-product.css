@@ -982,6 +982,12 @@ html:has(#navigation-product[data-load-state=ready]), body:has(#navigation-produ
 #navigation-product #np-detail-scroll .np-scientific-changes h3, #navigation-product #np-detail-scroll .np-scientific-changes article strong {font-size:15px;}
 #navigation-product .np-reader-heading>#np-task-route-return {float:right;width:auto;margin:0 0 5px 10px;padding:3px 7px;min-height:28px;font-size:15px;line-height:1.45;letter-spacing:normal;}
 @media (min-width:1200px) {
+/* The landing has no tree tabs: do not reserve their empty second toolbar row. */
+#navigation-product[data-reading-home=true] .np-global-start {padding:4px 0;min-height:36px;margin:0;}
+#navigation-product[data-reading-home=true] .np-workspace:not(:fullscreen) {height:var(--np-home-workspace-height,calc(100dvh - var(--site-header-height,64px) - 52px));}
+#navigation-product[data-reading-home=true] .np-workspace-bar {display:flex;flex-wrap:nowrap;flex:0 0 auto;height:auto;min-height:40px;padding:0 0 6px;gap:8px;}
+#navigation-product[data-reading-home=true] .np-global-context {flex:1 1 auto;min-width:0;}
+#navigation-product[data-reading-home=true] .np-origin-trail {width:auto;flex:0 1 auto;}
 #navigation-product[data-reading-home=true] #np-graph-fullscreen {grid-row:1;}
 .np-overview-map-toolbar {z-index:20;gap:16px;border:0;align-items:center;position:relative;height:auto;min-height:40px;padding:0 0 12px;margin-bottom:8px;flex-wrap:wrap;border-bottom:1px solid #e2e6e2;}
 .np-overview-map-toolbar>details[open] {position:absolute;left:0;right:auto;width:min(1060px,calc(100vw - 64px));overflow:auto;z-index:25;box-shadow:0 12px 40px #20343f25;top:40px;max-height:calc(100dvh - 240px);}
