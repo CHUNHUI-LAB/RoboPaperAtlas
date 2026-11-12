@@ -1362,6 +1362,35 @@ function originalRelation(id) {
   assert.ok(row, 'relation belongs to frozen science: ' + id);
   return row;
 }
+function assertOriginalLocatorDisplay(x, row, source) {
+  const originals = source.detail.locators;
+  const paragraphs = [...row.querySelectorAll('p[data-task-relation-locator-index]')];
+  assert.equal(paragraphs.length, originals.length, 'one visible paragraph per original locator');
+  const fixture88 = require('./fixtures/navigation_relation_locator.json').find(item => item.name === 'relation88');
+  originals.forEach((loc, index) => {
+    const paragraph = paragraphs[index];
+    assert.equal(paragraph.dataset.taskRelationLocatorIndex, String(index), 'original locator order');
+    assert.equal(paragraph.dataset.taskRelationLocator, loc.locator, 'exact original locator provenance');
+    const expected = loc.locator === fixture88.raw ? fixture88.expected : {text:loc.locator, links:[]};
+    assert.equal(paragraph.textContent, expected.text, 'complete visible locator display');
+    visible(x, paragraph);
+    // Only visible text and flat anchors may carry the copy. Hidden raw-text
+    // suffixes cannot substitute for the provenance or visible display checks.
+    for (const child of paragraph.childNodes) {
+      assert.ok(child.nodeType === 3 || child.nodeType === 1 && child.tagName === 'A', 'only text or source anchors');
+      if (child.nodeType === 1) {
+        visible(x, child);
+        assert.equal(child.children.length, 0, 'no hidden nested link copy');
+        assert.notEqual(child.getAttribute('aria-hidden'), 'true');
+      }
+    }
+    assert.deepEqual([...paragraph.querySelectorAll('a')].map(anchor => ({
+      text:anchor.textContent, url:anchor.getAttribute('href'),
+      target:anchor.getAttribute('target'), rel:anchor.getAttribute('rel')
+    })), expected.links, 'original URL, visible label and safe external-link attributes');
+    if (loc.version) assert.ok(row.textContent.includes(loc.version), source.id + ': original source version');
+  });
+}
 function relationPath(x, id) {
   const paths = map(x).querySelectorAll('path[data-map-relation="' + id + '"]');
   assert.equal(paths.length, 1, 'one actual graph path per original relation');
@@ -1578,9 +1607,26 @@ test('click and Enter on every typed graph edge expose its exact source while pr
       const row = x.d.querySelector('#np-overview-relation-panel [data-task-relation="' + id + '"]');
       assert.ok(row);
       assert.ok(row === x.d.activeElement || row.contains(x.d.activeElement) || x.w.__scrollTargets.some(target => target === row || row.contains(target)), id + ': source action locates the exact relation, not only the shared disclosure');
-      for (const loc of source.detail.locators) {
-        assert.ok(row.textContent.includes(loc.locator), id + ': original source locator');
-        if (loc.version) assert.ok(row.textContent.includes(loc.version), id + ': original source version');
+      assertOriginalLocatorDisplay(x, row, source);
+      if (id === 'tasks:relation:88' && action === 'click') {
+        // Mutations use detached clones: never alter production state or science.
+        const corruptions = [
+          p => p.dataset.taskRelationLocator = 'wrong original locator',
+          p => p.dataset.taskRelationLocatorIndex = '99',
+          p => p.querySelector('a').setAttribute('href', 'javascript:alert(1)'),
+          p => p.querySelector('a').setAttribute('target', '_self'),
+          p => p.querySelector('a').setAttribute('rel', 'opener'),
+          p => p.firstChild.textContent = 'missing scientific qualifier',
+          p => p.hidden = true,
+          p => p.querySelector('a').hidden = true,
+          p => p.querySelector('a').remove(),
+        ];
+        for (const corrupt of corruptions) {
+          const clone = row.cloneNode(true);
+          assertOriginalLocatorDisplay(x, clone, source);
+          corrupt(clone.querySelector('p[data-task-relation-locator-index]'));
+          assert.throws(() => assertOriginalLocatorDisplay(x, clone, source), {name:'AssertionError'});
+        }
       }
       assert.equal(row.dataset.fromEntity, source.from);
       assert.equal(row.dataset.toEntity, source.to);

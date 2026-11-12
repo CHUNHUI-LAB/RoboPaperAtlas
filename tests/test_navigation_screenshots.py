@@ -14,6 +14,75 @@ MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
 
 
+def separate_disclosure_save_sites(case, tree):
+    """Prove only the additive audit's exact checkpoints before testing old counts."""
+    import ast
+    helper = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'disclosure_bounds_checks')
+    def count(node):
+        return len([n for n in ast.walk(node) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save'])
+    nested = {n.name: count(n) for n in helper.body if isinstance(n, ast.FunctionDef)}
+    case.assertEqual(nested, {'snapshot': 0, 'action': 3, 'key': 0, 'wheel_to': 0, 'proof': 1})
+    case.assertEqual(count(helper), 9)
+    case.assertEqual(count(helper) - sum(nested.values()), 5)
+    tree.body.remove(helper)
+
+
+def chrome_text_fixture(text, font, area, foreground, background):
+    import copy
+    fragment = dict(area, visible=True)
+    return dict(text=text, renderedText=text, rect=copy.deepcopy(area), visible=True, opaque=True, unscaled=True, clipped=False,
+                fontSize=font, foreground=foreground, background=background, clipAreas=[], fragments=[fragment],
+                textRuns=[dict(text=text, fontSize=font, foreground=foreground, background=background, opaque=True, unscaled=True,
+                               clipAreas=[], fragments=[copy.deepcopy(fragment)])])
+
+
+def desktop_chrome_fixture(width=1440, height=900, top=132, bottom_padding=16, route=None, home=False):
+    """Independent synthetic DOM frames, not an assertion of browser pixels."""
+    import copy
+    def frame(selector, x, y, w, h, **values):
+        area = dict(x=x, y=y, width=w, height=h)
+        return dict(selector=selector, count=1, rect=area, clientRect=copy.deepcopy(area),
+                    position='relative', display='block', opaque=True, unscaled=True, top=0, left=0,
+                    marginTop=0, marginBottom=0, marginLeft=0, marginRight=0, paddingTop=0, paddingBottom=0, paddingLeft=0, paddingRight=0, rowGap=0) | values
+    result = dict(layoutWidth=width, rootClientWidth=width, rootRect=dict(x=0, y=0, width=width, height=height), rootGutter='stable', topology=True,
+                body=frame('body', 0, 0, width, height),
+                header=frame('.site-header', 0, 0, width, 32),
+                app=frame('#navigation-product', 0, 32, width, height - 32, paddingLeft=16, paddingRight=16, paddingBottom=bottom_padding),
+                start=frame('#navigation-product > .np-global-start', 16, 32, width - 32, 24),
+                workspace=frame('#np-workspace', 16, 56, width - 32, height - 56 - bottom_padding),
+                identity=frame('#np-selection-context', 16, 56, width - 32, 20),
+                bar=frame('#np-workspace > .np-workspace-bar', 16, 76, width - 32, top - 76))
+    route = route if route is not None else dict(tree='l')
+    texts = [('当前任务', '原始阅读范围'), ('当前路线', '原始路线'), ('当前论文', '尚未选择'), ('来源版本', '尚未选择')]
+    result['identitySource'] = dict(route=route, scopeId='original-scope', routePositionId=None, atRoot=home, fields=texts)
+    if route.get('tree') == 'g' and route.get('node'):
+        import sys
+        with patch.object(sys, 'path', [str(Path(__file__).parents[1] / 'scripts'), *sys.path]):
+            from navigation_research_map import build_research_map
+            graph = build_research_map(S0FooterCaptureChecks.source())
+        path = []; position = graph['positions'][route['node']]
+        while position:
+            path.insert(0, {key: position.get(key) for key in ('id', 'parentId', 'entityId', 'tree', 'scopeId')})
+            position = graph['positions'].get(position.get('parentId'))
+        result['identitySource'].update(tabSourceSha256=graph['sourceModelSha256'], tabPath=path)
+
+    result['identityFields'] = [dict(tag='DIV', className='np-context-field', children=['DT', 'DD'],
+        label=chrome_text_fixture(label, 11, dict(x=20+i*330, y=58, width=100, height=14), [98,107,103], [250,250,248]),
+        value=chrome_text_fixture(value, 13, dict(x=125+i*330, y=58, width=150, height=17), [23,26,25], [250,250,248])) for i,(label,value) in enumerate(texts)]
+    result['controls'] = []
+    for i,(selector,tag,identity,tree,text,font) in enumerate(MODULE.WORKSPACE_CONTROL_SPECS):
+        hidden = selector=='#np-overview-toggle' and not home
+        fg, bg = [23,26,25], [255,255,255]
+        if tree: fg,bg=([49,92,75],[255,255,255]) if tree==route['tree'] else ([107,122,130],[237,241,236])
+        elif selector=='#np-overview-toggle': fg,bg=[49,92,75],[250,250,248]
+        elif selector=='#np-reading-tools > summary': bg=[250,250,248]
+        proof=chrome_text_fixture(text or ('原全局树图' if home else '回到差异概览'),font,dict(x=20+i*160,y=78,width=155,height=18),fg,bg)
+        proof.update(opaque=not hidden,visible=not hidden)
+        result['controls'].append(dict(selector=selector,count=1,tag=tag,id=identity,tree=tree,hidden=hidden,disabled=False,hover=False,
+                                       selected=str(tree==route['tree']).lower() if tree else None,proof=proof))
+    return result
+
+
 def run_product_capture_script(owner, body, extra):
     """Production desktop DOM contract (1440px default); does not claim layout.
 
@@ -182,6 +251,11 @@ run(start+'<em>wrong sibling</em><span> · 未固定全文快照</span></p></art
         for value in (all_lines, single):
             bad = copy.deepcopy(value); next(e for e in bad['relations'] if e['visible'])['visible'] = False
             with self.assertRaises(RuntimeError): MODULE.check_graphical_map(bad)
+            for mutation in (dict(ownHits=[]), dict(uncovered=False), dict(inBounds=False), dict(endpointsMatch=False),
+                             dict(length=0), dict(length=float('nan')), dict(foreground=[250,250,250]),
+                             dict(type='invented'), dict(to='wrong-target')):
+                bad = copy.deepcopy(value); next(e for e in bad['relations'] if e['visible']).update(mutation)
+                with self.assertRaises(RuntimeError): MODULE.check_graphical_map(bad)
         mutations = [lambda x:x['relationControls'].pop(),lambda x:x.update(selectedRelation='invented'),lambda x:x.__setitem__('mapVisible',False),lambda x:x['nodes'].pop(),
                      lambda x:x['nodes'][0].__setitem__('id','invented'),lambda x:x['nodes'][0].__setitem__('opaque',False),
                      lambda x:x['nodes'][0].__setitem__('unscaled',False),lambda x:x['nodes'][0]['rect'].__setitem__('y',950),
@@ -211,6 +285,8 @@ run(start+'<em>wrong sibling</em><span> · 未固定全文快照</span></p></art
         for kind, proof in zip(('heading', 'locator', 'source', 'status'), data['visibleProofs']):
             proof.update(S0FooterCaptureChecks.proof('原文来源 · s' if kind == 'source' else ' · fixed' if kind == 'status' else 'Section 3', proof['rect']))
             proof.update(kind=kind, sourceRecord=data['sources'][0].copy() if kind in ('source', 'status') else None)
+            if kind == 'locator':
+                proof['locatorRecord'] = dict(index=0, raw='Section 3', links=[])
             if kind == 'source':
                 proof.update(elementTag='A', accessibilitySuffix=dict(tag='SPAN', className='np-sr', text='（新标签页）'), accessibleText=proof['text'] + '（新标签页）')
             proof.update(panelId='np-overview-relation-panel', panelContains=True, relationId='r',
@@ -443,6 +519,230 @@ const root=e.scopes['task:imagenav'].roots[0],target=d.querySelector('[data-path
                 MODULE.wait_for(lambda: False, timeout=1)
         with self.assertRaisesRegex(ValueError, 'failed'):
             MODULE.wait_for(lambda: (_ for _ in ()).throw(ValueError('failed')))
+
+
+class RelationPathSamplingChecks(unittest.TestCase):
+    """Execute the production probe with deterministic SVG geometry/hit stacks.
+
+    These are counterexamples to the sampler, not substituted Chrome evidence.
+    Real browser captures remain the PR job's responsibility.
+    """
+
+    def probe(self, **case):
+        driver = r"""
+const {JSDOM}=require('jsdom'),input=JSON.parse(require('fs').readFileSync(0,'utf8'));
+const dom=new JSDOM('<div id="map"><svg><path id="edge" data-map-relation="tasks:relation:90" data-from-entity="from" data-to-entity="to"></path></svg></div>');
+const d=dom.window.document,m=d.getElementById('map'),svg=m.querySelector('svg'),e=d.getElementById('edge'),c=input.case;
+const identity={a:1,b:0,c:0,d:1,e:0,f:0},matrix=c.matrix||identity;matrix.inverse=()=>{const det=matrix.a*matrix.d-matrix.b*matrix.c;return {a:matrix.d/det,b:-matrix.b/det,c:-matrix.c/det,d:matrix.a/det,e:(matrix.c*matrix.f-matrix.d*matrix.e)/det,f:(matrix.b*matrix.e-matrix.a*matrix.f)/det};};
+global.DOMPoint=class{constructor(x,y){this.x=x;this.y=y;}matrixTransform(a){return {x:this.x*a.a+this.y*a.c+a.e,y:this.x*a.b+this.y*a.d+a.f};}};
+global.innerWidth=1440;global.innerHeight=900;global.document=d;
+global.rect=n=>n.area||{x:0,y:0,width:1440,height:900};
+global.color=()=>({rgb:[60,131,125],alpha:1});global.bg=()=>[255,255,255];
+const style={opacity:'1',strokeOpacity:'1',visibility:'visible',display:'block',stroke:'rgb(60, 131, 125)',strokeWidth:'2',strokeDasharray:'5px, 4px',strokeDashoffset:String(c.offset||0),strokeLinecap:'butt',strokeLinejoin:'miter',vectorEffect:'non-scaling-stroke'};
+global.getComputedStyle=n=>Object.assign({},style,n.customStyle||{});
+function configure(path,points,styleChanges={}){
+  if(c.float32Geometry)points=points.map(p=>p.map(Math.fround));
+  path.points=points;path.customStyle=styleChanges;path.setAttribute('d','M '+points.map(p=>p.join(' ')).join(' L '));path.getScreenCTM=()=>matrix;
+  path.parts=points.slice(1).map((p,i)=>({a:points[i],b:p,len:Math.hypot(p[0]-points[i][0],p[1]-points[i][1])}));
+  path.getTotalLength=()=>{const len=path.parts.reduce((sum,p)=>sum+p.len,0);return c.float32Geometry?Math.fround(len):len;};
+  path.getPointAtLength=arc=>{let pos=c.float32Geometry?Math.fround(arc):arc;for(const p of path.parts){if(pos<=p.len){const q={x:p.a[0]+(p.b[0]-p.a[0])*pos/p.len,y:p.a[1]+(p.b[1]-p.a[1])*pos/p.len};return c.float32Geometry?{x:Math.fround(q.x),y:Math.fround(q.y)}:q;}pos-=p.len;}const p=points.at(-1);return {x:p[0],y:p[1]};};
+  path.nearest=(x,y)=>{let arc=0,best={distance:Infinity};for(const p of path.parts){const dx=p.b[0]-p.a[0],dy=p.b[1]-p.a[1],t=Math.max(0,Math.min(1,((x-p.a[0])*dx+(y-p.a[1])*dy)/(p.len*p.len))),distance=Math.hypot(x-p.a[0]-t*dx,y-p.a[1]-t*dy);if(distance<best.distance)best={distance,arc:arc+t*p.len};arc+=p.len;}return best;};
+  path.isPointInStroke=q=>{
+    if(c.float32Geometry)q={x:Math.fround(q.x),y:Math.fround(q.y)};
+    const s=getComputedStyle(path),dash=s.strokeDasharray==='none'?null:s.strokeDasharray.split(/[ ,]+/).map(parseFloat),period=dash&&dash.reduce((a,b)=>a+b,0),painted=arc=>!dash||((arc+(c.offset||0))%period+period)%period<dash[0];
+    // Unlike nearest-arc approximation, a real stroked corner is the union of
+    // painted segments. These cases use butt caps and the inner miter side.
+    if(c.strokeUnion){let arc=0;for(const p of path.parts){const dx=p.b[0]-p.a[0],dy=p.b[1]-p.a[1],t=((q.x-p.a[0])*dx+(q.y-p.a[1])*dy)/(p.len*p.len),distance=Math.abs((q.x-p.a[0])*dy-(q.y-p.a[1])*dx)/p.len;if(t>=0&&t<=1&&distance<=parseFloat(s.strokeWidth)/2&&painted(arc+t*p.len))return true;arc+=p.len;}return false;}
+    const p=path.nearest(q.x,q.y);return p.distance<=parseFloat(s.strokeWidth)/2+1e-8&&painted(p.arc);
+  };
+}
+configure(e,c.points||[[30,100],[568.421875,100]],c.style||{});
+if(c.rawPath!==undefined)e.setAttribute('d',c.rawPath);
+if(c.pathLength!==undefined)e.setAttribute('pathLength',String(c.pathLength));
+const extras=[];for(const spec of c.crossingPaths||[]){const p=d.createElementNS('http://www.w3.org/2000/svg','path');if(spec.foreign)p.id='foreign-path';else if(spec.parent){p.dataset.mapParent='parent';p.dataset.mapChild='child';}else{p.dataset.mapRelation=spec.id||'tasks:relation:91';p.dataset.fromEntity='other-from';p.dataset.toEntity='other-to';}svg.append(p);configure(p,spec.points,{strokeDasharray:'none',strokeWidth:spec.width||'2'});extras.push(p);}
+const cards=[];for(const spec of c.cards||[]){const n=d.createElement('button');n.dataset.mapPosition=spec.id||'card';if(spec.task)n.dataset.taskOpen=spec.task;n.area=spec.rect;if(spec.hidden)n.customStyle={visibility:'hidden'};m.append(n);cards.push(n);}
+let calls=0,arcs=[];const original=e.getPointAtLength;e.getPointAtLength=arc=>{arcs.push(arc);return original(arc);};
+d.elementsFromPoint=(x,y)=>{
+  if(c.float32HitTest){x=Math.fround(x);y=Math.fround(y);}
+  const q={x:(x-matrix.e)/matrix.a,y:(y-matrix.f)/matrix.d},stack=[];
+  if(!c.pointerlessCards)for(const n of cards){const r=n.area;if(!n.customStyle&&x>=r.x&&x<=r.x+r.width&&y>=r.y&&y<=r.y+r.height)stack.push(n);}
+  for(const p of extras)if(p.isPointInStroke(q))stack.push(p);
+  if(!c.missing&&!c.gapsOnly&&getComputedStyle(e).visibility==='visible'&&getComputedStyle(e).display!=='none'&&e.isPointInStroke(q))stack.push(e);
+  stack.push(c.gapSurface==='map'?m:svg,m);return stack;
+};
+d.elementFromPoint=(x,y)=>{calls++;return d.elementsFromPoint(x,y)[0];};
+const result=new Function('e','m',input.helper+'\n'+input.edge+'\nreturn edge(e);')(e,m);
+console.log(JSON.stringify({result,calls,arcs}));dom.window.close();
+"""
+        edge = next(line.strip() for line in Path(MODULE.__file__).read_text().splitlines() if line.strip().startswith('function edge(e)'))
+        helper = MODULE.RELATION_PATH_SAMPLES_JS
+        if case.pop('legacyCoordinates', False):
+            current = 'var z={x:Math.fround(rawScreen.x),y:Math.fround(rawScreen.y)},localProbe=point(inverse,z.x,z.y)'
+            self.assertIn(current, helper)
+            helper = helper.replace(current, 'var z=rawScreen,localProbe=q', 1)
+        run = subprocess.run(['node', '-e', driver], cwd=Path(__file__).parents[1],
+                             input=json.dumps(dict(helper=helper, edge=edge, case=case)),
+                             text=True, capture_output=True, timeout=30)
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        return json.loads(run.stdout)
+
+    def assert_complete_sampling(self, record):
+        edge = record['result']; proof = edge['sampling']; count = proof['count']
+        self.assertTrue(proof['valid'])
+        self.assertEqual(record['calls'], count)
+        self.assertEqual(sum(proof['counts'].values()), count)
+        self.assertLessEqual(proof['maxScreenStep'], .5)
+        # The endpoint bounds probes precede every evenly spaced interior probe.
+        self.assertEqual(record['arcs'][:2], [0, edge['length']])
+        self.assertEqual(len(record['arcs']), count + 2)
+        for i, arc in enumerate(record['arcs'][2:]):
+            self.assertAlmostEqual(arc, edge['length'] * (i + .5) / count)
+        self.assertAlmostEqual(proof['firstArc'], record['arcs'][2])
+        self.assertAlmostEqual(proof['lastArc'], record['arcs'][-1])
+        self.assertLessEqual(len(edge['ownHits']), proof['diagnosticLimit'])
+        self.assertLessEqual(len(edge['blockedHits']), proof['diagnosticLimit'])
+        self.assertLessEqual(len(edge['crossings']), proof['diagnosticLimit'])
+
+    def test_real_r90_r93_float32_corner_uses_one_coordinate_for_both_queries(self):
+        # Actual 88ec3e6 receipt points. Local SVG values and the screen hit-test
+        # each use float32; the map translation is exact and is not rounded away.
+        for points, length, raw_y in [
+            ([[277.828125, 366], [277.828125, 379.3333333333333], [687.25, 379.3333333333333], [687.25, 269], [697.25, 269]], 543.0885620117188, 561.2239685058594),
+            ([[317.90625, 442], [317.90625, 455.3333333333333], [695.25, 455.3333333333333], [695.25, 355.5], [697.25, 355.5]], 492.51043701171875, 637.2239685058594),
+        ]:
+            case = dict(points=points, matrix=dict(a=1, b=0, c=0, d=1, e=41, f=181.890625),
+                        float32Geometry=True, float32HitTest=True, strokeUnion=True, gapSurface='map')
+            old = self.probe(**case, legacyCoordinates=True)['result']
+            self.assertEqual(old['length'], length)
+            self.assertFalse(old['uncovered'])
+            self.assertEqual(old['sampling']['counts']['blocked'], 1)
+            blocked = old['blockedHits'][0]
+            self.assertTrue(blocked['painted'])
+            self.assertEqual(blocked['hit']['id'], 'map')
+            self.assertEqual(blocked['y'], raw_y)
+            self.assertTrue(5 < blocked['arc'] % 9 < 9)
+            record = self.probe(**case)
+            self.assert_complete_sampling(record)
+            new = record['result']
+            self.assertTrue(new['uncovered'])
+            self.assertEqual(new['sampling']['counts']['blocked'], 0)
+            self.assertEqual(new['sampling']['coordinates'], 'float32-screen-roundtrip')
+            self.assertEqual(new['sampling']['roundtripDifferenceCount'], 1)
+            delta = new['roundtripDifferences'][0]
+            self.assertTrue(delta['rawPainted'])
+            self.assertFalse(delta['painted'])
+            self.assertEqual(delta['localProbe']['y']-delta['rawLocal']['y'], 2**-15)
+            self.assertEqual(delta['rawScreen']['y'], raw_y)
+            # A screen background at an actually painted point is still failure.
+            missing = self.probe(**case, missing=True)['result']
+            self.assertFalse(missing['uncovered'])
+            self.assertGreater(missing['sampling']['counts']['blocked'], 0)
+            self.assertFalse(missing['ownHits'])
+
+    def test_original_r90_arc_length_alias_is_reproducible_without_chrome(self):
+        # 0f497e receipt: all 19 old probes occupy the 4px gap in a 5px/4px
+        # dash cycle. This unobscured fixture isolates aliasing from card overlap.
+        length = 538.421875
+        old_phases = [length * i / 20 % 9 for i in range(1, 20)]
+        self.assertTrue(all(5 <= value < 9 for value in old_phases))
+        self.assertAlmostEqual(old_phases[0], 8.92109375)
+        self.assertAlmostEqual(old_phases[-1], 7.50078125)
+        for surface in ('map', 'svg'):
+            record = self.probe(gapSurface=surface)
+            self.assert_complete_sampling(record)
+            edge = record['result']
+            self.assertTrue(edge['visible'] and edge['uncovered'] and edge['inBounds'])
+            self.assertTrue(edge['ownHits'])
+            self.assertGreater(edge['sampling']['counts']['gap'], 0)
+            self.assertEqual(edge['sampling']['counts']['blocked'], 0)
+
+    def test_original_r90_card_intersection_remains_a_failure_after_alias_fix(self):
+        # Rebuilt from the same receipt's node rectangles and production route.
+        points = [[318.828125, 547.890625], [318.828125, 558.890625],
+                  [720.25, 558.890625], [720.25, 450.890625], [738.25, 450.890625]]
+        cards = [dict(id='ivln', rect=dict(x=508.5, y=415.890625, width=213.75, height=56)),
+                 dict(id='ndh', rect=dict(x=508.5, y=491.890625, width=213.75, height=56))]
+        record = self.probe(points=points, cards=cards)
+        self.assert_complete_sampling(record)
+        edge = record['result']
+        self.assertEqual(edge['length'], 538.421875)
+        self.assertTrue(edge['ownHits'])
+        self.assertFalse(edge['uncovered'])
+        self.assertEqual({row['position'] for row in edge['cardIntersections']}, {'ivln', 'ndh'})
+        self.assertGreater(edge['sampling']['counts']['blocked'], 0)
+        # Pointer-events:none or another SVG stroke cannot conceal a real card.
+        concealed = self.probe(points=points, cards=cards, pointerlessCards=True)['result']
+        self.assertFalse(concealed['uncovered'])
+        self.assertEqual(concealed['sampling']['counts']['blocked'], 0)
+
+    def test_tiny_between_probe_card_is_rejected_by_complete_segment_geometry(self):
+        edge = self.probe(cards=[dict(rect=dict(x=31.001, y=99, width=.04, height=2))])['result']
+        self.assertFalse(edge['uncovered'])
+        self.assertTrue(edge['cardIntersections'])
+
+    def test_original_r93_along_card_top_borders_is_independently_rejected(self):
+        points = [[358.90625, 623.890625], [358.90625, 643.890625],
+                  [708.25, 643.890625], [708.25, 537.390625], [738.25, 537.390625]]
+        cards = [dict(id='hieranav', rect=dict(x=278.75, y=643.890625, width=213.75, height=56)),
+                 dict(id='soon', rect=dict(x=508.5, y=643.890625, width=213.75, height=56))]
+        for pointerless in (False, True):
+            edge = self.probe(points=points, cards=cards, pointerlessCards=pointerless)['result']
+            self.assertEqual(edge['length'], 505.84375)
+            self.assertFalse(edge['uncovered'])
+            self.assertEqual({row['position'] for row in edge['cardIntersections']}, {'hieranav', 'soon'})
+
+    def test_missing_hidden_empty_and_gap_only_paths_cannot_provide_visible_evidence(self):
+        for change in (dict(missing=True), dict(gapsOnly=True), dict(style=dict(strokeDasharray='0px, 4px')), dict(rawPath=''), dict(rawPath='M 30 100 C 40 100 500 100 568 100')):
+            with self.subTest(change=change):
+                edge = self.probe(**change)['result']
+                self.assertFalse(edge['uncovered'])
+                self.assertFalse(edge['ownHits'])
+        for style in (dict(visibility='hidden'), dict(display='none'), dict(opacity='0'), dict(strokeOpacity='0'), dict(strokeWidth='0')):
+            with self.subTest(style=style):
+                self.assertFalse(self.probe(style=style)['result']['visible'])
+
+    def test_only_geometric_registered_transverse_crossings_are_permitted(self):
+        for parent in (False, True):
+            for x, painted in ((100, False), (104, True)):
+                # At x=100 all covered samples lie in the gap; x=104 lies
+                # completely inside a painted dash. Both are real crossings.
+                record = self.probe(crossingPaths=[dict(points=[[x, 80], [x, 120]], parent=parent)])
+                self.assert_complete_sampling(record)
+                self.assertTrue(record['result']['uncovered'])
+                self.assertGreater(record['result']['sampling']['counts']['crossing'], 0)
+                self.assertTrue(all(row['sine'] == 1 for row in record['result']['crossings']))
+                self.assertTrue(all(row['painted'] is painted for row in record['result']['crossings']))
+        for spec in (dict(points=[[101, 80], [101, 120]], foreign=True),
+                     dict(points=[[100, 100], [120, 100]]),
+                     dict(points=[[100, 99.9], [120, 100.1]])):
+            with self.subTest(spec=spec):
+                edge = self.probe(crossingPaths=[spec])['result']
+                self.assertFalse(edge['uncovered'])
+                self.assertGreater(edge['sampling']['counts']['blocked'], 0)
+        edge = self.probe(crossingPaths=[dict(points=[[101, 80], [101, 120]])],
+                          cards=[dict(rect=dict(x=100, y=99, width=2, height=2))])['result']
+        self.assertFalse(edge['uncovered'])
+
+    def test_sampling_covers_small_dashes_short_paths_and_scaled_paths(self):
+        for change in (dict(points=[[30, 100], [46, 100]]),
+                       dict(points=[[30, 100], [46, 100]], style=dict(strokeDasharray='.2px, .1px')),
+                       dict(matrix=dict(a=2, b=0, c=0, d=2, e=0, f=0))):
+            with self.subTest(change=change):
+                record = self.probe(**change)
+                self.assert_complete_sampling(record)
+                self.assertTrue(record['result']['uncovered'])
+                self.assertTrue(record['result']['ownHits'])
+        # Oversized sample budgets fail rather than silently coarsening the scan.
+        self.assertFalse(self.probe(style=dict(strokeDasharray='.0001px, .0001px'))['result']['uncovered'])
+
+    def test_exact_endpoints_can_touch_their_own_cards_but_not_cross_their_interior(self):
+        cards = [dict(task='from', rect=dict(x=10, y=90, width=20, height=20)),
+                 dict(task='to', rect=dict(x=46, y=90, width=20, height=20))]
+        edge = self.probe(points=[[30, 100], [46, 100]], cards=cards)['result']
+        self.assertTrue(edge['uncovered'])
+        self.assertFalse(edge['cardIntersections'])
+        edge = self.probe(points=[[29.5, 100], [46, 100]], cards=cards)['result']
+        self.assertFalse(edge['uncovered'])
 
 
 class ReaderToggleChecks(unittest.TestCase):
@@ -2527,13 +2827,21 @@ class DefaultOverviewMaterializationChecks(unittest.TestCase):
             f = self.real_fixture(); before = f['before']; original = copy.deepcopy(before)
             if bad_origin: f['origin']['bucket']['relationOverviewByTree']['l']['open'] = True
             phase, saved = {'origin': f['origin'], 'before': copy.deepcopy(before)}, []
+            paint_calls = []; test = self
             class Driver:
+                def call(self, method, path, data):
+                    test.assertEqual((method, path), ('POST', '/execute/async'))
+                    test.assertEqual(data, dict(script=MODULE.DESKTOP_CHROME_PAINT_SETTLE_JS, args=[2000]))
+                    paint_calls.append(data)
+                    return dict(status='settled', scopeSelector=MODULE.DESKTOP_CHROME_PAINT_SELECTOR,
+                                timeoutMs=2000, elapsedMs=32, before={'colors': []}, after={'colors': []})
                 def js(self, script, element=None):
                     if script == MODULE.DESKTOP_SHELL_SNAPSHOT_JS: return {'geometry': 'original-source-layout'}
                     return before['activatedControl'] if "[role=treeitem]" in script else f['origin']['bucket']['focusTarget']
             env = dict(driver=Driver(), snapshot=lambda: before, reveal_control=lambda *args: 'element',
                        expose_source_position=lambda *args: 'element', record={}, save=lambda: saved.append(copy.deepcopy(phase)),
-                       transition_record=lambda *args: phase, json=json, MODULE=MODULE,
+                       transition_record=lambda *args: phase, json=json, MODULE=MODULE, report={}, prefix='1440x900',
+                       desktop_chrome_snapshot=MODULE.desktop_chrome_snapshot,
                        DESKTOP_SHELL_SNAPSHOT_JS=MODULE.DESKTOP_SHELL_SNAPSHOT_JS,
                        task_route_origin_overview=MODULE.task_route_origin_overview,
                        science={'forests': {before['route']['scope']: {'l': [p['id'] for p in f['roots']]}},
@@ -2546,6 +2854,9 @@ class DefaultOverviewMaterializationChecks(unittest.TestCase):
                 result = env['select_method']({'id': 'target'})
                 self.assertTrue(saved[-1]['overviewMaterialization']['validated'])
                 MODULE.check_task_route_return(result, f['after'], result['activatedControl'])
+            self.assertEqual(len(paint_calls), 1)
+            self.assertEqual(env['report']['desktopChromePaintSettles'][0]['scope'], 'desktop-workspace-toolbar')
+            self.assertEqual(env['report']['desktopChromePaintSettles'][0]['phase'], '1440x900-method-origin')
             self.assertEqual(phase['before'], original)
             self.assertEqual(before['relationOverview'], {})
             self.assertEqual(saved[-1]['desktopShellBefore'], {'geometry': 'original-source-layout'})
@@ -2664,19 +2975,21 @@ assert.ok(!JSON.stringify(result).includes('PRIVATE'));assert.ok(!JSON.stringify
 
 class DesktopHierarchyContractChecks(unittest.TestCase):
     @staticmethod
-    def shell(tree='l', width=1440):
+    def shell(tree='l', width=1440, layout_width=None):
         import copy
         height = 900 if width == 1440 else 1080
         def rect(x, y, w, h): return dict(x=x, y=y, width=w, height=h)
         def proof(r, text): return dict(rect=r, text=text, visible=True, opaque=True, unscaled=True, clipped=False,
                                        fontSize=15, foreground=[20, 30, 40], background=[255, 255, 255])
-        tw = (400 if width == 1440 else 448) if tree == 'a' else (768 if width == 1440 else 1056)
         gap = 24 if tree == 'a' else 16
-        pane = rect(16 + tw + gap, 132, width - 32 - tw - gap, height - 148)
-        return {'stationaryAncestors': [{'selector': selector, 'top': 0, 'left': 0} for selector in MODULE.STATIONARY_SHELL_SELECTORS],
-                'ready': 'ready', 'route': {'tree': tree}, 'methodReading': 'false', 'readingLayout': 'browse', 'position': None, 'window': {'x': 0, 'y': 0},
+        layout_width = layout_width or width
+        route = {'tree': tree}
+        tw = (400 if width == 1440 else 448) if tree == 'a' else (layout_width - 32 - gap) * 1.1 / 2.1
+        pane = rect(16 + tw + gap, 132, layout_width - 32 - tw - gap, height - 148)
+        return {'chrome': desktop_chrome_fixture(layout_width, height, route=route), 'stationaryAncestors': [{'selector': selector, 'top': 0, 'left': 0} for selector in MODULE.STATIONARY_SHELL_SELECTORS],
+                'ready': 'ready', 'route': route, 'methodReading': 'false', 'readingLayout': 'browse', 'position': None, 'window': {'x': 0, 'y': 0},
                 'viewport': rect(0, 0, width, height), 'home': False, 'collapsed': False,
-                'panels': rect(16, 132, width - 32, height - 148), 'treePane': rect(16, 132, tw, height - 148),
+                'panels': rect(16, 132, layout_width - 32, height - 148), 'treePane': rect(16, 132, tw, height - 148),
                 'tree': rect(17, 176, tw - 2, height - 217), 'pane': pane,
                 'reader': rect(pane['x'] + 1, 228, pane['width'] - 2, height - 245),
                 'heading': proof(rect(pane['x'] + 1, 133, pane['width'] - 2, 95), 'Object · version'),
@@ -2687,6 +3000,35 @@ class DesktopHierarchyContractChecks(unittest.TestCase):
                 'offsets': {'tree': {'top': 0, 'left': 0}, 'reader': {'top': 0, 'left': 0}},
                 'rootRows': [], 'routeRows': [], 'relation': None, 'visibleTaskDefinitions': 0,
                 'titleRelation': None, 'returnControlCount': 0, 'returnControl': None, 'treeFooter': None}
+
+    def test_chrome_budget_measures_new_top_gutter_and_original_pane_ratios(self):
+        import copy
+        for width in (1440, 1920):
+            for tree in ('l', 'c', 'a'):
+                data = self.shell(tree, width, layout_width=width - 15)
+                # Engines may report the root client box with or without the
+                # reserved stable gutter. The body still measures actual width.
+                data['chrome']['rootClientWidth'] = width
+                # The source panes move below an independently measured larger toolbar.
+                data['chrome']['bar']['rect']['height'] += 57
+                data['chrome']['bar']['clientRect']['height'] += 57
+                for key in ('panels', 'treePane', 'tree', 'pane', 'reader'):
+                    data[key]['y'] += 57; data[key]['height'] -= 57
+                for key in ('heading', 'title', 'meta'): data[key]['rect']['y'] += 57
+                MODULE.check_desktop_shell(data)
+                self.assertEqual(data['panels']['y'], 189)
+                for mutate in (lambda d: d.pop('chrome'), lambda d: d['chrome'].update(topology=False),
+                               lambda d: d['chrome']['header']['rect'].update(height=100),
+                               lambda d: d['chrome']['app']['rect'].update(height=100),
+                               lambda d: d['chrome']['bar']['rect'].update(height=800),
+                               lambda d: d['chrome']['identity'].update(opaque=False),
+                               lambda d: d['chrome']['start'].update(unscaled=False),
+                               lambda d: d['chrome']['workspace'].update(top=1),
+                               lambda d: d['chrome']['body'].update(marginLeft=15),
+                               lambda d: d['chrome']['body']['rect'].update(width=width),
+                               lambda d: d['panels'].update(width=width - 32)):
+                    bad = copy.deepcopy(data); mutate(bad)
+                    with self.subTest(width=width, tree=tree), self.assertRaises(RuntimeError): MODULE.check_desktop_shell(bad)
 
     def test_fixed_desktop_shell_rejects_outer_scroll_hidden_version_third_scroll_and_old_columns(self):
         import copy
@@ -2708,6 +3050,41 @@ class DesktopHierarchyContractChecks(unittest.TestCase):
                     bad = copy.deepcopy(good); mutate(bad)
                     with self.subTest(width=width, tree=tree, mutation=index), self.assertRaises(RuntimeError):
                         MODULE.check_desktop_shell(bad)
+
+    def test_original_identity_and_workspace_text_cannot_hide_behind_correct_frames(self):
+        import copy
+        good = self.shell()
+        MODULE.check_desktop_shell(good)
+        field = lambda d: d['chrome']['identityFields'][0]['value']
+        control = lambda d: d['chrome']['controls'][0]
+        mutations = [lambda d: d['chrome'].pop('identitySource'), lambda d: d['chrome']['identityFields'].pop(),
+                     lambda d: d['chrome']['identityFields'][0].update(children=['DD', 'DT']),
+                     lambda d: field(d).update(opaque=False), lambda d: field(d).update(clipped=True),
+                     lambda d: field(d).update(fontSize=12), lambda d: field(d).update(text='shortened'),
+                     lambda d: field(d)['textRuns'][0].update(unscaled=False),
+                     lambda d: field(d)['fragments'][-1].update(visible=False),
+                     lambda d: field(d)['textRuns'][0]['fragments'][-1].update(y=500),
+                     lambda d: field(d).update(foreground=[]),
+                     lambda d: d['chrome']['controls'].pop(), lambda d: control(d).update(count=2),
+                     lambda d: control(d).update(tag='SPAN'), lambda d: control(d).update(tree='other'),
+                     lambda d: control(d).update(hidden=True), lambda d: control(d).update(disabled=True),
+                     lambda d: control(d).update(selected='true'), lambda d: control(d)['proof'].update(clipped=True),
+                     lambda d: control(d)['proof'].update(visible=False),
+                     lambda d: control(d)['proof']['textRuns'][0]['fragments'][-1].update(visible=False)]
+        for index, mutate in enumerate(mutations):
+            bad = copy.deepcopy(good); mutate(bad)
+            with self.subTest(index=index), self.assertRaises(RuntimeError): MODULE.check_desktop_shell(bad)
+        # Preserve the existing lower-contrast unselected tab and approved hover
+        # styles; do not turn this geometry repair into a new color redesign.
+        self.assertLess(MODULE.contrast_ratio(control(good)['proof']['foreground'], control(good)['proof']['background']), 4.5)
+        for index, foreground, background in ((0,[107,122,130],[255,255,255]),(4,[49,92,75],[250,250,248]),
+                                               (6,[49,92,75],[255,255,255]),(7,[23,26,25],[240,244,239])):
+            hovered=copy.deepcopy(good); row=hovered['chrome']['controls'][index];row['hover']=True
+            for proof in [row['proof'], *row['proof']['textRuns']]: proof.update(foreground=foreground,background=background)
+            MODULE.check_desktop_shell(hovered)
+        transitioning=copy.deepcopy(good);proof=transitioning['chrome']['controls'][0]['proof']
+        for row in [proof,*proof['textRuns']]: row.update(foreground=[82,110,105],background=[246,248,245])
+        MODULE.check_desktop_shell(transitioning)
 
     def test_stationary_ancestor_offsets_cannot_hide_behind_window_zero_or_correct_panel_bounds(self):
         import copy
@@ -2814,7 +3191,8 @@ try{const w=dom.window,d=w.document;d.body.style.overflow='hidden';d.body.scroll
         science = json.loads(gzip.decompress((Path(__file__).parents[1] / 'data/navigation-product/model.json.gz').read_bytes()))
         body = r"""
 await scope('task:category-objectnav');
-d.elementFromPoint=()=>d.body;const shellSnapshot=new w.Function(input.shellSnapshot);assert.equal(shellSnapshot().headingInsideScroll,false);
+// DOM identity only; JSDOM has no native Range rectangles or browser pixels.
+d.elementFromPoint=()=>d.body;w.Range.prototype.getClientRects=function(){return [];};const shellSnapshot=new w.Function(input.shellSnapshot);assert.equal(shellSnapshot().headingInsideScroll,false);
 const tree=d.getElementById('np-tree-scroll'),reader=d.getElementById('np-detail-scroll'),picker=d.getElementById('np-task-route-canvas'),heading=d.getElementById('np-reader-heading');
 assert.equal(tree.contains(picker),false);assert.ok(picker.closest('.np-workspace-bar'));assert.equal(reader.contains(heading),false);assert.ok(heading.closest('.np-reading-pane'));
 d.getElementById('np-task-route-relations-summary').click();d.querySelector('[data-task-change="methods:relation:90"]').click();await ready(()=>d.querySelector('[data-selected-task-relation]')&&d.querySelector('[data-relation-state]')?.dataset.relationState==='ready');
@@ -2831,7 +3209,16 @@ d.querySelector('.np-return-previous').click();await ready(()=>a.getState().rout
 
     def test_new_state_capture_mapping_keeps_original_90_scenes_and_historical_diagnostics(self):
         import inspect
-        self.assertEqual(len(MODULE.DISPLAY_CONTRACT_MIGRATIONS), 14)
+        original_migrations = {
+            'shared_chrome_budget', 'relation_picker', 'reader_identity', 'context_path',
+            'outer_scroll', 's0_footer', 's0_adaptive_spacing', 'overview_relations',
+            'analysis_entry', 'active_forest_heading', 'method_geometry', 'method_ancestry',
+            'method_introduction', 'source_scroll_fixtures', 'method_analysis_controls',
+        }
+        self.assertEqual(len(original_migrations), 15)
+        self.assertEqual(set(MODULE.DISPLAY_CONTRACT_MIGRATIONS),
+                         original_migrations | {'workspace_branch_tabs'})
+        self.assertIn('shared_chrome_budget', MODULE.DISPLAY_CONTRACT_MIGRATIONS)
         self.assertIn('s0_footer', MODULE.DISPLAY_CONTRACT_MIGRATIONS)
         self.assertEqual(len(MODULE.SCENE_NAMES), 53)
         for name in ('-31-s0-reading-hierarchy', '-32-s1-relation-90', '-33-s2-first-answer', '-30-analysis-root-coverage'):
@@ -2844,6 +3231,70 @@ d.querySelector('.np-return-previous').click();await ready(()=>a.getState().rout
         result = subprocess.run(['node', '-e', "new Function(JSON.parse(require('fs').readFileSync(0,'utf8')));"],
                                 input=json.dumps(MODULE.DESKTOP_SHELL_SNAPSHOT_JS), text=True, capture_output=True)
         self.assertEqual(result.returncode, 0, result.stderr)
+
+
+def method_candidate_scope_fixture(ids, roving, indexes=None):
+    """Synthetic focus metadata for receipt/transport tests, not browser evidence."""
+    root=dict(token='fixture-workspace',id='np-workspace',tag='SECTION',hidden=False,inert=False,display='block',visibility='visible')
+    items=[dict(token='fixture-'+pid,id='np-node-'+pid,tag='LI',sourcePosition=pid,tabIndex='native-tree-roving',disabled=False,hidden=False,layout=True) for pid in ids]
+    items += [dict(token='fixture-control-'+str(i),id='control-'+str(i),tag='BUTTON',sourcePosition=None,tabIndex=0,disabled=False,hidden=False,layout=True) for i in range(6)]
+    return dict(same=True,root=root,items=items,treeTabIndexes=[dict(position=pid,tabIndex=indexes[pid] if indexes else 0 if pid==roving else -1) for pid in ids])
+
+
+def method_candidate_inventory_fixture(state):
+    scope=state['scopeCandidates'];indexes={r['position']:r['tabIndex'] for r in scope['treeTabIndexes']};eligible=[]
+    for item in scope['items']:
+        row=dict(item);row['tabIndex']=indexes[row['sourcePosition']] if row['sourcePosition'] else row['tabIndex']
+        if row['tabIndex']>=0 and not row['disabled'] and row['layout']:eligible.append(dict(row,inWorkspace=True))
+    return dict(scopeRoot=scope['root']['token'],candidateCount=len(scope['items']),eligibleCount=len(eligible),eligible=eligible)
+
+
+def attach_method_child_fixture(data, expected):
+    """Independent synthetic staged evidence; never a claim about Chrome pixels."""
+    import copy
+    p=expected['position']; selected=p['id']; key='method-fixture'; history_key='navigation-fixture'
+    names={'methods:pipeline-tap-llm':'-28-portable-llm','methods:pipeline-zhu':'-27-imagenav-zhu','methods:pipeline-poni':'-23-poni-method'}
+    data['captureName']='1440x900'+names.get(p['entityId'],'-03-method-reader' if p['tree']=='g' else '-11-active-method-reader')
+    bucket=dict(focusTarget=selected,expandedByTree=copy.deepcopy(data['expanded']),selectedByTree={p['tree']:selected},
+                treeScrollByTree={p['tree']:0},treeScrollLeftByTree={p['tree']:0},detailScrollByTree={p['tree']:0},windowScroll=0)
+    runtime=dict(route=copy.deepcopy(data['route']),originTrail=[],revision=7,contexts={key:bucket})
+    before=dict(route=copy.deepcopy(data['route']),runtime=runtime,history={history_key:copy.deepcopy(runtime)},historyKey=history_key,
+                contextKey=key,historyLength=15,viewport=dict(data['viewport'],dpr=1),window=dict(x=0,y=0),
+                tree=dict(top=0,left=0,maxTop=145,maxLeft=0,client=copy.deepcopy(data['tree'])),
+                reader=dict(top=0,left=0,maxTop=200,maxLeft=0,client=copy.deepcopy(data['reader'])),
+                active=dict(id='np-node-'+selected,tag='LI',position=selected,tabIndex=0,original=True),
+                roving=[selected],domSame=True,hoverSame=True,originalFocus=dict(id='np-node-'+selected,tag='LI',tabIndex=0),tabBound=8,
+                scopeCandidates=method_candidate_scope_fixture([r['id'] for r in data['rows']],selected))
+    children=[r['id'] for r in data['rows'] if r['id'] in expected['children']]
+    audit=dict(binding=MODULE.method_child_binding(data['captureName'],data,expected),status='verified_native_children',cleanedUp=True,
+               before=before,after=copy.deepcopy(before),baselineMode='coherent',required=children,proofs=[],actions=[],keys=[])
+    audit['tabCandidatesBefore']=method_candidate_inventory_fixture(before);audit['tabCandidatesAfter']=method_candidate_inventory_fixture(audit['after'])
+    audit['settles']=[dict(ok=True,elapsed=180,quietMs=160)]
+    audit['afterSnapshot']=copy.deepcopy({k:v for k,v in data.items() if k not in ('captureName','childReadability')})
+    current=copy.deepcopy(before)
+    def key_action(pid, key_name):
+        nonlocal current
+        state=copy.deepcopy(current);state['active']=dict(id='np-node-'+pid,tag='LI',position=pid,tabIndex=0,original=pid==selected);state['roving']=[pid]
+        state['runtime']['contexts'][key]['focusTarget']=pid
+        for row in state['scopeCandidates']['treeTabIndexes']:row['tabIndex']=0 if row['position']==pid else -1
+        trace=MethodKeyTraceChecks.fixture(selected,expected['chain'][0],pid,key_name,top=0)
+        for frame in [trace['before'],trace['after'],*(e['snapshot'] for e in trace['events'])]:
+            frame['route']=copy.deepcopy(data['route']);frame['tree']['rect']=copy.deepcopy(data['tree']);frame['tree']['clientRect']=copy.deepcopy(data['tree'])
+        trace['before']['active']=current['active']['id'];trace['after']['active']='np-node-'+pid
+        for event in trace['events']:event['eventTarget']=current['active']['id']
+        index=len(audit['actions'])
+        audit['keys'].append(dict(input='\ue011' if key_name=='Home' else '\ue015',target=pid,trace=copy.deepcopy(trace),actionIndex=index))
+        audit['actions'].append(dict(kind='tree-key',before=copy.deepcopy(current),after=copy.deepcopy(state),tabCandidatesBefore=method_candidate_inventory_fixture(current),tabCandidatesAfter=method_candidate_inventory_fixture(state),events=dict(overflow=0,events=[dict(type='keydown',key=key_name,trusted=True,target=current['active']['id'])])))
+        current=state
+        return state,trace
+    for pid in children:
+        state,trace=key_action(pid,'ArrowDown')
+        audit['proofs'].append(dict(id=pid,row=copy.deepcopy(next(r for r in data['rows'] if r['id']==pid)),state=copy.deepcopy(state),keyTrace=trace))
+    if children:
+        key_action(expected['chain'][0],'Home')
+        for pid in expected['chain'][1:]:key_action(pid,'ArrowDown')
+    data['childReadability']=audit
+    return audit
 
 
 class MethodReadingCaptureChecks(unittest.TestCase):
@@ -2893,6 +3344,7 @@ class MethodReadingCaptureChecks(unittest.TestCase):
                     title=self.proof(title), meta=self.proof(meta, y=179),
                     treeHeading=self.proof('当前位置与来路', 30, 144, 360), tree=dict(x=17, y=176, width=398, height=683),
                     viewport=dict(x=0, y=0, width=1440, height=900), reader=dict(x=433, y=261, width=990, height=622),
+                    pane=dict(x=432, y=132, width=992, height=752),
                     heading=self.proof('fixed source identity', 433, 133, 990, 128), rows=rows,
                     siblings=[], introductions=[dict(text='Original interface introduction', rendering=dict(display='none', rendered=False))],
                     mechanism=dict(entity=p['entityId'], ready=True, rect=dict(x=465, y=280, width=880, height=900),
@@ -2901,6 +3353,12 @@ class MethodReadingCaptureChecks(unittest.TestCase):
         if expected['siblings']:
             data['siblings'] = [dict(tag='DETAILS', parent=p['parentId'], open=False, summary=self.proof('Real parent alternatives', 30, 700, 360),
                                     controls=[dict(tag='BUTTON', id=pid, treeRole=False, sourceLabel=expected['siblingLabels'][pid], text=expected['siblingLabels'][pid], meta='Original role · '+expected['siblingVersions'].get(pid, ''), disabled=False) for pid in expected['siblings']])]
+        for row in rows:
+            if row['id'] in expected['childDisplay']:
+                display=expected['childDisplay'][row['id']]
+                row['label']=display['label'];row['role']=display['role']
+                row['proof']['text']=display['label'];row['roleProof']['text']=display['role']
+        attach_method_child_fixture(data, expected)
         return data, expected
 
     def test_source_projection_keeps_exact_global_local_and_original_condition_identity(self):
@@ -2948,6 +3406,7 @@ class MethodReadingCaptureChecks(unittest.TestCase):
         import copy
         data, expected = self.receipt()
         mutations = [lambda d: d['heading']['rect'].update(height=129), lambda d: d['reader'].update(y=262),
+                     lambda d: d.pop('pane'), lambda d: (d['heading']['rect'].update(y=143), d['reader'].update(y=271)),
                      lambda d: d['mechanism']['rect'].update(width=478), lambda d: d['mechanism']['rect'].update(width=1200),
                      lambda d: d['rows'][0]['proof'].update(visible=False), lambda d: d['rows'][0]['proof'].update(fontSize=14.99), lambda d: d['rows'][0]['roleProof'].update(fontSize=14),
                      lambda d: d['title']['textRuns'][0].update(fontSize=10), lambda d: d['title'].update(fragments=[]),
@@ -2964,6 +3423,7 @@ class MethodReadingCaptureChecks(unittest.TestCase):
                 MODULE.check_method_reading(bad, expected, self.source_positions, compact=True)
         # No hard clipping target is imposed on another genuinely long source identity.
         data['heading']['rect']['height'] = 140
+        attach_method_child_fixture(data, expected)
         MODULE.check_method_reading(data, expected, self.source_positions, compact=False)
 
     def test_method_geometry_is_separate_from_task_relation_analysis_and_collapse(self):
@@ -2974,6 +3434,11 @@ class MethodReadingCaptureChecks(unittest.TestCase):
                 data = DesktopHierarchyContractChecks.shell(tree, width)
                 data.update(methodReading='true', readingLayout='reading', position=dict(id=p['id'], kind=p['kind'], paper=p['paperId'], version=p['versionId']))
                 data['route'].update(node=p['id'], paper=p['paperId'], version=p['versionId'])
+                if tree == 'g':
+                    data['route']['scope'] = p['scopeId']
+                    data['chrome'] = desktop_chrome_fixture(width, data['viewport']['height'], route=data['route'])
+                    for tab in data['chrome']['controls']:
+                        if tab['tree']: tab['selected'] = str(tab['tree'] == 'l').lower()
                 old_width = data['treePane']['width']; width_delta = old_width - (400 if width == 1440 else 448)
                 data['treePane']['width'] -= width_delta; data['tree']['width'] -= width_delta
                 for key in ('pane', 'reader'):
@@ -3082,6 +3547,7 @@ for(const name of ['local','rich','condition','imported']){const p=input.cases[n
         data, expected = self.receipt('global')
         data['expanded']['g'].remove(expected['position']['id'])
         data['rows'] = data['rows'][:len(expected['chain'])]
+        attach_method_child_fixture(data, expected)
         MODULE.check_method_reading(data, expected, self.source_positions)
         wrong = copy.deepcopy(data); wrong['rows'].append(self.receipt('global')[0]['rows'][-1])
         with self.assertRaises(RuntimeError): MODULE.check_method_reading(wrong, expected, self.source_positions)
@@ -3258,11 +3724,16 @@ d.querySelector('[data-challenge-open="'+p.id+'"]').click();await ready(()=>a.ge
 const original=s.entities[p.entityId],header=d.getElementById('np-reader-object-title'),titles=d.querySelectorAll(input.titleSelector),roles=d.querySelectorAll(input.roleSelector),summary=d.querySelector('#np-reader-summary [data-reading-node="'+p.id+'"]');
 assert.equal(titles.length,1);assert.equal(titles[0].textContent,original.label);assert.deepEqual([header.dataset.objectPosition,header.dataset.objectEntity,header.dataset.objectPaper,header.dataset.objectVersion],[p.id,p.entityId,p.paperId||'',p.versionId||'']);
 assert.equal(roles.length,1);assert.equal(roles[0].textContent,' · 研究问题');const raw=summary.querySelector('[data-reader-duplicate-field="plain_language_question"] > p');assert.ok(raw);assert.equal(raw.textContent,original.detail.plain_language_question);assert.equal(summary.querySelector('[data-challenge-scope]').dataset.challengeScope,original.id);states.push(snapshot());
+d.elementFromPoint=()=>d.body;w.Range.prototype.getClientRects=function(){return [];};
+states[0].workspaceChrome=(new w.Function(input.chromeSnapshot))();
+assert.equal(a.getState().route.tree,'g');assert.deepEqual(JSON.parse(JSON.stringify(states[0].workspaceChrome.controls.filter(row=>row.tree&&row.selected==='true').map(row=>row.tree))),['c']);
 """
         states = run_product_capture_script(self, body, {'science': science, 'expected': MODULE.task_route_expected(science),
                                             'titleSelector': MODULE.ORIGINAL_CHALLENGE_TITLE_SELECTOR,
-                                            'roleSelector': MODULE.ORIGINAL_CHALLENGE_ROLE_SELECTOR})
+                                            'roleSelector': MODULE.ORIGINAL_CHALLENGE_ROLE_SELECTOR,
+                                            'chromeSnapshot': MODULE.VISUAL_GEOMETRY + MODULE.FIXED_TEXT_PROOF_JS + MODULE.DESKTOP_CHROME_GEOMETRY_JS + ';return desktopChromeGeometry();'})
         self.assertEqual(states[0]['position']['entity'], 'legacy:ci_search_unknown_target')
+        self.assertEqual(MODULE.workspace_selected_tree(states[0]['route'], states[0]['workspaceChrome']['identitySource']), 'c')
 
     def test_snapshot_uses_only_exact_fixed_h2_and_measures_actual_text_fragments(self):
         script = r"""
@@ -3491,6 +3962,142 @@ process.stdout.write(JSON.stringify([normal,hidden,covered,clipped]));}finally{d
         self.assertIn("check_desktop_relation_heading(record['relationScrolled'], expected)", inspect.getsource(MODULE.desktop_hierarchy_checks))
         self.assertIn("check_method_footer(data)", inspect.getsource(MODULE.check_desktop_shell))
         self.assertIn("...(footer?[footer,...footer.querySelectorAll('*')]:[])", MODULE.DESKTOP_SHELL_SNAPSHOT_JS)
+
+
+class MethodKeyTraceChecks(unittest.TestCase):
+    """Reconstructed 0→145→12 receipt offsets; the next Chrome run owns actual geometry."""
+
+    @staticmethod
+    def fixture(source='method', root='root', target='root', key='Home', top=145):
+        import copy
+        def row(identity, y):
+            return dict(id='np-node-'+identity,position=identity,rect=dict(x=28,y=y,width=360,height=84),itemMarginTop=4,rowScrollMarginBlockStart='0px')
+        frame=dict(route=dict(tree='g',node=source),methodReading='true',window=dict(x=0,y=0),active='np-node-child',
+                   tree=dict(id='np-tree-scroll',connected=True,top=top,left=0,scrollHeight=601,scrollWidth=398,
+                             rect=dict(x=17,y=382,width=398,height=456),clientRect=dict(x=17,y=382,width=398,height=456),paddingTop=8,scrollPaddingBlockStart='12px'),
+                   root=row(root,382+12-top),target=row(target,382+12-top))
+        events=[dict(phase=phase,key=key,code=key,isTrusted=True,defaultPrevented=phase=='bubble',eventTarget='np-node-child',snapshot=copy.deepcopy(frame)) for phase in ('capture','bubble')]
+        return dict(scope='method-tree-key',source=source,root=root,target=target,key=key,eventLimit=2,before=frame,events=events,overflow=0,after=copy.deepcopy(frame),cleanedUp=True)
+
+    def probe(self, **case):
+        script=r"""
+const input=JSON.parse(require('fs').readFileSync(0,'utf8')),c=input.case;let top=145,throwRect=false;
+const rows={};for(const id of ['root','method','child']){const row={getBoundingClientRect:()=>({x:28,y:382+(id==='root'?12:id==='method'?375:540)-top,width:360,height:id==='root'?84:60})};rows[id]={id:'np-node-'+id,dataset:{position:id},firstElementChild:row};}
+const listeners=[];const tree={id:'np-tree-scroll',isConnected:true,scrollLeft:0,scrollHeight:601,scrollWidth:398,clientLeft:0,clientTop:0,clientWidth:398,clientHeight:456,
+ get scrollTop(){return top;},getBoundingClientRect(){if(throwRect)throw Error('snapshot failed');return {x:17,y:382,width:398,height:456};},
+ addEventListener:(type,fn,capture)=>listeners.push({type,fn,capture}),removeEventListener:(type,fn,capture)=>{const i=listeners.findIndex(x=>x.type===type&&x.fn===fn&&x.capture===capture);if(i>=0)listeners.splice(i,1);}};
+global.window=global;global.scrollX=0;global.scrollY=0;global.NavigationProductApp={getState:()=>({route:{tree:'g',node:'method'}})};
+const app={dataset:{methodReading:'true'}};global.document={activeElement:rows.child,getElementById:id=>id==='np-tree-scroll'?tree:id==='navigation-product'?app:c.missing&&id==='np-node-root'?null:rows[id.replace('np-node-','')]};
+global.getComputedStyle=e=>e===tree?{paddingTop:'8px',scrollPaddingBlockStart:(c.old?0:12)+'px'}:{marginTop:'4px',scrollMarginBlockStart:'0px'};
+let start=null,result=null,error=null,probe=null;
+try{start=new Function(input.start)('method','root','root','Home');probe=window.__npMethodKeyTrace;
+ if(c.preScroll)top=111;
+ const event={key:'Home',code:'Home',isTrusted:!c.untrusted,defaultPrevented:false,target:rows.child};
+ for(const l of listeners.filter(x=>x.capture))l.fn(event);
+ // Native nearest aligns the existing root offset against the scroll-padding
+ // edge. 12=8px pane padding+4px first-li margin, inferred from exact CSS.
+ const rootY=12-top,paddedTop=c.old?0:12;if(rootY<paddedTop)top=Math.max(0,top+rootY-paddedTop);
+ event.defaultPrevented=true;document.activeElement=rows.root;
+ for(const l of listeners.filter(x=>!x.capture))l.fn(event);
+ if(c.extra)for(let n=0;n<10;n++)for(const l of listeners)l.fn(event);
+ if(c.failSnapshot)throwRect=true;
+ result=new Function(input.stop)();
+}catch(e){error=String(e);if(window.__npMethodKeyTrace){try{result=new Function(input.stop)();}catch(_){} }}
+process.stdout.write(JSON.stringify({start,result,error,listeners:listeners.length,installed:!!window.__npMethodKeyTrace,top,cleanedUp:probe?.state.cleanedUp}));
+"""
+        result=subprocess.run(['node','-e',script],input=json.dumps(dict(case=case,start=MODULE.METHOD_KEY_TRACE_START_JS,stop=MODULE.METHOD_KEY_TRACE_STOP_JS)),
+                              text=True,capture_output=True,timeout=10)
+        self.assertEqual(result.returncode,0,result.stderr)
+        return json.loads(result.stdout)
+
+    def test_method_only_css_padding_matches_existing_8_plus_4_without_layout_changes(self):
+        import re
+        css=(Path(__file__).parents[1]/'assets/navigation-product.css').read_text()
+        rules=re.findall(r'#navigation-product\[data-method-reading=true\] \.np-tree-scroll\s*\{([^}]*)\}',css)
+        self.assertEqual(rules,['padding:8px 10px;scroll-padding-block-start:12px;'])
+        self.assertEqual(css.count('scroll-padding-block-start:'),1)
+        self.assertIn('#navigation-product[data-method-reading=true] .np-tree li {margin:4px 0;}',css)
+        # Method-only rule is nested in the existing desktop1200px media block.
+        index=css.index('#navigation-product[data-method-reading=true] .np-tree-scroll')
+        self.assertGreater(css.rfind('@media (min-width:1200px)',0,index),css.rfind('@media (max-width:',0,index))
+
+    def test_receipt_145_home12_old_red_and_scroll_padding12_zero_green(self):
+        old,new=self.probe(old=True),self.probe()
+        self.assertEqual((old['top'],new['top']),(12,0))
+        for data in (old,new):
+            self.assertIsNone(data['error']);self.assertFalse(data['installed']);self.assertEqual(data['listeners'],0)
+            trace=data['result'];MODULE.check_method_key_trace(trace,'method','root','root','Home')
+            self.assertEqual(trace['before']['tree']['top'],145)
+            self.assertEqual(trace['events'][0]['snapshot']['tree']['top'],145)
+            self.assertEqual(trace['events'][1]['snapshot']['tree']['top'],data['top'])
+            self.assertEqual(trace['after']['root']['rect']['y'],382+12-data['top'])
+        before=dict(route={},originTrail=[],historyLength=1,expanded={},window=dict(x=0,y=0),readerScroll=dict(top=0,left=0),methodReading='true',roving=['method'],treeScroll=dict(top=0,left=0))
+        for top in (12,1,145):
+            with self.assertRaises(RuntimeError): MODULE.check_method_navigation_transition(before,dict(before,treeScroll=dict(top=top,left=0)),exact_tree_scroll=True)
+        MODULE.check_method_navigation_transition(before,dict(before),exact_tree_scroll=True)
+
+    def test_pre_key_transport_scroll_is_distinct_from_product_handler_scroll(self):
+        trace=self.probe(preScroll=True)['result']
+        self.assertEqual([trace['before']['tree']['top'],trace['events'][0]['snapshot']['tree']['top'],trace['events'][1]['snapshot']['tree']['top'],trace['after']['tree']['top']],[145,111,0,0])
+        for forbidden in ('.focus(','.scrollIntoView(','.scrollTo(','.preventDefault(','.click(','scrollTop=','scrollLeft=','replaceState','pushState'):
+            self.assertNotIn(forbidden,MODULE.METHOD_KEY_TRACE_START_JS+MODULE.METHOD_KEY_TRACE_STOP_JS)
+
+    def test_trace_bound_missing_scope_and_finally_cleanup_are_fail_closed(self):
+        extra=self.probe(extra=True)
+        self.assertEqual(len(extra['result']['events']),2);self.assertEqual(extra['result']['overflow'],3)
+        with self.assertRaises(RuntimeError): MODULE.check_method_key_trace(extra['result'],'method','root','root','Home')
+        for case in (dict(failSnapshot=True),dict(missing=True)):
+            data=self.probe(**case);self.assertTrue(data['error']);self.assertFalse(data['installed']);self.assertEqual(data['listeners'],0)
+        self.assertTrue(self.probe(failSnapshot=True)['cleanedUp'])
+        with self.assertRaises(RuntimeError): MODULE.check_method_key_trace(self.probe(untrusted=True)['result'],'method','root','root','Home')
+
+    def test_trace_does_not_excuse_wrong_context_missing_phases_or_invalid_geometry(self):
+        import copy
+        good=self.fixture();MODULE.check_method_key_trace(good,'method','root','root','Home')
+        mutations=[lambda d:d.update(cleanedUp=False),lambda d:d.update(eventLimit=3),lambda d:d.update(after=None),lambda d:d['events'].pop(),
+                   lambda d:d['events'][0].update(phase='bubble'),lambda d:d['events'][1].update(defaultPrevented=False),
+                   lambda d:d['events'][0].update(key='End'),lambda d:d['after']['route'].update(node='other'),
+                   lambda d:d['after']['tree'].update(connected=False),lambda d:d['after']['root'].update(position='other'),
+                   lambda d:d['after']['target']['rect'].update(height=0),lambda d:d['after']['tree']['clientRect'].update(y=float('nan'))]
+        for mutate in mutations:
+            bad=copy.deepcopy(good);mutate(bad)
+            with self.assertRaises(RuntimeError): MODULE.check_method_key_trace(bad,'method','root','root','Home')
+
+    def test_actual_thirteen_key_orchestration_keeps_exact_gate_and_cleans_failed_input(self):
+        import copy
+        path=['root','literature','tasks','objectnav','route','method','child'];chain=path[:-1];test=self
+        before=dict(route=dict(tree='g',node='method'),originTrail=[],historyLength=15,expanded=dict(g=chain),window=dict(x=0,y=0),
+                    readerScroll=dict(top=0,left=0),treeScroll=dict(top=0,left=0),methodReading='true',focus='np-node-method',roving=['method'],siblings=[])
+        class Driver:
+            def __init__(self, old=False, fail=False):self.state=copy.deepcopy(before);self.old=old;self.fail=fail;self.live=False;self.keys=[];self.cleanups=0
+            def js(self, script,*args):
+                if script==MODULE.METHOD_NAVIGATION_STATE_JS:return copy.deepcopy(self.state)
+                if script==MODULE.METHOD_KEY_TRACE_START_JS:
+                    test.assertFalse(self.live);self.live=True;self.source,self.root,self.target,self.key=args
+                    return test.fixture(*args)
+                if script==MODULE.METHOD_KEY_TRACE_STOP_JS:
+                    test.assertTrue(self.live);self.live=False;self.cleanups+=1;return test.fixture(self.source,self.root,self.target,self.key)
+                raise AssertionError('unexpected script')
+            def selector(self,selector):return {MODULE.ELEMENT:'focused-node'}
+            def call(self,method,url,data):
+                self.keys.append(data['text'])
+                if self.fail:raise RuntimeError('native input failed')
+                if self.target=='child':self.state['treeScroll']['top']=145
+                elif self.target=='root' and self.state['treeScroll']['top']>0:self.state['treeScroll']['top']=12 if self.old else 0
+                self.state.update(focus='np-node-'+self.target,roving=[self.target])
+            def settle(self):pass
+        for old,fail in ((False,False),(True,False),(False,True)):
+            driver=Driver(old,fail);report={};saved=[]
+            with patch.object(MODULE,'method_visible_source_ids',return_value=path):
+                if old or fail:
+                    with self.assertRaisesRegex(RuntimeError,'exact tree scroll' if old else 'native input failed'):
+                        MODULE.method_navigation_checks(driver,report,lambda:saved.append(copy.deepcopy(report)),'1440x900',dict(position=dict(id='method',tree='g'),chain=chain),{})
+                else:MODULE.method_navigation_checks(driver,report,lambda:saved.append(copy.deepcopy(report)),'1440x900',dict(position=dict(id='method',tree='g'),chain=chain),{})
+            expected_keys=['\ue011']+['\ue015']*6+['\ue011']+['\ue015']*5
+            self.assertEqual(driver.keys,expected_keys[:1] if fail else expected_keys)
+            self.assertEqual(driver.cleanups,len(driver.keys));self.assertFalse(driver.live)
+            self.assertTrue(saved[-1]['methodNavigationChecks'][0]['steps'][-1]['trace']['cleanedUp'])
+            if not old and not fail:self.assertEqual(report['methodNavigationChecks'][0]['status'],'verified_native_keyboard')
 
 
 class ScrollRegionVisibilityChecks(unittest.TestCase):
@@ -3823,6 +4430,551 @@ try{const w=dom.window,d=w.document,tree=d.getElementById('np-tree-scroll'),item
         self.assertEqual(len(MODULE.SCENE_NAMES)*len(MODULE.VIEWPORTS),106)
 
 
+class WorkspaceSourceTabChecks(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        import sys
+        with patch.object(sys, 'path', [str(Path(__file__).parents[1] / 'scripts'), *sys.path]):
+            from navigation_research_map import build_research_map
+            cls.graph = build_research_map(S0FooterCaptureChecks.source())
+        cls.contract = MODULE.workspace_tab_source_contract(cls.graph)
+        cls.root = cls.graph['roots'][0]
+        cls.challenge = 'pos:g:ef16259815fbbfb1f944b9'
+        cls.literature = next(p['id'] for p in cls.graph['positions'].values() if p['entityId'] == 'legacy:nav:l')
+
+    def shell(self, node, selected):
+        data = DesktopHierarchyContractChecks.shell()
+        data['route'] = dict(tree='g', node=node, scope='scope:all', paper=None, version=None)
+        data['chrome'] = desktop_chrome_fixture(route=data['route'])
+        if node == self.root:
+            data['chrome']['identitySource']['atRoot'] = True
+            toggle = next(row for row in data['chrome']['controls'] if row['id'] == 'np-overview-toggle')
+            toggle['hidden'] = False
+            toggle['proof'].update(opaque=True, visible=True)
+        for row in data['chrome']['controls']:
+            if row['tree']: row['selected'] = str(row['tree'] == selected).lower()
+        return data
+
+    def test_frozen_global_paths_determine_one_branch_without_changing_source_tree(self):
+        self.assertEqual(self.contract[self.root]['tab'], 'g')
+        self.assertEqual(self.contract[self.literature]['tab'], 'l')
+        self.assertEqual(self.contract[self.challenge], dict(tab='c', path=[
+            dict(id='pos:g:62d6d6cb98df700cdd762e', parentId=None, entityId='legacy:nav:goal', tree='g', scopeId='scope:all'),
+            dict(id='pos:g:4ff09ffb1b1dc4d549b8fe', parentId='pos:g:62d6d6cb98df700cdd762e', entityId='legacy:nav:c', tree='g', scopeId='scope:all'),
+            dict(id=self.challenge, parentId='pos:g:4ff09ffb1b1dc4d549b8fe', entityId='legacy:ci_search_unknown_target', tree='g', scopeId='scope:all')]))
+        descendant = next(identity for identity, value in self.contract.items() if value['tab'] == 'l' and len(value['path']) > 3)
+        self.assertEqual(MODULE.workspace_selected_tree(dict(tree='g', scope='scope:all', node=descendant),
+                         dict(tabSourceSha256=MODULE.WORKSPACE_TAB_SCIENCE_SHA256, tabPath=self.contract[descendant]['path'])), 'l')
+        for tree in ('l', 'c', 'a'):
+            MODULE.check_desktop_chrome(DesktopHierarchyContractChecks.shell(tree))
+            self.assertEqual(MODULE.workspace_selected_tree(dict(tree=tree), {}), tree)
+
+    def test_exact_challenge_chrome_rejects_old_g_expectation_and_wrong_or_multiple_tabs(self):
+        import copy
+        for node, selected in ((self.root, 'g'), (self.literature, 'l'), (self.challenge, 'c')):
+            good = self.shell(node, selected)
+            MODULE.check_desktop_chrome(good)
+            self.assertEqual(good['route']['tree'], 'g')
+            for wrong in ('g', 'l', 'c', 'a', None):
+                if wrong == selected: continue
+                bad = copy.deepcopy(good)
+                for row in bad['chrome']['controls']:
+                    if row['tree']: row['selected'] = str(row['tree'] == wrong).lower()
+                with self.assertRaisesRegex(RuntimeError, 'selected source tree'): MODULE.check_desktop_chrome(bad)
+            bad = copy.deepcopy(good)
+            next(row for row in bad['chrome']['controls'] if row['tree'] and row['tree'] != selected)['selected'] = 'true'
+            with self.assertRaisesRegex(RuntimeError, 'selected source tree'): MODULE.check_desktop_chrome(bad)
+
+    def test_runtime_path_must_match_exact_source_even_when_selected_tab_looks_correct(self):
+        import copy
+        good = self.shell(self.challenge, 'c')
+        mutations = [lambda s: s.pop('tabPath'), lambda s: s.update(tabPath=[]), lambda s: s.update(tabPath=None),
+                     lambda s: s.update(tabSourceSha256='wrong'), lambda s: s['tabPath'].pop(0),
+                     lambda s: s['tabPath'][1].update(entityId='legacy:nav:l'),
+                     lambda s: s['tabPath'][-1].update(parentId='wrong'),
+                     lambda s: s['tabPath'][0].update(id='another-root'),
+                     lambda s: s['tabPath'][-1].update(scopeId='other'), lambda s: s['tabPath'][-1].update(tree='c'),
+                     lambda s: s['tabPath'].append(copy.deepcopy(s['tabPath'][-1]))]
+        for mutate in mutations:
+            bad = copy.deepcopy(good); mutate(bad['chrome']['identitySource'])
+            with self.assertRaisesRegex(RuntimeError, 'source path'): MODULE.check_desktop_chrome(bad)
+        for route in (dict(tree='g', node='unknown', scope='scope:all'), dict(tree='g', node=self.challenge, scope='other'), dict(tree='unknown')):
+            with self.assertRaises(RuntimeError): MODULE.workspace_selected_tree(route, good['chrome']['identitySource'])
+
+    def test_source_builder_rejects_broken_cycle_wrong_root_and_ambiguous_branch(self):
+        import copy
+        for mutate in (lambda g: g.update(sourceModelSha256='wrong'), lambda g: g.update(roots=[self.challenge]),
+                       lambda g: g['roots'].append(self.root),
+                       lambda g: g['positions'][self.challenge].update(parentId='missing'),
+                       lambda g: (g['positions'][self.challenge].update(parentId=self.challenge), g['positions'][self.challenge]['childIds'].append(self.challenge)),
+                       lambda g: g['positions'][self.challenge].update(entityId='legacy:nav:l'),
+                       lambda g: g['positions'][self.challenge].update(tree='c'),
+                       lambda g: g['positions'][self.challenge].update(scopeId='wrong')):
+            graph = copy.deepcopy(self.graph); mutate(graph)
+            with self.assertRaises(RuntimeError): MODULE.workspace_tab_source_contract(graph)
+
+    def test_source_cache_is_bound_to_model_path_and_reviewed_content_hash(self):
+        import tempfile, gzip
+        raw = gzip.decompress((Path(__file__).parents[1] / 'data/navigation-product/model.json.gz').read_bytes())
+        with tempfile.TemporaryDirectory() as directory:
+            valid = Path(directory) / 'reviewed.gz'; valid.write_bytes(gzip.compress(raw))
+            other = Path(directory) / 'other.gz'; other.write_bytes(gzip.compress(b'{}'))
+            self.assertEqual(MODULE.load_workspace_tab_sources(str(valid), MODULE.WORKSPACE_TAB_SCIENCE_SHA256)[self.challenge]['tab'], 'c')
+            for path, digest in ((str(valid), 'another-version'), (str(other), MODULE.WORKSPACE_TAB_SCIENCE_SHA256)):
+                with self.assertRaisesRegex(RuntimeError, 'reviewed scientific source'): MODULE.load_workspace_tab_sources(path, digest)
+
+    def test_browser_snapshot_records_raw_parent_path_and_rejects_cycles_without_ui_oracle(self):
+        import copy
+        script = r"""
+const input=JSON.parse(require('fs').readFileSync(0,'utf8')),b={positions:input.positions,researchMap:{roots:input.roots},delivery:{sourceModelSha256:input.sha},scopes:[{id:'scope:all',label:'All'}],entities:{},papers:{},versions:{}};
+global.window={NavigationProductApp:{getBundle:()=>b,getState:()=>({route:input.route})}};
+global.document={querySelector:()=>null,querySelectorAll:()=>[],getElementById:()=>null,body:{clientWidth:1425},documentElement:{clientWidth:1425,getBoundingClientRect:()=>({x:0,y:0,width:1440,height:900})}};
+global.getComputedStyle=()=>({scrollbarGutter:'stable'});
+process.stdout.write(JSON.stringify(new Function(input.script+';return desktopChromeGeometry().identitySource;')()));
+"""
+        for mutation in ('normal', 'missing-parent', 'cycle'):
+            positions = copy.deepcopy(self.graph['positions'])
+            if mutation == 'missing-parent': positions[self.challenge]['parentId'] = 'missing'
+            if mutation == 'cycle': positions[self.challenge]['parentId'] = self.challenge
+            payload = dict(script=MODULE.VISUAL_GEOMETRY + MODULE.DESKTOP_CHROME_GEOMETRY_JS,
+                           positions=positions, roots=self.graph['roots'], sha=MODULE.WORKSPACE_TAB_SCIENCE_SHA256,
+                           route=dict(tree='g', node=self.challenge, scope='scope:all'))
+            result = subprocess.run(['node', '-e', script], input=json.dumps(payload), text=True, capture_output=True, timeout=10)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            source = json.loads(result.stdout)
+            if mutation == 'normal':
+                self.assertEqual(source['tabPath'], self.contract[self.challenge]['path'])
+                self.assertEqual(MODULE.workspace_selected_tree(payload['route'], source), 'c')
+            else:
+                self.assertIsNone(source['tabPath'])
+                with self.assertRaises(RuntimeError): MODULE.workspace_selected_tree(payload['route'], source)
+        self.assertIn('workspace_branch_tabs', MODULE.DISPLAY_CONTRACT_MIGRATIONS)
+        self.assertNotIn('activeTree', MODULE.DESKTOP_CHROME_GEOMETRY_JS)
+
+
+class RelationSelectorRevealChecks(unittest.TestCase):
+    """Replay R91's measured scroll geometry without claiming browser pixels."""
+
+    def probe(self, **case):
+        fixture = r"""
+const input=JSON.parse(require('fs').readFileSync(0,'utf8')),c=input.case,relation='tasks:relation:91';
+let top=0,left=0,calls=[];
+const client={x:965,y:181.890625,width:403,height:322},rowHeight=36.25;
+const buttonTop=c.buttonTop===undefined?338.640625:c.buttonTop,buttonHeight=c.buttonHeight||rowHeight;
+const summary={getBoundingClientRect:()=>({x:977,y:191.890625-top,width:379,height:28})};
+const menu={id:'np-task-relations',open:true,clientLeft:1,clientTop:1,clientWidth:403,clientHeight:322,scrollHeight:620,scrollWidth:403,
+ get scrollTop(){return top;},get scrollLeft(){return left;},matches:()=>true,contains:e=>e===button,
+ querySelector:s=>summary,getBoundingClientRect:()=>({x:964,y:180.890625,width:420,height:324})};
+const button={id:'np-relation-select-'+relation,tagName:'BUTTON',dataset:{relationSelect:relation},closest:()=>menu,matches:()=>true,
+ getBoundingClientRect:()=>({x:977-left,y:buttonTop-top,width:379,height:buttonHeight}),
+ scrollIntoView:options=>{calls.push(options);if(c.noScroll)return;
+  const r=button.getBoundingClientRect(),bottom=client.y+client.height;
+  let delta=0;
+  if(options.block==='center')delta=r.y+r.height/2-(client.y+client.height/2);
+  else if(options.block==='nearest'){
+   if(r.y<client.y&&r.y+r.height>bottom)delta=0;
+   else if(r.y<client.y)delta=r.y-client.y;
+   else if(r.y+r.height>bottom)delta=r.y+r.height-bottom;
+  }else throw Error('Unknown native scroll option');
+  top=Math.max(0,Math.min(menu.scrollHeight-menu.clientHeight,Math.round(top+delta)));
+ }};
+global.document={querySelectorAll:()=>[menu]};global.innerWidth=1440;global.innerHeight=900;global.scrollX=0;global.scrollY=0;
+const data=new Function(input.script)(button,relation);
+process.stdout.write(JSON.stringify({data,calls}));
+"""
+        script = MODULE.RELATION_SELECTOR_REVEAL_JS
+        if case.pop('legacy_center', False):
+            script = script.replace("e.scrollIntoView({block:'nearest',inline:'nearest'})", "e.scrollIntoView({block:'center'})")
+        result = subprocess.run(['node', '-e', fixture], input=json.dumps(dict(script=script, case=case)),
+                                text=True, capture_output=True, cwd=Path(__file__).parents[1], timeout=10)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        return json.loads(result.stdout)
+
+    def test_exact_r91_geometry_rejects_old_fourteen_pixel_scroll_and_accepts_nearest(self):
+        old = self.probe(legacy_center=True)['data']; new = self.probe()['data']
+        self.assertEqual(old['before']['buttonRect'], dict(x=977, y=338.640625, width=379, height=36.25))
+        self.assertEqual(old['after']['scrollTop'], 14)
+        self.assertEqual(old['after']['summaryRect']['y'], 177.890625)
+        self.assertAlmostEqual(old['after']['summaryRect']['y'] + .1 * 28, 180.690625)
+        self.assertLess(180.690625, old['after']['clientRect']['y'])
+        with self.assertRaisesRegex(RuntimeError, 'unnecessarily scrolled'):
+            MODULE.check_relation_selector_reveal(old, 'tasks:relation:91')
+        MODULE.check_relation_selector_reveal(new, 'tasks:relation:91')
+        self.assertEqual(new['before'], new['after'])
+        # Replay the original failing text predicate too; the summary's top hit
+        # lies outside the client, independently of its still-visible text centre.
+        for data, passes in ((old, False), (new, True)):
+            frame = data['after']; area = frame['summaryRect']
+            proof = S0FooterCaptureChecks.proof('7条有据对照与组合', area)
+            proof['clipAreas'] = [frame['clientRect']]
+            proof['visible'] = area['y'] + .1 * area['height'] >= frame['clientRect']['y']
+            fragment = dict(x=992.890625, y=area['y'] + 3, width=130.453125, height=18, visible=True)
+            proof['fragments'] = [fragment]; proof['textRuns'][0]['fragments'] = [fragment.copy()]
+            if passes: MODULE.check_s0_text(proof, proof['text'], frame['viewport'])
+            else:
+                with self.assertRaises(RuntimeError): MODULE.check_s0_text(proof, proof['text'], frame['viewport'])
+
+    def test_all_seven_existing_fitting_rows_remain_unscrolled(self):
+        for i in range(7):
+            result = self.probe(buttonTop=229.890625 + i * 36.25)
+            MODULE.check_relation_selector_reveal(result['data'], 'tasks:relation:91')
+            self.assertEqual(result['calls'], [dict(block='nearest', inline='nearest')])
+            self.assertEqual(result['data']['before'], result['data']['after'])
+
+    def test_target_that_needs_scrolling_is_revealed_and_noop_is_rejected(self):
+        data = self.probe(buttonTop=540)['data']
+        MODULE.check_relation_selector_reveal(data, 'tasks:relation:91')
+        self.assertGreater(data['after']['scrollTop'], data['before']['scrollTop'])
+        self.assertTrue(MODULE.rect_inside(data['after']['buttonRect'], data['after']['clientRect']))
+        bad = self.probe(buttonTop=540, noScroll=True)['data']
+        with self.assertRaisesRegex(RuntimeError, 'clipped or outside'):
+            MODULE.check_relation_selector_reveal(bad, 'tasks:relation:91')
+
+    def test_oversized_target_cannot_pass_as_revealed(self):
+        data = self.probe(buttonTop=175, buttonHeight=360)['data']
+        with self.assertRaisesRegex(RuntimeError, 'clipped or outside'):
+            MODULE.check_relation_selector_reveal(data, 'tasks:relation:91')
+
+    def test_missing_wrong_target_page_scroll_and_geometry_changes_fail(self):
+        import copy
+        good = self.probe()['data']
+        for mutate in (lambda d: d.update(relation='wrong'), lambda d: d.update(requested=dict(block='center')),
+                       lambda d: d['after'].update(buttonRelation='wrong'), lambda d: d['after'].update(buttonTag='DIV'),
+                       lambda d: d['after'].update(menuCount=2), lambda d: d['after'].update(open=False),
+                       lambda d: d['after'].update(topology=False), lambda d: d['after']['window'].update(y=1),
+                       lambda d: d['after']['clientRect'].update(height=323), lambda d: d['after'].update(scrollLeft=1),
+                       lambda d: d['after']['summaryRect'].update(y=180)):
+            bad = copy.deepcopy(good); mutate(bad)
+            with self.assertRaises(RuntimeError): MODULE.check_relation_selector_reveal(bad, 'tasks:relation:91')
+
+    def test_reveal_receipt_is_saved_before_rejecting_unnecessary_scroll(self):
+        import copy, inspect, ast
+        test = self
+        class Driver:
+            def __init__(self, data): self.data = data
+            def js(self, script, control, relation):
+                test.assertEqual(script, MODULE.RELATION_SELECTOR_REVEAL_JS)
+                test.assertEqual((control, relation), ('native-button', 'tasks:relation:91'))
+                return self.data
+        for legacy in (False, True):
+            data = self.probe(legacy_center=legacy)['data']; report = {}; saved = []
+            save = lambda: saved.append(copy.deepcopy(report))
+            if legacy:
+                with self.assertRaises(RuntimeError):
+                    MODULE.reveal_relation_selector(Driver(data), 'native-button', 'tasks:relation:91', report, save)
+            else: MODULE.reveal_relation_selector(Driver(data), 'native-button', 'tasks:relation:91', report, save)
+            self.assertEqual(saved, [report])
+            self.assertEqual(report['relationSelectorRevealChecks'], [data])
+        main = inspect.getsource(MODULE.main)
+        self.assertEqual(main.count("reveal_relation_selector(driver, control, expected['id'], report, save)"), 1)
+        self.assertIn("before_selection = s0_footer_check('before-selection-' + expected['id'])", main)
+        tree = ast.parse(inspect.getsource(MODULE))
+        helper = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'reveal_relation_selector')
+        saves = [n for n in ast.walk(helper) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']
+        self.assertEqual(len(saves), 1)
+
+
+class S0ToolbarPaintSettleChecks(unittest.TestCase):
+    """Synthetic animation clocks test the protocol, not Chrome render evidence."""
+
+    def probe(self, **case):
+        fixture = r"""
+const {JSDOM}=require('jsdom'),input=JSON.parse(require('fs').readFileSync(0,'utf8')),c=input.case;
+const dom=new JSDOM('<div id="np-reading-landing"><div class="np-overview-map-toolbar"><button id="np-map-relations-toggle">显示全部关系</button></div></div><div id="np-workspace"><div class="np-workspace-bar"><div class="np-tabs"><button data-tree-tab="g" aria-selected="false">全景</button><button data-tree-tab="l" aria-selected="true">文献发展</button></div></div></div>');
+global.document=dom.window.document;
+const toolbar=document.querySelector(c.workspace?'.np-workspace-bar':'.np-overview-map-toolbar'),button=c.workspace?document.querySelector('[data-tree-tab=g]'):document.getElementById('np-map-relations-toggle'),other=c.workspace?document.querySelector('[data-tree-tab=l]'):null;
+const outside=document.querySelector(c.workspace?'.np-overview-map-toolbar':'.np-workspace-bar');outside.getAnimations=()=>{throw Error('Unrelated toolbar was inspected');};
+let now=0,nextId=1,queue=[],answer=null,callbacks=0,inspections=0;
+global.performance={now:()=>now};
+global.setTimeout=(fn,delay)=>{const id=nextId++;queue.push({id,at:now+delay,fn});return id;};
+global.clearTimeout=id=>{queue=queue.filter(t=>t.id!==id);};
+global.requestAnimationFrame=fn=>c.frozenFrames?nextId++:setTimeout(fn,16);
+global.cancelAnimationFrame=clearTimeout;
+class Transition{
+ constructor(start,end,property='background-color',cancel=false){this.start=start;this.end=end;this.transitionProperty=property;this.cancelled=cancel;this.effect={target:button,getComputedTiming:()=>({duration:c.infinite?Infinity:c.invalidTiming?NaN:end-start,endTime:c.infinite?Infinity:end-start})};}
+ get playState(){return c.paused?'paused':now<this.end||c.stuck||c.pending?'running':this.cancelled?'idle':'finished';}
+ get pending(){return !!c.pending;}
+ get currentTime(){return c.pending?null:Math.min(now-this.start,this.end-this.start);}
+ get playbackRate(){return c.reverse?-1:1;}
+ finish(){throw Error('Must not force animation completion');}
+ cancel(){throw Error('Must not cancel an animation');}
+}
+global.CSSTransition=Transition;
+let transitions=c.none?[]:c.replacement?[new Transition(0,48,'background-color',true),new Transition(48,208,'background-color')]:[new Transition(0,160,c.property||'background-color')];
+if(c.workspace&&!c.none&&!c.replacement){for(const target of [button,other]){const a=new Transition(0,160,'color');a.effect.target=target;transitions.push(a);}const a=new Transition(0,160);a.effect.target=other;transitions.push(a);}
+// A forever-running CSS animation is not a colour CSSTransition, and must not
+// make this local wait depend on unrelated animation elsewhere in the app.
+const unrelated={transitionProperty:'background-color',playState:'running',pending:false,effect:{target:button,getComputedTiming:()=>({duration:Infinity,endTime:Infinity})}};
+toolbar.getAnimations=opts=>{if(!opts.subtree)throw Error('Toolbar descendants were not inspected');inspections++;
+ if(c.churn)transitions.push(new Transition(now,now+1));
+ return [...transitions.filter(a=>a.start<=now&&(now<a.end||c.stuck||c.pending||c.paused||c.infinite||c.invalidTiming||c.reverse)),...(c.unrelated?[unrelated]:[])];};
+global.getComputedStyle=e=>{
+ if(c.workspace){const running=!c.none&&now<(c.replacement?208:160),isTab=e===button||e===other;
+  const bg=isTab&&(c.alpha||running)?'rgba(255, 255, 255, 0.4)':e===other?'rgb(255, 255, 255)':e===button?'rgba(0, 0, 0, 0)':'rgb(237, 241, 236)';
+  const fg=e===button?(running?'rgb(105, 121, 128)':'rgb(107, 122, 130)'):(running?'rgb(51, 93, 77)':'rgb(49, 92, 75)');
+  return {color:fg,backgroundColor:bg,borderTopColor:'rgb(49, 92, 75)',borderRightColor:'rgb(49, 92, 75)',borderBottomColor:'rgb(49, 92, 75)',borderLeftColor:'rgb(49, 92, 75)'};
+ }
+ const end=c.replacement?208:160,alpha=e===button&&(c.alpha||(!c.none&&now<end))?'rgba(240, 244, 239, 0.6)':e===button?'rgba(0, 0, 0, 0)':'rgb(255, 255, 255)';
+ return {color:c.lowContrast?'rgb(220, 220, 220)':'rgb(49, 92, 75)',backgroundColor:alpha,borderTopColor:'rgb(136, 161, 142)',borderRightColor:'rgb(136, 161, 142)',borderBottomColor:'rgb(136, 161, 142)',borderLeftColor:'rgb(136, 161, 142)'};
+};
+if(c.missing)toolbar.remove();
+if(c.unsupported)global.CSSTransition=undefined;
+if(c.disappear)setTimeout(()=>toolbar.remove(),48);
+if(c.replaceRoot)setTimeout(()=>{const replacement=toolbar.cloneNode(true);replacement.getAnimations=toolbar.getAnimations;toolbar.before(replacement);toolbar.className='detached-from-selector';},48);
+const backgrounds=()=>new Function(input.visual+'\nreturn arguments[0].map(e=>bg(e));')([button,...(other?[other]:[])]);
+const beforeBackgrounds=backgrounds();
+new Function(input.script)(2000,value=>{answer=value;callbacks++;});
+let steps=0;while(queue.length&&steps++<1000){queue.sort((a,b)=>a.at-b.at||a.id-b.id);const item=queue.shift();now=item.at;item.fn();}
+if(!answer||steps>=1000)throw Error('Unbounded paint settlement');
+const background=new Function(input.visual+'\nreturn bg(document.getElementById("np-map-relations-toggle"));')();
+const foreground=new Function(input.visual+'\nreturn color(getComputedStyle(document.body).color).rgb;')();
+process.stdout.write(JSON.stringify({answer,callbacks,inspections,background,foreground,steps,beforeBackgrounds,afterBackgrounds:backgrounds()}));
+"""
+        result = subprocess.run(['node', '-e', fixture], input=json.dumps(dict(
+            case=case, script=MODULE.DESKTOP_CHROME_PAINT_SETTLE_JS if case.get('workspace') else MODULE.S0_TOOLBAR_PAINT_SETTLE_JS, visual=MODULE.VISUAL_GEOMETRY)),
+            text=True, capture_output=True, cwd=Path(__file__).parents[1], timeout=10)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        return json.loads(result.stdout)
+
+    def test_finite_colour_transition_finishes_naturally_and_keeps_rgba_evidence(self):
+        data = self.probe(); result = data['answer']
+        self.assertEqual(result['status'], 'settled')
+        self.assertEqual(result['elapsedMs'], 176)
+        self.assertEqual(data['callbacks'], 1)
+        self.assertEqual(data['background'], [255, 255, 255])
+        self.assertEqual(result['before']['colors'][1]['backgroundColor'], 'rgba(240, 244, 239, 0.6)')
+        self.assertEqual(result['after']['colors'][1]['backgroundColor'], 'rgba(0, 0, 0, 0)')
+        animation = result['before']['transitions'][0]
+        self.assertEqual(animation['property'], 'background-color')
+        self.assertEqual(animation['playState'], 'running')
+        self.assertFalse(animation['pending'])
+        self.assertEqual((animation['duration'], animation['endTime']), (160, 160))
+        self.assertEqual(result['after']['transitions'], [])
+        self.assertEqual(len(result['observedTransitions']), 1)
+
+    def test_cancellation_and_replacement_transition_are_reenumerated(self):
+        result = self.probe(replacement=True)['answer']
+        self.assertEqual(result['status'], 'settled')
+        self.assertEqual(result['elapsedMs'], 224)
+        self.assertEqual(len(result['observedTransitions']), 2)
+        self.assertEqual(result['observedTransitions'][1]['firstSeenMs'], 48)
+        self.assertEqual(result['after']['transitions'], [])
+
+    def test_longhand_border_colours_and_text_colour_are_waited(self):
+        for prop in ('color', 'border-color', 'border-top-color', 'border-right-color', 'border-bottom-color', 'border-left-color'):
+            with self.subTest(prop=prop):
+                result = self.probe(property=prop)['answer']
+                self.assertEqual(result['status'], 'settled')
+                self.assertEqual(result['elapsedMs'], 176)
+                self.assertEqual(result['observedTransitions'][0]['first']['property'], prop)
+
+    def test_unrelated_animation_and_transform_do_not_extend_local_wait(self):
+        for case in (dict(none=True, unrelated=True), dict(property='transform', unrelated=True)):
+            result = self.probe(**case)['answer']
+            self.assertEqual(result['status'], 'settled')
+            self.assertEqual(result['elapsedMs'], 32)
+            self.assertEqual(result['observedTransitions'], [])
+
+    def test_stuck_pending_and_frozen_frame_paths_timeout_once(self):
+        for case in (dict(stuck=True), dict(pending=True), dict(frozenFrames=True)):
+            with self.subTest(case=case):
+                data = self.probe(**case); result = data['answer']
+                self.assertEqual(result['status'], 'timeout')
+                self.assertEqual(result['elapsedMs'], 2000)
+                self.assertEqual(data['callbacks'], 1)
+                self.assertTrue(result['before']['transitions'])
+                self.assertTrue(result['after'])
+
+    def test_nonending_timing_missing_api_and_removed_toolbar_fail_closed(self):
+        for case in (dict(infinite=True), dict(invalidTiming=True), dict(paused=True), dict(reverse=True),
+                     dict(unsupported=True), dict(missing=True), dict(disappear=True)):
+            with self.subTest(case=case):
+                data = self.probe(**case)
+                self.assertEqual(data['answer']['status'], 'error')
+                self.assertEqual(data['callbacks'], 1)
+                self.assertLess(data['answer']['elapsedMs'], 2000)
+
+    def test_transition_churn_has_a_diagnostic_bound_and_cannot_pass(self):
+        result = self.probe(churn=True)['answer']
+        self.assertEqual(result['status'], 'error')
+        self.assertIn('churn', result['reason'])
+        self.assertEqual(len(result['observedTransitions']), 64)
+
+    def test_stable_alpha_or_low_contrast_still_fails_original_readability_gate(self):
+        import copy
+        for case in (dict(none=True, alpha=True), dict(alpha=True), dict(none=True, lowContrast=True), dict(lowContrast=True)):
+            with self.subTest(case=case):
+                result = self.probe(**case)
+                self.assertEqual(result['answer']['status'], 'settled')
+                data = S0FooterCaptureChecks.fixture()
+                proof = next(row['proof'] for row in data['toolbar']['controls'] if row['id'] == 'np-map-relations-toggle')
+                for run in [proof, *proof['textRuns']]:
+                    run['background'] = copy.deepcopy(result['background'])
+                    run['foreground'] = copy.deepcopy(result['foreground'])
+                with self.assertRaises(RuntimeError): MODULE.check_s0_footer(data)
+
+    def test_successful_settle_does_not_excuse_hidden_clipped_or_covered_controls(self):
+        self.assertEqual(self.probe(none=True)['answer']['status'], 'settled')
+        for mutate in (lambda p: p.update(visible=False), lambda p: p.update(opaque=False),
+                       lambda p: p.update(clipped=True), lambda p: p['fragments'][0].update(visible=False)):
+            data = S0FooterCaptureChecks.fixture()
+            proof = next(row['proof'] for row in data['toolbar']['controls'] if row['id'] == 'np-map-relations-toggle')
+            mutate(proof)
+            with self.assertRaises(RuntimeError): MODULE.check_s0_footer(data)
+
+    def test_receipt_is_saved_before_any_timeout_or_error_is_raised(self):
+        import copy
+        good = self.probe()['answer']
+        test = self
+        class Driver:
+            def __init__(self, result): self.result = result
+            def call(self, method, path, data):
+                test.assertEqual((method, path), ('POST', '/execute/async'))
+                test.assertEqual(data, dict(script=MODULE.S0_TOOLBAR_PAINT_SETTLE_JS, args=[2000]))
+                return self.result
+        for data in (good, None, dict(good, status='timeout'), dict(good, status='error'),
+                     dict(good, elapsedMs=2000), dict(good, elapsedMs=float('nan')),
+                     dict(good, timeoutMs=4000), dict(good, before=None), dict(good, after=None)):
+            report = {}; saved = []
+            save = lambda: saved.append(copy.deepcopy(report))
+            if data is good:
+                self.assertEqual(MODULE.settle_s0_toolbar_paint(Driver(data), report, save, 'before-selection'), good)
+            else:
+                with self.assertRaises(RuntimeError): MODULE.settle_s0_toolbar_paint(Driver(data), report, save, 'before-selection')
+            self.assertEqual(len(saved), 1)
+            self.assertEqual(saved[0]['s0ToolbarPaintSettles'][0]['phase'], 'before-selection')
+            self.assertIs(report['s0ToolbarPaintSettles'][0]['settle'], data)
+        source = (Path(__file__).parents[1] / 'scripts/navigation_screenshots.py').read_text()
+        import ast
+        tree = ast.parse(source)
+        separate_disclosure_save_sites(self, tree)
+        paint_helper = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'settle_s0_toolbar_paint')
+        def save_calls(node):
+            return [n for n in ast.walk(node) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']
+        self.assertEqual(len(save_calls(paint_helper)), 1)
+        tree.body.remove(paint_helper)
+        native_paint_helper = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'settle_version_title_paint')
+        self.assertEqual(len(save_calls(native_paint_helper)), 1)
+        tree.body.remove(native_paint_helper)
+        selector_helper = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'reveal_relation_selector')
+        self.assertEqual(len(save_calls(selector_helper)), 1)
+        tree.body.remove(selector_helper)
+        chrome_helper = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'desktop_chrome_snapshot')
+        self.assertEqual(len(save_calls(chrome_helper)), 1)
+        tree.body.remove(chrome_helper)
+        child_helper = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'method_child_readability_checks')
+        self.assertEqual(len(save_calls(child_helper)), 1)
+        tree.body.remove(child_helper)
+        self.assertEqual(len(save_calls(tree)), 99)  # Every original save checkpoint remains.
+        self.assertIn('def s0_footer_check(phase):\n        settle_s0_toolbar_paint(driver, report, save, phase)\n        data = desktop_chrome_snapshot(driver, report, save, phase, S0_FOOTER_SNAPSHOT_JS, footer_expected)', source)
+
+
+class DesktopChromePaintSettleChecks(unittest.TestCase):
+    """Actual receipt geometry/colours with synthetic animation clocks, not Chrome pixels."""
+
+    def probe(self, **case):
+        return S0ToolbarPaintSettleChecks.probe(self, workspace=True, **case)
+
+    def test_g_to_l_tabs_keep_actual_failure_colours_and_settle_to_css_endpoints(self):
+        data = self.probe(); result = data['answer']
+        self.assertEqual(result['scopeSelector'], '#np-workspace > .np-workspace-bar')
+        self.assertEqual((result['status'], result['elapsedMs'], data['callbacks']), ('settled', 176, 1))
+        self.assertEqual(data['beforeBackgrounds'], [[], []])
+        self.assertEqual(data['afterBackgrounds'], [[237, 241, 236], [255, 255, 255]])
+        tabs = {row['treeTab']: row for row in result['before']['colors'] if row['treeTab']}
+        # Foregrounds and selection are exact 9082001 receipt values; the 0.4
+        # alpha is synthetic because that old receipt did not retain raw RGBA.
+        self.assertEqual((tabs['g']['color'], tabs['g']['selected']), ('rgb(105, 121, 128)', 'false'))
+        self.assertEqual((tabs['l']['color'], tabs['l']['selected']), ('rgb(51, 93, 77)', 'true'))
+        self.assertEqual(len(result['observedTransitions']), 4)
+        self.assertEqual(result['after']['transitions'], [])
+        areas = [dict(x=0, y=0, width=1440, height=900)]
+        for i, (text, x, width, fg) in enumerate((('全景', 30, 30.015625, [105,121,128]),
+                                                ('文献发展', 84.015625, 60.015625, [51,93,77]))):
+            proof = chrome_text_fixture(text, 15, dict(x=x, y=250.015625, width=width, height=18), fg, data['beforeBackgrounds'][i])
+            with self.assertRaises(RuntimeError): MODULE.check_chrome_text(proof, text, 15, *areas)
+            for row in [proof, *proof['textRuns']]: row['background'] = data['afterBackgrounds'][i]
+            MODULE.check_chrome_text(proof, text, 15, *areas)
+
+    def test_scoped_wait_retains_replacement_timeout_and_nonending_failures(self):
+        self.assertEqual(self.probe(replacement=True)['answer']['elapsedMs'], 224)
+        for case in (dict(stuck=True), dict(pending=True), dict(frozenFrames=True)):
+            with self.subTest(case=case):
+                result = self.probe(**case)
+                self.assertEqual((result['answer']['status'], result['answer']['elapsedMs'], result['callbacks']), ('timeout', 2000, 1))
+        for case in (dict(paused=True), dict(infinite=True), dict(invalidTiming=True), dict(reverse=True),
+                     dict(missing=True), dict(disappear=True), dict(replaceRoot=True), dict(unsupported=True), dict(churn=True)):
+            with self.subTest(case=case):
+                result = self.probe(**case)
+                self.assertEqual(result['answer']['status'], 'error')
+                self.assertEqual(result['callbacks'], 1)
+                self.assertLessEqual(len(result['answer']['observedTransitions']), 64)
+
+    def test_stable_alpha_hidden_clipped_and_covered_text_still_fail_original_gate(self):
+        data = self.probe(none=True, alpha=True)
+        self.assertEqual(data['answer']['status'], 'settled')
+        area = dict(x=0, y=0, width=1440, height=900)
+        proof = chrome_text_fixture('全景', 15, dict(x=30,y=250.015625,width=30.015625,height=18), [107,122,130], data['afterBackgrounds'][0])
+        with self.assertRaises(RuntimeError): MODULE.check_chrome_text(proof, '全景', 15, area)
+        import copy
+        for mutate in (lambda p:p.update(visible=False), lambda p:p.update(opaque=False), lambda p:p.update(clipped=True),
+                       lambda p:p.update(fontSize=14), lambda p:p['fragments'][0].update(visible=False),
+                       lambda p:p['textRuns'][0]['fragments'][0].update(y=899)):
+            bad = copy.deepcopy(proof)
+            for row in [bad,*bad['textRuns']]: row['background']=[237,241,236]
+            mutate(bad)
+            with self.assertRaises(RuntimeError): MODULE.check_chrome_text(bad, '全景', 15, area)
+
+    def test_wrapper_saves_scope_then_takes_snapshot_only_after_bounded_success(self):
+        import copy
+        good = self.probe()['answer']; test = self
+        class Driver:
+            def __init__(self, result): self.result=result; self.events=[]
+            def call(self, method, path, data):
+                self.events.append('settle')
+                test.assertEqual((method,path), ('POST','/execute/async'))
+                test.assertEqual(data,dict(script=MODULE.DESKTOP_CHROME_PAINT_SETTLE_JS,args=[2000]))
+                return self.result
+            def js(self, script, *args):
+                self.events.append('snapshot')
+                return {'exactScript':script, 'args':args}
+        for snapshot, args in ((MODULE.DESKTOP_SHELL_SNAPSHOT_JS,()),(MODULE.S0_FOOTER_SNAPSHOT_JS,({'source':'exact'},))):
+            for result in (good,None,dict(good,status='timeout'),dict(good,status='error'),dict(good,elapsedMs=2000),
+                           dict(good,elapsedMs=float('nan')),dict(good,timeoutMs=4000),dict(good,before=None),dict(good,after=None),
+                           dict(good,scopeSelector=MODULE.S0_TOOLBAR_PAINT_SELECTOR)):
+                driver=Driver(result);report={};saved=[]
+                def save(): saved.append(copy.deepcopy(report));driver.events.append('save')
+                if result is good:
+                    value=MODULE.desktop_chrome_snapshot(driver,report,save,'1440x900-02-task-expanded',snapshot,*args)
+                    self.assertEqual(value,{'exactScript':snapshot,'args':args})
+                    self.assertEqual(driver.events,['settle','save','snapshot'])
+                else:
+                    with self.assertRaises(RuntimeError): MODULE.desktop_chrome_snapshot(driver,report,save,'bad',snapshot,*args)
+                    self.assertEqual(driver.events,['settle','save'])
+                self.assertEqual(len(saved),1)
+                record=saved[0]['desktopChromePaintSettles'][0]
+                self.assertEqual(record['scope'],'desktop-workspace-toolbar')
+                self.assertNotIn('s0ToolbarPaintSettles',report)
+        driver=Driver(good)
+        with self.assertRaises(RuntimeError): MODULE.desktop_chrome_snapshot(driver,{},lambda:None,'unsupported','return true;')
+        self.assertEqual(driver.events,[])
+
+    def test_all_six_chrome_snapshot_entries_use_one_scoped_wrapper_without_mutating_driver_settle(self):
+        import ast,inspect
+        tree=ast.parse((Path(__file__).parents[1]/'scripts/navigation_screenshots.py').read_text())
+        snapshots={'DESKTOP_SHELL_SNAPSHOT_JS','S0_FOOTER_SNAPSHOT_JS'}
+        calls=[n for n in ast.walk(tree) if isinstance(n,ast.Call)]
+        wrapped=[n for n in calls if isinstance(n.func,ast.Name) and n.func.id=='desktop_chrome_snapshot']
+        self.assertEqual(len(wrapped),6)
+        self.assertEqual([sum(isinstance(n.args[4],ast.Name) and n.args[4].id==name for n in wrapped) for name in sorted(snapshots)],[4,2])
+        raw=[n for n in calls if isinstance(n.func,ast.Attribute) and n.func.attr=='js' and n.args and isinstance(n.args[0],ast.Name) and n.args[0].id in snapshots]
+        self.assertEqual(raw,[])
+        self.assertEqual(MODULE.S0_TOOLBAR_PAINT_SETTLE_JS.split('\n',1)[1],MODULE.SCOPED_TOOLBAR_PAINT_SETTLE_JS)
+        self.assertEqual(MODULE.DESKTOP_CHROME_PAINT_SETTLE_JS.split('\n',1)[1],MODULE.SCOPED_TOOLBAR_PAINT_SETTLE_JS)
+        self.assertIn('document.fonts.ready.then(()=>requestAnimationFrame(()=>requestAnimationFrame(()=>done(true))))',inspect.getsource(MODULE.Driver.settle))
+        self.assertNotIn('paint',inspect.getsource(MODULE.Driver.settle))
+
+
 class S0FooterCaptureChecks(unittest.TestCase):
     @staticmethod
     def source():
@@ -3859,7 +5011,14 @@ class S0FooterCaptureChecks(unittest.TestCase):
         expected = cls.expected(); viewport = rect(0, 0, width, height)
         map_box = rect(41, 149, width - 82, height - 241.5)
         footer_rect = rect(41, height - 80.5, width - 82, 47.5)
-        landing = frame('np-reading-landing', rect(16, 132, width - 32, height - 148), paddingTop=17, paddingBottom=17, display='flex', flexDirection='column')
+        # Preserve the compact map fixture while budgeting a real preceding toolbar.
+        bottom_padding = 4 if height <= 950 else 16
+        landing = frame('np-reading-landing', rect(16, 100, width - 32, height - 100 - bottom_padding), paddingTop=17,
+                        paddingBottom=33 - bottom_padding, display='flex', flexDirection='column')
+        toolbar = frame('', rect(41, 117, width - 82, 32), 'np-reading-landing',
+                        className='np-overview-map-toolbar', flexShrink='0', count=1, beforeMap=True, first=True,
+                        controls=[dict(id=identity, tag=tag, proof=cls.proof(label or '显示全部关系', rect(41 + i * 190, 117, 180, 24)))
+                                  for i, (identity, tag, label) in enumerate(MODULE.S0_TOOLBAR_LABELS)])
         footer = frame('np-overview-footer', footer_rect, 'np-reading-landing', className='np-overview-footer',
                        display='flex', flexDirection='column', flexShrink='0', rowGap=4, marginTop=12,
                        afterMap=True, insideMap=False, children=[dict(id='', className='np-map-legend'), dict(id='', className='np-overview-coverage np-map-coverage')])
@@ -3897,7 +5056,7 @@ class S0FooterCaptureChecks(unittest.TestCase):
         for i, node in enumerate(expected['nodes']):
             if node['id'] in task_by_id:
                 scope = task_by_id[node['id']]; column, rank = task_places[scope]
-                area = rect(49 + column * (tw + 16), 307 + rank * (76 + task_extra), tw, 52)
+                area = rect(49 + column * (tw + 16), 307 + rank * (76 + task_extra), tw, 56)
                 name, contract = task_labels[scope]
                 labels = dict(name=cls.proof(name, rect(area['x'] + 10, area['y'] + 26, tw - 20, 21)),
                               contract=cls.proof(contract, rect(area['x'] + 10, area['y'] + 4, tw - 20, 20.8)))
@@ -3934,10 +5093,10 @@ class S0FooterCaptureChecks(unittest.TestCase):
         panel.update(scrollHeight=panel['clientHeight'] + (211 if selected else 0), maxTop=211 if selected else 0)
         route = dict(scope='scope:all', tree='g', node=expected['root'], paper=None, version=None)
         view = dict(selectedRelation=selected, relationScrollTop=0, scrollTop=0, relationsOpen=False, linesVisible=False)
-        return dict(expected=expected, viewport=viewport, ready='ready', home=True, scale=1, window=dict(x=0, y=0),
+        return dict(chrome=desktop_chrome_fixture(width, height, top=100, bottom_padding=bottom_padding, route=route, home=True), expected=expected, viewport=viewport, ready='ready', home=True, scale=1, window=dict(x=0, y=0),
                     route=route, historyRoute=copy.deepcopy(route), focus='np-map-relation-evidence-' + selected if selected else 'BODY',
                     selectedRelation=selected, relationsVisible='false', selectorOpen=False, runtimeOverview=copy.deepcopy(view), historyOverview=copy.deepcopy(view),
-                    landing=landing, map=map_frame, footerCount=1, legendCount=1, coverageCount=1,
+                    landing=landing, map=map_frame, toolbar=toolbar, footerCount=1, legendCount=1, coverageCount=1,
                     footer=footer, legend=legend, coverage=coverage, nodes=nodes, layoutNotes=layout_notes, panel=panel, scrollRegionCandidates=[],
                     scrollIds=['np-overview-relation-panel'] if selected else [])
 
@@ -3956,11 +5115,88 @@ class S0FooterCaptureChecks(unittest.TestCase):
         self.assertNotEqual(original['coverage'], changed['coverage'])
         self.assertEqual(original['nodes'], changed['nodes'])
 
+    def test_chrome_and_toolbar_budget_cannot_hide_excess_height_nodes_or_footer_overlap(self):
+        import copy
+        good = self.fixture()
+        MODULE.check_s0_footer(good)
+        for mutate in (lambda d: d['chrome']['header']['rect'].update(height=200),
+                       lambda d: d['chrome']['bar']['rect'].update(height=200),
+                       lambda d: d.pop('toolbar'), lambda d: d['toolbar'].update(count=2),
+                       lambda d: d['toolbar'].update(first=False), lambda d: d['toolbar'].update(beforeMap=False),
+                       lambda d: d['toolbar'].update(position='absolute'), lambda d: d['toolbar'].update(flexShrink='1'),
+                       lambda d: d['toolbar']['controls'].pop(), lambda d: d['toolbar']['controls'][0]['proof'].update(visible=False),
+                       lambda d: d['toolbar']['controls'][0]['proof'].update(fontSize=14),
+                       lambda d: d['toolbar']['controls'][0]['proof'].update(fontSize=16.1),
+                       lambda d: d['toolbar']['controls'][0]['proof'].update(clipped=True),
+                       lambda d: d['toolbar']['rect'].update(height=200),
+                       lambda d: d['nodes'].pop(), lambda d: d['nodes'][4]['labels'].pop('contract'),
+                       lambda d: d['footer']['rect'].update(y=d['map']['rect']['y'] + d['map']['rect']['height'] - 1)):
+            bad = copy.deepcopy(good); mutate(bad)
+            with self.assertRaises(RuntimeError): MODULE.check_s0_footer(bad)
+        # Budget accounting alone must not license reducing the source map: a
+        # genuinely taller toolbar takes height from the map, never from cards.
+        bad = copy.deepcopy(good); extra = 40
+        bad['toolbar']['rect']['height'] += extra
+        bad['toolbar']['clientRect']['height'] += extra
+        for key in ('rect', 'clientRect'):
+            bad['map'][key]['y'] += extra; bad['map'][key]['height'] -= extra
+        for key in ('clientHeight', 'scrollHeight'): bad['map'][key] -= extra
+        with self.assertRaises(RuntimeError): MODULE.check_s0_footer(bad)
+
+    def test_both_desktops_can_have_only_compact_source_height_after_current_chrome(self):
+        import copy
+        def translate(value, delta):
+            if isinstance(value, dict):
+                if all(key in value for key in ('x', 'y', 'width', 'height')): value['y'] += delta
+                for child in value.values(): translate(child, delta)
+            elif isinstance(value, list):
+                for child in value: translate(child, delta)
+        for width in (1440, 1920):
+            data = self.fixture(width)
+            old = MODULE.check_s0_adaptive_spacing(data)
+            # A synthetic tight budget at either viewport: the exact original
+            #649px compact graph fits with fractional CSS pixel rounding. This
+            # is not a claim that a1080px screen has the old838px map available.
+            delta = data['map']['rect']['height'] - 649.5
+            for key in ('rect', 'clientRect'): data['chrome']['bar'][key]['height'] += delta
+            for key in ('rect', 'clientRect'):
+                data['landing'][key]['y'] += delta; data['landing'][key]['height'] -= delta
+                data['map'][key]['y'] += delta; data['map'][key]['height'] -= delta
+            for region in ('landing', 'map'):
+                for key in ('clientHeight', 'scrollHeight'): data[region][key] -= delta
+            translate(data['toolbar'], delta)
+            ranks = {scope: rank for rank, group in enumerate(MODULE.S0_TASK_ROWS) for scope in group}
+            challenges = data['expected']['challengeIds']
+            for row in data['nodes']:
+                spread = ranks[row['scope']] * old['taskExtra'] if row['scope'] else (
+                    challenges.index(row['id']) * old['challengeExtra'] if row['id'] in challenges else 0)
+                translate(row, delta - spread)
+            translate(data['layoutNotes'], delta)
+            translate(data['panel'], delta)
+            for key in ('rect', 'clientRect'): data['panel'][key]['height'] -= delta
+            for key in ('clientHeight', 'scrollHeight'): data['panel'][key] -= delta
+            MODULE.check_s0_footer(data)
+            self.assertEqual(MODULE.check_s0_adaptive_spacing(data)['availableExtra'], 0)
+            # All accounting still balances when more chrome consumes space,
+            # but the unchanged source graph must then fail containment.
+            bad = copy.deepcopy(data)
+            for key in ('rect', 'clientRect'): bad['chrome']['bar'][key]['height'] += 20
+            for key in ('rect', 'clientRect'):
+                bad['landing'][key]['y'] += 20; bad['landing'][key]['height'] -= 20
+                bad['map'][key]['y'] += 20; bad['map'][key]['height'] -= 20
+            for region in ('landing', 'map'):
+                for key in ('clientHeight', 'scrollHeight'): bad[region][key] -= 20
+            for key in ('toolbar', 'nodes', 'layoutNotes'): translate(bad[key], 20)
+            with self.assertRaises(RuntimeError): MODULE.check_s0_footer(bad)
+
     def test_adaptive_spacing_uses_actual_client_height_and_preserves_compact_map_gap(self):
         for width, task_extra, c_extra in ((1440, 0, 0), (1920, 24, 7)):
             for selected in (None, *self.expected()['readouts']):
                 for mode in ('false', 'true'):
                     data = self.fixture(width, selected); data['relationsVisible'] = mode
+                    if mode == 'true':
+                        proof = data['toolbar']['controls'][-1]['proof']
+                        proof['text'] = proof['renderedText'] = proof['textRuns'][0]['text'] = '仅显示所选关系'
                     result = MODULE.check_s0_adaptive_spacing(data)
                     MODULE.check_s0_footer(data)
                     self.assertEqual(result, dict(compactBottom=649, availableExtra=0 if width == 1440 else 178,
@@ -3969,7 +5205,7 @@ class S0FooterCaptureChecks(unittest.TestCase):
                     self.assertAlmostEqual(last['y'] + last['height'] - map_rect['y'], 649 if width == 1440 else 733)
                     self.assertAlmostEqual(map_rect['y'] + map_rect['height'] - last['y'] - last['height'], 9.5 if width == 1440 else 105.5)
                     tasks = [n['proof']['rect'] for n in data['nodes'] if n['scope']]
-                    self.assertAlmostEqual(max(r['y'] + r['height'] for r in tasks) - map_rect['y'], 590 if width == 1440 else 710)
+                    self.assertAlmostEqual(max(r['y'] + r['height'] for r in tasks) - map_rect['y'], 594 if width == 1440 else 714)
                     self.assertTrue(all(data['footer']['rect']['y'] - r['y'] - r['height'] >= 12 for r in tasks + [last]))
 
     def test_adaptive_spacing_rejects_stale_large_layout_compact_drift_and_invented_metadata(self):
@@ -4017,7 +5253,8 @@ class S0FooterCaptureChecks(unittest.TestCase):
                      lambda d: task(d)['proof']['rect'].update(x=50),
                      lambda d: c(d)['proof']['rect'].update(x=c(d)['proof']['rect']['x'] - 1),
                      lambda d: task(d)['proof']['rect'].update(width=task(d)['proof']['rect']['width'] + 1),
-                     lambda d: task(d)['proof']['rect'].update(height=53),
+                     lambda d: task(d)['proof']['rect'].update(height=55),
+                     lambda d: task(d)['proof']['rect'].update(height=57),
                      lambda d: c(d)['proof']['rect'].update(height=38),
                      lambda d: c(d)['proof']['rect'].update(height=36),
                      lambda d: task(d)['labels']['contract'].update(fontSize=15),
@@ -4051,11 +5288,16 @@ class S0FooterCaptureChecks(unittest.TestCase):
         self.assertNotIn('!= 13', gate)
         self.assertIn('check_s0_adaptive_spacing(data)', inspect.getsource(MODULE.check_s0_footer))
         main = inspect.getsource(MODULE.main)
-        self.assertIn("graph['s0AdaptiveSpacing'] = driver.js(S0_FOOTER_SNAPSHOT_JS, footer_expected)", main)
+        self.assertIn("graph['s0AdaptiveSpacing'] = desktop_chrome_snapshot(driver, report, save, 'reading-home-' + relation_mode, S0_FOOTER_SNAPSHOT_JS, footer_expected)", main)
         self.assertIn("check_s0_footer(graph['s0AdaptiveSpacing'])", main)
         self.assertIn("reading_home(relation_mode='all')", main)
-        saves = [n for n in ast.walk(ast.parse(inspect.getsource(MODULE))) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']
-        self.assertEqual(len(saves), 99)
+        tree = ast.parse(inspect.getsource(MODULE))
+        separate_disclosure_save_sites(self, tree)
+        native_paint = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'settle_version_title_paint')
+        self.assertEqual(len([n for n in ast.walk(native_paint) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']), 1)
+        tree.body.remove(native_paint)
+        saves = [n for n in ast.walk(tree) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']
+        self.assertEqual(len(saves), 103)  # 99 original + S0 paint + selector reveal + desktop paint + child audit saves.
         self.assertEqual(len(MODULE.SCENE_NAMES) * len(MODULE.VIEWPORTS), 106)
         self.assertIn('s0_adaptive_spacing', MODULE.DISPLAY_CONTRACT_MIGRATIONS)
 
@@ -4183,6 +5425,8 @@ class S0FooterCaptureChecks(unittest.TestCase):
         for kind, proof in zip(('heading', 'locator', 'source', 'status'), data['visibleProofs']):
             proof.update(self.proof('原文来源 · 完整来源版本描述' if kind == 'source' else ' · fixed' if kind == 'status' else 'Section 3', proof['rect']))
             proof.update(kind=kind, sourceRecord=data['sources'][0].copy() if kind in ('source', 'status') else None)
+            if kind == 'locator':
+                proof['locatorRecord'] = dict(index=0, raw='Section 3', links=[])
             if kind == 'source':
                 proof.update(elementTag='A', accessibilitySuffix=dict(tag='SPAN', className='np-sr', text='（新标签页）'), accessibleText=proof['text'] + '（新标签页）')
         MODULE.check_relation_evidence(data, expected)
@@ -4230,6 +5474,11 @@ d.elementFromPoint=()=>d.body;w.Range.prototype.getClientRects=function(){return
 const footerSnapshot=new w.Function(input.footerSnapshot),state=JSON.stringify(a.getState()),initial=footerSnapshot(input.footerExpected);
 assert.equal(JSON.stringify(a.getState()),state);assert.equal(initial.footerCount,1);assert.equal(initial.footer.id,'np-overview-footer');assert.equal(initial.footer.parent,'np-reading-landing');assert.equal(initial.footer.afterMap,true);assert.equal(initial.footer.insideMap,false);assert.equal(initial.legend.inFooter,true);assert.equal(initial.coverage.inFooter,true);
 assert.equal(initial.coverage.proof.renderedText,input.footerExpected.coverage);assert.equal(initial.legend.labels[2].proof.renderedText,input.footerExpected.defaultReadout);
+assert.equal(initial.chrome.identityFields.length,4);assert.equal(initial.chrome.identitySource.scopeId,a.getState().route.scope);assert.deepEqual(initial.chrome.identitySource.route,a.getState().route);
+assert.deepEqual(JSON.parse(JSON.stringify(initial.chrome.identityFields.map(f=>[f.label.renderedText,f.value.renderedText]))),JSON.parse(JSON.stringify(initial.chrome.identitySource.fields)));
+assert.deepEqual(JSON.parse(JSON.stringify(initial.chrome.controls.map(c=>[c.count,c.tag,c.tree]))),[[1,'BUTTON','g'],[1,'BUTTON','l'],[1,'BUTTON','c'],[1,'BUTTON','a'],[1,'SUMMARY',null],[1,'BUTTON',null],[1,'SUMMARY',null],[1,'BUTTON',null]]);
+const identityValue=d.querySelector('#np-selection-context dd');identityValue.style.visibility='hidden';assert.equal(footerSnapshot(input.footerExpected).chrome.identityFields[0].value.opaque,false);identityValue.style.visibility='';
+const originalTab=d.querySelector('.np-workspace-bar .np-tabs > [data-tree-tab="g"]'),duplicateTab=originalTab.cloneNode(true);originalTab.parentElement.appendChild(duplicateTab);assert.equal(footerSnapshot(input.footerExpected).chrome.controls[0].count,2);duplicateTab.remove();
 assert.deepEqual(JSON.parse(JSON.stringify(initial.nodes.map(({id,parent,entity})=>({id,parent,entity})))),input.footerExpected.nodes);states.push(initial);
 d.querySelector('[data-relation-select="tasks:relation:90"]').click();await wait(35);const selectedState=JSON.stringify(a.getState()),selected=footerSnapshot(input.footerExpected);assert.equal(JSON.stringify(a.getState()),selectedState);assert.equal(selected.legend.labels[2].proof.renderedText,input.footerExpected.readouts['tasks:relation:90']);assert.equal(selected.panel.parent,'np-overview-map');assert.deepEqual(JSON.parse(JSON.stringify(selected.panel.articles)),['tasks:relation:90']);states.push(selected);
 for(const id of Object.keys(input.footerExpected.readouts)){d.querySelector('[data-relation-select="'+id+'"]').click();await wait(10);assert.equal(footerSnapshot(input.footerExpected).legend.labels[2].proof.renderedText,input.footerExpected.readouts[id]);}
@@ -4243,7 +5492,7 @@ const span=d.createElement('span');span.style.opacity='0';span.textContent='隐�
     def test_designated_s0_scenes_cannot_omit_footer_but_glossary_keeps_original_overlay_contract(self):
         import copy, inspect
         s0 = self.fixture(); shell = DesktopHierarchyContractChecks.shell()
-        shell.update(home=True, position=None, landing=s0['landing']['rect'], landingOffsets=dict(top=0, left=0), s0Footer=s0)
+        shell.update(chrome=s0['chrome'], route=s0['route'], home=True, position=None, landing=s0['landing']['rect'], landingOffsets=dict(top=0, left=0), s0Footer=s0)
         for viewport in MODULE.VIEWPORTS:
             for suffix in MODULE.S0_FOOTER_SCENES:
                 self.assertTrue(MODULE.s0_footer_required(str(viewport[0]) + 'x' + str(viewport[1]) + suffix))
@@ -4619,8 +5868,12 @@ class AtomicReceiptPersistenceChecks(unittest.TestCase):
         import ast
         import tempfile
         source = Path(MODULE.__file__).read_text(encoding='utf-8'); tree = ast.parse(source)
+        separate_disclosure_save_sites(self, tree)
+        native_paint = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'settle_version_title_paint')
+        self.assertEqual(len([n for n in ast.walk(native_paint) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']), 1)
+        tree.body.remove(native_paint)
         calls = [node for node in ast.walk(tree) if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == 'save']
-        self.assertEqual(len(calls), 99)
+        self.assertEqual(len(calls), 103)  # 99 original + S0 paint + selector reveal + desktop paint + child audit saves.
         saves = [node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef) and node.name == 'save']
         self.assertEqual(len(saves), 1)
         self.assertEqual(ast.dump(saves[0].body[0].value.func), "Name(id='write_receipt', ctx=Load())")
@@ -4733,8 +5986,13 @@ class S0SelectorOcclusionChecks(unittest.TestCase):
         main = inspect.getsource(MODULE.main)
         for text in ("s0_footer_check('before-selection-'", "s0_footer_check('closed-'", "check_s0_stability(before_selection, selected_footer)", "closed['focus'] != 'np-relation-select-'", 'check_s0_stability(footer_before_reload, footer_after_reload, restore=True)'):
             self.assertIn(text, main)
-        saves = [n for n in ast.walk(ast.parse(inspect.getsource(MODULE))) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']
-        self.assertEqual(len(saves), 99)
+        tree = ast.parse(inspect.getsource(MODULE))
+        separate_disclosure_save_sites(self, tree)
+        native_paint = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'settle_version_title_paint')
+        self.assertEqual(len([n for n in ast.walk(native_paint) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']), 1)
+        tree.body.remove(native_paint)
+        saves = [n for n in ast.walk(tree) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == 'save']
+        self.assertEqual(len(saves), 103)  # 99 original + S0 paint + selector reveal + desktop paint + child audit saves.
         self.assertEqual(len(MODULE.SCENE_NAMES) * len(MODULE.VIEWPORTS), 106)
 
 
@@ -4914,3 +6172,1118 @@ process.stdout.write(JSON.stringify(states));
             for actual,expected in zip(states,self.expected):
                 good,_=self.fixture();actual.update(sourceBinding=expected,renderedFonts=good['renderedFonts'],pngDimensions=[1440,900],pixelVariation=True,screenshotSha256='a'*64,console=[],networkFailures=[])
                 MODULE.check_version_title_capture(actual,expected,require_navigation=False)
+
+
+class MethodChildReadabilityChecks(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        MethodReadingCaptureChecks.setUpClass()
+
+    def fixture(self, case='global'):
+        return MethodReadingCaptureChecks().receipt(case)
+
+    def test_actual_failure_requires_child_native_proof_and_preserves_first_screen_ancestry(self):
+        import copy
+        data,expected=self.fixture();child=data['rows'][-1]
+        data['tree']=dict(x=17,y=382.390625,width=398,height=455.609375)
+        # Reproduce the real below-viewport child, without altering the independent
+        # source text or the separately revealed proof frame.
+        for key,y,h in (('proof',859.890625,93),('roleProof',957.890625,21)):
+            child[key]['rect'].update(y=y,height=h);child[key]['visible']=False
+        # Synthetic fixture ancestor geometry is shifted into the real current pane.
+        for index,row in enumerate(data['rows'][:-1]):
+            row['proof']['rect'].update(y=394+index*65,height=28)
+            row['roleProof']['rect'].update(y=422+index*65,height=20)
+        audit=data['childReadability'];audit['binding']=MODULE.method_child_binding(data['captureName'],data,expected)
+        for state in [audit['before'],audit['after'],audit['proofs'][0]['state'],*[a[k] for a in audit['actions'] for k in ('before','after')]]:
+            state['tree']['client']=copy.deepcopy(data['tree'])
+        item=audit['proofs'][0];item['state']['tree']['top']=145
+        audit['actions'][0]['after']['tree']['top']=145;audit['actions'][1]['before']['tree']['top']=145
+        for key,y,h in (('proof',714.890625,93),('roleProof',812.890625,21)):
+            item['row'][key]['rect'].update(y=y,height=h)
+        for trace in [k['trace'] for k in audit['keys']]:
+            for frame in [trace['before'],trace['after'],*(e['snapshot'] for e in trace['events'])]:
+                frame['tree']['clientRect']=copy.deepcopy(data['tree']);frame['tree']['rect']=copy.deepcopy(data['tree'])
+        for trace in (item['keyTrace'],audit['keys'][0]['trace']):
+            for frame in [trace['before'],trace['after'],*(e['snapshot'] for e in trace['events'])]:
+                frame['tree']['clientRect']=copy.deepcopy(data['tree']);frame['tree']['rect']=copy.deepcopy(data['tree']);frame['tree']['top']=145
+        audit['afterSnapshot']=copy.deepcopy({k:v for k,v in data.items() if k not in ('captureName','childReadability')})
+        MODULE.check_method_reading(data,expected,MethodReadingCaptureChecks.source_positions,compact=True)
+        old=copy.deepcopy(data)
+        self.assertFalse(MODULE._reader_proof(old['rows'][-1]['proof'],old['tree'],old['viewport'],font_size=15),'old all-at-once requirement stays red at actual CI coordinates')
+        bad=copy.deepcopy(data);bad.pop('childReadability')
+        with self.assertRaisesRegex(RuntimeError,'lacks its complete'):MODULE.check_method_reading(bad,expected,MethodReadingCaptureChecks.source_positions)
+        for key in ('proof','roleProof'):
+            bad=copy.deepcopy(data);bad['rows'][0][key]['visible']=False
+            with self.assertRaises(RuntimeError):MODULE.check_method_reading(bad,expected,MethodReadingCaptureChecks.source_positions)
+
+    def test_receipt_replay_requires_final_snapshot_quiet_windows_and_exact_key_action_bridge(self):
+        import copy
+        data,expected=self.fixture()
+        for mutate in (lambda a:a.pop('afterSnapshot'),lambda a:a.update(afterSnapshot={}),lambda a:a.pop('settles'),
+                       lambda a:a['settles'][0].update(ok=False),lambda a:a['settles'][0].update(quietMs=159),lambda a:a['settles'][0].update(elapsed=2001),
+                       lambda a:a['actions'][0].update(kind='anything'),lambda a:a['actions'][0]['events'].update(events=[]),
+                       lambda a:a['keys'][0].update(actionIndex=1),lambda a:a['actions'][0]['events']['events'][0].update(key='Home'),
+                       lambda a:a['actions'][0]['events']['events'][0].update(target='other-node'),lambda a:a['actions'][0]['events']['events'][0].update(trusted=False),
+                       lambda a:a['before']['active'].update(original=False),lambda a:a['before'].update(hoverSame=False)):
+            bad=copy.deepcopy(data);mutate(bad['childReadability'])
+            with self.subTest(mutation=mutate),self.assertRaises(RuntimeError):MODULE.check_method_child_audit(bad,expected,MethodReadingCaptureChecks.source_positions)
+
+    def test_all_thirteen_scene_sources_bind_technical_and_portable_environment_children(self):
+        science=MethodReadingCaptureChecks.science;positions=MethodReadingCaptureChecks.source_positions
+        routes=MODULE.task_route_expected(science)
+        sources=[MethodReadingCaptureChecks.cases['global'],MethodReadingCaptureChecks.cases['local'],routes['poni'],*routes['image'],*routes['portable']]
+        self.assertEqual(len(sources),8)
+        for source in sources:
+            expected=MODULE.method_reading_expected(science,source,positions)
+            self.assertEqual(set(expected['childDisplay']),set(source['childIds']))
+            for pid,display in expected['childDisplay'].items():
+                child=positions[pid];self.assertIn(child['kind'],('technical_improvement','environment'))
+                self.assertEqual(display['label'],science['entities'][child['entityId']]['label'])
+                role='有来源的阅读条目' if child['kind']=='environment' else '技术改进'+(' · 条件关联' if child.get('association')=='condition' else '')
+                self.assertEqual(display['role'],role)
+        self.assertTrue(all(positions[p['childIds'][0]]['kind']=='environment' for p in routes['portable']))
+
+    def test_source_claim_viewport_scene_and_expansion_cannot_reuse_an_audit(self):
+        import copy
+        data,expected=self.fixture('imported')
+        for mutate in (lambda d:d['route'].update(claim='different-original-claim'),lambda d:d.update(captureName='1920x1080-24-poni-claim'),
+                       lambda d:d['viewport'].update(width=1920),lambda d:d['expanded']['l'].pop(),
+                       lambda d:d['childReadability']['binding'].update(scienceSha256='0'*64),
+                       lambda d:d['childReadability']['binding']['identity'].update(version='wrong'),
+                       lambda d:d['childReadability'].update(required=[]),lambda d:d['childReadability']['proofs'].clear(),
+                       lambda d:d['childReadability']['proofs'].append(copy.deepcopy(d['childReadability']['proofs'][0]))):
+            bad=copy.deepcopy(data);mutate(bad)
+            with self.subTest(mutation=mutate),self.assertRaises(RuntimeError):MODULE.check_method_reading(bad,expected,MethodReadingCaptureChecks.source_positions)
+
+    def test_children_keep_full_text_role_contrast_font_hit_and_clip_gates(self):
+        import copy
+        data,expected=self.fixture()
+        for key in ('proof','roleProof'):
+            for mutate in (lambda p:p.update(text='short'),lambda p:p.update(visible=False),lambda p:p.update(opaque=False),
+                           lambda p:p.update(unscaled=False),lambda p:p.update(clipped=True),lambda p:p.update(fontSize=14.99),
+                           lambda p:p.update(foreground=[240,240,240]),lambda p:p.update(background=[]),lambda p:p['rect'].update(y=899)):
+                bad=copy.deepcopy(data);mutate(bad['childReadability']['proofs'][0]['row'][key])
+                with self.subTest(key=key,mutation=mutate),self.assertRaises(RuntimeError):MODULE.check_method_child_audit(bad,expected,MethodReadingCaptureChecks.source_positions)
+        for mutate in (lambda p:p['keyTrace']['events'][0].update(isTrusted=False),lambda p:p['state']['active'].update(position='other'),
+                       lambda p:p['state'].update(roving=['other']),lambda p:p['keyTrace']['after']['tree'].update(top=12),
+                       lambda p:p['row'].update(parent='different-source')):
+            bad=copy.deepcopy(data);mutate(bad['childReadability']['proofs'][0])
+            with self.assertRaises(RuntimeError):MODULE.check_method_child_audit(bad,expected,MethodReadingCaptureChecks.source_positions)
+
+    def test_matching_initial_and_revealed_shortened_text_cannot_replace_source_expectation(self):
+        import copy
+        data,expected=self.fixture()
+        for field,proof in (('label','proof'),('role','roleProof')):
+            bad=copy.deepcopy(data)
+            for row in (bad['rows'][-1],bad['childReadability']['proofs'][0]['row']):
+                row[field]='truncated';row[proof]['text']='truncated'
+            with self.assertRaisesRegex(RuntimeError,'independent scientific source'):
+                MODULE.check_method_reading(bad,expected,MethodReadingCaptureChecks.source_positions)
+
+    def test_exact_return_rejects_runtime_history_focus_scroll_dom_and_hover_drift(self):
+        import copy
+        data,expected=self.fixture();base=data['childReadability']['after'];key=base['contextKey'];hk=base['historyKey']
+        for mutate in (lambda a:a['tree'].update(top=12),lambda a:a['reader'].update(top=160),lambda a:a['window'].update(y=1),
+                       lambda a:a.update(domSame=False),lambda a:a.update(hoverSame=False),lambda a:a['active'].update(original=False),
+                       lambda a:a.update(roving=[expected['children'][0]]),lambda a:a['runtime']['contexts'][key].update(focusTarget='other'),
+                       lambda a:a['history'][hk]['contexts'][key].update(focusTarget='other'),lambda a:a['runtime']['contexts'][key]['expandedByTree']['g'].pop(),
+                       lambda a:a['runtime']['route'].update(claim='other')):
+            bad=copy.deepcopy(data);mutate(bad['childReadability']['after'])
+            with self.subTest(mutation=mutate),self.assertRaises(RuntimeError):MODULE.check_method_child_audit(bad,expected,MethodReadingCaptureChecks.source_positions)
+
+    def test_explicit_empty_closed_child_audit_is_required_and_visible_child_need_not_scroll(self):
+        data,expected=self.fixture()
+        MODULE.check_method_child_audit(data,expected,MethodReadingCaptureChecks.source_positions)
+        self.assertEqual(data['childReadability']['proofs'][0]['state']['tree']['top'],0,'already-visible child can have genuine0→0 keyboard geometry')
+        data['expanded']['g'].remove(expected['position']['id']);data['rows']=data['rows'][:-1]
+        audit=attach_method_child_fixture(data,expected)
+        self.assertEqual(audit['required'],[]);self.assertEqual(audit['proofs'],[])
+        MODULE.check_method_reading(data,expected,MethodReadingCaptureChecks.source_positions)
+        data.pop('childReadability')
+        with self.assertRaises(RuntimeError):MODULE.check_method_reading(data,expected,MethodReadingCaptureChecks.source_positions)
+
+    def test_stable_focus_only_difference_is_preserved_but_other_model_drift_is_not_accepted(self):
+        import copy
+        data,expected=self.fixture();before=data['childReadability']['before'];key=before['contextKey'];hk=before['historyKey']
+        before['history'][hk]['contexts'][key]['focusTarget']=expected['chain'][0]
+        self.assertEqual(MODULE.method_child_baseline_mode(before),'stable-keyboard-focus-only')
+        bad=copy.deepcopy(before);bad['history'][hk]['contexts'][key]['treeScrollByTree']['g']=12
+        with self.assertRaises(RuntimeError):MODULE.method_child_baseline_mode(bad)
+        bad=copy.deepcopy(before);bad['active']['position']='external'
+        with self.assertRaises(RuntimeError):MODULE.method_child_baseline_mode(bad)
+
+    def test_only_13_original_method_scenes_share_gateway_and_all_106_pngs_remain(self):
+        import ast,inspect
+        wanted={'-03-method-reader','-03b-reader-visible','-11-active-method-reader','-11c-reader-reopened','-23-poni-method','-24-poni-claim',
+                '-27-imagenav-zhu','-27-imagenav-sptm','-27-imagenav-ving','-28-portable-rl','-28-portable-llm','-30-analysis-imported-entry','-30-analysis-not-imported'}
+        self.assertEqual(set(MODULE.METHOD_CHILD_SCENES),wanted);self.assertEqual(len(MODULE.METHOD_CHILD_SCENES),13)
+        self.assertTrue(wanted<=set(MODULE.SCENE_NAMES));self.assertEqual(len(MODULE.SCENE_NAMES)*len(MODULE.VIEWPORTS),106)
+        tree=ast.parse(inspect.getsource(MODULE.main));calls=[n for n in ast.walk(tree) if isinstance(n,ast.Call) and isinstance(n.func,ast.Name) and n.func.id=='method_child_readability_checks']
+        self.assertEqual(len(calls),1)
+        source=inspect.getsource(MODULE.main)
+        self.assertIn("if data['desktopShell'].get('methodReading') == 'true' and not data['desktopShell']['collapsed']:",source)
+        self.assertIn("compact=name.endswith(('-03-method-reader', '-03b-reader-visible', '-11-active-method-reader', '-11c-reader-reopened'))",source)
+        self.assertIn('check_method_child_audit(data, expected, source_positions)',inspect.getsource(MODULE.check_method_reading))
+
+    def test_observer_scripts_are_syntactically_valid_and_never_set_focus_scroll_or_state(self):
+        js=[getattr(MODULE,n) for n in dir(MODULE) if n.startswith('METHOD_CHILD_') and n.endswith('_JS')]
+        self.assertEqual({n for n in dir(MODULE) if n.startswith('METHOD_CHILD_') and n.endswith('_JS')},
+                         {'METHOD_CHILD_PROBE_START_JS','METHOD_CHILD_STATE_JS','METHOD_CHILD_ACTION_JS','METHOD_CHILD_IDLE_JS','METHOD_CHILD_READER_POINT_JS','METHOD_CHILD_HOVER_POINT_JS','METHOD_CHILD_PROBE_STOP_JS'})
+        for script in js:
+            for operation in ('.focus(','.scrollIntoView(','.scrollTo(','.navigate(','.replaceState(','.pushState(','.scrollTop=', '.scrollLeft=', '.tabIndex='):
+                self.assertNotIn(operation,script)
+        result=subprocess.run(['node','-e',"for(const s of JSON.parse(require('fs').readFileSync(0,'utf8')))new Function(s);"],input=json.dumps(js),text=True,capture_output=True)
+        self.assertEqual(result.returncode,0,result.stderr)
+
+    def test_reader_pointer_requires_exact_self_hit_integer_client_padding_and_not_overlay(self):
+        code=r"""
+const input=JSON.parse(require('fs').readFileSync(0,'utf8')),c=input.case;
+const reader={id:'np-detail-scroll',isConnected:true,tabIndex:-1,clientLeft:1,clientTop:1,clientWidth:970,clientHeight:430,getBoundingClientRect:()=>({x:433.25,y:446.6875,width:992,height:436.3125})};
+global.window=global;window.__npMethodChildProbe={active:c.wrong?{}:reader};global.innerWidth=1440;global.innerHeight=900;
+const probes=[];global.document={getElementById:()=>reader,elementFromPoint:(x,y)=>{probes.push([x,y]);return c.overlay?{}:c.descendant?{parentElement:reader}:reader;}};
+let value,error;try{value=new Function(input.script)();}catch(e){error=String(e);}process.stdout.write(JSON.stringify({value,error,probes}));
+"""
+        def probe(**case):
+            result=subprocess.run(['node','-e',code],input=json.dumps(dict(case=case,script=MODULE.METHOD_CHILD_READER_POINT_JS)),text=True,capture_output=True)
+            self.assertEqual(result.returncode,0,result.stderr);return json.loads(result.stdout)
+        good=probe();p=good['value']['point'];self.assertIsInstance(p['x'],int);self.assertIsInstance(p['y'],int)
+        self.assertGreater(p['x'],434.25);self.assertLess(p['x'],444.25);self.assertLess(p['x'],1404.25)
+        self.assertEqual(good['value']['candidateCount'],9)
+        for case in ('overlay','descendant'):
+            self.assertIsNone(probe(**{case:True})['value']['point'])
+        self.assertIn('original reader',probe(wrong=True)['error'])
+
+
+# Native-input transport/state-machine regressions. This is a deterministic fake
+# WebDriver, NOT Chrome, trusted-browser-event evidence, layout or paint proof.
+class _MethodChildNativeDriver:
+    """Interpret requested native actions; JS calls may only inspect/observe.
+
+    The model implements the product's important independent state channels:
+    DOM object focus, roving tabindex, runtime focus, persisted history/taskView,
+    independent pane offsets, hover and a 120 ms debounced scroll save.
+    """
+    def __init__(self, fixture, expected, positions, *, original='tree', divergent=False,
+                 child_visible=False, reader_top=0, tree_top=0, tab_scroll=False, fault=None):
+        import copy
+        self.copy = copy.deepcopy
+        self.base = copy.deepcopy(fixture)
+        self.base.pop('captureName', None); self.base.pop('childReadability', None)
+        self.expected, self.positions, self.fault = expected, positions, fault
+        self.route = dict(nav='1', bench=None, protocol=None, claim=None, mode='tree', template=None,
+                          **self.base['route'])
+        self.base['route'] = copy.deepcopy(self.route)
+        self.tree_name = self.route['tree']; self.selected = self.route['node']
+        self.path = MODULE.method_visible_source_ids(expected, positions, self.base['expanded'][self.tree_name])
+        self.root, self.child = self.path[0], expected['children'][0]
+        self.child_visible, self.tab_scroll = child_visible, tab_scroll
+        self.tree = dict(top=tree_top, left=0, maxTop=300, maxLeft=0,
+                         client=dict(x=17, y=382.391, width=398, height=456))
+        self.reader = dict(top=reader_top, left=0, maxTop=800, maxLeft=0,
+                           client=dict(x=433, y=261, width=990, height=622))
+        self.initial_reader_top = reader_top
+        self.base['tree'] = copy.deepcopy(self.tree['client'])
+        self.nodes = {pid: dict(id='np-node-'+pid, tag='LI', position=pid, tabIndex=-1) for pid in self.path}
+        self.nodes[self.selected]['tabIndex'] = 0
+        self.reader_node = dict(id='np-detail-scroll', tag='DIV', position=None, tabIndex=-1)
+        self.tree_node = dict(id='np-tree-scroll', tag='DIV', position=None, tabIndex=0)
+        self.header_button = dict(id='np-reader-heading-button', tag='BUTTON', position=None, tabIndex=0)
+        self.content_button = dict(id='np-reader-content-button', tag='BUTTON', position=None, tabIndex=0)
+        self.toggle_button = dict(id='np-reader-toggle', tag='BUTTON', position=None, tabIndex=0)
+        self.active = self.reader_node if original == 'reader' else self.content_button if original == 'reader-control' else self.nodes[self.selected]
+        self.original_active = self.active
+        self.roving = self.selected
+        self.original_focus = {k: self.active[k] for k in ('id', 'tag', 'tabIndex')}
+        self.dom_refs = [object() for _ in range(4 + len(self.path))]
+        self.original_dom_refs = self.dom_refs.copy()
+        self.original_hover = object(); self.hover = self.original_hover
+        self.pointer = None; self.shift = False
+        self.history_key = 'navigationProduct'; self.context_key = 'exact-method-context'; self.neutral_key = 'task-neutral-context'
+        initial_focus = self.active['position'] or self.active['id']
+        bucket = dict(expandedByTree=copy.deepcopy(self.base['expanded']), selectedByTree={self.tree_name:self.selected},
+                      treeScrollByTree={self.tree_name:tree_top}, treeScrollLeftByTree={self.tree_name:0},
+                      detailScrollByTree={self.tree_name:reader_top}, windowScroll=0, focusTarget=initial_focus,
+                      graphScale=1, untouched=dict(nested=['preserve', 17]))
+        self.runtime = dict(schemaVersion='navigation-ui/1', modelRevision='fixture-source-revision',
+                            route=copy.deepcopy(self.route), revision=7,
+                            originTrail=[dict(route=dict(node='existing-origin'), bucket=dict(focusTarget='original-origin-focus'))],
+                            contexts={self.context_key:bucket, 'other-context':dict(untouched=['keep', 23])})
+        if self.tree_name in ('l','c'):
+            self.runtime['contexts'][self.neutral_key] = dict(taskView=dict(schema=1,
+                lastRouteByTree={self.tree_name:copy.deepcopy(self.route)}, focusTargetByTree={self.tree_name:initial_focus}))
+        self.history = {self.history_key:copy.deepcopy(self.runtime), 'externalOwner':dict(nested=['do not replace', 42])}
+        if divergent:
+            if original != 'tree': raise AssertionError('Supported divergent fixture starts at its roving treeitem')
+            self.history[self.history_key]['contexts'][self.context_key]['focusTarget'] = self.root
+            if self.tree_name in ('l','c'):
+                for s in (self.runtime,self.history[self.history_key]):
+                    s['contexts'][self.neutral_key]['taskView']['focusTargetByTree'][self.tree_name] = self.root
+        self.now = 0; self.pending_save = None; self.probe = False; self.trace = None
+        self.events = []; self.overflow = 0; self.calls = []; self.keys = []
+        self.cleanup_calls = 0; self.trace_cleanup_calls = 0; self.save_count = 0; self.saved_focuses = []
+        self.child_seen = False; self.return_home_count = 0; self.no_scroll_stage = False
+        self.wheel_count = 0; self.fault_triggered = False
+        self.initial_state = self.snapshot_state()
+        self.initial_snapshot = self.snapshot_reading()
+
+    def _event(self, kind, *, key=None, target=None, trusted=True):
+        if not self.probe: return
+        target = target or self.active
+        row = dict(type=kind, key=key, trusted=trusted, target=target['id'],
+                   originalTarget=target is self.original_active, readerTarget=target is self.reader_node)
+        if len(self.events) < 24: self.events.append(row)
+        else: self.overflow = min(25, self.overflow + 1)
+
+    def _focus(self, node):
+        if self.active is not node:
+            self.active = node; self._event('focusin', target=node)
+
+    def _scroll(self, region, *, top=None, left=None):
+        area = self.tree if region == 'tree' else self.reader
+        old = (area['top'],area['left'])
+        if top is not None: area['top'] = max(0,min(area['maxTop'],top))
+        if left is not None: area['left'] = max(0,min(area['maxLeft'],left))
+        if old != (area['top'],area['left']):
+            self._event('scroll',target=self.tree_node if region=='tree' else self.reader_node)
+            self.pending_save = self.now + 120
+
+    def _save_current(self):
+        # Production capture clones runtime and reads DOM focus, never roving alone.
+        self.runtime = self.copy(self.runtime)
+        bucket = self.runtime['contexts'][self.context_key]
+        bucket.update(focusTarget=self.active['position'] or self.active['id'], windowScroll=0)
+        bucket['treeScrollByTree'][self.tree_name] = self.tree['top']
+        bucket['treeScrollLeftByTree'][self.tree_name] = self.tree['left']
+        bucket['detailScrollByTree'][self.tree_name] = self.reader['top']
+        if self.tree_name in ('l','c'):
+            task = self.runtime['contexts'][self.neutral_key]['taskView']
+            task['lastRouteByTree'][self.tree_name] = self.copy(self.route)
+            task['focusTargetByTree'][self.tree_name] = bucket['focusTarget']
+        self.history[self.history_key] = self.copy(self.runtime)
+        self.pending_save = None; self.save_count += 1; self.saved_focuses.append(bucket['focusTarget'])
+
+    def _idle(self):
+        self.now += 200
+        if self.pending_save is not None and self.pending_save <= self.now: self._save_current()
+        return dict(ok=True, elapsed=200, quietMs=160)
+
+    def _row_rect(self, pid):
+        if pid == self.child:
+            y = 690 if self.child_visible else 855.891
+            height = 127.5
+        else:
+            y = self.tree['client']['y'] + 12 + self.path.index(pid)*58
+            height = 49
+        return dict(x=25,y=y-self.tree['top'],width=375,height=height)
+
+    def _native_nearest(self, pid):
+        import math
+        row = self._row_rect(pid); client = self.tree['client']
+        top = self.tree['top']
+        top_edge=client['y']+(12 if pid==self.root else 0)
+        if row['y'] < top_edge: top -= math.ceil(round(top_edge-row['y'],6))
+        elif row['y']+row['height'] > client['y']+client['height']:
+            top += math.ceil(round(row['y']+row['height']-client['y']-client['height'],6))
+        self._scroll('tree',top=top)
+
+    def _trace_frame(self):
+        if not self.trace: raise AssertionError('No active keyboard trace')
+        def row(pid):
+            return dict(id='np-node-'+pid,position=pid,rect=self._row_rect(pid),itemMarginTop=0,rowScrollMarginBlockStart='auto')
+        return dict(route=self.copy(self.route),methodReading='true',window=dict(x=0,y=0),active=self.active['id'],
+                    tree=dict(id='np-tree-scroll',connected=True,top=self.tree['top'],left=self.tree['left'],
+                              scrollHeight=756,scrollWidth=398,rect=self.copy(self.tree['client']),clientRect=self.copy(self.tree['client']),
+                              paddingTop=0,scrollPaddingBlockStart='auto'),
+                    root=row(self.trace['root']),target=row(self.trace['target']))
+
+    def _key(self, value):
+        key = {'\ue011':'Home','\ue015':'ArrowDown','\ue004':'Tab','\ue008':'Shift'}.get(value,value)
+        if key=='Shift': self.shift=True; return
+        trusted = not (self.fault=='untrusted-child' and key=='ArrowDown' and self.active['position']==self.path[self.path.index(self.child)-1])
+        self._event('keydown',key=key,trusted=trusted)
+        self.keys.append((key,self.active['id']))
+        if key=='Tab':
+            ring = [self.tree_node,self.nodes[self.roving],self.header_button,self.content_button,self.toggle_button]
+            # tabindex=-1 reader is outside the sequential ring; its DOM position
+            # is between fixed header controls and reader content controls.
+            if self.active is self.reader_node: target = self.header_button if self.shift else self.content_button
+            else:
+                index=next((i for i,n in enumerate(ring) if n is self.active),1)
+                target=ring[(index+(-1 if self.shift else 1))%len(ring)]
+            self._focus(target)
+            if self.tab_scroll and target is self.header_button: self._scroll('reader',top=0)
+            return
+        if key not in ('Home','ArrowDown'): raise AssertionError('Unsupported native key '+key)
+        if self.active['position'] is None: return
+        source=self.active['id']; at=self.path.index(self.active['position'])
+        # Detect the persistence-preserving phase from actual restored history,
+        # not from an incidental count of Home requests.
+        if (self.child_seen and self.history==self.initial_state['history'] and self.pending_save is None and
+                self.active['position']==self.initial_state['history'][self.history_key]['contexts'][self.context_key]['focusTarget']):
+            self.no_scroll_stage=True
+        target=self.root if key=='Home' else self.path[min(len(self.path)-1,at+1)]
+        if self.fault=='action-error' and target==self.child:
+            self.fault_triggered=True; raise RuntimeError('injected native action transport failure')
+        if self.trace:
+            self.trace['events'].append(dict(phase='capture',key=key,code=key,isTrusted=trusted,defaultPrevented=False,
+                                              eventTarget=source,snapshot=self._trace_frame()))
+        for node in self.nodes.values(): node['tabIndex']=-1
+        self.nodes[target]['tabIndex']=0; self.roving=target; self._focus(self.nodes[target]); self._native_nearest(target)
+        self.runtime['contexts'][self.context_key]['focusTarget']=target
+        if target==self.child: self.child_seen=True
+        if self.fault=='delayed-save' and self.no_scroll_stage and key=='ArrowDown' and not self.fault_triggered:
+            # Fault injection: a delayed pre-existing save leaks into the
+            # history-preserving phase. No DOM scroll is invented for the key.
+            self.pending_save=self.now+120; self.fault_triggered=True
+        if self.fault=='dom-replaced' and target==self.child: self.dom_refs[-1]=object()
+        if self.trace:
+            self.trace['events'].append(dict(phase='bubble',key=key,code=key,isTrusted=trusted,defaultPrevented=True,
+                                              eventTarget=source,snapshot=self._trace_frame()))
+
+    def _wheel(self, action):
+        self.wheel_count += 1
+        x,y=action['x'],action['y']
+        region=next((name for name,area in [('tree',self.tree),('reader',self.reader)]
+                     if area['client']['x']<=x<area['client']['x']+area['client']['width'] and
+                     area['client']['y']<=y<area['client']['y']+area['client']['height']),None)
+        if region is None: raise AssertionError('Native wheel origin misses both existing panes')
+        if action['origin']!='viewport' or action['duration']!=80: raise AssertionError('Unexpected native wheel transport')
+        if self.fault=='wheel-noop': self.fault_triggered=True; return
+        area=self.tree if region=='tree' else self.reader
+        dx,dy=action['deltaX'],action['deltaY']
+        if self.fault=='wheel-inexact':
+            dx=dx/2;dy=dy/2;self.fault_triggered=True
+        self._scroll(region,top=area['top']+dy,left=area['left']+dx)
+
+    def _pointer(self, action):
+        kind=action['type']
+        if kind=='pointerMove':
+            self.pointer=(action['x'],action['y'])
+            self.hover = self.original_hover if self.pointer==(100,200) else self.reader_node
+        elif kind=='pointerDown':
+            if self.pointer!=(435,500): raise AssertionError('Pointer down was not aimed at verified reader self-hit')
+            self._event('pointerdown',target=self.reader_node)
+            if self.fault!='pointer-no-focus': self._focus(self.reader_node)
+            else: self.fault_triggered=True
+        elif kind=='pointerUp':
+            self._event('pointerup',target=self.reader_node);self._event('click',target=self.reader_node)
+        else: raise AssertionError('Unexpected pointer action '+kind)
+
+    def call(self, method, endpoint, payload):
+        self.calls.append(('call',method,endpoint,self.copy(payload)))
+        if method!='POST': raise AssertionError('Unexpected non-POST transport')
+        if endpoint=='/execute/async':
+            if payload!={'script':MODULE.METHOD_CHILD_IDLE_JS,'args':[]}: raise AssertionError('Non-observational asynchronous JavaScript')
+            return self._idle()
+        if endpoint!='/actions': raise AssertionError('Only native actions and read-only idle may run')
+        for source in payload['actions']:
+            for action in source['actions']:
+                if source['type']=='key':
+                    if action['type']=='keyDown': self._key(action['value'])
+                    elif action['type']=='keyUp':
+                        if action['value']=='\ue008': self.shift=False
+                    else: raise AssertionError('Unexpected key action')
+                elif source['type']=='wheel': self._wheel(action)
+                elif source['type']=='pointer': self._pointer(action)
+                else: raise AssertionError('Unexpected action source')
+        return None
+
+    def snapshot_state(self):
+        active={**self.active,'original':self.active is self.original_active}
+        return dict(route=self.copy(self.route),runtime=self.copy(self.runtime),history=self.copy(self.history),
+                    historyKey=self.history_key,contextKey=self.context_key,historyLength=15,
+                    viewport=dict(self.base['viewport'],dpr=1),window=dict(x=0,y=0),tree=self.copy(self.tree),reader=self.copy(self.reader),
+                    active=active,roving=[self.roving],hoverSame=self.hover is self.original_hover,
+                    domSame=len(self.dom_refs)==len(self.original_dom_refs) and all(a is b for a,b in zip(self.dom_refs,self.original_dom_refs)),
+                    originalFocus=self.copy(self.original_focus),tabBound=8,
+                    scopeCandidates=method_candidate_scope_fixture(self.path,self.roving,{pid:self.nodes[pid]['tabIndex'] for pid in self.path}))
+
+    def snapshot_reading(self):
+        snapshot=self.copy(self.base)
+        for row in snapshot['rows']:
+            pid=row['id'];row['tabIndex']=self.nodes[pid]['tabIndex']
+            if pid==self.child:
+                label_y=694 if self.child_visible else 859.891
+                role_y=792 if self.child_visible else 957.891
+                label_height=93;role_height=21
+            else:
+                label_y=self.tree['client']['y']+8+self.path.index(pid)*58
+                role_y=label_y+29;label_height=28;role_height=20
+            row['proof']=MethodReadingCaptureChecks.proof(row['label'],30,label_y-self.tree['top'],360,label_height)
+            row['roleProof']=MethodReadingCaptureChecks.proof(row['role'],30,role_y-self.tree['top'],360,role_height)
+            for field in ('proof','roleProof'):
+                proof=row[field]
+                visible=MODULE.rect_inside(proof['rect'],self.tree['client'],0)
+                proof['visible']=visible;proof['clipped']=not visible
+                proof['readerContent']=self.copy(self.tree['client'])
+                proof['clipAreas']=[self.copy(self.tree['client'])]
+                for fragment in proof['fragments']:fragment['visible']=visible
+                for run in proof['textRuns']:
+                    run['clipAreas']=[self.copy(self.tree['client'])]
+                    for fragment in run['fragments']:fragment['visible']=visible
+        # Reflect reader movement in source/geometry snapshots, so failing to
+        # restore reader160 cannot pass only because source strings are stable.
+        delta=self.initial_reader_top-self.reader['top']
+        snapshot['mechanism']['rect']['y']+=delta
+        for field in snapshot['mechanism']['fields']:
+            field['proof']['rect']['y']+=delta
+        return snapshot
+
+    def js(self, script, *args):
+        self.calls.append(('js',script,self.copy(args)))
+        if script==MODULE.METHOD_CHILD_PROBE_START_JS:
+            if self.probe: raise AssertionError('Probe installed twice')
+            self.probe=True;return True
+        if script==MODULE.METHOD_CHILD_STATE_JS:
+            if not self.probe: raise AssertionError('State measurement requires its observation probe')
+            return self.snapshot_state()
+        if script==MODULE.METHOD_READING_SNAPSHOT_JS:return self.snapshot_reading()
+        if script==MODULE.METHOD_CHILD_ACTION_JS:
+            if args==('baseline',):
+                self.original_active=self.active;self.original_hover=self.hover
+                self.original_focus={k:self.active[k] for k in ('id','tag','tabIndex')}
+                return True
+            if args==('candidates',):return method_candidate_inventory_fixture(self.snapshot_state())
+            if args==('reset',):self.events=[];self.overflow=0;return True
+            if args==('read',):return dict(events=self.copy(self.events),overflow=self.overflow)
+            raise AssertionError('Unexpected event-recorder command')
+        if script==MODULE.METHOD_CHILD_READER_POINT_JS:
+            if self.original_active is not self.reader_node: raise AssertionError('Reader pointer special-case used for another original focus')
+            return dict(id='np-detail-scroll',client=self.copy(self.reader['client']),
+                        point=None if self.fault=='pointer-missing' else dict(x=435,y=500),candidateCount=0 if self.fault=='pointer-missing' else 1)
+        if script==MODULE.METHOD_CHILD_HOVER_POINT_JS:
+            return dict(point=dict(x=100,y=200),id='original-hover-target',tag='BUTTON')
+        if script==MODULE.METHOD_KEY_TRACE_START_JS:
+            if self.trace is not None: raise AssertionError('Keyboard trace leaked from preceding action')
+            source,root,target,key=args
+            self.trace=dict(scope='method-tree-key',source=source,root=root,target=target,key=key,eventLimit=2,
+                            events=[],overflow=0,after=None,cleanedUp=False)
+            self.trace['before']=self._trace_frame();return self.copy(self.trace)
+        if script==MODULE.METHOD_KEY_TRACE_STOP_JS:
+            if self.trace is None: raise AssertionError('No keyboard trace to clean up')
+            self.trace['after']=self._trace_frame();self.trace['cleanedUp']=True
+            result=self.copy(self.trace);self.trace=None;self.trace_cleanup_calls+=1;return result
+        if script==MODULE.METHOD_CHILD_PROBE_STOP_JS:
+            self.cleanup_calls+=1;self.probe=False
+            if self.fault=='cleanup-error': self.fault_triggered=True;raise RuntimeError('injected probe cleanup transport failure')
+            return dict(cleanedUp=True)
+        raise AssertionError('Unapproved JavaScript execution: helper must not focus, scroll, rewrite model/history or rebuild DOM')
+
+
+class MethodChildNativeOrchestrationChecks(unittest.TestCase):
+    """State-machine transport checks; actual Chrome remains the acceptance gate."""
+    @classmethod
+    def setUpClass(cls):
+        MethodReadingCaptureChecks.setUpClass()
+
+    def make(self, case='global', **options):
+        fixture=MethodReadingCaptureChecks()
+        data,expected=fixture.receipt(case)
+        driver=_MethodChildNativeDriver(data,expected,fixture.source_positions,**options)
+        data=driver.snapshot_reading()
+        report={};saves=[]
+        suffix='-11c-reader-reopened' if options.get('original')=='reader' else '-03-method-reader' if case=='global' else '-11-active-method-reader'
+        name='1440x900'+suffix
+        return driver,data,expected,fixture.source_positions,report,lambda:saves.append(len(driver.calls)),name,saves
+
+    def run_helper(self, values):
+        driver,data,expected,positions,report,save,name,_=values
+        return MODULE.method_child_readability_checks(driver,report,save,name,data,expected,positions)
+
+    def assert_exact_return(self, values, record):
+        driver,data,expected,positions,report,save,name,saves=values
+        self.assertEqual(record['status'],'verified_native_children')
+        self.assertTrue(record['cleanedUp']);self.assertFalse(driver.probe);self.assertIsNone(driver.trace)
+        self.assertEqual(driver.cleanup_calls,1);self.assertGreater(len(saves),0)
+        self.assertEqual(driver.snapshot_state(),driver.initial_state)
+        self.assertEqual(driver.snapshot_reading(),driver.initial_snapshot)
+        self.assertIs(driver.active,driver.original_active)
+        self.assertTrue(all(a is b for a,b in zip(driver.dom_refs,driver.original_dom_refs)))
+        self.assertEqual(record['before'],record['after'])
+        self.assertEqual(record['afterSnapshot'],driver.initial_snapshot)
+        MODULE.check_method_child_audit(data,expected,positions)
+        action_calls=[call for call in driver.calls if call[:3]==('call','POST','/actions')]
+        self.assertGreater(len(action_calls),0)
+        self.assertEqual(driver.history['externalOwner'],{'nested':['do not replace',42]})
+        self.assertEqual(driver.runtime['contexts']['other-context'],{'untouched':['keep',23]})
+
+    def test_coherent_global_child_full_label_and_role_require_actual_145_scroll(self):
+        values=self.make();driver=values[0]
+        before=next(r for r in driver.initial_snapshot['rows'] if r['id']==driver.child)
+        self.assertEqual(before['proof']['rect']['y'],859.891)
+        self.assertEqual(before['roleProof']['rect']['y']+before['roleProof']['rect']['height'],978.891)
+        self.assertFalse(before['proof']['visible']);self.assertFalse(before['roleProof']['visible'])
+        record=self.run_helper(values);self.assert_exact_return(values,record)
+        proof=record['proofs'][0]
+        self.assertEqual(proof['state']['tree']['top'],145)
+        self.assertEqual(proof['keyTrace']['before']['tree']['top'],0)
+        self.assertEqual(proof['keyTrace']['after']['tree']['top'],145)
+        for field in ('proof','roleProof'):
+            self.assertTrue(MODULE._reader_proof(proof['row'][field],driver.tree['client'],driver.base['viewport'],font_size=15))
+        self.assertEqual(record['baselineMode'],'coherent')
+        self.assertGreater(driver.wheel_count,0,'coherent original selected focus must be naturally persisted after Home saves root')
+
+    def test_stable_original_history_root_runtime_method_survives_without_final_save(self):
+        for case in ('global','local'):
+            with self.subTest(case=case):
+                values=self.make(case,divergent=True);driver=values[0]
+                record=self.run_helper(values);self.assert_exact_return(values,record)
+                self.assertEqual(record['baselineMode'],'stable-keyboard-focus-only')
+                key=driver.context_key;hkey=driver.history_key
+                self.assertEqual(driver.runtime['contexts'][key]['focusTarget'],driver.selected)
+                self.assertEqual(driver.history[hkey]['contexts'][key]['focusTarget'],driver.root)
+                self.assertEqual(record['persistedReturn']['runtime'],driver.initial_state['history'][hkey])
+                self.assertEqual(driver.saved_focuses[-1],driver.root,'last native save must persist original history, never the runtime-only final focus')
+                self.assertTrue(all(a['kind']=='tree-key' for a in record['actions'][-len(driver.expected['chain']):]),'history reconstruction must finish with only non-scrolling keys')
+                if case=='local':
+                    self.assertEqual(driver.runtime['contexts'][driver.neutral_key]['taskView']['focusTargetByTree']['l'],driver.root)
+
+    def test_nonzero_original_tree_offset_and_reader_scroll_survive_focus_only_history_return(self):
+        values=self.make(divergent=True,tree_top=4,reader_top=160);driver=values[0]
+        record=self.run_helper(values);self.assert_exact_return(values,record)
+        self.assertEqual(record['before']['tree']['top'],4);self.assertEqual(record['after']['tree']['top'],4)
+        self.assertEqual(record['after']['reader']['top'],160)
+        persisted=record['persistedReturn'];self.assertEqual(persisted['tree']['top'],4)
+        # A needless Home here would move12px-padded root back to0 and fail.
+        last_home=max(i for i,k in enumerate(record['keys']) if k['input']=='\ue011')
+        self.assertTrue(all(k['input']=='\ue015' for k in record['keys'][last_home+1:]))
+
+    def test_reader_reopened_minus_one_focus_reader160_and_tab_scroll_are_restored(self):
+        values=self.make('local',original='reader',reader_top=160,tab_scroll=True);driver=values[0]
+        record=self.run_helper(values);self.assert_exact_return(values,record)
+        self.assertEqual(record['before']['originalFocus'],dict(id='np-detail-scroll',tag='DIV',tabIndex=-1))
+        self.assertEqual(record['after']['reader']['top'],160)
+        self.assertTrue(any(a['kind']=='reverse-tab' and a['after']['reader']['top']==0 for a in record['actions']))
+        pointer=next(a for a in record['actions'] if a['kind']=='pointer-return-reader')
+        self.assertEqual(pointer['after']['active']['id'],'np-detail-scroll')
+        self.assertTrue(pointer['after']['active']['original'])
+        for kind in ('pointerdown','pointerup','click','focusin'):
+            self.assertTrue(any(e['type']==kind and e['readerTarget'] and e['trusted'] for e in pointer['events']['events']))
+        self.assertTrue(any(a['kind']=='restore-original-hover' for a in record['actions']))
+        self.assertTrue(any(a['kind']=='wheel-reader' for a in record['actions']))
+
+    def test_reader_focus_alone_requires_effective_one_pixel_persistence_roundtrip(self):
+        values=self.make('local',original='reader',reader_top=160,child_visible=True)
+        driver=values[0];record=self.run_helper(values);self.assert_exact_return(values,record)
+        pointer=next(a for a in record['actions'] if a['kind']=='pointer-return-reader')
+        key=driver.context_key;hkey=driver.history_key
+        self.assertEqual(pointer['after']['active']['id'],'np-detail-scroll')
+        self.assertEqual(pointer['after']['runtime']['contexts'][key]['focusTarget'],driver.selected)
+        self.assertEqual(pointer['after']['history'][hkey]['contexts'][key]['focusTarget'],'np-detail-scroll')
+        wheels=[a for a in record['actions'] if a['kind']=='wheel-reader']
+        self.assertEqual([(a['before']['reader']['top'],a['after']['reader']['top']) for a in wheels],[(160,161),(161,160)])
+        self.assertEqual(driver.saved_focuses,['np-detail-scroll','np-detail-scroll'])
+
+    def test_execution_transport_never_requests_javascript_focus_scroll_or_model_writes(self):
+        import re
+        values=self.make('local',original='reader',reader_top=160,tab_scroll=True)
+        record=self.run_helper(values);self.assert_exact_return(values,record)
+        for call in values[0].calls:
+            if call[0]=='js':
+                script=call[1]
+            elif call[:3]==('call','POST','/execute/async'):
+                script=call[3]['script']
+            else:
+                self.assertEqual(call[:3],('call','POST','/actions'))
+                continue
+            self.assertNotRegex(script,r'\.(?:focus|scrollIntoView|scrollTo|navigate|replaceState|pushState)\s*\(')
+            self.assertNotRegex(script,r'\.(?:scrollTop|scrollLeft|tabIndex|focusTarget)\s*=(?!=)')
+            self.assertNotRegex(script,r'history\.state\s*=(?!=)')
+
+    def test_tab_reachable_reader_control_returns_without_activating_it(self):
+        values=self.make('local',original='reader-control',reader_top=160,tab_scroll=True)
+        record=self.run_helper(values);self.assert_exact_return(values,record)
+        self.assertTrue(any(a['kind']=='tab' for a in record['actions']))
+        self.assertFalse(any(a['kind']=='pointer-return-reader' for a in record['actions']))
+        self.assertFalse(any(e['type']=='click' for a in record['actions'] for e in a['events']['events']))
+
+    def test_already_visible_child_zero_scroll_still_requires_trusted_key_proof(self):
+        values=self.make(child_visible=True);driver=values[0]
+        record=self.run_helper(values);self.assert_exact_return(values,record)
+        proof=record['proofs'][0]
+        self.assertEqual(proof['keyTrace']['before']['tree']['top'],0)
+        self.assertEqual(proof['keyTrace']['after']['tree']['top'],0)
+        self.assertEqual([e['phase'] for e in proof['keyTrace']['events']],['capture','bubble'])
+        self.assertTrue(all(e['isTrusted'] for e in proof['keyTrace']['events']))
+        self.assertEqual(driver.wheel_count,0,'zero-scroll child proof does not invent a wheel requirement')
+
+    def test_missing_self_hit_or_pointer_without_focus_fails_and_cleans_up(self):
+        for fault,pattern in [('pointer-missing','safe self-hit'),('pointer-no-focus','exact-target focus')]:
+            with self.subTest(fault=fault):
+                values=self.make('local',original='reader',reader_top=160,tab_scroll=True,fault=fault)
+                with self.assertRaisesRegex(RuntimeError,pattern): self.run_helper(values)
+                self.assert_failure_cleanup(values)
+
+    def test_ineffective_or_inexact_native_wheel_cannot_pass_restoration(self):
+        for fault,pattern in [('wheel-noop','no effective progress'),('wheel-inexact','integer native wheel')]:
+            with self.subTest(fault=fault):
+                values=self.make(fault=fault)
+                with self.assertRaisesRegex(RuntimeError,pattern): self.run_helper(values)
+                self.assertTrue(values[0].fault_triggered);self.assert_failure_cleanup(values)
+
+    def test_delayed_save_in_no_scroll_history_return_is_rejected(self):
+        values=self.make(divergent=True,fault='delayed-save')
+        with self.assertRaisesRegex(RuntimeError,'forbidden persistence or scroll change'): self.run_helper(values)
+        self.assertTrue(values[0].fault_triggered);self.assert_failure_cleanup(values)
+        self.assertNotEqual(values[0].history,values[0].initial_state['history'])
+
+    def test_untrusted_already_visible_child_is_rejected(self):
+        values=self.make(child_visible=True,fault='untrusted-child')
+        with self.assertRaisesRegex(RuntimeError,'trusted'): self.run_helper(values)
+        self.assert_failure_cleanup(values)
+
+    def test_transport_action_failure_always_cleans_up_both_observers(self):
+        values=self.make(fault='action-error')
+        with self.assertRaisesRegex(RuntimeError,'native action transport failure'): self.run_helper(values)
+        self.assertTrue(values[0].fault_triggered);self.assert_failure_cleanup(values)
+        self.assertGreater(values[0].trace_cleanup_calls,0)
+
+    def test_original_dom_replacement_fails_even_with_same_node_labels(self):
+        values=self.make(fault='dom-replaced')
+        with self.assertRaisesRegex(RuntimeError,'original DOM'): self.run_helper(values)
+        self.assert_failure_cleanup(values)
+
+    def test_cleanup_failure_never_attaches_a_successful_audit(self):
+        values=self.make(fault='cleanup-error')
+        with self.assertRaisesRegex(RuntimeError,'cleanup transport failure'): self.run_helper(values)
+        driver,data,_,_,report,_,_,_=values
+        self.assertEqual(driver.cleanup_calls,1);self.assertFalse(driver.probe);self.assertIsNone(driver.trace)
+        self.assertNotIn('childReadability',data)
+        self.assertNotEqual(report['methodChildReadabilityChecks'][0].get('cleanedUp'),True)
+
+    def assert_failure_cleanup(self, values):
+        driver,data,_,_,report,_,_,_=values
+        self.assertFalse(driver.probe);self.assertIsNone(driver.trace);self.assertEqual(driver.cleanup_calls,1)
+        self.assertTrue(report['methodChildReadabilityChecks'][0]['cleanedUp'])
+        self.assertNotEqual(report['methodChildReadabilityChecks'][0]['status'],'verified_native_children')
+        self.assertNotIn('childReadability',data)
+
+
+class MethodChildObserverContractChecks(unittest.TestCase):
+    def probe_dom(self, replacement=None, events=0, roving=False, rebind=False):
+        code=r"""
+const input=JSON.parse(require('fs').readFileSync(0,'utf8')),{JSDOM}=require('jsdom');
+const dom=new JSDOM('<main id="navigation-product" data-method-reading="true"><section id="np-workspace"><div id="np-reader-object-title">method</div><div id="np-tree-scroll"><ul id="np-tree"><li id="np-node-method" role="treeitem" tabindex="0" data-position="method"><div class="np-node-row"><button class="np-node-label">method</button><span class="np-node-kind">具体方法</span></div></li><li id="np-node-child" role="treeitem" tabindex="-1" data-position="child"><div class="np-node-row"><button class="np-node-label">full scientific child</button><span class="np-node-kind">技术改进</span></div></li></ul></div><div id="np-detail-scroll" tabindex="-1"><section data-mechanism-entity="method">full original mechanism</section></div></section></main>',{runScripts:'outside-only'}),w=dom.window,d=w.document;
+const s={route:{tree:'g',node:'method'},contexts:{k:{focusTarget:'method',expandedByTree:{g:['method']},selectedByTree:{g:'method'}}}},h={nav:s};
+w.NavigationProductApp={getState:()=>JSON.parse(JSON.stringify(s))};w.NavigationProductModel={KEY:'nav',contextKey:()=> 'k'};w.history.replaceState(h,'');
+for(const n of d.querySelectorAll('*')){n.getBoundingClientRect=()=>({x:17,y:382,width:398,height:456});for(const [k,v] of Object.entries({clientWidth:398,clientHeight:456,scrollWidth:398,scrollHeight:601}))Object.defineProperty(n,k,{value:v,configurable:true});}
+const observed=new Set();const add=d.addEventListener.bind(d),remove=d.removeEventListener.bind(d);d.addEventListener=(t,f,c)=>{if(['keydown','pointerdown','pointerup','click','focusin','scroll'].includes(t))observed.add(f);return add(t,f,c);};d.removeEventListener=(t,f,c)=>{observed.delete(f);return remove(t,f,c);};
+const method=d.getElementById('np-node-method'),child=d.getElementById('np-node-child');
+if(input.roving&&!input.rebind)method.focus();
+new w.Function(input.start)();
+if(input.rebind)method.focus();
+new w.Function(input.action)('baseline');const before=new w.Function(input.state)();
+if(input.roving){method.tabIndex=-1;child.tabIndex=0;child.focus();s.contexts.k.focusTarget='child';}
+
+if(input.replacement){const selectors={row:'[data-position="method"]>.np-node-row',label:'[data-position="child"] .np-node-label',role:'[data-position="child"] .np-node-kind',mechanism:'[data-mechanism-entity]'};const n=d.querySelector(selectors[input.replacement]);n.replaceWith(n.cloneNode(true));}
+for(let i=0;i<input.events;i++)d.getElementById('np-tree-scroll').dispatchEvent(new w.Event('scroll',{bubbles:true}));
+const after=new w.Function(input.state)();if(input.rebind)method.focus();const events=new w.Function(input.action)('read'),refs=w.__npMethodChildProbe.refs.length;const stop=new w.Function(input.stop)();
+process.stdout.write(JSON.stringify({before,after,events,refs,stop,listeners:observed.size,installed:!!w.__npMethodChildProbe}));dom.window.close();
+"""
+        result=subprocess.run(['node','-e',code],input=json.dumps(dict(start=MODULE.METHOD_CHILD_PROBE_START_JS,state=MODULE.METHOD_CHILD_STATE_JS,
+                              action=MODULE.METHOD_CHILD_ACTION_JS,stop=MODULE.METHOD_CHILD_PROBE_STOP_JS,replacement=replacement,events=events,roving=roving,rebind=rebind)),text=True,capture_output=True,timeout=10)
+        self.assertEqual(result.returncode,0,result.stderr);return json.loads(result.stdout)
+
+    def test_same_text_row_label_role_or_mechanism_clones_are_not_original_dom(self):
+        good=self.probe_dom();self.assertTrue(good['before']['domSame']);self.assertTrue(good['after']['domSame']);self.assertEqual(good['refs'],13)
+        for target in ('row','label','role','mechanism'):
+            with self.subTest(target=target):
+                data=self.probe_dom(target);self.assertTrue(data['before']['domSame']);self.assertFalse(data['after']['domSame'])
+                self.assertEqual(data['listeners'],0);self.assertFalse(data['installed']);self.assertTrue(data['stop']['cleanedUp'])
+
+    def test_original_focus_metadata_is_a_baseline_snapshot_while_roving_reads_real_dom(self):
+        data=self.probe_dom(roving=True)
+        self.assertEqual(data['before']['originalFocus'],dict(id='np-node-method',tag='LI',tabIndex=0))
+        self.assertEqual(data['after']['originalFocus'],data['before']['originalFocus'])
+        self.assertEqual(data['after']['active']['id'],'np-node-child');self.assertFalse(data['after']['active']['original'])
+        self.assertEqual(data['after']['roving'],['child']);self.assertTrue(data['after']['domSame'])
+        MODULE.check_method_child_state(data['before'],data['after'])
+        with self.assertRaises(RuntimeError):MODULE.check_method_child_state(data['before'],data['after'],exact=True)
+
+    def test_listener_rebinds_original_target_after_natural_baseline_focus_change(self):
+        data=self.probe_dom(roving=True,rebind=True)
+        events=[e for e in data['events']['events'] if e['type']=='focusin' and e['target']=='np-node-method']
+        self.assertEqual(len(events),2);self.assertFalse(events[0]['originalTarget']);self.assertTrue(events[-1]['originalTarget'])
+        self.assertEqual(data['after']['originalFocus']['tabIndex'],0)
+
+    def test_observer_caps_events_and_preserves_untrusted_status_instead_of_fabricating_native_input(self):
+        data=self.probe_dom(events=100)
+        self.assertEqual(len(data['events']['events']),24);self.assertEqual(data['events']['overflow'],25)
+        self.assertTrue(all(e['trusted'] is False for e in data['events']['events']))
+        self.assertEqual(data['listeners'],0);self.assertFalse(data['installed'])
+
+    def idle(self, **case):
+        code=r"""
+const input=JSON.parse(require('fs').readFileSync(0,'utf8')),c=input.case;let now=0,serial=0,queue=[],cancelled=new Set(),answer=null,calls=0,reads=0;
+global.window=global;global.performance={now:()=>now};window.__npMethodChildProbe={lastScroll:0,lastFocus:0};
+global.setTimeout=(fn,delay)=>{const id=++serial;queue.push({id,t:now+delay,fn});return id;};global.clearTimeout=id=>cancelled.add(id);
+global.requestAnimationFrame=fn=>{if(c.hangFrames)return;++serial;queue.push({id:serial,t:now+(c.slowFrames?1100:16),fn});};
+global.NavigationProductApp={getState:()=>({revision:c.churn?++reads:c.lateSave&&now>=100?1:0})};global.history={state:{value:1}};global.scrollX=0;global.scrollY=0;
+global.document={activeElement:{id:'method',tagName:'LI'},getElementById:()=>({scrollTop:0,scrollLeft:0})};
+new Function(input.script)(r=>{answer=r;calls++;});
+for(let limit=0;queue.length&&limit<500;limit++){queue.sort((a,b)=>a.t-b.t||a.id-b.id);let e=queue.shift();if(cancelled.has(e.id))continue;now=e.t;e.fn();}
+process.stdout.write(JSON.stringify({answer,calls,now,reads}));
+"""
+        result=subprocess.run(['node','-e',code],input=json.dumps(dict(case=case,script=MODULE.METHOD_CHILD_IDLE_JS)),text=True,capture_output=True,timeout=10)
+        self.assertEqual(result.returncode,0,result.stderr);return json.loads(result.stdout)
+
+    def test_quiet_wait_covers_late_save_and_two_frames_without_waiting_for_assertions(self):
+        data=self.idle(lateSave=True);self.assertTrue(data['answer']['ok']);self.assertEqual(data['calls'],1)
+        self.assertGreaterEqual(data['answer']['elapsed'],292);self.assertGreaterEqual(data['answer']['quietMs'],160);self.assertLessEqual(data['answer']['elapsed'],2000)
+
+    def test_watchdog_rejects_churn_stalled_or_slow_frames_without_late_success(self):
+        for case in ('churn','hangFrames','slowFrames'):
+            with self.subTest(case=case):
+                data=self.idle(**{case:True});self.assertFalse(data['answer']['ok']);self.assertEqual(data['calls'],1);self.assertEqual(data['answer']['elapsed'],2000)
+
+
+class MethodChildCandidateReceiptChecks(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        MethodReadingCaptureChecks.setUpClass()
+
+    def fixture(self):
+        import copy
+        data,expected=MethodChildReadabilityChecks().fixture()
+        audit=data['childReadability']
+        # Match the observed 171 baseline / 175 later global search counts.
+        outside=[dict(token='outside-'+str(i),id='outside-'+str(i),tag='BUTTON',sourcePosition=None,
+                      tabIndex=0,disabled=False,hidden=False,layout=True,inWorkspace=False) for i in range(167)]
+        snapshots=[audit['before'],audit['after'],*(a[k] for a in audit['actions'] for k in ('before','after')),*(p['state'] for p in audit['proofs'])]
+        for state in snapshots:state['tabBound']=171
+        inventories=[audit['tabCandidatesBefore'],audit['tabCandidatesAfter'],*(a[k] for a in audit['actions'] for k in ('tabCandidatesBefore','tabCandidatesAfter'))]
+        for i,inventory in enumerate(inventories):
+            additions=outside[:163] if i==0 else outside
+            inventory['eligible']+=copy.deepcopy(additions)
+            inventory['candidateCount']+=len(additions);inventory['eligibleCount']+=len(additions)
+        self.assertEqual(audit['tabCandidatesBefore']['eligibleCount']+1,171)
+        self.assertEqual(audit['actions'][0]['tabCandidatesBefore']['eligibleCount']+1,175)
+        return data,expected
+
+    def test_external_171_to_175_inventory_is_recorded_without_changing_baseline_budget(self):
+        data,expected=self.fixture();audit=data['childReadability']
+        MODULE.check_method_reading(data,expected,MethodReadingCaptureChecks.source_positions)
+        self.assertEqual(audit['before'],audit['actions'][0]['before'])
+        self.assertEqual(audit['before'],audit['after'])
+        self.assertNotEqual(audit['tabCandidatesBefore'],audit['tabCandidatesAfter'])
+
+    def test_dynamic_budget_or_actual_intervening_state_drift_remains_rejected(self):
+        import copy
+        data,expected=self.fixture()
+        for mutation in ('budget','runtime','history','tree','reader','scope'):
+            bad=copy.deepcopy(data);frame=bad['childReadability']['actions'][0]['before']
+            if mutation=='budget':frame['tabBound']=175
+            elif mutation=='runtime':frame['runtime']['revision']+=1
+            elif mutation=='history':frame['historyLength']+=1
+            elif mutation in ('tree','reader'):frame[mutation]['top']+=12
+            else:frame['scopeCandidates']['items'][0]['hidden']=True
+            with self.subTest(mutation=mutation),self.assertRaises(RuntimeError):
+                MODULE.check_method_child_audit(bad,expected,MethodReadingCaptureChecks.source_positions)
+
+    def test_tab_wheel_and_pointer_cannot_borrow_the_traced_tree_roving_exception(self):
+        import copy
+        data,expected=self.fixture()
+        for kind in ('tab','reverse-tab','wheel-tree','wheel-reader','pointer-move-reader','pointer-return-reader','restore-original-hover'):
+            bad=copy.deepcopy(data);audit=bad['childReadability'];action=audit['actions'][0]
+            action['kind']=kind
+            audit['keys']=[row for row in audit['keys'] if row['actionIndex']!=0]
+            with self.subTest(kind=kind),self.assertRaisesRegex(RuntimeError,'Non-tree-key method action changed'):
+                MODULE.check_method_child_audit(bad,expected,MethodReadingCaptureChecks.source_positions)
+
+    def test_scope_candidates_cannot_be_omitted_or_mislabeled_as_external(self):
+        import copy
+        data,expected=self.fixture()
+        for mutation in ('omit','external','invent-scope','count','duplicate','missing','budget','wrong-source-tree'):
+            bad=copy.deepcopy(data);audit=bad['childReadability'];inventory=audit['actions'][0]['tabCandidatesBefore']
+            if mutation=='omit':inventory['eligible'].pop(0);inventory['eligibleCount']-=1
+            elif mutation=='external':inventory['eligible'][0]['inWorkspace']=False
+            elif mutation=='invent-scope':inventory['eligible'][-1]['inWorkspace']=True
+            elif mutation=='count':inventory['eligibleCount']-=1
+            elif mutation=='duplicate':inventory['eligible'][-1]['token']=inventory['eligible'][0]['token']
+            elif mutation=='missing':del audit['tabCandidatesAfter']
+            elif mutation=='budget':audit['before']['tabBound']=256
+            else:audit['before']['scopeCandidates']['treeTabIndexes'][0]['position']='forged-source'
+            with self.subTest(mutation=mutation),self.assertRaises(RuntimeError):
+                MODULE.check_method_child_audit(bad,expected,MethodReadingCaptureChecks.source_positions)
+
+class MethodChildFrozenTabBudgetDOMChecks(unittest.TestCase):
+    """Execute production START/STATE/ACTION/STOP against real JSDOM nodes.
+
+    Geometry is explicitly stubbed because JSDOM has no layout. This tests actual
+    selector membership, DOM references, order, properties and observer output;
+    it is not native-keyboard, paint, hit-testing, or Chrome acceptance evidence.
+    """
+    @classmethod
+    def setUpClass(cls):
+        cls.cases = [
+            'unchanged', 'external-four', 'external-four-clones', 'before-baseline-four', 'baseline-gap-four',
+            'internal-four', 'internal-remove-four', 'internal-clone-four', 'internal-reorder-four',
+            'add-hidden', 'add-negative', 'remove-hidden', 'clone-hidden', 'remove-negative', 'clone-negative',
+            'disabled', 'hidden', 'display-none', 'visibility-hidden', 'ancestor-hidden', 'ancestor-display-none',
+            'details-open', 'empty-details-open', 'href', 'role', 'type', 'name', 'aria-label', 'aria-controls',
+            'raw-data-action', 'control-text', 'input-value', 'input-checked',
+            'tab-control-negative', 'label-positive', 'reader-fake-tree-positive', 'legal-roving', 'roving-positive',
+            'roving-negative-two', 'roving-two-zero', 'roving-no-zero', 'workspace-clone', 'workspace-hidden',
+        ]
+        code = r"""
+const input=JSON.parse(require('fs').readFileSync(0,'utf8')),{JSDOM}=require('jsdom');
+const clone=x=>JSON.parse(JSON.stringify(x));
+const selector='a[href],button,input,select,textarea,summary,[tabindex]';
+function runCase(name){
+ const dom=new JSDOM(`<!doctype html><html><body>
+ <main id="navigation-product" data-method-reading="true">
+  <section id="np-workspace">
+   <div id="np-reader-object-title">Original method title</div>
+   <div id="np-tree-scroll" tabindex="0"><ul id="np-tree">
+    <li id="np-node-method" role="treeitem" tabindex="0" data-position="method"><div class="np-node-row"><button id="method-label" class="np-node-label" tabindex="-1">method</button><span class="np-node-kind">具体方法</span></div></li>
+    <li id="np-node-child" role="treeitem" tabindex="-1" data-position="child"><div class="np-node-row"><button id="child-label" class="np-node-label" tabindex="-1">full scientific child</button><span class="np-node-kind">技术改进</span></div></li>
+   </ul></div>
+   <div id="np-detail-scroll" tabindex="-1">
+    <section data-mechanism-entity="method">Original scientific mechanism</section>
+    <div id="ordinary-controls"><button id="scope-a" type="button">A</button><button id="scope-b" type="button">B</button><button id="scope-c" type="button">C</button><button id="scope-d" type="button">D</button></div>
+    <a id="scope-link" href="/original">Original source</a>
+    <input id="scope-input" name="original-name" aria-label="Original label" aria-controls="original-target">
+    <select id="scope-select"><option>Original choice</option></select><textarea id="scope-textarea"></textarea>
+    <button id="scope-hidden" hidden>Hidden original control</button>
+    <button id="scope-negative" tabindex="-1">Non-tabstop original control</button>
+    <button id="scope-disabled" disabled>Disabled original control</button>
+    <div id="ancestor-wrapper"><button id="ancestor-control">Ancestor-sensitive control</button></div>
+    <details id="scope-details"><summary id="scope-summary">Original closed disclosure</summary><button id="details-child">Closed disclosure child</button></details>
+    <details id="empty-details"><summary id="empty-summary">Empty disclosure</summary><p>No interactive descendants</p></details>
+    <button id="reader-fake-tree" role="treeitem" data-position="reader-decoy" tabindex="-1">Outside scientific tree</button>
+   </div>
+  </section>
+ </main><footer id="external-controls"></footer></body></html>`,{runScripts:'outside-only',url:'https://example.org/navigation/'});
+ const w=dom.window,d=w.document,workspace=d.getElementById('np-workspace'),method=d.getElementById('np-node-method'),child=d.getElementById('np-node-child');
+ // Cache actual JSDOM computed styles within an immutable fixture phase.
+ // Each deliberate mutation phase invalidates this cache before observation.
+ const nativeStyle=w.getComputedStyle.bind(w);let styles=new WeakMap();
+ w.getComputedStyle=n=>{if(!styles.has(n))styles.set(n,nativeStyle(n));return styles.get(n);};
+ // A browser's layout is intentionally not asserted. Supply deterministic
+ // geometry while deriving hidden/details/display eligibility from real DOM.
+ w.HTMLElement.prototype.getBoundingClientRect=function(){return {x:17,y:382,width:398,height:456,left:17,right:415,top:382,bottom:838};};
+ w.HTMLElement.prototype.getClientRects=function(){
+  for(let n=this;n;n=n.parentElement){
+   if(n.hidden||w.getComputedStyle(n).display==='none')return [];
+   if(n.tagName==='DETAILS'&&!n.open){const summary=[...n.children].find(c=>c.tagName==='SUMMARY');if(this!==n&&this!==summary&&!summary?.contains(this))return [];}
+  }
+  return [this.getBoundingClientRect()];
+ };
+ for(const [key,value] of Object.entries({clientWidth:398,clientHeight:456,scrollWidth:398,scrollHeight:601}))Object.defineProperty(w.HTMLElement.prototype,key,{get(){return value;},configurable:true});
+ const eligible=()=>[...d.querySelectorAll(selector)].filter(n=>n.tabIndex>=0&&!n.disabled&&n.getClientRects().length);
+ const footer=d.getElementById('external-controls');
+ for(let i=eligible().length;i<170;i++){const b=d.createElement('button');b.id='outside-base-'+i;b.textContent='Existing outside control '+i;footer.appendChild(b);}
+ if(eligible().length!==170)throw Error('Fixture baseline must have exactly170 actual eligible DOM candidates');
+ const s={route:{nav:'1',tree:'g',node:'method',scope:'scope:all',paper:'p',version:'v',claim:null,bench:null,protocol:null,mode:'tree',template:null},
+  revision:3,originTrail:[],contexts:{k:{focusTarget:'method',expandedByTree:{g:['method']},selectedByTree:{g:'method'},treeScrollByTree:{g:0},treeScrollLeftByTree:{g:0},detailScrollByTree:{g:0},windowScroll:0}}};
+ w.NavigationProductApp={getState:()=>clone(s)};w.NavigationProductModel={KEY:'nav',contextKey:()=> 'k'};w.history.replaceState({nav:clone(s),otherOwner:{keep:'unchanged'}},'');
+ method.focus();
+ const observed=new Map(),add=d.addEventListener.bind(d),remove=d.removeEventListener.bind(d),types=['keydown','pointerdown','pointerup','click','focusin','scroll'];
+ d.addEventListener=(t,f,c)=>{if(types.includes(t)){if(!observed.has(t))observed.set(t,new Set());observed.get(t).add(f);}return add(t,f,c);};
+ d.removeEventListener=(t,f,c)=>{observed.get(t)?.delete(f);return remove(t,f,c);};
+ const start=new w.Function(input.start),state=new w.Function(input.state),action=new w.Function(input.action),stop=new w.Function(input.stop);
+ const addFour=(parent,prefix)=>{for(let i=0;i<4;i++){const b=d.createElement('button');b.id=prefix+i;b.textContent='New control '+i;parent.appendChild(b);}};
+ const replace=n=>n.replaceWith(n.cloneNode(true));
+ const read=()=>({state:clone(state()),inventory:clone(action('candidates'))});
+ let before,after,repeat,restored,startBudget,stopResult;
+ try{
+  start();startBudget=state().tabBound;
+  if(name==='before-baseline-four')addFour(footer,'external-added-');
+  action('baseline');
+  if(name==='baseline-gap-four')addFour(footer,'baseline-gap-added-');
+  before=read();action('reset');
+  if(name==='external-four')addFour(footer,'external-added-');
+  else if(name==='external-four-clones')[...footer.children].slice(0,4).forEach(replace);
+  else if(name==='internal-four')addFour(workspace,'internal-added-');
+  else if(name==='internal-remove-four')['a','b','c','d'].forEach(x=>d.getElementById('scope-'+x).remove());
+  else if(name==='internal-clone-four')['a','b','c','d'].forEach(x=>replace(d.getElementById('scope-'+x)));
+  else if(name==='internal-reorder-four'){const p=d.getElementById('ordinary-controls');for(const n of [...p.children].reverse())p.appendChild(n);}
+  else if(name==='add-hidden'){const b=d.createElement('button');b.id='hidden-added';b.hidden=true;workspace.appendChild(b);}
+  else if(name==='add-negative'){const b=d.createElement('button');b.id='negative-added';b.tabIndex=-1;workspace.appendChild(b);}
+  else if(name==='remove-hidden')d.getElementById('scope-hidden').remove();
+  else if(name==='clone-hidden')replace(d.getElementById('scope-hidden'));
+  else if(name==='remove-negative')d.getElementById('scope-negative').remove();
+  else if(name==='clone-negative')replace(d.getElementById('scope-negative'));
+  else if(name==='disabled')d.getElementById('scope-a').disabled=true;
+  else if(name==='hidden')d.getElementById('scope-a').hidden=true;
+  else if(name==='display-none')d.getElementById('scope-a').style.display='none';
+  else if(name==='visibility-hidden')d.getElementById('scope-a').style.visibility='hidden';
+  else if(name==='ancestor-hidden')d.getElementById('ancestor-wrapper').hidden=true;
+  else if(name==='ancestor-display-none')d.getElementById('ancestor-wrapper').style.display='none';
+  else if(name==='details-open')d.getElementById('scope-details').open=true;
+  else if(name==='empty-details-open')d.getElementById('empty-details').open=true;
+  else if(name==='href')d.getElementById('scope-link').setAttribute('href','/changed');
+  else if(name==='role')d.getElementById('scope-a').setAttribute('role','switch');
+  else if(name==='type')d.getElementById('scope-a').setAttribute('type','submit');
+  else if(name==='name')d.getElementById('scope-input').name='different-name';
+  else if(name==='aria-label')d.getElementById('scope-input').setAttribute('aria-label','Changed label');
+  else if(name==='aria-controls')d.getElementById('scope-input').setAttribute('aria-controls','different-target');
+  else if(name==='raw-data-action')d.getElementById('scope-a').setAttribute('data-action','unexpected');
+  else if(name==='control-text')d.getElementById('scope-a').textContent='Changed visible purpose';
+  else if(name==='input-value')d.getElementById('scope-input').value='Changed live value';
+  else if(name==='input-checked')d.getElementById('scope-input').checked=true;
+  else if(name==='tab-control-negative')d.getElementById('scope-a').tabIndex=-1;
+  else if(name==='label-positive')d.getElementById('method-label').tabIndex=0;
+  else if(name==='reader-fake-tree-positive')d.getElementById('reader-fake-tree').tabIndex=0;
+  else if(name==='legal-roving'){method.tabIndex=-1;child.tabIndex=0;child.focus();s.contexts.k.focusTarget='child';}
+  else if(name==='roving-positive'){method.tabIndex=1;}
+  else if(name==='roving-negative-two'){method.tabIndex=-2;child.tabIndex=0;child.focus();s.contexts.k.focusTarget='child';}
+  else if(name==='roving-two-zero'){child.tabIndex=0;}
+  else if(name==='roving-no-zero'){method.tabIndex=-1;}
+  else if(name==='workspace-clone')replace(workspace);
+  else if(name==='workspace-hidden')workspace.hidden=true;
+  styles=new WeakMap();after=read();repeat=read();
+  if(name==='legal-roving'){method.tabIndex=0;child.tabIndex=-1;method.focus();s.contexts.k.focusTarget='method';styles=new WeakMap();restored=read();}
+ }finally{if(w.__npMethodChildProbe)stopResult=stop();}
+ const result={name,startBudget,before,after,repeat,restored,stop:stopResult,
+  listeners:[...observed.values()].reduce((n,x)=>n+x.size,0),installed:!!w.__npMethodChildProbe};
+ dom.window.close();return result;
+}
+process.stdout.write(JSON.stringify(input.cases.map(runCase)));
+"""
+        result=subprocess.run(['node','-e',code],input=json.dumps(dict(cases=cls.cases,
+            start=MODULE.METHOD_CHILD_PROBE_START_JS,state=MODULE.METHOD_CHILD_STATE_JS,
+            action=MODULE.METHOD_CHILD_ACTION_JS,stop=MODULE.METHOD_CHILD_PROBE_STOP_JS)),
+            text=True,capture_output=True,timeout=90,cwd=Path(MODULE.__file__).parents[1])
+        if result.returncode:
+            raise AssertionError('Actual production observer JS failed in JSDOM:\n'+result.stderr)
+        cls.results={row['name']:row for row in json.loads(result.stdout)}
+
+    def assert_inventory(self, frame):
+        MODULE.check_method_child_candidates(frame['state'],frame['inventory'])
+        items=frame['inventory']['eligible']
+        self.assertEqual(len(items),frame['inventory']['eligibleCount'])
+        self.assertEqual(len({row['token'] for row in items}),len(items))
+        self.assertTrue(all(type(row['inWorkspace']) is bool for row in items))
+
+    def assert_rejected(self, case):
+        data=self.results[case]
+        with self.assertRaises(RuntimeError):
+            MODULE.check_method_child_state(data['before']['state'],data['after']['state'])
+        self.assertEqual(data['before']['state']['tabBound'],171)
+        self.assertEqual(data['after']['state']['tabBound'],171,'budget cannot be repurposed as a changing scope count')
+
+    def test_external_171_to_175_changes_only_separate_diagnostic_not_actual_state_bridge(self):
+        data=self.results['external-four'];before,after=data['before'],data['after']
+        self.assertEqual(data['startBudget'],171)
+        self.assertEqual(before['inventory']['eligibleCount'],170)
+        self.assertEqual(after['inventory']['eligibleCount'],174)
+        self.assertEqual(min(256,after['inventory']['eligibleCount']+1),175)
+        self.assertEqual(before['state']['tabBound'],171);self.assertEqual(after['state']['tabBound'],171)
+        self.assertEqual(before['state'],after['state'],'the full bridge remains exact; do not remove actual state fields')
+        MODULE.check_method_child_state(before['state'],after['state'],exact=True)
+        self.assert_inventory(before);self.assert_inventory(after)
+        added=[row for row in after['inventory']['eligible'] if row['id'] and row['id'].startswith('external-added-')]
+        self.assertEqual(len(added),4);self.assertTrue(all(row['inWorkspace'] is False for row in added))
+        old={row['id']:row['token'] for row in before['inventory']['eligible']}
+        for row in after['inventory']['eligible']:
+            if row['id'] in old:self.assertEqual(row['token'],old[row['id']])
+        self.assertEqual(after,data['repeat'],'stable tokens must survive repeated real STATE reads')
+
+    def test_outside_same_id_clones_have_new_diagnostic_tokens_but_no_workspace_changes(self):
+        data=self.results['external-four-clones'];before,after=data['before'],data['after']
+        self.assertEqual(before['state'],after['state'])
+        self.assert_inventory(before);self.assert_inventory(after)
+        old={row['id']:row for row in before['inventory']['eligible']}
+        changed=[row for row in after['inventory']['eligible'] if row['token']!=old[row['id']]['token']]
+        self.assertEqual(len(changed),4)
+        self.assertTrue(all(row['inWorkspace'] is False for row in changed))
+        self.assertEqual(after,data['repeat'])
+
+    def test_budget_is_frozen_at_settled_baseline_not_premature_probe_start(self):
+        data=self.results['before-baseline-four']
+        self.assertEqual(data['startBudget'],171)
+        self.assertEqual(data['before']['state']['tabBound'],175)
+        self.assertEqual(data['before']['inventory']['eligibleCount'],174)
+        self.assertEqual(data['before'],data['after'])
+        self.assert_inventory(data['before'])
+
+    def test_first_baseline_state_freezes_budget_and_inventory_in_the_same_observation(self):
+        data=self.results['baseline-gap-four']
+        self.assertEqual(data['startBudget'],171)
+        self.assertEqual(data['before']['inventory']['eligibleCount'],174)
+        self.assertEqual(data['before']['state']['tabBound'],175)
+        self.assertEqual(data['before'],data['after'])
+        self.assert_inventory(data['before'])
+        MODULE.check_method_child_state(data['before']['state'],data['after']['state'],exact=True)
+
+    def test_same_four_new_controls_inside_scope_are_explicitly_internal_and_rejected(self):
+        data=self.results['internal-four'];before,after=data['before'],data['after']
+        self.assertEqual(after['inventory']['eligibleCount']-before['inventory']['eligibleCount'],4)
+        new=[row for row in after['inventory']['eligible'] if row['id'] and row['id'].startswith('internal-added-')]
+        self.assertEqual(len(new),4);self.assertTrue(all(row['inWorkspace'] is True for row in new))
+        self.assertFalse(after['state']['scopeCandidates']['same'])
+        self.assert_rejected('internal-four')
+        self.assert_inventory(after)
+        # A count increase of four is not itself evidence of external controls.
+        import copy
+        forged=copy.deepcopy(after['inventory'])
+        for row in forged['eligible']:
+            if row['id'] and row['id'].startswith('internal-added-'):row['inWorkspace']=False
+        with self.assertRaises(RuntimeError):MODULE.check_method_child_candidates(after['state'],forged)
+
+    def test_scope_order_and_original_candidate_objects_cannot_be_replaced_by_equal_html(self):
+        for case in ('internal-remove-four','internal-clone-four','internal-reorder-four','workspace-clone'):
+            with self.subTest(case=case):
+                data=self.results[case];self.assert_rejected(case)
+                self.assertFalse(data['after']['state']['scopeCandidates']['same'])
+        clones=self.results['internal-clone-four']
+        old={row['id']:row for row in clones['before']['state']['scopeCandidates']['items']}
+        new={row['id']:row for row in clones['after']['state']['scopeCandidates']['items']}
+        for identity in ('scope-a','scope-b','scope-c','scope-d'):
+            self.assertNotEqual(old[identity]['token'],new[identity]['token'])
+            self.assertEqual(old[identity]['id'],new[identity]['id'])
+            self.assertEqual(old[identity]['tabIndex'],new[identity]['tabIndex'])
+
+    def test_hidden_and_minus_one_candidates_are_bound_even_when_tab_count_does_not_change(self):
+        baseline=self.results['unchanged']['before']
+        source={row['id']:row for row in baseline['state']['scopeCandidates']['items']}
+        for identity in ('scope-hidden','scope-negative','scope-disabled','details-child','child-label','np-detail-scroll'):
+            self.assertIn(identity,source)
+            self.assertNotIn(identity,[row['id'] for row in baseline['inventory']['eligible']])
+        for case in ('add-hidden','add-negative','remove-hidden','clone-hidden','remove-negative','clone-negative'):
+            with self.subTest(case=case):
+                self.assert_rejected(case)
+                data=self.results[case]
+                self.assertEqual(data['before']['inventory']['eligibleCount'],data['after']['inventory']['eligibleCount'])
+
+    def test_disabled_hidden_layout_ancestor_and_disclosure_changes_remain_hard_failures(self):
+        for case in ('disabled','hidden','display-none','visibility-hidden','ancestor-hidden','ancestor-display-none',
+                     'details-open','empty-details-open','workspace-hidden'):
+            with self.subTest(case=case):self.assert_rejected(case)
+        data=self.results['empty-details-open']
+        self.assertEqual(data['before']['inventory']['eligibleCount'],data['after']['inventory']['eligibleCount'])
+        self.assertTrue(data['after']['state']['scopeCandidates']['same'],'same node identities cannot hide changed details semantics')
+
+    def test_non_tree_candidate_semantics_are_not_masked_by_roving_exception(self):
+        for case in ('href','role','type','name','aria-label','aria-controls','raw-data-action','control-text','input-value','input-checked',
+                     'tab-control-negative','label-positive','reader-fake-tree-positive'):
+            with self.subTest(case=case):self.assert_rejected(case)
+        baseline=self.results['unchanged']['before']['state']['scopeCandidates']['items']
+        by_id={row['id']:row for row in baseline}
+        self.assertIsNone(by_id['method-label']['sourcePosition'])
+        self.assertIsNone(by_id['reader-fake-tree']['sourcePosition'])
+        self.assertEqual(by_id['np-node-method']['sourcePosition'],'method')
+
+    def test_only_real_treeitem_zero_minus_one_roving_is_allowed_and_exactly_returns(self):
+        data=self.results['legal-roving'];before,after,restored=data['before'],data['after'],data['restored']
+        MODULE.check_method_child_state(before['state'],after['state'])
+        self.assertEqual(before['state']['scopeCandidates']['items'],after['state']['scopeCandidates']['items'])
+        self.assertEqual(after['state']['scopeCandidates']['treeTabIndexes'],[dict(position='method',tabIndex=-1),dict(position='child',tabIndex=0)])
+        self.assertEqual(after['state']['roving'],['child'])
+        self.assertEqual(after['state']['active']['id'],'np-node-child')
+        self.assertEqual(after['state']['originalFocus'],dict(id='np-node-method',tag='LI',tabIndex=0))
+        self.assertEqual(before['state']['history'],after['state']['history'])
+        self.assertEqual(before['state'],restored['state'])
+        MODULE.check_method_child_state(before['state'],restored['state'],exact=True)
+        for frame in (before,after,restored):self.assert_inventory(frame)
+        for case in ('roving-positive','roving-negative-two','roving-two-zero','roving-no-zero'):
+            with self.subTest(case=case):self.assert_rejected(case)
+
+    def test_actual_observers_clean_up_every_fixture_including_invalid_scope_cases(self):
+        for case,data in self.results.items():
+            with self.subTest(case=case):
+                self.assertTrue(data['stop']['cleanedUp'])
+                self.assertEqual(data['listeners'],0)
+                self.assertFalse(data['installed'])

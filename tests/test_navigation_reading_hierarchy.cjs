@@ -8,7 +8,7 @@ const output=path.join(temp,'research/navigation'),html=fs.readFileSync(path.joi
 test.after(()=>fs.rmSync(temp,{recursive:true,force:true}));
 async function frames(w){await new Promise(r=>w.requestAnimationFrame(()=>w.requestAnimationFrame(r)));}
 async function ready(x){const c=x.a.getContent();for(let i=0;i<300;i++){if(!Object.keys(x.a.getBundle().delivery.packets).some(id=>c.status(id)==='loading')){await frames(x.w);return;}await wait(10);}throw Error('Content did not settle');}
-async function page(options={}){const errors=[];class NoNetwork extends ResourceLoader{fetch(url){const name=new URL(url).pathname.split('/').at(-1);if(['site.css','catalog-navigation.js','presentation.js','interface.js','chrome.js'].includes(name))return null;throw Error('Unexpected external navigation dependency '+url);}}const vc=new VirtualConsole();vc.on('jsdomError',e=>errors.push(e.message));const dom=new JSDOM(html,{url:'https://example.org/research/navigation/'+(options.hash||''),resources:new NoNetwork(),runScripts:'dangerously',pretendToBeVisual:true,virtualConsole:vc,beforeParse(w){Object.defineProperty(w,'innerWidth',{value:options.width||1440,configurable:true});w.TextEncoder=TextEncoder;w.TextDecoder=TextDecoder;Object.defineProperty(w.crypto,'subtle',{value:crypto.webcrypto.subtle});w.scrollTo=(x,y)=>Object.defineProperty(w,'scrollY',{value:y,configurable:true});w.HTMLElement.prototype.scrollIntoView=function(){};if(options.saved)w.history.replaceState(options.saved,'',w.location.href);w.fetch=url=>Promise.resolve({ok:true,arrayBuffer:async()=>fs.readFileSync(path.join(output,url))});}});for(let i=0;i<300&&!dom.window.NavigationProductApp;i++)await wait(10);const w=dom.window;assert.ok(w.NavigationProductApp,w.document.getElementById('np-loading').textContent);const x={w,d:w.document,a:w.NavigationProductApp,M:w.NavigationProductModel,errors};await ready(x);return x;}
+async function page(options={}){const errors=[];class NoNetwork extends ResourceLoader{fetch(url){const name=new URL(url).pathname.split('/').at(-1);if(['site.css','catalog-navigation.js','presentation.js','interface.js','chrome.js'].includes(name))return null;throw Error('Unexpected external navigation dependency '+url);}}const vc=new VirtualConsole();vc.on('jsdomError',e=>errors.push(e.message));const dom=new JSDOM(html,{url:'https://example.org/research/navigation/'+(options.hash||''),resources:new NoNetwork(),runScripts:'dangerously',pretendToBeVisual:true,virtualConsole:vc,beforeParse(w){Object.defineProperty(w,'innerWidth',{value:options.width||1440,configurable:true});w.TextEncoder=TextEncoder;w.TextDecoder=TextDecoder;Object.defineProperty(w.crypto,'subtle',{value:crypto.webcrypto.subtle});w.scrollTo=(x,y)=>Object.defineProperty(w,'scrollY',{value:y,configurable:true});w.HTMLElement.prototype.scrollIntoView=function(){};if(options.saved)w.history.replaceState(options.saved,'',w.location.href);w.fetch=url=>Promise.resolve({ok:true,arrayBuffer:async()=>fs.readFileSync(path.join(output,url))});if(options.beforeParse)options.beforeParse(w);}});for(let i=0;i<300&&!dom.window.NavigationProductApp;i++)await wait(10);const w=dom.window;assert.ok(w.NavigationProductApp,w.document.getElementById('np-loading').textContent);const x={w,d:w.document,a:w.NavigationProductApp,M:w.NavigationProductModel,errors};await ready(x);return x;}
 async function close(x){await ready(x);assert.deepEqual(x.errors,[]);x.w.close();}
 async function go(x,route){x.a.navigate(route,{cross:true,initialTree:true});await ready(x);}
 async function method(x,paper,version){const p=Object.values(science.positions).find(p=>p.tree==='l'&&p.kind==='pipeline_recipe'&&p.paperId===paper&&p.versionId===version&&p.scopeId!=='scope:all')||Object.values(science.positions).find(p=>p.tree==='l'&&p.paperId===paper&&p.versionId===version&&p.kind==='versioned_method_card');assert.ok(p);await go(x,x.M.routeForPosition(x.a.getBundle(),{scope:p.scopeId},p.id));return p;}
@@ -159,7 +159,7 @@ test('identity dedup: desktop peer CSSOM rejects missing overrides and legacy ne
 test('desktop research-question role inherits readable metadata color instead of the legacy last-child tint',()=>{
  const css=fs.readFileSync(path.join(root,'assets/navigation-product.css'),'utf8'),selector='#np-reader-object-meta .np-reader-field-role';
  function contrast(rgb){const linear=rgb.map(v=>v/255).map(v=>v<=0.04045?v/12.92:((v+0.055)/1.055)**2.4);return 1.05/(linear[0]*0.2126+linear[1]*0.7152+linear[2]*0.0722+0.05);}
- for(const width of [1440,1920]){
+ for(const [width,height] of [[1440,900],[1440,950],[1440,951],[1920,1080]]){
   const dom=new JSDOM('<style></style><div id="navigation-product"><div class="np-reader-heading"><p id="np-reader-object-meta">困难 · 未固定论文版本<span class="np-reader-field-role" data-reader-field-role="plain_language_question"> · 研究问题</span></p></div></div>');
   try {
    const w=dom.window,style=w.document.querySelector('style'),role=w.document.querySelector('.np-reader-field-role');style.textContent=css;
@@ -168,8 +168,8 @@ test('desktop research-question role inherits readable metadata color instead of
    const legacy=entries.find(({rule})=>rule.selectorText==='.np-reader-heading span:last-child');assert.ok(legacy);assert.ok(role.matches(legacy.rule.selectorText),'the actual last-child span triggers the historical rule');assert.ok(role.matches(selector));assert.equal(legacy.rule.style.getPropertyValue('color'),'#6c838b');assert.ok(selector.startsWith('#np-reader-object-meta '));assert.equal(legacy.rule.selectorText.includes('#'),false,'the exact local ID selector outranks the legacy class/pseudo-class rule');
    // JSDOM does not apply viewport media queries. Materialize only the current
    // screen-width rules in their original order; this is not a pixel assertion.
-   function active(media){return media.every(query=>{const match=query.match(/^\((min|max)-width:\s*(\d+)px\)$/);if(match)return match[1]==='min'?width>=Number(match[2]):width<=Number(match[2]);assert.ok(['print','(prefers-reduced-motion:reduce)'].includes(query),'explicitly account for every other media condition');return false;});}
-   const flattened=entries.filter(({media})=>active(media)).map(({rule})=>rule.cssText).join('\n');
+
+   const flattened=entries.filter(({media})=>methodMediaActive(media,width,height)).map(({rule})=>rule.cssText).join('\n');
    function install(value){style.textContent=flattened;const rule=[...style.sheet.cssRules].find(rule=>rule.selectorText===selector&&rule.style.getPropertyValue('color'));if(value===null)rule.style.removeProperty('color');else rule.style.setProperty('color',value);style.textContent=[...style.sheet.cssRules].map(rule=>rule.cssText).join('\n');}
    // cssstyle returns the keyword for explicit inherit, so resolve it through
    // the actual parent's computed color rather than inventing a fallback color.
@@ -270,8 +270,8 @@ for(const kind of ['rich','conditional'])test('desktop method reading: '+kind+' 
 // CSSOM assertions below materialize media rules solely to inspect declarations
 // and accessible text styles. They deliberately do not assert rendered heights.
 function methodCSS(doc){const style=doc.createElement('style');style.textContent=fs.readFileSync(path.join(root,'assets/navigation-product.css'),'utf8');doc.head.appendChild(style);const entries=[];function collect(rules,media=[]){for(const rule of rules)if(rule.cssRules)collect(rule.cssRules,rule.media?media.concat(rule.media.mediaText):media);else if(rule.selectorText)entries.push({rule,media});}collect(style.sheet.cssRules);return {style,entries};}
-function methodMediaActive(media,width){return media.every(query=>{const match=query.match(/^\((min|max)-width:\s*(\d+)px\)$/);if(match)return match[1]==='min'?width>=Number(match[2]):width<=Number(match[2]);assert.ok(['print','(prefers-reduced-motion:reduce)'].includes(query),'unexpected media query '+query);return false;});}
-function materializeMethodCSS(x,width){const {style,entries}=methodCSS(x.d);style.textContent=entries.filter(({media})=>methodMediaActive(media,width)).map(({rule})=>rule.cssText).join('\n');return {style,entries};}
+function methodMediaActive(media,width,height=1080){return media.map(query=>{if(['print','(prefers-reduced-motion:reduce)'].includes(query))return false;return query.split(/\s+and\s+/).map(part=>{const match=part.match(/^\((min|max)-(width|height):\s*(\d+)px\)$/);assert.ok(match,'unexpected media query '+query);const size=match[2]==='width'?width:height;return match[1]==='min'?size>=Number(match[3]):size<=Number(match[3]);}).every(Boolean);}).every(Boolean);}
+function materializeMethodCSS(x,width){const {style,entries}=methodCSS(x.d);style.textContent=entries.filter(({media})=>methodMediaActive(media,width,x.w.innerHeight)).map(({rule})=>rule.cssText).join('\n');return {style,entries};}
 function methodCSSVariable(x,node,value){const variable=value.match(/^var\((--[\w-]+)(?:,\s*([^)]*))?\)$/);if(!variable)return value;for(let at=node;at;at=at.parentElement){const resolved=x.w.getComputedStyle(at).getPropertyValue(variable[1]);if(resolved)return resolved.trim();}assert.ok(variable[2],'custom property is defined in the real cascade: '+value);return variable[2].trim();}
 function methodFontSize(x,node){for(let at=node;at;at=at.parentElement){const value=methodCSSVariable(x,at,x.w.getComputedStyle(at).fontSize);if(value&&value!=='inherit'&&value!=='normal'){if(value.endsWith('px'))return parseFloat(value);if(value.endsWith('rem'))return parseFloat(value)*16;}}return NaN;}
 function methodColor(x,node,property='color'){
@@ -292,7 +292,7 @@ test('desktop method reading: long fixed identity, full version warning, status 
 
 test('desktop method reading: CSS geometry and deduplication are narrowly scoped, with no third permanent scroller or scientific clipping',()=>{
  const dom=new JSDOM('<!doctype html><style></style>');try{const {entries}=methodCSS(dom.window.document),method=entries.filter(({rule})=>rule.selectorText.includes('[data-method-reading=true]'));assert.ok(method.length,'explicit derived-state CSS');for(const {rule,media} of method){assert.ok(media.some(query=>/^\(min-width:\s*1200px\)$/.test(query)),rule.selectorText+' must be desktop-only');for(const selector of rule.selectorText.split(','))assert.ok(selector.includes('[data-method-reading=true]'),'each selector is method-scoped');}
-  const geometry=method.filter(({rule})=>rule.selectorText.endsWith(' .np-panels'));assert.ok(geometry.length);const layout=geometry.find(({rule})=>rule.style.getPropertyValue('grid-template-columns').includes('448px'));assert.ok(layout,'method width is independently declared');assert.match(layout.rule.style.getPropertyValue('grid-template-columns'),/clamp\(400px,\s*calc\(10vw\s*\+\s*256px\),\s*448px\)\s+minmax\(0,\s*1fr\)/);assert.equal(layout.rule.style.getPropertyValue('gap'),'16px');for(const [width,treeWidth,readerWidth] of [[1440,400,992],[1920,448,1424]]){assert.equal(Math.min(448,Math.max(400,width*.1+256)),treeWidth);assert.equal(width-32-16-treeWidth,readerWidth);}
+  const geometry=method.filter(({rule})=>rule.selectorText.endsWith(' .np-panels'));assert.ok(geometry.length);const layout=geometry.find(({rule})=>rule.style.getPropertyValue('grid-template-columns').includes('448px'));assert.ok(layout,'method width is independently declared');assert.match(layout.rule.style.getPropertyValue('grid-template-columns'),/clamp\(400px,\s*calc\(var\(--np-desktop-viewport-width,\s*100vw\)\s*\/\s*10\s*\+\s*256px\),\s*448px\)\s+minmax\(0,\s*1fr\)/);assert.equal(layout.rule.style.getPropertyValue('gap'),'16px');for(const [width,treeWidth,readerWidth] of [[1440,400,992],[1920,448,1424]]){assert.equal(Math.min(448,Math.max(400,width*.1+256)),treeWidth);assert.equal(width-32-16-treeWidth,readerWidth);}
   const intro=method.filter(({rule})=>rule.selectorText.includes('.np-selection-intro')&&rule.style.getPropertyValue('display')==='none');assert.equal(intro.length,1);assert.ok(intro[0].rule.selectorText.includes('#np-reader-summary'));assert.equal(entries.some(({rule})=>rule.style.getPropertyValue('display')==='none'&&rule.selectorText.includes('.np-method-mechanism')),false,'mechanism and boundary flow are never hidden');
   for(const {rule} of method){const selector=rule.selectorText;if(/np-reader-heading|np-reader-object|np-reader-analysis|np-analysis-status/.test(selector)){assert.ok(!['hidden','clip','auto','scroll'].includes(rule.style.getPropertyValue('overflow')));assert.notEqual(rule.style.getPropertyValue('text-overflow'),'ellipsis');assert.ok(!rule.style.getPropertyValue('max-height')||rule.style.getPropertyValue('max-height')==='none');assert.ok(!rule.style.getPropertyValue('height')||rule.style.getPropertyValue('height')==='auto');assert.notEqual(rule.style.getPropertyValue('-webkit-line-clamp'),'1');}if(!/np-tree-scroll|np-detail-scroll/.test(selector))assert.ok(!['auto','scroll'].includes(rule.style.getPropertyValue('overflow')),'new method CSS cannot create another permanent scroller: '+selector);}
   const prose=entries.filter(({rule,media})=>methodMediaActive(media,1920)&&rule.selectorText==='#navigation-product .np-reader-body>*').at(-1);assert.ok(prose);assert.ok(parseFloat(prose.rule.style.getPropertyValue('max-width'))>=720&&parseFloat(prose.rule.style.getPropertyValue('max-width'))<=880);assert.ok(entries.some(({rule,media})=>methodMediaActive(media,1440)&&rule.selectorText.includes('[data-active-tree=a] .np-panels')&&rule.style.getPropertyValue('gap')==='24px'),'A geometry remains separately scoped');
@@ -386,7 +386,9 @@ test('ready desktop outer clip forbids hidden ancestor scrolling without changin
   check();for(const value of ['hidden','auto','scroll','visible','']){const old=rows[0].rule.style.cssText;try{rows[0].rule.style.setProperty('overflow',value);assert.throws(check,/stationary outer wrappers/);}finally{rows[0].rule.style.cssText=old;}check();}
   for(const width of [760,1199])assert.equal(entries.filter(({rule,media})=>methodMediaActive(media,width)&&rule.selectorText.replace(/,\s*/g,',')===selector).length,0,'non-desktop document scrolling is unchanged');
   for(const width of [1200,1440,1920]){const active=entries.filter(({media})=>methodMediaActive(media,width));assert.equal(active.filter(({rule})=>rule.selectorText.replace(/,\s*/g,',')===selector).length,1);for(const scroller of ['#navigation-product .np-tree-scroll','#navigation-product .np-reader-body']){const rules=active.filter(({rule})=>rule.selectorText.split(',').map(s=>s.trim()).includes(scroller)&&rule.style.getPropertyValue('overflow'));assert.ok(rules.length,scroller);assert.equal(rules.at(-1).rule.style.getPropertyValue('overflow'),'auto','actual inner native scrolling remains');}}
-  assert.equal(entries.filter(({rule})=>rule.style.getPropertyValue('overflow')==='clip').length,1,'no scientific region or text gains clipping');
+  const landingSelector='#navigation-product[data-reading-home=true] .np-reading-landing.np-graphical-home';
+  function checkClipScope(){const clips=entries.filter(({rule})=>rule.style.getPropertyValue('overflow')==='clip');assert.deepEqual(clips.map(({rule})=>rule.selectorText.replace(/,\s*/g,',')).sort(),[selector,landingSelector].sort(),'only the document and explicit desktop-home landing are non-scrollable');for(const {rule,media}of clips){assert.deepEqual(media,['(min-width:1200px)']);assert.equal(rule.style.getPropertyValue('overflow-x'),'');assert.equal(rule.style.getPropertyValue('overflow-y'),'');}}
+  checkClipScope();const landing=entries.find(({rule})=>rule.selectorText===landingSelector).rule,old=landing.style.cssText;try{landing.style.setProperty('overflow','hidden');assert.throws(checkClipScope,/non-scrollable/);}finally{landing.style.cssText=old;}checkClipScope();
  }finally{dom.window.close();}
 });
 
@@ -570,7 +572,7 @@ test('S0 adaptive spacing: actual compact extent and actual row counts bound spa
  assert.deepEqual(positions,before,'allocation cannot mutate measured compact inputs');assert.deepEqual(spacingFunction(691,{a:{y:600,h:79}},6,13),{task:0,challenge:0},'actual taller content consumes spare space');
 });
 function spacingFixture(x){
- const map=x.d.getElementById('np-overview-map');for(const node of map.querySelectorAll('[data-map-position]')){const height=node.matches('[data-task-open]')?52:node.matches('[data-challenge-open]')?37:node.matches('[data-overview-entity]')?42.390625:node.matches('[data-reading-branch]')?37.390625:26.5;node.getBoundingClientRect=()=>({x:parseFloat(node.style.left),y:parseFloat(node.style.top),width:parseFloat(node.style.width),height:parseFloat(node.style.height)||height});}
+ const map=x.d.getElementById('np-overview-map');for(const node of map.querySelectorAll('[data-map-position]')){const height=node.matches('[data-task-open]')?56:node.matches('[data-challenge-open]')?37:node.matches('[data-overview-entity]')?42.390625:node.matches('[data-reading-branch]')?37.390625:26.5;node.getBoundingClientRect=()=>({x:parseFloat(node.style.left),y:parseFloat(node.style.top),width:parseFloat(node.style.width),height:parseFloat(node.style.height)||height});}
  for(const note of map.querySelectorAll('[data-layout-note]'))note.getBoundingClientRect=()=>({height:21});
  return async(width,height,mapWidth=width-82)=>{Object.defineProperty(x.w,'innerWidth',{value:width,configurable:true});Object.defineProperty(map,'clientWidth',{value:mapWidth,configurable:true});Object.defineProperty(map,'clientHeight',{value:height,configurable:true});x.w.dispatchEvent(new x.w.Event('resize'));await frames(x.w);return spacingSnapshot(x);};
 }
@@ -603,4 +605,149 @@ test('S0 adaptive spacing: relation focus, hidden source rows, same-view history
  for(const trigger of triggers){trigger.click();await frames(x.w);const selected=x.d.getElementById('np-map-relation-evidence-'+trigger.dataset.relationSelect);assert.equal(x.d.activeElement,selected);panel.scrollTop=57;panel.dispatchEvent(new x.w.Event('scroll'));assert.deepEqual(await resize(1920,839),tall,'hidden source C nodes still set compact extent');assert.equal(panel.scrollTop,57);assert.equal(x.d.getElementById('np-overview-map').dataset.selectedRelation,trigger.dataset.relationSelect);assert.deepEqual(plain(x.a.getState().route),route);assertSpacingEdges(x,tall);assert.deepEqual(await resize(1920,659),compact);assert.deepEqual(await resize(1920,839),tall);x.d.getElementById('np-overview-relation-close').click();assert.equal(x.d.activeElement,trigger);assert.equal(panel.hidden,true);}
  const trigger=triggers.find(n=>n.dataset.relationSelect==='tasks:relation:90');trigger.click();await frames(x.w);panel.scrollTop=57;panel.dispatchEvent(new x.w.Event('scroll'));const saved=save(x),cold=await page({width:1920,saved});try{const coldResize=spacingFixture(cold);assert.deepEqual(await coldResize(1920,839),tall);assert.equal(cold.d.getElementById('np-overview-relation-panel').scrollTop,57);assert.deepEqual(plain(cold.a.getState().route),route);assertSpacingEdges(cold,tall);}finally{await close(cold);}
  x.d.getElementById('np-relation-entry-tasks:relation:90-task:goat').click();await ready(x);x.w.history.back();await wait(60);await ready(x);const afterBack=spacingFixture(x);assert.deepEqual(await afterBack(1920,839),tall);assert.deepEqual(plain(x.a.getState().route),route);assert.equal(x.d.getElementById('np-overview-relation-panel').scrollTop,57);x.M.validateState(x.a.getBundle(),x.a.getState());
+});
+
+// The repository's aggregate CI explicitly invokes this suite. Keep the new
+// shell-height/summary-cascade regressions on that same required path.
+require('./test_navigation_s0_height.cjs');
+
+// CI 38358176100 at head0f497eb: the 1343x649.609375 map has 56px
+// task cards, a 20px row gap and 16px column gaps. These are arithmetic
+// regressions from its receipt, not substitute browser hit/visual acceptance.
+function relationSegments(d){
+ const v=d.match(/[MHV]|-?\d+(?:\.\d+)?(?:e[+-]?\d+)?/gi)||[],points=[];let i=0,x,y;
+ while(i<v.length){const op=v[i++];if(op==='M'){x=Number(v[i++]);y=Number(v[i++]);}else if(op==='H')x=Number(v[i++]);else if(op==='V')y=Number(v[i++]);else throw Error('unexpected relation command '+op);assert.ok(Number.isFinite(x)&&Number.isFinite(y));points.push({x,y});}
+ assert.ok(points.length>=2);return points.slice(1).map((b,i)=>({a:points[i],b}));
+}
+function assertRelationGutters(d,nodes,from,to,width,height){
+ const segments=relationSegments(d);let length=0;
+ for(const {a,b}of segments){assert.ok(a.x===b.x||a.y===b.y);length+=Math.abs(a.x-b.x)+Math.abs(a.y-b.y);
+  for(const p of[a,b])assert.ok(p.x>=0&&p.y>=0&&p.x<=width&&p.y<=height,'entire relationship stays in map');
+  for(const n of nodes){const pad=n.scope===from||n.scope===to?0:1.75,l=n.x-pad,r=n.x+n.w+pad,t=n.y-pad,bot=n.y+n.h+pad;
+   const overlap=a.y===b.y?a.y>=t&&a.y<=bot&&Math.min(Math.max(a.x,b.x),r)-Math.max(Math.min(a.x,b.x),l)>1e-7:a.x>=l&&a.x<=r&&Math.min(Math.max(a.y,b.y),bot)-Math.max(Math.min(a.y,b.y),t)>1e-7;
+   assert.equal(overlap,false,'relationship crosses card '+n.scope);
+  }
+ }
+ assert.ok(length>0,'nonempty relationship');const endpoint=(p,n)=>{assert.ok(p.x>=n.x-1e-7&&p.x<=n.x+n.w+1e-7&&p.y>=n.y-1e-7&&p.y<=n.y+n.h+1e-7);assert.ok([p.x-n.x,p.x-n.x-n.w,p.y-n.y,p.y-n.y-n.h].some(v=>Math.abs(v)<1e-7));};endpoint(segments[0].a,nodes.find(n=>n.scope===from));endpoint(segments.at(-1).b,nodes.find(n=>n.scope===to));return length;
+}
+function legacyRelationPath(a,b,i,count,colStep){
+ const sp=(i+1)/(count*2+2),tp=(i+count+1)/(count*2+2),sy=a.y+a.h*sp,ty=b.y+b.h*tp;
+ if(Math.abs(a.y-b.y)<2&&b.x>a.x&&b.x-a.x<colStep+2)return `M ${a.x+a.w} ${sy} H ${b.x}`;
+ if(Math.abs(a.x-b.x)<2){const lane=a.x+a.w+9;return `M ${a.x+a.w} ${sy} H ${lane} V ${ty} H ${b.x+b.w}`;}
+ const y=a.y+a.h+5+i*3,lane=b.x-(10+i*4);return `M ${a.x+a.w*sp} ${a.y+a.h} V ${y} H ${lane} V ${ty} H ${b.x}`;
+}
+test('S0 relationship gutters: old CI card intersections are red and all seven real rebuilt routes clear every card',async t=>{
+ const x=await page();t.after(()=>close(x));const resize=spacingFixture(x);
+ for(const[width,mapWidth,height]of[[1440,1343,649.609375],[1920,1823,652.5],[1440,1343,839],[1920,1823,839],[1440,1343,649.609375]]){
+  const snapshot=await resize(width,height,mapWidth),nodes=snapshot.filter(n=>n.scope),map=x.d.getElementById('np-overview-map'),paths=[...map.querySelectorAll('[data-map-relation]')];assert.equal(paths.length,7);assertSpacingEdges(x,snapshot);
+  for(const p of paths)assertRelationGutters(p.getAttribute('d'),nodes,p.dataset.fromEntity,p.dataset.toEntity,mapWidth,height);
+  if(width===1440&&height===649.609375){
+   const byScope=Object.fromEntries(nodes.map(n=>[n.scope,n]));assert.equal(byScope['task:vln'].w,213.75);assert.equal(byScope['task:soon'].y,462);assert.equal(byScope['task:language-objectnav'].y+56,442);
+   for(const i of[2,3,4,5]){const p=paths[i],a=byScope[p.dataset.fromEntity],b=byScope[p.dataset.toEntity],old=legacyRelationPath(a,b,i,7,229.75);assert.throws(()=>assertRelationGutters(old,nodes,p.dataset.fromEntity,p.dataset.toEntity,mapWidth,height),/crosses card/,'original '+p.dataset.mapRelation+' must remain red');}
+   const p=paths[2],old=legacyRelationPath(byScope[p.dataset.fromEntity],byScope[p.dataset.toEntity],2,7,229.75),length=relationSegments(old).reduce((sum,s)=>sum+Math.abs(s.a.x-s.b.x)+Math.abs(s.a.y-s.b.y),0);assert.equal(length,538.421875,'same R90 length as real receipt');assert.ok(Array.from({length:19},(_,i)=>length*(i+1)/20%9).every(v=>v>5&&v<9),'all old equal-fraction samples alias into dash gaps');
+   assert.throws(()=>assertRelationGutters('',nodes,p.dataset.fromEntity,p.dataset.toEntity,mapWidth,height),'no path cannot pass');
+   const broken=p.getAttribute('d').replace(/H [-\d.]+ V/,`H ${byScope['task:ivln'].x+10} V`);assert.throws(()=>assertRelationGutters(broken,nodes,p.dataset.fromEntity,p.dataset.toEntity,mapWidth,height),/crosses card/,'moving a bend into a real card cannot pass');
+  }
+ }
+});
+
+test('desktop CSS fixture media conditions include exact height boundaries and reject unknown syntax',()=>{
+
+const shortQuery='(min-width:1200px) and (max-height:950px)';
+for(const[w,h,expected]of[[1199,949,false],[1200,949,true],[1200,950,true],[1200,951,false],[1440,900,true],[1920,1080,false]])assert.equal(methodMediaActive([shortQuery],w,h),expected,`${w}x${h}`);
+assert.equal(methodMediaActive(['(max-width:1200px) and (min-height:950px)'],1200,950),true);
+assert.equal(methodMediaActive(['print'],1440,900),false);assert.equal(methodMediaActive(['(prefers-reduced-motion:reduce)'],1440,900),false);
+for(const q of['(orientation:landscape)','(min-width:1200px) and (hover:hover)','(min-width:9999px) and (unknown:1)','(max-height:950px) trailing','(min-width:1200px) or (max-height:950px)'])assert.throws(()=>methodMediaActive([q],1440,900),/unexpected media query/);
+assert.throws(()=>methodMediaActive(['print','(unknown:1)'],1440,900),/unexpected media query/,'inactive media must not hide unknown syntax');
+});
+
+test('desktop method reading: analysis summary overrides shared touch whitespace without shrinking text or other scopes',()=>{
+ const navigation=fs.readFileSync(path.join(root,'assets/navigation-product.css'),'utf8'),site=fs.readFileSync(path.join(root,'assets/site.css'),'utf8');
+ const selector='#navigation-product[data-method-reading=true] .np-analysis-reference>summary';
+ for(const width of [1199,1200,1440,1920])for(const method of [false,true]){
+  const dom=new JSDOM('<!doctype html><style id="site"></style><style id="navigation"></style><main id="navigation-product" data-method-reading="'+method+'"><details class="np-analysis-reference"><summary>未填参考模板，保留完整来源身份和未填状态</summary></details></main><details><summary id="outside">其他页面控件</summary></details>');
+  try{
+   const d=dom.window.document,ss=d.getElementById('site'),ns=d.getElementById('navigation');ss.textContent=site;
+   const shared=[...ss.sheet.cssRules].filter(r=>r.selectorText==='summary'||r.selectorText==='button, select, input[type="search"], input[type="text"], summary');
+   assert.equal(shared.length,2,'retain the exact shared44px/9px defaults');ss.textContent=shared.map(r=>r.cssText).join('\n');
+   ns.textContent=navigation;const entries=[];function collect(rules,media=[]){for(const r of rules)if(r.cssRules)collect(r.cssRules,r.media?media.concat(r.media.mediaText):media);else if(r.selectorText)entries.push({rule:r,media});}collect(ns.sheet.cssRules);
+   const override=entries.filter(e=>e.rule.selectorText===selector);assert.equal(override.length,1);assert.deepEqual(override[0].media,['(min-width:1200px)']);
+   ns.textContent=entries.filter(e=>methodMediaActive(e.media,width,900)).map(e=>e.rule.cssText).join('\n');
+   const summary=d.querySelector('.np-analysis-reference>summary'),text=summary.textContent,inside=width>=1200&&method;
+   function check(){const s=dom.window.getComputedStyle(summary);assert.equal(s.minHeight,inside?'26px':'44px');assert.equal(s.paddingTop,inside?'2px':'9px');assert.equal(s.paddingBottom,inside?'2px':'9px');assert.equal(s.fontSize,'15px');assert.notEqual(s.whiteSpace,'nowrap');assert.ok(!['hidden','clip','auto','scroll'].includes(s.overflow));assert.notEqual(s.textOverflow,'ellipsis');assert.equal(summary.textContent,text);const outside=dom.window.getComputedStyle(d.getElementById('outside'));assert.equal(outside.minHeight,'44px');assert.equal(outside.paddingTop,'9px');}
+   check();
+   if(inside){const rules=[...ns.sheet.cssRules],rule=rules.find(r=>r.selectorText===selector);rule.style.removeProperty('min-height');rule.style.removeProperty('padding');ns.textContent=rules.map(r=>r.cssText).join('\n');assert.throws(check,/44px/,'without the narrow overrides the original shared whitespace failure returns');}
+  }finally{dom.window.close();}
+ }
+});
+
+test('desktop column viewport initializes before ready and follows real lifecycle without changing exact method identity',async t=>{
+ let releaseFonts;const fontReady=new Promise(resolve=>{releaseFonts=resolve;}),readyWidths=[];
+ const x=await page({width:1920,beforeParse(w){
+  Object.defineProperty(w.document,'fonts',{value:{ready:fontReady},configurable:true});
+  new w.MutationObserver(records=>{for(const r of records)if(r.target.id==='navigation-product'&&r.target.getAttribute('data-load-state')==='ready')readyWidths.push(r.target.style.getPropertyValue('--np-desktop-viewport-width'));}).observe(w.document,{subtree:true,attributes:true,attributeFilter:['data-load-state']});
+ }});t.after(()=>close(x));const app=x.d.getElementById('navigation-product');
+ assert.ok(readyWidths.length,'the real boot produced a ready transition');assert.ok(readyWidths.every(value=>value==='1920px'),'width exists before ready, without waiting for a later frame');
+ const p=await method(x,'vlfm','source:method-lineage:vlfm'),route=plain(x.a.getState().route),hash=x.w.location.hash;
+ const assertIdentity=()=>{assert.deepEqual(plain(x.a.getState().route),route);assert.equal(x.w.location.hash,hash);assert.equal(x.d.getElementById('np-reader-object-title').dataset.objectPosition,p.id);assert.equal(x.d.getElementById('np-reader-object-title').dataset.objectVersion,p.versionId);};
+ for(const width of [1600,1199,1200,1180,1440,1920,1500,1920]){
+  Object.defineProperty(x.w,'innerWidth',{value:width,configurable:true});
+  // Bursts reuse the existing single pending resize frame.
+  for(let i=0;i<3;i++)x.w.dispatchEvent(new x.w.Event('resize'));
+  await ready(x);assert.equal(app.style.getPropertyValue('--np-desktop-viewport-width'),width>=1200?width+'px':'');assert.equal(app.dataset.methodReading,String(width>=1200));assertIdentity();
+ }
+ // Site chrome/font/fullscreen refreshes can happen without a window resize.
+ for(const event of ['load','fullscreenchange']){
+  app.style.setProperty('--np-desktop-viewport-width','1600px');
+  if(event==='fullscreenchange')Object.defineProperty(x.d,'fullscreenElement',{value:x.d.getElementById('np-workspace'),configurable:true});
+  (event==='load'?x.w:x.d).dispatchEvent(new x.w.Event(event));await ready(x);assert.equal(app.style.getPropertyValue('--np-desktop-viewport-width'),'1920px');assertIdentity();
+ }
+ Object.defineProperty(x.d,'fullscreenElement',{value:null,configurable:true});app.style.setProperty('--np-desktop-viewport-width','1600px');x.d.dispatchEvent(new x.w.Event('fullscreenchange'));await ready(x);assert.equal(app.style.getPropertyValue('--np-desktop-viewport-width'),'1920px');assertIdentity();
+ app.style.setProperty('--np-desktop-viewport-width','1600px');releaseFonts();await ready(x);assert.equal(app.style.getPropertyValue('--np-desktop-viewport-width'),'1920px');assertIdentity();
+ const reader=x.d.getElementById('np-detail-scroll'),tree=x.d.getElementById('np-tree-scroll'),selected=x.d.getElementById('np-node-'+p.id);
+ for(let i=0;i<2;i++){
+  x.d.getElementById('np-reader-toggle').click();await ready(x);assert.equal(app.dataset.readerCollapsed,'true');assert.equal(app.style.getPropertyValue('--np-desktop-viewport-width'),'1920px');assertIdentity();
+  x.d.getElementById('np-reader-toggle').click();await ready(x);assert.equal(app.dataset.readerCollapsed,'false');assert.equal(app.style.getPropertyValue('--np-desktop-viewport-width'),'1920px');assertIdentity();
+  assert.equal(x.d.getElementById('np-detail-scroll'),reader);assert.equal(x.d.getElementById('np-tree-scroll'),tree);assert.equal(x.d.getElementById('np-node-'+p.id),selected);
+ }
+ for(let i=0;i<3;i++){
+  await go(x,x.M.initialState(x.a.getBundle(),{scope:p.scopeId,tree:'l'}).route);assert.equal(app.style.getPropertyValue('--np-desktop-viewport-width'),'1920px');assert.notEqual(app.dataset.methodReading,'true');
+  await selectMethodExact(x,p);assert.equal(app.style.getPropertyValue('--np-desktop-viewport-width'),'1920px');assert.equal(app.dataset.methodReading,'true');assertIdentity();
+ }
+});
+
+// Geometry inputs are explicit fixtures. JSDOM verifies lifecycle/state only;
+// the existing Chrome directory scene remains the native scroll/pixel gate.
+test('desktop toolbar disclosure height follows initial render, resize, fonts, fullscreen and repeated open without state mutation',async t=>{
+ let releaseFonts;const fontReady=new Promise(resolve=>{releaseFonts=resolve;}),geometry={height:1080,bottom:1064,toolbarTop:290,paddingBottom:16,borderBottom:1};
+ const x=await page({width:1920,beforeParse(w){
+  Object.defineProperty(w,'innerHeight',{get:()=>geometry.height,configurable:true});Object.defineProperty(w.document,'fonts',{value:{ready:fontReady},configurable:true});
+  const rect=w.HTMLElement.prototype.getBoundingClientRect;w.HTMLElement.prototype.getBoundingClientRect=function(){const r=rect.call(this);if(this.id==='np-reading-landing')return {...r,bottom:geometry.bottom};if(this.classList.contains('np-overview-map-toolbar'))return {...r,top:geometry.toolbarTop};return r;};
+  const computed=w.getComputedStyle.bind(w);w.getComputedStyle=function(element,...args){const style=computed(element,...args);if(element.id!=='np-reading-landing')return style;return new Proxy(style,{get(target,key){if(key==='paddingBottom')return geometry.paddingBottom+'px';if(key==='borderBottomWidth')return geometry.borderBottom+'px';const value=Reflect.get(target,key,target);return typeof value==='function'?value.bind(target):value;}});};
+ }});t.after(()=>close(x));
+ const landing=x.d.getElementById('np-reading-landing'),all=x.d.getElementById('np-all-scopes'),panels=[...landing.querySelectorAll('.np-overview-map-toolbar>details')],nodes=[...all.querySelectorAll('[data-scope-open]')],source=nodes.map(n=>[n.id,n.dataset.scopeOpen,n.parentElement.dataset.parentScope,n.textContent]),route=plain(x.a.getState().route),history=x.w.history.length,variable='--np-overview-disclosure-room';assert.equal(nodes.length,64);assert.deepEqual(panels.map(p=>p.id),['np-all-scopes','np-overview-comparison','np-task-relations','np-overview-notes']);assert.equal(x.d.querySelectorAll('#np-overview-comparison [data-task-comparison]').length,22);assert.equal(x.d.querySelectorAll('#np-task-relations [data-relation-select]').length,7);const panelContents=panels.map(p=>p.innerHTML);assert.equal(landing.style.getPropertyValue(variable),'757px','first settled render already has actual available height');
+ const unchanged=()=>{assert.deepEqual(plain(x.a.getState().route),route);assert.equal(x.w.history.length,history);assert.deepEqual([...all.querySelectorAll('[data-scope-open]')],nodes);assert.deepEqual(nodes.map(n=>[n.id,n.dataset.scopeOpen,n.parentElement.dataset.parentScope,n.textContent]),source);assert.equal(landing.scrollTop,0);assert.equal(x.w.scrollY,0);assert.deepEqual(panels.map(p=>p.innerHTML),panelContents);};
+ for(const [width,height,bottom,toolbarTop,padding,wanted]of[[1440,900,896,152.890625,4,'738.109375px'],[1920,1080,1064,290,16,'757px'],[1199,900,896,152.890625,4,''],[375,757,753,140,4,''],[1200,951,935,260,16,'658px'],[1920,1080,1064,290,16,'757px']]){
+  Object.assign(geometry,{height,bottom,toolbarTop,paddingBottom:padding});Object.defineProperty(x.w,'innerWidth',{value:width,configurable:true});for(let i=0;i<3;i++)x.w.dispatchEvent(new x.w.Event('resize'));await ready(x);assert.equal(landing.style.getPropertyValue(variable),wanted);unchanged();
+  for(const panel of panels)for(let i=0;i<2;i++){panel.open=true;await frames(x.w);assert.equal(landing.style.getPropertyValue(variable),wanted);panel.open=false;await frames(x.w);unchanged();}
+ }
+ for(const event of ['load','fullscreenchange']){geometry.bottom-=12;const wanted=(geometry.bottom-geometry.borderBottom-geometry.paddingBottom-geometry.toolbarTop)+'px';if(event==='fullscreenchange')Object.defineProperty(x.d,'fullscreenElement',{value:x.d.getElementById('np-workspace'),configurable:true});(event==='load'?x.w:x.d).dispatchEvent(new x.w.Event(event));await ready(x);assert.equal(landing.style.getPropertyValue(variable),wanted);unchanged();}
+ geometry.bottom=1064;Object.defineProperty(x.d,'fullscreenElement',{value:null,configurable:true});x.d.dispatchEvent(new x.w.Event('fullscreenchange'));await ready(x);assert.equal(landing.style.getPropertyValue(variable),'757px');unchanged();
+ geometry.bottom=1054;releaseFonts();await ready(x);assert.equal(landing.style.getPropertyValue(variable),'747px');unchanged();
+ x.a.render({restore:true,focus:false});await ready(x);assert.equal(x.d.getElementById('np-reading-landing').style.getPropertyValue(variable),'747px');assert.deepEqual([...x.d.querySelectorAll('#np-all-scopes [data-scope-open]')].map(n=>[n.id,n.dataset.scopeOpen,n.parentElement.dataset.parentScope,n.textContent]),source);assert.deepEqual(plain(x.a.getState().route),route);
+});
+
+test('directory first and last original entries preserve native button semantics, Escape, exact return focus and all 64 identities',async()=>{
+ for(const width of [1440,1920]){const x=await page({width});try{
+  const original=[...x.d.querySelectorAll('#np-all-scopes [data-scope-open]')].map(n=>({id:n.id,scope:n.dataset.scopeOpen,parent:n.parentElement.dataset.parentScope,text:n.textContent})),route=plain(x.a.getState().route);assert.equal(original.length,64);assert.deepEqual(original.map(x=>x.scope).sort(),science.scopes.map(x=>x.id).sort());for(const entry of original)assert.equal(entry.parent,science.scopes.find(s=>s.id===entry.scope).parentScopeId||'');
+  for(const entry of [original[0],original.at(-1)]){
+   let all=x.d.getElementById('np-all-scopes'),control=x.d.getElementById(entry.id);all.open=true;assert.equal(control.tagName,'BUTTON');assert.equal(control.type,'button');assert.equal(control.disabled,false);assert.equal(control.tabIndex,0);
+   control.focus({preventScroll:true});control.dispatchEvent(new x.w.KeyboardEvent('keydown',{key:'Escape',bubbles:true}));assert.equal(all.open,false);assert.equal(x.d.activeElement,all.querySelector('summary'));
+   all.open=true;control.focus({preventScroll:true});assert.equal(x.d.activeElement,control);control.click();await ready(x);assert.equal(x.a.getState().route.scope,entry.scope);
+   for(const tree of ['c','l']){x.d.querySelector('[data-tree-tab="'+tree+'"]').click();await ready(x);assert.equal(x.a.getState().route.scope,entry.scope);}
+   for(let i=0;i<6&&x.d.getElementById('np-reading-landing').hidden;i++){const back=x.d.querySelector('.np-return-previous');assert.ok(back);back.click();await ready(x);}
+   assert.equal(x.d.getElementById('np-reading-landing').hidden,false);all=x.d.getElementById('np-all-scopes');assert.equal(all.open,true);assert.equal(x.d.activeElement.id,entry.id);assert.equal(x.d.getElementById('np-reading-landing').scrollTop,0);assert.equal(x.w.scrollY,0);assert.deepEqual(plain(x.a.getState().route),route);
+   assert.deepEqual([...all.querySelectorAll('[data-scope-open]')].map(n=>({id:n.id,scope:n.dataset.scopeOpen,parent:n.parentElement.dataset.parentScope,text:n.textContent})),original);x.M.validateState(x.a.getBundle(),x.a.getState());
+  }
+ }finally{await close(x);}}
 });

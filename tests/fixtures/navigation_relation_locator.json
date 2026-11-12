@@ -1,0 +1,331 @@
+[
+  {
+    "name": "relation88",
+    "raw": "已核原始摘要/引言；reset位置、tour reposition精确协议待核。[paper](https://arxiv.org/abs/2210.03087)",
+    "expected": {
+      "text": "已核原始摘要/引言；reset位置、tour reposition精确协议待核。paper（https://arxiv.org/abs/2210.03087；新标签页）",
+      "links": [
+        {
+          "text": "paper（https://arxiv.org/abs/2210.03087；新标签页）",
+          "url": "https://arxiv.org/abs/2210.03087",
+          "target": "_blank",
+          "rel": "noopener noreferrer"
+        }
+      ]
+    }
+  },
+  {
+    "name": "two-links",
+    "raw": "前[paper](https://arxiv.org/abs/2210.03087)；后[second](http://example.org/b?x=1&y=2)。",
+    "expected": {
+      "text": "前paper（https://arxiv.org/abs/2210.03087；新标签页）；后second（http://example.org/b?x=1&y=2；新标签页）。",
+      "links": [
+        {
+          "text": "paper（https://arxiv.org/abs/2210.03087；新标签页）",
+          "url": "https://arxiv.org/abs/2210.03087",
+          "target": "_blank",
+          "rel": "noopener noreferrer"
+        },
+        {
+          "text": "second（http://example.org/b?x=1&y=2；新标签页）",
+          "url": "http://example.org/b?x=1&y=2",
+          "target": "_blank",
+          "rel": "noopener noreferrer"
+        }
+      ]
+    }
+  },
+  {
+    "name": "html-label-is-text",
+    "raw": "[<img src=x onerror=alert>](https://example.org/)",
+    "expected": {
+      "text": "<img src=x onerror=alert>（https://example.org/；新标签页）",
+      "links": [
+        {
+          "text": "<img src=x onerror=alert>（https://example.org/；新标签页）",
+          "url": "https://example.org/",
+          "target": "_blank",
+          "rel": "noopener noreferrer"
+        }
+      ]
+    }
+  },
+  {
+    "name": "plain",
+    "raw": "§3、tour表、t-nDTW定义、Appendix B",
+    "expected": {
+      "text": "§3、tour表、t-nDTW定义、Appendix B",
+      "links": []
+    }
+  },
+  {
+    "name": "javascript",
+    "raw": "[bad](javascript:alert)",
+    "expected": {
+      "text": "[bad](javascript:alert)",
+      "links": []
+    }
+  },
+  {
+    "name": "data",
+    "raw": "[bad](data:text/html,evil)",
+    "expected": {
+      "text": "[bad](data:text/html,evil)",
+      "links": []
+    }
+  },
+  {
+    "name": "credentials",
+    "raw": "[bad](https://name:secret@example.org/)",
+    "expected": {
+      "text": "[bad](https://name:secret@example.org/)",
+      "links": []
+    }
+  },
+  {
+    "name": "malformed",
+    "raw": "[paper](https://example.org/",
+    "expected": {
+      "text": "[paper](https://example.org/",
+      "links": []
+    }
+  },
+  {
+    "name": "nested-url",
+    "raw": "[paper](https://example.org/a(b))",
+    "expected": {
+      "text": "[paper](https://example.org/a(b))",
+      "links": []
+    }
+  },
+  {
+    "name": "image",
+    "raw": "![paper](https://example.org/)",
+    "expected": {
+      "text": "![paper](https://example.org/)",
+      "links": []
+    }
+  },
+  {
+    "name": "escaped",
+    "raw": "\\[paper](https://example.org/)",
+    "expected": {
+      "text": "\\[paper](https://example.org/)",
+      "links": []
+    }
+  },
+  {
+    "name": "nested-label",
+    "raw": "[[paper](https://example.org/)]",
+    "expected": {
+      "text": "[[paper](https://example.org/)]",
+      "links": []
+    }
+  },
+  {
+    "name": "invalid-port",
+    "raw": "[paper](https://example.org:bad/)",
+    "expected": {
+      "text": "[paper](https://example.org:bad/)",
+      "links": []
+    }
+  },
+  {
+    "name": "backslash",
+    "raw": "[paper](https://example.org\\x)",
+    "expected": {
+      "text": "[paper](https://example.org\\x)",
+      "links": []
+    }
+  },
+  {
+    "name": "empty",
+    "raw": "",
+    "expected": {
+      "text": "",
+      "links": []
+    }
+  },
+  {
+    "name": "narrow-url-literal-0",
+    "raw": "[x](https:example.com/a)",
+    "expected": {
+      "text": "[x](https:example.com/a)",
+      "links": []
+    }
+  },
+  {
+    "name": "narrow-url-literal-1",
+    "raw": "[x](https:///example.com/a)",
+    "expected": {
+      "text": "[x](https:///example.com/a)",
+      "links": []
+    }
+  },
+  {
+    "name": "narrow-url-literal-2",
+    "raw": "[x](https://@example.com/a)",
+    "expected": {
+      "text": "[x](https://@example.com/a)",
+      "links": []
+    }
+  },
+  {
+    "name": "narrow-url-literal-3",
+    "raw": "[x](https://%zz/a)",
+    "expected": {
+      "text": "[x](https://%zz/a)",
+      "links": []
+    }
+  },
+  {
+    "name": "narrow-url-literal-4",
+    "raw": "[x](https://999.999.999.999/a)",
+    "expected": {
+      "text": "[x](https://999.999.999.999/a)",
+      "links": []
+    }
+  },
+  {
+    "name": "narrow-url-literal-5",
+    "raw": "[x](https://example.123/a)",
+    "expected": {
+      "text": "[x](https://example.123/a)",
+      "links": []
+    }
+  },
+  {
+    "name": "narrow-url-literal-6",
+    "raw": "[x](https://example.0x1/a)",
+    "expected": {
+      "text": "[x](https://example.0x1/a)",
+      "links": []
+    }
+  },
+  {
+    "name": "narrow-url-literal-7",
+    "raw": "[x](https://example.org/)",
+    "expected": {
+      "text": "[x](https://example.org/)",
+      "links": []
+    }
+  },
+  {
+    "name": "narrow-url-literal-8",
+    "raw": "[x](https://example.org/﻿)",
+    "expected": {
+      "text": "[x](https://example.org/﻿)",
+      "links": []
+    }
+  },
+  {
+    "name": "narrow-url-literal-9",
+    "raw": "[x](https://example.org/%zz)",
+    "expected": {
+      "text": "[x](https://example.org/%zz)",
+      "links": []
+    }
+  },
+  {
+    "name": "narrow-url-literal-10",
+    "raw": "[x](https://example.org:65536/a)",
+    "expected": {
+      "text": "[x](https://example.org:65536/a)",
+      "links": []
+    }
+  },
+  {
+    "name": "narrow-url-literal-11",
+    "raw": "[x](https://例子.org/a)",
+    "expected": {
+      "text": "[x](https://例子.org/a)",
+      "links": []
+    }
+  },
+  {
+    "name": "narrow-url-literal-12",
+    "raw": "[x](HTTPS://example.org/a)",
+    "expected": {
+      "text": "[x](HTTPS://example.org/a)",
+      "links": []
+    }
+  },
+  {
+    "name": "narrow-url-literal-13",
+    "raw": "[x](https://example.org/é)",
+    "expected": {
+      "text": "[x](https://example.org/é)",
+      "links": []
+    }
+  },
+  {
+    "name": "narrow-url-valid-0",
+    "raw": "[x](https://example.org:65535/a%20b?x=1#part)",
+    "expected": {
+      "text": "x（https://example.org:65535/a%20b?x=1#part；新标签页）",
+      "links": [
+        {
+          "text": "x（https://example.org:65535/a%20b?x=1#part；新标签页）",
+          "url": "https://example.org:65535/a%20b?x=1#part",
+          "target": "_blank",
+          "rel": "noopener noreferrer"
+        }
+      ]
+    }
+  },
+  {
+    "name": "narrow-url-valid-1",
+    "raw": "[x](http://sub.example.org:0/a)",
+    "expected": {
+      "text": "x（http://sub.example.org:0/a；新标签页）",
+      "links": [
+        {
+          "text": "x（http://sub.example.org:0/a；新标签页）",
+          "url": "http://sub.example.org:0/a",
+          "target": "_blank",
+          "rel": "noopener noreferrer"
+        }
+      ]
+    }
+  },
+  {
+    "name": "punycode-literal-0",
+    "raw": "[x](https://xn--a.com/)",
+    "expected": {
+      "text": "[x](https://xn--a.com/)",
+      "links": []
+    }
+  },
+  {
+    "name": "punycode-literal-1",
+    "raw": "[x](https://xn--abc.com/)",
+    "expected": {
+      "text": "[x](https://xn--abc.com/)",
+      "links": []
+    }
+  },
+  {
+    "name": "punycode-literal-2",
+    "raw": "[x](https://a.xn--a.com/)",
+    "expected": {
+      "text": "[x](https://a.xn--a.com/)",
+      "links": []
+    }
+  },
+  {
+    "name": "punycode-literal-3",
+    "raw": "[x](https://xn--bcher-kva.com/)",
+    "expected": {
+      "text": "[x](https://xn--bcher-kva.com/)",
+      "links": []
+    }
+  },
+  {
+    "name": "punycode-literal-4",
+    "raw": "[x](https://XN--BCHER-KVA.com/)",
+    "expected": {
+      "text": "[x](https://XN--BCHER-KVA.com/)",
+      "links": []
+    }
+  }
+]

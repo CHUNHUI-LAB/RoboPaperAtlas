@@ -1,0 +1,204 @@
+'use strict';
+// These are CSSOM and explicit budget regressions, not browser pixel approval.
+// The unchanged exact-node/visibility/footer gates still run in Chrome CI.
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const {JSDOM}=require('jsdom'),root=path.resolve(__dirname,'..');
+const css=fs.readFileSync(path.join(root,'assets/navigation-product.css'),'utf8'),site=fs.readFileSync(path.join(root,'assets/site.css'),'utf8');
+const marker='/* The current identity and site chrome share the short desktop';
+const split=css.indexOf(marker);assert.ok(split>0);
+function match(query,width,height){return query.split(',').some(part=>{const tests=[...part.matchAll(/\((min|max)-(width|height):\s*(\d+)px\)/g)];return tests.length>0&&tests.every(([,bound,axis,n])=>bound==='min'?(axis==='width'?width:height)>=+n:(axis==='width'?width:height)<=+n)&&!part.includes('prefers-');});}
+function fixture(width,height,home=true,compact=true){
+ const dom=new JSDOM(`<main id="navigation-product" data-load-state="ready" data-reading-home="${home}"><section class="np-global-start"><nav class="np-global-navigation"><strong>导航研究地图</strong><details><summary>直接查找具体任务或条件</summary></details></nav></section><section id="np-workspace" class="np-workspace"><dl class="np-selection-context"><div class="np-context-field"><dt>当前虚拟阅读索引</dt><dd>全部来源与论文索引</dd></div><div class="np-context-field"><dt>当前路线</dt><dd>全局研究图</dd></div><div class="np-context-field"><dt>当前论文</dt><dd>尚未选择</dd></div><div class="np-context-field"><dt>来源版本</dt><dd>尚未选择</dd></div></dl><div class="np-workspace-bar"><div class="np-tabs"><button>全景</button><button>文献发展</button><button>困难与思路</button><button>论文解析</button></div><nav class="np-global-context"></nav><details class="np-reading-tools"><summary>阅读工具</summary></details><nav class="np-origin-trail"></nav><button id="np-overview-toggle" class="np-text-button">原全局树图</button><details class="np-identity-controls"><summary>论文身份与来源版本</summary></details><button id="np-graph-fullscreen">全屏查看</button></div><section id="np-reading-landing" class="np-reading-landing np-graphical-home"><div class="np-overview-map-toolbar"><details id="np-all-scopes"><summary>全部阅读范围与术语</summary></details><details id="np-overview-comparison"><summary>任务输入与完成要求</summary></details><details id="np-task-relations"><summary>7条有据对照与组合</summary></details><details id="np-overview-notes"><summary>范围说明</summary></details><button id="np-overview-analysis" class="np-text-button">单篇论文解析</button><button id="np-map-relations-toggle" class="np-text-button">显示全部关系</button></div><div class="np-overview-map"><button class="np-map-task"><span class="np-task-reading-contract">图文→飞行搜索</span><span class="np-task-reading-name">AVOS</span></button><button class="np-map-challenge">逐点语义冗余且缺少对象关系</button></div><div class="np-overview-footer"><div class="np-map-legend">实线：原目录父子</div><p class="np-overview-coverage np-map-coverage">选段覆盖，不代表全文精读</p></div></section></section></main>`),d=dom.window.document;
+ const parse=d.createElement('style');parse.textContent=site+'\n'+(compact?css:css.slice(0,split));d.head.append(parse);
+ function flatten(rules){return [...rules].flatMap(r=>r.media?(match(r.media.mediaText,width,height)?flatten(r.cssRules):[]):r.style?[r.cssText]:[]);}
+ const active=flatten(parse.sheet.cssRules);parse.remove();const style=d.createElement('style');style.textContent=active.join('\n');d.head.append(style);
+ const s=q=>dom.window.getComputedStyle(d.querySelector(q));return {dom,d,s,style};
+}
+const px=v=>parseFloat(v)||0;
+const outer=(s,prefix='padding')=>px(s[prefix+'Top'])+px(s[prefix+'Bottom']);
+test('short S0 shell only reclaims chrome spacing, preserving exact typography and node styles',()=>{
+ const changed=['#navigation-product','.np-global-start','.np-selection-context','.np-context-field','.np-workspace-bar','.np-tabs','.np-overview-map-toolbar'];
+ const text=['.np-global-navigation>details>summary','.np-selection-context dt','.np-selection-context dd','.np-tabs button','.np-reading-tools>summary','.np-identity-controls>summary','.np-overview-map-toolbar>details>summary','.np-task-reading-name','.np-task-reading-contract','.np-map-challenge','.np-map-legend','.np-map-coverage'];
+ for(const [width,height,home,applies]of[[1440,900,true,true],[1920,1080,true,false],[1180,757,true,false],[1440,900,false,false]]){
+  const before=fixture(width,height,home,false),after=fixture(width,height,home,true);try{
+   assert.equal(after.d.querySelectorAll('.np-context-field dt').length,4);assert.equal(after.d.querySelectorAll('.np-context-field dd').length,4);assert.equal(after.d.querySelectorAll('.np-tabs button').length,4);assert.equal(after.d.querySelectorAll('.np-overview-map-toolbar>details>summary,.np-overview-map-toolbar>button').length,6);
+   for(const q of text)for(const key of ['fontSize','fontWeight','lineHeight','color'])assert.equal(after.s(q)[key],before.s(q)[key],`${width}×${height} ${q} unchanged ${key}`);
+   if(!applies){for(const q of changed)for(const key of ['display','height','paddingTop','paddingBottom','marginTop','marginBottom','flexDirection']){if(width>=1200&&q==='#navigation-product'&&['display','height','flexDirection'].includes(key))continue;if(width>=1200&&home&&q==='.np-overview-map-toolbar'&&key==='paddingBottom'){assert.equal(after.s(q)[key],'8px');assert.equal(before.s(q)[key],'12px');continue;}assert.equal(after.s(q)[key],before.s(q)[key],q+' unaffected outside short S0');}}
+   else{assert.equal(after.s('.np-context-field').flexDirection,'row');assert.equal(after.s('.np-workspace-bar').display,'flex');assert.equal(after.s('.np-workspace-bar').flexWrap,'wrap');assert.equal(after.s('.np-tabs').width,'auto');assert.equal(after.s('.np-global-navigation>details>summary').paddingTop,'0px');assert.equal(after.s('.np-overview-map-toolbar>details>summary').paddingBottom,'0px');}
+   for(const q of ['.np-map-task','.np-map-challenge','.np-overview-footer'])for(const key of ['minHeight','paddingTop','paddingBottom','marginTop','gap','flexShrink','overflow'])assert.equal(after.s(q)[key],before.s(q)[key],q+' unchanged scientific card/footer');
+  }finally{before.dom.window.close();after.dom.window.close();}
+ }
+});
+test('both approved desktop budgets reserve full 649px source map and original separate footer without shrinking text',()=>{
+ for(const [width,height]of[[1440,900],[1920,1080]]){const x=fixture(width,height),s=x.s;try{
+  // Real CI font sizes/line heights are already independently pinned. Model each
+  // natural-flow row from those CSS declarations, without using product y values.
+  const line=(selector,fallback)=>{const style=s(selector),v=style.lineHeight;return v.endsWith('px')?px(v):px(style.fontSize)*(px(v)||fallback);};
+  const summary='.np-global-navigation>details>summary',global=Math.max(px(s('.np-global-start').minHeight),Math.max(line(summary,1.65)+outer(s(summary)),px(s(summary).minHeight))+outer(s('.np-global-start')));
+  const identity=(height<=950?Math.max(line('.np-selection-context dt',1.5),line('.np-selection-context dd',1.5)):line('.np-selection-context dt',1.5)+line('.np-selection-context dd',1.5)+px(s('.np-context-field').gap))+outer(s('.np-selection-context'))+outer(s('.np-selection-context'),'margin')+1;
+  const controlOuter=selector=>{const style=s(selector);return Math.max(px(style.minHeight),line(selector,1.65)+outer(style)+px(style.borderTopWidth)+px(style.borderBottomWidth));};
+  const controls=['.np-tabs button','.np-reading-tools>summary','.np-identity-controls>summary','#np-overview-toggle','#np-graph-fullscreen'];
+  const controlHeights=controls.map(q=>controlOuter(q)+(q==='.np-tabs button'?outer(s('.np-tabs')):0));
+  const tabs=Math.max(px(s('.np-workspace-bar').height),...controlHeights);
+  const overviewSelectors=['#np-all-scopes>summary','#np-overview-comparison>summary','#np-task-relations>summary','#np-overview-notes>summary','#np-overview-analysis','#np-map-relations-toggle'];
+  const overview=Math.max(px(s('.np-overview-map-toolbar').minHeight),Math.max(...overviewSelectors.map(controlOuter))+outer(s('.np-overview-map-toolbar'))+1)+outer(s('.np-overview-map-toolbar'),'margin');
+  const footer=line('.np-map-legend',1.45)+line('.np-map-coverage',1.45)+px(s('.np-overview-footer').gap)+outer(s('.np-overview-footer'),'margin');
+  const landing=outer(s('.np-reading-landing'))+2,app=outer(s('#navigation-product')),header=65;
+  const budget={header,global,identity,tabs,overview,footer,landing,app};if(height<=950)assert.ok(controlHeights.every(v=>v<=34),JSON.stringify({controls,controlHeights}));const available=height-Object.values(budget).reduce((a,b)=>a+b,0);
+  assert.ok(available>=649,JSON.stringify({budget,available}));assert.ok(available<680,'budget must not fabricate spare viewport');
+  assert.ok(available-30<649,'a genuinely taller header exhausts the budget');
+  assert.equal(s('.np-overview-footer').marginTop,'12px');assert.equal(s('.np-overview-footer').flexShrink,'0');
+  assert.equal(s('.np-overview-map').minHeight,'0');assert.equal(s('.np-reading-landing').overflow,'clip');
+ }finally{x.dom.window.close();}}
+});
+test('short-shell controller derives height from the actual application top, not the old fixed 128px offset',()=>{
+ const source=fs.readFileSync(path.join(root,'assets/navigation-product.js'),'utf8');
+ assert.ok(source.includes("window.innerHeight-app.getBoundingClientRect().top"));
+ assert.ok(source.includes("else app.style.removeProperty('--np-workspace-shell-height')"));
+ const declaration=css.slice(css.indexOf('@media (min-width:1200px) and (max-height:950px)',split));assert.ok(declaration.includes('@media (min-width:1200px) and (max-height:950px)'));
+ for(const r of declaration.matchAll(/([^{}]+)\{([^{}]*)\}/g))if(!r[1].includes('@media')){assert.ok(r[1].includes('[data-reading-home=true]'));assert.ok(!/(?:font-size|font-weight|line-height|transform|zoom|display\s*:\s*none|visibility\s*:\s*hidden)/.test(r[2]));}
+});
+
+test('desktop height follows actual app top, clamps exhausted space and clears stale narrow styles',()=>{
+ const source=fs.readFileSync(path.join(root,'assets/navigation-product.js'),'utf8');
+ const fn=['syncDesktopViewportWidth','syncDesktopWorkspaceHeight'].map(name=>source.match(new RegExp('^function '+name+'\\([^]*?^\\}', 'm'))[0]).join('\n');
+ const run=Function('app','window',fn+';syncDesktopWorkspaceHeight();');const values=new Map();
+ const app={getBoundingClientRect:()=>({top:65}),style:{setProperty:(k,v)=>values.set(k,v),removeProperty:k=>values.delete(k)}};
+ for(const [width,height,wanted]of[[1440,900,'835px'],[1920,1080,'1015px'],[1440,40,'0px']]){run(app,{innerWidth:width,innerHeight:height});assert.equal(values.get('--np-workspace-shell-height'),wanted);}
+ run(app,{innerWidth:1180,innerHeight:757});assert.equal(values.has('--np-workspace-shell-height'),false);
+});
+
+test('explicit fullscreen keeps its independent viewport height instead of inherited flex remainder',()=>{
+ const dom=new JSDOM('<style></style>');try{const style=dom.window.document.querySelector('style');style.textContent=css;
+ const desktop=[...style.sheet.cssRules].filter(r=>r.media&&r.media.mediaText==='(min-width:1200px)').flatMap(r=>[...r.cssRules]);
+ const rule=desktop.filter(r=>r.selectorText==='#navigation-product[data-load-state=ready] .np-workspace:fullscreen').at(-1);assert.ok(rule);
+ assert.equal(rule.style.getPropertyValue('height'),'100dvh');assert.equal(rule.style.getPropertyValue('flex'),'0 0 auto');
+ }finally{dom.window.close();}
+});
+
+test('fullscreen changes request geometry refresh even when viewport dimensions do not change',()=>{
+ const source=fs.readFileSync(path.join(root,'assets/navigation-product.js'),'utf8');
+ const start=source.indexOf('function(){',source.indexOf("document.addEventListener('fullscreenchange'"));assert.ok(start>0);let depth=0,end=start;for(;end<source.length;end++){if(source[end]==='{')depth++;if(source[end]==='}'&&--depth===0){end++;break;}}const callback=source.slice(start,end);let refreshes=0,focused=0;
+ const control={textContent:'',focus:options=>{assert.deepEqual(options,{preventScroll:true});focused++;}};
+ const doc={fullscreenElement:{}};const run=Function('document','by','refreshChromeHeight','return '+callback)(doc,()=>control,()=>refreshes++);
+ run();assert.equal(refreshes,1);assert.equal(focused,0);assert.equal(control.textContent,'退出全屏');
+ doc.fullscreenElement=null;run();assert.equal(refreshes,2);assert.equal(focused,1);assert.equal(control.textContent,'全屏查看');
+});
+
+test('desktop column viewport is raw innerWidth, independent of gutter, and clears narrow stale state',()=>{
+ const source=fs.readFileSync(path.join(root,'assets/navigation-product.js'),'utf8');
+ const fn=source.match(/^function syncDesktopViewportWidth\([^]*?^\}/m)[0];
+ const run=Function('app','window',fn+';syncDesktopViewportWidth();'),values=new Map([['--unrelated-value','preserved']]);
+ const app={style:{setProperty:(k,v)=>values.set(k,v),removeProperty:k=>values.delete(k)},getBoundingClientRect(){throw Error('Column input must not be inferred from product geometry');}};
+ for(const width of [1200,1440,1500,1600,1680,1800,1919,1920,2200])for(const gutter of [0,8,15,24]){
+  const window={innerWidth:width};Object.defineProperty(window,'document',{get(){throw Error('Do not infer viewport from root/body/gutter: '+gutter);}});
+  run(app,window);assert.equal(values.get('--np-desktop-viewport-width'),width+'px');assert.equal(values.get('--unrelated-value'),'preserved');
+ }
+ for(const width of [1199,1180,375]){run(app,{innerWidth:width});assert.equal(values.has('--np-desktop-viewport-width'),false);}
+ run(app,{innerWidth:1920});assert.equal(values.get('--np-desktop-viewport-width'),'1920px');
+});
+
+test('method and A columns retain continuous reviewed interpolation with actual gutter-aware reader remainder',()=>{
+ const dom=new JSDOM('<style></style>');try{
+  const style=dom.window.document.querySelector('style');style.textContent=css;
+  const desktop=[...style.sheet.cssRules].filter(r=>r.media&&r.media.mediaText==='(min-width:1200px)').flatMap(r=>[...r.cssRules]);
+  const source=fs.readFileSync(path.join(root,'assets/navigation-product.js'),'utf8'),fn=source.match(/^function syncDesktopViewportWidth\([^]*?^\}/m)[0];
+  const values=new Map(),app={style:{setProperty:(k,v)=>values.set(k,v),removeProperty:k=>values.delete(k)}},run=Function('app','window',fn+';syncDesktopViewportWidth();');
+  for(const [selector,gap]of[['#navigation-product[data-method-reading=true] .np-panels',16],['#navigation-product[data-active-tree=a] .np-panels',24]]){
+   const rule=desktop.find(r=>r.selectorText===selector);assert.ok(rule);
+   assert.match(rule.style.getPropertyValue('grid-template-columns'),/^clamp\(400px,\s*calc\(var\(--np-desktop-viewport-width,\s*100vw\)\s*\/\s*10\s*\+\s*256px\),\s*448px\)\s+minmax\(0,\s*1fr\)$/);
+   assert.equal(rule.style.getPropertyValue('gap'),gap+'px');
+   for(const [width,wanted]of[[1200,400],[1440,400],[1500,406],[1600,416],[1680,424],[1800,436],[1919,447.9],[1920,448],[2200,448]])for(const gutter of [0,8,15,24]){
+    run(app,{innerWidth:width});const viewport=parseFloat(values.get('--np-desktop-viewport-width')),tree=Math.min(448,Math.max(400,viewport/10+256)),panels=width-gutter-32,reader=panels-gap-tree;
+    assert.equal(tree,wanted);assert.ok(reader>0);assert.ok(Math.abs(tree+gap+reader-panels)<1e-9,'the reader takes remaining space without root overflow');
+    if(width===1920&&gutter===15){assert.equal(tree,448);assert.equal(reader,gap===16?1409:1401);}
+    if(width===1440&&gutter===15)assert.equal(reader,gap===16?977:969);
+   }
+  }
+  assert.equal((css.match(/var\(--np-desktop-viewport-width/g)||[]).length,2,'only A and actual-method column rules consume the viewport input');
+ }finally{dom.window.close();}
+});
+
+test('viewport synchronization shares existing render, resize, font, load and fullscreen lifecycle without new listeners',()=>{
+ const source=fs.readFileSync(path.join(root,'assets/navigation-product.js'),'utf8');
+ assert.match(source,/function render\(options\)\{[^\n]*restoring=true;syncDesktopViewportWidth\(\);[^\n]*renderScopePicker\(/,'initial render sets width inside restore suppression before readiness or panel reads');
+ assert.match(source,/function syncDesktopWorkspaceHeight\(\)\{\s*syncDesktopViewportWidth\(\);/);
+ assert.match(source,/resizeFrame=window\.requestAnimationFrame\(function\(\)\{resizeFrame=null;syncDesktopViewportWidth\(\);if\(state/,'resize writes the new viewport before selected-row anchoring');
+ assert.equal((source.match(/window\.addEventListener\('resize'/g)||[]).length,1);
+ assert.equal((source.match(/document\.addEventListener\('fullscreenchange'/g)||[]).length,1);
+ assert.equal((source.match(/window\.addEventListener\('load',refreshChromeHeight\)/g)||[]).length,1);
+ assert.equal((source.match(/document\.fonts\.ready\.then\(refreshChromeHeight\)/g)||[]).length,1);
+ const helper=source.match(/^function syncDesktopViewportWidth\([^]*?^\}/m)[0];
+ assert.doesNotMatch(helper,/requestAnimationFrame|addEventListener|Observer|getBoundingClientRect|scroll|state\.|route\.|setTimeout|render\(/,'the viewport sync cannot create a layout/event/state loop');
+});
+
+// These declaration/box-model checks do not simulate native scrolling. Chrome
+// CI still owns native scroll/pixel evidence and the unchanged zero-offset gates.
+const directoryController=fs.readFileSync(path.join(root,'assets/navigation-product.js'),'utf8');
+const directoryHeightSource=directoryController.match(/^function syncOverviewDisclosureHeight\([^]*?^\}/m)[0];
+function directoryBudget(options={}){
+ const o={width:1920,height:1080,bottom:1064,paddingBottom:16,borderBottom:1,toolbarTop:290,toolbarBorder:0,...options},values=new Map([['--unrelated-value','preserved']]);
+ const toolbar={getBoundingClientRect:()=>({top:o.toolbarTop}),clientTop:o.toolbarBorder};
+ const landing={querySelector:selector=>{assert.equal(selector,'.np-overview-map-toolbar');return o.missingToolbar?null:toolbar;},getBoundingClientRect:()=>({bottom:o.bottom}),style:{setProperty:(k,v)=>values.set(k,v),removeProperty:k=>values.delete(k)}};
+ const window={innerWidth:o.width,innerHeight:o.height,getComputedStyle:element=>{assert.equal(element,landing);return {paddingBottom:o.paddingBottom+'px',borderBottomWidth:o.borderBottom+'px'};}};
+ Object.defineProperty(window,'scrollY',{get(){throw Error('Viewport coordinates must not include document scrolling');}});
+ const run=Function('window',directoryHeightSource+';return syncOverviewDisclosureHeight;')(window);
+ run(landing);return {o,window,landing,toolbar,values,run};
+}
+test('disclosure bound uses actual inner bottom and toolbar padding edge without double-counting border or padding',()=>{
+ for(const [options,wanted]of[[{},757],[{height:900,bottom:896,paddingBottom:4,toolbarTop:152.890625},738.109375],[{toolbarBorder:3},754],[{borderBottom:2.5,paddingBottom:21.25},750.25],[{height:1000},710],[{bottom:280},0],[{bottom:1064.375},757.375]]){
+  const x=directoryBudget(options);assert.equal(x.values.get('--np-overview-disclosure-room'),wanted+'px');assert.equal(x.values.get('--unrelated-value'),'preserved');
+ }
+ const x=directoryBudget();x.o.bottom=960;x.run(x.landing);assert.equal(x.values.get('--np-overview-disclosure-room'),'653px','recompute from new chrome rather than accumulate offsets');
+ assert.doesNotMatch(directoryHeightSource,/scrollTop|scrollLeft|scrollTo|scrollIntoView|focus\(|state\.|history|setTimeout|requestAnimationFrame|addEventListener|Observer/,'measurement must not repair scroll/state or introduce a loop');
+});
+test('disclosure bound clears on narrow layout and a missing toolbar without reading stale desktop geometry',()=>{
+ for(const width of [1199,1180,375]){const x=directoryBudget();x.window.innerWidth=width;x.landing.getBoundingClientRect=()=>{throw Error('Narrow layout must not receive desktop measurements');};x.run(x.landing);assert.equal(x.values.has('--np-overview-disclosure-room'),false);assert.equal(x.values.get('--unrelated-value'),'preserved');}
+ const x=directoryBudget({missingToolbar:true});assert.equal(x.values.has('--np-overview-disclosure-room'),false);
+});
+test('all four toolbar disclosures are bounded only inside desktop home and retain their distinct original caps and positions',()=>{
+ const selector='#navigation-product[data-reading-home=true] .np-overview-map-toolbar>details[open]',relationSelector='#navigation-product[data-reading-home=true] .np-overview-map-toolbar>#np-task-relations[open]',ids=['np-all-scopes','np-overview-comparison','np-task-relations','np-overview-notes'];
+ const generalCap='min(calc(100dvh - 240px),max(0px,calc(var(--np-overview-disclosure-room,0px) - var(--np-overview-disclosure-top))))',relationCap='min(324px,max(0px,calc(var(--np-overview-disclosure-room,0px) - var(--np-overview-disclosure-top))))';
+ for(const [width,height,home]of[[1440,900,true],[1440,950,true],[1440,951,true],[1920,1080,true],[1200,1000,true],[1199,900,true],[375,757,true],[1920,1080,false]]){
+  const x=fixture(width,height,home),base=fixture(width,height,home,false);try{
+   for(const id of ids){x.d.getElementById(id).open=true;base.d.getElementById(id).open=true;}
+   const landing=x.s('.np-reading-landing'),active=width>=1200&&home;
+   assert.equal(landing.overflow,active?'clip':base.s('.np-reading-landing').overflow);if(width<1200)assert.equal(landing.overflow,'visible');
+   for(const id of ids){const panel=x.s('#'+id);
+    if(active){assert.equal(panel.overflow,'auto');assert.equal(panel.top,'var(--np-overview-disclosure-top)');assert.equal(panel.getPropertyValue('--np-overview-disclosure-top'),height<=950?'28px':'40px');assert.equal(panel.maxHeight,id==='np-task-relations'?relationCap:generalCap);}
+    else{assert.equal(panel.getPropertyValue('--np-overview-disclosure-top'),'');assert.equal(panel.maxHeight,base.s('#'+id).maxHeight);}
+    for(const key of ['fontSize','lineHeight','width','paddingTop','paddingBottom','borderTopWidth','borderBottomWidth'])assert.equal(panel[key],base.s('#'+id)[key]);
+   }
+   for(const q of ['.np-reading-landing','.np-global-navigation>details'])for(const key of ['fontSize','lineHeight','borderTopWidth','borderBottomWidth','paddingLeft','paddingRight'])assert.equal(x.s(q)[key],base.s(q)[key]);
+  }finally{x.dom.window.close();base.dom.window.close();}
+ }
+ const dom=new JSDOM('<style></style>');try{const style=dom.window.document.querySelector('style');style.textContent=css;const entries=[];function collect(rules,media=[]){for(const r of rules)if(r.media)collect(r.cssRules,media.concat(r.media.mediaText));else if(r.selectorText)entries.push({r,media});}collect(style.sheet.cssRules);
+  const rules=entries.filter(({r})=>r.selectorText===selector);assert.equal(rules.length,2);assert.deepEqual(rules.map(x=>x.media),[['(min-width:1200px)'],['(min-width:1200px) and (max-height:950px)']]);
+  const cap=rules[0].r.style;assert.equal(cap.getPropertyValue('top'),'var(--np-overview-disclosure-top)');assert.equal(cap.getPropertyValue('--np-overview-disclosure-top'),'40px');assert.equal(rules[1].r.style.getPropertyValue('--np-overview-disclosure-top'),'28px');
+  const relation=entries.filter(({r})=>r.selectorText===relationSelector);assert.equal(relation.length,1);assert.deepEqual(relation[0].media,['(min-width:1200px)']);
+  const assertBound=()=>{assert.equal(cap.getPropertyValue('max-height'),generalCap);assert.equal(relation[0].r.style.getPropertyValue('max-height'),relationCap);};assertBound();
+  cap.setProperty('max-height','calc(100dvh - 240px)');assert.throws(assertBound,'the old viewport-only cap must not survive on comparison or notes');cap.setProperty('max-height',generalCap);
+  relation[0].r.style.setProperty('max-height','324px');assert.throws(assertBound,'the relation cap also needs the actual landing limit');relation[0].r.style.setProperty('max-height',relationCap);assertBound();
+  assert.equal(relationCap.includes('100dvh'),false,'relations preserve their independent original 324px cap rather than acquiring a new viewport cap');
+ }finally{dom.window.close();}
+});
+test('directory, long comparison, notes and relation scrollport budgets keep modeled first and last rows reachable',()=>{
+ // Independent scrollport arithmetic, not a claim that JSDOM paints or runs
+ // scrollIntoView. Existing CI checks only its declared interactions.
+ for(const [options,top,expectedGeneral,expectedRelation]of[[{},40,717,324],[{height:900,bottom:896,paddingBottom:4,toolbarTop:152.890625},28,660,324],[{height:600,bottom:584,toolbarTop:340},28,199,199]]){
+  const x=directoryBudget(options),room=parseFloat(x.values.get('--np-overview-disclosure-room')),available=Math.max(0,room-top),origin=x.o.toolbarTop+x.o.toolbarBorder+top,innerBottom=x.o.bottom-x.o.borderBottom-x.o.paddingBottom;
+  for(const id of ['np-all-scopes','np-overview-comparison','np-overview-notes','np-task-relations']){
+   const oldCap=id==='np-task-relations'?324:x.o.height-240,height=Math.min(oldCap,available);assert.equal(height,id==='np-task-relations'?expectedRelation:expectedGeneral,id);
+   function check(menuHeight){const border=1,padding=10,client=menuHeight-2*border,scrollHeight=4000,lastY=scrollHeight-padding-44;
+    for(const y of [padding+24,lastY]){const scroll=Math.max(0,Math.min(scrollHeight-client,y+22-client/2)),visibleTop=origin+border+y-scroll,visibleBottom=visibleTop+44;assert.ok(visibleTop>=origin+border);assert.ok(visibleBottom<=innerBottom,JSON.stringify({id,menuHeight,visibleBottom,innerBottom}));if(y===lastY)assert.ok(scroll>0,'long content retains its own internal scroll');}
+   }check(height);if(oldCap>available)assert.throws(()=>check(oldCap),/visibleBottom/,'clip without the matching cap strands the last row of '+id);
+  }
+ }
+});
+test('disclosure height follows existing home geometry lifecycle without changing capture or zero-offset contracts',()=>{
+ assert.match(directoryController,/map\.classList\.toggle\('np-compact-overview',!desktop\);by\('np-map-relations-toggle'\)\.hidden=!desktop;\s*syncOverviewDisclosureHeight\(by\('np-reading-landing'\)\);/);
+ assert.equal((directoryController.match(/syncOverviewDisclosureHeight\(by\(/g)||[]).length,1,'one shared lifecycle call');
+ assert.equal((directoryController.match(/window\.addEventListener\('resize'/g)||[]).length,1);assert.equal((directoryController.match(/document\.addEventListener\('fullscreenchange'/g)||[]).length,1);
+ assert.match(directoryController,/function refreshChromeHeight\(\)\{[^\n]*layoutReadingOverview\(\);\}/);
+ const capture=fs.readFileSync(path.join(root,'scripts/navigation_screenshots.py'),'utf8');assert.ok(capture.includes("arguments[0].scrollIntoView({block:'center'});arguments[0].focus({preventScroll:true});"));assert.ok(capture.includes("data.get('landingOffsets') != {'top': 0, 'left': 0}"));assert.ok(capture.includes("before != after"));
+});
