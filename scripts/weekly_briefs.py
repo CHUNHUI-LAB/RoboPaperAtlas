@@ -71,21 +71,36 @@ def render(data,index,prefix,current='weekly'):
  note=('<p class="radar-state">最近周报更新失败（'+e(attempt['attempted_at'])+'）：'+e(attempt['message'])+'。以下保留上次成功观察窗口。</p>') if attempt else ''
  return navigation(prefix,current)+note+overview_render(data,index,prefix)
 
+def latest_weekly_link(index,records,prefix='../'):
+ """A dated archive link, never a substitute for the daily overview."""
+ if not index:return ''
+ date=index.get('latest');record=records.get(date)
+ if not record or record.get('date')!=date:return ''
+ date_ok(date)
+ state=record['status']
+ if state not in {'ready','no_material_update','stale'}:return ''
+ label={'ready':'最新周报','no_material_update':'本期周报（无新增主线）','stale':'周报（更新未完成，保留原窗口）'}[state]
+ if index.get('last_attempt'):
+  label='上次成功周报（最近更新失败）' if state!='stale' else '周报（最近更新失败，保留原窗口）'
+ e=lambda value:html.escape(value,quote=True)
+ return '<p class="radar-state" data-latest-weekly><a href="'+e(prefix+'frontier/weekly/'+date+'/index.html')+'">'+e(label+' · '+date)+' ↗</a></p>'
+
 def home_overview(weekly_index,weekly_records,daily_index,daily_records,prefix='../',current='overview'):
  from briefs import section as daily_section
  e=lambda value:html.escape(str(value),quote=True)
+ entry=latest_weekly_link(weekly_index,weekly_records,prefix) if current=='overview' else ''
  daily=daily_records[daily_index['latest']]
  day_state={'ready':'当天摘要已更新','no_material_update':('最近24小时没有新增候选或研究主线' if daily['counts']['window_candidates']==0 else '最近24小时未新增研究主线；窗口候选保留在完整日报'),'stale':'当天更新未完成，日报保留原窗口','error':'当天更新失败；这不代表没有新论文'}[daily['status']]
  day='<aside class="radar-state"><p>'+e(day_state)+' · '+e(daily['window']['start'])+' → '+e(daily['window']['end'])+'（UTC）</p><a href="'+prefix+'frontier/briefs/'+e(daily['date'])+'/index.html">阅读 '+e(daily['date'])+' 日报与证据范围 ↗</a></aside>'
  # A landing page never silently substitutes another reporting period.
  usable=[r for r in daily_records.values() if r['date']<=daily_index['latest'] and r['status'] in {'ready','stale'} and r.get('research_overview',{}).get('themes')]
  if daily['status'] in {'ready','stale'} and daily.get('research_overview',{}).get('themes'):
-  return navigation(prefix,current)+daily_section(daily,daily_index,prefix)
+  return navigation(prefix,current)+entry+daily_section(daily,daily_index,prefix)
  if usable:
   recent=max(usable,key=lambda r:r['window']['end'])
   note='<p class="radar-state">以下为 '+e(recent['date'])+' 历史日报，保留原始观察窗口，不是当天新发现或本期新增。周报可从独立周期入口阅读。</p>'
-  return navigation(prefix,current)+day+note+daily_section(recent,daily_index,prefix)
- return navigation(prefix,current)+day+'<p class="radar-state">近期研究总览暂不可用；可查看完整日报记录或独立周报。</p>'
+  return navigation(prefix,current)+entry+day+note+daily_section(recent,daily_index,prefix)
+ return navigation(prefix,current)+entry+day+'<p class="radar-state">近期研究总览暂不可用；可查看完整日报记录或独立周报。</p>'
 
 def daily_landing(weekly_index,weekly_records,daily_index,daily_records,prefix='../../'):
  """Keep empty daily records intact, but make the rolling reading entry useful."""
