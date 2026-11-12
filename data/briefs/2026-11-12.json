@@ -1,0 +1,168 @@
+{
+  "schema_version": "1.1",
+  "id": "arxiv-daily-2026-11-12",
+  "date": "2026-11-12",
+  "title": "2026-11-12 前沿观察：本窗口无新增匹配候选",
+  "status": "no_material_update",
+  "generated_at": "2026-11-12T08:25:32Z",
+  "language": "zh-CN",
+  "window": {
+    "start": "2026-11-11T08:00:00Z",
+    "end": "2026-11-12T08:00:00Z",
+    "timezone": "UTC",
+    "date_field": "updated_at",
+    "inclusive": true,
+    "duration_hours": 24
+  },
+  "source_snapshot": {
+    "generated_at": "2026-11-12T08:24:03Z",
+    "fetched_at": "2026-11-12T08:24:03Z",
+    "last_successful_fetch_at": "2026-11-12T08:24:03Z",
+    "status": "ok",
+    "coverage": {
+      "window_start": "2026-11-05T08:00:00Z",
+      "window_end": "2026-11-12T08:00:00Z",
+      "window_inclusive": true,
+      "date_field": "updated_at",
+      "complete": true,
+      "truncated": false,
+      "api_total_results": 15703,
+      "fetched_entries": 300,
+      "pages_fetched": 3,
+      "window_entries": 235,
+      "matched_entries": 133,
+      "displayed_entries": 133,
+      "stopped_at": "reached_window_start",
+      "source": "arxiv_api",
+      "limitations": [
+        "Candidates are heuristic title-and-abstract matches, not reviewed or deep-read recommendations.",
+        "Coverage is limited to the declared arXiv query and categories; indexing delay and terminology can omit relevant work.",
+        "This feed discovers preprints. Curated reading should prefer an available formally published version.",
+        "New/revision describes the retrieved arXiv version, not novelty, publication acceptance, or first appearance on this site."
+      ]
+    },
+    "name": "frontier.json",
+    "sha256": "69ba46d9eafd1cea24e06f3427edcf28b74bbd47fb4727aa1d9fab0547b7fce1",
+    "query": "(cat:cs.RO OR cat:cs.CV OR cat:cs.AI OR cat:cs.LG OR cat:cs.CL) AND (all:\"vision-language navigation\" OR all:\"vision language navigation\" OR all:VLN OR all:ObjectNav OR all:\"object-goal\" OR all:\"object goal\" OR ((ti:navigation OR abs:navigation) AND (all:agent OR all:memory OR all:feedback OR all:harness OR all:reflection)) OR all:\"spatial memory\" OR all:\"episodic memory\" OR all:\"mobile manipulation\" OR all:\"mobile manipulator\" OR all:quadruped OR all:\"whole-body\" OR all:\"whole body\" OR all:\"end-effector\" OR all:\"end effector\" OR all:\"vision-language-action\" OR all:\"vision language action\" OR all:\"world-action model\" OR all:\"world action model\" OR ((all:VLA OR all:MoE OR all:\"mixture of experts\" OR all:\"mixture-of-experts\" OR all:\"world model\" OR all:\"world models\") AND (all:robot OR all:robotic OR all:robotics OR all:manipulation OR all:navigation OR all:embodied)))",
+    "rule_version": "2026-09-30.3"
+  },
+  "counts": {
+    "source_seven_day_candidates": 133,
+    "window_candidates": 0,
+    "new": 0,
+    "revisions": 0,
+    "selected_new": 0,
+    "selected_revisions": 0,
+    "complete_abstracts_checked_for_selection": 0
+  },
+  "coverage_note": "官方 arXiv API 按更新时间串行扫描3页、300条记录，达到七天窗口起点；235条处于七天窗口，133条命中现有关键词规则，无分页或展示截断。最近24小时窗口无匹配候选；这只描述声明查询和此次索引返回，不证明没有相关新研究。",
+  "overview": "本次24小时窗口没有新增匹配候选，因此不重复上一期研究主线或选读。七天队列仍保留133条候选供后续核查。",
+  "new_papers": [],
+  "revised_papers": [],
+  "reading_priority": [],
+  "evidence_note": "本期只完成官方 API 候选采集和窗口元数据核对。窗口候选为0，未新增完整摘要阅读、全文阅读、代码实验核验或版本差异比较。",
+  "limitations": [
+    "关键词检索受所列类别、术语、索引延迟及误分漏分影响；零命中不是全领域没有新论文。",
+    "七天候选队列与24小时研究总览是两个窗口，不混用计数。",
+    "没有本窗口论文证据，不归纳研究主题，不生成推荐，不改变目录或三阶段阅读状态。"
+  ],
+  "candidate_ids": [],
+  "research_overview": {
+    "headline": "本窗口无新增匹配候选，不重复旧主线",
+    "executive_summary": "本次24小时窗口没有新增匹配候选，因此不重复上一期研究主线或选读。七天队列仍保留133条候选供后续核查。",
+    "coverage": {
+      "candidate_metadata_screened": 0,
+      "complete_abstracts_checked": 0,
+      "full_papers_read": 0,
+      "revision_diffs_checked": 0,
+      "comparison_window_available": false,
+      "topic_count_method": "existing_title_abstract_keyword_heuristic_multilabel",
+      "count_denominator": 0
+    },
+    "topic_distribution": [
+      {
+        "topic": "vln_objectnav",
+        "label": "VLN / ObjectNav",
+        "count": 0,
+        "new": 0,
+        "revisions": 0,
+        "candidate_ids": []
+      },
+      {
+        "topic": "navigation_agents",
+        "label": "Navigation agents / harnesses",
+        "count": 0,
+        "new": 0,
+        "revisions": 0,
+        "candidate_ids": []
+      },
+      {
+        "topic": "spatial_episodic_memory",
+        "label": "Spatial / episodic memory and feedback",
+        "count": 0,
+        "new": 0,
+        "revisions": 0,
+        "candidate_ids": []
+      },
+      {
+        "topic": "mobile_manipulation",
+        "label": "Quadruped-arm / mobile manipulation",
+        "count": 0,
+        "new": 0,
+        "revisions": 0,
+        "candidate_ids": []
+      },
+      {
+        "topic": "whole_body_control",
+        "label": "Whole-body control",
+        "count": 0,
+        "new": 0,
+        "revisions": 0,
+        "candidate_ids": []
+      },
+      {
+        "topic": "end_effector_trajectories",
+        "label": "End-effector trajectories",
+        "count": 0,
+        "new": 0,
+        "revisions": 0,
+        "candidate_ids": []
+      },
+      {
+        "topic": "robot_vla",
+        "label": "Robot VLA",
+        "count": 0,
+        "new": 0,
+        "revisions": 0,
+        "candidate_ids": []
+      },
+      {
+        "topic": "robot_moe",
+        "label": "Robot mixture-of-experts",
+        "count": 0,
+        "new": 0,
+        "revisions": 0,
+        "candidate_ids": []
+      },
+      {
+        "topic": "robot_world_models",
+        "label": "Robot world models",
+        "count": 0,
+        "new": 0,
+        "revisions": 0,
+        "candidate_ids": []
+      }
+    ],
+    "themes": [],
+    "evidence_sources": [],
+    "revision_note": "本24小时窗口首版和修订候选均为0；未进行逐版比较，也未进行跨期趋势分析。",
+    "limitations": [
+      "关键词检索受所列类别、术语、索引延迟及误分漏分影响；零命中不是全领域没有新论文。",
+      "七天候选队列与24小时研究总览是两个窗口，不混用计数。",
+      "没有本窗口论文证据，不归纳研究主题，不生成推荐，不改变目录或三阶段阅读状态。",
+      "九个查询标签为多标签关键词启发式，计数可能重叠；各项为0不能证明对应研究方向没有成果。"
+    ],
+    "candidate_records": [],
+    "keyword_caveats": []
+  }
+}
